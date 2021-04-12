@@ -150,9 +150,6 @@ Before you submit a pull request, check that it meets these guidelines:
 2. If the pull request adds functionality, You should update the docs. Put
    your new functionality into a function with a docstring, and add the
    feature to the list in README.md.
-3. The pull request should work for Python 3.6+. Check
-   https://travis-ci.com/triton-inference-server/model_navigator/pull_requests
-   and make sure that the tests pass for all supported Python versions.
 
 ### Tips
 
@@ -176,4 +173,4 @@ $ git push --tags
 
 ## Documentation
 
-- add/update docstrings as defined in [Google Style Guide](https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings)
+Add/update docstrings as defined in [Google Style Guide](https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings)

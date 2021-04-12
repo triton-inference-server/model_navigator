@@ -248,7 +248,6 @@ dmypy.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python,pycharm+all,visualstudiocode,direnv
 
-# data downloaded by pytest-datadir_mgr fixture
 tests/data
-examples/mnist_pyt_data
 workspace/
+docs/CONTRIBUTING.md
