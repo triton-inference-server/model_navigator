@@ -27,4 +27,4 @@ It selects the most promising model format and configuration, matches the provid
 * [Model optimizations](docs/optimization.md)
 * [Model analysis](docs/analysis.md)
 * [Helm Charts](docs/helm_charts.md)
-* [Contributing](docs/CONTRIBUTING.md)
+* [Contributing](CONTRIBUTING.md)
