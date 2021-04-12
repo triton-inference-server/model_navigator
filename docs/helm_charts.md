@@ -77,10 +77,10 @@ Charts can be found in the charts catalog inside the workspace passed in configu
 ```
 
 Each generated charts is stored in separate catalogs and contains:
-- Charts for model inference
-- Charts for inference tester
-- toolkit with additional scripts
-- Dockerfile which is used in deployment
+- Charts for model inference,
+- Charts for inference tester,
+- toolkit with additional scripts,
+- Dockerfile which is used in deployment,
 
 Example:
 ```
@@ -199,9 +199,9 @@ In order to change that number, override the `gpu.limit` value during chart inst
 ## Downloading Model
 
 Helm Chart provides support for downloading models from the provided URL. The URL must be:
-* A model file - `*.pt`, `*.savedmodel`, `*.onnx` or `*.plan` files
-* A ZIP archive - `*.zip*` files
-* A TAR archive - `*.tar.*` files
+* A model file - `*.pt`, `*.savedmodel`, `*.onnx` or `*.plan` files,
+* A ZIP archive - `*.zip*` files,
+* A TAR archive - `*.tar.*` files,
 
 In the case of ZIP and TAR archive files, they should contain only one file or catalog in the main archive directory. For example, for TensorFlow SavedModel:
 ```
