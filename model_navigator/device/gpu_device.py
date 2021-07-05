@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .device import Device
+from model_navigator.device.device import Device
 
 
 class GPUDevice(Device):

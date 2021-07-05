@@ -15,6 +15,8 @@
 requires = [
     "setuptools>=35.0.2",
     "setuptools_scm>=2.0.0,<3",
+    "PyYaml>=5.2",
+    "GitPython>=3.1.18",
     "wheel",
 ]
 build-backend = "setuptools.build_meta"
@@ -42,11 +44,15 @@ exclude = '''
 '''
 
 [tool.isort]
-known_typing = "typing,types,typing_extensions,mypy,mypy_extensions"
-sections = "FUTURE,TYPING,STDLIB,THIRDPARTY,FIRSTPARTY,LOCALFOLDER"
-include_trailing_comma = true
-default_section = "FIRSTPARTY"
-multi_line_output = 3
-force_grid_wrap = 0
-use_parentheses = true
-line_length = 80
+profile = "black"
+line_length = 120
+
+[tool.vulture]
+exclude = []
+ignore_decorators = []
+ignore_names = []
+make_whitelist = true
+min_confidence = 80
+paths = ["model_navigator"]
+sort_by_size = true
+verbose = false

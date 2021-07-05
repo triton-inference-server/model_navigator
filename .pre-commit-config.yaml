@@ -1,0 +1,71 @@
+# Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+repos:
+  - repo: https://github.com/ambv/black
+    rev: 21.6b0
+    hooks:
+      - id: black
+  - repo: https://github.com/pycqa/isort
+    rev: 5.9.1
+    hooks:
+      - id: isort
+        name: isort (python)
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.0.1
+    hooks:
+      - id: check-docstring-first
+      - id: check-executables-have-shebangs
+      - id: check-json
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: check-shebang-scripts-are-executable
+      - id: check-toml
+      - id: check-yaml
+      - id: debug-statements
+      - id: end-of-file-fixer
+        types: [python]
+      - id: fix-byte-order-marker
+      - id: no-commit-to-branch
+      - id: requirements-txt-fixer
+      - id: trailing-whitespace
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v2.19.4
+    hooks:
+      - id: pyupgrade
+        args: [--py36-plus]
+  - repo: https://github.com/jendrikseipp/vulture
+    rev: 'v2.3'
+    hooks:
+      - id: vulture
+        name: Check dead code
+  - repo: https://gitlab.com/pycqa/flake8
+    rev: 3.9.2
+    hooks:
+    -   id: flake8
+        additional_dependencies:
+            - flake8-comprehensions==3.5.0
+            - flake8-bugbear==21.4.3
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.5.0
+    hooks:
+      - id: hadolint-docker
+        args: [--ignore, DL3006, --ignore, DL3008, --ignore, DL4006, --ignore, DL3013, --ignore, SC1091, --ignore, SC1083]
+  - repo: local
+    hooks:
+      - id: docs_config_generator
+        name: docs generator
+        entry: ./scripts/generate_docs_config.py
+        pass_filenames: false
+        language: script
+        verbose: true

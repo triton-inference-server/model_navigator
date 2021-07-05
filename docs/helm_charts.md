@@ -16,28 +16,172 @@ limitations under the License.
 
 # Helm Charts
 
-## Overview
+## The `helm-chart-create` Command
+
+The `helm-chart-create` command generates the Helm Chart per selected model configuration.
+
+Using CLI arguments:
+
+```shell
+$ model-navigator helm-chart-create --model-name add_sub \
+    --model-path model_navigator/examples/quick-start/model.pt \
+    --charts-repository navigator_workspace/charts \
+    --chart-name add_sub_i0
+```
+
+Using YAML file:
+
+```yaml
+model_name: add_sub
+model_path: model_navigator/examples/quick-start/model.pt
+charts_repository: navigator_workspace/charts
+chart_name: add_sub_i0
+```
+
+Running command using YAML configuration:
+
+```shell
+$ model-navigator helm-chart-create --config-path model_navigator.yaml
+```
+
+## CLI and YAML Config Options
+
+[comment]: <> (START_CONFIG_LIST)
+```yaml
+# Name of the model.
+model_name: str
+
+# Path to the model file.
+model_path: path
+
+# Path to Helm Charts repository.
+charts_repository: path
+
+# Name of the chart in Helm Charts repository.
+chart_name: str
+
+# Path to the configuration file containing default parameter values to use. For more information about configuration
+# files, refer to: https://github.com/triton-inference-server/model_navigator/blob/main/docs/run.md
+[ config_path: path | default: model_navigator.yaml ]
+
+# Path to the output workspace directory.
+[ workspace_path: path | default: navigator_workspace ]
+
+# Clean workspace directory before command execution.
+[ override_workspace: boolean ]
+
+# NVIDIA framework and Triton container version to use (refer to https://docs.nvidia.com/deeplearning/frameworks/support-
+# matrix/index.html and https://docs.nvidia.com/deeplearning/triton-inference-server/release-notes/index.html for
+# details).
+[ container_version: str | default: 21.05 ]
+
+# List of GPU UUIDs to be used for the conversion and/or profiling. Use 'all' to profile all the GPUs visible by CUDA.
+[ gpus: str | default: ['all'] ]
+
+# Provide verbose logs.
+[ verbose: boolean ]
+
+# Format of the model. Should be provided in case it is not possible to obtain format from model filename.
+[ model_format: choice(torchscript, tf-savedmodel, onnx, trt) ]
+
+# Version of model used by the Triton Inference Server.
+[ model_version: str | default: 1 ]
+
+# Signature of the model inputs.
+[ inputs: list[str] ]
+
+# Signature of the model outputs.
+[ outputs: list[str] ]
+
+# Target format to generate.
+[ target_formats: list[str] ]
+
+# Configure TensorRT builder for precision layer selection.
+[ target_precisions: list[choice(fp16, fp32, tf32)] ]
+
+# Generate an ONNX graph that uses only ops available in a given opset.
+[ onnx_opsets: list[integer] ]
+
+# The amount of workspace the ICudaEngine uses.
+[ max_workspace_size: integer ]
+
+# Absolute tolerance parameter for output comparison. To specify per-output tolerances, use the format: --atol
+# [<out_name>:]<atol>. Example: --atol 1e-5 out0:1e-4 out1:1e-3
+[ atol: list[str] | default: ['=1e-05'] ]
+
+# Relative tolerance parameter for output comparison. To specify per-output tolerances, use the format: --rtol
+# [<out_name>:]<rtol>. Example: --rtol 1e-5 out0:1e-4 out1:1e-3
+[ rtol: list[str] | default: ['=1e-05'] ]
+
+# Maximum batch size allowed for inference. A max_batch_size value of 0 indicates that batching is not allowed for the
+# model
+[ max_batch_size: integer | default: 32 ]
+
+# Map of features names and minimum shapes visible in the dataset. Format: --min-shapes <input0>=D0,D1,..,DN ..
+# <inputN>=D0,D1,..,DN
+[ min_shapes: list[str] ]
+
+# Map of features names and optimal shapes visible in the dataset. Used during the definition of the TensorRT optimization
+# profile. Format: --opt-shapes <input0>=D0,D1,..,DN .. <inputN>=D0,D1,..,DN
+[ opt_shapes: list[str] ]
+
+# Map of features names and maximal shapes visible in the dataset. Format: --max-shapes <input0>=D0,D1,..,DN ..
+# <inputN>=D0,D1,..,DN
+[ max_shapes: list[str] ]
+
+# Map of features names and range of values visible in the dataset. Format: --value-ranges
+# <input0>=<lower_bound>,<upper_bound> .. <inputN>=<lower_bound>,<upper_bound> <default_lower_bound>,<default_upper_bound>
+[ value_ranges: list[str] ]
+
+# Map of features names and numpy dtypes visible in the dataset. Format: --dtypes <input0>=<dtype> <input1>=<dtype>
+# <default_dtype>
+[ dtypes: list[str] ]
+
+# Select Backend Accelerator used to serve the model.
+[ backend_accelerator: choice(none, amp, trt) ]
+
+# Target model precision for TensorRT acceleration.
+[ tensorrt_precision: choice(fp16, fp32) ]
+
+# Enable CUDA capture graph feature on the TensorRT backend.
+[ tensorrt_capture_cuda_graph: boolean ]
+
+# Batch sizes that the dynamic batcher should attempt to create. In case --max-queue-delay-us is set and this parameter is
+# not, default value will be --max-batch-size.
+[ preferred_batch_sizes: list[integer] ]
+
+# Max delay time that the dynamic batcher will wait to form a batch.
+[ max_queue_delay_us: integer ]
+
+# Mapping of device kind to model instances count on a single device. Available devices: [cpu|gpu]. Format: --engine-
+# count-per-device <kind>=<count>
+[ engine_count_per_device: list[str] | default: ['gpu=1'] ]
+
+```
+[comment]: <> (END_CONFIG_LIST)
+
+## Using Generated Helm Charts
 
 This section describes how to use the generated [Helm Chart](https://helm.sh/docs/chart_template_guide/getting_started/) to run a model
-on Triton Inference Server in a [Kubernetes](https://kubernetes.io/docs/home/) cluster.
+on the Triton Inference Server in a [Kubernetes](https://kubernetes.io/docs/home/) cluster.
 
-**Note** Most of the commands are dependent on the model name passed to Model Navigator on process start.
+**Note** Most of the commands are dependent on the model name passed to the Triton Model Navigator on process start.
 
-[Helm](https://helm.sh/) is the package manager for [Kubernetes](https://kubernetes.io/docs/home/) which helps manage
+[Helm](https://helm.sh/) is the package manager for [Kubernetes](https://kubernetes.io/docs/home/) that helps manage
 applications in a cluster.
 
 [Helm Charts](https://helm.sh/docs/chart_template_guide/getting_started/) provide an easy way to define how software is
 deployed and served on the Kubernetes cluster.
 
-## Serving model on Triton Inference Server
+## Serving Model on the Triton Inference Server
 
-The model Helm Chart provides the definition of steps which are required to be performed in order to serve model inference on
-Triton Inference Server in a Kubernetes cluster.
+The model Helm Chart provides the definition of steps required to be performed in
+order to serve model inference on the Triton Inference Server in a Kubernetes cluster.
 
 The process consists of two stages:
 
-1. Model preparation for Triton Inference Server
-2. Running Triton Inference Server with the model exposed as a Service in a Kubernetes cluster
+1. Preparing the model for the Triton Inference Server
+2. Running the Triton Inference Server with the model exposed as a Service in a Kubernetes cluster
 
 The first stage is performed on application start and
 uses an [Init container](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/) concept to download the necessary
@@ -48,28 +192,28 @@ At application start, the Init container:
 1. Downloads the model from the provided URL.
 2. Optimizes the model.
 3. Prepares the model configuration.
-4. Deploys the model to Triton Inference Server model store.
+4. Deploys the model to the Triton Inference Server model store.
 5. Starts Triton Inference Server with the model exposed as a Service.
 
 ## Scaling and Load Balancing
 
 The Helm Chart utilizes the Kubernetes concept of a [Service](https://kubernetes.io/docs/concepts/services-networking/service/).
-Model; after being deployed to Triton Inference Server and can be accessed by other applications through DNS name.
+Model after being deployed to Triton Inference Server can be accessed by other applications through DNS name.
 
-Kubernetes allows scaling the number of running instances which serves a model through a number of replicas of a given application.
+Kubernetes allows scaling the number of running instances that serves a model through a number of replicas of a given application.
 
-Each newly created instance of an application prepares Triton Inference Server with a model is
+Each newly created instance of an application prepares Triton Inference Server with a model that is
 accessible under the same Service as Chart's name.
 
 ## Quick Start Guide
 
-This section describes the steps which are required to prepare a Docker image and install a Helm Chart on Kubernetes to run
+This section describes the steps that are required to prepare a Docker image and install a Helm Chart on Kubernetes to run
 Triton Inference Server with a model in a cluster.
 
 ### Generated Helm Charts
 
-Model Navigator is the final step of the process when generating Helm Charts for top N models; based on passed constraints and sorted regards
-to selected objectives.
+The Triton Model Navigator is the final step of the process when generating Helm Charts for top N models based on passed
+constraints and sorted in regards to selected objectives.
 
 Charts can be found in the charts catalog inside the workspace passed in configuration:
 ```
@@ -77,10 +221,10 @@ Charts can be found in the charts catalog inside the workspace passed in configu
 ```
 
 Each generated charts is stored in separate catalogs and contains:
-- Charts for model inference,
-- Charts for inference tester,
-- toolkit with additional scripts,
-- Dockerfile which is used in deployment,
+- Charts for model inference
+- Charts for inference tester
+- toolkit with additional scripts
+- Dockerfile that is used in deployment
 
 Example:
 ```
@@ -108,7 +252,7 @@ resnet50
 
 Every chart generated in the catalog can be built and installed separately.
 
-### Building Docker image for model deployment
+### Building Docker Image for Model Deployment
 
 This solution provides Dockerfile to prepare Docker images used by the init container and tester chart.
 
@@ -130,9 +274,9 @@ Push the image to a private registry:
 $ docker push nvcr.io/{organization}/{image}:{version}
 ```
 
-### Install Helm Chart
+### Installing the Helm Chart
 
-Helm Chart for top N models are located in the `workspace/charts/{model-variant}` directory.
+The Helm Chart for top N models is located in the `workspace/charts/{model-variant}` directory.
 
 To install a Helm Chart on your Kubernetes cluster, run:
 
@@ -142,13 +286,13 @@ $ helm install {INFERENCE_CHART_NAME} {INFERENCE_CHART_NAME} \
  --set deployer.modelUri={url/to/model}
 ```
 
-The model on Triton Inference Server is deployed in your cluster.
+The model on the Triton Inference Server is deployed in your cluster.
 
-For more information about Helm, install, and other operations, refer to this [documentation](https://helm.sh/docs/intro/using_helm/).
+For more information about Helm, installation, and other operations, refer to this [documentation](https://helm.sh/docs/intro/using_helm/).
 
-### Optional customizations
+### Optional Customizations
 
-Helm Chart for inference allows providing customization on installation time by overriding default values stored in:
+The Helm Chart for inference allows providing customization on installation time by overriding default values stored in:
 
 ```
 {INFERENCE_CHART_NAME}/values.yaml
@@ -164,9 +308,10 @@ $ helm install {INFERENCE_CHART_NAME} {INFERENCE_CHART_NAME} \
 ```
 
 
-#### Adding pull secret for private container registry
+#### Adding Pull Secret for Private Container Registry
 
-If you stored your Docker image in a private container registry, you most likely would need to provide a [secret](https://kubernetes.io/docs/concepts/configuration/secret/)
+If you stored your Docker image in a private container registry, you may need to provide a
+a [secret](https://kubernetes.io/docs/concepts/configuration/secret/)
 file name with credentials to the private registry.
 
 During chart installation, you can provide it under `imagePullSecret`:
@@ -175,22 +320,23 @@ During chart installation, you can provide it under `imagePullSecret`:
 --set imagePullSecret={secret-file-name}
 ```
 
-#### Scaling number of instances
+#### Scaling Number of Instances
 
-Helm Chart allows setting up a number of POD instances which are created for the installed chart.
+The Helm Chart allows setting up a number of POD instances that are created for the installed chart.
 
-The default value is set to `1`. It means that there will be a single POD with Triton Inference Server which will serve the model.
-If you would like to change the number of instances on the chart installation, override the `replicaCount` value:
-
+The default value is set to `1`, which means there will be a single POD with Triton Inference Server
+that serves the model. If you would like to change the number of instances on the chart installation,
+override the `replicaCount` value:
 ```
 --set replicaCount={Number}
 ```
 
-#### Setting number of GPU units per Triton Inference Server
+#### Setting number of GPU Units per Triton Inference Server
 
-During the Helm Chart installation, it’s possible to update the number of GPU units which will be allocated for POD instances.
+During the Helm Chart installation, it’s possible to update the number of GPU units that will
+be allocated for POD instances.
 
-The default value is set to `1`. It means each created POD instance will acquire 1 GPU unit.
+The default value is set to `1` which means each created POD instance will acquire 1 GPU unit.
 In order to change that number, override the `gpu.limit` value during chart installation:
 
 ```
@@ -198,10 +344,10 @@ In order to change that number, override the `gpu.limit` value during chart inst
 ```
 ## Downloading Model
 
-Helm Chart provides support for downloading models from the provided URL. The URL must be:
-* A model file - `*.pt`, `*.savedmodel`, `*.onnx` or `*.plan` files,
-* A ZIP archive - `*.zip*` files,
-* A TAR archive - `*.tar.*` files,
+The Helm Chart provides support for downloading models from the provided URL. The URL must be:
+* A model file - `*.pt`, `*.savedmodel`, `*.onnx` or `*.plan` files
+* A ZIP archive - `*.zip*` files
+* A TAR archive - `*.tar.*` files
 
 In the case of ZIP and TAR archive files, they should contain only one file or catalog in the main archive directory. For example, for TensorFlow SavedModel:
 ```
@@ -213,22 +359,23 @@ ARCHIVE
 
 The archive is automatically unpacked and moved for further optimization.
 
-Helm Chart supports 4 methods for providing files:
-- HTTP URL without authorization - `http://` or `https://`,
-- AWS S3 URI - `s3://`,
-- Azure Cloud Storage URI - `as://`,
-- Google Cloud Storage URI - `gs://`,
+Helm Chart supports four methods for providing files:
+- HTTP URL without authorization - `http://` or `https://`
+- AWS S3 URI - `s3://`
+- Azure Cloud Storage URI - `as://`
+- Google Cloud Storage URI - `gs://`
 
 ## Cloud Storages
 
-The default option to provide remote data is to pass uri to a resource which does not require any authorization. In many
+The default option to provide remote data is to pass uri to a resource that does not require any authorization. In many
 cases, you want to access restricted resources saved on a remote storage. For that purpose, Triton Deployer and Helm Chart
 support downloading files from:
-- [AWS S3 Storage](#aws-s3-storage),
-- [Azure Cloud Storage](#azure-cloud-storage),
-- [Google Cloud Storage](#google-cloud-storage),
+- [AWS S3 Storage](#aws-s3-storage)
+- [Azure Cloud Storage](#azure-cloud-storage)
+- [Google Cloud Storage](#google-cloud-storage)
 
-The following sections are dedicated to each provider to provide a deeper understanding on how to use it.
+The following sections are dedicated to each provider to provide a
+deeper understanding of how to use their cloud storage.
 
 ### AWS S3 Storage
 
@@ -297,7 +444,7 @@ gs://{bucket}/{file_path}
 ### Overview
 
 [Multi-Instance GPU (MIG)](https://developer.nvidia.com/blog/getting-kubernetes-ready-for-the-a100-gpu-with-multi-instance-gpu/)  is a
-new feature of the latest generation of NVIDIA GPUs, such as NVIDIA DGX A100. It enables users to maximize the utilization of a
+new feature of the latest generation of NVIDIA GPUs, such as the NVIDIA DGX A100. It enables users to maximize the utilization of a
 single GPU by running multiple GPU workloads concurrently as if there were multiple smaller GPUs. MIG supports running
 multiple workloads in parallel on a single A100 GPU or allowing multiple users to share an A100 GPU with hardware-level
 isolation and quality of service.
@@ -306,13 +453,13 @@ isolation and quality of service.
 
 Helm Chart supports all strategies for MIG in Kubernetes:
 
-- None - MIG is disabled on GPU,
-- Single - node expose a single type of MIG device across all its GPUs,
-- Mixed - node exposes a mixture of different MIG device types and GPUs in non-MIG mode across all its GPUs.
+- None - MIG is disabled on GPU
+- Single - node expose a single type of MIG device across all its GPUs
+- Mixed - node exposes a mixture of different MIG device types and GPUs in non-MIG mode across all its GPUs
 
 #### None
 
-The default strategy supported by Helm Chart is `None`. When MIG is disabled on NVIDIA A100 GPU, in order to install Helm Chart
+The default strategy supported by the Helm Chart is `None`. When MIG is disabled on NVIDIA A100 GPU, in order to install Helm Chart
 supporting this strategy, run:
 
 ```shell
@@ -339,16 +486,16 @@ A mixed strategy is necessary to provide GPU product and MIG partition informati
 --set gpu.mig=mig-1g.5gb
 ```
 
-**Note**: MIG cannot be combined with a number of GPUs - Triton Inference Server will always acquire a single partition on which it will be running.
+**Note**: MIG cannot be combined with a number of GPUs. The Triton Inference Server will always acquire a single partition on which it will be running.
 
 
 ## Testing Deployed Model
 
-Helm Chart for inference Model Navigator, at the end of the process generates a tester chart to evaluate the deployed models in a cluster.
+The Helm Chart for inference the Triton Model Navigator, at the end of the process generates a tester chart to evaluate the deployed models in a cluster.
 
 The chart contains a simple performance test to evaluate the deployed model. Deployment is based on Kubernetes Job which runs a set of performance tests.
 
-It’s necessary to use the same image which has been prepared for inference Helm Chart. In order to deploy tester job, run:
+It’s necessary to use the same image that was prepared for Inference Helm Chart. In order to deploy the tester job, run:
 ```shell
 $ helm install {TESTER_CHART_NAME} {TESTER_CHART_NAME} \
  --set image=nvcr.io/{organization}/{image}:{version}

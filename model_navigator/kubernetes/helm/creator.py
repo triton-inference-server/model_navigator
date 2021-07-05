@@ -11,14 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import typing
-
 import pathlib
 import shutil
+import typing
 
-from ... import framework
-from .. import internals, utils, yaml
-from . import chart, entrypoint
+from model_navigator import framework
+from model_navigator.kubernetes import internals, utils, yaml
+from model_navigator.kubernetes.helm import chart, entrypoint
 
 
 def hasclass(name):
@@ -52,17 +51,18 @@ class ChartCreator:
 
     def __init__(
         self,
+        *,
         catalog: typing.Union[str, pathlib.Path],
         container_version: str,
         framework: framework.Framework,
+        chart_name: str,
         cmds: typing.List[str],
-        parameters: typing.NamedTuple,
     ):
         self.catalog = pathlib.Path(catalog)
         self.framework = framework
         self.container_version = container_version
+        self.name = chart_name
         self.cmds = cmds
-        self.parameters = parameters
 
     def create(self):
         self._create_dir()
@@ -74,14 +74,8 @@ class ChartCreator:
         self._create_helpers_file()
 
     @property
-    def name(self) -> str:
-        name = f"{self.parameters.model_name}"
-        normalized_name = name.lower().replace("_", "-")
-        return f"{normalized_name}-{self.NAME}"
-
-    @property
     def description(self) -> str:
-        return f"{self.DESCRIPTION} for {self.parameters.model_name}"
+        return f"{self.DESCRIPTION} for {self.name}"
 
     @property
     def chart_dir(self) -> pathlib.Path:
@@ -124,7 +118,7 @@ class ChartCreator:
 
     @hasclass("VALUES_CLS")
     def _create_values_file(self):
-        values = self.VALUES_CLS(container_version=self.container_version, parameters=self.parameters)
+        values = self.VALUES_CLS(container_version=self.container_version)
 
         values_file = self.chart_dir / "values.yaml"
         self._create_yaml_file(file_path=values_file, data=values.data())
@@ -134,9 +128,7 @@ class ChartCreator:
     @hasclass("DEPLOYMENT_CLS")
     def _create_deployment_file(self):
         entrypoint_file = self.ENTRYPOINT_FILE_DOCKER / self.ENTRYPOINT_FILE_NAME
-        deployment = self.DEPLOYMENT_CLS(
-            name=self.name, framework=self.framework, parameters=self.parameters, entrypoint=entrypoint_file
-        )
+        deployment = self.DEPLOYMENT_CLS(name=self.name, framework=self.framework, entrypoint=entrypoint_file)
 
         deployment_file = self.template_dir / "deployment.yaml"
         self._create_yaml_file(file_path=deployment_file, data=deployment.data())

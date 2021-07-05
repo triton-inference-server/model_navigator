@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .exceptions import TritonServerException
+from model_navigator.triton.server.exceptions import TritonServerException
 
 
 class TritonServerConfig:

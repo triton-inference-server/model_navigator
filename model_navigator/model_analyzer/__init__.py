@@ -11,5 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from .model_analyzer import ModelAnalyzer  # noqa: F401
-from .model_analyzer_config import ModelAnalyzerConfig  # noqa: F401
+from model_navigator.model_analyzer.config import (  # noqa: F401
+    ModelAnalyzerAnalysisConfig,
+    ModelAnalyzerProfileConfig,
+    ModelAnalyzerTritonConfig,
+    TritonLaunchMode,
+)
+from model_navigator.model_analyzer.model_analyzer import ModelAnalyzer  # noqa: F401
+from model_navigator.model_analyzer.results import AnalyzeResult  # noqa: F401

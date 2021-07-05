@@ -22,3 +22,5 @@
 build/
 dist/
 workspace/
+navigator_workspace/
+version.yaml

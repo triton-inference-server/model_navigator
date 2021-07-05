@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import numpy as np
+
 # pytype: disable=import-error
 import tensorflow as tf
+
 from model_navigator.tensor import NPTensorUtils, TensorUtils
 
 # pytype: enable=import-error

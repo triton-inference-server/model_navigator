@@ -15,8 +15,8 @@
 import itertools
 from collections import defaultdict
 
-from .exceptions import RecordAggregatorKeyError
-from .. import model_navigator_exceptions as mne
+from model_navigator.exceptions import ModelNavigatorException
+from model_navigator.record.exceptions import RecordAggregatorKeyError
 
 
 class RecordAggregator:
@@ -41,7 +41,7 @@ class RecordAggregator:
             record_type = type(record)
             self._records[record_type].append(record)
         else:
-            raise mne.ModelNavigatorException("Can only add objects of type 'Record' to RecordAggregator")
+            raise ModelNavigatorException("Can only add objects of type 'Record' to RecordAggregator")
 
     def insert_all(self, record_list):
         """
@@ -113,11 +113,11 @@ class RecordAggregator:
                     filtered_records.add_key(record_type, self._records[record_type])
                 return filtered_records
             except RecordAggregatorKeyError as k:
-                raise mne.ModelNavigatorException(f"Record type '{k.record_type}' not found in this RecordAggregator")
+                raise ModelNavigatorException(f"Record type '{k.record_type}' not found in this RecordAggregator")
         if filters and not record_types:
-            raise mne.ModelNavigatorException("Must specify the record types corresponding to each filter criterion.")
+            raise ModelNavigatorException("Must specify the record types corresponding to each filter criterion.")
         if len(record_types) != len(filters):
-            raise mne.ModelNavigatorException("Must specify the same number of record types as filter criteria.")
+            raise ModelNavigatorException("Must specify the same number of record types as filter criteria.")
 
         # Remove records that do not satisfy criteria
         for h, f in zip(record_types, filters):
@@ -149,7 +149,7 @@ class RecordAggregator:
         """
 
         field_values = {
-            record_type: set([groupby_criterion(record) for record in self._records[record_type]])
+            record_type: {groupby_criterion(record) for record in self._records[record_type]}
             for record_type in record_types
         }
         groupby_result = defaultdict(list)
@@ -193,7 +193,7 @@ class RecordAggregator:
 
         if record_type:
             if record_type not in self._records:
-                raise mne.ModelNavigatorException(
+                raise ModelNavigatorException(
                     f"Record type '{record_type.header()}' not found in this RecordAggregator"
                 )
             return len(self._records[record_type])

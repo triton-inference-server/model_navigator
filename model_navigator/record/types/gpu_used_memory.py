@@ -14,7 +14,7 @@
 
 from functools import total_ordering
 
-from .. import gpu_record
+from model_navigator.record import gpu_record
 
 
 @total_ordering

@@ -15,14 +15,30 @@ limitations under the License.
 -->
 # Testing
 
-## Running tests
+- to run tests locally or in [docker container](docs/installation.md#using-docker-container) you need to install project inside your current venv with all required development packages.
+  To do that you can use `make install-dev` command.
+
+## Running functional tests
+- tests defined in `tests/functional` might be run with bash scripts
+  - `tests/functional/run_test_e2e*.sh` executes all steps of pipeline: source model preparation, random dataset generation, conversion, analysis, helm chart generation
+  - `tests/functional/run_test_convert*.sh` executes conversion steps of pipeline: source model preparation and conversion
+- to run all e2e functional tests run `make test-func-e2e`
+- to run all functional tests of conversion steps run `make test-func-convert`
+- to run specific model use for example:
+  ```
+  PYTHONPATH=$PWD ./tests/functional/run_test_e2e_pytorch_vision_models.sh \
+      ./tests/functional/pytorch_vision_models/e2e_config_pytorch_vision_resnet50_trace.yaml
+  ```
+- tests leave artifacts inside `$PWD/workspace` directory which might be reviewed manually.
+
+**Note** If you run the tests from inside of container run `make install` to handle paths in tests correctly.
+
+## Running unit tests
 - tests defined inside `tests/test_*.py` are run with pytest
   - `tests/test_*_pyt.py` are run inside PyTorch container
   - `tests/test_*_tf1.py` are run inside Tensorflow1 container
   - `tests/test_*_tf2.py` are run inside Tensorflow2 container
   - rest is run inside `python:<version>` container
-- to run tests locally you need to install project inside your current venv with all required development packages.
-  To do that you can use `make install-dev` command
 - to run tests locally inside your current venv run `make test`
 - to run linters run `make lint`
 - to run framework tests run `make test-fw`

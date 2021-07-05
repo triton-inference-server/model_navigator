@@ -69,7 +69,7 @@ lint: ## check style with flake8 and pytype
 	tox -e pytype,flake8
 
 test: ## run tests quickly with the default Python
-	pytest --ignore-glob='tests/test_*_pyt.py' --ignore-glob='tests/test_*_tf1.py' --ignore-glob='tests/test_*_tf2.py'
+	pytest --ignore-glob='tests/test_*_pyt.py' --ignore-glob='tests/test_*_tf1.py' --ignore-glob='tests/test_*_tf2.py' --ignore-glob='tests/functional'
 
 test-all: ## run tests on every Python version with tox
 	tox
@@ -78,6 +78,12 @@ test-fw: ## run tests on framework containers
 	docker run --gpus 0 --rm -it -v ${PWD}:/workspace nvcr.io/nvidia/pytorch:21.03-py3 bash -c "pip install tox && tox -e pyt; make clean"
 	docker run --gpus 0 --rm -it -v ${PWD}:/workspace nvcr.io/nvidia/tensorflow:21.03-tf2-py3 bash -c "pip install tox && tox -e tf2; make clean"
 	#docker run --gpus 0 --rm -it -v ${PWD}:/workspace nvcr.io/nvidia/tensorflow:20.12-tf1-py3 bash -c "pip install tox && tox -e tf1 && make clean"
+
+test-func-e2e:
+	@for f in $(shell ls ./tests/functional/run_test_e2e*.sh); do PYTHONPATH=$$PWD $${f}; done
+
+test-func-convert:
+	@for f in $(shell ls ./tests/functional/run_test_convert*.sh); do PYTHONPATH=$$PWD $${f}; done
 
 coverage: ## check code coverage quickly with the default Python
 	coverage run --source model_navigator -m pytest
@@ -115,3 +121,6 @@ endif
 install-dev: clean
 	pip install -e .
 	pip install -r dev_requirements.txt
+
+docker: clean
+	docker build --network host -t model-navigator:latest .

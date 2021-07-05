@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,33 +12,52 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import argparse
 import logging
+from pathlib import Path
 
-from model_navigator.optimizer.config import parse_tensor_spec, parse_value_range
+import click
+
+from model_navigator.cli.spec import DatasetProfileConfigCli
+from model_navigator.converter.config import DatasetProfileConfig
+from model_navigator.log import init_logger
 from model_navigator.perf_analyzer.profiling_data import create_profiling_data
+from model_navigator.utils.cli import common_options, options_from_config
 
 LOGGER = logging.getLogger("profiling_data")
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Create Triton model repository and model configuration", allow_abbrev=False
-    )
-    parser.add_argument("--shapes", nargs="+", required=True, help="List of input shapes.")
-    parser.add_argument("--value-ranges", nargs="+", required=True, help="List of values ranges.")
-    parser.add_argument("--iterations", type=int, required=True, help="Number of dataloader iterations.")
-    parser.add_argument("--output-path", type=str, required=True, help="Output file where data has to be stored.")
+@click.command(name="create-profiling-data", help="Create profiling data in format required by Perf Analyzer")
+@common_options
+@click.option("-o", "--data-output-path", help="Path to output json file", type=click.Path(writable=True))
+@click.option("-i", "--iterations", help="Number of samples", type=click.INT, default=128, show_default=True)
+@options_from_config(DatasetProfileConfig, DatasetProfileConfigCli)
+@click.pass_context
+def create_profiling_data_cmd(ctx, verbose: bool, data_output_path: str, iterations: int, **kwargs):
+    init_logger(verbose=verbose)
+    LOGGER.debug("Running create_profiling_data_cmd")
 
-    args = parser.parse_args()
+    dataset_profile_config = DatasetProfileConfig.from_dict(kwargs)
+
+    # obtain first defined profile in given preferences
+    shapes = [
+        s
+        for s in [
+            dataset_profile_config.opt_shapes,
+            dataset_profile_config.max_shapes,
+            dataset_profile_config.min_shapes,
+        ]
+        if s
+    ]
+
+    if not shapes:
+        raise click.BadParameter("Missing defined at least single dataset profile shape")
+
+    shapes = shapes[0]
 
     create_profiling_data(
-        shapes=parse_tensor_spec(args.shapes),
-        value_ranges=parse_value_range(args.value_ranges),
-        iterations=args.iterations,
-        output_path=args.output_path,
+        shapes=shapes,
+        value_ranges=dataset_profile_config.value_ranges,
+        dtypes=dataset_profile_config.dtypes,
+        iterations=iterations,
+        output_path=Path(data_output_path),
     )
-
-
-if __name__ == "__main__":
-    main()

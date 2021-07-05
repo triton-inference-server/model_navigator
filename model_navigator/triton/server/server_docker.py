@@ -16,8 +16,10 @@ import logging
 
 import docker
 
-from .exceptions import TritonServerException
-from .server import TritonServer
+from model_navigator.triton.client import TritonClient
+from model_navigator.triton.server.exceptions import TritonServerException
+from model_navigator.triton.server.server import TritonServer
+from model_navigator.utils.docker import DockerContainer
 
 LOCAL_HTTP_PORT = 8000
 LOCAL_GRPC_PORT = 8001
@@ -70,14 +72,12 @@ class TritonServerDocker(TritonServer):
 
         # Map ports, use config values but set to server defaults if not
         # specified
-        server_http_port = self._server_config["http-port"] or 8000
-        server_grpc_port = self._server_config["grpc-port"] or 8001
-        server_metrics_port = self._server_config["metrics-port"] or 8002
+        triton_ports = self.get_ports()
 
         ports = {
-            server_http_port: server_http_port,
-            server_grpc_port: server_grpc_port,
-            server_metrics_port: server_metrics_port,
+            triton_ports["http"]: triton_ports["http"],
+            triton_ports["grpc"]: triton_ports["grpc"],
+            triton_ports["metrics"]: triton_ports["metrics"],
         }
 
         try:
@@ -96,8 +96,7 @@ class TritonServerDocker(TritonServer):
             if error.explanation.find("port is already allocated") != -1:
                 raise TritonServerException(
                     "One of the following port(s) are already allocated: "
-                    f"{server_http_port}, {server_grpc_port}, "
-                    f"{server_metrics_port}.\n"
+                    f"{', '.join(map(str, triton_ports.values()))}.\n"
                     "Change the Triton server ports using"
                     " --triton-http-endpoint, --triton-grpc-endpoint,"
                     " and --triton-metrics-endpoint flags."
@@ -132,3 +131,20 @@ class TritonServerDocker(TritonServer):
         """
 
         return b"".join(list(self._tritonserver_log_gen)).decode("utf-8")
+
+    def get_ports(self):
+        return {
+            "http": self._server_config["http-port"] or 8000,
+            "grpc": self._server_config["grpc-port"] or 8001,
+            "metrics": self._server_config["metrics-port"] or 8002,
+        }
+
+    def create_grpc_client(self):
+        port = self.get_ports()["grpc"]
+        container = DockerContainer(self._tritonserver_container.id)
+        return TritonClient(f"grpc://{container.ip_address}:{port}")
+
+    def create_http_client(self):
+        port = self.get_ports()["http"]
+        container = DockerContainer(self._tritonserver_container.id)
+        return TritonClient(f"http://{container.ip_address}:{port}")

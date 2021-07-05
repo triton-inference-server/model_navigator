@@ -38,7 +38,7 @@ def append_copyright(filename: Path, tag: str, open_tag: str = None, close_tag: 
     copyright_file_path = os.path.join(local_dir, "templates", "copyright.tpl")
 
     content = list()
-    with open(copyright_file_path, "r") as f:
+    with open(copyright_file_path) as f:
         copyright = f.readlines()
         if open_tag:
             content.append(f"{open_tag}\n")

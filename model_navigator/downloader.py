@@ -11,17 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import typing
-from typing import Any, Callable
-
 import logging
 import os
 import pathlib
 import shutil
 import tarfile
+import typing
 import urllib.request
 import zipfile
 from tempfile import TemporaryDirectory
+from typing import Any, Callable
 from urllib.parse import urlparse
 
 from tqdm import tqdm
@@ -49,28 +48,28 @@ def _download_progress(t: Any) -> Callable:
     return update
 
 
-def _http_downloader(file_url: str, tmpdir) -> pathlib.Path:
-    LOGGER.info(f"Downloading file from {file_url}")
+def _http_downloader(file_uri: str, tmpdir) -> pathlib.Path:
+    LOGGER.info(f"Downloading file from {file_uri}")
 
-    parsed_url = urlparse(file_url)
+    parsed_url = urlparse(file_uri)
     filename = os.path.basename(parsed_url.path)
 
     with tqdm(unit="B") as t:
-        urllib.request.urlretrieve(file_url, filename=filename, reporthook=_download_progress(t))
+        urllib.request.urlretrieve(file_uri, filename=filename, reporthook=_download_progress(t))
 
     dst_path = pathlib.Path(tmpdir) / filename
     shutil.move(filename, dst_path.as_posix())
     LOGGER.info(f"File saved in {dst_path}")
 
     if not dst_path.is_file():
-        raise RuntimeError(f"File {file_url} was not downloaded correctly.")
+        raise RuntimeError(f"File {file_uri} was not downloaded correctly.")
 
     return dst_path
 
 
-def _gcs_downloader(file_url: str, tmpdir) -> pathlib.Path:
-    LOGGER.info(f"Downloading file {file_url} from Google Cloud Storage ")
-    parts = file_url[5:].split("/")
+def _gcs_downloader(file_uri: str, tmpdir) -> pathlib.Path:
+    LOGGER.info(f"Downloading file {file_uri} from Google Cloud Storage ")
+    parts = file_uri[5:].split("/")
     bucket = parts[0]
     filename = parts[-1]
     resource = "/".join(parts[1:])
@@ -91,15 +90,15 @@ def _gcs_downloader(file_url: str, tmpdir) -> pathlib.Path:
     LOGGER.info(f"File saved in {tmp_file}")
 
     if not tmp_file.is_file():
-        raise RuntimeError(f"File {file_url} was not downloaded correctly.")
+        raise RuntimeError(f"File {file_uri} was not downloaded correctly.")
 
     return tmp_file
 
 
-def _s3_downloader(file_url: str, tmpdir) -> pathlib.Path:
-    LOGGER.info(f"Downloading file {file_url} from AWS S3")
+def _s3_downloader(file_uri: str, tmpdir) -> pathlib.Path:
+    LOGGER.info(f"Downloading file {file_uri} from AWS S3")
 
-    parts = file_url[5:].split("/")
+    parts = file_uri[5:].split("/")
     bucket = parts[0]
     filename = parts[-1]
     resource = "/".join(parts[1:])
@@ -114,15 +113,15 @@ def _s3_downloader(file_url: str, tmpdir) -> pathlib.Path:
     LOGGER.info(f"File saved in {tmp_file}")
 
     if not tmp_file.is_file():
-        raise RuntimeError(f"File {file_url} was not downloaded correctly.")
+        raise RuntimeError(f"File {file_uri} was not downloaded correctly.")
 
     return tmp_file
 
 
-def _azure_downloader(file_url: str, tmpdir) -> pathlib.Path:
-    LOGGER.info(f"Downloading file {file_url} from Azure Cloud Storage.")
+def _azure_downloader(file_uri: str, tmpdir) -> pathlib.Path:
+    LOGGER.info(f"Downloading file {file_uri} from Azure Cloud Storage.")
 
-    parts = file_url[5:].split("/")
+    parts = file_uri[5:].split("/")
     container_name = parts[1]
     filename = parts[-1]
     resource = "/".join(parts[2:])
@@ -146,20 +145,20 @@ def _azure_downloader(file_url: str, tmpdir) -> pathlib.Path:
     LOGGER.info(f"File saved in {tmp_file}")
 
     if not tmp_file.is_file():
-        raise RuntimeError(f"File {file_url} was not downloaded correctly.")
+        raise RuntimeError(f"File {file_uri} was not downloaded correctly.")
 
     return tmp_file
 
 
 class Downloader:
-    def __init__(self, file_url: str, dst_path: typing.Union[str, pathlib.Path]):
-        self._file_url = file_url
+    def __init__(self, file_uri: str, dst_path: typing.Union[str, pathlib.Path]):
+        self._file_uri = file_uri
         self._dst_path = pathlib.Path(dst_path)
-        self._downloader = self._get_downloader(file_url=file_url)
+        self._downloader = self._get_downloader(file_uri=file_uri)
 
     def get_file(self) -> pathlib.Path:
         with TemporaryDirectory() as tmpdir:
-            file_path = self._downloader(self._file_url, tmpdir)
+            file_path = self._downloader(self._file_uri, tmpdir)
             if zipfile.is_zipfile(file_path) and file_path.suffix == ".zip":
                 file_path = self._unzip(file_to_unpack=file_path)
             elif tarfile.is_tarfile(file_path) and ".tar" in file_path.suffix:
@@ -170,20 +169,20 @@ class Downloader:
 
         return file_path
 
-    def _get_downloader(self, file_url: str):
-        if self._file_url_match_prefix(file_url, prefixes=Prefixes.HTTP):
+    def _get_downloader(self, file_uri: str):
+        if self._file_uri_match_prefix(file_uri, prefixes=Prefixes.HTTP):
             return _http_downloader
-        elif self._file_url_match_prefix(file_url, prefixes=Prefixes.GCS):
+        elif self._file_uri_match_prefix(file_uri, prefixes=Prefixes.GCS):
             return _gcs_downloader
-        elif self._file_url_match_prefix(file_url, prefixes=Prefixes.AWS):
+        elif self._file_uri_match_prefix(file_uri, prefixes=Prefixes.AWS):
             return _s3_downloader
-        elif self._file_url_match_prefix(file_url, prefixes=Prefixes.AZURE):
+        elif self._file_uri_match_prefix(file_uri, prefixes=Prefixes.AZURE):
             return _azure_downloader
 
-        raise ValueError(f"Unsupported resource {file_url}.")
+        raise ValueError(f"Unsupported resource {file_uri}.")
 
-    def _file_url_match_prefix(self, file_url: str, *, prefixes: typing.List[str]):
-        return any([file_url.startswith(prefix) for prefix in prefixes])
+    def _file_uri_match_prefix(self, file_uri: str, *, prefixes: typing.List[str]):
+        return any([file_uri.startswith(prefix) for prefix in prefixes])
 
     def _untar(self, file_to_unpack: pathlib.Path) -> pathlib.Path:
         with TemporaryDirectory() as tmpdir:

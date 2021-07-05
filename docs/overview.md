@@ -14,8 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-# Triton Model Navigator
+# Overview
 
-The [Triton Inference Server](https://github.com/triton-inference-server) provides a robust and configurable solution for deploying and managing AI models. The [Triton
-Model Navigator](https://github.com/triton-inference-server/model_navigator) is a tool that provides the ability to automate the process of model deployment on Triton Inference Server.
-It selects the most promising model format and configuration, matches the provided constraints, and helps optimize performance.
+The Triton Model Navigator provides a [run](run.md) command to perform the step-by-step process of:
+- [Conversion](converion.md) - converts input model to the formats optimized for inference
+- [Triton Model Configuration](triton_model_configurator.md) - creates a model entry in the Triton Model Repository, including framework-specific backend accelerations
+- [Profiling](profiling.md) - profiles model's performance using [Triton Model Analyzer](https://github.com/triton-inference-server/model_analyzer)
+- [Analysis](analysis.md):
+    - analyzes models using [Triton Model Analyzer](https://github.com/triton-inference-server/model_analyzer)
+    - selects top N configurations within given constraints and objectives
+    - generates a summary report for selected configurations
+- [Helm Charts](helm_charts.md) - generates Helm Charts for selected configurations
+
+The Triton Model Navigator allows running processes as a single command or performs step execution running each command separately.

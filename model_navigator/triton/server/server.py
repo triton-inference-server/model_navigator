@@ -38,3 +38,11 @@ class TritonServer(ABC):
         """
         Gets the server's stdout logs as a string
         """
+
+    @abstractmethod
+    def create_grpc_client(self):
+        pass
+
+    @abstractmethod
+    def create_http_client(self):
+        pass

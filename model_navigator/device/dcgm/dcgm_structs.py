@@ -253,7 +253,7 @@ DCGM_SWTEST_INFOROM = 9
 DCGM_CONTEXT_CREATE_INDEX = 0
 
 
-class DCGM_INTROSPECT_STATE(object):
+class DCGM_INTROSPECT_STATE:
     DISABLED = 0
     ENABLED = 1
 
@@ -565,7 +565,7 @@ def _LoadDcgmLibrary(libDcgmPath=None):
                             dist_name, dist_version, dist_id = distro.linux_distribution(full_distribution_name=0)
                             dist_name = dist_name.lower()
                             if dist_name in {"ubuntu", "debian"}:
-                                libDcgmPath = "/usr/lib/{}-linux-gnu".format(platform.machine())
+                                libDcgmPath = f"/usr/lib/{platform.machine()}-linux-gnu"
                             elif dist_name in {"fedora", "redhat", "centos", "suse"}:
                                 libDcgmPath = "/usr/lib64"
 
@@ -1631,7 +1631,7 @@ class c_dcgmAllFieldGroup_v1(_PrintableStructure):
 dcgmAllFieldGroup_version1 = make_dcgm_version(c_dcgmAllFieldGroup_v1, 1)
 
 
-class DCGM_INTROSPECT_LVL(object):
+class DCGM_INTROSPECT_LVL:
     """
     Identifies a level to retrieve field introspection info for
     """

@@ -13,7 +13,7 @@
 # limitations under the License.
 import typing
 
-from .. import helm, internals, triton
+from model_navigator.kubernetes import helm, internals, triton
 
 
 def wrap(lst: typing.List, condition: str, required: typing.Optional[str] = None):
@@ -85,7 +85,6 @@ class Deployment(helm.Deployment):
         volumeMounts = list()
         volumeAttach = list()
 
-        self._prepare_environment(env, namespace="deployer")
         self._prepare_volumes(env, volumeAttach, volumeMounts)
 
         self._extend_for_gcs(env, volumeAttach, volumeMounts)

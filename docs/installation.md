@@ -18,38 +18,44 @@ limitations under the License.
 ## Requirements
 
 Ensure your system fulfills the following requirements:
-* Installed [NVIDIA Container Toolkit](https://github.com/NVIDIA/nvidia-docker)
-* [NVIDIA Ampere](https://www.nvidia.com/en-us/data-center/nvidia-ampere-gpu-architecture/), [Volta](https://www.nvidia.com/en-us/data-center/volta-gpu-architecture/) or [Turing](https://www.nvidia.com/en-us/geforce/turing/) based GPU
+* [NVIDIA Container Toolkit](https://github.com/NVIDIA/nvidia-docker)
+* [NVIDIA Ampere](https://www.nvidia.com/en-us/data-center/nvidia-ampere-gpu-architecture/), [Volta](https://www.nvidia.com/en-us/data-center/volta-gpu-architecture/), or [Turing](https://www.nvidia.com/en-us/geforce/turing/) based GPU
 
-## Using Docker container
+## Using Docker Container
 
-The recommended way of using Model Navigator is to build a Docker container with all necessary dependencies:
+The recommended way of using the Triton Model Navigator is to build a Docker container with all necessary dependencies:
 
 ```shell
-$ docker build -f Dockerfile -t model-navigator .
+$ make docker
 ```
 
-Running the Model Navigator container requires additional mappings:
-* `-v /var/run/docker.sock:/var/run/docker.sock` allows running Docker containers as sibling containers from inside the Model Navigator container to perform optimization processes.
-* `-v <path-to-model-catalog>:<path-to-model-catalog>` The ***absolute*** path to the catalog where models are stored. The mapping inside the container must exactly match the host path.
+Running the Triton Model Navigator container requires additional mappings:
+* `-v /var/run/docker.sock:/var/run/docker.sock` allows running Docker containers as sibling containers from inside the Triton Model Navigator container to perform optimization processes.
+* `-v <path-to-model-catalog>:<path-to-model-catalog>` The ***absolute*** path to the catalog where models are being stored. The mapping inside the container must exactly match the host path.
+* `-v ${HOME}:${HOME}` The ***absolute*** path to the catalog where Model Navigator will be run from. The simple option is to map the user directory. Navigator creates a workspace catalog there to share artifacts across the steps.
 
-To run Model Navigator container:
+**Note**
+
+_The mappings of volumes inside the container must match the host path. This is required to share artifacts between steps correctly, as some steps are executed in separate containers._
+
+To run the Triton Model Navigator container:
 ```shell
 $ docker run -it \
 --gpus 1 \
 -v <path-to-model-catalog>:<path-to-model-catalog> \
 -v /var/run/docker.sock:/var/run/docker.sock \
--w <path-to-model-catalog> \
+-v ${HOME}:${HOME}
+-w ${HOME} \
 --net host \
 --name model-navigator \
 model-navigator /bin/bash
 
-root@hostname:<path-to-model-catalog>#
+root@hostname:/home/{username}#
 ```
 
-## Installing from source
+## Installing from the Source
 
-Model navigator can be installed from source:
+The Model Navigator can be installed from the source:
 ```shell
 $ make install
 ```
@@ -61,7 +67,7 @@ $ wget -q https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x8
 dpkg -i datacenter-gpu-manager_${DCGM_VERSION}_amd64.deb
 ```
 
-The additional Python packages required:
-```
-python3-pdfkit
+The additional packages required:
+```shell
+$ sudo apt install wkhtmltopdf
 ```

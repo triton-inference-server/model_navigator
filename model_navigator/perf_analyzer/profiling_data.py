@@ -14,38 +14,54 @@
 import json
 import logging
 from pathlib import Path
-from typing import List, Tuple
+from sys import getsizeof
+from typing import Dict, Tuple
 
+import numpy as np
 from polygraphy.common import TensorMetadata
 
-from model_navigator.optimizer.polygraphy.dataloader import DataLoader
-from model_navigator.tensor import TensorSpec
+from model_navigator.converter import DataLoader
 
 LOGGER = logging.getLogger(__name__)
 
+DEFAULT_RANDOM_DATA_FILENAME = "random_data.json"
+
 
 def get_profiling_data_path(workspace_path: Path):
-    return workspace_path / "random_data.json"
+    return workspace_path / DEFAULT_RANDOM_DATA_FILENAME
 
 
-def create_profiling_data(shapes: List[TensorSpec], value_ranges: List[Tuple], iterations: int, output_path: str):
+def create_profiling_data(
+    shapes: Dict[str, Tuple],
+    value_ranges: Dict[str, Tuple],
+    dtypes: Dict[str, np.dtype],
+    iterations: int,
+    output_path: Path,
+):
     # As perf_analyzer doesn't support passing value ranges we need to generate json files
     LOGGER.debug("Generating profiling data for Perf Analyzer")
-    value_ranges = dict(value_ranges)
 
     batch_size = 1
     input_metadata = TensorMetadata()
-    for spec in shapes:
-        shape = spec.shape
+    for name, shape in shapes.items():
         batch_size = shape[0]
-        input_metadata.add(spec.name, dtype=spec.dtype, shape=shape[1:])
+        dtype = dtypes[name]
+        input_metadata.add(name, dtype=dtype, shape=shape[1:])
 
-    dataloader = DataLoader(iterations=iterations * batch_size, input_metadata=input_metadata, val_range=value_ranges)
+    # to provide at least iterations number of samples
+    batches_number = (iterations // batch_size) + int(bool(iterations % batch_size))
+    samples_number = batches_number * batch_size
+    LOGGER.debug(
+        f"Generating {batches_number} batches data with specs: {input_metadata} and value_ranges: {value_ranges}"
+    )
+
+    dataloader = DataLoader(iterations=samples_number, input_metadata=input_metadata, val_range=value_ranges)
 
     def _cast_input(name, value):
-        min_value = value_ranges[name][0]
-        target_type = type(min_value)
-        return target_type(value)
+        target_type = dtypes[name]
+        value = target_type.type(value)  # cast to target numpy dtype
+        value = {"i": int(value), "f": float(value)}[target_type.kind]  # cast to python primitive
+        return value
 
     data = {
         "data": [
@@ -56,9 +72,13 @@ def create_profiling_data(shapes: List[TensorSpec], value_ranges: List[Tuple], i
                 }
                 for name, data in feed_dict.items()
             }
-            for feed_dict in dataloader
+            for idx, feed_dict in enumerate(dataloader)
+            if idx < iterations
         ]
     }
 
+    LOGGER.debug(f"Saving data of size {getsizeof(data)} bytes to {output_path}")
     with open(output_path, "w") as json_file:
         json.dump(data, json_file, indent=4)
+
+    LOGGER.debug("File saved")

@@ -12,104 +12,74 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import itertools
-from collections import Generator
+from enum import Enum
+from typing import Generator
 
-from model_navigator.core import Accelerator, Format, Parameter, Precision
+from model_navigator.configurator.variant import Variant
+from model_navigator.converter import PARAMETERS_SEP
+from model_navigator.model import Model
+from model_navigator.triton import TritonModelOptimizationConfig
+from model_navigator.triton.config import BackendAccelerator, TensorRTOptPrecision
 
-from .variant import Variant
+MODEL_CONFIG_SEP = "."
 
 
 class ModelConfigurator:
-    formats = tuple()
-    accelerators = (Accelerator.NONE, Accelerator.TRT)
-    capture_cuda_graph = (0,)
+    accelerators = (
+        None,
+        BackendAccelerator.TRT,
+    )
+    capture_cuda_graph = (None,)
 
-    def variants(self, model_name: str, max_batch_size: int) -> Generator:
-        parameters = [self.formats, self.accelerators, self.capture_cuda_graph]
-
+    def variants(self, model: Model) -> Generator[Variant, None, None]:
+        parameters = [self.accelerators, self.capture_cuda_graph]
         combinations = itertools.product(*parameters)
-
-        variants = list()
         for combination in combinations:
-            format = combination[0]
-            accelerator = combination[1]
-            capture_cuda_graph = combination[2]
-            if accelerator == Accelerator.TRT:
-                precisions = (Precision.FP16, Precision.FP32)
+            accelerator, capture_cuda_graph = combination
+            if accelerator == BackendAccelerator.TRT:
+                precisions = (TensorRTOptPrecision.FP16, TensorRTOptPrecision.FP32)
             else:
-                precisions = (Precision.ANY,)
+                precisions = (None,)
 
             for precision in precisions:
-                variant = self._map_on_variant(
-                    model_name=model_name,
-                    max_batch_size=max_batch_size,
-                    format=format,
-                    accelerator=accelerator,
-                    capture_cuda_graph=capture_cuda_graph,
-                    precision=precision,
+                optimization_config = TritonModelOptimizationConfig(
+                    backend_accelerator=accelerator,
+                    tensorrt_precision=precision,
+                    tensorrt_capture_cuda_graph=bool(capture_cuda_graph)
+                    if capture_cuda_graph is not None
+                    else capture_cuda_graph,
                 )
 
-                variants.append(variant)
+                variant_name = self._get_variant_name(model.name, [accelerator, capture_cuda_graph, precision])
+                yield Variant(variant_name, optimization_config)
 
-        for variant in variants:
-            yield variant
+    def _get_variant_name(self, model_name, parameters):
+        def _format_param(param):
+            return str(param.value if isinstance(param, Enum) else param)
 
-    def _map_on_variant(
-        self,
-        model_name: str,
-        format: Format,
-        precision: Precision,
-        accelerator: Accelerator,
-        capture_cuda_graph: int,
-        max_batch_size: int,
-    ):
-        args = [format, accelerator, capture_cuda_graph]
-        if precision != Precision.ANY:
-            args.append(precision)
+        variant_names = [_format_param(parameter) for parameter in parameters if parameter is not None]
+        if not variant_names:
+            return model_name
 
-        name = self._get_variant_name(model_name, *args)
-        variant = Variant(
-            name=name,
-            format=format,
-            precision=precision,
-            accelerator=accelerator,
-            capture_cuda_graph=capture_cuda_graph,
-            gpu_engine_count=1,
-            max_batch_size=max_batch_size,
-        )
-
-        return variant
-
-    def _get_variant_name(self, model_name, *args):
-        params = []
-        for item in args:
-            item = item if not isinstance(item, Parameter) else item.value
-            item = str(item)
-            params.append(item)
-
-        suffix = "_".join(params)
-        return f"{model_name}.{suffix}"
+        suffix = PARAMETERS_SEP.join(variant_names)
+        return f"{model_name}{MODEL_CONFIG_SEP}{suffix}"
 
 
 class TFConfigurator(ModelConfigurator):
-    formats = (Format.TF_SAVEDMODEL,)
     accelerators = (
-        Accelerator.NONE,
-        Accelerator.AMP,
-        Accelerator.TRT,
+        BackendAccelerator.AMP,
+        BackendAccelerator.TRT,
     )
 
 
 class PyTorchConfigurator(ModelConfigurator):
-    formats = (Format.TS_SCRIPT,)
-    accelerators = (Accelerator.NONE,)
+    accelerators = (None,)
 
 
 class ONNXConfigurator(ModelConfigurator):
-    formats = (Format.ONNX,)
+    pass
 
 
 class TRTConfigurator(ModelConfigurator):
-    formats = (Format.TRT,)
     capture_cuda_graph = (0, 1)
-    accelerators = (Accelerator.NONE,)
+    accelerators = (None,)

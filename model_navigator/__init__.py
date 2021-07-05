@@ -13,14 +13,3 @@
 # limitations under the License.
 
 __version__ = "0.1.1"
-
-try:
-    from model_navigator.core import (  # noqa: F401
-        Accelerator,
-        Format,
-        Precision,
-    )
-except ImportError:
-    # This is to avoid import errors during package installation - __version__ import
-    # there are no 3rd party components installed before installation
-    pass

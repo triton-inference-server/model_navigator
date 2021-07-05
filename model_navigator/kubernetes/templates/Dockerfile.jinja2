@@ -1,16 +1,18 @@
 FROM {{FROM_IMAGE_NAME}}
 
 RUN apt-get update && \
-    apt-get install -y libb64-dev libb64-0d libffi-dev libssl-dev && \
+    apt-get install -y --no-install-recommends libb64-dev libb64-0d libffi-dev libssl-dev && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /opt/workspace
 
-RUN pip install onnx
-RUN pip install --upgrade --upgrade-strategy only-if-needed \
+# onnx is required by graph_surgeon
+RUN pip install --no-cache-dir onnx && \
+    pip install --no-cache-dir --upgrade --upgrade-strategy only-if-needed \
     {{INSTALL_URL}}
 
-ADD {{DEPLOYER_LOCAL}} {{DEPLOYER_DOCKER}}
-ADD {{TESTER_LOCAL}} {{TESTER_DOCKER}}
+COPY {{DEPLOYER_LOCAL}} {{DEPLOYER_DOCKER}}
+COPY {{EVALUATOR_LOCAL}} {{EVALUATOR_DOCKER}}
+COPY {{CONFIG_LOCAL}} {{CONFIG_DOCKER}}
 

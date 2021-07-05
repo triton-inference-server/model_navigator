@@ -13,8 +13,8 @@
 # limitations under the License.
 from enum import Enum, auto
 
-from ..core import Container
-from ..framework import Framework, PyTorch, TensorFlow1, TensorFlow2
+from model_navigator.core import Container
+from model_navigator.framework import Framework, PyTorch, TensorFlow1, TensorFlow2
 
 
 class TRITON_LOAD_MODE(Enum):

@@ -13,9 +13,8 @@
 # limitations under the License.
 import typing
 
-from ... import framework
-from .. import utils
-from . import config
+from model_navigator import framework
+from model_navigator.kubernetes.helm import config
 
 
 class Volume(typing.NamedTuple):
@@ -26,29 +25,14 @@ class Volume(typing.NamedTuple):
 
 
 class Deployment(config.Config):
-    def __init__(self, name: str, entrypoint: str, framework: framework.Framework, parameters: typing.NamedTuple):
+    def __init__(self, name: str, entrypoint: str, framework: framework.Framework):
         self.name = name
         self.framework = framework
-        self.parameters = parameters
         self.entrypoint = entrypoint
-
-        if not hasattr(self.parameters, "model_name"):
-            raise ValueError("Parameters need to have model_name.")
 
     @property
     def volumes(self):
         return []
-
-    def _prepare_environment(self, env: typing.List, namespace: typing.Optional[str] = None):
-        for key in self.parameters._fields:
-            env_var = utils.format_env(key)
-            param = utils.format_value(key)
-
-            value_str = ".Values"
-            if namespace:
-                value_str += f".{namespace}"
-
-            env.append({"name": env_var, "value": f"{{{{ quote {value_str}.{param} }}}}"})
 
     def _prepare_volumes(self, env: typing.List, volumeAttach: typing.List, volumeMounts: typing.List):
         for volume in self.volumes:

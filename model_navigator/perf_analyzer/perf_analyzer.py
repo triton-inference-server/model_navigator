@@ -11,22 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import logging
+from subprocess import PIPE, STDOUT, CalledProcessError, Popen, TimeoutExpired, check_output
 from typing import List
 
-import logging
-from subprocess import (
-    PIPE,
-    STDOUT,
-    CalledProcessError,
-    Popen,
-    TimeoutExpired,
-    check_output,
-)
-
-from ..model_navigator_exceptions import ModelNavigatorException
+from model_navigator.exceptions import ModelNavigatorException
 
 MAX_INTERVAL_CHANGES = 10
-INTERVAL_DELTA = 1000
+INTERVAL_DELTA = 2000
 
 LOGGER = logging.getLogger(__name__)
 
@@ -55,7 +47,7 @@ class PerfAnalyzer:
     def run(self):
         """
         Runs the perf analyzer with the
-        intialized configuration
+        initialized configuration
 
         Returns
         -------
@@ -69,7 +61,7 @@ class PerfAnalyzer:
             If subprocess throws CalledProcessError
         """
         if self._stream_output:
-            self._output = str()
+            self._output = ""
 
         for _ in range(MAX_INTERVAL_CHANGES):
             cmd = [self.bin_path]
@@ -93,7 +85,7 @@ class PerfAnalyzer:
             except CalledProcessError as e:
                 if e.output.find("Please use a larger time window.") > 0:
                     self._config["measurement-interval"] += INTERVAL_DELTA
-                    LOGGER.info(
+                    LOGGER.debug(
                         "perf_analyzer's measurement window is too small, "
                         f"increased to {self._config['measurement-interval']} ms."
                     )
@@ -103,7 +95,7 @@ class PerfAnalyzer:
                     )
             except TimeoutExpired:
                 self._config["measurement-interval"] += INTERVAL_DELTA
-                LOGGER.info("perf_analyzer's timeouted, " f"increased to {self._config['measurement-interval']} ms.")
+                LOGGER.debug("perf_analyzer's timeouted, " f"increased to {self._config['measurement-interval']} ms.")
 
         raise ModelNavigatorException(
             f"Ran perf_analyzer {MAX_INTERVAL_CHANGES} times, "

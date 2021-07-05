@@ -17,7 +17,9 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from model_navigator.tensor import IOSpec, TensorSpec, TensorUtils
+from model_navigator.model import ModelSignatureConfig
+from model_navigator.tensor import TensorSpec, TensorUtils
+from model_navigator.utils.config import YamlConfigFile
 
 
 def test_numpy_eq():
@@ -78,20 +80,23 @@ def test_tensorspec_without_dtype():
 
 
 def test_iospec():
-    IOSpec(
+    ModelSignatureConfig(
         {"tensor_in1": TensorSpec("tensor_in1", shape=(-1, 24, 24, 1), dtype=np.dtype("float32"))},
         {"tensor_out1": TensorSpec("tensor_out1", shape=(-1, 1000), dtype=np.dtype("float32"))},
     )
 
 
 def test_write_read_iospec():
-    io_spec = IOSpec(
+    io_spec = ModelSignatureConfig(
         {"tensor_in1": TensorSpec("tensor_in1", shape=(-1, 24, 24, 1), dtype=np.dtype("float32"))},
         {"tensor_out1": TensorSpec("tensor_out1", shape=(-1, 1000), dtype=np.dtype("float32"))},
     )
     with tempfile.TemporaryDirectory() as tmp_dir:
         file_path = Path(tmp_dir) / "io_spec.yaml"
-        io_spec.write(file_path)
+        with YamlConfigFile(file_path) as config_file:
+            config_file.save_config(io_spec)
 
-        loaded_io_spec = IOSpec.from_file(file_path)
+        with YamlConfigFile(file_path) as config_file:
+            loaded_io_spec = config_file.load(ModelSignatureConfig)
+
         assert io_spec == loaded_io_spec

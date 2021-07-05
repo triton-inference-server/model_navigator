@@ -14,7 +14,6 @@
 # pylint: skip-file
 # flake8: noqa
 from ctypes import *
-from ctypes.util import find_library
 
 from . import dcgm_structs
 
