@@ -13,10 +13,17 @@
 # limitations under the License.
 import logging
 import os
-from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
-from model_navigator.config import ModelNavigatorBaseConfig
+import coloredlogs
+
+LOGGER = logging.getLogger(__name__)
+
+
+def init_logger(*, verbose: bool = False, colored_logs: bool = True):
+    set_logger(verbose=bool(verbose), colored_logs=colored_logs)
+    set_tf_verbosity(verbose=bool(verbose))
+    LOGGER.debug(f"initialized logger verbose={verbose}")
 
 
 def set_tf_verbosity(verbose: bool = False):
@@ -27,17 +34,43 @@ def set_tf_verbosity(verbose: bool = False):
     os.environ["TF_ENABLE_DEPRECATION_WARNINGS"] = "1"
 
 
-def set_logger(*, verbose: bool = False):
-    log_format = "%(asctime)s - %(levelname)s - %(name)s: %(message)s"
+def set_logger(*, verbose: bool = False, colored_logs: bool = False):
     log_level = logging.INFO if not verbose else logging.DEBUG
+    log_format = "%(asctime)s - %(levelname)s - %(name)s: %(message)s"
+
     logging.basicConfig(level=log_level, format=log_format)
+    if colored_logs:
+        coloredlogs.install(
+            fmt=log_format,
+            level=log_level,
+            field_styles={
+                "asctime": {"color": "blue"},
+                "hostname": {"color": "magenta"},
+                "levelname": {"bold": True, "color": "blue"},
+                "name": {"color": "blue"},
+                "programname": {"color": "cyan"},
+                "username": {"color": "yellow"},
+            },
+            # isatty=False,
+        )
+
     logging.getLogger("sh.command").setLevel(logging.WARNING)
     logging.getLogger("sh.stream_bufferer").setLevel(logging.WARNING)
+    logging.getLogger("sh.streamreader").setLevel(logging.WARNING)
+    logging.getLogger("docker.api.build").setLevel(logging.WARNING)
+    logging.getLogger("docker.auth").setLevel(logging.WARNING)
+    logging.getLogger("docker.utils.config").setLevel(logging.WARNING)
+    logging.getLogger("numba.cuda.cudadrv.driver").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 
-def is_root_logger_verbose() -> bool:
-    return logging.getLogger().getEffectiveLevel() == logging.DEBUG
+def dump_loggers_handlers(tag: Optional[str] = None):
+    print(f"============= START loggers dump {tag or ''} ==================")
+    loggers = {"root": logging.getLogger(), **logging.Logger.manager.loggerDict}
+    for idx, (name, logger) in enumerate(loggers.items()):
+        handler, other_logger = coloredlogs.find_handler(logger, coloredlogs.match_stream_handler)
+        print(idx, name, logger, "->", other_logger, handler)
+    print(f"============= STOP loggers dump {tag or ''} ==================")
 
 
 def log_dict(title: str, dict_: Dict[str, Any]):
@@ -56,21 +89,3 @@ def dump_sh_logs(name, logs, limit: Optional[int] = None):
             lines = lines[-limit:]
         for line in lines:
             print("\t" + line, flush=True)
-
-
-def section_header(section_name: str) -> str:
-    return f"\n\n================== {section_name} ==================\n\n"
-
-
-class FileLogger:
-    def __init__(self, config: ModelNavigatorBaseConfig, name: str):
-        filename = f"{name}.log"
-        self.file_path = self.get_logs_dir(config) / filename
-
-    def log(self, content: str):
-        with open(self.file_path, "a+") as f:
-            f.write(content)
-
-    @classmethod
-    def get_logs_dir(cls, config: ModelNavigatorBaseConfig):
-        return Path(config.workspace_path) / "logs"

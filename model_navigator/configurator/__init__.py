@@ -12,3 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from .configurator import Configurator  # noqa: F401
+from .utils import log_configuration_error  # noqa: F401
+from .variant import Variant  # noqa: F401

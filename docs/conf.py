@@ -36,7 +36,7 @@ import sys
 
 sys.path.insert(0, os.path.abspath(".."))
 
-import model_navigator
+import model_navigator  # noqa: 400
 
 # -- General configuration ---------------------------------------------
 
@@ -167,3 +167,4 @@ texinfo_documents = [
 ]
 
 shutil.copy("../CONTRIBUTING.md", "CONTRIBUTING.md")
+shutil.copy("../CHANGELOG.md", "CHANGELOG.md")

@@ -12,9 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from pathlib import Path
+
 # Config constants
 CONFIG_PARSER_SUCCESS = 1
 CONFIG_PARSER_FAILURE = 0
 
 # Result Comparator Constants
 COMPARISON_SCORE_THRESHOLD = 0.005
+
+MODEL_NAVIGATOR_DIR = Path(__file__).parent.parent
+
+ALL_OTHER_INPUTS = ""

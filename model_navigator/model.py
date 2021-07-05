@@ -11,69 +11,95 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Optional, Union
-
-from dataclasses import dataclass
+from dataclasses import InitVar, dataclass, field
+from enum import Enum
 from pathlib import Path
+from typing import Any, Dict, Optional
 
-from .config import ModelNavigatorBaseConfig
-from .core import Accelerator, Format, Precision
-from .model_navigator_exceptions import ModelNavigatorException
-
-SUFFIX2FORMAT = {
-    ".savedmodel": Format.TF_SAVEDMODEL,
-    ".plan": Format.TRT,
-    ".onnx": Format.ONNX,
-    ".pt": Format.TS_SCRIPT,
-}
-FORMAT2SUFFIX = {format_: suffix for suffix, format_ in SUFFIX2FORMAT.items()}
+from model_navigator.exceptions import ModelNavigatorException
+from model_navigator.tensor import TensorSpec
+from model_navigator.utils.config import BaseConfig
 
 
-def guess_format(model_path: Union[str, Path]):
-    model_path = Path(model_path)
-    suffix = model_path.suffix
-
-    try:
-        file_format = SUFFIX2FORMAT[suffix]
-    except KeyError:
-        file_format = None
-    return file_format
+class Format(Enum):
+    TORCHSCRIPT = "torchscript"
+    TF_SAVEDMODEL = "tf-savedmodel"
+    ONNX = "onnx"
+    TENSORRT = "trt"
 
 
-class InputModel:
+@dataclass
+class ModelConfig(BaseConfig):
+    model_name: str
+    model_path: Path
+    model_format: Optional[Format] = None
+    model_version: str = "1"
+
+
+@dataclass
+class ModelSignatureConfig(BaseConfig):
+    inputs: Optional[Dict[str, TensorSpec]] = None
+    outputs: Optional[Dict[str, TensorSpec]] = None
+
+    def has_input_dynamic_axes(self) -> Optional[bool]:
+        # FIXME: for signatures of models which doesn't support batching
+        has_dynamic_axes = None
+        if self.inputs:
+            has_dynamic_axes = any([spec.is_dynamic() for name, spec in self.inputs.items()])
+        return has_dynamic_axes
+
+    def is_missing(self):
+        return self.inputs is None or self.outputs is None
+
+
+@dataclass
+class Model(BaseConfig):
     name: str
     path: Path
-    format: Format
-    config: Optional[ModelNavigatorBaseConfig]
+    format: Format = field(init=False)
+    signature: Optional[ModelSignatureConfig] = field(init=False)
+    properties: Any = field(init=False)
+    signature_if_missing: InitVar[Optional[ModelSignatureConfig]] = None
+    explicit_format: InitVar[Optional[Format]] = None
 
-    def __init__(self, name: str, path: Union[str, Path], config: Optional[ModelNavigatorBaseConfig] = None):
-        self.name = name
-        self.path = Path(path)
-        self.config = config
+    def __post_init__(self, signature_if_missing: Optional[ModelSignatureConfig], explicit_format: Optional[Format]):
+        from model_navigator.utils.formats import FORMAT2ADAPTER
 
-        model_format = guess_format(self.path)
+        self.format = self._get_format(explicit_format)
+
+        adapter = FORMAT2ADAPTER[self.format]
+        self.signature = self._get_signature(adapter, signature_if_missing)
+        self.properties = adapter.get_properties(self.path)
+
+    def _get_signature(self, adapter, signature_if_missing):
+        signature = adapter.get_signature(self.path)
+        if (
+            signature is not None
+            and signature.is_missing()
+            and signature_if_missing
+            and not signature_if_missing.is_missing()
+        ):
+            # imported here due to circular import
+            from model_navigator.utils.formats.pyt import validate_torchscript_signature
+
+            # FIXME: leak
+            validate_torchscript_signature(signature_if_missing)
+            signature = signature_if_missing
+        return signature
+
+    def _get_format(self, explicit_format):
+        from .utils.formats import SUFFIX2FORMAT, guess_format
+
+        model_format = explicit_format
+        if not model_format:
+            model_format = guess_format(self.path)
+
         if not model_format:
             raise ModelNavigatorException(
                 f"""Unsupported file type in {self.path}. """
                 """Please provide file with one of the following file type: """
-                f"""{", ".join(list(map(lambda ext: f"*{ext}", SUFFIX2FORMAT.keys())))}"""
+                f"""{", ".join(list(map(lambda ext: f"*{ext}", SUFFIX2FORMAT.keys())))} """
+                """or use --model-format parameter"""
             )
 
-        self.format = model_format
-
-
-@dataclass
-class Model:
-    base_name: str
-    name: str
-    format: Format
-    max_batch_size: int
-    precision: Precision
-    accelerator: Accelerator
-    capture_cuda_graph: int
-    gpu_engine_count: int
-    onnx_opset: int
-    path: Path
-    triton_path: Optional[Path] = None
-    error_log: Optional[Path] = None
-    result_path: Optional[Path] = None
+        return model_format

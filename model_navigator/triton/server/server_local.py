@@ -12,13 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from subprocess import Popen, PIPE, STDOUT, TimeoutExpired
 import logging
+from subprocess import PIPE, STDOUT, Popen, TimeoutExpired
 
-from .server import TritonServer
+from model_navigator.triton.client import TritonClient
+from model_navigator.triton.server.server import TritonServer
 
 SERVER_OUTPUT_TIMEOUT_SECS = 5
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 class TritonServerLocal(TritonServer):
@@ -42,8 +43,7 @@ class TritonServerLocal(TritonServer):
         self._server_path = path
         self._log = None
 
-        assert self._server_config['model-repository'], \
-            "Triton Server requires --model-repository argument to be set."
+        assert self._server_config["model-repository"], "Triton Server requires --model-repository argument to be set."
 
     def start(self):
         """
@@ -53,14 +53,12 @@ class TritonServerLocal(TritonServer):
         if self._server_path:
             # Create command list and run subprocess
             cmd = [self._server_path]
-            cmd += self._server_config.to_cli_string().replace('=', ' ').split()
+            cmd += self._server_config.to_cli_string().replace("=", " ").split()
 
-            self._tritonserver_process = Popen(cmd,
-                                               start_new_session=True,
-                                               stdout=PIPE,
-                                               stderr=STDOUT,
-                                               universal_newlines=True)
-            logger.info('Triton Server started.')
+            self._tritonserver_process = Popen(
+                cmd, start_new_session=True, stdout=PIPE, stderr=STDOUT, universal_newlines=True
+            )
+            LOGGER.debug("Triton Server started.")
 
     def stop(self):
         """
@@ -71,13 +69,12 @@ class TritonServerLocal(TritonServer):
         if self._tritonserver_process is not None:
             self._tritonserver_process.terminate()
             try:
-                self._log, _ = self._tritonserver_process.communicate(
-                    timeout=SERVER_OUTPUT_TIMEOUT_SECS)
+                self._log, _ = self._tritonserver_process.communicate(timeout=SERVER_OUTPUT_TIMEOUT_SECS)
             except TimeoutExpired:
                 self._tritonserver_process.kill()
                 self._log, _ = self._tritonserver_process.communicate()
             self._tritonserver_process = None
-            logger.info('Triton Server stopped.')
+            LOGGER.debug("Triton Server stopped.")
 
     def logs(self):
         """
@@ -86,3 +83,18 @@ class TritonServerLocal(TritonServer):
         """
 
         return self._log
+
+    def get_ports(self):
+        return {
+            "http": self._server_config["http-port"] or 8000,
+            "grpc": self._server_config["grpc-port"] or 8001,
+            "metrics": self._server_config["metrics-port"] or 8002,
+        }
+
+    def create_grpc_client(self):
+        triton_ports = self.get_ports()
+        return TritonClient(f"grpc://127.0.0.1:{triton_ports['grpc']}")
+
+    def create_http_client(self):
+        triton_ports = self.get_ports()
+        return TritonClient(f"grpc://127.0.0.1:{triton_ports['grpc']}")

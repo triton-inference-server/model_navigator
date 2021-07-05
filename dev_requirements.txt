@@ -11,22 +11,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-pip==21.0.1
-bump2version==1.0.1
-watchdog[watchmedo]==2.0.2
-flake8==3.8.4
-tox==3.21.4
-coverage==5.4
-Sphinx==3.4.3
-twine==3.3.0
-Click==7.1.2
-pytest==6.2.2
-pytest-datadir-mgr==1.2.4
-black==20.8b1
-isort==5.7.0
-pytype==2021.2.9
-pdbpp==0.10.2
-build==0.2.1
-recommonmark==0.7.1
-sphinx-rtd-theme==0.5.1
-ipython==7.16.1
+black>=20.8b1
+build>=0.3.1.post1
+bump2version>=1.0.1
+coverage>=5.5
+flake8>=3.9.2
+ipython>=7.16.1
+isort>=5.8.0
+pdbpp>=0.10.2
+pip>=21.1.1
+pre-commit>=2.13.0
+pytest>=6.2.4
+pytest-datadir-mgr>=1.2.5
+pytype>=2021.2.9
+recommonmark>=0.7.1
+Sphinx>=4.0.1
+sphinx-rtd-theme>=0.5.2
+tox>=3.23.1
+watchdog[watchmedo]>=2.1.1

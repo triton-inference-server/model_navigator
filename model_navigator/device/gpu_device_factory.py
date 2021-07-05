@@ -14,10 +14,10 @@
 
 import numba.cuda
 
-from ..model_navigator_exceptions import ModelNavigatorException
-from .dcgm import dcgm_agent
-from .dcgm import dcgm_structs as structs
-from .gpu_device import GPUDevice
+from model_navigator.device.dcgm import dcgm_agent
+from model_navigator.device.dcgm import dcgm_structs as structs
+from model_navigator.device.gpu_device import GPUDevice
+from model_navigator.exceptions import ModelNavigatorException
 
 
 class GPUDeviceFactory:

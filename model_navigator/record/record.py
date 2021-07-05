@@ -11,13 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Optional, Union
-
 import importlib
 import os
 from abc import ABCMeta, abstractmethod
+from typing import Optional, Union
 
-from .. import model_navigator_exceptions as mne
+from model_navigator.exceptions import ModelNavigatorException
 
 # pytype: disable=not-instantiable
 
@@ -79,7 +78,7 @@ class RecordType(ABCMeta):
                 try:
                     importlib.import_module(f"model_navigator.record.types.{filename[:-3]}")
                 except AttributeError:
-                    raise mne.ModelNavigatorException("Error retrieving all record types")
+                    raise ModelNavigatorException("Error retrieving all record types")
         return cls.record_types
 
 

@@ -15,10 +15,15 @@ import logging
 import subprocess
 from subprocess import CalledProcessError
 
-from ..model_navigator_exceptions import ModelNavigatorException
+from model_navigator.exceptions import ModelNavigatorException
 
 SERVER_OUTPUT_TIMEOUT_SECS = 5
 LOGGER = logging.getLogger(__name__)
+
+
+class ModelAnalyzerMode:
+    PROFILE = "profile"
+    ANALYZE = "analyze"
 
 
 class ModelAnalyzer:
@@ -43,14 +48,14 @@ class ModelAnalyzer:
         self._analyzer_config = config
         self._log = None
 
-    def run(self):
+    def run(self, mode: str):
         """
         Starts the model analyzer locally
         """
 
         if self._analyzer_path:
 
-            cmd = [self._analyzer_path]
+            cmd = [self._analyzer_path, mode]
             cmd += self._analyzer_config.to_cli_string().split()
 
             LOGGER.debug(f"Model Analyze command: {cmd}")

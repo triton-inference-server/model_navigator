@@ -19,4 +19,5 @@ package_dir = Path(os.path.abspath(__file__)).parent
 
 class Paths:
     MODEL_REPOSITORY_PATH = "/mnt/triton-models"
+    CONFIG_PATH = "/opt/workspace/config.yaml"
     SHARED_DIR = "/mnt/shared"

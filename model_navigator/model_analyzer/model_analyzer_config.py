@@ -11,7 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from ..model_navigator_exceptions import ModelNavigatorException
+
+from model_navigator.exceptions import ModelNavigatorException
 
 
 class ModelAnalyzerConfig:
@@ -22,7 +23,7 @@ class ModelAnalyzerConfig:
 
     def __init__(self):
         # Args will be a dict with the string representation as key
-        self._args = {"log-level": "INFO", "override-output-model-repository": True}
+        self._args = {}
 
         self._options = {
             "-f": "config.yaml",
@@ -41,7 +42,7 @@ class ModelAnalyzerConfig:
         str
             the command consisting of all set arguments to
             the model analyzer.
-            e.g. '--model-repository=/models --log-verbose=True'
+            e.g. '--model-repository=/models --verbose=True'
         """
         # single dashed options, then verbose flags, then main args
         args = [f"{k} {v}" for k, v in self._options.items() if v]

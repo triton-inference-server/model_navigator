@@ -12,26 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import abc
-from pathlib import Path
-from typing import Any, Dict, Tuple, Union, Optional
+import dataclasses
+from typing import Any, Dict, Optional, Tuple
 
-import attr
 import numpy as np
-import yaml
-
 
 # pytype: disable=annotation-type-mismatch
 # pytype: disable=wrong-keyword-args
 # pytype: disable=name-error
 
 
-def _is_dim_correct(self, attribute_name, dim):
-    # int equal to 1 or positive number
-    if not isinstance(dim, int) or (dim != -1 and dim <= 0):
-        raise TypeError(f"Shape items should be integers equal to -1 or positive numbers. Got {dim}")
-
-
-@attr.s(frozen=True)
+@dataclasses.dataclass
 class TensorSpec:
     """Stores specification of single tensor. This includes name, shape and dtype.
 
@@ -57,19 +48,24 @@ class TensorSpec:
     Raises TypeError if arguments validation fails due to wrong type or value.
     """
 
-    name: str = attr.ib(validator=[attr.validators.instance_of(str)])
-    shape: Tuple = attr.ib(
-        validator=[
-            attr.validators.deep_iterable(
-                member_validator=_is_dim_correct,
-                iterable_validator=attr.validators.instance_of(tuple),
-            )
-        ],
-        kw_only=True,
-    )
-    dtype: Optional[np.dtype] = attr.ib(
-        validator=[attr.validators.optional(attr.validators.instance_of(np.dtype))], kw_only=True, default=None
-    )
+    name: str
+    shape: Tuple
+    dtype: Optional[np.dtype] = dataclasses.field(default=None)
+
+    def __post_init__(self):
+        def _expect_type(name, value, expected_types, optional=False):
+            if not (isinstance(value, expected_types) or (value is None and optional)):
+                raise TypeError(f"{name} should be {expected_types}, but got {type(value)}")
+
+        def _is_dim_correct(dim):
+            # int equal to -1 or positive number
+            return isinstance(dim, int) and (dim == -1 or dim > 0)
+
+        _expect_type("name", self.name, str)
+        _expect_type("shape", self.shape, tuple)
+        _expect_type("dtype", self.dtype, np.dtype, optional=True)
+        if not all([_is_dim_correct(dim) for dim in self.shape]):
+            raise TypeError(f"Shape items should be integers equal to -1 or positive numbers. Got {self.shape}")
 
     def is_dynamic(self):
         """Check if tensor is dynamic - if any of dimension have -1 in shape. Except fist axis which is batch size."""
@@ -89,7 +85,7 @@ class TensorSpec:
 
         return cls(
             name=tensor_metadata["name"],
-            shape=tuple([int(s) for s in tensor_metadata["shape"]]),
+            shape=tuple(int(s) for s in tensor_metadata["shape"]),
             dtype=np.dtype(client_utils.triton_to_np_dtype(tensor_metadata["datatype"])),
         )
 
@@ -106,82 +102,9 @@ class TensorSpec:
         """
         return cls(
             name=name,
-            shape=tuple([dim if isinstance(dim, int) else -1 for dim in metadata.shape]),
+            shape=tuple(dim if isinstance(dim, int) else -1 for dim in metadata.shape),
             dtype=metadata.dtype,
         )
-
-    @classmethod
-    def from_command_line(cls, shape_spec: str, delimiter: str = ":"):
-        name, shape, *dtype = shape_spec.split(delimiter)
-        shape = tuple(map(int, shape.split(",")))
-        dtype = np.dtype(dtype[0]) if dtype else None
-        return cls(name=name, shape=shape, dtype=dtype)
-
-    def to_command_line(self, delimiter: str = ":"):
-        name = self.name
-        shape = ",".join(map(str, self.shape))
-
-        parts = [name, shape]
-
-        if self.dtype:
-            parts.append(self.dtype.name)
-
-        cli_value = f"{delimiter}".join(parts)
-        return cli_value
-
-
-@attr.s
-class IOSpec:
-    """Model inputs and outputs specification.
-
-    Example usage:
-    >>> io_spec = IOSpec.from_file("/tmp/model.json")
-    >>> io_spec.write("/tmp/model.json")
-    """
-
-    inputs: Dict[str, TensorSpec] = attr.ib(
-        validator=attr.validators.deep_mapping(
-            key_validator=attr.validators.instance_of(str),
-            value_validator=attr.validators.instance_of(TensorSpec),
-            mapping_validator=attr.validators.instance_of(Dict),
-        ),
-        factory=list,
-    )
-    outputs: Dict[str, TensorSpec] = attr.ib(
-        validator=attr.validators.deep_mapping(
-            key_validator=attr.validators.instance_of(str),
-            value_validator=attr.validators.instance_of(TensorSpec),
-            mapping_validator=attr.validators.instance_of(Dict),
-        ),
-        factory=list,
-    )
-
-    @classmethod
-    def from_file(cls, file_path: Union[str, Path]) -> "IOSpec":
-        file_path = Path(file_path)
-
-        with file_path.open("r") as fh:
-            io_spec_dict = yaml.load(fh, Loader=yaml.SafeLoader)
-
-        def _wrap_entry(entry):
-            return TensorSpec(entry["name"], shape=tuple(entry["shape"]), dtype=np.dtype(entry["dtype"]))
-
-        inputs = {name: _wrap_entry(entry) for name, entry in io_spec_dict["inputs"].items()}
-        outputs = {name: _wrap_entry(entry) for name, entry in io_spec_dict["outputs"].items()}
-        return cls(inputs=inputs, outputs=outputs)
-
-    def write(self, file_path: Union[str, Path]):
-        file_path = Path(file_path)
-        file_path.parent.mkdir(parents=True, exist_ok=True)
-
-        def _extract_attribute(self_, name, value):
-            if isinstance(value, np.dtype):
-                value = value.name
-            return value
-
-        with file_path.open("w") as fh:
-            io_specs = attr.asdict(self, value_serializer=_extract_attribute)
-            yaml.dump(io_specs, fh, indent=4)
 
 
 class TensorUtils:

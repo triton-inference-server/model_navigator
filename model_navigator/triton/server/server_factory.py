@@ -12,14 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .server_docker import TritonServerDocker
-from .server_local import TritonServerLocal
+from model_navigator.triton.server.server_docker import TritonServerDocker
+from model_navigator.triton.server.server_local import TritonServerLocal
 
 
 class TritonServerFactory:
     """
     A factory for creating TritonServer instances
     """
+
     @staticmethod
     def create_server_docker(image, config, gpus):
         """

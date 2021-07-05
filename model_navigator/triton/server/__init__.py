@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from .exceptions import TritonServerException  # noqa: F401
-from .server import TritonServer  # noqa: F401
-from .server_config import TritonServerConfig  # noqa: F401
-from .server_factory import TritonServerFactory  # noqa: F401
+from model_navigator.triton.server.exceptions import TritonServerException  # noqa: F401
+from model_navigator.triton.server.server import TritonServer  # noqa: F401
+from model_navigator.triton.server.server_config import TritonServerConfig  # noqa: F401
+from model_navigator.triton.server.server_factory import TritonServerFactory  # noqa: F401

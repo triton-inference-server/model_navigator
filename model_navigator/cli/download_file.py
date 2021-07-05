@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,41 +11,29 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-r"""
-Download file from given url to defined path
-
-```shell script
-python ./cli/download_file.py \
-    --file-url http://models/model.onnx \
-    --to-path /mnt/models
-```
-"""
-
-import argparse
 import logging
 
-from model_navigator.args import str2bool
+import click
+
 from model_navigator.downloader import Downloader
-from model_navigator.log import set_logger, log_dict
+from model_navigator.log import log_dict, set_logger
 
 LOGGER = logging.getLogger("download_file")
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Download files from given url and store it to defined path.")
-    parser.add_argument("--file-url", type=str, required=True, help="Url to file.")
-    parser.add_argument("--to-path", type=str, required=True, help="Path where files would be stored.")
-    parser.add_argument("-v", "--verbose", help="Provide verbose logs", type=str2bool, default=False)
+@click.command(name="download-model", help="Download model from given uri and store it to defined path.")
+@click.option("--model-uri", required=True, help="Uri to model file or archive.")
+@click.option(
+    "--save-to",
+    type=click.Path(writable=True),
+    required=True,
+    help="Path where model file or archive has to be downloaded.",
+)
+@click.option("-v", "--verbose", help="Provide verbose logs.", default=False, type=bool, is_flag=True)
+def download_cmd(model_uri: str, save_to: str, verbose: bool):
+    set_logger(verbose=verbose)
+    if verbose:
+        log_dict("args", {"model_uri": model_uri, "save_to": save_to, "verbose": verbose})
 
-    args = parser.parse_args()
-
-    set_logger(verbose=args.verbose)
-    log_dict("args", vars(args))
-
-    downloader = Downloader(file_url=args.file_url, dst_path=args.to_path)
+    downloader = Downloader(file_uri=model_uri, dst_path=save_to)
     downloader.get_file()
-
-
-if __name__ == "__main__":
-    main()

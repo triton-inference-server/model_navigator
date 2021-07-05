@@ -12,11 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from .client import TritonClient, client_utils  # noqa: F401
-from .model_config import ModelConfig  # noqa: F401
-from .model_store import TritonModelStore  # noqa: F401
-from .server import (  # noqa: F401
-    TritonServer,
-    TritonServerConfig,
-    TritonServerException,
-    TritonServerFactory,
+from .config import (  # noqa: F401
+    DeviceKind,
+    TritonClientConfig,
+    TritonModelInstancesConfig,
+    TritonModelOptimizationConfig,
+    TritonModelSchedulerConfig,
 )
+from .model_config import TritonModelConfigGenerator  # noqa: F401
+from .model_store import TritonModelStore  # noqa: F401
+from .server import TritonServer, TritonServerConfig, TritonServerException, TritonServerFactory  # noqa: F401
+from .utils import parse_server_url  # noqa: F401

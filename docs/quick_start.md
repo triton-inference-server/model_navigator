@@ -15,8 +15,8 @@ limitations under the License.
 -->
 # Quick Start
 
-The steps below will guide you through using Model Navigator to analyze a simple PyTorch model. The instructions below assume a directory structure like the
-following:
+The following steps below will guide you through using the Triton Model Navigator to analyze a simple PyTorch model.
+The instructions assume a directory structure like the following:
 
 ```
 $HOME
@@ -30,14 +30,13 @@ $HOME
       .
 ```
 
-## Install Model Navigator and Run Container
+## Install the Triton Model Navigator and Run Container
 
-Install Model Navigator by following the instructions in
-the [Installation](installation.md)
+Install the Triton Model Navigator using the instructions in thee [Installation](installation.md)
 section, and run the Triton Model Navigator container as shown below.
 
 ```shell
-docker run -it \
+docker run -it --rm \
  --gpus 1 \
  -v ${HOME}:${HOME} \
  -v /var/run/docker.sock:/var/run/docker.sock \
@@ -47,83 +46,98 @@ docker run -it \
  model-navigator /bin/bash
 ```
 
-## Run the add_sub example
+## Run the add_sub Example
 
-The [examples/quick-start](../examples/quick-start) directory contains a simple libtorch model which calculates the sum and difference of two inputs. Run the Model Navigator inside the container with:
+The [examples/quick-start](../examples/quick-start) directory contains a simple libtorch model that calculates the sum and difference of two inputs.
+Run the Triton Model Navigator inside the container with:
 
 ```shell
-$ model-navigator --model-name add_sub \
+$ model-navigator run --model-name add_sub \
     --model-path model_navigator/examples/quick-start/model.pt \
     --inputs INPUT__0:-1,16:float32 INPUT__1:-1,16:float32 \
     --outputs OUTPUT__0:-1,16:float32 OUTPUT__1:-1,16:float32
 ```
 
+Or using configuration stored in YAML file:
+
+```shell
+$ model-navigator run --config-path model_navigator/examples/quick-start/model_navigator.yaml
+```
+
+***Note:*** Input and output definitions are required for PyTorch models. Read more about that in the [model conversions](conversion.md) section.
+
 You should see an output similar to the output below:
 ```
-2021-04-12 11:36:49,634 - INFO - model_navigator.log: Model Navigator config:
-2021-04-12 11:36:49,634 - INFO - model_navigator.log: 	model_name = add_sub
-2021-04-12 11:36:49,634 - INFO - model_navigator.log: 	model_path = model-navigator/examples/quick-start/model.pt
-2021-04-12 11:36:49,634 - INFO - model_navigator.log: 	config_file = None
-2021-04-12 11:36:49,634 - INFO - model_navigator.log: 	workspace_path = workspace
-2021-04-12 11:36:49,634 - INFO - model_navigator.log: 	verbose = False
-2021-04-12 11:36:49,634 - INFO - model_navigator.log: 	top_n_configs = 3
-2021-04-12 11:36:49,634 - INFO - model_navigator.log: 	max_concurrency = 1024
-2021-04-12 11:36:49,634 - INFO - model_navigator.log: 	max_instance_count = 5
-2021-04-12 11:36:49,634 - INFO - model_navigator.log: 	max_preferred_batch_size = 32
-2021-04-12 11:36:49,634 - INFO - model_navigator.log: 	concurrency = []
-2021-04-12 11:36:49,634 - INFO - model_navigator.log: 	instance_counts = []
-2021-04-12 11:36:49,634 - INFO - model_navigator.log: 	preferred_batch_sizes = []
-2021-04-12 11:36:49,634 - INFO - model_navigator.log: 	max_latency_ms = None
-2021-04-12 11:36:49,634 - INFO - model_navigator.log: 	min_throughput = None
-2021-04-12 11:36:49,634 - INFO - model_navigator.log: 	max_gpu_usage_mb = None
-2021-04-12 11:36:49,634 - INFO - model_navigator.log: 	objectives = {'perf_throughput': 10}
-2021-04-12 11:36:49,634 - INFO - model_navigator.log: 	triton_version = 21.03-py3
-2021-04-12 11:36:49,634 - INFO - model_navigator.log: 	triton_launch_mode = local
-2021-04-12 11:36:49,634 - INFO - model_navigator.log: 	triton_server_path = tritonserver
-2021-04-12 11:36:49,634 - INFO - model_navigator.log: 	client_protocol = grpc
-2021-04-12 11:36:49,634 - INFO - model_navigator.log: 	gpus = ['all']
-2021-04-12 11:36:49,634 - INFO - model_navigator.log: 	target_format = None
-2021-04-12 11:36:49,634 - INFO - model_navigator.log: 	max_workspace_size = None
-2021-04-12 11:36:49,634 - INFO - model_navigator.log: 	target_precisions = [<Precision.FP16: 'fp16'>, <Precision.TF32: 'tf32'>]
-2021-04-12 11:36:49,634 - INFO - model_navigator.log: 	onnx_opsets = [12, 13]
-2021-04-12 11:36:49,634 - INFO - model_navigator.log: 	min_shapes = []
-2021-04-12 11:36:49,634 - INFO - model_navigator.log: 	opt_shapes = []
-2021-04-12 11:36:49,634 - INFO - model_navigator.log: 	max_shapes = []
-2021-04-12 11:36:49,634 - INFO - model_navigator.log: 	value_ranges = []
-2021-04-12 11:36:49,634 - INFO - model_navigator.log: 	inputs = [TensorSpec(name='INPUT__0', shape=(-1, 16), dtype=dtype('float32')), TensorSpec(name='INPUT__1', shape=(-1, 16), dtype=dtype('float32'))]
-2021-04-12 11:36:49,634 - INFO - model_navigator.log: 	outputs = [TensorSpec(name='OUTPUT__0', shape=(-1, 16), dtype=dtype('float32')), TensorSpec(name='OUTPUT__1', shape=(-1, 16), dtype=dtype('float32'))]
-2021-04-12 11:36:49,634 - INFO - model_navigator.log: 	rtol = []
-2021-04-12 11:36:49,634 - INFO - model_navigator.log: 	atol = []
-2021-04-12 11:36:49,645 - INFO - model_navigator.entrypoint: Starting Model Navigator
-2021-04-12 11:36:49,689 - INFO - numba.cuda.cudadrv.driver: init
-2021-04-12 11:36:50,797 - INFO - model_navigator.optimizer: Building optimizer docker image
-2021-04-12 11:38:41,857 - INFO - model_navigator.optimizer: Run optimizer
-2021-04-12 11:38:42,926 - INFO - model_navigator.optimizer.transformers: Running optimization ts2onnx_op12
-2021-04-12 11:38:43,596 - WARNING - pyt.transformers: Optimization failed. Details can be found in logfile: workspace/optimized/model.ts2onnx_op12.onnx.log
-2021-04-12 11:38:43,597 - INFO - model_navigator.optimizer.transformers: Running optimization ts2onnx_op13
-2021-04-12 11:38:44,108 - WARNING - pyt.transformers: Optimization failed. Details can be found in logfile: workspace/optimized/model.ts2onnx_op13.onnx.log
-2021-04-12 11:38:44,609 - INFO - model_navigator.model_navigator: New model: add_sub @ workspace/optimized/model.pt
-2021-04-12 11:38:44,609 - INFO - model_navigator.model_navigator: Number of models after optimization: 1
-2021-04-12 11:38:44,611 - INFO - model_navigator.model_navigator: Prepared 1 model variants.
-2021-04-12 11:38:44,612 - INFO - model_navigator.model_navigator: Verifying variant 1
-2021-04-12 11:38:44,621 - INFO - model_navigator.triton.server.server_local: Triton Server started.
-2021-04-12 11:38:44,622 - INFO - model_navigator.triton.client: Connecting to grpc://localhost:8001
-2021-04-12 11:38:47,649 - INFO - model_navigator.triton.model_store: Deploying model workspace/optimized/model.pt in Triton Model Store workspace/model-store with config ModelConfig(model_name='add_sub.ts-script_none_0', model_version='1', model_format=<Format.TS_SCRIPT: 'ts-script'>, max_batch_size=32, precision=<Precision.ANY: 'any'>, gpu_engine_count=1, preferred_batch_sizes=[16, 32], max_queue_delay_us=1, capture_cuda_graph=0, accelerator=<Accelerator.NONE: 'none'>, inputs=[TensorSpec(name='INPUT__0', shape=(-1, 16), dtype=dtype('float32')), TensorSpec(name='INPUT__1', shape=(-1, 16), dtype=dtype('float32'))], outputs=[TensorSpec(name='OUTPUT__0', shape=(-1, 16), dtype=dtype('float32')), TensorSpec(name='OUTPUT__1', shape=(-1, 16), dtype=dtype('float32'))])
-2021-04-12 11:38:51,017 - INFO - model_navigator.deployer.deployer: Evaluating model add_sub.ts-script_none_0 on Triton
-2021-04-12 11:39:29,263 - INFO - model_navigator.triton.server.server_local: Triton Server stopped.
-2021-04-12 11:39:29,263 - INFO - model_navigator.deployer.deployer: Done. Model add_sub.ts-script_none_0 ready to promote to analysis.
-2021-04-12 11:39:29,264 - INFO - model_navigator.model_navigator: Deployment for add_sub.ts-script_none_0 variant succeed. Promoting to analysis stage.
-2021-04-12 11:39:29,270 - INFO - model_navigator.analyzer: Copying files from workspace/model-store/add_sub.ts-script_none_0 to workspace/analyzer/model-store/add_sub.ts-script_none_0
-2021-04-12 11:39:29,270 - INFO - model_navigator.analyzer: Prepare analysis for 1 models:
-2021-04-12 11:39:29,270 - INFO - model_navigator.analyzer: add_sub.ts-script_none_0
+2021-06-28 08:57:18 - INFO - model_navigator.log: run args:
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	model_name = add_sub
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	model_path = model_navigator/examples/quick-start/model.pt
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	model_format = None
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	model_version = 1
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	target_formats = [<Format.TF_SAVEDMODEL: 'tf-savedmodel'>, <Format.ONNX: 'onnx'>, <Format.TENSORRT: 'trt'>, <Format.TORCHSCRIPT: 'torchscript'>]
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	target_precisions = [<TensorRTPrecision.FP16: 'fp16'>, <TensorRTPrecision.TF32: 'tf32'>]
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	onnx_opsets = [13]
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	max_workspace_size = None
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	atol = {'': 1e-05}
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	rtol = {'': 1e-05}
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	inputs = {'INPUT__0': {'name': 'INPUT__0', 'shape': (-1, 16), 'dtype': dtype('float32')}, 'INPUT__1': {'name': 'INPUT__1', 'shape': (-1, 16), 'dtype': dtype('float32')}}
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	outputs = {'OUTPUT__0': {'name': 'OUTPUT__0', 'shape': (-1, 16), 'dtype': dtype('float32')}, 'OUTPUT__1': {'name': 'OUTPUT__1', 'shape': (-1, 16), 'dtype': dtype('float32')}}
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	min_shapes = None
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	opt_shapes = None
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	max_shapes = None
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	value_ranges = None
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	dtypes = None
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	max_batch_size = 32
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	preferred_batch_sizes = None
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	max_queue_delay_us = 0
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	model_repository = model-store
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	triton_launch_mode = TritonLaunchMode.LOCAL
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	triton_server_path = tritonserver
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	perf_measurement_window = 5000
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	max_concurrency = 1024
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	max_instance_count = 5
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	concurrency = None
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	instance_counts = None
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	top_n_configs = 3
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	objectives = {'perf_throughput': 10}
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	max_latency_ms = 1000
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	min_throughput = None
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	max_gpu_usage_mb = None
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	workspace_path = navigator_workspace
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	override_workspace = True
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	override_container = False
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	container_version = 21.05
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	gpus = ('all',)
+2021-06-28 08:57:18 - INFO - model_navigator.log: 	verbose = False
+2021-06-28 08:57:20 - INFO - model_navigator.utils.docker: Run docker container with image model_navigator_converter:21.05-py3; using workdir: /home/{username}
+2021-06-28 08:57:22 - INFO - model_navigator.converter.transformers: Running command copy on Projects/JoC/model_navigator/examples/quick-start/model.pt
+2021-06-28 08:57:22 - INFO - model_navigator.converter.transformers: Running command annotation on /home/{username}/navigator_workspace/converted/model.pt
+2021-06-28 08:57:22 - INFO - model_navigator.converter.transformers: Saving annotations to /home/{username}/navigator_workspace/converted/model.yaml
+2021-06-28 08:57:22 - INFO - model_navigator.converter.transformers: Missing model input value ranges required during conversion. Use `value_ranges` config to define missing dataset profile. Used default values_ranges: {'INPUT__0': (0.0, 1.0), 'INPUT__1': (0.0, 1.0)}
+2021-06-28 08:57:25 - INFO - pyt.transformers: Optimization succeed.
+[I] Loading model: /home/{username}/navigator_workspace/converted/model-ts2onnx_op13.onnx
+2021-06-28 08:57:25 - WARNING - polygraphy.transformers: This conversion should be done on target GPU platform
+2021-06-28 08:57:25 - WARNING - polygraphy.transformers: --max-workspace-size config parameter is missing thus using 4294967296
+2021-06-28 08:57:37 - INFO - polygraphy.transformers: Polygraphy onnx2trt succeed.
+[I] Loading model: /home/{username}/navigator_workspace/converted/model-ts2onnx_op13.onnx
+2021-06-28 08:57:37 - WARNING - polygraphy.transformers: This conversion should be done on target GPU platform
+2021-06-28 08:57:37 - WARNING - polygraphy.transformers: --max-workspace-size config parameter is missing thus using 4294967296
+2021-06-28 08:57:49 - INFO - polygraphy.transformers: Polygraphy onnx2trt succeed.
+2021-06-28 08:57:50 - INFO - run: Running triton model configuration varians generation for add_sub
+2021-06-28 08:57:50 - INFO - run: Running triton model configurator for add_sub
+2021-06-28 08:57:51 - INFO - run: Running triton model evaluator for add_sub
 .
 .
 .
 ```
 
-The generated models, logs and Helm Charts can be found in:
+The generated models, logs, and Helm Charts can be found in:
 ```
-$HOME
+$PWD
   |--- workspace
+      |--- analyzer
       |--- charts
+      |--- converted
+      |--- model-store
+      |--- logs
+      |--- ...
 ```

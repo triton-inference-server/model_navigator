@@ -11,5 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from .perf_analyzer import PerfAnalyzer  # noqa: F401
-from .perf_config import PerfAnalyzerConfig  # noqa: F401
+from model_navigator.perf_analyzer.perf_analyzer import PerfAnalyzer  # noqa: F401
+from model_navigator.perf_analyzer.perf_config import PerfAnalyzerConfig  # noqa: F401
+from model_navigator.perf_analyzer.profiling_data import DEFAULT_RANDOM_DATA_FILENAME  # noqa: F401

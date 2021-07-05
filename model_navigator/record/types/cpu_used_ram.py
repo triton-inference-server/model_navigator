@@ -14,7 +14,7 @@
 
 from functools import total_ordering
 
-from .. import record
+from model_navigator.record import record
 
 
 @total_ordering

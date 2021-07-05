@@ -11,84 +11,150 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import List, NamedTuple, Optional, Union
-
 import logging
+from distutils.version import LooseVersion
 from pathlib import Path
+from typing import Optional, Union
 
-import onnx
-from google.protobuf.text_format import MessageToString
-from polygraphy.backend.onnx import OnnxFromPath
-from polygraphy.backend.onnx.util import get_input_metadata, get_output_metadata
-from model_navigator import Accelerator, Format, Precision
-from model_navigator.tensor import IOSpec, TensorSpec
+from google.protobuf import text_format  # pytype: disable=pyi-error
+from google.protobuf.text_format import MessageToString  # pytype: disable=pyi-error
 
-from .client import client_utils, grpc_client
+from model_navigator.exceptions import ModelNavigatorDeployerException
+from model_navigator.model import Format, Model, ModelSignatureConfig
+from model_navigator.tensor import TensorSpec
+from model_navigator.triton.client import client_utils, grpc_client
+from model_navigator.triton.config import (
+    BackendAccelerator,
+    DeviceKind,
+    TensorRTOptPrecision,
+    TritonModelInstancesConfig,
+    TritonModelOptimizationConfig,
+    TritonModelSchedulerConfig,
+)
 
 LOGGER = logging.getLogger(__name__)
 
 _PLATFORM_PER_FORMAT = {
-    Format.TF_GRAPHDEF: "tensorflow_graphdef",
     Format.TF_SAVEDMODEL: "tensorflow_savedmodel",
-    Format.TF_TRT: "tensorflow_savedmodel",
     Format.ONNX: "onnxruntime_onnx",
-    Format.TRT: "tensorrt_plan",
-    Format.TS_SCRIPT: "pytorch_libtorch",
-    Format.TS_TRACE: "pytorch_libtorch",
+    Format.TENSORRT: "tensorrt_plan",
+    Format.TORCHSCRIPT: "pytorch_libtorch",
+}
+
+INT_DATATYPE2STR_DATATYPE = {
+    getattr(grpc_client.model_config_pb2, attr_name): attr_name.split("_")[1]  # remove TYPE_ prefix
+    for attr_name in vars(grpc_client.model_config_pb2)
+    if attr_name.startswith("TYPE_")
 }
 
 
-def _load_io_specs(*, exported_model: Union[str, Path]):
-    model_path = Path(exported_model)
-    yaml_path = model_path.parent / f"{model_path.stem}.yaml"
+class TritonModelConfigGenerator:
+    def __init__(
+        self,
+        model: Model,
+        optimization_config: TritonModelOptimizationConfig,
+        scheduler_config: TritonModelSchedulerConfig,
+        instances_config: TritonModelInstancesConfig,
+        target_triton_version: Optional[str] = None,
+    ):
+        self._model = model
+        self._optimization_config = optimization_config
+        self._scheduler_config = scheduler_config
+        self._instances_config = instances_config
+        self._target_triton_version = target_triton_version
+        self._validate()
 
-    try:
-        return IOSpec.from_file(yaml_path)
-    except OSError:
-        raise ValueError(f"TorchScript model configurator expects file {yaml_path} with tensor information.")
+    @property
+    def model(self):
+        return self._model
 
+    @property
+    def optimization_config(self):
+        return self._optimization_config
 
-class ModelConfig(NamedTuple):
-    model_name: str
-    model_version: str
-    model_format: Format
-    max_batch_size: int
-    precision: Precision
-    gpu_engine_count: int
-    preferred_batch_sizes: List[int]
-    max_queue_delay_us: int
-    capture_cuda_graph: int
-    accelerator: Accelerator
-    inputs: Optional[List[TensorSpec]]
-    outputs: Optional[List[TensorSpec]]
+    @property
+    def scheduler_config(self):
+        return self._scheduler_config
 
-    def validate(self):
-        assert self.capture_cuda_graph in [0, 1]
-        if Accelerator.AMP == self.accelerator and self.model_format not in [
-            Format.TF_GRAPHDEF,
-            Format.TF_SAVEDMODEL,
-            Format.TF_TRT,
-        ]:
-            raise ValueError("AMP accelerator is available only for TF formats")
-        if Accelerator.TRT == self.accelerator and self.model_format not in [
-            Format.ONNX,
-            Format.TF_GRAPHDEF,
-            Format.TF_SAVEDMODEL,
-        ]:
-            raise ValueError("TensorRT accelerator is available only for ONNX and TF formats")
-        if self.model_format.value.startswith("ts-") and (self.inputs is None or self.outputs is None):
-            raise ValueError("TorchScripts models require --io-props parameter")
+    @property
+    def instances_config(self):
+        return self._instances_config
+
+    def _validate(self):
+
+        platform = _PLATFORM_PER_FORMAT[self._model.format]
+
+        if self._optimization_config.backend_accelerator == BackendAccelerator.AMP and not platform.startswith(
+            "tensorflow"
+        ):
+            raise ValueError("AMP acceleration is available only for TensorFlow backends")
+
+        if self._optimization_config.backend_accelerator == BackendAccelerator.TRT and not (
+            platform.startswith("onnx") or platform.startswith("tensorflow")
+        ):
+            raise ValueError("TensorRT acceleration is available only for ONNX and TensorFlow backends")
 
     def generate_prototxt_payload(self):
-        self.validate()
 
         # https://docs.nvidia.com/deeplearning/triton-inference-server/master-user-guide/docs/protobuf_api/model_config.proto.html
         model_config = grpc_client.model_config_pb2.ModelConfig()
-        model_config.name = self.model_name
-        model_config.platform = _PLATFORM_PER_FORMAT[self.model_format]
-        model_config.max_batch_size = self.max_batch_size
+        model_config.name = self._model.name
+        model_config.platform = _PLATFORM_PER_FORMAT[self._model.format]
 
-        if self.inputs:
+        self._extract_signature(model_config)
+        self._fill_optimization(model_config)
+        self._fill_scheduler(model_config)
+        self._fill_instance_group(model_config)
+
+        config_payload = MessageToString(model_config)
+        LOGGER.debug(f"Generated Triton config:\n{config_payload}")
+
+        return config_payload
+
+    def _fill_instance_group(self, model_config):
+        for kind, count in self._instances_config.engine_count_per_device.items():
+            instance_group = model_config.instance_group.add()
+            instance_group.kind = {
+                DeviceKind.CPU: instance_group.KIND_CPU,
+                DeviceKind.GPU: instance_group.KIND_GPU,
+            }[kind]
+            instance_group.count = count
+
+    def _fill_scheduler(self, model_config):
+        model_config.max_batch_size = self._scheduler_config.max_batch_size
+        if any([self._scheduler_config.preferred_batch_sizes, self._scheduler_config.max_queue_delay_us > 0]):
+            model_support_batching = self._scheduler_config.max_batch_size > 0
+            if model_support_batching:
+                model_config.dynamic_batching.max_queue_delay_microseconds = max(
+                    int(self._scheduler_config.max_queue_delay_us), 0
+                )
+                preferred_batch_sizes = self._scheduler_config.preferred_batch_sizes or [
+                    self._scheduler_config.max_batch_size
+                ]
+                for preferred_batch_size in preferred_batch_sizes:
+                    model_config.dynamic_batching.preferred_batch_size.append(int(preferred_batch_size))
+            else:
+                LOGGER.warning("Ignore dynamic batching parameters as model doesn't support batching")
+
+    def _fill_optimization(self, model_config):
+        if self._optimization_config.backend_accelerator == BackendAccelerator.TRT:
+            accelerator = model_config.optimization.execution_accelerators.gpu_execution_accelerator.add()
+            accelerator.name = "tensorrt"
+            accelerator.parameters["precision_mode"] = self._optimization_config.tensorrt_precision.value.upper()
+        elif self._optimization_config.backend_accelerator == BackendAccelerator.AMP:
+            accelerator = model_config.optimization.execution_accelerators.gpu_execution_accelerator.add()
+            accelerator.name = "auto_mixed_precision"
+        if model_config.platform == "tensorrt_plan":
+            model_config.optimization.cuda.graphs = int(self._optimization_config.tensorrt_capture_cuda_graph)
+
+    def _extract_signature(self, model_config):
+        platform = _PLATFORM_PER_FORMAT[self._model.format]
+        if self._should_extract_signature(platform):
+            if not self._model.signature.inputs or not self._model.signature.outputs:
+                raise ModelNavigatorDeployerException(
+                    f"For {self._model.path} model, signature is required to create Triton Model Configuration. "
+                    f"Could not obtain it."
+                )
 
             def _rewrite_io_spec(spec_, item):
                 dtype = f"TYPE_{client_utils.np_to_triton_dtype(spec_.dtype)}"
@@ -100,44 +166,22 @@ class ModelConfig(NamedTuple):
                 if len(spec_.shape) <= 1:
                     item.reshape.shape.extend([])
 
-            for spec in self.inputs:
+            for _name, spec in self._model.signature.inputs.items():
                 input_item = model_config.input.add()
                 _rewrite_io_spec(spec, input_item)
 
-            for spec in self.outputs:
+            for _name, spec in self._model.signature.outputs.items():
                 output_item = model_config.output.add()
                 _rewrite_io_spec(spec, output_item)
 
-        if self.accelerator == Accelerator.TRT:
-            accelerator = model_config.optimization.execution_accelerators.gpu_execution_accelerator.add()
-            accelerator.name = "tensorrt"
-            accelerator.parameters["precision_mode"] = self.precision.value.upper()
-
-        elif self.accelerator == Accelerator.AMP:
-            accelerator = model_config.optimization.execution_accelerators.gpu_execution_accelerator.add()
-            accelerator.name = "auto_mixed_precision"
-
-        if model_config.platform == "tensorrt_plan":
-            model_config.optimization.cuda.graphs = self.capture_cuda_graph
-
-        if any([len(self.preferred_batch_sizes) > 0, self.max_queue_delay_us > 0]):
-            model_support_batching = self.max_batch_size > 0
-            if model_support_batching:
-                model_config.dynamic_batching.max_queue_delay_microseconds = max(int(self.max_queue_delay_us), 0)
-                preferred_batch_sizes = self.preferred_batch_sizes or [self.max_batch_size]
-                for preferred_batch_size in preferred_batch_sizes:
-                    model_config.dynamic_batching.preferred_batch_size.append(int(preferred_batch_size))
-            else:
-                LOGGER.warning("Ignore dynamic batching parameters as model doesn't support batching")
-
-        instance_group = model_config.instance_group.add()
-        instance_group.kind = instance_group.KIND_GPU
-        instance_group.count = self.gpu_engine_count
-
-        config_payload = MessageToString(model_config)
-        LOGGER.debug(f"Generated Triton config:\n{config_payload}")
-
-        return config_payload
+    def _should_extract_signature(self, platform):
+        # https://github.com/triton-inference-server/onnxruntime_backend/pull/16
+        TRITON_VERSION_WITH_FIXED_ONNX_SIGNATURE_EXTRACT = LooseVersion("2.7.0")
+        version_of_triton_with_bug = (
+            self._target_triton_version is not None
+            and LooseVersion(self._target_triton_version) < TRITON_VERSION_WITH_FIXED_ONNX_SIGNATURE_EXTRACT
+        )
+        return platform.startswith("pytorch_") or (version_of_triton_with_bug and platform.startswith("onnx"))
 
     def save(self, model_dir: Union[str, Path]) -> str:
         """
@@ -148,55 +192,89 @@ class ModelConfig(NamedTuple):
         model_dir.mkdir(parents=True, exist_ok=True)
 
         config_path = model_dir / "config.pbtxt"
-        config_payload = self.generate_prototxt_payload()
+        config_payload = self.save_config_pbtxt(config_path)
+        return config_payload
 
+    def save_config_pbtxt(self, config_path):
+        config_payload = self.generate_prototxt_payload()
         with config_path.open("w+") as cfg:
             cfg.write(config_payload)
-
         return config_payload
 
     @classmethod
-    def create(
-        cls,
-        model_path: Union[str, Path],
-        model_name: str,
-        model_version: str,
-        model_format: str,
-        max_batch_size: int,
-        precision: str,
-        gpu_engine_count: int,
-        preferred_batch_sizes: List[int],
-        max_queue_delay_us: int,
-        capture_cuda_graph: int,
-        accelerator: str,
-    ):
-        model_path = Path(model_path)
-        inputs: Optional[List[TensorSpec]] = None
-        outputs: Optional[List[TensorSpec]] = None
-        if model_format.startswith("ts-"):
-            io_spec = _load_io_specs(exported_model=model_path)
-            inputs, outputs = list(io_spec.inputs.values()), list(io_spec.outputs.values())
-        elif model_format.startswith("onnx"):
-            # this is temporary fix for missing auto-generation of model configuration for onnx runtime
-            # fixed in xxx version
+    def from_triton_config_pbtxt(cls, config_path: Path, model_path: Optional[Path] = None):
+        with config_path.open("r") as config_file:
+            payload = config_file.read()
+            model_config = text_format.Parse(payload, grpc_client.model_config_pb2.ModelConfig())
 
-            model: onnx.ModelProto = OnnxFromPath(model_path.as_posix())()
-            inputs = get_input_metadata(model.graph)
-            outputs = get_output_metadata(model.graph)
-            inputs = [TensorSpec.from_polygraphy_metadata_tuple(name, meta) for name, meta in inputs.items()]
-            outputs = [TensorSpec.from_polygraphy_metadata_tuple(name, meta) for name, meta in outputs.items()]
+        model_name = model_config.name
+        # there should be exactly one version dir
+        model_path = model_path or config_path.parent
+        version_dir_path = [file_path for file_path in model_path.iterdir() if file_path.is_dir()][0]
+        model_paths = list(version_dir_path.iterdir())
+        assert len(model_paths) == 1
+        model_path = model_paths[0].resolve()
 
-        return ModelConfig(
-            model_name=model_name,
-            model_version=model_version,
-            model_format=Format(model_format),
-            max_batch_size=max_batch_size,
-            precision=Precision(precision),
-            gpu_engine_count=gpu_engine_count,
-            preferred_batch_sizes=preferred_batch_sizes,
-            max_queue_delay_us=max_queue_delay_us,
-            capture_cuda_graph=capture_cuda_graph,
-            accelerator=Accelerator(accelerator),
-            inputs=inputs,
-            outputs=outputs,
+        optimization_config_kwargs = {}
+        if model_config.optimization.execution_accelerators.gpu_execution_accelerator:
+            assert len(model_config.optimization.execution_accelerators.gpu_execution_accelerator) == 1
+            backend_accelerator = model_config.optimization.execution_accelerators.gpu_execution_accelerator[0]
+            BACKEND_ACCELERATOR_NAMES2ACCELERATORS = {
+                "tensorrt": BackendAccelerator.TRT,
+                "auto_mixed_precision": BackendAccelerator.AMP,
+            }
+            precision_mode = backend_accelerator.parameters.get("precision_mode")
+            optimization_config_kwargs = {
+                "backend_accelerator": BACKEND_ACCELERATOR_NAMES2ACCELERATORS[backend_accelerator.name],
+                "tensorrt_precision": TensorRTOptPrecision(precision_mode.lower()) if precision_mode else None,
+            }
+
+        optimization_config = TritonModelOptimizationConfig(
+            **optimization_config_kwargs,
+            tensorrt_capture_cuda_graph=(
+                model_config.platform == "tensorrt_plan" and model_config.optimization.cuda.graphs
+            ),
+        )
+
+        scheduler_config = TritonModelSchedulerConfig(
+            max_batch_size=model_config.max_batch_size,
+            preferred_batch_sizes=list(model_config.dynamic_batching.preferred_batch_size) or None,
+            max_queue_delay_us=model_config.dynamic_batching.max_queue_delay_microseconds,
+        )
+
+        KIND_MAP = {
+            grpc_client.model_config_pb2.ModelInstanceGroup.KIND_CPU: DeviceKind.CPU,
+            grpc_client.model_config_pb2.ModelInstanceGroup.KIND_GPU: DeviceKind.GPU,
+        }
+
+        instances_config = TritonModelInstancesConfig(
+            engine_count_per_device={KIND_MAP[entry.kind]: entry.count for entry in model_config.instance_group}
+        )
+
+        model = Model(model_name, model_path)
+        # if there is no possibility to obtain signature (also from annotation file)
+        # try to load it from triton config file
+        if model.signature is not None and model.signature.is_missing():
+
+            def _rewrite_io_spec(item):
+                data_type = INT_DATATYPE2STR_DATATYPE[item.data_type]
+                np_class = client_utils.triton_to_np_dtype(data_type)
+                dummy_instance = np_class()
+                dtype = dummy_instance.dtype
+                if len(item.dims) == 0:
+                    shape = (-1,)
+                else:
+                    shape = (-1,) + tuple(item.dims)
+                return TensorSpec(name=item.name, shape=shape, dtype=dtype)
+
+            inputs = {item.name: _rewrite_io_spec(item) for item in model_config.input}
+            outputs = {item.name: _rewrite_io_spec(item) for item in model_config.output}
+            signature = ModelSignatureConfig(inputs=inputs, outputs=outputs)
+            model = Model(model_name, model_path, signature_if_missing=signature)
+
+        return cls(
+            model=model,
+            optimization_config=optimization_config,
+            scheduler_config=scheduler_config,
+            instances_config=instances_config,
         )

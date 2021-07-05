@@ -11,9 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from .chart import Chart  # noqa: F401
-from .creator import ChartCreator  # noqa: F401
-from .deployment import Deployment, Volume  # noqa: F401
-from .entrypoint import Entrypoint  # noqa: F401
-from .service import Service  # noqa: F401
-from .values import Values  # noqa: F401
+from model_navigator.kubernetes.helm.chart import Chart  # noqa: F401
+from model_navigator.kubernetes.helm.creator import ChartCreator  # noqa: F401
+from model_navigator.kubernetes.helm.deployment import Deployment, Volume  # noqa: F401
+from model_navigator.kubernetes.helm.entrypoint import Entrypoint  # noqa: F401
+from model_navigator.kubernetes.helm.service import Service  # noqa: F401
+from model_navigator.kubernetes.helm.values import Values  # noqa: F401

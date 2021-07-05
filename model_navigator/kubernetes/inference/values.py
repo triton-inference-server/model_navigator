@@ -11,19 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import NamedTuple
-
-from collections import Iterable
-
-from .. import helm
-from ..triton import TritonServer
-from ..utils import format_value
+from model_navigator.kubernetes import helm
+from model_navigator.kubernetes.triton import TritonServer
 
 
 class Values(helm.Values):
-    def __init__(self, container_version: str, parameters: NamedTuple):
+    def __init__(self, container_version: str):
         self.container_version = container_version
-        self.parameters = parameters
 
     def data(self):
         values = dict(
@@ -46,14 +40,6 @@ class Values(helm.Values):
         )
 
         values["server"] = {"image": TritonServer.container_image(version=self.container_version)}
-
-        for key, value in zip(self.parameters._fields, self.parameters):
-            key = format_value(key)
-
-            if isinstance(value, Iterable) and not isinstance(value, str):
-                value = " ".join(map(str, value))
-
-            values["deployer"][key] = value
 
         values["service"] = {
             "type": "ClusterIP",

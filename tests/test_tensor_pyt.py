@@ -12,11 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import numpy as np
-# pytype: disable=import-error
-import torch
-from model_navigator.tensor import NPTensorUtils, TensorUtils
+import torch  # pytype: disable=import-error
 
-# pytype: enable=import-error
+from model_navigator.tensor import NPTensorUtils, TensorUtils
 
 
 def test_pyt_eq():

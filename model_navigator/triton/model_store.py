@@ -11,58 +11,79 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Union
-
 import logging
 import shutil
 from pathlib import Path
+from typing import Optional, Union
 
-from .. import Format
-from .model_config import ModelConfig
+from model_navigator.model import Format, Model
+from model_navigator.triton.config import (
+    TritonModelInstancesConfig,
+    TritonModelOptimizationConfig,
+    TritonModelSchedulerConfig,
+)
+from model_navigator.triton.model_config import TritonModelConfigGenerator
 
 LOGGER = logging.getLogger(__name__)
 
 _SUFFIXES = {
-    Format.TF_GRAPHDEF: "graphdef",
     Format.TF_SAVEDMODEL: "savedmodel",
-    Format.TF_TRT: "savedmodel",
-    Format.TRT: "plan",
+    Format.TENSORRT: "plan",
     Format.ONNX: "onnx",
-    Format.TS_TRACE: "pt",
-    Format.TS_SCRIPT: "pt",
+    Format.TORCHSCRIPT: "pt",
 }
 
 
 class TritonModelStore:
-    def __init__(self, model_store_path: Union[str, Path]):
+    def __init__(
+        self,
+        model_store_path: Union[str, Path],
+        target_triton_version: Optional[str] = None,
+    ):
         self._model_store_path = Path(model_store_path)
+        self._target_triton_version = target_triton_version
 
-    def deploy_model(self, *, model_config: ModelConfig, model_path: Union[str, Path]) -> Path:
-        src_model_path = Path(model_path)
+    def deploy_model(
+        self,
+        *,
+        model: Model,
+        model_version: str,
+        optimization_config: TritonModelOptimizationConfig,
+        scheduler_config: TritonModelSchedulerConfig,
+        instances_config: TritonModelInstancesConfig,
+    ) -> Path:
 
-        LOGGER.info(
-            f"Deploying model {src_model_path} in Triton Model Store {self._model_store_path} "
-            f"with config {model_config}"
+        triton_model_config_generator = TritonModelConfigGenerator(
+            model=model,
+            optimization_config=optimization_config,
+            scheduler_config=scheduler_config,
+            instances_config=instances_config,
+            target_triton_version=self._target_triton_version,
+        )
+        LOGGER.debug(
+            f"Deploying model {model.path} in Triton Model Store {self._model_store_path} "
+            f"with optimization config: {optimization_config} and scheduler_config: {scheduler_config}"
         )
 
         # Order of model repository files might be important while using Triton server in polling model_control_mode
-        self._copy_model(config=model_config, model_path=src_model_path)
+        model_path = self._copy_model(model=model, version=model_version)
 
         # remove model filename and model version
-        model_dir_in_model_store_path = self._get_model_path(config=model_config).parent.parent
-        model_config.save(model_dir=model_dir_in_model_store_path)
+        model_dir_in_model_store_path = model_path.parent.parent
+        triton_model_config_generator.save(model_dir=model_dir_in_model_store_path)
 
         return model_dir_in_model_store_path
 
-    def _copy_model(self, config: ModelConfig, model_path: Path):
-        dst_path = self._get_model_path(config)
+    def _copy_model(self, model: Model, version: str) -> Path:
+        dst_path = self._get_model_path(model, version)
         dst_path.parent.mkdir(exist_ok=True, parents=True)
-        LOGGER.debug(f"Copying {model_path} to {dst_path}")
-        if model_path.is_file():
-            shutil.copy(model_path, dst_path)
+        LOGGER.debug(f"Copying {model.path} to {dst_path}")
+        if model.path.is_file():
+            shutil.copy(model.path, dst_path)
         else:
-            shutil.copytree(model_path, dst_path)
+            shutil.copytree(model.path, dst_path)
+        return dst_path
 
-    def _get_model_path(self, config: ModelConfig) -> Path:
-        suffix = _SUFFIXES[config.model_format]
-        return self._model_store_path / config.model_name / config.model_version / f"model.{suffix}"
+    def _get_model_path(self, model: Model, version: str) -> Path:
+        suffix = _SUFFIXES[model.format]
+        return self._model_store_path / model.name / version / f"model.{suffix}"
