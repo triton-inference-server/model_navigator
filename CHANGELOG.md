@@ -16,7 +16,7 @@ limitations under the License.
 
 # Changelog
 
-## (unreleased)
+## 0.2.0 (2021-07-05)
 
 - comprehensive refactor of command-line API in order to provide more gradual
   pipeline steps execution
