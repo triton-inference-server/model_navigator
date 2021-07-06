@@ -20,9 +20,9 @@ Below is a list of tested models and third-party dependencies that are supported
 ## Verified Models
 
 We have verified that the Model Navigator run command works correctly for the following models. We're publishing a subset of
-[scripts](tests/functional) with [instructions](tests/README.md#running-functional-tests) on testing.
+[scripts](../tests/functional) with [instructions](../tests/README.md#running-functional-tests) on testing.
 
-Refer to the [changelog](CHANGELOG.md) for any related issues on these models.
+Refer to the [changelog](../CHANGELOG.md) for any related issues on these models.
 
 | Source                                 | Model                                                                      |
 |----------------------------------------|----------------------------------------------------------------------------|

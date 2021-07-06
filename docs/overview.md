@@ -17,7 +17,7 @@ limitations under the License.
 # Overview
 
 The Triton Model Navigator provides a [run](run.md) command to perform the step-by-step process of:
-- [Conversion](converion.md) - converts input model to the formats optimized for inference
+- [Conversion](conversion.md) - converts input model to the formats optimized for inference
 - [Triton Model Configuration](triton_model_configurator.md) - creates a model entry in the Triton Model Repository, including framework-specific backend accelerations
 - [Profiling](profiling.md) - profiles model's performance using [Triton Model Analyzer](https://github.com/triton-inference-server/model_analyzer)
 - [Analysis](analysis.md):
