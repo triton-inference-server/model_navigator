@@ -11,12 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-model_name: InceptionV3_script
-model_path: ${TEST_TEMP_DIR}/inception_v3_ts_script.pt
+model_name: InceptionV3_fp32_trace
+model_path: ${TEST_TEMP_DIR}/inception_v3_fp32_ts_trace.pt
 model_downloader_kwargs:
     url: "torchhub:///pytorch/vision/inception_v3"
-    method: script
+    method: trace
     normalize_sample_input: { mean: [ 0.485, 0.456, 0.406 ], std: [ 0.229, 0.224, 0.225 ] }
+    precision: fp32
 verbose: True
 container_version: "21.05"
 triton_launch_mode: docker
