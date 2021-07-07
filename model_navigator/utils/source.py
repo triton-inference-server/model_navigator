@@ -13,6 +13,7 @@
 # limitations under the License.
 import logging
 import os
+import typing
 
 import yaml
 
@@ -23,18 +24,20 @@ LOGGER = logging.getLogger(__name__)
 version_file = MODEL_NAVIGATOR_DIR / "model_navigator" / "version.yaml"
 
 
-def navigator_install_url(framework) -> str:
+def navigator_install_url(framework, extras: typing.Optional[typing.List[str]] = None) -> str:
     with open(version_file) as f:
         data = yaml.safe_load(f)
 
     version = data["version"]
     url = data["repository_url"]
 
-    extras = "tf"
+    extras = extras or []
     if framework == PyTorch:
-        extras = "pyt"
+        extras.append("pyt")
+    else:
+        extras.append("tf")
 
-    install_url = f"git+{url}@{version}#egg=model_navigator[{extras}]"
+    install_url = f"git+{url}@{version}#egg=model_navigator[{','.join(extras)}]"
 
     return install_url
 
