@@ -45,9 +45,7 @@ class ModelConfigurator:
                 optimization_config = TritonModelOptimizationConfig(
                     backend_accelerator=accelerator,
                     tensorrt_precision=precision,
-                    tensorrt_capture_cuda_graph=bool(capture_cuda_graph)
-                    if capture_cuda_graph is not None
-                    else capture_cuda_graph,
+                    tensorrt_capture_cuda_graph=bool(capture_cuda_graph or False),
                 )
 
                 variant_name = self._get_variant_name(model.name, [accelerator, capture_cuda_graph, precision])
