@@ -45,6 +45,24 @@ CASE_TORCHSCRIPT_SIMPLE_IMAGE_MODEL_WITH_DYNAMIC_AXES = (
     ),
 )
 
+CASE_TENSORRT_PLAN_SIMPLE_IMAGE_MODEL_WITH_STATIC_AXES = (
+    128,
+    "model.plan",
+    ModelSignatureConfig(
+        inputs={"i__0": TensorSpec("i__0", shape=(-1, 3, 224, 224), dtype=np.dtype("float16"))},
+        outputs={"o__1": TensorSpec("o__1", shape=(-1, 1000), dtype=np.dtype("float16"))},
+    ),
+)
+
+CASE_TENSORRT_PLAN_IMAGE_MODEL_WITH_DYNAMIC_AXES = (
+    128,
+    "model.plan",
+    ModelSignatureConfig(
+        inputs={"i__0": TensorSpec("i__0", shape=(-1, 3, -1, -1), dtype=np.dtype("float16"))},
+        outputs={"o__1": TensorSpec("o__1", shape=(-1, 1000), dtype=np.dtype("float16"))},
+    ),
+)
+
 
 @pytest.mark.parametrize(
     "max_batch_size,model_filename,signature",
@@ -76,3 +94,41 @@ def test_model_config_parsing_signature_for_torchscript(monkeypatch, max_batch_s
 
         parsed_model_config_generator = TritonModelConfigGenerator.from_triton_config_pbtxt(config_path)
         assert parsed_model_config_generator.model.signature == src_model.signature
+        assert parsed_model_config_generator.optimization_config == optimization_config
+        assert parsed_model_config_generator.scheduler_config == scheduler_config
+        assert parsed_model_config_generator.instances_config == instances_config
+
+
+@pytest.mark.parametrize(
+    "max_batch_size,model_filename,signature",
+    [CASE_TORCHSCRIPT_SIMPLE_IMAGE_MODEL_WITH_STATIC_AXES, CASE_TENSORRT_PLAN_IMAGE_MODEL_WITH_DYNAMIC_AXES],
+)
+def test_model_config_parsing_signature_for_tensorrt_plan(monkeypatch, max_batch_size, model_filename, signature):
+    with TemporaryDirectory() as temp_dir:
+        temp_dir = Path(temp_dir)
+
+        # create dummy triton model repo structure
+        model_path = temp_dir / "1" / model_filename
+        model_path.parent.mkdir(parents=True, exist_ok=True)
+        with model_path.open("w"):
+            pass
+
+        config_path = temp_dir / "config.pbtxt"
+
+        src_model = Model("dummy", model_path, signature_if_missing=signature)
+        optimization_config = TritonModelOptimizationConfig()
+        scheduler_config = TritonModelSchedulerConfig(max_batch_size=max_batch_size)
+        instances_config = TritonModelInstancesConfig({DeviceKind.GPU: 1})
+        initial_model_config_generator = TritonModelConfigGenerator(
+            src_model,
+            optimization_config=optimization_config,
+            scheduler_config=scheduler_config,
+            instances_config=instances_config,
+        )
+        initial_model_config_generator.save_config_pbtxt(config_path)
+
+        parsed_model_config_generator = TritonModelConfigGenerator.from_triton_config_pbtxt(config_path)
+        assert parsed_model_config_generator.model.signature == src_model.signature
+        assert parsed_model_config_generator.optimization_config == optimization_config
+        assert parsed_model_config_generator.scheduler_config == scheduler_config
+        assert parsed_model_config_generator.instances_config == instances_config

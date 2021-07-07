@@ -48,7 +48,7 @@ class TritonClientConfig(BaseConfig):
 class TritonModelOptimizationConfig(BaseConfig):
     backend_accelerator: Optional[BackendAccelerator] = dataclasses.field(default=None)
     tensorrt_precision: Optional[TensorRTOptPrecision] = dataclasses.field(default=None)
-    tensorrt_capture_cuda_graph: Optional[bool] = dataclasses.field(default=None)
+    tensorrt_capture_cuda_graph: bool = False
 
 
 @dataclass
