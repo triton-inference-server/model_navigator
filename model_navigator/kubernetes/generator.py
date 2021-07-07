@@ -86,7 +86,7 @@ class Generator:
         template_path = internals.package_dir / "templates"
         env = Environment(loader=FileSystemLoader(template_path.as_posix()))
 
-        install_url = navigator_install_url(framework)
+        install_url = navigator_install_url(framework, extras=["cloud"])
 
         config_local_path = "config.yaml"
         tags = {
