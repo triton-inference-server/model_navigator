@@ -11,12 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-model_name: ResNet50_trace
-model_path: ${TEST_TEMP_DIR}/resnet50_ts_trace.pt
+model_name: ResNet50_fp16_script
+model_path: ${TEST_TEMP_DIR}/resnet50_fp16_ts_script.pt
 model_downloader_kwargs:
     url: "torchhub:///pytorch/vision/resnet50"
-    method: trace
+    method: script
     normalize_sample_input: { mean: [ 0.485, 0.456, 0.406 ], std: [ 0.229, 0.224, 0.225 ] }
+    precision: fp16
 verbose: True
 container_version: "21.05"
 triton_launch_mode: docker
@@ -30,12 +31,12 @@ inputs:
     image__0:
         name: image__0
         shape: [ -1, 3, -1, -1 ]
-        dtype: float32
+        dtype: float16
 outputs:
     output__0:
         name: output__0
         shape: [ -1, 1000 ]
-        dtype: float32
+        dtype: float16
 # comparator config
 atol:
     output__0: 0.007
@@ -51,7 +52,7 @@ max_shapes:
 value_ranges:
     image__0: [ 0., 1. ]
 dtypes:
-    image__0: float32
+    image__0: float16
 # triton specific
 max_batch_size: 128
 load_model_timeout_s: 5
