@@ -67,13 +67,16 @@ def execute_sh_command(cmd: sh.Command, *, log_file, verbose: bool = False):
 
 
 def prepare_log_header(file_handler, src_format: Format, dst_format: Format):
-    lines = list()
-    lines.append(
-        f"Performing optimization from format {FORMAT2RESOURCE[src_format]} to {FORMAT2RESOURCE[dst_format]}.\n"
-    )
-    lines.append("In case of any issue please review helpful link section to address problems correctly.")
-
-    lines.append(_section_header("Helpful links"))
+    lines = [
+        f"Performing optimization from format {FORMAT2RESOURCE[src_format]} to {FORMAT2RESOURCE[dst_format]}.\n",
+        "There should be available JSON files with inputs and outputs used during verification "
+        "in case of failed conversion.",
+        "Refer to the [Verification of Conversion Correctness]"
+        "(https://github.com/triton-inference-server/model_navigator/blob/main/docs/conversion.md#verification-of-conversion-correctness) "
+        "section of conversion command documentation for details.\n",
+        "In case of any issue please review helpful link section to address problems correctly.",
+        _section_header("Helpful links"),
+    ]
 
     src_resource = FORMAT_RESOURCE[src_format]
     dst_resource = FORMAT_RESOURCE[dst_format]

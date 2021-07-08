@@ -276,6 +276,30 @@ atol:
  "": 1e-5
 ```
 
+During conversion, the Triton Model Navigator dumps JSON files containing inputs and outputs used during verification.
+They are removed when verbose logs output flag is disabled, and conversion succeeds.
+
+To load numpy arrays from these JSON files, use below sample code:
+
+```python
+from polygraphy.json import load_json
+from polygraphy.comparator import RunResults
+
+inputs_data = load_json("resnet50_ts_script-ts2onnx_op13-polygraphyonnx2trt_tf32.plan.comparator_inputs.json")
+results = RunResults.load("resnet50_ts_script-ts2onnx_op13-polygraphyonnx2trt_tf32.plan.comparator_outputs.json")
+for input_data, onnx_output, trt_output in zip(
+    inputs_data,
+    results["onnxrt-runner-N0-07/05/21-11:13:08"],
+    results["trt-runner-N0-07/05/21-11:13:08"]
+):
+    print(input_data["image__0"])
+    print(onnx_output["output__0"])
+    print(trt_output["output__0"])
+```
+
+In case of failed conversion due to a mismatch of output,
+if possible, the tolerance parameters values to pass the conversion verification are determined and dumped to logs.
+
 ## CLI and YAML Config Options
 
 [comment]: <> (START_CONFIG_LIST)
@@ -342,12 +366,12 @@ model_path: path
 [ max_workspace_size: integer ]
 
 # Absolute tolerance parameter for output comparison. To specify per-output tolerances, use the format: --atol
-# [<out_name>:]<atol>. Example: --atol 1e-5 out0:1e-4 out1:1e-3
-[ atol: list[str] | default: ['=1e-05'] ]
+# [<out_name>=]<atol>. Example: --atol 1e-5 out0=1e-4 out1=1e-3
+[ atol: list[str] | default: ['1e-05'] ]
 
 # Relative tolerance parameter for output comparison. To specify per-output tolerances, use the format: --rtol
-# [<out_name>:]<rtol>. Example: --rtol 1e-5 out0:1e-4 out1:1e-3
-[ rtol: list[str] | default: ['=1e-05'] ]
+# [<out_name>=]<rtol>. Example: --rtol 1e-5 out0=1e-4 out1=1e-3
+[ rtol: list[str] | default: ['1e-05'] ]
 
 # Maximum batch size allowed for inference. A max_batch_size value of 0 indicates that batching is not allowed for the
 # model

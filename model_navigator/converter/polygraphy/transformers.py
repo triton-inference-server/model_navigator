@@ -21,6 +21,7 @@ import polygraphy
 import sh
 
 from model_navigator.converter.config import DatasetProfileConfig, TensorRTPrecision
+from model_navigator.converter.polygraphy.comparator import ToleranceParameterHelper
 from model_navigator.converter.utils import execute_sh_command, prepare_log_header
 from model_navigator.exceptions import ModelNavigatorConverterCommandException, ModelNavigatorConverterException
 from model_navigator.model import Format, Model
@@ -236,16 +237,24 @@ def onnx2trt(
         max_workspace_size = DEFAULT_MAX_WORKSPACE_SIZE
         LOGGER.warning(f"--max-workspace-size config parameter is missing thus using {DEFAULT_MAX_WORKSPACE_SIZE}")
 
-    tolerance_flags = []
+    comparator_inputs_path = log_path.with_suffix(".comparator_inputs.json")
+    comparator_outputs_path = log_path.with_suffix(".comparator_outputs.json")
+    comparator_flags = [
+        "--save-inputs",
+        comparator_inputs_path.resolve().as_posix(),
+        "--save-outputs",
+        comparator_outputs_path.resolve().as_posix(),
+        "--validate",
+    ]
 
-    def _add_tolerance_params(params_name, tolerance_params):
+    def _add_tolerance_params(flags, tolerance_name, tolerance_params):
         if tolerance_params:
-            tolerance_params.setdefault("", DEFAULT_TOLERANCES[params_name])
+            tolerance_params.setdefault("", DEFAULT_TOLERANCES[tolerance_name])
             params = [_serialize_tolerance(name, value) for name, value in tolerance_params.items()]
-            tolerance_flags.extend([f"--{params_name}"] + params)
+            flags.extend([f"--{tolerance_name}"] + params)
 
-    _add_tolerance_params("rtol", rtol or {})
-    _add_tolerance_params("atol", atol or {})
+    _add_tolerance_params(comparator_flags, "rtol", rtol or {})
+    _add_tolerance_params(comparator_flags, "atol", atol or {})
 
     args = [
         "--onnxrt",
@@ -259,7 +268,7 @@ def onnx2trt(
         "--shape-inference",
         trt_precision_flags,
         *profiles_adapter.profile_flags,
-        *tolerance_flags,
+        *comparator_flags,
         "--workspace",
         max_workspace_size,
         "--save-engine",
@@ -276,5 +285,37 @@ def onnx2trt(
             execute_sh_command(polygraphy.run.bake(*args), log_file=log_file, verbose=verbose)
         LOGGER.info("Polygraphy onnx2trt succeed.")
     except sh.ErrorReturnCode as e:
+
+        _dump_tolerace_parameters_if_possible(comparator_inputs_path, comparator_outputs_path)
+
         LOGGER.warning(f"Polygraphy onnx2trt conversion failed. Details can be found in logfile: {log_path}")
         raise ModelNavigatorConverterCommandException(message=e.stdout.decode("utf-8"), log_path=log_path)
+    else:
+        if not verbose and comparator_inputs_path.exists():
+            LOGGER.debug(f"Remove comparator input file {comparator_inputs_path}")
+            comparator_inputs_path.unlink()
+        if not verbose and comparator_outputs_path.exists():
+            LOGGER.debug(f"Remove comparator output file {comparator_outputs_path}")
+            comparator_outputs_path.unlink()
+
+
+def _dump_tolerace_parameters_if_possible(comparator_inputs_path, comparator_outputs_path):
+    from model_navigator.cli.spec import ComparatorConfigCli
+
+    tolerance_helper = ToleranceParameterHelper(comparator_inputs_path, comparator_outputs_path)
+    atol, rtol = tolerance_helper.get_tolerance_parameters()
+    output_value_ranges = tolerance_helper.get_outputs_value_ranges()
+
+    if atol and rtol:
+        atol_cli = " ".join(["--atol"] + ComparatorConfigCli.atol.serialize_default_callback(param=None, value=atol))
+        rtol_cli = " ".join(["--rtol"] + ComparatorConfigCli.rtol.serialize_default_callback(param=None, value=rtol))
+
+        value_ranges_str = " ".join(
+            ComparatorConfigCli.rtol.serialize_default_callback(param=None, value=output_value_ranges)
+        )
+        LOGGER.debug(f"Output value ranges: {value_ranges_str}")
+        LOGGER.warning(
+            "For data which was used during conversion verification, "
+            f"tolerance parameters which make conversion correctness will pass: {atol_cli} {rtol_cli}. "
+            "There is no warranty that this parameter make sense. They require verification!"
+        )
