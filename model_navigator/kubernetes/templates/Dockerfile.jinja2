@@ -7,9 +7,7 @@ RUN apt-get update && \
 
 WORKDIR /opt/workspace
 
-# onnx is required by graph_surgeon
-RUN pip install --no-cache-dir onnx && \
-    pip install --no-cache-dir --upgrade --upgrade-strategy only-if-needed \
+RUN pip install --no-cache-dir --upgrade --upgrade-strategy only-if-needed \
     {{INSTALL_URL}}
 
 COPY {{DEPLOYER_LOCAL}} {{DEPLOYER_DOCKER}}
