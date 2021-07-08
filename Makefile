@@ -111,7 +111,6 @@ install: clean ## install the package to the active Python's site-packages
 	pip install -e .
 
 install-with-framework-extras: clean
-	pip install onnx
 ifeq ($(origin TENSORFLOW_VERSION), undefined)
 	pip install --upgrade --upgrade-strategy only-if-needed .[pyt]
 else

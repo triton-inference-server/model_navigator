@@ -16,6 +16,5 @@ FROM ${FROM_IMAGE_NAME}
 
 ARG INSTALL_URL
 
-RUN pip install --no-cache-dir onnx && \
-    pip install --no-cache-dir --upgrade --upgrade-strategy only-if-needed \
+RUN pip install --no-cache-dir --upgrade --upgrade-strategy only-if-needed \
     ${INSTALL_URL}
