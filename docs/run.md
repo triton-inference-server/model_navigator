@@ -162,12 +162,12 @@ model_path: path
 [ max_workspace_size: integer ]
 
 # Absolute tolerance parameter for output comparison. To specify per-output tolerances, use the format: --atol
-# [<out_name>:]<atol>. Example: --atol 1e-5 out0:1e-4 out1:1e-3
-[ atol: list[str] | default: ['=1e-05'] ]
+# [<out_name>=]<atol>. Example: --atol 1e-5 out0=1e-4 out1=1e-3
+[ atol: list[str] | default: ['1e-05'] ]
 
 # Relative tolerance parameter for output comparison. To specify per-output tolerances, use the format: --rtol
-# [<out_name>:]<rtol>. Example: --rtol 1e-5 out0:1e-4 out1:1e-3
-[ rtol: list[str] | default: ['=1e-05'] ]
+# [<out_name>=]<rtol>. Example: --rtol 1e-5 out0=1e-4 out1=1e-3
+[ rtol: list[str] | default: ['1e-05'] ]
 
 # Maximum batch size allowed for inference. A max_batch_size value of 0 indicates that batching is not allowed for the
 # model

@@ -317,7 +317,7 @@ class TritonModelInstancesConfigCli:
 def _serialize_tolerance_parameters(param, value):
     if isinstance(value, float):
         value = {ALL_OTHER_INPUTS: value}
-    return [f"{k}={v}" if k == ALL_OTHER_INPUTS else str(v) for k, v in value.items()]
+    return [f"{k}={v}" if k != ALL_OTHER_INPUTS else str(v) for k, v in value.items()]
 
 
 def _parse_tolerance_parameters(ctx, param, value):
@@ -344,8 +344,8 @@ class ComparatorConfigCli:
     atol = CliSpec(
         help=(
             "Absolute tolerance parameter for output comparison. "
-            "To specify per-output tolerances, use the format: --atol [<out_name>:]<atol>. "
-            "Example: --atol 1e-5 out0:1e-4 out1:1e-3"
+            "To specify per-output tolerances, use the format: --atol [<out_name>=]<atol>. "
+            "Example: --atol 1e-5 out0=1e-4 out1=1e-3"
         ),
         parse_and_verify_callback=_parse_tolerance_parameters,
         serialize_default_callback=_serialize_tolerance_parameters,
@@ -353,8 +353,8 @@ class ComparatorConfigCli:
     rtol = CliSpec(
         help=(
             "Relative tolerance parameter for output comparison. "
-            "To specify per-output tolerances, use the format: --rtol [<out_name>:]<rtol>. "
-            "Example: --rtol 1e-5 out0:1e-4 out1:1e-3"
+            "To specify per-output tolerances, use the format: --rtol [<out_name>=]<rtol>. "
+            "Example: --rtol 1e-5 out0=1e-4 out1=1e-3"
         ),
         parse_and_verify_callback=_parse_tolerance_parameters,
         serialize_default_callback=_serialize_tolerance_parameters,

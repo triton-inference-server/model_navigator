@@ -19,6 +19,8 @@ limitations under the License.
 ## unreleased
 
 - Fixed triton-model-config error when tensorrt_capture_cuda_graph flag is not passed
+- [Dump Conversion Comparator inputs and outputs into JSON files](docs/conversion.md#verification-of-conversion-Correctness)
+- Added information in logs on the tolerance parameters values to pass the conversion verification
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 - Versions of used external components:

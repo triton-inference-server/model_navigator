@@ -39,9 +39,9 @@ outputs:
         dtype: float32
 # comparator config
 atol:
-    output__0: 0.007
+    output__0: 0.012
 rtol:
-    output__0: 0.1
+    output__0: 0.025
 # dataset profile
 min_shapes:
     image__0: [ 1, 3, 300, 300 ]
