@@ -38,7 +38,7 @@ class Prefixes:
 def _download_progress(t: Any) -> Callable:
     last_downloaded = [0]
 
-    def update(downloaded: int = 1, chunk_size: int = 1, total_size: int = None):
+    def update(downloaded: int = 1, chunk_size: int = 1, total_size: typing.Optional[int] = None):
         if total_size not in (None, -1):
             t.total = total_size
 
@@ -77,7 +77,7 @@ def _gcs_downloader(file_uri: str, tmpdir) -> pathlib.Path:
     LOGGER.info(f"Bucket: {bucket}")
     LOGGER.info(f"Filename: {filename}")
 
-    from google.cloud import storage
+    from google.cloud import storage  # pytype: disable=import-error
 
     client = storage.Client()
     bucket = client.get_bucket(bucket)
@@ -103,7 +103,7 @@ def _s3_downloader(file_uri: str, tmpdir) -> pathlib.Path:
     filename = parts[-1]
     resource = "/".join(parts[1:])
 
-    import boto3
+    import boto3  # pytype: disable=import-error
 
     s3 = boto3.client("s3")
 
@@ -126,7 +126,7 @@ def _azure_downloader(file_uri: str, tmpdir) -> pathlib.Path:
     filename = parts[-1]
     resource = "/".join(parts[2:])
 
-    from azure.storage.blob import BlobServiceClient
+    from azure.storage.blob import BlobServiceClient  # pytype: disable=import-error
 
     blob_service_client = BlobServiceClient.from_connection_string(os.environ["AZURE_STORAGE_CONNECTION_STRING"])
 
@@ -195,7 +195,7 @@ class Downloader:
             os.remove(file_to_unpack.as_posix())
             LOGGER.info("done")
 
-            items = [item for item in pathlib.Path(tmpdir).iterdir()]
+            items = list(pathlib.Path(tmpdir).iterdir())
             if len(items) > 1:
                 raise ValueError("Too many files in archive. Expected single file/directory with model.")
 
@@ -215,7 +215,7 @@ class Downloader:
             os.remove(file_to_unpack.as_posix())
             LOGGER.info("done")
 
-            items = [item for item in pathlib.Path(tmpdir).iterdir()]
+            items = list(pathlib.Path(tmpdir).iterdir())
             if len(items) > 1:
                 raise ValueError("Too many files in archive. Expected single file/directory with model.")
 

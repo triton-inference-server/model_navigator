@@ -13,6 +13,7 @@
 # limitations under the License.
 import dataclasses
 import functools
+import subprocess
 from dataclasses import dataclass, field, fields
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -271,7 +272,7 @@ def _serialize_nested_struct(param, value):
     if dataclasses.is_dataclass(value):
         items = list(map(str, dataclasses.astuple(value)))
     else:
-        items = [item for item in value]
+        items = list(value)
     return ":".join(items)
 
 
@@ -714,3 +715,28 @@ def test_cli_with_list_of_primitives_2(runner):
     assert not result.exception
     assert result.output.splitlines() == [expected_config_str]
     assert result.exit_code == 0
+
+
+def test_cli_return_error_code_on_missing_conversion_outputs():
+    with TemporaryDirectory() as temp_dir:
+        completed_process_result = subprocess.run(
+            [
+                "model-navigator",
+                "convert",
+                "--model-name",
+                "MyModel",
+                "--model-path",
+                "tests/files/models/identity.savedmodel",
+                "--target-formats",
+                "torchscript",
+                "--output-path",
+                (Path(temp_dir) / "model.onnx").as_posix(),
+                "--launch-mode",
+                "local",
+                "--override-workspace",
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+        print("output", completed_process_result.stdout.decode("utf-8"))
+        assert completed_process_result.returncode != 0

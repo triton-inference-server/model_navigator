@@ -14,6 +14,8 @@
 from pathlib import Path
 from typing import Optional
 
+from click import ClickException
+
 
 class ModelNavigatorException(Exception):
     def __init__(self, message: str, log_path: Optional[Path] = None):
@@ -53,4 +55,8 @@ class ModelNavigatorConverterCommandException(ModelNavigatorException):
 
 
 class ModelNavigatorAnalyzeException(ModelNavigatorException):
+    pass
+
+
+class ModelNavigatorCliException(ClickException):
     pass
