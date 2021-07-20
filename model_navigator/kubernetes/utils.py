@@ -13,6 +13,7 @@
 # limitations under the License.
 import os
 from pathlib import Path
+from typing import Optional
 
 
 def format_env(s: str):
@@ -33,11 +34,11 @@ def env_var(key: str) -> str:
     return f"${{{format_env(key)}}}"
 
 
-def append_copyright(filename: Path, tag: str, open_tag: str = None, close_tag: str = None):
+def append_copyright(filename: Path, tag: str, open_tag: Optional[str] = None, close_tag: Optional[str] = None):
     local_dir = os.path.dirname(os.path.abspath(__file__))
     copyright_file_path = os.path.join(local_dir, "templates", "copyright.tpl")
 
-    content = list()
+    content = []
     with open(copyright_file_path) as f:
         copyright = f.readlines()
         if open_tag:

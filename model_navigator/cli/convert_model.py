@@ -45,6 +45,7 @@ from model_navigator.converter import (
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.converter.utils import FORMAT2FRAMEWORK
 from model_navigator.device.utils import get_gpus
+from model_navigator.exceptions import ModelNavigatorCliException, ModelNavigatorException
 from model_navigator.log import init_logger, log_dict
 from model_navigator.model import Format, Model, ModelConfig, ModelSignatureConfig
 from model_navigator.results import ResultsStore, State
@@ -350,7 +351,10 @@ def convert(
     results_store = ResultsStore(workspace)
     results_store.dump("convert", conversion_results)
 
-    if output_path is not None:
+    successful_conversion_results = [result for result in conversion_results if result.status.state == State.SUCCEEDED]
+    if not successful_conversion_results:
+        raise ModelNavigatorException("No successful conversion performed.")
+    elif output_path is not None:
         _copy_to_output_path(conversion_results, output_path)
 
     return conversion_results
@@ -385,6 +389,13 @@ def convert_cmd(
     init_logger(verbose=verbose)
     LOGGER.debug("Running convert_cmd")
     launch_mode = ConversionLaunchMode(launch_mode)
-    return convert(
-        verbose=verbose, launch_mode=launch_mode, override_conversion_container=override_conversion_container, **kwargs
-    )
+    try:
+        return convert(
+            verbose=verbose,
+            launch_mode=launch_mode,
+            override_conversion_container=override_conversion_container,
+            **kwargs,
+        )
+    except ModelNavigatorException as e:
+        message = str(e)
+        raise ModelNavigatorCliException(message)
