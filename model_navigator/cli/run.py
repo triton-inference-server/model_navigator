@@ -41,7 +41,7 @@ from model_navigator.converter import ComparatorConfig, ConversionResult, Datase
 from model_navigator.device.utils import get_gpus
 from model_navigator.exceptions import ModelNavigatorException
 from model_navigator.log import init_logger, log_dict
-from model_navigator.model import Model, ModelConfig, ModelSignatureConfig
+from model_navigator.model import ModelConfig, ModelSignatureConfig
 from model_navigator.model_analyzer import (
     AnalyzeResult,
     ModelAnalyzerAnalysisConfig,
@@ -129,18 +129,8 @@ def run_cmd(
         convert_result for convert_result in convert_results if convert_result.status.state == State.SUCCEEDED
     ]
 
-    # gather succeeded models (+original/src model)
+    # gather succeeded models; they should include source model if its matches requested target_formats
     succeeded_models = [result.output_model for result in succeeded_convert_results]
-
-    # in case of some models for which we could not handle signature (ex. TorchScript models)
-    src_model = Model(
-        src_model_config.model_name,
-        src_model_config.model_path,
-        explicit_format=src_model_config.model_format,
-        signature_if_missing=src_model_signature_config,
-    )
-
-    succeeded_models = [src_model] + succeeded_models
 
     # deploy and pre-check of model correctness with perf_analyzer
     interim_model_repository = workspace.path / "interim-model-store"
@@ -272,10 +262,6 @@ def _obtain_conversion_config(
         for convert_result in convert_results
         if convert_result.output_model.name in analyze_result.model_name
     ]
-
-    if len(matching_conversion_configs) == 0:
-        LOGGER.debug("Original model returned from analysis. No conversion config needed.")
-        return ConversionSetConfig(target_formats=[], target_precisions=[], onnx_opsets=[])
 
     if len(matching_conversion_configs) > 1:
         LOGGER.debug(f"More than on conversion config match: {len(matching_conversion_configs)}. Using one with idx 0.")

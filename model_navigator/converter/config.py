@@ -59,7 +59,7 @@ class DatasetProfileConfig(BaseConfig):
 
 @dataclass
 class ConversionConfig(BaseConfig):
-    target_format: Optional[Format] = None
+    target_format: Format
     target_precision: Optional[TensorRTPrecision] = None
     # ONNX related
     onnx_opset: Optional[int] = None
