@@ -30,7 +30,7 @@ from model_navigator.cli.spec import (
     TritonModelOptimizationConfigCli,
     TritonModelSchedulerConfigCli,
 )
-from model_navigator.converter.config import ComparatorConfig, ConversionConfig, DatasetProfileConfig
+from model_navigator.converter.config import ComparatorConfig, DatasetProfileConfig
 from model_navigator.kubernetes import ChartGenerator, HelmChartGenerationResult
 from model_navigator.log import init_logger, log_dict
 from model_navigator.model import ModelConfig, ModelSignatureConfig
@@ -114,10 +114,7 @@ def helm_chart_create_cmd(
 
     LOGGER.debug("Obtaining conversion config for Helm Chart")
     conversion_set_config_lst = list(conversion_set_config)
-    if len(conversion_set_config_lst) == 0:
-        conversion_config = ConversionConfig()
-    else:
-        conversion_config = conversion_set_config_lst[0]
+    conversion_config = conversion_set_config_lst[0]
 
     try:
         container_version_without_tag = container_version.split("-")[0]

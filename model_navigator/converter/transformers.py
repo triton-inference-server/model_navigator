@@ -111,6 +111,26 @@ class CopyModelFilesCommand(BaseConvertCommand):
         return list(model_path.parent.glob(f"{model_path.name}*"))
 
 
+class PassTransformer(BaseConvertCommand):
+    def __init__(self, parent: Optional[BaseConvertCommand] = None, *, conversion_config: ConversionConfig) -> None:
+        super().__init__(parent)
+        self._conversion_config = conversion_config
+
+    def transform(self, executor, model: ModelConfig, *, verbose: int = 0) -> ConversionResult:
+        return ConversionResult(
+            Status(State.SUCCEEDED, "Source model", None),
+            source_model_config=model,
+            conversion_config=self._conversion_config,
+            comparator_config=None,
+            dataset_profile=None,
+            output_model=Model(model.model_name, path=model.model_path, explicit_format=model.model_format),
+        )
+
+    @property
+    def name(self):
+        return "pass"
+
+
 class TorchScriptAnnotationGenerator(BaseConvertCommand):
     def __init__(self, parent: Optional[BaseConvertCommand] = None, *, signature_config: ModelSignatureConfig) -> None:
         super().__init__(parent)

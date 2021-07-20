@@ -15,9 +15,13 @@
 from collections import OrderedDict
 
 import numpy as np
-from polygraphy.common import constants
 from polygraphy.logger.logger import G_LOGGER, LogMode
 from polygraphy.util import misc
+
+try:
+    from polygraphy import constants
+except ImportError:
+    from polygraphy.common import constants  # to be deprecated in 0.32.0
 
 
 class DataLoader:

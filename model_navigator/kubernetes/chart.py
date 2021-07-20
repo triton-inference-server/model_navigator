@@ -116,9 +116,7 @@ class ChartGenerator:
         model_suffix = src_model.model_path.suffix
 
         docker_src_model_path = f"${{SHARED_DIR}}/model{model_suffix}"
-        docker_converted_model_path = docker_src_model_path
-
-        commands = list()
+        commands = []
 
         commands.append(
             rf"""
@@ -128,18 +126,17 @@ class ChartGenerator:
             """
         )
 
-        if conversion_config.target_format:
-            converted_model_suffix = FORMAT2SUFFIX[conversion_config.target_format]
-            docker_converted_model_path = f"${{SHARED_DIR}}/model_converted{converted_model_suffix}"
-            commands.append(
-                rf"""
-                model-navigator convert \
-                    --config-path {internals.Paths.CONFIG_PATH} \
-                    --model-path {docker_src_model_path} \
-                    --output-path {docker_converted_model_path} \
-                    --launch-mode {ConversionLaunchMode.LOCAL.value}
-                """,
-            )
+        converted_model_suffix = FORMAT2SUFFIX[conversion_config.target_format]
+        docker_converted_model_path = f"${{SHARED_DIR}}/model_converted{converted_model_suffix}"
+        commands.append(
+            rf"""
+            model-navigator convert \
+                --config-path {internals.Paths.CONFIG_PATH} \
+                --model-path {docker_src_model_path} \
+                --output-path {docker_converted_model_path} \
+                --launch-mode {ConversionLaunchMode.LOCAL.value}
+            """,
+        )
 
         commands.append(
             rf"""

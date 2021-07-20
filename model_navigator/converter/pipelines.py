@@ -16,7 +16,7 @@ import logging
 from typing import List, Optional, Sequence
 
 from model_navigator.converter.config import ComparatorConfig, ConversionConfig, DatasetProfileConfig
-from model_navigator.converter.transformers import CompositeConvertCommand, TFSavedModel2ONNXTransform
+from model_navigator.converter.transformers import CompositeConvertCommand, PassTransformer, TFSavedModel2ONNXTransform
 from model_navigator.model import Format, Model, ModelConfig, ModelSignatureConfig
 
 LOGGER = logging.getLogger(__name__)
@@ -52,7 +52,10 @@ class SavedModelPipeline(BaseModelPipeline):
 
         commands = []
 
-        if conversion_config.target_format == Format.ONNX:
+        if conversion_config.target_format == Format.TF_SAVEDMODEL:
+            pass_transform = PassTransformer(conversion_config=conversion_config)
+            commands.append(CompositeConvertCommand(cmds=[pass_transform]))
+        elif conversion_config.target_format == Format.ONNX:
             tf2onnx_converter = TFSavedModel2ONNXTransform(
                 conversion_config=conversion_config,
                 comparator_config=comparator_config,
@@ -97,7 +100,10 @@ class TorchScriptPipeline(BaseModelPipeline):
 
         commands = []
 
-        if conversion_config.target_format == Format.ONNX:
+        if conversion_config.target_format == Format.TORCHSCRIPT:
+            pass_transform = PassTransformer(conversion_config=conversion_config)
+            commands.append(CompositeConvertCommand(cmds=[pass_transform]))
+        elif conversion_config.target_format == Format.ONNX:
             copy_command = CopyModelFilesCommand()
             annotation_command = TorchScriptAnnotationGenerator(copy_command, signature_config=signature_config)
             ts2onnx_converter = TorchScript2ONNXCommand(
@@ -144,7 +150,10 @@ class ONNXPipeline(BaseModelPipeline):
         from model_navigator.converter.transformers import ONNX2TRTCommand
 
         commands = []
-        if conversion_config.target_format == Format.TENSORRT:
+        if conversion_config.target_format == Format.ONNX:
+            pass_transform = PassTransformer(conversion_config=conversion_config)
+            commands.append(CompositeConvertCommand(cmds=[pass_transform]))
+        elif conversion_config.target_format == Format.TENSORRT:
             cmd = ONNX2TRTCommand(
                 conversion_config=conversion_config,
                 comparator_config=comparator_config,
@@ -154,9 +163,29 @@ class ONNXPipeline(BaseModelPipeline):
         return commands
 
 
+class TRTPipeline(BaseModelPipeline):
+    src_formats: List[Format] = [Format.TENSORRT]
+
+    def get_commands(
+        self,
+        *,
+        conversion_config: ConversionConfig,
+        signature_config: Optional[ModelSignatureConfig] = None,
+        comparator_config: Optional[ComparatorConfig] = None,
+        dataset_profile: Optional[DatasetProfileConfig] = None,
+    ) -> Sequence[CompositeConvertCommand]:
+
+        commands = []
+        if conversion_config.target_format == Format.TENSORRT:
+            pass_transform = PassTransformer(conversion_config=conversion_config)
+            commands.append(CompositeConvertCommand(cmds=[pass_transform]))
+
+        return commands
+
+
 _FORMAT2PIPELINE = {
     format_: pipeline
-    for pipeline in [SavedModelPipeline, TorchScriptPipeline, ONNXPipeline]
+    for pipeline in [SavedModelPipeline, TorchScriptPipeline, ONNXPipeline, TRTPipeline]
     for format_ in pipeline.src_formats
 }
 
