@@ -54,7 +54,6 @@ class ModelAnalyzerTritonConfig(BaseConfig):
     model_repository: pathlib.Path = pathlib.Path("model-store")
     triton_launch_mode: TritonLaunchMode = TritonLaunchMode.LOCAL
     triton_server_path: str = "tritonserver"
-    perf_measurement_window: int = 5000
 
 
 @dataclass
@@ -71,6 +70,6 @@ class ModelAnalyzerProfileConfig(BaseConfig):
 class ModelAnalyzerAnalysisConfig(BaseConfig):
     top_n_configs: int = 3
     objectives: Dict[str, int] = field(default_factory=lambda: {"perf_throughput": 10})
-    max_latency_ms: int = 1000
-    min_throughput: Optional[int] = None
+    max_latency_ms: Optional[int] = None
+    min_throughput: int = 1
     max_gpu_usage_mb: Optional[int] = None

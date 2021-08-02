@@ -421,10 +421,6 @@ class ModelAnalyzerTritonConfigCli:
     )
     model_repository = CliSpec(help="Path to the Triton Model Repository.")
     triton_server_path = CliSpec(help="Path to the Triton Server binary when the local mode is enabled.")
-    perf_measurement_window = CliSpec(
-        help="Time interval in milliseconds between perf_analyzer measurements. perf_analyzer will take "
-        "measurements over all the requests completed within this time interval."
-    )
 
 
 class ModelAnalyzerProfileConfigCli:
@@ -455,3 +451,12 @@ class ModelAnalyzerAnalysisConfigCli:
         parse_and_verify_callback=_parse_objectives,
         serialize_default_callback=_serialize_objectives,
     )
+
+
+class PerfMeasurementConfigCli:
+    perf_analyzer_timeout = CliSpec(help="Perf Analyzer measurement timeout in seconds.")
+    perf_measurement_mode = CliSpec(help="Perf Analyzer measurement mode. Available: count_windows, time_windows.")
+    perf_measurement_request_count = CliSpec(
+        help="Perf Analyzer count windows number of samples to used for stabilization."
+    )
+    perf_measurement_interval = CliSpec(help="Perf Analyzer time windows time in [ms] used for stabilization.")

@@ -21,10 +21,12 @@ limitations under the License.
 - Fixed triton-model-config error when tensorrt_capture_cuda_graph flag is not passed
 - [Dump Conversion Comparator inputs and outputs into JSON files](docs/conversion.md#verification-of-conversion-Correctness)
 - Added information in logs on the tolerance parameters values to pass the conversion verification
+- Use `count_windows` mode as default option for Perf Analyzer
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 - Versions of used external components:
-    - [Triton Model Analyzer](https://github.com/triton-inference-server/model_analyzer): 21.05
+    - [Triton Model Analyzer](https://github.com/triton-inference-server/model_analyzer): 21.06
+    - [Triton Inference Server Client](https://github.com/triton-inference-server/client/): 2.11.0
     - tf2onnx: [v1.8.5](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.8.5) (support for ONNX opset 13, tf 1.15 and 2.5)
     - Other component versions depend on the used framework and Triton Inference Server containers versions.
       See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)

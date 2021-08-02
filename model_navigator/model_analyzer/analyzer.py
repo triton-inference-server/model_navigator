@@ -63,11 +63,13 @@ class Analyzer:
             LOGGER.debug("Model Analyzer analyze config:\n" f"{config_content}")
             config_file.write(config_content)
 
+        quiet = self._verbose is False
+
         analyzer_config = ModelAnalyzerConfig()
         analyzer_config["config-file"] = self._config_path.as_posix()
 
         analyzer = ModelAnalyzer(config=analyzer_config)
-        analyzer.run(mode=ModelAnalyzerMode.ANALYZE)
+        analyzer.run(mode=ModelAnalyzerMode.ANALYZE, verbose=self._verbose, quiet=quiet)
 
         LOGGER.info("Analyzer analysis done.")
 
@@ -140,7 +142,7 @@ class AnalysisConfigGenerator(BaseConfigGenerator):
         for model_name in model_names:
             LOGGER.info(f"\t- {model_name}")
 
-        # https://github.com/triton-inference-server/model_analyzer/blob/r21.05/docs/config.md
+        # https://github.com/triton-inference-server/model_analyzer/blob/r21.06/docs/config.md
         config = {
             "analysis_models": model_names,
             "checkpoint_directory": self._analyzer_checkpoints_dir_path.as_posix(),
@@ -150,9 +152,11 @@ class AnalysisConfigGenerator(BaseConfigGenerator):
             "filename_model_gpu": self.metrics_path.name,
             "num_top_model_configs": self._analysis_config.top_n_configs,
             "objectives": self._analysis_config.objectives,
-            "constraints": self._get_constraints(),
-            "log_level": "INFO",
         }
+
+        constraints = self._get_constraints()
+        if constraints:
+            config["constraints"] = constraints
 
         return config
 

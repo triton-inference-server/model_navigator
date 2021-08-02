@@ -24,13 +24,17 @@ from model_navigator.cli.spec import (
     DatasetProfileConfigCli,
     ModelAnalyzerProfileConfigCli,
     ModelAnalyzerTritonConfigCli,
+    PerfMeasurementConfigCli,
 )
 from model_navigator.converter.config import DatasetProfileConfig
 from model_navigator.log import init_logger, log_dict
-from model_navigator.model_analyzer.config import ModelAnalyzerProfileConfig, ModelAnalyzerTritonConfig
-from model_navigator.model_analyzer.profiler import Profiler
-from model_navigator.model_analyzer.results import ProfileResult
-from model_navigator.perf_analyzer.profiling_data import DEFAULT_RANDOM_DATA_FILENAME
+from model_navigator.model_analyzer import (
+    ModelAnalyzerProfileConfig,
+    ModelAnalyzerTritonConfig,
+    Profiler,
+    ProfileResult,
+)
+from model_navigator.perf_analyzer import DEFAULT_RANDOM_DATA_FILENAME, PerfMeasurementConfig
 from model_navigator.results import ResultsStore, State, Status
 from model_navigator.utils import Workspace
 from model_navigator.utils.cli import common_options, options_from_config
@@ -40,6 +44,7 @@ LOGGER = logging.getLogger("profile")
 
 @click.command(name="profile", help="Profile models using Triton Model Analyzer")
 @common_options
+@options_from_config(PerfMeasurementConfig, PerfMeasurementConfigCli)
 @options_from_config(ModelAnalyzerTritonConfig, ModelAnalyzerTritonConfigCli)
 @options_from_config(ModelAnalyzerProfileConfig, ModelAnalyzerProfileConfigCli)
 @options_from_config(DatasetProfileConfig, DatasetProfileConfigCli)
@@ -61,6 +66,7 @@ def profile_cmd(
     triton_config = ModelAnalyzerTritonConfig.from_dict(kwargs)
     profile_config = ModelAnalyzerProfileConfig.from_dict(kwargs)
     dataset_profile_config = DatasetProfileConfig.from_dict(kwargs)
+    perf_measurement_config = PerfMeasurementConfig.from_dict(kwargs)
 
     if verbose:
         log_dict(
@@ -69,6 +75,7 @@ def profile_cmd(
                 **dataclasses.asdict(triton_config),
                 **dataclasses.asdict(profile_config),
                 **dataclasses.asdict(dataset_profile_config),
+                **dataclasses.asdict(perf_measurement_config),
                 "workspace_path": workspace.path,
                 "override_workspace": override_workspace,
                 "container_version": container_version,
@@ -94,6 +101,8 @@ def profile_cmd(
         triton_config=triton_config,
         dataset_profile_config=dataset_profile_config,
         profiling_data_path=profiling_data_path,
+        perf_measurement_config=perf_measurement_config,
+        gpus=gpus,
     )
 
     try:
