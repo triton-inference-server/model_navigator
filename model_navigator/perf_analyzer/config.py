@@ -11,7 +11,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from model_navigator.perf_analyzer.config import MeasurementMode, PerfMeasurementConfig  # noqa: F401
-from model_navigator.perf_analyzer.perf_analyzer import PerfAnalyzer  # noqa: F401
-from model_navigator.perf_analyzer.perf_config import PerfAnalyzerConfig  # noqa: F401
-from model_navigator.perf_analyzer.profiling_data import DEFAULT_RANDOM_DATA_FILENAME  # noqa: F401
+from dataclasses import dataclass
+from enum import Enum
+
+from model_navigator.utils.config import BaseConfig
+
+
+class MeasurementMode(Enum):
+    COUNT_WINDOWS = "count_windows"
+    TIME_WINDOWS = "time_windows"
+
+
+@dataclass
+class PerfMeasurementConfig(BaseConfig):
+    perf_analyzer_timeout: int = 600
+    perf_measurement_mode: str = MeasurementMode.COUNT_WINDOWS.value
+    perf_measurement_request_count: int = 50
+    perf_measurement_interval: int = 10000

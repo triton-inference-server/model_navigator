@@ -103,7 +103,7 @@ Analyzer [objectives here](https://github.com/triton-inference-server/model_anal
 # NVIDIA framework and Triton container version to use (refer to https://docs.nvidia.com/deeplearning/frameworks/support-
 # matrix/index.html and https://docs.nvidia.com/deeplearning/triton-inference-server/release-notes/index.html for
 # details).
-[ container_version: str | default: 21.05 ]
+[ container_version: str | default: 21.06 ]
 
 # List of GPU UUIDs to be used for the conversion and/or profiling. Use 'all' to profile all the GPUs visible by CUDA.
 [ gpus: str | default: ['all'] ]
@@ -121,10 +121,10 @@ Analyzer [objectives here](https://github.com/triton-inference-server/model_anal
 [ objectives: list[str] | default: ['perf_throughput=10'] ]
 
 # Maximum latency in ms that the analyzed models should match.
-[ max_latency_ms: integer | default: 1000 ]
+[ max_latency_ms: integer ]
 
 # Minimal throughput that the analyzed models should match.
-[ min_throughput: integer ]
+[ min_throughput: integer | default: 1 ]
 
 # Maximal GPU memory usage in MB that analyzed model should match.
 [ max_gpu_usage_mb: integer ]

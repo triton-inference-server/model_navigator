@@ -96,13 +96,25 @@ $ model-navigator profile --workspace-path navigator_workspace \
 # NVIDIA framework and Triton container version to use (refer to https://docs.nvidia.com/deeplearning/frameworks/support-
 # matrix/index.html and https://docs.nvidia.com/deeplearning/triton-inference-server/release-notes/index.html for
 # details).
-[ container_version: str | default: 21.05 ]
+[ container_version: str | default: 21.06 ]
 
 # List of GPU UUIDs to be used for the conversion and/or profiling. Use 'all' to profile all the GPUs visible by CUDA.
 [ gpus: str | default: ['all'] ]
 
 # Provide verbose logs.
 [ verbose: boolean ]
+
+# Perf Analyzer measurement timeout in seconds.
+[ perf_analyzer_timeout: integer | default: 600 ]
+
+# Perf Analyzer measurement mode. Available: count_windows, time_windows.
+[ perf_measurement_mode: str | default: count_windows ]
+
+# Perf Analyzer count windows number of samples to used for stabilization.
+[ perf_measurement_request_count: integer | default: 50 ]
+
+# Perf Analyzer time windows time in [ms] used for stabilization.
+[ perf_measurement_interval: integer | default: 10000 ]
 
 # Path to the Triton Model Repository.
 [ model_repository: path | default: model-store ]
@@ -113,10 +125,6 @@ $ model-navigator profile --workspace-path navigator_workspace \
 
 # Path to the Triton Server binary when the local mode is enabled.
 [ triton_server_path: str | default: tritonserver ]
-
-# Time interval in milliseconds between perf_analyzer measurements. perf_analyzer will take measurements over all the
-# requests completed within this time interval.
-[ perf_measurement_window: integer | default: 5000 ]
 
 # Max concurrency used for config search in analysis.
 [ max_concurrency: integer | default: 1024 ]

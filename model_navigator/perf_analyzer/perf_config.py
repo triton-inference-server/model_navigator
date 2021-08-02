@@ -25,6 +25,8 @@ class PerfAnalyzerConfig:
         "async",
         "sync",
         "measurement-interval",
+        "measurement-mode",
+        "measurement-request-count",
         "concurrency-range",
         "request-rate-range",
         "request-distribution",

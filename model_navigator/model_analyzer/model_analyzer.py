@@ -48,14 +48,21 @@ class ModelAnalyzer:
         self._analyzer_config = config
         self._log = None
 
-    def run(self, mode: str):
+    def run(self, mode: str, verbose: bool = False, quiet: bool = False):
         """
         Starts the model analyzer locally
         """
 
         if self._analyzer_path:
 
-            cmd = [self._analyzer_path, mode]
+            cmd = [self._analyzer_path]
+            if verbose:
+                cmd += ["--verbose"]
+
+            if quiet:
+                cmd += ["--quiet"]
+
+            cmd += [mode]
             cmd += self._analyzer_config.to_cli_string().split()
 
             LOGGER.debug(f"Model Analyze command: {cmd}")

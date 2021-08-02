@@ -11,8 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-import dataclasses
 import logging
 import shutil
 from typing import List
@@ -33,6 +31,7 @@ from model_navigator.cli.spec import (
     ModelAnalyzerTritonConfigCli,
     ModelConfigCli,
     ModelSignatureConfigCli,
+    PerfMeasurementConfigCli,
     TritonModelSchedulerConfigCli,
 )
 from model_navigator.cli.triton_evaluate_model import triton_evaluate_model_cmd
@@ -47,9 +46,10 @@ from model_navigator.model_analyzer import (
     ModelAnalyzerAnalysisConfig,
     ModelAnalyzerProfileConfig,
     ModelAnalyzerTritonConfig,
+    ProfileResult,
     TritonLaunchMode,
 )
-from model_navigator.model_analyzer.results import ProfileResult
+from model_navigator.perf_analyzer import PerfMeasurementConfig
 from model_navigator.results import State
 from model_navigator.triton import (
     TritonClientConfig,
@@ -75,6 +75,7 @@ LOGGER = logging.getLogger("run")
 @cli.options_from_config(ModelAnalyzerTritonConfig, ModelAnalyzerTritonConfigCli)
 @cli.options_from_config(ModelAnalyzerProfileConfig, ModelAnalyzerProfileConfigCli)
 @cli.options_from_config(ModelAnalyzerAnalysisConfig, ModelAnalyzerAnalysisConfigCli)
+@cli.options_from_config(PerfMeasurementConfig, PerfMeasurementConfigCli)
 @click.option(
     "--override-conversion-container", is_flag=True, help="Override conversion container if it already exists."
 )
@@ -102,19 +103,21 @@ def run_cmd(
     triton_config = ModelAnalyzerTritonConfig.from_dict(kwargs)
     profile_config = ModelAnalyzerProfileConfig.from_dict(kwargs)
     analysis_config = ModelAnalyzerAnalysisConfig.from_dict(kwargs)
+    perf_measurement_config = PerfMeasurementConfig.from_dict(kwargs)
 
     log_dict(
         "run args:",
         {
-            **dataclasses.asdict(src_model_config),
-            **dataclasses.asdict(conversion_set_config),
-            **dataclasses.asdict(comparator_config),
-            **dataclasses.asdict(src_model_signature_config),
-            **dataclasses.asdict(dataset_profile_config),
-            **dataclasses.asdict(scheduler_config),
-            **dataclasses.asdict(triton_config),
-            **dataclasses.asdict(profile_config),
-            **dataclasses.asdict(analysis_config),
+            **dataclass2dict(src_model_config),
+            **dataclass2dict(conversion_set_config),
+            **dataclass2dict(comparator_config),
+            **dataclass2dict(src_model_signature_config),
+            **dataclass2dict(dataset_profile_config),
+            **dataclass2dict(scheduler_config),
+            **dataclass2dict(triton_config),
+            **dataclass2dict(profile_config),
+            **dataclass2dict(analysis_config),
+            **dataclass2dict(perf_measurement_config),
             "workspace_path": workspace_path,
             "override_workspace": override_workspace,
             "override_conversion_container": override_conversion_container,
@@ -172,7 +175,8 @@ def run_cmd(
                     triton_evaluate_model_cmd,
                     **dataclass2dict(triton_client_config),
                     **dataclass2dict(triton_config),
-                    **dataclasses.asdict(dataset_profile_config),
+                    **dataclass2dict(dataset_profile_config),
+                    **dataclass2dict(perf_measurement_config),
                     model_name=model_to_deploy_config.model_name,
                     model_version=model_to_deploy_config.model_version,
                 )
@@ -211,8 +215,9 @@ def run_cmd(
     LOGGER.info("Running Model Analyzer profiling for promoted models")
     profile_result: ProfileResult = ctx.forward(
         profile_cmd,
-        **dataclasses.asdict(triton_config),
-        **dataclasses.asdict(profile_config),
+        **dataclass2dict(triton_config),
+        **dataclass2dict(profile_config),
+        **dataclass2dict(perf_measurement_config),
     )
     if profile_result.status.state != State.SUCCEEDED:
         LOGGER.error(f"Model Analyzer profiling failed with message: {profile_result.status.message}")
@@ -221,7 +226,7 @@ def run_cmd(
     LOGGER.info("Running Model Analyzer analysis for profiled models")
     analyze_results: List[AnalyzeResult] = ctx.forward(
         analyze_cmd,
-        **dataclasses.asdict(analysis_config),
+        **dataclass2dict(analysis_config),
     )
 
     failed_results: List[AnalyzeResult] = [

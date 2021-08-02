@@ -14,7 +14,7 @@
 import logging
 import shutil
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 import yaml
 
@@ -24,6 +24,7 @@ from model_navigator.model_analyzer import ModelAnalyzer, ModelAnalyzerProfileCo
 from model_navigator.model_analyzer.config import BaseConfigGenerator, ModelAnalyzerTritonConfig
 from model_navigator.model_analyzer.model_analyzer import ModelAnalyzerMode
 from model_navigator.model_analyzer.model_analyzer_config import ModelAnalyzerConfig
+from model_navigator.perf_analyzer import PerfMeasurementConfig
 from model_navigator.triton import DeviceKind
 from model_navigator.utils import Workspace
 
@@ -36,9 +37,11 @@ class Profiler:
         *,
         workspace: Workspace,
         container_version: str,
+        gpus: List[str],
         verbose: bool = False,
         profile_config: ModelAnalyzerProfileConfig,
         triton_config: ModelAnalyzerTritonConfig,
+        perf_measurement_config: PerfMeasurementConfig,
         dataset_profile_config: Optional[DatasetProfileConfig] = None,
         profiling_data_path: Optional[Path] = None,
     ):
@@ -49,6 +52,7 @@ class Profiler:
         self._profile_config = profile_config
         self._dataset_profile_config = dataset_profile_config
         self._profiling_data_path = profiling_data_path
+        self._perf_measurement_config = perf_measurement_config
 
         self._config_generator: ProfileConfigGenerator = ProfileConfigGenerator(
             workspace=self._workspace,
@@ -58,6 +62,8 @@ class Profiler:
             verbose=verbose,
             dataset_profile_config=dataset_profile_config,
             profiling_data_path=profiling_data_path,
+            perf_measurement_config=perf_measurement_config,
+            gpus=gpus,
         )
 
         self._profile_config_path = self._config_generator.analyzer_path / "config-profile.yaml"
@@ -77,7 +83,7 @@ class Profiler:
         analyzer_config["config-file"] = self._profile_config_path.as_posix()
 
         analyzer = ModelAnalyzer(config=analyzer_config)
-        analyzer.run(mode=ModelAnalyzerMode.PROFILE)
+        analyzer.run(mode=ModelAnalyzerMode.PROFILE, verbose=self._verbose)
 
         LOGGER.info("Analyzer profiling done.")
 
@@ -98,6 +104,8 @@ class ProfileConfigGenerator(BaseConfigGenerator):
         workspace: Workspace,
         profile_config: ModelAnalyzerProfileConfig,
         triton_config: ModelAnalyzerTritonConfig,
+        perf_measurement_config: PerfMeasurementConfig,
+        gpus: List[str],
         container_version: Optional[str] = None,
         verbose: int = 0,
         dataset_profile_config: Optional[DatasetProfileConfig] = None,
@@ -112,6 +120,8 @@ class ProfileConfigGenerator(BaseConfigGenerator):
         self._profile_config = profile_config
         self._dataset_profile_config = dataset_profile_config
         self._profiling_data_path = profiling_data_path
+        self._perf_measurement_config = perf_measurement_config
+        self._gpus = gpus
 
     @property
     def triton_log_path(self) -> Path:
@@ -133,7 +143,7 @@ class ProfileConfigGenerator(BaseConfigGenerator):
         else:
             max_preferred_batch_size = 1
 
-        # https://github.com/triton-inference-server/model_analyzer/blob/r21.05/docs/config.md
+        # https://github.com/triton-inference-server/model_analyzer/blob/r21.06/docs/config.md
         config = {
             "profile_models": model_names,
             "triton_docker_image": f"nvcr.io/nvidia/tritonserver:{self._container_version}-py3",
@@ -143,16 +153,15 @@ class ProfileConfigGenerator(BaseConfigGenerator):
             "output_model_repository_path": self.output_model_repository_path.as_posix(),
             "summarize": self._verbose,
             "export_path": self._analyzer_path.resolve().as_posix(),
-            "perf_analyzer_cpu_util": 400,
-            "perf_measurement_window": self._triton_config.perf_measurement_window,
             "triton_server_flags": {"strict-model-config": False},
             "run_config_search_max_concurrency": self._profile_config.max_concurrency,
             "run_config_search_max_instance_count": self._profile_config.max_instance_count,
             "run_config_search_max_preferred_batch_size": max_preferred_batch_size,
+            "perf_analyzer_timeout": self._perf_measurement_config.perf_analyzer_timeout,
             "perf_analyzer_flags": self._get_perf_analyzer_flags(),
             "triton_server_path": self._triton_config.triton_server_path,
             "override_output_model_repository": True,
-            "log_level": "INFO",
+            "gpus": list(self._gpus),
         }
 
         if self._verbose:
@@ -174,6 +183,10 @@ class ProfileConfigGenerator(BaseConfigGenerator):
             configuration["shape"] = " ".join(
                 [_shape_param_format(name, shape_) for name, shape_ in self._dataset_profile_config.max_shapes.items()]
             )
+        configuration["measurement-interval"] = self._perf_measurement_config.perf_measurement_interval
+        configuration["measurement-mode"] = self._perf_measurement_config.perf_measurement_mode
+        configuration["measurement-request-count"] = self._perf_measurement_config.perf_measurement_request_count
+
         return configuration
 
     @property

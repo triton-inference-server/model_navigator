@@ -92,7 +92,7 @@ model_repository: path
 # NVIDIA framework and Triton container version to use (refer to https://docs.nvidia.com/deeplearning/frameworks/support-
 # matrix/index.html and https://docs.nvidia.com/deeplearning/triton-inference-server/release-notes/index.html for
 # details).
-[ container_version: str | default: 21.05 ]
+[ container_version: str | default: 21.06 ]
 
 # List of GPU UUIDs to be used for the conversion and/or profiling. Use 'all' to profile all the GPUs visible by CUDA.
 [ gpus: str | default: ['all'] ]

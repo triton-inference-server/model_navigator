@@ -19,7 +19,7 @@ model_downloader_kwargs:
     normalize_sample_input: { mean: [ 0.485, 0.456, 0.406 ], std: [ 0.229, 0.224, 0.225 ] }
     precision: fp32
 verbose: True
-container_version: "21.05"
+container_version: "21.06"
 triton_launch_mode: docker
 # converter set config
 target_formats: [ onnx, trt ]
