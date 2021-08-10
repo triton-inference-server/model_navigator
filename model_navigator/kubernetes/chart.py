@@ -22,7 +22,7 @@ from model_navigator.converter.config import (
     ConversionLaunchMode,
     DatasetProfileConfig,
 )
-from model_navigator.framework import PyTorch, TensorFlow2
+from model_navigator.framework import SUFFIX2FRAMEWORK, PyTorch, TensorFlow2
 from model_navigator.kubernetes import internals
 from model_navigator.kubernetes.generator import generator
 from model_navigator.kubernetes.inference import InferenceChartCreator
@@ -39,20 +39,13 @@ from model_navigator.utils.formats import FORMAT2SUFFIX
 
 LOGGER = logging.getLogger(__name__)
 
-# TODO: refactor this
-_SUFFIX2FRAMEWORK = {
-    ".savedmodel": TensorFlow2,
-    ".plan": PyTorch,
-    ".onnx": PyTorch,
-    ".pt": PyTorch,
-}
-
 
 class ChartGenerator:
-    def __init__(self, *, container_version: str):
+    def __init__(self, *, triton_docker_image: str, framework_docker_image: str):
         """Generate Helm Chart"""
         self._docker_workspace_path = "${SHARED_DIR}/workspace"
-        self._container_version = container_version
+        self._triton_docker_image = triton_docker_image
+        self._framework_docker_image = framework_docker_image
 
     def run(
         self,
@@ -66,12 +59,15 @@ class ChartGenerator:
         scheduler_config: TritonModelSchedulerConfig,
         instances_config: TritonModelInstancesConfig,
         output_path: Path,
+        chart_version: Optional[str] = None,
     ):
         framework = self._get_framework(src_model.model_path)
         generator(
             chart_name=src_model.model_name,
             output_path=output_path,
-            container_version=self._container_version,
+            chart_version=chart_version,
+            framework_docker_image=self._framework_docker_image,
+            triton_docker_image=self._triton_docker_image,
             framework=framework,
             navigator_cmds=self._navigator_commands(src_model=src_model, conversion_config=conversion_config),
             evaluator_cmds=self._evaluator_commands(src_model=src_model, scheduler_config=scheduler_config),
@@ -100,7 +96,8 @@ class ChartGenerator:
         LOGGER.info(message)
         return HelmChartGenerationResult(
             status=Status(state=State.SUCCEEDED, message=message),
-            container_version=self._container_version,
+            triton_docker_image=self._triton_docker_image,
+            framework_docker_image=self._framework_docker_image,
             src_model_config=src_model,
             src_model_signature_config=src_model_signature_config,
             conversion_config=conversion_config,
@@ -168,7 +165,7 @@ class ChartGenerator:
     def _get_framework(self, path: Path) -> Type[Union[PyTorch, TensorFlow2]]:
         model_path = Path(path)
         suffix = model_path.suffix
-        framework = _SUFFIX2FRAMEWORK[suffix]
+        framework = SUFFIX2FRAMEWORK[suffix]
 
         return framework
 

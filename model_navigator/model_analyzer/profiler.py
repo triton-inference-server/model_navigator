@@ -36,7 +36,7 @@ class Profiler:
         self,
         *,
         workspace: Workspace,
-        container_version: str,
+        triton_docker_image: str,
         gpus: List[str],
         verbose: bool = False,
         profile_config: ModelAnalyzerProfileConfig,
@@ -48,7 +48,7 @@ class Profiler:
         self._workspace = workspace
 
         self._triton_config = triton_config
-        self._container_version = container_version
+        self._triton_docker_image = triton_docker_image
         self._profile_config = profile_config
         self._dataset_profile_config = dataset_profile_config
         self._profiling_data_path = profiling_data_path
@@ -58,7 +58,7 @@ class Profiler:
             workspace=self._workspace,
             profile_config=self._profile_config,
             triton_config=triton_config,
-            container_version=container_version,
+            triton_docker_image=triton_docker_image,
             verbose=verbose,
             dataset_profile_config=dataset_profile_config,
             profiling_data_path=profiling_data_path,
@@ -106,7 +106,7 @@ class ProfileConfigGenerator(BaseConfigGenerator):
         triton_config: ModelAnalyzerTritonConfig,
         perf_measurement_config: PerfMeasurementConfig,
         gpus: List[str],
-        container_version: Optional[str] = None,
+        triton_docker_image: Optional[str] = None,
         verbose: int = 0,
         dataset_profile_config: Optional[DatasetProfileConfig] = None,
         profiling_data_path: Optional[Path] = None,
@@ -115,7 +115,7 @@ class ProfileConfigGenerator(BaseConfigGenerator):
         self._analyzer_triton_log_path = self._analyzer_path / "triton.log"
 
         self._triton_config = triton_config
-        self._container_version = container_version
+        self._triton_docker_image = triton_docker_image
         self._verbose = verbose
         self._profile_config = profile_config
         self._dataset_profile_config = dataset_profile_config
@@ -146,7 +146,7 @@ class ProfileConfigGenerator(BaseConfigGenerator):
         # https://github.com/triton-inference-server/model_analyzer/blob/r21.06/docs/config.md
         config = {
             "profile_models": model_names,
-            "triton_docker_image": f"nvcr.io/nvidia/tritonserver:{self._container_version}-py3",
+            "triton_docker_image": self._triton_docker_image,
             "triton_launch_mode": self._triton_config.triton_launch_mode.value,
             "model_repository": model_repository.resolve().as_posix(),
             "checkpoint_directory": self._analyzer_checkpoints_dir_path.as_posix(),

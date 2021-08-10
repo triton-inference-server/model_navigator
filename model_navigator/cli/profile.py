@@ -15,7 +15,7 @@
 import dataclasses
 import logging
 import traceback
-from typing import List
+from typing import List, Optional
 
 import click
 
@@ -27,6 +27,7 @@ from model_navigator.cli.spec import (
     PerfMeasurementConfigCli,
 )
 from model_navigator.converter.config import DatasetProfileConfig
+from model_navigator.kubernetes.triton import TritonServer
 from model_navigator.log import init_logger, log_dict
 from model_navigator.model_analyzer import (
     ModelAnalyzerProfileConfig,
@@ -38,6 +39,7 @@ from model_navigator.perf_analyzer import DEFAULT_RANDOM_DATA_FILENAME, PerfMeas
 from model_navigator.results import ResultsStore, State, Status
 from model_navigator.utils import Workspace
 from model_navigator.utils.cli import common_options, options_from_config
+from model_navigator.validators import run_command_validators
 
 LOGGER = logging.getLogger("profile")
 
@@ -55,11 +57,25 @@ def profile_cmd(
     workspace_path: str,
     override_workspace: bool,
     container_version: str,
+    triton_docker_image: Optional[str],
     gpus: List[str],
     **kwargs,
 ):
     init_logger(verbose=verbose)
-    LOGGER.debug("Running profile_cmd")
+    LOGGER.debug(f"Running '{ctx.command_path}' with config_path: {kwargs.get('config_path')}")
+
+    run_command_validators(
+        ctx.command.name,
+        configuration={
+            "verbose": verbose,
+            "workspace_path": "workspace_path",
+            "override_workspace": override_workspace,
+            "container_version": container_version,
+            "triton_docker_image": triton_docker_image,
+            "gpus": gpus,
+            **kwargs,
+        },
+    )
 
     workspace = Workspace(workspace_path)
 
@@ -67,6 +83,8 @@ def profile_cmd(
     profile_config = ModelAnalyzerProfileConfig.from_dict(kwargs)
     dataset_profile_config = DatasetProfileConfig.from_dict(kwargs)
     perf_measurement_config = PerfMeasurementConfig.from_dict(kwargs)
+
+    triton_docker_image = triton_docker_image or TritonServer.container_image(container_version)
 
     if verbose:
         log_dict(
@@ -79,6 +97,7 @@ def profile_cmd(
                 "workspace_path": workspace.path,
                 "override_workspace": override_workspace,
                 "container_version": container_version,
+                "triton_docker_image": triton_docker_image,
                 "gpus": gpus,
                 "verbose": verbose,
             },
@@ -95,7 +114,7 @@ def profile_cmd(
 
     profiler = Profiler(
         workspace=workspace,
-        container_version=container_version,
+        triton_docker_image=triton_docker_image,
         verbose=verbose,
         profile_config=profile_config,
         triton_config=triton_config,
@@ -109,7 +128,7 @@ def profile_cmd(
         profiler.run()
         profile_result = ProfileResult(
             status=Status(State.SUCCEEDED, message="Model repository profiled successfully"),
-            container_version=container_version,
+            triton_docker_image=triton_docker_image,
             profile_config=profile_config,
             triton_config=triton_config,
             dataset_profile=dataset_profile_config,
@@ -120,7 +139,7 @@ def profile_cmd(
         LOGGER.warning(f"Encountered exception \n{message}")
         profile_result = ProfileResult(
             status=Status(State.FAILED, message=message),
-            container_version=container_version,
+            triton_docker_image=triton_docker_image,
             profile_config=profile_config,
             triton_config=triton_config,
             dataset_profile=dataset_profile_config,
@@ -128,6 +147,6 @@ def profile_cmd(
         )
 
     results_store = ResultsStore(workspace)
-    results_store.dump("profile", [profile_result])
+    results_store.dump(ctx.command.name.replace("-", "_"), [profile_result])
 
     return profile_result

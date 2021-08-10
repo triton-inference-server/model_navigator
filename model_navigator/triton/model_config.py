@@ -96,7 +96,7 @@ class TritonModelConfigGenerator:
 
     def generate_prototxt_payload(self):
 
-        # https://docs.nvidia.com/deeplearning/triton-inference-server/master-user-guide/docs/protobuf_api/model_config.proto.html
+        # https://github.com/triton-inference-server/common/blob/main/protobuf/model_config.proto
         model_config = grpc_client.model_config_pb2.ModelConfig()
         model_config.name = self._model.name
         model_config.platform = _PLATFORM_PER_FORMAT[self._model.format]

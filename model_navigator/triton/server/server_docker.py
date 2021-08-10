@@ -82,6 +82,10 @@ class TritonServerDocker(TritonServer):
 
         try:
             # Run the docker container
+            logger.debug(
+                f"Starting docker container with {self._tritonserver_image} device_requests={devices} "
+                f"volumes={volumes} ports={ports}"
+            )
             self._tritonserver_container = self._docker_client.containers.run(
                 image=self._tritonserver_image,
                 device_requests=devices,
@@ -107,6 +111,7 @@ class TritonServerDocker(TritonServer):
         # Run the command in the container
         cmd = "tritonserver " + self._server_config.to_cli_string()
 
+        logger.debug(f"Run command {cmd} in docker container id={self._tritonserver_container.id}")
         _, self._tritonserver_log_gen = self._tritonserver_container.exec_run(cmd=cmd, stream=True)
 
     def stop(self):
@@ -118,11 +123,14 @@ class TritonServerDocker(TritonServer):
         logger.info("Stopping triton server.")
 
         if self._tritonserver_container is not None:
+            logger.debug(f"Stopping Triton Server id={self._tritonserver_container.id}")
             self._tritonserver_container.stop()
             self._tritonserver_container.remove(force=True)
 
             self._tritonserver_container = None
             self._docker_client.close()
+
+        logger.debug("Triton server stopped")
 
     def logs(self):
         """

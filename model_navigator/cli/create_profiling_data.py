@@ -22,6 +22,7 @@ from model_navigator.converter.config import DatasetProfileConfig
 from model_navigator.log import init_logger
 from model_navigator.perf_analyzer.profiling_data import create_profiling_data
 from model_navigator.utils.cli import common_options, options_from_config
+from model_navigator.validators import run_command_validators
 
 LOGGER = logging.getLogger("profiling_data")
 
@@ -34,7 +35,17 @@ LOGGER = logging.getLogger("profiling_data")
 @click.pass_context
 def create_profiling_data_cmd(ctx, verbose: bool, data_output_path: str, iterations: int, **kwargs):
     init_logger(verbose=verbose)
-    LOGGER.debug("Running create_profiling_data_cmd")
+    LOGGER.debug(f"Running '{ctx.command_path}' with config_path: {kwargs.get('config_path')}")
+
+    run_command_validators(
+        ctx.command.name,
+        configuration={
+            "verbose": verbose,
+            "data_output_path": data_output_path,
+            "iterations": iterations,
+            **kwargs,
+        },
+    )
 
     dataset_profile_config = DatasetProfileConfig.from_dict(kwargs)
 

@@ -13,7 +13,7 @@
 # limitations under the License.
 import logging
 import shutil
-from typing import List
+from typing import List, Optional
 
 import click
 
@@ -39,6 +39,8 @@ from model_navigator.configurator import Configurator, log_configuration_error
 from model_navigator.converter import ComparatorConfig, ConversionResult, DatasetProfileConfig
 from model_navigator.device.utils import get_gpus
 from model_navigator.exceptions import ModelNavigatorException
+from model_navigator.framework import SUFFIX2FRAMEWORK
+from model_navigator.kubernetes.triton import TritonServer
 from model_navigator.log import init_logger, log_dict
 from model_navigator.model import ModelConfig, ModelSignatureConfig
 from model_navigator.model_analyzer import (
@@ -60,6 +62,7 @@ from model_navigator.triton import (
 )
 from model_navigator.utils import Workspace, cli
 from model_navigator.utils.config import dataclass2dict
+from model_navigator.validators import run_command_validators
 
 LOGGER = logging.getLogger("run")
 
@@ -87,11 +90,28 @@ def run_cmd(
     verbose: bool,
     gpus: List[str],
     container_version: str,
+    framework_docker_image: Optional[str],
+    triton_docker_image: Optional[str],
     override_conversion_container: bool,
     **kwargs,
 ):
     init_logger(verbose=verbose)
-    LOGGER.debug("Running run_cmd")
+    LOGGER.debug(f"Running '{ctx.command_path}' with config_path: {kwargs.get('config_path')}")
+
+    run_command_validators(
+        ctx.command.name,
+        configuration={
+            "workspace_path": workspace_path,
+            "override_workspace": override_workspace,
+            "verbose": verbose,
+            "gpus": gpus,
+            "container_version": container_version,
+            "framework_docker_image": framework_docker_image,
+            "triton_docker_image": triton_docker_image,
+            "override_conversion_container": override_conversion_container,
+            **kwargs,
+        },
+    )
 
     workspace = Workspace(workspace_path)
     src_model_config = ModelConfig.from_dict(kwargs)
@@ -104,6 +124,10 @@ def run_cmd(
     profile_config = ModelAnalyzerProfileConfig.from_dict(kwargs)
     analysis_config = ModelAnalyzerAnalysisConfig.from_dict(kwargs)
     perf_measurement_config = PerfMeasurementConfig.from_dict(kwargs)
+
+    framework = SUFFIX2FRAMEWORK[src_model_config.model_path.suffix]
+    framework_docker_image = framework_docker_image or framework.container_image(container_version)
+    triton_docker_image = triton_docker_image or TritonServer.container_image(container_version)
 
     log_dict(
         "run args:",
@@ -121,7 +145,8 @@ def run_cmd(
             "workspace_path": workspace_path,
             "override_workspace": override_workspace,
             "override_conversion_container": override_conversion_container,
-            "container_version": container_version,
+            "framework_docker_image": framework_docker_image,
+            "triton_docker_image": triton_docker_image,
             "gpus": gpus,
             "verbose": verbose,
         },
@@ -139,11 +164,19 @@ def run_cmd(
     interim_model_repository = workspace.path / "interim-model-store"
     final_model_repository = workspace.path / triton_config.model_repository
 
+    interim_model_repository.mkdir(parents=True, exist_ok=True)
+    final_model_repository.mkdir(parents=True, exist_ok=True)
+
     results_to_analyze = []
     configurator = Configurator()
 
     # TODO: refactor that loop
-    triton_server = _get_triton_server(container_version, gpus, interim_model_repository, triton_config)
+    triton_server = _get_triton_server(
+        triton_docker_image=triton_docker_image,
+        gpus=gpus,
+        models_repository=interim_model_repository,
+        analyzer_config=triton_config,
+    )
     for model_to_deploy in succeeded_models:
         LOGGER.info(f"Running triton model configuration variants generation for {model_to_deploy.name}")
         for variant in configurator.get_models_variants(model_to_deploy):
@@ -275,7 +308,7 @@ def _obtain_conversion_config(
     return new_conversion_set_config
 
 
-def _get_triton_server(container_version, gpus, models_repository, analyzer_config):
+def _get_triton_server(*, triton_docker_image, gpus, models_repository, analyzer_config):
     triton_config = TritonServerConfig()
     triton_config["model-repository"] = models_repository.resolve().as_posix()
     triton_config["model-control-mode"] = "explicit"
@@ -287,7 +320,7 @@ def _get_triton_server(container_version, gpus, models_repository, analyzer_conf
         )
     elif analyzer_config.triton_launch_mode == TritonLaunchMode.DOCKER:
         triton_server = TritonServerFactory.create_server_docker(
-            image="nvcr.io/nvidia/tritonserver:" + container_version + "-py3",
+            image=triton_docker_image,
             config=triton_config,
             gpus=get_gpus(gpus=gpus),
         )

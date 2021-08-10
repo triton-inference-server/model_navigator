@@ -17,7 +17,6 @@ from model_navigator.converter.config import (  # noqa: F401
     ConversionLaunchMode,
     DatasetProfileConfig,
 )
-from model_navigator.converter.container import ConverterContainer  # noqa: F401
 from model_navigator.converter.convert import Converter  # noqa: F401
 from model_navigator.converter.polygraphy.dataloader import DataLoader  # noqa: F401
 from model_navigator.converter.results import ConversionResult  # noqa: F401

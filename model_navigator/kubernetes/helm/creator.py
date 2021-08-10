@@ -53,14 +53,16 @@ class ChartCreator:
         self,
         *,
         catalog: typing.Union[str, pathlib.Path],
-        container_version: str,
+        chart_version: str,
+        docker_image: typing.Optional[str] = None,
         framework: framework.Framework,
         chart_name: str,
         cmds: typing.List[str],
     ):
         self.catalog = pathlib.Path(catalog)
         self.framework = framework
-        self.container_version = container_version
+        self.chart_version = chart_version
+        self.docker_image = docker_image
         self.name = chart_name
         self.cmds = cmds
 
@@ -108,7 +110,7 @@ class ChartCreator:
         chart = self.CHART_CLS(
             name=self.name,
             description=self.description,
-            version=self.container_version,
+            version=self.chart_version,
         )
 
         chart_file = self.chart_dir / "Chart.yaml"
@@ -118,7 +120,7 @@ class ChartCreator:
 
     @hasclass("VALUES_CLS")
     def _create_values_file(self):
-        values = self.VALUES_CLS(container_version=self.container_version)
+        values = self.VALUES_CLS(docker_image=self.docker_image)
 
         values_file = self.chart_dir / "values.yaml"
         self._create_yaml_file(file_path=values_file, data=values.data())

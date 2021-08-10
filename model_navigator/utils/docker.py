@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, TextIO
+from typing import Any, Dict, List, Optional, TextIO, Union
 
 import dockerpty
 from docker import APIClient, from_env
@@ -22,9 +23,20 @@ from docker.types import DeviceRequest
 
 LOGGER = logging.getLogger(__name__)
 
+ContainerIdType = str
+ContainerIpAddress = str
+CONTAINER_ID_LENGTH = 10
+
+
+@dataclass(frozen=True)
+class ContainerMount:
+    host_path: Path
+    container_path: Path
+    mount_type: str
+
 
 class DockerContainer:
-    def __init__(self, container_id: str):
+    def __init__(self, container_id: ContainerIdType):
         self._docker_api_client = APIClient()
         self._docker_client = from_env()
         containers = self._docker_client.containers.list(filters={"id": container_id})
@@ -43,8 +55,15 @@ class DockerContainer:
         stderr: Optional[TextIO] = None,
     ):
         LOGGER.debug(f"Running cmd: {cmd}")
+        interactive = stdin.isatty() if hasattr(stdin, "isatty") else False
         dockerpty.exec_command(
-            self._docker_api_client, self._container.id, command=cmd, stdin=stdin, stdout=stdout, stderr=stderr
+            self._docker_api_client,
+            self._container.id,
+            command=cmd,
+            stdin=stdin,
+            stdout=stdout,
+            stderr=stderr,
+            interactive=interactive,
         )
 
     @property
@@ -68,6 +87,19 @@ class DockerContainer:
         self._container.reload()
         return self._container.attrs["NetworkSettings"]["IPAddress"]
 
+    @property
+    def mounts(self) -> List[ContainerMount]:
+        self._container.reload()
+        mounts = self._container.attrs["Mounts"]
+        return [
+            ContainerMount(
+                host_path=Path(mount["Source"]),
+                container_path=Path(mount["Destination"]),
+                mount_type=mount["Type"],
+            )
+            for mount in mounts
+        ]
+
 
 class DockerImage:
     def __init__(self, image_name: str):
@@ -84,20 +116,53 @@ class DockerImage:
         mount_as_volumes: Optional[List[Path]] = None,
     ):
         devices = devices or []
-        mount_as_volumes = mount_as_volumes or []
         environment = environment or {}
-        volumes = {p.resolve().as_posix(): {"bind": p.resolve().as_posix(), "mode": "rw"} for p in mount_as_volumes}
+        volumes = self._get_volumes(mount_as_volumes)
         return self._run_container(devices=devices, volumes=volumes, environment=environment, workdir_path=workdir_path)
 
-    def _fix_mounted_dirs_ownerships(self, container, mount_as_volumes):
-        import os
+    def _get_volumes(self, mount_as_volumes: Optional[List[Path]]):
 
-        current_uid = os.geteuid()
-        current_gid = os.getegid()
-        for mounted_dir in mount_as_volumes:
-            LOGGER.debug(f"Fixing ownership of {mounted_dir}")
-            cmd = f"chown -R {current_uid}:{current_gid} {mounted_dir}"
-            dockerpty.exec_command(self._docker_api_client, container.id, command=cmd)
+        mount_as_volumes = self._get_volume_mappings_containing(mount_as_volumes)
+        mount_as_volumes = sorted(set(mount_as_volumes or []))
+        volumes = {
+            mount.host_path.resolve().as_posix(): {"bind": mount.container_path.resolve().as_posix()}
+            for mount in mount_as_volumes
+        }
+        return volumes
+
+    def _get_volume_mappings_containing(self, container_side_required_paths: List[Path]) -> List[ContainerMount]:
+        from model_navigator.utils.env import get_environment_state
+
+        def _is_relative_to(a: Union[str, Path], *outer):
+            try:
+                a = Path(a)
+                a.relative_to(*outer)
+                return True
+            except ValueError:
+                return False
+
+        environment_state = get_environment_state()
+        is_model_navigator_running_in_container = environment_state.docker_container_id is not None
+
+        result = []
+        for container_side_required_path in container_side_required_paths:
+            if is_model_navigator_running_in_container:
+                mounts = [
+                    mount
+                    for mount in environment_state.docker_container_mounts
+                    if _is_relative_to(container_side_required_path, mount.container_path)
+                ]
+                assert len(mounts) == 1, f"for {container_side_required_path} found {mounts}"
+                mount = mounts[0]
+            else:
+                mount = ContainerMount(
+                    host_path=container_side_required_path,
+                    container_path=container_side_required_path,
+                    mount_type="bind",
+                )
+            result.append(mount)
+        mounts = sorted(set(result))
+        return mounts
 
     def _run_container(
         self,
@@ -112,8 +177,8 @@ class DockerImage:
         for device in devices:
             LOGGER.debug(f"Using device: {device}")
         volumes = volumes or {}
-        for volume_src in volumes:
-            LOGGER.debug(f"Mounting volume: {volume_src}")
+        for host_path, volume_spec in volumes.items():
+            LOGGER.debug(f"Mounting volume: {host_path}:{volume_spec['bind']}")
         environment = environment or {}
         LOGGER.debug(f"Setting environment: {environment}")
         container = self._docker_client.containers.run(
@@ -157,7 +222,7 @@ class DockerBuilder:
         LOGGER.debug(f"    Using workdir: {workdir_path}")
         LOGGER.debug(f"    Dockerfile: {dockerfile_path}")
         LOGGER.debug(f"    Build args: {build_args}")
-        build_logs = list()
+        build_logs = []
         try:
             _, build_logs = self._docker_client.images.build(
                 path=workdir_path.resolve().as_posix(),
@@ -177,3 +242,13 @@ class DockerBuilder:
                     LOGGER.debug(log.rstrip())
 
         return DockerImage(image_name)
+
+
+def get_docker_container_id() -> Optional[ContainerIdType]:
+    """Return container id in which current process is running or None if process is not running in container"""
+    try:
+        cpuset_path = Path("/proc/1/cpuset")
+        cpuset_content = cpuset_path.read_text("utf-8")
+        return Path(cpuset_content).name[:CONTAINER_ID_LENGTH]
+    except FileNotFoundError:
+        return None

@@ -28,6 +28,7 @@ from model_navigator.model_analyzer.summary import Summary
 from model_navigator.results import ResultsStore, State, Status
 from model_navigator.utils import Workspace
 from model_navigator.utils.cli import common_options, options_from_config
+from model_navigator.validators import run_command_validators
 
 LOGGER = logging.getLogger("analyze")
 
@@ -51,7 +52,17 @@ def analyze_cmd(
     **kwargs,
 ):
     init_logger(verbose=verbose)
-    LOGGER.debug("Running analyze_cmd")
+    LOGGER.debug(f"Running '{ctx.command_path}' with config_path: {kwargs.get('config_path')}")
+
+    run_command_validators(
+        ctx.command.name,
+        configuration={
+            "verbose": verbose,
+            "workspace_path": workspace_path,
+            "model_repository": model_repository,
+            **kwargs,
+        },
+    )
 
     workspace = Workspace(workspace_path)
 
@@ -92,7 +103,7 @@ def analyze_cmd(
         ]
 
     results_store = ResultsStore(workspace)
-    results_store.dump("analyze", analyze_results)
+    results_store.dump(ctx.command.name.replace("-", "_"), analyze_results)
 
     return analyze_results
 
