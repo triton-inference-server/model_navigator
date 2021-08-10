@@ -84,7 +84,8 @@ def dataclass2dict(config):
 
 
 def dict2dataclass(cls, data):
-    probable_data = {k: v for k, v in data.items() if hasattr(cls, k)}
+    fields_names = [f.name for f in dataclasses.fields(cls)]
+    probable_data = {k: v for k, v in data.items() if k in fields_names}
     LOGGER.debug(f"Parsing {probable_data} {cls}")
     return dacite.from_dict(cls, data, config=dacite.Config(cast=[Enum, Path, tuple, np.dtype]))
 

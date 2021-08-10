@@ -22,6 +22,7 @@ limitations under the License.
 - [Dump Conversion Comparator inputs and outputs into JSON files](docs/conversion.md#verification-of-conversion-Correctness)
 - Added information in logs on the tolerance parameters values to pass the conversion verification
 - Use `count_windows` mode as default option for Perf Analyzer
+- Added possibility to define custom docker images
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 - Versions of used external components:

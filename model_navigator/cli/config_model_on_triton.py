@@ -44,6 +44,7 @@ from model_navigator.triton.config import (
 )
 from model_navigator.utils import Workspace
 from model_navigator.utils.cli import common_options, options_from_config
+from model_navigator.validators import run_command_validators
 
 LOGGER = logging.getLogger("config_model")
 
@@ -133,7 +134,21 @@ def config_model_on_triton_cmd(
     **kwargs,
 ):
     init_logger(verbose=verbose)
-    LOGGER.debug("Running config_model_on_triton_cmd")
+    LOGGER.debug(f"Running '{ctx.command_path}' with config_path: {kwargs.get('config_path')}")
+
+    run_command_validators(
+        ctx.command.name,
+        configuration={
+            "verbose": verbose,
+            "model_version": model_version,
+            "model_repository": model_repository,
+            "load_model": load_model,
+            "load_model_timeout_s": load_model_timeout_s,
+            "model_control_mode": model_control_mode,
+            "workspace_path": workspace_path,
+            **kwargs,
+        },
+    )
 
     model_config = ModelConfig.from_dict(kwargs)
     signature_config = ModelSignatureConfig.from_dict(kwargs)
@@ -187,7 +202,6 @@ def config_model_on_triton_cmd(
             scheduler_config=scheduler_config,
             instances_config=instances_config,
         )
-
         if load_model:
             _load_model(
                 triton_client_config=triton_client_config,
@@ -233,6 +247,6 @@ def config_model_on_triton_cmd(
 
     workspace = Workspace(workspace_path)
     results_store = ResultsStore(workspace)
-    results_store.dump("config_model", [config_model_result])
+    results_store.dump(ctx.command.name.replace("-", "_"), [config_model_result])
 
     return config_model_result

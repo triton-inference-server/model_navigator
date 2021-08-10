@@ -363,6 +363,8 @@ def options_from_config(config_dataclass, cli_specs=None):  # noqa: C901
 
 
 def common_options(f):
+    from model_navigator.kubernetes.triton import TritonServer
+
     def _load_config_from_file(ctx, param, value):
         """Set other CLI options defaults based on parameters from config file"""
         config_path = Path(value)
@@ -370,6 +372,7 @@ def common_options(f):
             ctx.default_map = ctx.default_map or {}
             with YamlConfigFile(config_path=config_path) as config_file:
                 ctx.default_map.update(config_file.config_dict)
+        return config_path
 
     # TODO: add versification if --config-path is first option wrapping command
     options = [
@@ -408,6 +411,25 @@ def common_options(f):
                 "(refer to https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html and https://docs.nvidia.com/deeplearning/triton-inference-server/release-notes/index.html for details)."
             ),
             default="21.06",
+        ),
+        click.option(
+            "--framework-docker-image",
+            help=(
+                "Custom framework docker image to use. If not provided "
+                "nvcr.io/nvidia/<framework>:<container_version>-<framework_and_python_version> "
+                "will be used"
+            ),
+            type=click.Path(dir_okay=False),
+            required=False,
+        ),
+        click.option(
+            "--triton-docker-image",
+            help=(
+                "Custom Triton Inference Server docker image to use. "
+                f"If not provided {TritonServer.image}:<container_version>-{TritonServer.tag} will be used"
+            ),
+            type=click.Path(dir_okay=False),
+            required=False,
         ),
         click.option(
             "--gpus",

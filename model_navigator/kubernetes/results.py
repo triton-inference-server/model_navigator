@@ -24,7 +24,8 @@ from model_navigator.triton import TritonModelInstancesConfig, TritonModelOptimi
 @dataclass
 class HelmChartGenerationResult:
     status: Status
-    container_version: str
+    triton_docker_image: str
+    framework_docker_image: str
     src_model_config: ModelConfig
     src_model_signature_config: ModelSignatureConfig
     conversion_config: ConversionConfig

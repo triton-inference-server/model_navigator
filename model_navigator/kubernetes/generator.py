@@ -15,7 +15,9 @@ import pathlib
 import shutil
 import typing
 
+from docker.utils import parse_repository_tag
 from jinja2 import Environment, FileSystemLoader
+from semver import VersionInfo
 
 from model_navigator.framework import Framework
 from model_navigator.kubernetes import internals, utils
@@ -24,13 +26,19 @@ from model_navigator.kubernetes.inference import InferenceChartCreator
 from model_navigator.utils.source import navigator_install_url
 
 
+def _chart_version_from_docker_tag(docker_tag):
+    return docker_tag if docker_tag and VersionInfo.isvalid(docker_tag) else None
+
+
 class Generator:
     def __call__(
         self,
         *,
         chart_name: str,
         output_path: pathlib.Path,
-        container_version: str,
+        chart_version: typing.Optional[str],
+        triton_docker_image: str,
+        framework_docker_image: str,
         framework,
         navigator_cmds: typing.List[str],
         evaluator_cmds: typing.List[str],
@@ -41,10 +49,20 @@ class Generator:
         self._create_catalog()
 
         chart_basename = chart_name.lower().replace("_", "-")
+
+        _, triton_docker_tag = parse_repository_tag(triton_docker_image)
+        _, framework_docker_tag = parse_repository_tag(framework_docker_image)
+        chart_version = (
+            chart_version
+            or _chart_version_from_docker_tag(triton_docker_tag)
+            or _chart_version_from_docker_tag(framework_docker_tag)
+            or "0.0.1"
+        )
         inference_chart_creator = InferenceChartCreator(
             chart_name=f"{chart_basename}-{InferenceChartCreator.NAME}",
             catalog=self.catalog,
-            container_version=container_version,
+            chart_version=chart_version,
+            docker_image=triton_docker_image,
             framework=framework,
             cmds=navigator_cmds,
         )
@@ -55,7 +73,8 @@ class Generator:
             evaluator_chart_creator = EvaluatorChartCreator(
                 chart_name=f"{chart_basename}-{EvaluatorChartCreator.NAME}",
                 catalog=self.catalog,
-                container_version=container_version,
+                chart_version=chart_version,
+                docker_image=None,
                 framework=framework,
                 cmds=evaluator_cmds,
             )
@@ -63,7 +82,7 @@ class Generator:
 
         if create_dockerfile:
             self._create_dockerfile(
-                container_version=container_version,
+                docker_image=framework_docker_image,
                 framework=framework,
                 inference_chart_creator=inference_chart_creator,
                 evaluator_chart_creator=evaluator_chart_creator,
@@ -77,7 +96,7 @@ class Generator:
 
     def _create_dockerfile(
         self,
-        container_version: str,
+        docker_image: str,
         framework: Framework,
         inference_chart_creator: InferenceChartCreator,
         evaluator_chart_creator: EvaluatorChartCreator,
@@ -90,7 +109,7 @@ class Generator:
 
         config_local_path = "config.yaml"
         tags = {
-            "FROM_IMAGE_NAME": framework.container_image(version=container_version),
+            "FROM_IMAGE_NAME": docker_image,
             "INSTALL_URL": install_url,
             "DEPLOYER_LOCAL": inference_chart_creator.entrypoint_local_path,
             "DEPLOYER_DOCKER": inference_chart_creator.entrypoint_docker_path,

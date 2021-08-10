@@ -75,6 +75,14 @@ chart_name: str
 # details).
 [ container_version: str | default: 21.06 ]
 
+# Custom framework docker image to use. If not provided
+# nvcr.io/nvidia/<framework>:<container_version>-<framework_and_python_version> will be used
+[ framework_docker_image: path ]
+
+# Custom Triton Inference Server docker image to use. If not provided nvcr.io/nvidia/tritonserver:<container_version>-py3
+# will be used
+[ triton_docker_image: path ]
+
 # List of GPU UUIDs to be used for the conversion and/or profiling. Use 'all' to profile all the GPUs visible by CUDA.
 [ gpus: str | default: ['all'] ]
 
@@ -86,6 +94,9 @@ chart_name: str
 
 # Version of model used by the Triton Inference Server.
 [ model_version: str | default: 1 ]
+
+# Version of the chart in Helm Charts repository.
+[ chart_version: str ]
 
 # Signature of the model inputs.
 [ inputs: list[str] ]

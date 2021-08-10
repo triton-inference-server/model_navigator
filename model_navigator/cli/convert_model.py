@@ -24,6 +24,7 @@ from typing import List, Optional, Sequence
 import click
 from docker.errors import DockerException
 from docker.types import DeviceRequest
+from docker.utils import parse_repository_tag
 
 from model_navigator.cli.spec import (
     ComparatorConfigCli,
@@ -39,13 +40,13 @@ from model_navigator.converter import (
     ConversionLaunchMode,
     ConversionResult,
     Converter,
-    ConverterContainer,
     DatasetProfileConfig,
 )
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.converter.utils import FORMAT2FRAMEWORK
 from model_navigator.device.utils import get_gpus
 from model_navigator.exceptions import ModelNavigatorCliException, ModelNavigatorException
+from model_navigator.framework import SUFFIX2FRAMEWORK
 from model_navigator.log import init_logger, log_dict
 from model_navigator.model import Format, Model, ModelConfig, ModelSignatureConfig
 from model_navigator.results import ResultsStore, State
@@ -54,6 +55,7 @@ from model_navigator.utils.cli import clean_workspace_if_needed, common_options,
 from model_navigator.utils.config import BaseConfig, YamlConfigFile
 from model_navigator.utils.docker import DockerBuilder, DockerImage
 from model_navigator.utils.source import navigator_install_url, navigator_is_editable
+from model_navigator.validators import run_command_validators
 
 LOGGER = logging.getLogger("convert")
 
@@ -160,7 +162,7 @@ def _run_in_docker(
     conversion_set_config: ConversionSetConfig,
     comparator_config: Optional[ComparatorConfig] = None,
     dataset_profile_config: Optional[DatasetProfileConfig] = None,
-    container_version: str,
+    framework_docker_image: str,
     model_format: Format,
     gpus: Optional[List[str]] = None,
     verbose: bool = False,
@@ -177,13 +179,11 @@ def _run_in_docker(
         config_file.save_config(dataset_profile_config)
 
     framework = FORMAT2FRAMEWORK[model_format]
-    base_framework_image_name = ConverterContainer.base_image(
-        model_format=model_format, container_version=container_version
-    )
-    converter_image_name = ConverterContainer.image(model_format=model_format, container_version=container_version)
+    _, framework_docker_tag = parse_repository_tag(framework_docker_image)
+    converter_docker_image = f"model_navigator_converter:{framework_docker_tag}"
 
     build_args = {
-        "FROM_IMAGE_NAME": base_framework_image_name,
+        "FROM_IMAGE_NAME": framework_docker_image,
     }
 
     if navigator_is_editable():
@@ -193,14 +193,14 @@ def _run_in_docker(
         install_url = navigator_install_url(framework)
         build_args["INSTALL_URL"] = install_url
 
-    LOGGER.debug(f"Base converter image: {base_framework_image_name}")
-    LOGGER.debug(f"Converter image: {converter_image_name}")
+    LOGGER.debug(f"Base converter image: {framework_docker_image}")
+    LOGGER.debug(f"Converter image: {converter_docker_image}")
 
-    conversion_image = DockerImage(converter_image_name)
+    conversion_image = DockerImage(converter_docker_image)
     if not conversion_image.exists() or override_conversion_container:
         conversion_image = DockerBuilder().build(
             dockerfile_path=dockerfile_path,
-            image_name=converter_image_name,
+            image_name=converter_docker_image,
             workdir_path=MODEL_NAVIGATOR_DIR,
             build_args=build_args,
         )
@@ -219,10 +219,13 @@ def _run_in_docker(
     gpus = get_gpus(gpus)
     devices = [DeviceRequest(device_ids=[gpus[0]], capabilities=[["gpu"]])]
     cwd = Path.cwd()
-    mount_as_volumes = [workspace.path, src_model_config.model_path.parent, cwd]
-    env = {"PYTHONPATH": cwd.as_posix(), _RUN_BY_MODEL_NAVIGATOR: 1}
+
+    required_paths = [workspace.path, src_model_config.model_path.parent, cwd]
+    required_paths = sorted({p.resolve() for p in required_paths})
+
+    env = {"PYTHONPATH": cwd.resolve().as_posix(), _RUN_BY_MODEL_NAVIGATOR: 1}
     container = conversion_image.run_container(
-        devices=devices, workdir_path=cwd, mount_as_volumes=mount_as_volumes, environment=env
+        devices=devices, workdir_path=cwd, mount_as_volumes=required_paths, environment=env
     )
 
     try:
@@ -231,12 +234,20 @@ def _run_in_docker(
     except DockerException as e:
         raise e
     finally:
-        # self._fix_mounted_dirs_ownerships(container, mount_as_volumes)
+        current_uid = os.geteuid()
+        current_gid = os.getegid()
+        for mounted_dir in required_paths:
+            mounted_dir = mounted_dir.resolve()
+            container.run_cmd(f"chown -R {current_uid}:{current_gid} {mounted_dir}")
         LOGGER.debug(f"Killing docker container {container.id[:8]}")
         container.kill()
 
     results_store = ResultsStore(workspace)
-    results = results_store.load("convert", ConversionResult)
+    results = results_store.load("convert_model")
+
+    # update framework_docker_image when run conversion in docker container
+    results = [dataclasses.replace(result, framework_docker_image=framework_docker_image) for result in results]
+    results_store.dump("convert_model", results)
 
     return results
 
@@ -283,6 +294,7 @@ def convert(
     verbose: bool,
     output_path: Optional[str],
     container_version: str,
+    framework_docker_image: Optional[str],
     gpus: Optional[List[str]],
     launch_mode: ConversionLaunchMode = ConversionLaunchMode.DOCKER,
     override_conversion_container: bool = False,
@@ -305,6 +317,9 @@ def convert(
         LOGGER.error(f"No such file or directory {src_model.path}")
         raise click.Abort()
 
+    framework = SUFFIX2FRAMEWORK[src_model_config.model_path.suffix]
+    framework_docker_image = framework_docker_image or framework.container_image(container_version)
+
     workspace = Workspace(workspace_path)
 
     if launch_mode == ConversionLaunchMode.DOCKER:
@@ -316,7 +331,7 @@ def convert(
             conversion_set_config=conversion_set_config,
             comparator_config=comparator_config,
             dataset_profile_config=dataset_profile_config,
-            container_version=container_version,
+            framework_docker_image=framework_docker_image,
             model_format=src_model.format,
             gpus=gpus,
             verbose=verbose,
@@ -336,6 +351,7 @@ def convert(
                     "override_workspace": override_workspace,
                     "output_path": output_path,
                     "container_version": container_version,
+                    "framework_docker_image": framework_docker_image,
                     "gpus": gpus,
                 },
             )
@@ -352,7 +368,7 @@ def convert(
         )
 
     results_store = ResultsStore(workspace)
-    results_store.dump("convert", conversion_results)
+    results_store.dump("convert_model", conversion_results)
 
     successful_conversion_results = [result for result in conversion_results if result.status.state == State.SUCCEEDED]
     if not successful_conversion_results:
@@ -382,7 +398,9 @@ def convert(
 @options_from_config(ConversionSetConfig, ConversionSetConfigCli)
 @options_from_config(ComparatorConfig, ComparatorConfigCli)
 @options_from_config(DatasetProfileConfig, DatasetProfileConfigCli)
+@click.pass_context
 def convert_cmd(
+    ctx,
     *,
     verbose: bool,
     launch_mode: str,
@@ -390,8 +408,20 @@ def convert_cmd(
     **kwargs,
 ):
     init_logger(verbose=verbose)
-    LOGGER.debug("Running convert_cmd")
+    LOGGER.debug(f"Running '{ctx.command_path}' with config_path: {kwargs.get('config_path')}")
+
+    run_command_validators(
+        ctx.command.name,
+        configuration={
+            "verbose": verbose,
+            "launch_mode": launch_mode,
+            "override_conversion_container": override_conversion_container,
+            **kwargs,
+        },
+    )
+
     launch_mode = ConversionLaunchMode(launch_mode)
+
     try:
         return convert(
             verbose=verbose,

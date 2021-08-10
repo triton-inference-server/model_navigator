@@ -28,3 +28,4 @@ class ConversionResult:
     comparator_config: Optional[ComparatorConfig] = None
     dataset_profile: Optional[DatasetProfileConfig] = None
     output_model: Optional[Model] = None
+    framework_docker_image: Optional[str] = None

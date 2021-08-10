@@ -28,7 +28,7 @@ from model_navigator.triton import TritonModelInstancesConfig, TritonModelOptimi
 @dataclass
 class ProfileResult:
     status: Status
-    container_version: str
+    triton_docker_image: str
     profile_config: ModelAnalyzerProfileConfig
     triton_config: ModelAnalyzerTritonConfig
     dataset_profile: Optional[DatasetProfileConfig] = None

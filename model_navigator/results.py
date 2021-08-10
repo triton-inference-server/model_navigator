@@ -50,7 +50,23 @@ class ResultsStore:
             yaml.dump(results_dict, results_file)
         return results_path
 
-    def load(self, stage, cls):
+    def load(self, stage):
+        # TODO: move this to decorator which is called in cli.main() by iterating through commands
+        # TODO: missing results for run command
+        from model_navigator.cli.config_model_on_triton import ConfigModelResult
+        from model_navigator.converter import ConversionResult
+        from model_navigator.kubernetes import HelmChartGenerationResult
+        from model_navigator.model_analyzer import AnalyzeResult, ProfileResult
+
+        _CLS_FOR_STAGE = {
+            "convert_model": ConversionResult,
+            "triton_config_model": ConfigModelResult,
+            "profile": ProfileResult,
+            "analyze": AnalyzeResult,
+            "helm_chart_create": HelmChartGenerationResult,
+        }
+
+        cls = _CLS_FOR_STAGE[stage]
         results_path: Path = self.get_path(stage)
         with results_path.open("r") as results_file:
             results = yaml.safe_load(results_file)

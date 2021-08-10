@@ -38,3 +38,11 @@ class TensorFlow2(Framework):
     acronym = "TF2"
     image = "nvcr.io/nvidia/tensorflow"
     tag = "tf2-py3"
+
+
+SUFFIX2FRAMEWORK = {
+    ".savedmodel": TensorFlow2,
+    ".plan": PyTorch,
+    ".onnx": PyTorch,
+    ".pt": PyTorch,
+}

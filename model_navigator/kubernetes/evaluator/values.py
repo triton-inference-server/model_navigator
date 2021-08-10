@@ -11,17 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from typing import Optional
+
 from model_navigator.kubernetes import helm
 
 
 class Values(helm.Values):
-    def __init__(self, container_version: str):
-        self.container_version = container_version
+    def __init__(self, docker_image: Optional[str] = None):
+        self.docker_image = docker_image
 
     def data(self):
-        values = {
-            "image": None,
-            "imagePullSecret": None,
-            "pullPolicy": "Always",
-        }
+        values = {"image": self.docker_image, "imagePullSecret": None, "pullPolicy": "Always"}
         return values
