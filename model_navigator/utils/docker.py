@@ -191,6 +191,7 @@ class DockerImage:
             stream=True,
             detach=True,
             auto_remove=True,
+            ipc_mode="host",
             working_dir=workdir_path.as_posix() if workdir_path else None,
         )
         LOGGER.debug(f"Started docker container {container.id[:8]}")

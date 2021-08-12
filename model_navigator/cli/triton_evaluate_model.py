@@ -16,6 +16,7 @@ import logging
 import traceback
 from dataclasses import dataclass
 from enum import Enum
+from subprocess import TimeoutExpired
 from typing import List, Optional, Tuple, Union
 
 import click as click
@@ -44,47 +45,82 @@ from model_navigator.utils import Workspace, cli
 LOGGER = logging.getLogger("triton_evaluate_model")
 
 
-class EvaluationMode(Enum):
+class MeasurementMode(Enum):
+    COUNT_WINDOWS = "count_windows"
+    TIME_WINDOWS = "time_windows"
+
+
+class PerformanceTool(Enum):
     """
-    Available evaluation modes
+    Available performance evaluation tools
+    """
+
+    MODEL_ANALYZER = "model_analyzer"
+    PERF_ANALYZER = "perf_analyzer"
+
+
+class BatchingMode(Enum):
+    """
+    Available batching modes
     """
 
     STATIC = "static"
     DYNAMIC = "dynamic"
 
 
+class EvaluationMode(Enum):
+    """
+    Available evaluation modes
+    """
+
+    OFFLINE = "offline"
+    ONLINE = "online"
+
+
+class OfflineMode(Enum):
+    SYSTEM = "system"
+    CUDA = "cuda"
+
+
 @dataclass
 class TritonEvaluateModelResult:
     status: Status
-    static_batching_log: Optional[str]
-    dynamic_batching_log: Optional[str]
+    log: Optional[str]
 
 
-def _dynamic_batching(
+def _perf_analyzer_evaluation(
+    server_url: str,
     model_name: str,
-    model_version: str,
-    max_batch_size: int,
-    input_shapes: Optional[List[str]] = None,
-    profiling_data: str = "random",
-    server_url: str = "http://localhost:8000",
-    measurement_mode: str = "count_windows",
-    measurement_request_count: int = 50,
+    input_shapes: List[str],
+    batch_size: int,
+    model_version: str = "1",
+    input_data: str = "random",
+    number_of_model_instances: int = 1,
+    measurement_mode: MeasurementMode = MeasurementMode.COUNT_WINDOWS,
     measurement_interval: int = 5000,
+    measurement_request_count: int = 50,
+    concurrency_steps: int = 1,
+    batching_mode: BatchingMode = BatchingMode.STATIC,
+    evaluation_mode: EvaluationMode = EvaluationMode.OFFLINE,
+    offline_mode: OfflineMode = OfflineMode.SYSTEM,
+    latency_report_file: Optional[str] = None,
     verbose: bool = False,
     timeout: int = 600,
-) -> str:
-    """
-    Evaluate model with dynamic batching
-    """
-    LOGGER.debug("Evaluating model on Triton with Dynamic Batching")
-
+):
     protocol, host, port = parse_server_url(server_url)
-    max_total_requests = 2 * max_batch_size
-    max_concurrency = min(256, max_total_requests)
-    batch_size = max(1, max_total_requests // 256)
 
-    step = max(1, max_concurrency // 16)
-    min_concurrency = step
+    if batching_mode == BatchingMode.STATIC:
+        max_concurrency = 1
+        min_concurrency = 1
+        step = 1
+    elif batching_mode == BatchingMode.DYNAMIC:
+        max_total_requests = 2 * batch_size * number_of_model_instances
+        max_concurrency = min(256, max_total_requests)
+        step = max(1, max_concurrency // concurrency_steps)
+        min_concurrency = step
+        batch_size = [max(1, max_total_requests // 256)]
+    else:
+        raise ValueError(f"Unsupported batching mode: {batching_mode}")
 
     params = {
         "model-name": model_name,
@@ -92,72 +128,31 @@ def _dynamic_batching(
         "batch-size": batch_size,
         "url": f"{host}:{port}",
         "protocol": protocol,
-        "input-data": profiling_data,
+        "input-data": input_data,
         "measurement-mode": measurement_mode,
         "measurement-request-count": measurement_request_count,
         "measurement-interval": measurement_interval,
         "concurrency-range": f"{min_concurrency}:{max_concurrency}:{step}",
-        "verbose": verbose,
     }
 
-    if input_shapes:
-        params["shapes"] = input_shapes
+    if latency_report_file:
+        params["latency_report_file"] = latency_report_file
+
+    if verbose:
+        params["verbose"] = True
+
+    if evaluation_mode == EvaluationMode.OFFLINE:
+        params["shared-memory"] = offline_mode.value
+
+    if verbose:
+        log_dict(f"Perf Analyzer config for {batch_size}", params)
 
     perf_config = PerfAnalyzerConfig()
     for param, value in params.items():
         perf_config[param] = value
 
-    perf_analyzer = PerfAnalyzer(
-        perf_config,
-        timeout=timeout,
-        stream_output=verbose,
-    )
-    perf_analyzer.run()
-    output = perf_analyzer.output()
-
-    return output
-
-
-def _static_batching(
-    model_name: str,
-    model_version: str,
-    max_batch_size: int,
-    input_shapes: Optional[List[str]] = None,
-    profiling_data: str = "random",
-    server_url: str = "http://localhost:8000",
-    measurement_mode: str = "count_windows",
-    measurement_request_count: int = 50,
-    measurement_interval: int = 5000,
-    verbose: bool = False,
-    timeout: int = 600,
-) -> str:
-    """
-    Evaluate model with static batching
-    """
-    LOGGER.debug("Evaluating model on Triton with Static Batching")
-
-    protocol, host, port = parse_server_url(server_url)
-
-    max_batch_size = max_batch_size if max_batch_size > 0 else 1
-    params = {
-        "model-name": model_name,
-        "model-version": model_version,
-        "batch-size": max_batch_size,
-        "url": f"{host}:{port}",
-        "protocol": protocol,
-        "input-data": profiling_data,
-        "measurement-mode": measurement_mode,
-        "measurement-request-count": measurement_request_count,
-        "measurement-interval": measurement_interval,
-        "verbose": verbose,
-    }
-
-    if input_shapes:
-        params["shapes"] = input_shapes
-
-    perf_config = PerfAnalyzerConfig()
-    for param, value in params.items():
-        perf_config[param] = value
+    for shape in input_shapes:
+        perf_config["shape"] = shape
 
     perf_analyzer = PerfAnalyzer(
         perf_config,
@@ -177,9 +172,8 @@ def _get_shape_params(dataset_profile_config):
     def _shape_param_format(name, shape_):
         return f"{name}:{','.join(map(str, shape_[1:]))}"
 
-    shape_param = " ".join(
-        [_shape_param_format(name, shape_) for name, shape_ in dataset_profile_config.max_shapes.items()]
-    )
+    shape_param = [_shape_param_format(name, shape_) for name, shape_ in dataset_profile_config.max_shapes.items()]
+
     return shape_param
 
 
@@ -191,11 +185,26 @@ def _get_shape_params(dataset_profile_config):
 @click.option(
     "--evaluation-mode",
     type=click.Choice([item.value for item in EvaluationMode]),
-    default=[EvaluationMode.STATIC.value],
+    default=EvaluationMode.OFFLINE.value,
+    help="Select model evaluation mode "
+    "'offline' use system or GPU memory to pass tensors. "
+    "'online' use TCP to pass tensors.",
+)
+@click.option(
+    "--offline-mode",
+    type=click.Choice([item.value for item in OfflineMode]),
+    default=OfflineMode.SYSTEM.value,
+    help="Select offline mode "
+    "'system' use system memory to pass tensors. "
+    "'cuda' use GPU memory to pass tensors. ",
+)
+@click.option(
+    "--batching-mode",
+    type=click.Choice([item.value for item in BatchingMode]),
+    default=BatchingMode.STATIC.value,
     help="Select model evaluation mode "
     "'static' run static batching scenario. "
     "'dynamic' run dynamic batching scenario.",
-    multiple=True,
 )
 @cli.options_from_config(PerfMeasurementConfig, PerfMeasurementConfigCli)
 @cli.options_from_config(DatasetProfileConfig, DatasetProfileConfigCli)
@@ -207,6 +216,8 @@ def triton_evaluate_model_cmd(
     model_name: str,
     model_version: str,
     evaluation_mode: Union[List, Tuple],
+    batching_mode: str,
+    offline_mode: str,
     max_batch_size: int,
     verbose: bool,
     **kwargs,
@@ -238,71 +249,61 @@ def triton_evaluate_model_cmd(
             },
         )
 
-    static_batching_log = None
-    dynamic_batching_log = None
+    perf_analyzer_log = None
 
     profiling_data = "random"
     shapes = []
 
     try:
         shape_params = _get_shape_params(dataset_profile_config)
-        if dataset_profile_config.value_ranges:
+        if dataset_profile_config.value_ranges and dataset_profile_config.dtypes:
             profiling_data_path = workspace.path / DEFAULT_RANDOM_DATA_FILENAME
             ctx.forward(create_profiling_data_cmd, data_output_path=profiling_data_path)
             profiling_data = profiling_data_path
         elif shape_params:
             shapes = shape_params
 
-        if EvaluationMode.STATIC.value in evaluation_mode:
-            static_batching_log = _static_batching(
-                server_url=triton_client_config.server_url,
-                model_name=model_name,
-                model_version=model_version,
-                max_batch_size=max_batch_size,
-                input_shapes=shapes,
-                profiling_data=profiling_data,
-                measurement_mode=perf_measurement_config.perf_measurement_mode,
-                measurement_interval=perf_measurement_config.perf_measurement_interval,
-                measurement_request_count=perf_measurement_config.perf_measurement_request_count,
-                timeout=perf_measurement_config.perf_analyzer_timeout,
-                verbose=verbose,
-            )
-
-        if EvaluationMode.DYNAMIC.value in evaluation_mode and max_batch_size > 0:
-            dynamic_batching_log = _dynamic_batching(
-                server_url=triton_client_config.server_url,
-                model_name=model_name,
-                model_version=model_version,
-                input_shapes=shapes,
-                profiling_data=profiling_data,
-                max_batch_size=max_batch_size,
-                measurement_mode=perf_measurement_config.perf_measurement_mode,
-                measurement_interval=perf_measurement_config.perf_measurement_interval,
-                measurement_request_count=perf_measurement_config.perf_measurement_request_count,
-                timeout=perf_measurement_config.perf_analyzer_timeout,
-                verbose=verbose,
-            )
+        perf_analyzer_log = _perf_analyzer_evaluation(
+            server_url=triton_client_config.server_url,
+            model_name=model_name,
+            model_version=model_version,
+            batch_size=max_batch_size,
+            input_shapes=shapes,
+            input_data=profiling_data,
+            measurement_mode=perf_measurement_config.perf_measurement_mode,
+            measurement_interval=perf_measurement_config.perf_measurement_interval,
+            measurement_request_count=perf_measurement_config.perf_measurement_request_count,
+            timeout=perf_measurement_config.perf_analyzer_timeout,
+            verbose=verbose,
+            evaluation_mode=EvaluationMode(evaluation_mode),
+            batching_mode=BatchingMode(batching_mode),
+            offline_mode=OfflineMode(offline_mode),
+        )
 
         message = f"Evaluated model {model_name} and batch size {max_batch_size} and modes: {','.join(evaluation_mode)}"
         result = TritonEvaluateModelResult(
             status=Status(state=State.SUCCEEDED, message=message),
-            static_batching_log=static_batching_log,
-            dynamic_batching_log=dynamic_batching_log,
+            log=perf_analyzer_log,
         )
     except ModelNavigatorException as e:
         LOGGER.debug(f"Encountered exception \n{str(e)}")
         result = TritonEvaluateModelResult(
             status=Status(state=State.FAILED, message=str(e)),
-            static_batching_log=static_batching_log,
-            dynamic_batching_log=dynamic_batching_log,
+            log=perf_analyzer_log,
+        )
+    except TimeoutExpired:
+        error_message = "perf_analyzer's timeouted, verify performance measurement options."
+        LOGGER.debug(error_message)
+        result = TritonEvaluateModelResult(
+            status=Status(state=State.FAILED, message=error_message),
+            log=perf_analyzer_log,
         )
     except Exception:
         message = traceback.format_exc()
         LOGGER.debug(f"Encountered exception \n{message}")
         result = TritonEvaluateModelResult(
             status=Status(state=State.FAILED, message=message),
-            static_batching_log=static_batching_log,
-            dynamic_batching_log=dynamic_batching_log,
+            log=perf_analyzer_log,
         )
 
     return result

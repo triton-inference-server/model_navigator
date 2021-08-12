@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
-from subprocess import PIPE, STDOUT, CalledProcessError, Popen, TimeoutExpired, check_output
+from subprocess import PIPE, STDOUT, CalledProcessError, Popen, check_output
 from typing import List
 
 from model_navigator.exceptions import ModelNavigatorException
@@ -93,8 +93,6 @@ class PerfAnalyzer:
                     raise ModelNavigatorException(
                         f"Running perf_analyzer with {e.cmd} failed with" f" exit status {e.returncode} : {e.output}"
                     )
-            except TimeoutExpired:
-                raise ModelNavigatorException("perf_analyzer's timeouted, verify performance measurement options.")
 
         raise ModelNavigatorException(
             f"Ran perf_analyzer {MAX_INTERVAL_CHANGES} times, but no valid requests recorded."
@@ -125,7 +123,8 @@ class PerfAnalyzer:
                 print(output.rstrip())
 
         result = process.poll()
-        return result
+        if result != 0:
+            raise CalledProcessError(returncode=result, cmd=commands_lst, output=self._output)
 
     def _faild_with_measruement_inverval(self, output: str):
         return (
@@ -133,7 +132,7 @@ class PerfAnalyzer:
         )
 
     def _increase_request_count(self):
-        self._config["measurement-request-count"] -= COUNT_INTERVAL_DELTA
+        self._config["measurement-request-count"] += COUNT_INTERVAL_DELTA
         LOGGER.debug(
             "perf_analyzer's measurement request count is too small, "
             f"decreased to {self._config['measurement-request-count']}."

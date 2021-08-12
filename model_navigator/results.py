@@ -68,6 +68,10 @@ class ResultsStore:
 
         cls = _CLS_FOR_STAGE[stage]
         results_path: Path = self.get_path(stage)
+        if not results_path.exists():
+            LOGGER.debug(f"No results found for {stage}")
+            return []
+
         with results_path.open("r") as results_file:
             results = yaml.safe_load(results_file)
             results = [dict2dataclass(cls, result) for result in results]

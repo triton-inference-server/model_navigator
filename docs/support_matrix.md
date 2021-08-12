@@ -33,23 +33,25 @@ Refer to the [changelog](../CHANGELOG.md) for any related issues on these models
 | [NVIDIA DeepLearningExamples](https://github.com/NVIDIA/DeepLearningExamples) | [ResNet50 PyT](https://github.com/NVIDIA/DeepLearningExamples/tree/master/PyTorch/Classification/ConvNets) |
 | [NVIDIA DeepLearningExamples](https://github.com/NVIDIA/DeepLearningExamples) | [EfficientNet TF2](https://github.com/NVIDIA/DeepLearningExamples/tree/master/TensorFlow2/Classification/ConvNets) |
 | [NVIDIA DeepLearningExamples](https://github.com/NVIDIA/DeepLearningExamples) |[FastPitch PyT](https://github.com/NVIDIA/DeepLearningExamples/tree/master/PyTorch/SpeechSynthesis/FastPitch) |
+| [NVIDIA DeepLearningExamples](https://github.com/NVIDIA/DeepLearningExamples) |[Jasper PyT](https://github.com/NVIDIA/DeepLearningExamples/tree/master/PyTorch/SpeechRecognition/Jasper) |
+
 
 ## Third-Party Packages
 
 A set of component versions are imposed by the used `container_version` parameter value.
-By default, we're using the 21.05 container version that contains:
+By default, we're using the 21.07 container version that contains:
 
-- PyTorch 1.9.0a0+2ecb2c7
-- TensorFlow 2.4.0 / 1.15.5
-- TensorRT 7.2.3.4
-- [Triton Inference Server 2.10.0](https://github.com/triton-inference-server/server/releases/tag/v2.10.0)
-  - [ONNX Runtime 1.7.1](https://github.com/microsoft/onnxruntime/releases/tag/v1.7.0) (support for opset 13 from with ONNX 1.8)
-- [Polygraphy 0.29.1](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy)
+- PyTorch 1.10.0a0+ecc3718
+- TensorFlow 2.5.0 / 1.15.5
+- TensorRT TensorRT 8.0.1.6
+- [Triton Inference Server 2.12.0](https://github.com/triton-inference-server/server/releases/tag/v2.12.0)
+  - [ONNX Runtime 1.8.0](https://github.com/microsoft/onnxruntime/releases/tag/v1.8.0) (support for opset 14 from with ONNX 1.9)
+- [Polygraphy 0.31.1](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy)
 
 Refer to [the containers support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
 for a detailed summary for each version.
 
 The Triton Model Navigator installs additional components:
 
-- [tf2onnx 1.8.5](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.8.5)
-- [Triton Model Analyzer 21.05](https://github.com/triton-inference-server/model_analyzer)
+- [tf2onnx 1.9.1](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.9.1)
+- [Triton Model Analyzer 21.07](https://github.com/triton-inference-server/model_analyzer/tree/r21.07)

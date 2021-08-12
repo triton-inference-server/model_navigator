@@ -39,8 +39,8 @@ class Summary:
         self._metrics_path = metrics_path
         self._analysis_config = analysis_config
 
-        self._inference = list()
-        self._gpu_metrics = list()
+        self._inference = []
+        self._gpu_metrics = []
 
     def show(self):
         self._prepare()
@@ -69,7 +69,8 @@ class Summary:
         return self._gpu_metrics[idx]
 
     def _show_results(self, results: List[Dict], section: str):
-        index = range(1, self._analysis_config.top_n_configs + 1)
+        max_index = min(len(results), self._analysis_config.top_n_configs)
+        index = range(1, max_index + 1)
         header = ["No"]
 
         header = header + list(results[0].keys())
@@ -93,7 +94,7 @@ class Summary:
         self._gpu_metrics = metrics
 
     def _rows_from_csv(self, *, file_path: Path) -> List[Dict]:
-        data = list()
+        data = []
         with file_path.open("r") as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
@@ -107,7 +108,7 @@ class Summary:
 
     def _top_results(self, results: List[Dict]):
         comparator = ResultComparator(metric_objectives=self._analysis_config.objectives)
-        measurements = list()
+        measurements = []
         for result in results:
             heapq.heappush(measurements, Measurement(result, comparator))
 
@@ -118,8 +119,8 @@ class Summary:
         return top_results
 
     def _top_metrics(self, metrics: List[Dict], results: List[Dict]):
-        metrics_hashed = dict()
-        results_hashed = list()
+        metrics_hashed = {}
+        results_hashed = []
 
         for metric in metrics:
             key = self._hash_result(metric)
@@ -129,7 +130,7 @@ class Summary:
             key = self._hash_result(result)
             results_hashed.append(key)
 
-        filtered_metrics = list()
+        filtered_metrics = []
         for result_hash in results_hashed:
             metric = metrics_hashed[result_hash]
             filtered_metrics.append(metric)
@@ -147,7 +148,7 @@ class Summary:
             "Satisfies Constraints",
         }
 
-        filtered_items = dict()
+        filtered_items = {}
         for key, value in result.items():
             if key in merge_fields:
                 filtered_items[key] = value

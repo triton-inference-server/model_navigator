@@ -24,7 +24,6 @@ import numpy as np
 import yaml
 
 LOGGER = logging.getLogger(__name__)
-DEFAULT_CONFIG_PATH = "model_navigator.yaml"
 
 _MISSING = "__MISSING__"
 

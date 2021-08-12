@@ -31,12 +31,8 @@ $ make docker
 
 Running the Triton Model Navigator container requires additional mappings:
 * `-v /var/run/docker.sock:/var/run/docker.sock` allows running Docker containers as sibling containers from inside the Triton Model Navigator container to perform optimization processes.
-* `-v <path-to-model-catalog>:<path-to-model-catalog>` The ***absolute*** path to the catalog where models are being stored. The mapping inside the container must exactly match the host path.
-* `-v ${HOME}:${HOME}` The ***absolute*** path to the catalog where Model Navigator will be run from. The simple option is to map the user directory. Navigator creates a workspace catalog there to share artifacts across the steps.
-
-**Note**
-
-_The mappings of volumes inside the container must match the host path. This is required to share artifacts between steps correctly, as some steps are executed in separate containers._
+* `-v <path-to-model-catalog>:<path-to-model-catalog>` The path to the catalog where models are being stored.
+* `-v ${HOME}:${HOME}` The path to the catalog where Model Navigator will be run from. The simple option is to map the user directory. Navigator creates a workspace catalog there to share artifacts across the steps.
 
 To run the Triton Model Navigator container:
 ```shell

@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from typing import Any
+
 from model_navigator.exceptions import ModelNavigatorException
 from model_navigator.tensor import TensorSpec
 
@@ -41,10 +43,13 @@ class PerfAnalyzerConfig:
         "input-data",
         "shared-memory",
         "output-shared-memory-size",
-        "shape",
         "sequence-length",
         "string-length",
         "string-data",
+    ]
+
+    perf_analyzer_multiple_args = [
+        "shape",
     ]
 
     input_to_options = [
@@ -65,6 +70,7 @@ class PerfAnalyzerConfig:
         """
 
         self._args = {k: None for k in self.perf_analyzer_args}
+        self._multiple_args = {k: [] for k in self.perf_analyzer_multiple_args}
 
         self._options = {
             "-m": None,
@@ -108,7 +114,12 @@ class PerfAnalyzerConfig:
             passed into perf_analyzer
         """
 
-        return list(cls.perf_analyzer_args) + list(cls.input_to_options) + list(cls.input_to_verbose)
+        return (
+            list(cls.perf_analyzer_args)
+            + list(cls.perf_analyzer_multiple_args)
+            + list(cls.input_to_options)
+            + list(cls.input_to_verbose)
+        )
 
     def update_config(self, params=None):
         """
@@ -142,17 +153,20 @@ class PerfAnalyzerConfig:
         args = [f"{k} {v}" for k, v in self._options.items() if v]
         args += [k for k, v in self._verbose.items() if v]
         args += [f"--{k}={v}" for k, v in self._args.items() if v]
+        for k, v in self._multiple_args.items():
+            for item in v:
+                args.append(f"--{k}={item}")
 
         return " ".join(args)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str):
         """
         Gets an arguments value in config
 
         Parameters
         ----------
         key : str
-            The name of the argument to the tritonserver
+            The name of the argument to the perf_analyzer
 
         Returns
         -------
@@ -166,6 +180,8 @@ class PerfAnalyzerConfig:
 
         if key in self._args:
             return self._args[key]
+        elif key in self._multiple_args:
+            return self._multiple_args[key]
         elif key in self._input_to_options:
             return self._options[self._input_to_options[key]]
         elif key in self._input_to_verbose:
@@ -173,7 +189,7 @@ class PerfAnalyzerConfig:
         else:
             raise ModelNavigatorException(f"'{key}' Key not found in config")
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: Any):
         """
         Sets an arguments value in config
         after checking if defined/supported.
@@ -181,7 +197,7 @@ class PerfAnalyzerConfig:
         Parameters
         ----------
         key : str
-            The name of the argument to the tritonserver
+            The name of the argument to the perf_analyzer
         value : (any)
             The value to which the argument is being set
 
@@ -194,6 +210,8 @@ class PerfAnalyzerConfig:
 
         if key in self._args:
             self._args[key] = value
+        elif key in self._multiple_args:
+            self._multiple_args[key].append(value)
         elif key in self._input_to_options:
             self._options[self._input_to_options[key]] = value
         elif key in self._input_to_verbose:

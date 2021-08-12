@@ -27,4 +27,4 @@ class PerfMeasurementConfig(BaseConfig):
     perf_analyzer_timeout: int = 600
     perf_measurement_mode: str = MeasurementMode.COUNT_WINDOWS.value
     perf_measurement_request_count: int = 50
-    perf_measurement_interval: int = 10000
+    perf_measurement_interval: int = 5000

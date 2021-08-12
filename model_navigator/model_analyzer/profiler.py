@@ -143,7 +143,7 @@ class ProfileConfigGenerator(BaseConfigGenerator):
         else:
             max_preferred_batch_size = 1
 
-        # https://github.com/triton-inference-server/model_analyzer/blob/r21.06/docs/config.md
+        # https://github.com/triton-inference-server/model_analyzer/blob/r21.07/docs/config.md
         config = {
             "profile_models": model_names,
             "triton_docker_image": self._triton_docker_image,
@@ -180,6 +180,7 @@ class ProfileConfigGenerator(BaseConfigGenerator):
             def _shape_param_format(name, shape_):
                 return f"{name}:{','.join(map(str, shape_[1:]))}"
 
+            # FIXME: Model Analyzer should allow to pass multiple values for shape
             configuration["shape"] = " ".join(
                 [_shape_param_format(name, shape_) for name, shape_ in self._dataset_profile_config.max_shapes.items()]
             )

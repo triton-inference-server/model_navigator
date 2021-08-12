@@ -286,7 +286,8 @@ def onnx2trt(
         LOGGER.info("Polygraphy onnx2trt succeed.")
     except sh.ErrorReturnCode as e:
 
-        _dump_tolerace_parameters_if_possible(comparator_inputs_path, comparator_outputs_path)
+        if comparator_inputs_path.exists() and comparator_outputs_path.exists():
+            _dump_tolerace_parameters_if_possible(comparator_inputs_path, comparator_outputs_path)
 
         LOGGER.warning(f"Polygraphy onnx2trt conversion failed. Details can be found in logfile: {log_path}")
         raise ModelNavigatorConverterCommandException(message=e.stdout.decode("utf-8"), log_path=log_path)

@@ -21,7 +21,7 @@ from typing import Callable, Dict, List, Optional, Tuple
 import click
 from click.types import UNPROCESSED
 
-from model_navigator.utils.config import DEFAULT_CONFIG_PATH, YamlConfigFile
+from model_navigator.utils.config import YamlConfigFile
 from model_navigator.utils.workspace import DEFAULT_WORKSPACE_PATH, Workspace
 
 LOGGER = logging.getLogger(__name__)
@@ -367,11 +367,14 @@ def common_options(f):
 
     def _load_config_from_file(ctx, param, value):
         """Set other CLI options defaults based on parameters from config file"""
+        if not value:
+            return value
+
         config_path = Path(value)
-        if config_path.exists():
-            ctx.default_map = ctx.default_map or {}
-            with YamlConfigFile(config_path=config_path) as config_file:
-                ctx.default_map.update(config_file.config_dict)
+        ctx.default_map = ctx.default_map or {}
+        with YamlConfigFile(config_path=config_path) as config_file:
+            ctx.default_map.update(config_file.config_dict)
+
         return config_path
 
     # TODO: add versification if --config-path is first option wrapping command
@@ -384,8 +387,7 @@ def common_options(f):
                 "For more information about configuration files, refer to: "
                 "https://github.com/triton-inference-server/model_navigator/blob/main/docs/run.md"
             ),
-            type=click.Path(dir_okay=False),
-            default=DEFAULT_CONFIG_PATH,
+            type=click.Path(dir_okay=False, exists=True),
             show_default=True,
             required=False,
             callback=_load_config_from_file,
@@ -410,7 +412,7 @@ def common_options(f):
                 "NVIDIA framework and Triton container version to use "
                 "(refer to https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html and https://docs.nvidia.com/deeplearning/triton-inference-server/release-notes/index.html for details)."
             ),
-            default="21.06",
+            default="21.07",
         ),
         click.option(
             "--framework-docker-image",

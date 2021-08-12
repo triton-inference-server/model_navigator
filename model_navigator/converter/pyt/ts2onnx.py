@@ -139,9 +139,11 @@ def main():
     with torch.no_grad():
         dummy_output = model(*(data_sample for name, data_sample in dummy_input.items()))
 
+    # Map to list of dicts
+    dummy_input = [{name: tensor} for name, tensor in dummy_input.items()]
     torch.onnx.export(
         model=model,
-        args=(dummy_input,),
+        args=dummy_input,
         example_outputs=dummy_output,
         f=args.onnx_path,
         opset_version=args.opset_version,

@@ -234,11 +234,6 @@ def _run_in_docker(
     except DockerException as e:
         raise e
     finally:
-        current_uid = os.geteuid()
-        current_gid = os.getegid()
-        for mounted_dir in required_paths:
-            mounted_dir = mounted_dir.resolve()
-            container.run_cmd(f"chown -R {current_uid}:{current_gid} {mounted_dir}")
         LOGGER.debug(f"Killing docker container {container.id[:8]}")
         container.kill()
 

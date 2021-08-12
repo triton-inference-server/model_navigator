@@ -23,12 +23,15 @@ limitations under the License.
 - Added information in logs on the tolerance parameters values to pass the conversion verification
 - Use `count_windows` mode as default option for Perf Analyzer
 - Added possibility to define custom docker images
+- Bugfixes
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 - Versions of used external components:
-    - [Triton Model Analyzer](https://github.com/triton-inference-server/model_analyzer): 21.06
-    - [Triton Inference Server Client](https://github.com/triton-inference-server/client/): 2.11.0
-    - tf2onnx: [v1.8.5](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.8.5) (support for ONNX opset 13, tf 1.15 and 2.5)
+    - [Triton Model Analyzer](https://github.com/triton-inference-server/model_analyzer): 1.6.0
+    - [Triton Inference Server Client](https://github.com/triton-inference-server/client/): 2.12.0
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.31.1
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.11
+    - tf2onnx: [v1.9.1](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.9.1) (support for ONNX opset 14, tf 1.15 and 2.5)
     - Other component versions depend on the used framework and Triton Inference Server containers versions.
       See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
       for a detailed summary.
@@ -39,10 +42,8 @@ limitations under the License.
     - missing support for stateful models (ex. time-series one)
     - missing support for models without batching support
     - no verification of conversion results for conversions: TF -> ONNX, TorchScript -> ONNX
-    - issues with TorchScript -> ONNX conversion due to [issue in PyTorch 1.8](https://github.com/pytorch/pytorch/issues/53506)
-      - affected NVIDIA PyTorch containers: 20.12, 21.02, 21.03
-      - workaround: use PyTorch containers newer than 21.03
     - possible to define a single profile for TensorRT
+    - TensorRT backend acceleration not supported for ONNX Runtime in Triton Inference Server ver. 21.07
 
 ## 0.2.0 (2021-07-05)
 

@@ -118,7 +118,7 @@ model_path: path
 
 # Path to the configuration file containing default parameter values to use. For more information about configuration
 # files, refer to: https://github.com/triton-inference-server/model_navigator/blob/main/docs/run.md
-[ config_path: path | default: model_navigator.yaml ]
+[ config_path: path ]
 
 # Path to the output workspace directory.
 [ workspace_path: path | default: navigator_workspace ]
@@ -129,7 +129,7 @@ model_path: path
 # NVIDIA framework and Triton container version to use (refer to https://docs.nvidia.com/deeplearning/frameworks/support-
 # matrix/index.html and https://docs.nvidia.com/deeplearning/triton-inference-server/release-notes/index.html for
 # details).
-[ container_version: str | default: 21.06 ]
+[ container_version: str | default: 21.07 ]
 
 # Custom framework docker image to use. If not provided
 # nvcr.io/nvidia/<framework>:<container_version>-<framework_and_python_version> will be used
@@ -257,7 +257,7 @@ model_path: path
 [ perf_measurement_request_count: integer | default: 50 ]
 
 # Perf Analyzer time windows time in [ms] used for stabilization.
-[ perf_measurement_interval: integer | default: 10000 ]
+[ perf_measurement_interval: integer | default: 5000 ]
 
 # Override conversion container if it already exists.
 [ override_conversion_container: boolean ]

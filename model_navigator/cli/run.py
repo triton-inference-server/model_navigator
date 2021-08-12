@@ -181,7 +181,6 @@ def run_cmd(
         LOGGER.info(f"Running triton model configuration variants generation for {model_to_deploy.name}")
         for variant in configurator.get_models_variants(model_to_deploy):
             model_to_deploy_config = ModelConfig(variant.name, model_to_deploy.path)
-            failed = False
             error_logs = []
             try:
                 triton_server.start()
@@ -199,7 +198,6 @@ def run_cmd(
                     load_model=True,
                 )
                 if config_result.status.state != State.SUCCEEDED:
-                    failed = True
                     error_logs.append(config_result.status.message)
                     continue
 
@@ -214,18 +212,16 @@ def run_cmd(
                     model_version=model_to_deploy_config.model_version,
                 )
                 if evaluate_result.status.state != State.SUCCEEDED:
-                    failed = True
-                    error_logs.append(evaluate_result.dynamic_batching_log)
-                    error_logs.append(evaluate_result.static_batching_log)
+                    error_logs.append(evaluate_result.log)
                     continue
 
-                if not failed:
+                if not error_logs:
                     LOGGER.info(f"Promoting {variant.name} to profiling.")
                     results_to_analyze.append(config_result)
             finally:
                 triton_server.stop()
 
-                if failed:
+                if error_logs:
                     server_log = triton_server.logs()
                     LOGGER.debug(server_log)
 
@@ -244,6 +240,12 @@ def run_cmd(
         dst_dir = final_model_repository / src_dir.name
         LOGGER.info(f"Moving model dir between model stores: {src_dir} -> {dst_dir}")
         shutil.move(src_dir.as_posix(), dst_dir.as_posix())
+
+    if not results_to_analyze:
+        LOGGER.warning(
+            "No models promoted to profiling and analysis. Please, review the error logs and verify the input model."
+        )
+        return
 
     LOGGER.info("Running Model Analyzer profiling for promoted models")
     profile_result: ProfileResult = ctx.forward(
