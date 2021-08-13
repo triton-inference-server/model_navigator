@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 model_name: add_sub
-model_path: Projects/JoC/model_navigator/examples/quick-start/model.pt
+model_path: examples/quick-start/model.pt
 inputs:
   INPUT__0:
     name: INPUT__0

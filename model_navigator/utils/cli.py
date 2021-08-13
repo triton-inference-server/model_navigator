@@ -421,7 +421,7 @@ def common_options(f):
                 "nvcr.io/nvidia/<framework>:<container_version>-<framework_and_python_version> "
                 "will be used"
             ),
-            type=click.Path(dir_okay=False),
+            type=str,
             required=False,
         ),
         click.option(
@@ -430,7 +430,7 @@ def common_options(f):
                 "Custom Triton Inference Server docker image to use. "
                 f"If not provided {TritonServer.image}:<container_version>-{TritonServer.tag} will be used"
             ),
-            type=click.Path(dir_okay=False),
+            type=str,
             required=False,
         ),
         click.option(
