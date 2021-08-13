@@ -183,6 +183,7 @@ def run_cmd(
             model_to_deploy_config = ModelConfig(variant.name, model_to_deploy.path)
             error_logs = []
             try:
+                LOGGER.info(f"Verifying model variant: {variant.name}")
                 triton_server.start()
                 triton_client = triton_server.create_grpc_client()
                 triton_client_config = TritonClientConfig(server_url=triton_client.server_url)

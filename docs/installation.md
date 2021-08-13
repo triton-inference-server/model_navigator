@@ -34,6 +34,13 @@ Running the Triton Model Navigator container requires additional mappings:
 * `-v <path-to-model-catalog>:<path-to-model-catalog>` The path to the catalog where models are being stored.
 * `-v ${HOME}:${HOME}` The path to the catalog where Model Navigator will be run from. The simple option is to map the user directory. Navigator creates a workspace catalog there to share artifacts across the steps.
 
+**Note**
+
+When using `triton_launch_mode=docker`:
+* The mappings of volumes inside the container must match the host path, example: `-v {host-path}:{host-path}`
+* Use `--ipc=host` mode running `model-navigator` container
+
+
 To run the Triton Model Navigator container:
 ```shell
 $ docker run -it \

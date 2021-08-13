@@ -59,6 +59,7 @@ class TritonServerDocker(TritonServer):
         """
         Starts the tritonserver docker container using docker-py
         """
+        logger.debug("Starting triton server.")
 
         if len(self._gpus) == 1 and self._gpus[0] == "all":
             devices = [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])]
@@ -95,6 +96,7 @@ class TritonServerDocker(TritonServer):
                 tty=True,
                 stdin_open=True,
                 detach=True,
+                ipc_mode="host",
             )
         except docker.errors.APIError as error:
             if error.explanation.find("port is already allocated") != -1:
@@ -120,7 +122,7 @@ class TritonServerDocker(TritonServer):
         and cleans up docker client
         """
 
-        logger.info("Stopping triton server.")
+        logger.debug("Stopping triton server.")
 
         if self._tritonserver_container is not None:
             logger.debug(f"Stopping Triton Server id={self._tritonserver_container.id}")
