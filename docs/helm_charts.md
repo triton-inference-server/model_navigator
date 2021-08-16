@@ -108,7 +108,7 @@ chart_name: str
 [ target_formats: list[str] ]
 
 # Configure TensorRT builder for precision layer selection.
-[ target_precisions: list[choice(fp16, fp32, tf32)] ]
+[ target_precisions: list[choice(int8, fp16, fp32, tf32)] ]
 
 # Generate an ONNX graph that uses only ops available in a given opset.
 [ onnx_opsets: list[integer] ]

@@ -34,6 +34,7 @@ class ConversionLaunchMode(Enum):
 
 
 class TensorRTPrecision(Enum):
+    INT8 = "int8"
     FP16 = "fp16"
     FP32 = "fp32"
     TF32 = "tf32"

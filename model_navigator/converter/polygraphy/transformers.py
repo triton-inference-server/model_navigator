@@ -214,6 +214,7 @@ def onnx2trt(
         TensorRTPrecision.FP32: "--tf32",
         TensorRTPrecision.TF32: "--tf32",
         TensorRTPrecision.FP16: "--fp16",
+        TensorRTPrecision.INT8: "--int8",
     }[precision]
 
     LOGGER.warning("This conversion should be done on target GPU platform")
