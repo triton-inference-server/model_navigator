@@ -29,32 +29,36 @@ The recommended way of using the Triton Model Navigator is to build a Docker con
 $ make docker
 ```
 
-Running the Triton Model Navigator container requires additional mappings:
-* `-v /var/run/docker.sock:/var/run/docker.sock` allows running Docker containers as sibling containers from inside the Triton Model Navigator container to perform optimization processes.
-* `-v <path-to-model-catalog>:<path-to-model-catalog>` The path to the catalog where models are being stored.
-* `-v ${HOME}:${HOME}` The path to the catalog where Model Navigator will be run from. The simple option is to map the user directory. Navigator creates a workspace catalog there to share artifacts across the steps.
+Running the Triton Model Navigator inside the container requires additional volumes mapping:
+* `-v /var/run/docker.sock:/var/run/docker.sock` allows to communicate with host Docker Daemon to run additional containers required in some steps
+* `-v <path-to-model-catalog>:<path-to-model-catalog>` the path to the catalog where your model is being stored
+* `-v <path-to-workdir>:<path-to-workdir>` the path where Model Navigator commands are executed inside container
 
-**Note**
+**Understanding volumes mounting and workspace**
 
-When using `triton_launch_mode=docker`:
-* The mappings of volumes inside the container must match the host path, example: `-v {host-path}:{host-path}`
-* Use `--ipc=host` mode running `model-navigator` container
+The commands executed by the Triton Model Navigator creates workspace directory to store the artifacts and share them between the steps.
+Additionally, some steps are run inside a separate Docker container maintained by the Triton Model Navigator.
 
+In order to run the Triton Model Navigator inside the Docker container the commands must be executed from **mounted host path**.
 
-To run the Triton Model Navigator container:
+Running the Triton Model Navigator container:
 ```shell
 $ docker run -it \
 --gpus 1 \
--v <path-to-model-catalog>:<path-to-model-catalog> \
 -v /var/run/docker.sock:/var/run/docker.sock \
--v ${HOME}:${HOME}
--w ${HOME} \
+-v <path-to-model-catalog>:<path-to-model-catalog> \
+-v <path-to-workdir>:<path-to-workdir> \
+-w <path-to-workdir> \
 --net host \
 --name model-navigator \
 model-navigator /bin/bash
 
-root@hostname:/home/{username}#
+root@hostname:<path-to-workdir>#
 ```
+
+Additional constraints when using `triton_launch_mode=docker`:
+* The mappings of volumes inside the container **must match** the host path name, example: `-v <host-path-name>:<host-path-name>`
+* Use `--ipc=host` mode running `model-navigator` container
 
 ## Installing from the Source
 
