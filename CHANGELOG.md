@@ -18,7 +18,6 @@ limitations under the License.
 
 ## unreleased
 
-- Added int8 precision flag for TRT conversion
 - Fixed triton-model-config error when tensorrt_capture_cuda_graph flag is not passed
 - [Dump Conversion Comparator inputs and outputs into JSON files](docs/conversion.md#verification-of-conversion-Correctness)
 - Added information in logs on the tolerance parameters values to pass the conversion verification
