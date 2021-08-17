@@ -16,7 +16,7 @@ limitations under the License.
 
 # Changelog
 
-## unreleased
+## 0.2.1 (2021-08-17)
 
 - Fixed triton-model-config error when tensorrt_capture_cuda_graph flag is not passed
 - [Dump Conversion Comparator inputs and outputs into JSON files](docs/conversion.md#verification-of-conversion-Correctness)
