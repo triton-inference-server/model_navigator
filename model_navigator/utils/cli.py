@@ -412,7 +412,7 @@ def common_options(f):
                 "NVIDIA framework and Triton container version to use "
                 "(refer to https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html and https://docs.nvidia.com/deeplearning/triton-inference-server/release-notes/index.html for details)."
             ),
-            default="21.07",
+            default="21.08",
         ),
         click.option(
             "--framework-docker-image",

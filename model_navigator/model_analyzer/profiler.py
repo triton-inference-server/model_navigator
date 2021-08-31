@@ -143,7 +143,7 @@ class ProfileConfigGenerator(BaseConfigGenerator):
         else:
             max_preferred_batch_size = 1
 
-        # https://github.com/triton-inference-server/model_analyzer/blob/r21.07/docs/config.md
+        # https://github.com/triton-inference-server/model_analyzer/blob/r21.08/docs/config.md
         config = {
             "profile_models": model_names,
             "triton_docker_image": self._triton_docker_image,

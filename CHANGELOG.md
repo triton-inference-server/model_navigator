@@ -16,6 +16,29 @@ limitations under the License.
 
 # Changelog
 
+## unreleased
+
+- Updated NVIDIA containers defaults to 21.08
+
+[//]: <> (put here on external component update with short summary what change or link to changelog)
+- Versions of used external components:
+    - [Triton Model Analyzer](https://github.com/triton-inference-server/model_analyzer): 1.7.0
+    - [Triton Inference Server Client](https://github.com/triton-inference-server/client/): 2.13.0
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.31.1
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.11
+    - tf2onnx: [v1.9.1](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.9.1) (support for ONNX opset 14, tf 1.15 and 2.5)
+    - Other component versions depend on the used framework and Triton Inference Server containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
+
+[//]: <> (keep up to date list of known issues inside docs/known_issue.md and paste it here on major and minor release)
+
+- Known issues and limitations
+    - missing support for stateful models (ex. time-series one)
+    - missing support for models without batching support
+    - no verification of conversion results for conversions: TF -> ONNX, TorchScript -> ONNX
+    - possible to define a single profile for TensorRT
+
 ## 0.2.1 (2021-08-17)
 
 - Fixed triton-model-config error when tensorrt_capture_cuda_graph flag is not passed

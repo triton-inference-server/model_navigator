@@ -39,12 +39,12 @@ Refer to the [changelog](../CHANGELOG.md) for any related issues on these models
 ## Third-Party Packages
 
 A set of component versions are imposed by the used `container_version` parameter value.
-By default, we're using the 21.07 container version that contains:
+By default, we're using the 21.08 container version that contains:
 
-- PyTorch 1.10.0a0+ecc3718
+- PyTorch 1.10.0a0+3fd9dcf
 - TensorFlow 2.5.0 / 1.15.5
 - TensorRT TensorRT 8.0.1.6
-- [Triton Inference Server 2.12.0](https://github.com/triton-inference-server/server/releases/tag/v2.12.0)
+- [Triton Inference Server 2.13.0](https://github.com/triton-inference-server/server/releases/tag/v2.13.0)
   - [ONNX Runtime 1.8.0](https://github.com/microsoft/onnxruntime/releases/tag/v1.8.0) (support for opset 14 from with ONNX 1.9)
 - [Polygraphy 0.31.1](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy)
 
@@ -54,4 +54,4 @@ for a detailed summary for each version.
 The Triton Model Navigator installs additional components:
 
 - [tf2onnx 1.9.1](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.9.1)
-- [Triton Model Analyzer 21.07](https://github.com/triton-inference-server/model_analyzer/tree/r21.07)
+- [Triton Model Analyzer 21.08](https://github.com/triton-inference-server/model_analyzer/tree/r21.08)

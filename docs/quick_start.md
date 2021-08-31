@@ -115,8 +115,8 @@ You should see an output similar to the output below:
 2021-08-16 08:46:31 - INFO - model_navigator.log: 	workspace_path = navigator_workspace
 2021-08-16 08:46:31 - INFO - model_navigator.log: 	override_workspace = False
 2021-08-16 08:46:31 - INFO - model_navigator.log: 	override_conversion_container = False
-2021-08-16 08:46:31 - INFO - model_navigator.log: 	framework_docker_image = nvcr.io/nvidia/pytorch:21.07-py3
-2021-08-16 08:46:31 - INFO - model_navigator.log: 	triton_docker_image = nvcr.io/nvidia/tritonserver:21.07-py3
+2021-08-16 08:46:31 - INFO - model_navigator.log: 	framework_docker_image = nvcr.io/nvidia/pytorch:21.08-py3
+2021-08-16 08:46:31 - INFO - model_navigator.log: 	triton_docker_image = nvcr.io/nvidia/tritonserver:21.08-py3
 2021-08-16 08:46:31 - INFO - model_navigator.log: 	gpus = ('all',)
 2021-08-16 08:46:31 - INFO - model_navigator.log: 	verbose = False
 2021-08-16 08:46:33 - INFO - model_navigator.utils.docker: Run docker container with image model_navigator_converter:21.07-py3; using workdir: ${PWD}
