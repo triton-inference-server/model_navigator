@@ -180,10 +180,10 @@ class ProfileConfigGenerator(BaseConfigGenerator):
             def _shape_param_format(name, shape_):
                 return f"{name}:{','.join(map(str, shape_[1:]))}"
 
-            # FIXME: Model Analyzer should allow to pass multiple values for shape
-            configuration["shape"] = " ".join(
-                [_shape_param_format(name, shape_) for name, shape_ in self._dataset_profile_config.max_shapes.items()]
-            )
+            configuration["shape"] = [
+                _shape_param_format(name, shape_) for name, shape_ in self._dataset_profile_config.max_shapes.items()
+            ]
+
         configuration["measurement-interval"] = self._perf_measurement_config.perf_measurement_interval
         configuration["measurement-mode"] = self._perf_measurement_config.perf_measurement_mode
         configuration["measurement-request-count"] = self._perf_measurement_config.perf_measurement_request_count
