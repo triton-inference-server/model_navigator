@@ -16,7 +16,7 @@ limitations under the License.
 
 # Changelog
 
-## unreleased
+## 0.2.2 (2021-09-06)
 
 - Updated NVIDIA containers defaults to 21.08
 
