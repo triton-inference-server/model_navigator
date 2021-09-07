@@ -36,12 +36,12 @@ class Analyzer:
         self,
         *,
         workspace: Workspace,
-        model_repository: str,
+        model_repository: Path,
         verbose: bool = False,
         analysis_config: ModelAnalyzerAnalysisConfig,
     ):
         self._workspace = workspace
-        self._model_repository = workspace.path / model_repository
+        self._model_repository = model_repository
 
         self._analysis_config = analysis_config
 

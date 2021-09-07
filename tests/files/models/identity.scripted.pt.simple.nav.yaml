@@ -39,10 +39,11 @@ value_ranges:
 dtypes:
     input__0: float32
 # triton specific
-max_batch_size: 1
 load_model_timeout_s: 5
-# analyzer config (dummy values for faster tests)
-max_concurrency: 1
-max_instance_count: 1
-max_preferred_batch_size: 1
+max_batch_size: 1
+# analyzer automatic config search config (dummy values for faster tests)
+config_search_max_concurrency: 1
+config_search_max_instance_count: 1
+config_search_max_preferred_batch_size: 1
+# analyzer constraints
 max_latency_ms: 1000

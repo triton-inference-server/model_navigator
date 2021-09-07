@@ -208,9 +208,6 @@ model_path: path
 # Max delay time that the dynamic batcher will wait to form a batch.
 [ max_queue_delay_us: integer ]
 
-# Path to the Triton Model Repository.
-[ model_repository: path | default: model-store ]
-
 # The method used  to launch the Triton Server. 'local' assume tritonserver binary is available locally. 'docker' pulls
 # and launches a triton docker container with the specified version.
 [ triton_launch_mode: choice(local, docker) | default: local ]
@@ -218,19 +215,34 @@ model_path: path
 # Path to the Triton Server binary when the local mode is enabled.
 [ triton_server_path: str | default: tritonserver ]
 
-# Max concurrency used for config search in analysis.
-[ max_concurrency: integer | default: 1024 ]
+# Max concurrency used for automatic config search in analysis.
+[ config_search_max_concurrency: integer | default: 1024 ]
 
-# Max number of model instances used for config search in analysis.
-[ max_instance_count: integer | default: 5 ]
+# Max number of model instances used for automatic config search in analysis.
+[ config_search_max_instance_count: integer | default: 5 ]
 
-# List of concurrency values used for config search in analysis. Disable search over max_concurrency. Format:
-# --concurrency 1 2 4 ... N
-[ concurrency: list[integer] ]
+# Maximum preferred batch size allowed for inference used for automatic config search in analysis.
+[ config_search_max_preferred_batch_size: integer | default: 32 ]
 
-# List of model instance count values used for config search in analysis. Disable search over max_instance_count in
-# profiling. Format: --instance-counts <DeviceKind>=<count> <DeviceKind>=<count> ...
-[ instance_counts: list[str] ]
+# List of concurrency values used for manual config search in analysis. Forces manual config search. Format: --config-
+# search-concurrency 1 2 4 ...
+[ config_search_concurrency: list[integer] ]
+
+# List of model instance count values used for manual config search in analysis. Forces manual config search. Format:
+# --config-search-instance-counts <DeviceKind>=<count>,<count> <DeviceKind>=<count> ...
+[ config_search_instance_counts: list[str] ]
+
+# List of max batch sizes used for manual config search in analysis. Forces manual config search. Format: --config-search-
+# max-batch-sizes 1 2 4 ...
+[ config_search_max_batch_sizes: list[integer] ]
+
+# List of preferred batch sizes used for manual config search in analysis. Forces manual config search. Format: --config-
+# search-preferred-batch-sizes 4,8,16 8,16 16 ...
+[ config_search_preferred_batch_sizes: list[str] ]
+
+# List of custom backend parameters used for manual config search in analysis. Forces manual config search. Format:
+# --config-search-backend-parameters <param_name1>=<value1>,<value2> <param_name2>=<value3> ...
+[ config_search_backend_parameters: list[str] ]
 
 # Number of top final configurations selected from the analysis.
 [ top_n_configs: integer | default: 3 ]

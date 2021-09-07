@@ -413,6 +413,32 @@ def parse_instance_counts(ctx, param, value):
     return value
 
 
+def parse_backend_parameters(ctx, param, value):
+    if value:
+        if isinstance(value, dict):  # from config file
+            value = {name: list(values) for name, values in value.items()}
+        elif isinstance(value, list):  # from cli
+            parsed_value = {}
+            for item in value:
+                param_name, param_values = item.split("=")
+                parsed_value[param_name] = param_values.split(",")
+            value = parsed_value
+        else:
+            raise click.BadParameter(f"Could not parse {value} as backend parameters")
+    return value
+
+
+def parse_config_search_preferred_batch_sizes(ctx, param, value):
+    if value:
+        if isinstance(value, list):  # from config file
+            value = list(map(int, value))
+        elif isinstance(value, str):  # from cli
+            value = list(map(int, value.split(",")))
+        else:
+            raise click.BadParameter(f"Could not parse {value} as config_search_preferred_batch_sizes")
+    return value
+
+
 class ModelAnalyzerTritonConfigCli:
     triton_launch_mode = CliSpec(
         help="The method used  to launch the Triton Server. "
@@ -424,21 +450,40 @@ class ModelAnalyzerTritonConfigCli:
 
 
 class ModelAnalyzerProfileConfigCli:
-    max_concurrency = CliSpec(help="Max concurrency used for config search in analysis.")
-    max_instance_count = CliSpec(help="Max number of model instances used for config search in analysis.")
-    max_batch_size = CliSpec(help=TritonModelSchedulerConfigCli.max_batch_size.help)
-    concurrency = CliSpec(
-        help="""List of concurrency values used for config search in analysis. """
-        """Disable search over max_concurrency. """
-        """Format: --concurrency 1 2 4 ... N""",
+    config_search_max_concurrency = CliSpec(help="Max concurrency used for automatic config search in analysis.")
+    config_search_max_instance_count = CliSpec(
+        help="Max number of model instances used for automatic config search in analysis."
     )
-    instance_counts = CliSpec(
-        help="""List of model instance count values used for config search in analysis. """
-        """Disable search over max_instance_count in profiling. """
-        """Format: --instance-counts <DeviceKind>=<count> <DeviceKind>=<count> ...""",
+    config_search_max_preferred_batch_size = CliSpec(
+        help="Maximum preferred batch size allowed for inference used for automatic config search in analysis."
+    )
+    config_search_concurrency = CliSpec(
+        help="List of concurrency values used for manual config search in analysis. "
+        "Forces manual config search. "
+        "Format: --config-search-concurrency 1 2 4 ...",
+    )
+    config_search_instance_counts = CliSpec(
+        help="List of model instance count values used for manual config search in analysis. "
+        "Forces manual config search. "
+        "Format: --config-search-instance-counts <DeviceKind>=<count>,<count> <DeviceKind>=<count> ...",
         parse_and_verify_callback=parse_instance_counts,
     )
-    preferred_batch_sizes = CliSpec(help=TritonModelSchedulerConfigCli.preferred_batch_sizes.help)
+    config_search_max_batch_sizes = CliSpec(
+        help="List of max batch sizes used for manual config search in analysis. Forces manual config search. "
+        "Format: --config-search-max-batch-sizes 1 2 4 ...",
+    )
+    config_search_preferred_batch_sizes = CliSpec(
+        help="List of preferred batch sizes used for manual config search in analysis. "
+        "Forces manual config search. "
+        "Format: --config-search-preferred-batch-sizes 4,8,16 8,16 16 ...",
+        parse_and_verify_callback=parse_config_search_preferred_batch_sizes,
+    )
+    config_search_backend_parameters = CliSpec(
+        help="List of custom backend parameters used for manual config search in analysis. "
+        "Forces manual config search. "
+        "Format: --config-search-backend-parameters <param_name1>=<value1>,<value2> <param_name2>=<value3> ...",
+        parse_and_verify_callback=parse_backend_parameters,
+    )
 
 
 class ModelAnalyzerAnalysisConfigCli:

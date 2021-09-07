@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import dataclasses
 import logging
 import shutil
 from typing import List, Optional
@@ -61,10 +62,21 @@ from model_navigator.triton import (
     TritonServerFactory,
 )
 from model_navigator.utils import Workspace, cli
-from model_navigator.utils.config import dataclass2dict
+from model_navigator.utils.config import BaseConfig, dataclass2dict
 from model_navigator.validators import run_command_validators
 
 LOGGER = logging.getLogger("run")
+
+RunTritonConfig = dataclasses.make_dataclass(
+    "RunTritonConfig",
+    [(f.name, f.type, f) for f in dataclasses.fields(ModelAnalyzerTritonConfig) if f.name not in ["model_repository"]],
+    bases=(BaseConfig,),
+)
+
+
+class RunTritonConfigCli:
+    triton_launch_mode = ModelAnalyzerTritonConfigCli.triton_launch_mode
+    triton_server_path = ModelAnalyzerTritonConfigCli.triton_server_path
 
 
 @click.command(name="run", help="Run models")
@@ -75,7 +87,7 @@ LOGGER = logging.getLogger("run")
 @cli.options_from_config(ComparatorConfig, ComparatorConfigCli)
 @cli.options_from_config(DatasetProfileConfig, DatasetProfileConfigCli)
 @cli.options_from_config(TritonModelSchedulerConfig, TritonModelSchedulerConfigCli)
-@cli.options_from_config(ModelAnalyzerTritonConfig, ModelAnalyzerTritonConfigCli)
+@cli.options_from_config(RunTritonConfig, RunTritonConfigCli)
 @cli.options_from_config(ModelAnalyzerProfileConfig, ModelAnalyzerProfileConfigCli)
 @cli.options_from_config(ModelAnalyzerAnalysisConfig, ModelAnalyzerAnalysisConfigCli)
 @cli.options_from_config(PerfMeasurementConfig, PerfMeasurementConfigCli)
@@ -120,7 +132,7 @@ def run_cmd(
     comparator_config = ComparatorConfig.from_dict(kwargs)
     dataset_profile_config = DatasetProfileConfig.from_dict(kwargs)
     scheduler_config = TritonModelSchedulerConfig.from_dict(kwargs)
-    triton_config = ModelAnalyzerTritonConfig.from_dict(kwargs)
+    triton_config = RunTritonConfig.from_dict(kwargs)
     profile_config = ModelAnalyzerProfileConfig.from_dict(kwargs)
     analysis_config = ModelAnalyzerAnalysisConfig.from_dict(kwargs)
     perf_measurement_config = PerfMeasurementConfig.from_dict(kwargs)
@@ -162,7 +174,7 @@ def run_cmd(
 
     # deploy and pre-check of model correctness with perf_analyzer
     interim_model_repository = workspace.path / "interim-model-store"
-    final_model_repository = workspace.path / triton_config.model_repository
+    final_model_repository = workspace.path / "final-model-store"
 
     interim_model_repository.mkdir(parents=True, exist_ok=True)
     final_model_repository.mkdir(parents=True, exist_ok=True)
@@ -174,8 +186,9 @@ def run_cmd(
     triton_server = _get_triton_server(
         triton_docker_image=triton_docker_image,
         gpus=gpus,
-        models_repository=interim_model_repository,
-        analyzer_config=triton_config,
+        analyzer_config=ModelAnalyzerTritonConfig.from_dict(
+            {**dataclass2dict(triton_config), **{"model_repository": interim_model_repository}}
+        ),
     )
     for model_to_deploy in succeeded_models:
         LOGGER.info(f"Running triton model configuration variants generation for {model_to_deploy.name}")
@@ -206,7 +219,6 @@ def run_cmd(
                 evaluate_result = ctx.forward(
                     triton_evaluate_model_cmd,
                     **dataclass2dict(triton_client_config),
-                    **dataclass2dict(triton_config),
                     **dataclass2dict(dataset_profile_config),
                     **dataclass2dict(perf_measurement_config),
                     model_name=model_to_deploy_config.model_name,
@@ -252,6 +264,7 @@ def run_cmd(
     profile_result: ProfileResult = ctx.forward(
         profile_cmd,
         **dataclass2dict(triton_config),
+        model_repository=final_model_repository,
         **dataclass2dict(profile_config),
         **dataclass2dict(perf_measurement_config),
     )
@@ -263,6 +276,7 @@ def run_cmd(
     analyze_results: List[AnalyzeResult] = ctx.forward(
         analyze_cmd,
         **dataclass2dict(analysis_config),
+        model_repository=final_model_repository,
     )
 
     failed_results: List[AnalyzeResult] = [
@@ -311,9 +325,9 @@ def _obtain_conversion_config(
     return new_conversion_set_config
 
 
-def _get_triton_server(*, triton_docker_image, gpus, models_repository, analyzer_config):
+def _get_triton_server(*, triton_docker_image, gpus, analyzer_config):
     triton_config = TritonServerConfig()
-    triton_config["model-repository"] = models_repository.resolve().as_posix()
+    triton_config["model-repository"] = analyzer_config.model_repository.resolve().as_posix()
     triton_config["model-control-mode"] = "explicit"
     triton_config["strict-model-config"] = "false"
     if analyzer_config.triton_launch_mode == TritonLaunchMode.LOCAL:

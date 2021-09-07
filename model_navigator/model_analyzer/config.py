@@ -44,6 +44,10 @@ class BaseConfigGenerator(abc.ABC):
     def output_model_repository_path(self) -> pathlib.Path:
         return self._output_model_repository_path.resolve()
 
+    @property
+    def checkpoints_dir_path(self) -> pathlib.Path:
+        return self._analyzer_checkpoints_dir_path
+
     @abc.abstractmethod
     def generate_config(self, **kwargs):
         pass
@@ -51,19 +55,21 @@ class BaseConfigGenerator(abc.ABC):
 
 @dataclass
 class ModelAnalyzerTritonConfig(BaseConfig):
-    model_repository: pathlib.Path = pathlib.Path("model-store")
+    model_repository: pathlib.Path
     triton_launch_mode: TritonLaunchMode = TritonLaunchMode.LOCAL
     triton_server_path: str = "tritonserver"
 
 
 @dataclass
 class ModelAnalyzerProfileConfig(BaseConfig):
-    max_concurrency: int = 1024
-    max_instance_count: int = 5
-    max_batch_size: int = 32
-    concurrency: Optional[List[int]] = None
-    instance_counts: Optional[Dict[DeviceKind, List]] = None
-    preferred_batch_sizes: Optional[List[int]] = None
+    config_search_max_concurrency: int = 1024
+    config_search_max_instance_count: int = 5
+    config_search_max_preferred_batch_size: int = 32
+    config_search_concurrency: Optional[List[int]] = None
+    config_search_instance_counts: Optional[Dict[DeviceKind, List]] = None
+    config_search_max_batch_sizes: Optional[List[int]] = None
+    config_search_preferred_batch_sizes: Optional[List[List[int]]] = None
+    config_search_backend_parameters: Optional[Dict[str, List[str]]] = None
 
 
 @dataclass

@@ -15,6 +15,7 @@
 import dataclasses
 import logging
 import traceback
+from pathlib import Path
 from typing import List
 
 import click
@@ -38,9 +39,8 @@ LOGGER = logging.getLogger("analyze")
 @click.option(
     "--model-repository",
     type=click.Path(file_okay=False),
-    required=False,
+    required=True,
     help="Path to the Triton Model Repository.",
-    default="model-store",
 )
 @options_from_config(ModelAnalyzerAnalysisConfig, ModelAnalyzerAnalysisConfigCli)
 @click.pass_context
@@ -80,7 +80,7 @@ def analyze_cmd(
 
     analyzer = Analyzer(
         workspace=workspace,
-        model_repository=model_repository,
+        model_repository=Path(model_repository),
         verbose=verbose,
         analysis_config=analysis_config,
     )

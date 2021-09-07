@@ -15,40 +15,96 @@ limitations under the License.
 -->
 # Models Profiling
 
-The `profile` command evaluates a model on the Triton Inference Server in order to gather statistics for provided search parameters.
+The `profile` command evaluates a model on the Triton Inference Server to gather statistics for provided search parameters.
 
-The model's profiling is performed using the [Model Analyzer](https://github.com/triton-inference-server/model_analyzer),
+The model's profiling is performed using the [Triton Model Analyzer](https://github.com/triton-inference-server/model_analyzer),
 which performs a robust analysis of models on different configurations, gathering the details for performance, latency,
 and resources consumption running given models inference on Triton Inference Server.
 
-The profiling sweeps through the [optimization settings](https://github.com/triton-inference-server/server/blob/master/docs/optimization.md#optimization-settings)
-and concurrency, generates different model configurations, and evaluates the performance for each.
+The profiling sweeps through the model config parameters, generating different model configurations, and evaluates the performance for each.
+It is performed for each model configuration already present in Triton model repository.
 
-The sweep process takes place as long as there is a significant performance increase between the previous and current
-configuration. Learn more about the Model Analyzer [config search here](https://github.com/triton-inference-server/model_analyzer/blob/r21.05/docs/config_search.md).
+The sweeping process takes place as long as there is a significant performance increase between the previous and current
+configuration.
+
+## Model Config sweeping process
+
+Triton Model Navigator supports automatic and manual [configuration search modes](https://github.com/triton-inference-server/model_analyzer/blob/main/docs/config_search.md) offered by Triton Model Analyzer.
+
+To use the automatic mode, it is necessary to provide just max boundaries within the search will be performed.
+
+```shell
+$ model-navigator profile --workspace-path navigator_workspace \
+  --config-search-max-concurrency 2048 \
+  --config-search-max-instance-count 3 \
+  --config-search-max-preferred-batch-size 512
+```
+
+During this mode, Triton Model Analyzer will automatically search over
+[instance_group](https://github.com/triton-inference-server/server/blob/master/docs/model_configuration.md#instance-groups) and
+[dynamic_batching](https://github.com/triton-inference-server/server/blob/master/docs/model_configuration.md#dynamic-batcher) Model Config settings using
+range of [concurrent](https://github.com/triton-inference-server/server/blob/master/docs/perf_analyzer.md#request-concurrency) requests.
+
+The manual configuration search can be enabled by providing the lists of parameters:
+
+```shell
+$ model-navigator profile --workspace-path navigator_workspace \
+  --model-repository my-storage/model-store \
+  --config-search-concurrency 512 1024 \
+  --config-search-instance-counts gpu=2,4 \
+  --config-search-preferred-batch-sizes 128,256 256
+```
+
+During this mode, Triton Model Analyzer search over
+[max_batch_size](https://github.com/triton-inference-server/server/blob/main/docs/model_configuration.md#maximum-batch-size),
+[instance_group](https://github.com/triton-inference-server/server/blob/master/docs/model_configuration.md#instance-groups),
+[dynamic_batching](https://github.com/triton-inference-server/server/blob/master/docs/model_configuration.md#dynamic-batcher)
+and custom backend parameters of Model Config settings with defined parameter values using
+defined level of [concurrent](https://github.com/triton-inference-server/server/blob/master/docs/perf_analyzer.md#request-concurrency) requests.
+
+Learn more about the Triton Model Analyzer [Model Config search here](https://github.com/triton-inference-server/model_analyzer/blob/main/docs/config_search.md).
+
+## Profile Results
+
+The easiest method to analyze and generate reports of profiling process is to use Triton Model Navigator [analyze command](docs/analysis.md).
+
+The Triton Model Analyzer writes the collected measurements to [checkpoint](https://github.com/triton-inference-server/model_analyzer/blob/main/docs/checkpoints.md) files when profiling.
+They are saved into the `<workspace_path>/analyzer/checkpoints` directory. To load them you can use:
+
+```python
+import json
+from model_analyzer.state.analyzer_state import AnalyzerState
+
+with latest_checkpoint_path.open("r") as checkpoint_file:
+    state = AnalyzerState.from_dict(json.load(checkpoint_file))
+
+profiling_configs_and_results = state.get("ResultManager.results")  # contain profiling configs, perf_analyzer args and results
+server_only_data = state.get("ResultManager.server_only_data")
+gpus = state.get("MetricsManager.gpus")
+```
 
 ## The `profile` Command
 
-Triton Model Navigator evaluates Triton models configuration stored in `workspace`/`model_repository` directory.
+Triton Model Navigator evaluates all Triton models configuration stored in `model_repository` directory.
 
 Using CLI arguments:
 
 ```shell
 $ model-navigator profile --workspace-path navigator_workspace \
-  --model-repository model-store \
-  --max-concurrency 1024 \
-  --max-instance-count 5 \
-  --max-batch-size 32
+  --model-repository my-storage/model-store \
+  --config-search-max-concurrency 1024 \
+  --config-search-max-instance-count 5 \
+  --config-search-max-preferred-batch-size 32
 ```
 
 Using YAML file:
 
 ```yaml
 workspace_path: navigator_workspace
-model_repository: model-store
-max_concurrency: 1024
-max_instance_count: 5
-max_batch_size: 32
+model_repository: my-storage/model-store
+config_search_max_concurrency: 1024
+config_search_max_instance_count: 5
+config_search_max_preferred_batch_size: 32
 ```
 
 Running command using YAML configuration:
@@ -57,32 +113,13 @@ Running command using YAML configuration:
 $ model-navigator profile --config-path model_navigator.yaml
 ```
 
-## Model Config Search
-
-Triton Model Navigator supports automatic and manual configuration search modes offered by [Model Analyzer](https://github.com/triton-inference-server/model_analyzer/blob/r21.05/docs/config_search.md).
-
-In order to use the automatic mode, it is necessary to provide max boundaries within the search will be performed.
-
-```shell
-$ model-navigator profile --workspace-path navigator_workspace \
-  --max-concurrency 2048 \
-  --max-instance-count 3 \
-  --max-batch-size 512
-```
-
-The manual configuration search can be enabled by providing the lists of parameters:
-
-```shell
-$ model-navigator profile --workspace-path navigator_workspace \
-  --concurrency 512 1024 \
-  --instance-counts gpu=2,4 \
-  --preferred-batch-sizes 128 256
-```
-
 ## CLI and YAML Config Options
 
 [comment]: <> (START_CONFIG_LIST)
 ```yaml
+# Path to the Triton Model Repository.
+model_repository: path
+
 # Path to the configuration file containing default parameter values to use. For more information about configuration
 # files, refer to: https://github.com/triton-inference-server/model_navigator/blob/main/docs/run.md
 [ config_path: path ]
@@ -124,9 +161,6 @@ $ model-navigator profile --workspace-path navigator_workspace \
 # Perf Analyzer time windows time in [ms] used for stabilization.
 [ perf_measurement_interval: integer | default: 5000 ]
 
-# Path to the Triton Model Repository.
-[ model_repository: path | default: model-store ]
-
 # The method used  to launch the Triton Server. 'local' assume tritonserver binary is available locally. 'docker' pulls
 # and launches a triton docker container with the specified version.
 [ triton_launch_mode: choice(local, docker) | default: local ]
@@ -134,27 +168,34 @@ $ model-navigator profile --workspace-path navigator_workspace \
 # Path to the Triton Server binary when the local mode is enabled.
 [ triton_server_path: str | default: tritonserver ]
 
-# Max concurrency used for config search in analysis.
-[ max_concurrency: integer | default: 1024 ]
+# Max concurrency used for automatic config search in analysis.
+[ config_search_max_concurrency: integer | default: 1024 ]
 
-# Max number of model instances used for config search in analysis.
-[ max_instance_count: integer | default: 5 ]
+# Max number of model instances used for automatic config search in analysis.
+[ config_search_max_instance_count: integer | default: 5 ]
 
-# Maximum batch size allowed for inference. A max_batch_size value of 0 indicates that batching is not allowed for the
-# model
-[ max_batch_size: integer | default: 32 ]
+# Maximum preferred batch size allowed for inference used for automatic config search in analysis.
+[ config_search_max_preferred_batch_size: integer | default: 32 ]
 
-# List of concurrency values used for config search in analysis. Disable search over max_concurrency. Format:
-# --concurrency 1 2 4 ... N
-[ concurrency: list[integer] ]
+# List of concurrency values used for manual config search in analysis. Forces manual config search. Format: --config-
+# search-concurrency 1 2 4 ...
+[ config_search_concurrency: list[integer] ]
 
-# List of model instance count values used for config search in analysis. Disable search over max_instance_count in
-# profiling. Format: --instance-counts <DeviceKind>=<count> <DeviceKind>=<count> ...
-[ instance_counts: list[str] ]
+# List of model instance count values used for manual config search in analysis. Forces manual config search. Format:
+# --config-search-instance-counts <DeviceKind>=<count>,<count> <DeviceKind>=<count> ...
+[ config_search_instance_counts: list[str] ]
 
-# Batch sizes that the dynamic batcher should attempt to create. In case --max-queue-delay-us is set and this parameter is
-# not, default value will be --max-batch-size.
-[ preferred_batch_sizes: list[integer] ]
+# List of max batch sizes used for manual config search in analysis. Forces manual config search. Format: --config-search-
+# max-batch-sizes 1 2 4 ...
+[ config_search_max_batch_sizes: list[integer] ]
+
+# List of preferred batch sizes used for manual config search in analysis. Forces manual config search. Format: --config-
+# search-preferred-batch-sizes 4,8,16 8,16 16 ...
+[ config_search_preferred_batch_sizes: list[str] ]
+
+# List of custom backend parameters used for manual config search in analysis. Forces manual config search. Format:
+# --config-search-backend-parameters <param_name1>=<value1>,<value2> <param_name2>=<value3> ...
+[ config_search_backend_parameters: list[str] ]
 
 # Map of features names and minimum shapes visible in the dataset. Format: --min-shapes <input0>=D0,D1,..,DN ..
 # <inputN>=D0,D1,..,DN

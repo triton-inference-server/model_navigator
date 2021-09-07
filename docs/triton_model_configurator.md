@@ -151,7 +151,7 @@ model_repository: path
 
 # Mapping of device kind to model instances count on a single device. Available devices: [cpu|gpu]. Format: --engine-
 # count-per-device <kind>=<count>
-[ engine_count_per_device: list[str] | default: ['gpu=1'] ]
+[ engine_count_per_device: list[str] ]
 
 # Inference server URL in format protocol://host[:port]
 [ server_url: str | default: grpc://localhost:8001 ]

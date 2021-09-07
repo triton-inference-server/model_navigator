@@ -60,4 +60,4 @@ class TritonModelSchedulerConfig(BaseConfig):
 
 @dataclass
 class TritonModelInstancesConfig(BaseConfig):
-    engine_count_per_device: Dict[DeviceKind, int] = field(default_factory=lambda: {DeviceKind.GPU: 1})
+    engine_count_per_device: Dict[DeviceKind, int] = field(default_factory=lambda: {})

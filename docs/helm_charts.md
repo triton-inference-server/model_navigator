@@ -166,7 +166,7 @@ chart_name: str
 
 # Mapping of device kind to model instances count on a single device. Available devices: [cpu|gpu]. Format: --engine-
 # count-per-device <kind>=<count>
-[ engine_count_per_device: list[str] | default: ['gpu=1'] ]
+[ engine_count_per_device: list[str] ]
 
 ```
 [comment]: <> (END_CONFIG_LIST)

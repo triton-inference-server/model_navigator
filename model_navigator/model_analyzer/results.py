@@ -33,6 +33,7 @@ class ProfileResult:
     triton_config: ModelAnalyzerTritonConfig
     dataset_profile: Optional[DatasetProfileConfig] = None
     profiling_data_path: Optional[Path] = None
+    profiling_results_path: Optional[Path] = None
 
 
 @dataclass

@@ -124,27 +124,24 @@ def profile_cmd(
         gpus=gpus,
     )
 
+    checkpoint_path = None
     try:
-        profiler.run()
-        profile_result = ProfileResult(
-            status=Status(State.SUCCEEDED, message="Model repository profiled successfully"),
-            triton_docker_image=triton_docker_image,
-            profile_config=profile_config,
-            triton_config=triton_config,
-            dataset_profile=dataset_profile_config,
-            profiling_data_path=profiling_data_path,
-        )
+        checkpoint_path = profiler.run()
+        status = Status(State.SUCCEEDED, message="Model repository profiled successfully")
     except Exception:
         message = traceback.format_exc()
         LOGGER.warning(f"Encountered exception \n{message}")
-        profile_result = ProfileResult(
-            status=Status(State.FAILED, message=message),
-            triton_docker_image=triton_docker_image,
-            profile_config=profile_config,
-            triton_config=triton_config,
-            dataset_profile=dataset_profile_config,
-            profiling_data_path=profiling_data_path,
-        )
+        status = Status(State.FAILED, message=message)
+
+    profile_result = ProfileResult(
+        status=status,
+        triton_docker_image=triton_docker_image,
+        profile_config=profile_config,
+        triton_config=triton_config,
+        dataset_profile=dataset_profile_config,
+        profiling_data_path=profiling_data_path,
+        profiling_results_path=checkpoint_path,
+    )
 
     results_store = ResultsStore(workspace)
     results_store.dump(ctx.command.name.replace("-", "_"), [profile_result])

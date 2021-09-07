@@ -16,7 +16,7 @@ limitations under the License.
 
 # Models Analysis
 
-The Triton Model Navigator uses the [Model Analyzer](https://github.com/triton-inference-server/model_analyzer) for performing
+The Triton Model Navigator uses the [Triton Model Analyzer](https://github.com/triton-inference-server/model_analyzer) for performing
 analysis of profiled models according to provided constraints and objectives.
 The analysis step selects the top N model configurations across all prepared versions of models and
 applied optimizations.
@@ -90,6 +90,9 @@ Analyzer [objectives here](https://github.com/triton-inference-server/model_anal
 
 [comment]: <> (START_CONFIG_LIST)
 ```yaml
+# Path to the Triton Model Repository.
+model_repository: path
+
 # Path to the configuration file containing default parameter values to use. For more information about configuration
 # files, refer to: https://github.com/triton-inference-server/model_navigator/blob/main/docs/run.md
 [ config_path: path ]
@@ -118,9 +121,6 @@ Analyzer [objectives here](https://github.com/triton-inference-server/model_anal
 
 # Provide verbose logs.
 [ verbose: boolean ]
-
-# Path to the Triton Model Repository.
-[ model_repository: path | default: model-store ]
 
 # Number of top final configurations selected from the analysis.
 [ top_n_configs: integer | default: 3 ]

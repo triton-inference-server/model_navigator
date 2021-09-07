@@ -71,12 +71,12 @@ class Profiler:
         self._verbose = verbose
         self._prepare_catalogs()
 
-    def run(self):
+    def run(self) -> Path:
         config = self._config_generator.generate_config()
         self._profile_config_path.parent.mkdir(parents=True, exist_ok=True)
         with self._profile_config_path.open("w") as config_file:
             config_content = yaml.dump(config, Dumper=CustomDumper)
-            LOGGER.debug("Model Analyzer profile config:\n" f"{config_content}")
+            LOGGER.debug("Triton Model Analyzer profile config:\n" f"{config_content}")
             config_file.write(config_content)
 
         analyzer_config = ModelAnalyzerConfig()
@@ -85,7 +85,18 @@ class Profiler:
         analyzer = ModelAnalyzer(config=analyzer_config)
         analyzer.run(mode=ModelAnalyzerMode.PROFILE, verbose=self._verbose)
 
-        LOGGER.info("Analyzer profiling done.")
+        latest_checkpoint_path = self._find_latest_checkpoint()
+
+        LOGGER.info(f"Triton Model Analyzer profiling done. Results are stored in {latest_checkpoint_path}")
+        return latest_checkpoint_path
+
+    def _find_latest_checkpoint(self):
+        checkpoints_paths = sorted(
+            self._config_generator.checkpoints_dir_path.glob("*.ckpt"),
+            key=lambda path: int(path.stem),
+        )
+        latest_checkpoint_path = checkpoints_paths[-1] if checkpoints_paths else None
+        return latest_checkpoint_path
 
     def _prepare_catalogs(self):
         def _remove_and_create_dir(dir_path: Path):
@@ -128,7 +139,7 @@ class ProfileConfigGenerator(BaseConfigGenerator):
         return self._analyzer_triton_log_path.resolve()
 
     def generate_config(self):
-        model_repository = self._workspace.path / self._triton_config.model_repository
+        model_repository = self._triton_config.model_repository
         model_names = [model_dir.name for model_dir in model_repository.glob("*") if model_dir.is_dir()]
         LOGGER.info(f"Prepare profiling for {len(model_names)} models from {model_repository}:")
         for model_name in model_names:
@@ -138,8 +149,8 @@ class ProfileConfigGenerator(BaseConfigGenerator):
         if len(model_configuration) > 0:
             model_names = {model_name: model_configuration for model_name in model_names}
 
-        if self._profile_config.max_batch_size > 0:
-            max_preferred_batch_size = self._profile_config.max_batch_size
+        if self._profile_config.config_search_max_preferred_batch_size > 0:
+            max_preferred_batch_size = self._profile_config.config_search_max_preferred_batch_size
         else:
             max_preferred_batch_size = 1
 
@@ -154,8 +165,8 @@ class ProfileConfigGenerator(BaseConfigGenerator):
             "summarize": self._verbose,
             "export_path": self._analyzer_path.resolve().as_posix(),
             "triton_server_flags": {"strict-model-config": False},
-            "run_config_search_max_concurrency": self._profile_config.max_concurrency,
-            "run_config_search_max_instance_count": self._profile_config.max_instance_count,
+            "run_config_search_max_concurrency": self._profile_config.config_search_max_concurrency,
+            "run_config_search_max_instance_count": self._profile_config.config_search_max_instance_count,
             "run_config_search_max_preferred_batch_size": max_preferred_batch_size,
             "perf_analyzer_timeout": self._perf_measurement_config.perf_analyzer_timeout,
             "perf_analyzer_flags": self._get_perf_analyzer_flags(),
@@ -192,27 +203,32 @@ class ProfileConfigGenerator(BaseConfigGenerator):
 
     @property
     def _model_configuration(self):
-        configuration = {}
-        if self._profile_config.concurrency:
-            configuration["parameters"] = {"concurrency": self._profile_config.concurrency}
-
         model_config = {}
-        if self._profile_config.instance_counts:
-            items = []
-            for kind, count in self._profile_config.instance_counts.items():
-                mapping = {DeviceKind.GPU: "KIND_GPU", DeviceKind.CPU: "KIND_CPU"}
-                items.append({"kind": mapping[kind], "count": count})
+        if self._profile_config.config_search_instance_counts:
+            mapping = {DeviceKind.GPU: "KIND_GPU", DeviceKind.CPU: "KIND_CPU"}
+            model_config["instance_group"] = [
+                {"kind": mapping[kind], "count": counts}
+                for kind, counts in self._profile_config.config_search_instance_counts.items()
+            ]
 
-            model_config["instance_group"] = items
+        if self._profile_config.config_search_max_batch_sizes:
+            model_config["max_batch_size"] = self._profile_config.config_search_max_batch_sizes
 
-        if self._profile_config.preferred_batch_sizes:
-            preferred_batch_sizes = []
-            for batch_sizes in self._profile_config.preferred_batch_sizes:
-                preferred_batch_sizes.append(batch_sizes)
+        if self._profile_config.config_search_preferred_batch_sizes:
+            model_config["dynamic_batching"] = {
+                "preferred_batch_size": self._profile_config.config_search_preferred_batch_sizes
+            }
 
-            model_config["dynamic_batching"] = {"preferred_batch_size": preferred_batch_sizes}
+        if self._profile_config.config_search_backend_parameters:
+            model_config["parameters"] = {
+                param_name: {"string_value": list(map(str, param_values))}
+                for param_name, param_values in self._profile_config.config_search_backend_parameters.items()
+            }
 
+        configuration = {}
         if model_config:
             configuration["model_config_parameters"] = model_config
+        if self._profile_config.config_search_concurrency:
+            configuration["parameters"] = {"concurrency": self._profile_config.config_search_concurrency}
 
         return configuration
