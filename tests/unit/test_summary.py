@@ -18,13 +18,14 @@ from model_navigator.model_analyzer.summary import Summary
 from model_navigator.record.types.perf_latency import PerfLatency
 from model_navigator.record.types.perf_throughput import PerfThroughput
 
+FILES_DIR = Path(__file__).parent.parent.absolute() / "files"
+
 
 def test_filter_results():
     config = ModelAnalyzerAnalysisConfig()
 
-    file_dir = Path(__file__).parent.absolute()
-    results_file = file_dir / "files" / "results.csv"
-    metrics_file = file_dir / "files" / "metrics.csv"
+    results_file = FILES_DIR / "results.csv"
+    metrics_file = FILES_DIR / "metrics.csv"
 
     summary = Summary(results_path=results_file, metrics_path=metrics_file, analysis_config=config)
 
@@ -41,9 +42,8 @@ def test_filter_results():
 def test_top_results_perf():
     config = ModelAnalyzerAnalysisConfig()
 
-    file_dir = Path(__file__).parent.absolute()
-    results_file = file_dir / "files" / "results.csv"
-    metrics_file = file_dir / "files" / "metrics.csv"
+    results_file = FILES_DIR / "results.csv"
+    metrics_file = FILES_DIR / "metrics.csv"
 
     summary = Summary(results_path=results_file, metrics_path=metrics_file, analysis_config=config)
 
@@ -67,9 +67,8 @@ def test_top_results_latency():
     config = ModelAnalyzerAnalysisConfig()
     config.objectives = {"perf_latency": 10}
 
-    file_dir = Path(__file__).parent.absolute()
-    results_file = file_dir / "files" / "results.csv"
-    metrics_file = file_dir / "files" / "metrics.csv"
+    results_file = FILES_DIR / "results.csv"
+    metrics_file = FILES_DIR / "metrics.csv"
 
     summary = Summary(results_path=results_file, metrics_path=metrics_file, analysis_config=config)
 
@@ -92,9 +91,8 @@ def test_top_results_wighted():
     config = ModelAnalyzerAnalysisConfig()
     config.objectives = {"perf_throughput": 10, "perf_latency": 5}
 
-    file_dir = Path(__file__).parent.absolute()
-    results_file = file_dir / "files" / "results.csv"
-    metrics_file = file_dir / "files" / "metrics.csv"
+    results_file = FILES_DIR / "results.csv"
+    metrics_file = FILES_DIR / "metrics.csv"
 
     summary = Summary(results_path=results_file, metrics_path=metrics_file, analysis_config=config)
 
@@ -121,9 +119,8 @@ def test_top_results_wighted():
 def test_prepare_results():
     config = ModelAnalyzerAnalysisConfig()
 
-    file_dir = Path(__file__).parent.absolute()
-    results_file = file_dir / "files" / "results.csv"
-    metrics_file = file_dir / "files" / "metrics.csv"
+    results_file = FILES_DIR / "results.csv"
+    metrics_file = FILES_DIR / "metrics.csv"
 
     summary = Summary(results_path=results_file, metrics_path=metrics_file, analysis_config=config)
 
@@ -138,9 +135,8 @@ def test_print_results():
     config = ModelAnalyzerAnalysisConfig()
     config.objectives = {"perf_throughput": 10, "perf_latency": 5}
 
-    file_dir = Path(__file__).parent.absolute()
-    results_file = file_dir / "files" / "results.csv"
-    metrics_file = file_dir / "files" / "metrics.csv"
+    results_file = FILES_DIR / "results.csv"
+    metrics_file = FILES_DIR / "metrics.csv"
 
     summary = Summary(results_path=results_file, metrics_path=metrics_file, analysis_config=config)
     summary.show()

@@ -20,11 +20,11 @@ from collections import Counter
 from enum import Enum, EnumMeta
 
 from model_navigator.cli.analyze import analyze_cmd
-from model_navigator.cli.config_model_on_triton import config_model_on_triton_cmd
 from model_navigator.cli.convert_model import convert_cmd
 from model_navigator.cli.helm_chart_create import helm_chart_create_cmd
 from model_navigator.cli.profile import profile_cmd
 from model_navigator.cli.run import run_cmd
+from model_navigator.cli.triton_config_model import config_model_on_triton_cmd
 from model_navigator.utils.cli import OptionNargs
 
 START_TAG = "START_CONFIG_LIST"

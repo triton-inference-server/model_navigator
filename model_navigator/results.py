@@ -35,6 +35,7 @@ class Status:
     state: State
     message: str
     log_path: Optional[str] = None
+    exception: Optional[Exception] = None
 
 
 class ResultsStore:
@@ -53,7 +54,7 @@ class ResultsStore:
     def load(self, stage):
         # TODO: move this to decorator which is called in cli.main() by iterating through commands
         # TODO: missing results for run command
-        from model_navigator.cli.config_model_on_triton import ConfigModelResult
+        from model_navigator.cli.triton_config_model import ConfigModelResult
         from model_navigator.converter import ConversionResult
         from model_navigator.kubernetes import HelmChartGenerationResult
         from model_navigator.model_analyzer import AnalyzeResult, ProfileResult

@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Optional
 
 import click
+from click import UsageError
 
 from model_navigator.cli.spec import (
     ModelConfigCli,
@@ -30,7 +31,7 @@ from model_navigator.cli.spec import (
     TritonModelOptimizationConfigCli,
     TritonModelSchedulerConfigCli,
 )
-from model_navigator.exceptions import ModelNavigatorDeployerException
+from model_navigator.exceptions import BadParameterModelNavigatorDeployerException, ModelNavigatorDeployerException
 from model_navigator.log import init_logger, log_dict
 from model_navigator.model import Model, ModelConfig, ModelSignatureConfig
 from model_navigator.results import ResultsStore, State, Status
@@ -46,7 +47,7 @@ from model_navigator.utils import Workspace
 from model_navigator.utils.cli import common_options, options_from_config
 from model_navigator.validators import run_command_validators
 
-LOGGER = logging.getLogger("config_model")
+LOGGER = logging.getLogger("triton_config_model")
 
 
 @dataclass
@@ -86,7 +87,10 @@ def _load_model(
     client.wait_for_model(model_name=model_name, model_version=model_version, timeout_s=load_model_timeout_s)
 
 
-@click.command(name="triton-config-model", help="Create Triton Server model repository and model configuration")
+CMD_NAME = "triton-config-model"
+
+
+@click.command(name=CMD_NAME, help="Create Triton Server model repository and model configuration")
 @common_options
 @options_from_config(ModelConfig, ModelConfigCli)
 @click.option(
@@ -160,7 +164,7 @@ def config_model_on_triton_cmd(
 
     if verbose:
         log_dict(
-            "config-model-on-triton args:",
+            f"{CMD_NAME} args:",
             {
                 **dataclasses.asdict(model_config),
                 **{
@@ -185,12 +189,7 @@ def config_model_on_triton_cmd(
         signature_if_missing=signature_config,
     )
     if verbose:
-        log_dict(
-            "model:",
-            {
-                **dataclasses.asdict(model),
-            },
-        )
+        log_dict("model:", {**dataclasses.asdict(model)})
 
     model_dir_in_model_store = None
     try:
@@ -211,42 +210,35 @@ def config_model_on_triton_cmd(
                 model_control_mode=model_control_mode,
                 verbose=verbose,
             )
-        config_model_result = ConfigModelResult(
-            status=Status(state=State.SUCCEEDED, message="Model configured and loaded correctly"),
-            model_config=model_config,
-            model_version=model_version,
-            optimization_config=optimization_config,
-            scheduler_config=scheduler_config,
-            instances_config=instances_config,
-            model_dir_in_model_store=model_dir_in_model_store,
-        )
+        status = Status(state=State.SUCCEEDED, message="Model configured and loaded correctly")
     except ModelNavigatorDeployerException as e:
         message = str(e)
         LOGGER.debug(message)
-        config_model_result = ConfigModelResult(
-            status=Status(state=State.FAILED, message=message, log_path=e.log_path),
-            model_config=model_config,
-            model_version=model_version,
-            optimization_config=optimization_config,
-            scheduler_config=scheduler_config,
-            instances_config=instances_config,
-            model_dir_in_model_store=model_dir_in_model_store,
-        )
-    except Exception:
+        status = Status(state=State.FAILED, message=message, log_path=e.log_path, exception=e)
+    except Exception as e:
         message = traceback.format_exc()
         LOGGER.debug(f"Encountered exception \n{message}")
-        config_model_result = ConfigModelResult(
-            status=Status(state=State.FAILED, message=message),
-            model_config=model_config,
-            model_version=model_version,
-            optimization_config=optimization_config,
-            scheduler_config=scheduler_config,
-            instances_config=instances_config,
-            model_dir_in_model_store=model_dir_in_model_store,
-        )
+        status = Status(state=State.FAILED, message=message, exception=e)
+
+    config_model_result = ConfigModelResult(
+        status=status,
+        model_config=model_config,
+        model_version=model_version,
+        optimization_config=optimization_config,
+        scheduler_config=scheduler_config,
+        instances_config=instances_config,
+        model_dir_in_model_store=model_dir_in_model_store,
+    )
 
     workspace = Workspace(workspace_path)
     results_store = ResultsStore(workspace)
     results_store.dump(ctx.command.name.replace("-", "_"), [config_model_result])
+
+    if (
+        config_model_result.status.state != State.SUCCEEDED
+        and config_model_result.status.exception
+        and isinstance(config_model_result.status.exception, BadParameterModelNavigatorDeployerException)
+    ):
+        raise UsageError(config_model_result.status.message)
 
     return config_model_result

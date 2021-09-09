@@ -42,6 +42,10 @@ class ArtifactoryRepository:
             model_path=Path("tests/files/models/identity.scripted.pt"),
             config_path=Path("tests/files/models/identity.scripted.pt.simple.nav.yaml"),
         ),
+        ("ONNX/simple", "simple"): ModelConfigPair(
+            model_path=Path("tests/files/models/identity.onnx"),
+            config_path=Path("tests/files/models/identity.onnx.simple.nav.yaml"),
+        ),
     }
 
     def copy_model_and_config(self, *, model_type: str, config_type: str, to: Path):

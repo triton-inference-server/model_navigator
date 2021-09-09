@@ -11,12 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from tests.test_tensor_tf2 import test_tf2_eq, test_tf2_to_numpy
 
+from pytest_bdd import scenarios  # pytype: disable=import-error
 
-def test_tf1_eq():
-    test_tf2_eq()
+from tests.acceptance.library import *  # noqa
 
-
-def test_tf1_to_numpy():
-    test_tf2_to_numpy()
+scenarios(
+    "features/profile",
+    "features/docker",
+    "features/triton_config_model",
+)

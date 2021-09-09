@@ -18,13 +18,13 @@ import click
 
 from model_navigator import __version__ as navigator_version
 from model_navigator.cli.analyze import analyze_cmd
-from model_navigator.cli.config_model_on_triton import config_model_on_triton_cmd
 from model_navigator.cli.convert_model import convert_cmd
 from model_navigator.cli.create_profiling_data import create_profiling_data_cmd
 from model_navigator.cli.download_file import download_cmd
 from model_navigator.cli.helm_chart_create import helm_chart_create_cmd
 from model_navigator.cli.profile import profile_cmd
 from model_navigator.cli.run import run_cmd
+from model_navigator.cli.triton_config_model import config_model_on_triton_cmd
 from model_navigator.cli.triton_evaluate_model import triton_evaluate_model_cmd
 
 LOGGER = logging.getLogger("model-navigator")

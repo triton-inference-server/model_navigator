@@ -23,6 +23,7 @@ limitations under the License.
   - Added `config_search` prefix  to all profiling parameters (BREAKING CHANGE)
   - Added `config_search_max_preferred_batch_size` parameter
   - Added `config_search_backend_parameters` parameter
+- fixes and improvements
 
 ## 0.2.2 (2021-09-06)
 

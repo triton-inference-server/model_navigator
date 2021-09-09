@@ -19,7 +19,7 @@ from typing import Optional, Union
 from google.protobuf import text_format  # pytype: disable=pyi-error
 from google.protobuf.text_format import MessageToString  # pytype: disable=pyi-error
 
-from model_navigator.exceptions import ModelNavigatorDeployerException
+from model_navigator.exceptions import BadParameterModelNavigatorDeployerException, ModelNavigatorDeployerException
 from model_navigator.model import Format, Model, ModelSignatureConfig
 from model_navigator.tensor import TensorSpec
 from model_navigator.triton.client import client_utils, grpc_client
@@ -138,6 +138,10 @@ class TritonModelConfigGenerator:
 
     def _fill_optimization(self, model_config):
         if self._optimization_config.backend_accelerator == BackendAccelerator.TRT:
+            if self._optimization_config.tensorrt_precision is None:
+                raise BadParameterModelNavigatorDeployerException(
+                    "--tensorrt-precision is required while using tensorrt backend accelerator"
+                )
             accelerator = model_config.optimization.execution_accelerators.gpu_execution_accelerator.add()
             accelerator.name = "tensorrt"
             accelerator.parameters["precision_mode"] = self._optimization_config.tensorrt_precision.value.upper()

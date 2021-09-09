@@ -46,6 +46,10 @@ class ModelNavigatorDeployerException(ModelNavigatorException):
     pass
 
 
+class BadParameterModelNavigatorDeployerException(ModelNavigatorDeployerException):
+    pass
+
+
 class ModelNavigatorConverterException(ModelNavigatorException):
     pass
 
