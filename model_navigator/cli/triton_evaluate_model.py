@@ -101,7 +101,7 @@ def _perf_analyzer_evaluation(
     measurement_request_count: int = 50,
     concurrency_steps: int = 1,
     batching_mode: BatchingMode = BatchingMode.STATIC,
-    evaluation_mode: EvaluationMode = EvaluationMode.OFFLINE,
+    evaluation_mode: EvaluationMode = EvaluationMode.ONLINE,
     offline_mode: OfflineMode = OfflineMode.SYSTEM,
     latency_report_file: Optional[str] = None,
     verbose: bool = False,
@@ -185,7 +185,7 @@ def _get_shape_params(dataset_profile_config):
 @click.option(
     "--evaluation-mode",
     type=click.Choice([item.value for item in EvaluationMode]),
-    default=EvaluationMode.OFFLINE.value,
+    default=EvaluationMode.ONLINE.value,
     help="Select model evaluation mode "
     "'offline' use system or GPU memory to pass tensors. "
     "'online' use TCP to pass tensors.",
