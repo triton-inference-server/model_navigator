@@ -46,7 +46,6 @@ from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.converter.utils import FORMAT2FRAMEWORK
 from model_navigator.device.utils import get_gpus
 from model_navigator.exceptions import ModelNavigatorCliException, ModelNavigatorException
-from model_navigator.framework import SUFFIX2FRAMEWORK
 from model_navigator.log import init_logger, log_dict
 from model_navigator.model import Format, Model, ModelConfig, ModelSignatureConfig
 from model_navigator.results import ResultsStore, State
@@ -312,7 +311,7 @@ def convert(
         LOGGER.error(f"No such file or directory {src_model.path}")
         raise click.Abort()
 
-    framework = SUFFIX2FRAMEWORK[src_model_config.model_path.suffix]
+    framework = FORMAT2FRAMEWORK[src_model.format]
     framework_docker_image = framework_docker_image or framework.container_image(container_version)
 
     workspace = Workspace(workspace_path)

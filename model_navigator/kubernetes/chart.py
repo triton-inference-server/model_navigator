@@ -22,7 +22,7 @@ from model_navigator.converter.config import (
     ConversionLaunchMode,
     DatasetProfileConfig,
 )
-from model_navigator.framework import SUFFIX2FRAMEWORK, PyTorch, TensorFlow2
+from model_navigator.framework import PyTorch, TensorFlow2
 from model_navigator.kubernetes import internals
 from model_navigator.kubernetes.generator import generator
 from model_navigator.kubernetes.inference import InferenceChartCreator
@@ -59,9 +59,9 @@ class ChartGenerator:
         scheduler_config: TritonModelSchedulerConfig,
         instances_config: TritonModelInstancesConfig,
         output_path: Path,
+        framework: Type[Union[PyTorch, TensorFlow2]],
         chart_version: Optional[str] = None,
     ):
-        framework = self._get_framework(src_model.model_path)
         generator(
             chart_name=src_model.model_name,
             output_path=output_path,
@@ -161,13 +161,6 @@ class ChartGenerator:
             """,
         ]
         return commands
-
-    def _get_framework(self, path: Path) -> Type[Union[PyTorch, TensorFlow2]]:
-        model_path = Path(path)
-        suffix = model_path.suffix
-        framework = SUFFIX2FRAMEWORK[suffix]
-
-        return framework
 
     def _normalize(self, name) -> str:
         return name.lower().replace("_", "-")

@@ -17,7 +17,7 @@ from pytest_bdd import scenarios  # pytype: disable=import-error
 from tests.acceptance.library import *  # noqa
 
 scenarios(
-    "features/profile",
     "features/docker",
+    "features/profile",
     "features/triton_config_model",
 )

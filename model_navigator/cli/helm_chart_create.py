@@ -32,6 +32,8 @@ from model_navigator.cli.spec import (
     TritonModelSchedulerConfigCli,
 )
 from model_navigator.converter.config import ComparatorConfig, DatasetProfileConfig
+from model_navigator.converter.utils import FORMAT2FRAMEWORK
+from model_navigator.exceptions import ModelNavigatorException
 from model_navigator.framework import SUFFIX2FRAMEWORK
 from model_navigator.kubernetes import ChartGenerator, HelmChartGenerationResult
 from model_navigator.kubernetes.triton import TritonServer
@@ -113,7 +115,17 @@ def helm_chart_create_cmd(
     scheduler_config = TritonModelSchedulerConfig.from_dict(kwargs)
     instances_config = TritonModelInstancesConfig.from_dict(kwargs)
 
-    framework = SUFFIX2FRAMEWORK[src_model_config.model_path.suffix]
+    if src_model_config.model_format:
+        framework = FORMAT2FRAMEWORK[src_model_config.model_format]
+    elif src_model_config.model_path.suffix:
+        framework = SUFFIX2FRAMEWORK[src_model_config.model_path.suffix]
+    else:
+        raise ModelNavigatorException(
+            """The model format or file/directory suffix is required. Provided: \n"""
+            f"""model-format: {src_model_config.model_format}\n"""
+            f"""model-path: {src_model_config.model_path}"""
+        )
+
     framework_docker_image = framework_docker_image or framework.container_image(container_version)
     triton_docker_image = triton_docker_image or TritonServer.container_image(container_version)
 
@@ -161,6 +173,7 @@ def helm_chart_create_cmd(
             instances_config=instances_config,
             output_path=output_path,
             chart_version=chart_version,
+            framework=framework,
         )
     except Exception:
         message = traceback.format_exc()

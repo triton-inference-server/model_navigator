@@ -38,6 +38,7 @@ from model_navigator.cli.triton_config_model import config_model_on_triton_cmd
 from model_navigator.cli.triton_evaluate_model import triton_evaluate_model_cmd
 from model_navigator.configurator import Configurator, log_configuration_error
 from model_navigator.converter import ComparatorConfig, ConversionResult, DatasetProfileConfig
+from model_navigator.converter.utils import FORMAT2FRAMEWORK
 from model_navigator.device.utils import get_gpus
 from model_navigator.exceptions import ModelNavigatorException
 from model_navigator.framework import SUFFIX2FRAMEWORK
@@ -137,7 +138,17 @@ def run_cmd(
     analysis_config = ModelAnalyzerAnalysisConfig.from_dict(kwargs)
     perf_measurement_config = PerfMeasurementConfig.from_dict(kwargs)
 
-    framework = SUFFIX2FRAMEWORK[src_model_config.model_path.suffix]
+    if src_model_config.model_format:
+        framework = FORMAT2FRAMEWORK[src_model_config.model_format]
+    elif src_model_config.model_path.suffix:
+        framework = SUFFIX2FRAMEWORK[src_model_config.model_path.suffix]
+    else:
+        raise ModelNavigatorException(
+            """The model format or file/directory suffix is required. Provided: \n"""
+            f"""model-format: {src_model_config.model_format}\n"""
+            f"""model-path: {src_model_config.model_path}"""
+        )
+
     framework_docker_image = framework_docker_image or framework.container_image(container_version)
     triton_docker_image = triton_docker_image or TritonServer.container_image(container_version)
 

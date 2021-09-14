@@ -42,6 +42,10 @@ class ArtifactoryRepository:
             model_path=Path("tests/files/models/identity.scripted.pt"),
             config_path=Path("tests/files/models/identity.scripted.pt.simple.nav.yaml"),
         ),
+        ("TorchScript/simple_no_extension", "simple_no_extension"): ModelConfigPair(
+            model_path=Path("tests/files/models/identity.scripted"),
+            config_path=Path("tests/files/models/identity.scripted.simple.nav.yaml"),
+        ),
         ("ONNX/simple", "simple"): ModelConfigPair(
             model_path=Path("tests/files/models/identity.onnx"),
             config_path=Path("tests/files/models/identity.onnx.simple.nav.yaml"),
