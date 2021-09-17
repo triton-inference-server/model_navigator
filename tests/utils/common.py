@@ -1,4 +1,3 @@
-#!/usr/bin/env bash
 # Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,12 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import logging
 
-set -x
+LOGGER = logging.getLogger(__name__)
 
-TEST_CONFIG="${1:-./tests/functional/pytorch_vision_models}"
-CURRENT_DATE=$(date "+%Y%m%d_%H%M%S")
 
-./tests/functional/test_convert.py -vvv \
-    --work-dir ${CURRENT_DATE}_workspace_pytorch_vision_convert \
-    ${TEST_CONFIG} 2>&1|tee ${CURRENT_DATE}_workspace_pytorch_vision_convert.log
+def load_config(config_path):
+    import yaml
+
+    with config_path.open("r") as config_file:
+        return yaml.safe_load(config_file)

@@ -24,7 +24,8 @@ from pytest_bdd.parsers import parse  # pytype: disable=import-error
 from model_navigator.results import ResultsStore, State
 from model_navigator.utils import Workspace
 from model_navigator.utils.workspace import DEFAULT_WORKSPACE_PATH
-from tests.acceptance.library.utils import equal_model_configs_sets, get_profile_results
+from tests.utils.profile_results import get_profile_results
+from tests.utils.triton_model_config import equal_model_configs_sets
 
 
 @then(parse("the {command_name} subcommand results have {state} state and parameters matching:\n{parameters}"))

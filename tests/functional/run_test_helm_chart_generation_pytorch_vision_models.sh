@@ -20,5 +20,4 @@ CURRENT_DATE=$(date "+%Y%m%d_%H%M%S")
 
 ./tests/functional/test_helm_chart_generation.py -vvv \
     --work-dir ${CURRENT_DATE}_workspace_pytorch_vision_helm \
-    --downloader-path tests/functional/pytorch_vision_models/pytorch_downloader.py \
     ${TEST_CONFIG} 2>&1|tee tee ${CURRENT_DATE}_workspace_pytorch_vision_helm.log

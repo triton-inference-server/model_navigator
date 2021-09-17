@@ -16,6 +16,7 @@ model_name: identity_scripted
 model_path: identity.scripted
 model_format: torchscript
 triton_launch_mode: local
+verbose: true
 # model signature
 inputs:
     input__0:

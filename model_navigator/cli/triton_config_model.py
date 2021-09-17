@@ -211,14 +211,17 @@ def config_model_on_triton_cmd(
                 verbose=verbose,
             )
         status = Status(state=State.SUCCEEDED, message="Model configured and loaded correctly")
+        exception = None
     except ModelNavigatorDeployerException as e:
         message = str(e)
         LOGGER.debug(message)
-        status = Status(state=State.FAILED, message=message, log_path=e.log_path, exception=e)
+        status = Status(state=State.FAILED, message=message, log_path=e.log_path)
+        exception = e
     except Exception as e:
         message = traceback.format_exc()
         LOGGER.debug(f"Encountered exception \n{message}")
-        status = Status(state=State.FAILED, message=message, exception=e)
+        status = Status(state=State.FAILED, message=message)
+        exception = e
 
     config_model_result = ConfigModelResult(
         status=status,
@@ -236,8 +239,8 @@ def config_model_on_triton_cmd(
 
     if (
         config_model_result.status.state != State.SUCCEEDED
-        and config_model_result.status.exception
-        and isinstance(config_model_result.status.exception, BadParameterModelNavigatorDeployerException)
+        and exception is not None
+        and isinstance(exception, BadParameterModelNavigatorDeployerException)
     ):
         raise UsageError(config_model_result.status.message)
 

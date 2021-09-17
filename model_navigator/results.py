@@ -35,7 +35,6 @@ class Status:
     state: State
     message: str
     log_path: Optional[str] = None
-    exception: Optional[Exception] = None
 
 
 class ResultsStore:
@@ -47,6 +46,8 @@ class ResultsStore:
         LOGGER.debug(f"Saving results of {stage} stage into {results_path}")
         results_path.parent.mkdir(parents=True, exist_ok=True)
         with results_path.open("w") as results_file:
+            for result in results:
+                LOGGER.debug(result)
             results_dict = [dataclass2dict(result) for result in results]
             yaml.dump(results_dict, results_file)
         return results_path

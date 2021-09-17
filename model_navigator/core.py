@@ -28,3 +28,6 @@ class Container(NamedTuple):
             )
 
         return f"{cls.image}:{version}-{cls.tag}"
+
+
+DEFAULT_CONTAINER_VERSION = "21.08"

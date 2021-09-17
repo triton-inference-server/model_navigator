@@ -31,9 +31,9 @@ def i_execute_command(run_context, command_name: str):
             value = [value]
         param_values = list(map(str, value))
 
-        # if value is True/False - assume it is flag argument
-        if len(value) == 1 and value[0] in ["True", "False"]:
-            value = value[0] == "True"
+        # if value is True/False/true/false - assume it is flag argument
+        if len(value) == 1 and value[0] in ["True", "False", "true", "false"]:
+            value = value[0] in ["True", "true"]
             if not value:
                 continue
             else:

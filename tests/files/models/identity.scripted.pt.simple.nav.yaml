@@ -15,6 +15,7 @@ override_conversion_container: True
 model_name: identity_scripted
 model_path: identity.scripted.pt
 triton_launch_mode: local
+verbose: true
 # model signature
 inputs:
     input__0:

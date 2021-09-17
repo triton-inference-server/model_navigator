@@ -21,6 +21,7 @@ from typing import Callable, Dict, List, Optional, Tuple
 import click
 from click.types import UNPROCESSED
 
+from model_navigator.core import DEFAULT_CONTAINER_VERSION
 from model_navigator.utils.config import YamlConfigFile
 from model_navigator.utils.workspace import DEFAULT_WORKSPACE_PATH, Workspace
 
@@ -412,7 +413,7 @@ def common_options(f):
                 "NVIDIA framework and Triton container version to use "
                 "(refer to https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html and https://docs.nvidia.com/deeplearning/triton-inference-server/release-notes/index.html for details)."
             ),
-            default="21.08",
+            default=DEFAULT_CONTAINER_VERSION,
         ),
         click.option(
             "--framework-docker-image",
