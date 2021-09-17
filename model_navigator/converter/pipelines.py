@@ -13,7 +13,7 @@
 # limitations under the License.
 import abc
 import logging
-from typing import List, Optional, Sequence
+from typing import Iterator, List, Optional, Sequence
 
 from model_navigator.converter.config import ComparatorConfig, ConversionConfig, DatasetProfileConfig
 from model_navigator.converter.transformers import CompositeConvertCommand, PassTransformer, TFSavedModel2ONNXTransform
@@ -174,7 +174,6 @@ class TRTPipeline(BaseModelPipeline):
         comparator_config: Optional[ComparatorConfig] = None,
         dataset_profile: Optional[DatasetProfileConfig] = None,
     ) -> Sequence[CompositeConvertCommand]:
-
         commands = []
         if conversion_config.target_format == Format.TENSORRT:
             pass_transform = PassTransformer(conversion_config=conversion_config)
@@ -183,33 +182,28 @@ class TRTPipeline(BaseModelPipeline):
         return commands
 
 
-_FORMAT2PIPELINE = {
-    format_: pipeline
-    for pipeline in [SavedModelPipeline, TorchScriptPipeline, ONNXPipeline, TRTPipeline]
-    for format_ in pipeline.src_formats
-}
-
-
 class ConvertCommandsRegistry:
     def get(
         self,
         *,
-        model: ModelConfig,
+        model_config: ModelConfig,
         conversion_config: ConversionConfig,
         signature_config: Optional[ModelSignatureConfig] = None,
         comparator_config: Optional[ComparatorConfig] = None,
         dataset_profile_config: Optional[DatasetProfileConfig] = None,
-    ) -> Sequence[CompositeConvertCommand]:
-        src_format = Model(model.model_name, model.model_path, explicit_format=model.model_format).format
+    ) -> Iterator[Sequence[CompositeConvertCommand]]:
+        model = Model(model_config.model_name, model_config.model_path, explicit_format=model_config.model_format)
 
-        try:
-            pipeline = _FORMAT2PIPELINE[src_format]()
-            return pipeline.get_commands(
+        for pipeline in self._get_pipelines_for_model(model):
+            yield pipeline.get_commands(
                 conversion_config=conversion_config,
                 signature_config=signature_config,
                 comparator_config=comparator_config,
                 dataset_profile=dataset_profile_config,
             )
-        except KeyError:
-            LOGGER.info(f"Have no optimization pipelines defined for {src_format}")
-            return []
+
+    def _get_pipelines_for_model(self, model: Model):
+        for pipeline_cls in BaseModelPipeline.__subclasses__():
+            if model.format in pipeline_cls.src_formats:
+                pipeline = pipeline_cls()
+                yield pipeline

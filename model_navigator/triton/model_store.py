@@ -16,8 +16,11 @@ import shutil
 from pathlib import Path
 from typing import Optional, Union
 
-from model_navigator.model import Format, Model
+from model_navigator.exceptions import ModelNavigatorDeployerException
+from model_navigator.model import Model
+from model_navigator.triton.backends.base import BackendConfiguratorSelector
 from model_navigator.triton.config import (
+    TritonCustomBackendParametersConfig,
     TritonModelInstancesConfig,
     TritonModelOptimizationConfig,
     TritonModelSchedulerConfig,
@@ -25,13 +28,6 @@ from model_navigator.triton.config import (
 from model_navigator.triton.model_config import TritonModelConfigGenerator
 
 LOGGER = logging.getLogger(__name__)
-
-_SUFFIXES = {
-    Format.TF_SAVEDMODEL: "savedmodel",
-    Format.TENSORRT: "plan",
-    Format.ONNX: "onnx",
-    Format.TORCHSCRIPT: "pt",
-}
 
 
 class TritonModelStore:
@@ -51,6 +47,7 @@ class TritonModelStore:
         optimization_config: TritonModelOptimizationConfig,
         scheduler_config: TritonModelSchedulerConfig,
         instances_config: TritonModelInstancesConfig,
+        backend_parameters_config: TritonCustomBackendParametersConfig,
     ) -> Path:
 
         triton_model_config_generator = TritonModelConfigGenerator(
@@ -58,6 +55,7 @@ class TritonModelStore:
             optimization_config=optimization_config,
             scheduler_config=scheduler_config,
             instances_config=instances_config,
+            backend_parameters_config=backend_parameters_config,
             target_triton_version=self._target_triton_version,
         )
         LOGGER.debug(
@@ -70,7 +68,8 @@ class TritonModelStore:
 
         # remove model filename and model version
         model_dir_in_model_store_path = model_path.parent.parent
-        triton_model_config_generator.save(model_dir=model_dir_in_model_store_path)
+        config_path = model_dir_in_model_store_path / "config.pbtxt"
+        triton_model_config_generator.save(config_path=config_path)
 
         return model_dir_in_model_store_path
 
@@ -81,9 +80,29 @@ class TritonModelStore:
         if model.path.is_file():
             shutil.copy(model.path, dst_path)
         else:
-            shutil.copytree(model.path, dst_path)
+            try:
+                shutil.copytree(model.path, dst_path)
+            except shutil.Error:
+                # due to error as reported on https://bugs.python.org/issue43743
+                shutil._USE_CP_SENDFILE = False
+                shutil.rmtree(dst_path)
+                shutil.copytree(model.path, dst_path)
         return dst_path
 
     def _get_model_path(self, model: Model, version: str) -> Path:
-        suffix = _SUFFIXES[model.format]
-        return self._model_store_path / model.name / version / f"model.{suffix}"
+        backend_configurator = BackendConfiguratorSelector.for_model(model)
+        return self._model_store_path / model.name / version / backend_configurator.get_filename(model)
+
+    def get_model_path(self, model_name):
+        model_dir = self._model_store_path / model_name
+        # support only single version and single file/directory models
+        version_dir_paths = [file_path for file_path in model_dir.iterdir() if file_path.is_dir()]
+        if len(version_dir_paths) != 1:
+            raise ModelNavigatorDeployerException(
+                f"In Triton model directory there is more than 1 model version {version_dir_paths}"
+            )
+        version_dir_path = version_dir_paths[0]
+        model_paths = list(version_dir_path.iterdir())
+        if len(model_paths) != 1:
+            raise ModelNavigatorDeployerException(f"In Triton model directory there is more than 1 model {model_paths}")
+        return model_paths[0].resolve()

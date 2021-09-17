@@ -83,16 +83,15 @@ class Converter:
             LOGGER.debug(f"There was no specified comparator configuration - created default one {comparator_config}")
 
         try:
-            composite_commands = self._registry.get(
-                model=src_model,
+            for composite_commands in self._registry.get(
+                model_config=src_model,
                 conversion_config=conversion_config,
                 signature_config=signature_config,
                 comparator_config=comparator_config,
                 dataset_profile_config=dataset_profile_config,
-            )
-
-            for composite_command in composite_commands:
-                yield from self._executor(src_model, composite_command)
+            ):
+                for composite_command in composite_commands:
+                    yield from self._executor(src_model, composite_command)
 
         except ModelNavigatorConverterException as e:
             message = str(e)

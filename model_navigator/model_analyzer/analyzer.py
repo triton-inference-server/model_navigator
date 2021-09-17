@@ -25,7 +25,7 @@ from model_navigator.model_analyzer.model_analyzer import ModelAnalyzerMode
 from model_navigator.model_analyzer.model_analyzer_config import ModelAnalyzerConfig
 from model_navigator.model_analyzer.summary import Summary
 from model_navigator.results import State, Status
-from model_navigator.triton import TritonModelConfigGenerator
+from model_navigator.triton import TritonModelConfigGenerator, TritonModelStore
 from model_navigator.utils import Workspace
 
 LOGGER = logging.getLogger(__name__)
@@ -98,12 +98,14 @@ class Analyzer:
         )
 
         for result in summary.get_results():
-            model_path = self._model_repository / result["Model"]
+            model_store = TritonModelStore(self._model_repository)
+            external_model_path = model_store.get_model_path(result["Model"])
+
             triton_config_path = (
                 self._config_generator.output_model_repository_path / result["Model Config Path"] / "config.pbtxt"
             )
-            triton_model_config_generator = TritonModelConfigGenerator.from_triton_config_pbtxt(
-                triton_config_path, model_path
+            triton_model_config_generator = TritonModelConfigGenerator.parse_triton_config_pbtxt(
+                triton_config_path, external_model_path=external_model_path
             )
 
             analyze_result = AnalyzeResult(

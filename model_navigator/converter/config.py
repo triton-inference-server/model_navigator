@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, Optional, Tuple
@@ -66,3 +67,27 @@ class ConversionConfig(BaseConfig):
     onnx_opset: Optional[int] = None
     # TRT related
     max_workspace_size: Optional[int] = None
+
+
+class TargetFormatConfigSetIterator(ABC):
+    def __init__(self, conversion_set_config):
+        self._conversion_set_config = conversion_set_config
+
+    @abstractmethod
+    def __iter__(self):
+        pass
+
+    @classmethod
+    def for_target_format(cls, target_format, config_set):
+        from model_navigator.converter.onnx.config import OnnxConfigSetIterator
+        from model_navigator.converter.pyt.config import PyTorchConfigSetIterator
+        from model_navigator.converter.tensorrt.config import TensorRTConfigSetIterator
+        from model_navigator.converter.tf.config import TensorFlowConfigSetIterator
+
+        iterator_cls = {
+            Format.ONNX: OnnxConfigSetIterator,
+            Format.TENSORRT: TensorRTConfigSetIterator,
+            Format.TF_SAVEDMODEL: TensorFlowConfigSetIterator,
+            Format.TORCHSCRIPT: PyTorchConfigSetIterator,
+        }[target_format]
+        return iterator_cls(config_set)

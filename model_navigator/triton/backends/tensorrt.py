@@ -11,25 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from abc import ABC, abstractmethod
-from pathlib import Path
-from typing import Any
-
-from model_navigator.model import ModelSignatureConfig
+from model_navigator.model import Format
+from model_navigator.triton import TritonModelOptimizationConfig
+from model_navigator.triton.backends.base import BaseBackendConfigurator
 
 
-class BaseFormatUtils(ABC):
-    @classmethod
-    @abstractmethod
-    def get_signature(cls, path: Path) -> ModelSignatureConfig:
-        raise NotImplementedError()
+class TensorRTBackendConfigurator(BaseBackendConfigurator):
+    platform_name = "tensorrt_plan"
+    supported_formats = [Format.TENSORRT]
 
-    @classmethod
-    @abstractmethod
-    def validate_signature(cls, signature: ModelSignatureConfig):
-        raise NotImplementedError()
-
-    @classmethod
-    @abstractmethod
-    def get_properties(cls, path: Path) -> Any:
-        raise NotImplementedError()
+    def _set_backend_acceleration(self, model_config, optimization_config: TritonModelOptimizationConfig):
+        model_config.optimization.cuda.graphs = int(optimization_config.tensorrt_capture_cuda_graph)

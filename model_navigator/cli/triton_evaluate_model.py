@@ -11,13 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import csv
 import dataclasses
 import logging
 import traceback
 from dataclasses import dataclass
 from enum import Enum
 from subprocess import TimeoutExpired
-from typing import List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import click as click
 
@@ -27,7 +28,6 @@ from model_navigator.cli.spec import (
     ModelConfigCli,
     PerfMeasurementConfigCli,
     TritonClientConfigCli,
-    TritonModelSchedulerConfigCli,
 )
 from model_navigator.converter import DatasetProfileConfig
 from model_navigator.exceptions import ModelNavigatorException
@@ -88,11 +88,37 @@ class TritonEvaluateModelResult:
     log: Optional[str]
 
 
+def _read_csv_file(file: str, additional_fields: Optional[Dict] = None) -> List[Dict]:
+    LOGGER.info(f"Reading data from {file}")
+    rows: List[Dict] = []
+    with open(file) as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            if additional_fields:
+                row = {**additional_fields, **row}
+            rows.append(row)
+
+    LOGGER.info("done")
+
+    return rows
+
+
+def _save_csv_file(file: str, results: List[Dict]):
+    LOGGER.info(f"Saving data to {file}")
+    with open(file, "w") as csvfile:
+        header = tuple(results[0].keys())
+        writer = csv.DictWriter(csvfile, fieldnames=header)
+        writer.writeheader()
+        writer.writerows(results)
+
+    LOGGER.info("done")
+
+
 def _perf_analyzer_evaluation(
     server_url: str,
     model_name: str,
     input_shapes: List[str],
-    batch_size: int,
+    batch_sizes: List[int],
     model_version: str = "1",
     input_data: str = "random",
     number_of_model_instances: int = 1,
@@ -114,53 +140,63 @@ def _perf_analyzer_evaluation(
         min_concurrency = 1
         step = 1
     elif batching_mode == BatchingMode.DYNAMIC:
-        max_total_requests = 2 * batch_size * number_of_model_instances
+        max_total_requests = 2 * max(batch_sizes) * number_of_model_instances
         max_concurrency = min(256, max_total_requests)
         step = max(1, max_concurrency // concurrency_steps)
         min_concurrency = step
-        batch_size = [max(1, max_total_requests // 256)]
+        batch_sizes = [max(1, max_total_requests // 256)]
     else:
         raise ValueError(f"Unsupported batching mode: {batching_mode}")
 
-    params = {
-        "model-name": model_name,
-        "model-version": model_version,
-        "batch-size": batch_size,
-        "url": f"{host}:{port}",
-        "protocol": protocol,
-        "input-data": input_data,
-        "measurement-mode": measurement_mode,
-        "measurement-request-count": measurement_request_count,
-        "measurement-interval": measurement_interval,
-        "concurrency-range": f"{min_concurrency}:{max_concurrency}:{step}",
-    }
+    results = []
+    output = ""
+    for batch_size in batch_sizes:
+        params = {
+            "model-name": model_name,
+            "model-version": model_version,
+            "batch-size": batch_size,
+            "url": f"{host}:{port}",
+            "protocol": protocol,
+            "input-data": input_data,
+            "measurement-mode": measurement_mode,
+            "measurement-request-count": measurement_request_count,
+            "measurement-interval": measurement_interval,
+            "concurrency-range": f"{min_concurrency}:{max_concurrency}:{step}",
+        }
 
-    if latency_report_file:
-        params["latency_report_file"] = latency_report_file
+        if latency_report_file:
+            params["latency-report-file"] = latency_report_file
 
-    if verbose:
-        params["verbose"] = True
+        if verbose:
+            params["verbose"] = True
 
-    if evaluation_mode == EvaluationMode.OFFLINE:
-        params["shared-memory"] = offline_mode.value
+        if evaluation_mode == EvaluationMode.OFFLINE:
+            params["shared-memory"] = offline_mode.value
 
-    if verbose:
-        log_dict(f"Perf Analyzer config for {batch_size}", params)
+        if verbose:
+            log_dict(f"Perf Analyzer config for {batch_size}", params)
 
-    perf_config = PerfAnalyzerConfig()
-    for param, value in params.items():
-        perf_config[param] = value
+        perf_config = PerfAnalyzerConfig()
+        for param, value in params.items():
+            perf_config[param] = value
 
-    for shape in input_shapes:
-        perf_config["shape"] = shape
+        for shape in input_shapes:
+            perf_config["shape"] = shape
 
-    perf_analyzer = PerfAnalyzer(
-        perf_config,
-        timeout=timeout,
-        stream_output=verbose,
-    )
-    perf_analyzer.run()
-    output = perf_analyzer.output()
+        perf_analyzer = PerfAnalyzer(
+            perf_config,
+            timeout=timeout,
+            stream_output=verbose,
+        )
+        perf_analyzer.run()
+        output += perf_analyzer.output()
+
+        if latency_report_file:
+            partial_result = _read_csv_file(latency_report_file, additional_fields={"Batch": batch_size})
+            results.extend(partial_result)
+
+    if latency_report_file and results:
+        _save_csv_file(latency_report_file, results)
 
     return output
 
@@ -181,7 +217,13 @@ def _get_shape_params(dataset_profile_config):
 @click.command(name="triton-evaluate-model", help="Evaluate model on Triton using Perf Analyzer")
 @click.option("--model-name", required=True, help=ModelConfigCli.model_name.help)
 @click.option("--model-version", required=False, help=ModelConfigCli.model_version.help, default="1")
-@click.option("--max-batch-size", required=False, help=TritonModelSchedulerConfigCli.max_batch_size.help, default=1)
+@click.option(
+    "--batch-sizes",
+    type=str,
+    required=False,
+    help="List of batch sizes to tests. Comma separated integers.",
+    default="1",
+)
 @click.option(
     "--evaluation-mode",
     type=click.Choice([item.value for item in EvaluationMode]),
@@ -189,6 +231,7 @@ def _get_shape_params(dataset_profile_config):
     help="Select model evaluation mode "
     "'offline' use system or GPU memory to pass tensors. "
     "'online' use TCP to pass tensors.",
+    required=False,
 )
 @click.option(
     "--offline-mode",
@@ -197,6 +240,7 @@ def _get_shape_params(dataset_profile_config):
     help="Select offline mode "
     "'system' use system memory to pass tensors. "
     "'cuda' use GPU memory to pass tensors. ",
+    required=False,
 )
 @click.option(
     "--batching-mode",
@@ -205,6 +249,21 @@ def _get_shape_params(dataset_profile_config):
     help="Select model evaluation mode "
     "'static' run static batching scenario. "
     "'dynamic' run dynamic batching scenario.",
+    required=False,
+)
+@click.option(
+    "--concurrency-steps",
+    type=int,
+    default=16,
+    help="Number of concurrency steps for dynamic batching",
+    required=False,
+)
+@click.option(
+    "--latency-report-file",
+    type=str,
+    required=False,
+    default=None,
+    help="Provide path to file where CSV report has to be stored",
 )
 @cli.options_from_config(PerfMeasurementConfig, PerfMeasurementConfigCli)
 @cli.options_from_config(DatasetProfileConfig, DatasetProfileConfigCli)
@@ -215,11 +274,13 @@ def triton_evaluate_model_cmd(
     workspace_path: str,
     model_name: str,
     model_version: str,
+    batch_sizes: str,
     evaluation_mode: Union[List, Tuple],
     batching_mode: str,
     offline_mode: str,
-    max_batch_size: int,
     verbose: bool,
+    latency_report_file: str,
+    concurrency_steps: int,
     **kwargs,
 ):
     """
@@ -232,6 +293,8 @@ def triton_evaluate_model_cmd(
     triton_client_config = TritonClientConfig.from_dict(kwargs)
     perf_measurement_config = PerfMeasurementConfig.from_dict(kwargs)
 
+    batch_sizes = list(map(lambda v: int(v.strip()), batch_sizes.split(",")))
+
     if verbose:
         log_dict(
             "triton-evaluate-model args:",
@@ -240,7 +303,9 @@ def triton_evaluate_model_cmd(
                     "model_name": model_name,
                     "model_version": model_version,
                     "evaluation_mode": evaluation_mode,
-                    "max_batch_size": max_batch_size,
+                    "batch_sizes": batch_sizes,
+                    "concurrency_steps": concurrency_steps,
+                    "latency_report_file": latency_report_file,
                     "verbose": verbose,
                 },
                 **dataclasses.asdict(perf_measurement_config),
@@ -267,7 +332,7 @@ def triton_evaluate_model_cmd(
             server_url=triton_client_config.server_url,
             model_name=model_name,
             model_version=model_version,
-            batch_size=max_batch_size,
+            batch_sizes=batch_sizes,
             input_shapes=shapes,
             input_data=profiling_data,
             measurement_mode=perf_measurement_config.perf_measurement_mode,
@@ -278,9 +343,11 @@ def triton_evaluate_model_cmd(
             evaluation_mode=EvaluationMode(evaluation_mode),
             batching_mode=BatchingMode(batching_mode),
             offline_mode=OfflineMode(offline_mode),
+            concurrency_steps=concurrency_steps,
+            latency_report_file=latency_report_file,
         )
 
-        message = f"Evaluated model {model_name} and batch size {max_batch_size} and modes: {','.join(evaluation_mode)}"
+        message = f"Evaluated model {model_name} and batch size {batch_sizes} and modes: {','.join(evaluation_mode)}"
         result = TritonEvaluateModelResult(
             status=Status(state=State.SUCCEEDED, message=message),
             log=perf_analyzer_log,

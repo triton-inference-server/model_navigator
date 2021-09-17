@@ -11,25 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from abc import ABC, abstractmethod
-from pathlib import Path
-from typing import Any
 
-from model_navigator.model import ModelSignatureConfig
+from model_navigator.converter import ConversionConfig
+from model_navigator.converter.config import TargetFormatConfigSetIterator
+from model_navigator.model import Format
 
 
-class BaseFormatUtils(ABC):
-    @classmethod
-    @abstractmethod
-    def get_signature(cls, path: Path) -> ModelSignatureConfig:
-        raise NotImplementedError()
-
-    @classmethod
-    @abstractmethod
-    def validate_signature(cls, signature: ModelSignatureConfig):
-        raise NotImplementedError()
-
-    @classmethod
-    @abstractmethod
-    def get_properties(cls, path: Path) -> Any:
-        raise NotImplementedError()
+class TensorFlowConfigSetIterator(TargetFormatConfigSetIterator):
+    def __iter__(self):
+        yield ConversionConfig(target_format=Format.TF_SAVEDMODEL)

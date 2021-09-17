@@ -13,6 +13,7 @@
 # limitations under the License.
 import logging
 import os
+from copy import deepcopy
 from typing import Any, Dict, Optional
 
 import coloredlogs
@@ -40,17 +41,20 @@ def set_logger(*, verbose: bool = False, colored_logs: bool = False):
 
     logging.basicConfig(level=log_level, format=log_format)
     if colored_logs:
+        level_styles = deepcopy(coloredlogs.DEFAULT_LEVEL_STYLES)
+        level_styles["debug"] = {"color": "white", "faint": True}
         coloredlogs.install(
             fmt=log_format,
             level=log_level,
             field_styles={
-                "asctime": {"color": "blue"},
-                "hostname": {"color": "magenta"},
-                "levelname": {"bold": True, "color": "blue"},
-                "name": {"color": "blue"},
-                "programname": {"color": "cyan"},
-                "username": {"color": "yellow"},
+                "asctime": {"color": "white", "faint": True},
+                "hostname": {"color": "white", "faint": True},
+                "levelname": {"color": "white", "faint": True, "bold": True},
+                "name": {"color": "white", "faint": True},
+                "programname": {"color": "white", "faint": True},
+                "username": {"color": "white", "faint": True},
             },
+            level_styles=level_styles
             # isatty=False,
         )
 

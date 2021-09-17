@@ -14,6 +14,9 @@
 import logging
 from typing import Tuple
 
+from model_navigator.exceptions import ModelNavigatorDeployerException
+from model_navigator.model import ModelSignatureConfig
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -45,3 +48,30 @@ def parse_server_url(server_url: str) -> Tuple[str, str, int]:
     else:
         raise ValueError(f"Could not parse {server_url}. Example of correct server URL: grpc://127.0.0.1:8001")
     return requested_protocol, host, port
+
+
+def rewrite_signature_to_model_config(model_config, signature: ModelSignatureConfig):
+    from model_navigator.triton.client import client_utils, grpc_client
+
+    if not signature.inputs or not signature.outputs:
+        raise ModelNavigatorDeployerException(
+            "Signature is required to create Triton Model Configuration. Could not obtain it."
+        )
+
+    def _rewrite_io_spec(spec_, item):
+        dtype = f"TYPE_{client_utils.np_to_triton_dtype(spec_.dtype)}"
+        dims = [1] if len(spec_.shape) <= 1 else spec_.shape[1:]  # do not pass batch size
+
+        item.name = spec_.name
+        item.dims.extend(dims)
+        item.data_type = getattr(grpc_client.model_config_pb2, dtype)
+        if len(spec_.shape) <= 1:
+            item.reshape.shape.extend([])
+
+    for _name, spec in signature.inputs.items():
+        input_item = model_config.input.add()
+        _rewrite_io_spec(spec, input_item)
+
+    for _name, spec in signature.outputs.items():
+        output_item = model_config.output.add()
+        _rewrite_io_spec(spec, output_item)

@@ -27,6 +27,7 @@ from model_navigator.cli.spec import (
     ModelConfigCli,
     ModelSignatureConfigCli,
     TritonClientConfigCli,
+    TritonCustomBackendParametersConfigCli,
     TritonModelInstancesConfigCli,
     TritonModelOptimizationConfigCli,
     TritonModelSchedulerConfigCli,
@@ -39,6 +40,7 @@ from model_navigator.triton import TritonClient, TritonModelStore
 from model_navigator.triton.config import (
     ModelControlMode,
     TritonClientConfig,
+    TritonCustomBackendParametersConfig,
     TritonModelInstancesConfig,
     TritonModelOptimizationConfig,
     TritonModelSchedulerConfig,
@@ -124,6 +126,7 @@ CMD_NAME = "triton-config-model"
 @options_from_config(TritonModelOptimizationConfig, TritonModelOptimizationConfigCli)
 @options_from_config(TritonModelSchedulerConfig, TritonModelSchedulerConfigCli)
 @options_from_config(TritonModelInstancesConfig, TritonModelInstancesConfigCli)
+@options_from_config(TritonCustomBackendParametersConfig, TritonCustomBackendParametersConfigCli)
 @options_from_config(TritonClientConfig, TritonClientConfigCli)
 @click.pass_context
 def config_model_on_triton_cmd(
@@ -159,6 +162,7 @@ def config_model_on_triton_cmd(
     optimization_config = TritonModelOptimizationConfig.from_dict(kwargs)
     scheduler_config = TritonModelSchedulerConfig.from_dict(kwargs)
     instances_config = TritonModelInstancesConfig.from_dict(kwargs)
+    backend_parameters_config = TritonCustomBackendParametersConfig.from_dict(kwargs)
     triton_client_config = TritonClientConfig.from_dict(kwargs)
     model_control_mode = ModelControlMode(model_control_mode)
 
@@ -178,6 +182,7 @@ def config_model_on_triton_cmd(
                 **dataclasses.asdict(optimization_config),
                 **dataclasses.asdict(scheduler_config),
                 **dataclasses.asdict(instances_config),
+                **dataclasses.asdict(backend_parameters_config),
                 **dataclasses.asdict(triton_client_config),
             },
         )
@@ -200,6 +205,7 @@ def config_model_on_triton_cmd(
             optimization_config=optimization_config,
             scheduler_config=scheduler_config,
             instances_config=instances_config,
+            backend_parameters_config=backend_parameters_config,
         )
         if load_model:
             _load_model(

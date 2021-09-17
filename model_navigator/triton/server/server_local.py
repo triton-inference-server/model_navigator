@@ -37,10 +37,9 @@ class TritonServerLocal(TritonServer):
         config : TritonServerConfig
             the config object containing arguments for this server instance
         """
-
-        self._tritonserver_process = None
-        self._server_config = config
         self._server_path = path
+        self._server_config = config
+        self._tritonserver_process = None
         self._log = None
 
         assert self._server_config["model-repository"], "Triton Server requires --model-repository argument to be set."
@@ -52,7 +51,7 @@ class TritonServerLocal(TritonServer):
 
         if self._server_path:
             # Create command list and run subprocess
-            cmd = [self._server_path]
+            cmd = self._server_path.split(" ")
             cmd += self._server_config.to_cli_string().replace("=", " ").split()
 
             self._tritonserver_process = Popen(

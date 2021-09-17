@@ -153,6 +153,10 @@ model_repository: path
 # count-per-device <kind>=<count>
 [ engine_count_per_device: list[str] ]
 
+# Triton Inference Server Custom Backend parameters map. Format: --triton-backend-parameters <name1>=<value1> ..
+# <nameN>=<valueN>
+[ triton_backend_parameters: list[str] ]
+
 # Inference server URL in format protocol://host[:port]
 [ server_url: str | default: grpc://localhost:8001 ]
 

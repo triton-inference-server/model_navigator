@@ -18,11 +18,13 @@ limitations under the License.
 
 ## unreleased
 - Fixed `model_repository` path to be  not relative to `<navigator_workspace>` dir
-- Removed default value for `engine_count_per_device`
 - Profiling related
   - Added `config_search` prefix  to all profiling parameters (BREAKING CHANGE)
   - Added `config_search_max_preferred_batch_size` parameter
   - Added `config_search_backend_parameters` parameter
+- Configuration Model on Triton related
+  - Removed default value for `engine_count_per_device`
+  - Added possibility to define Triton Custom Backend parameters with `triton_backend_parameters` command
 - fixes and improvements
 
 ## 0.2.2 (2021-09-06)

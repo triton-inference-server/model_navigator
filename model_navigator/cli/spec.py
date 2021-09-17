@@ -314,6 +314,30 @@ class TritonModelInstancesConfigCli:
     )
 
 
+def _parse_backend_parameters(ctx, param, value):
+    if value:
+        if isinstance(value, dict):  # from config file
+            pass  # just load config
+        elif isinstance(value, list):  # from cli
+            value = dict(item.split("=") for item in value)
+        else:
+            raise click.BadParameter(f"Could not parse {value} as model signature input/output")
+    return value
+
+
+def _serialize_backend_parameters(param, value: Dict[str, str]):
+    return [f"{k}={v}" for k, v in value.items()]
+
+
+class TritonCustomBackendParametersConfigCli:
+    triton_backend_parameters = CliSpec(
+        help="Triton Inference Server Custom Backend parameters map. "
+        "Format: --triton-backend-parameters <name1>=<value1> .. <nameN>=<valueN>",
+        parse_and_verify_callback=_parse_backend_parameters,
+        serialize_default_callback=_serialize_backend_parameters,
+    )
+
+
 def _serialize_tolerance_parameters(param, value):
     if isinstance(value, float):
         value = {ALL_OTHER_INPUTS: value}

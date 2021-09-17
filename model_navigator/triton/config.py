@@ -61,3 +61,8 @@ class TritonModelSchedulerConfig(BaseConfig):
 @dataclass
 class TritonModelInstancesConfig(BaseConfig):
     engine_count_per_device: Dict[DeviceKind, int] = field(default_factory=lambda: {})
+
+
+@dataclass
+class TritonCustomBackendParametersConfig(BaseConfig):
+    triton_backend_parameters: Dict[str, str] = field(default_factory=lambda: {})

@@ -218,5 +218,5 @@ class PerfAnalyzerConfig:
             self._verbose[self._input_to_verbose[key]] = value
         else:
             raise ModelNavigatorException(
-                f"The argument '{key}' to the perf_analyzer " "is not supported by the model analyzer."
+                f"The argument '{key}' to the perf_analyzer is not supported by the perf analyzer."
             )

@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import dataclasses
-import itertools
 import logging
 import os
 import shutil
@@ -42,7 +41,7 @@ from model_navigator.converter import (
     Converter,
     DatasetProfileConfig,
 )
-from model_navigator.converter.config import TensorRTPrecision
+from model_navigator.converter.config import TargetFormatConfigSetIterator, TensorRTPrecision
 from model_navigator.converter.utils import FORMAT2FRAMEWORK
 from model_navigator.device.utils import get_gpus
 from model_navigator.exceptions import ModelNavigatorCliException, ModelNavigatorException
@@ -60,7 +59,12 @@ LOGGER = logging.getLogger("convert")
 
 _RUN_BY_MODEL_NAVIGATOR = "MODEL_NAVIGATOR_RUN_BY"
 
-TRITON_SUPPORTED_FORMATS = [Format.TF_SAVEDMODEL, Format.ONNX, Format.TENSORRT, Format.TORCHSCRIPT]
+TRITON_SUPPORTED_FORMATS = [
+    Format.TF_SAVEDMODEL,
+    Format.ONNX,
+    Format.TENSORRT,
+    Format.TORCHSCRIPT,
+]
 
 
 @dataclasses.dataclass
@@ -75,14 +79,9 @@ class ConversionSetConfig(BaseConfig):
     max_workspace_size: Optional[int] = None
 
     def __iter__(self):
-        parameters = [self.target_formats, self.onnx_opsets]
-        combinations = itertools.product(*parameters)
-        # FIXME: this is workaround for now
-        for target_format, onnx_opset in combinations:
-            if target_format == Format.TENSORRT:
-                yield from self._tensorrt_config(onnx_opset)
-            else:
-                yield from self._conversion_config(target_format, onnx_opset)
+        for target_format in self.target_formats:
+            config_set_iterator = TargetFormatConfigSetIterator.for_target_format(target_format, self)
+            yield from config_set_iterator
 
     @classmethod
     def from_single_config(cls, config: ConversionConfig):
@@ -100,25 +99,6 @@ class ConversionSetConfig(BaseConfig):
             onnx_opsets=[config.onnx_opset] if config.onnx_opset else [],
             max_workspace_size=config.max_workspace_size,
         )
-
-    def _tensorrt_config(self, onnx_opset):
-        for target_precision in self.target_precisions:
-            config = ConversionConfig(
-                target_format=Format.TENSORRT,
-                target_precision=target_precision,
-                onnx_opset=onnx_opset,
-                max_workspace_size=self.max_workspace_size,
-            )
-            yield config
-
-    def _conversion_config(self, target_format, onnx_opset):
-        config = ConversionConfig(
-            target_format=target_format,
-            target_precision=None,
-            onnx_opset=onnx_opset,
-            max_workspace_size=self.max_workspace_size,
-        )
-        yield config
 
 
 def _run_locally(

@@ -50,6 +50,10 @@ class ONNXUtils(BaseFormatUtils):
         )
 
     @classmethod
+    def validate_signature(cls, signature: ModelSignatureConfig):
+        pass
+
+    @classmethod
     def get_properties(cls, path: Path):
         import onnx
 

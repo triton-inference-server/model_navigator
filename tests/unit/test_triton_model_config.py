@@ -22,6 +22,7 @@ from model_navigator.tensor import TensorSpec
 from model_navigator.triton import TritonModelConfigGenerator
 from model_navigator.triton.config import (
     DeviceKind,
+    TritonCustomBackendParametersConfig,
     TritonModelInstancesConfig,
     TritonModelOptimizationConfig,
     TritonModelSchedulerConfig,
@@ -84,15 +85,17 @@ def test_model_config_parsing_signature_for_torchscript(monkeypatch, max_batch_s
         optimization_config = TritonModelOptimizationConfig()
         scheduler_config = TritonModelSchedulerConfig(max_batch_size=max_batch_size)
         instances_config = TritonModelInstancesConfig({DeviceKind.GPU: 1})
+        backend_parameters_config = TritonCustomBackendParametersConfig()
         initial_model_config_generator = TritonModelConfigGenerator(
             src_model,
             optimization_config=optimization_config,
             scheduler_config=scheduler_config,
             instances_config=instances_config,
+            backend_parameters_config=backend_parameters_config,
         )
-        initial_model_config_generator.save_config_pbtxt(config_path)
+        initial_model_config_generator.save(config_path)
 
-        parsed_model_config_generator = TritonModelConfigGenerator.from_triton_config_pbtxt(config_path)
+        parsed_model_config_generator = TritonModelConfigGenerator.parse_triton_config_pbtxt(config_path)
         assert parsed_model_config_generator.model.signature == src_model.signature
         assert parsed_model_config_generator.optimization_config == optimization_config
         assert parsed_model_config_generator.scheduler_config == scheduler_config
@@ -101,7 +104,7 @@ def test_model_config_parsing_signature_for_torchscript(monkeypatch, max_batch_s
 
 @pytest.mark.parametrize(
     "max_batch_size,model_filename,signature",
-    [CASE_TORCHSCRIPT_SIMPLE_IMAGE_MODEL_WITH_STATIC_AXES, CASE_TENSORRT_PLAN_IMAGE_MODEL_WITH_DYNAMIC_AXES],
+    [CASE_TENSORRT_PLAN_SIMPLE_IMAGE_MODEL_WITH_STATIC_AXES, CASE_TENSORRT_PLAN_IMAGE_MODEL_WITH_DYNAMIC_AXES],
 )
 def test_model_config_parsing_signature_for_tensorrt_plan(monkeypatch, max_batch_size, model_filename, signature):
     with TemporaryDirectory() as temp_dir:
@@ -119,16 +122,19 @@ def test_model_config_parsing_signature_for_tensorrt_plan(monkeypatch, max_batch
         optimization_config = TritonModelOptimizationConfig()
         scheduler_config = TritonModelSchedulerConfig(max_batch_size=max_batch_size)
         instances_config = TritonModelInstancesConfig({DeviceKind.GPU: 1})
+        backend_parameters_config = TritonCustomBackendParametersConfig()
         initial_model_config_generator = TritonModelConfigGenerator(
             src_model,
             optimization_config=optimization_config,
             scheduler_config=scheduler_config,
             instances_config=instances_config,
+            backend_parameters_config=backend_parameters_config,
         )
-        initial_model_config_generator.save_config_pbtxt(config_path)
+        initial_model_config_generator.save(config_path)
 
-        parsed_model_config_generator = TritonModelConfigGenerator.from_triton_config_pbtxt(config_path)
+        parsed_model_config_generator = TritonModelConfigGenerator.parse_triton_config_pbtxt(config_path)
         assert parsed_model_config_generator.model.signature == src_model.signature
         assert parsed_model_config_generator.optimization_config == optimization_config
         assert parsed_model_config_generator.scheduler_config == scheduler_config
         assert parsed_model_config_generator.instances_config == instances_config
+        # assert parsed_model_config_generator.backend_parameters_config == backend_parameters_config

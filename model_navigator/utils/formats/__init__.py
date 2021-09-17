@@ -17,9 +17,9 @@ from typing import Union
 
 from model_navigator.model import Format
 from model_navigator.utils.formats.onnx import ONNXUtils
-from model_navigator.utils.formats.pyt import TorchScriptUtils
+from model_navigator.utils.formats.pytorch import TorchScriptUtils
+from model_navigator.utils.formats.tensorflow import TensorFlowSavedModelUtils
 from model_navigator.utils.formats.tensorrt import TensorRTUtils
-from model_navigator.utils.formats.tf import TensorFlowSavedModelUtils
 
 SUFFIX2FORMAT = {
     ".savedmodel": Format.TF_SAVEDMODEL,

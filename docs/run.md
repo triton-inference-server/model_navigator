@@ -201,6 +201,14 @@ model_path: path
 # <default_dtype>
 [ dtypes: list[str] ]
 
+# Triton Inference Server Custom Backend parameters map. Format: --triton-backend-parameters <name1>=<value1> ..
+# <nameN>=<valueN>
+[ triton_backend_parameters: list[str] ]
+
+# Mapping of device kind to model instances count on a single device. Available devices: [cpu|gpu]. Format: --engine-
+# count-per-device <kind>=<count>
+[ engine_count_per_device: list[str] ]
+
 # Batch sizes that the dynamic batcher should attempt to create. In case --max-queue-delay-us is set and this parameter is
 # not, default value will be --max-batch-size.
 [ preferred_batch_sizes: list[integer] ]
@@ -270,6 +278,10 @@ model_path: path
 
 # Perf Analyzer time windows time in [ms] used for stabilization.
 [ perf_measurement_interval: integer | default: 5000 ]
+
+# The method by which to launch conversion. 'local' assume conversion will be run locally. 'docker' build conversion
+# Docker and perform operations inside it.
+[ launch_mode: choice(local, docker) | default: docker ]
 
 # Override conversion container if it already exists.
 [ override_conversion_container: boolean ]

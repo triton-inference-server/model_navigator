@@ -11,25 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from abc import ABC, abstractmethod
-from pathlib import Path
-from typing import Any
-
-from model_navigator.model import ModelSignatureConfig
+from model_navigator.model import Format, Model
+from model_navigator.triton.backends.base import BaseBackendConfigurator
+from model_navigator.triton.utils import rewrite_signature_to_model_config
 
 
-class BaseFormatUtils(ABC):
-    @classmethod
-    @abstractmethod
-    def get_signature(cls, path: Path) -> ModelSignatureConfig:
-        raise NotImplementedError()
+class PyTorchBackendConfigurator(BaseBackendConfigurator):
+    backend_name = "pytorch"
+    supported_formats = [Format.TORCHSCRIPT]
 
-    @classmethod
-    @abstractmethod
-    def validate_signature(cls, signature: ModelSignatureConfig):
-        raise NotImplementedError()
-
-    @classmethod
-    @abstractmethod
-    def get_properties(cls, path: Path) -> Any:
-        raise NotImplementedError()
+    def _extract_signature(self, model_config, model: Model):
+        rewrite_signature_to_model_config(model_config, model.signature)

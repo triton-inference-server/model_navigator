@@ -25,10 +25,7 @@ MODEL_CONFIG_SEP = "."
 
 
 class ModelConfigurator:
-    accelerators = (
-        None,
-        BackendAccelerator.TRT,
-    )
+    accelerators = (None,)
     capture_cuda_graph = (None,)
 
     def variants(self, model: Model) -> Generator[Variant, None, None]:
@@ -76,7 +73,10 @@ class PyTorchConfigurator(ModelConfigurator):
 
 
 class ONNXConfigurator(ModelConfigurator):
-    pass
+    accelerators = (
+        None,
+        BackendAccelerator.TRT,
+    )
 
 
 class TRTConfigurator(ModelConfigurator):

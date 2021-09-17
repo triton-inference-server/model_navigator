@@ -79,11 +79,7 @@ class Model(BaseConfig):
             and signature_if_missing
             and not signature_if_missing.is_missing()
         ):
-            # imported here due to circular import
-            from model_navigator.utils.formats.pyt import validate_torchscript_signature
-
-            # FIXME: leak
-            validate_torchscript_signature(signature_if_missing)
+            adapter.validate_signature(signature_if_missing)
             signature = signature_if_missing
         return signature
 

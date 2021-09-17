@@ -34,7 +34,7 @@ class TritonServerDocker(TritonServer):
     triton in a docker container.
     """
 
-    def __init__(self, image, config, gpus):
+    def __init__(self, image, config, gpus, path):
         """
         Parameters
         ----------
@@ -46,6 +46,7 @@ class TritonServerDocker(TritonServer):
             list of GPUs to be used
         """
 
+        self._server_path = path
         self._server_config = config
         self._docker_client = docker.from_env()
         self._tritonserver_image = image
@@ -111,7 +112,7 @@ class TritonServerDocker(TritonServer):
                 raise error
 
         # Run the command in the container
-        cmd = "tritonserver " + self._server_config.to_cli_string()
+        cmd = self._server_path + " " + self._server_config.to_cli_string()
 
         logger.debug(f"Run command {cmd} in docker container id={self._tritonserver_container.id}")
         _, self._tritonserver_log_gen = self._tritonserver_container.exec_run(cmd=cmd, stream=True)

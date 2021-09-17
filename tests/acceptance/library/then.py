@@ -96,10 +96,9 @@ def the_command_should_have_given_state(run_context, state: str):
 @then(parse("the {model_name} model configs in latest profile checkpoint are\n{expected_configs_jsonlines}"))
 def the_model_configs_in_latest_profile_checkpoint_are(run_context, model_name: str, expected_configs_jsonlines: str):
     def _filter_out_not_swappable_parameters(config):
-        del config["name"]
-        del config["platform"]
-        del config["input"]
-        del config["output"]
+        for name in ["name", "platform", "backend", "version_policy", "input", "output"]:
+            if name in config:
+                del config[name]
         return config
 
     expected_configs = [json.loads(line) for line in expected_configs_jsonlines.splitlines()]

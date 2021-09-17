@@ -15,6 +15,7 @@ import logging
 from dataclasses import dataclass
 from pathlib import Path
 
+from model_navigator.model import ModelSignatureConfig
 from model_navigator.utils.formats.base import BaseFormatUtils
 
 LOGGER = logging.getLogger(__name__)
@@ -29,6 +30,10 @@ class TensorRTUtils(BaseFormatUtils):
     @classmethod
     def get_signature(cls, path: Path):
         return None
+
+    @classmethod
+    def validate_signature(cls, signature: ModelSignatureConfig):
+        pass
 
     @classmethod
     def get_properties(cls, path: Path):

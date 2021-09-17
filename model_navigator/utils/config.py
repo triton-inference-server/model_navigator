@@ -119,7 +119,7 @@ class ConfigFile(ABC):
         pass
 
     @abstractmethod
-    def save_config(self, config: BaseConfig):
+    def save_config(self, config):
         pass
 
     @abstractmethod
@@ -179,7 +179,7 @@ class YamlConfigFile(ConfigFile):
     def __exit__(self, _exc_type, _exc_val, _exc_tb):
         self.close()
 
-    def save_config(self, config: BaseConfig):
+    def save_config(self, config):
         new_config_dict = dataclass2dict(config)
         for name, value in new_config_dict.items():
             old_value = self._config_dict.get(name, _MISSING)

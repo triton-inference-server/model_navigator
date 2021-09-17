@@ -11,25 +11,30 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from abc import ABC, abstractmethod
+import logging
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
 from model_navigator.model import ModelSignatureConfig
+from model_navigator.utils.formats.base import BaseFormatUtils
+
+LOGGER = logging.getLogger(__name__)
 
 
-class BaseFormatUtils(ABC):
+@dataclass
+class TensorFlowProperties:
+    pass
+
+
+class TensorFlowSavedModelUtils(BaseFormatUtils):
     @classmethod
-    @abstractmethod
-    def get_signature(cls, path: Path) -> ModelSignatureConfig:
-        raise NotImplementedError()
+    def get_signature(cls, path: Path):
+        return None
 
     @classmethod
-    @abstractmethod
     def validate_signature(cls, signature: ModelSignatureConfig):
-        raise NotImplementedError()
+        pass
 
     @classmethod
-    @abstractmethod
-    def get_properties(cls, path: Path) -> Any:
-        raise NotImplementedError()
+    def get_properties(cls, path: Path):
+        return TensorFlowProperties()

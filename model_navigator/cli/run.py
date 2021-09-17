@@ -32,12 +32,14 @@ from model_navigator.cli.spec import (
     ModelConfigCli,
     ModelSignatureConfigCli,
     PerfMeasurementConfigCli,
+    TritonCustomBackendParametersConfigCli,
+    TritonModelInstancesConfigCli,
     TritonModelSchedulerConfigCli,
 )
 from model_navigator.cli.triton_config_model import config_model_on_triton_cmd
 from model_navigator.cli.triton_evaluate_model import triton_evaluate_model_cmd
 from model_navigator.configurator import Configurator, log_configuration_error
-from model_navigator.converter import ComparatorConfig, ConversionResult, DatasetProfileConfig
+from model_navigator.converter import ComparatorConfig, ConversionLaunchMode, ConversionResult, DatasetProfileConfig
 from model_navigator.converter.utils import FORMAT2FRAMEWORK
 from model_navigator.device.utils import get_gpus
 from model_navigator.exceptions import ModelNavigatorException
@@ -62,6 +64,7 @@ from model_navigator.triton import (
     TritonServerConfig,
     TritonServerFactory,
 )
+from model_navigator.triton.config import TritonCustomBackendParametersConfig
 from model_navigator.utils import Workspace, cli
 from model_navigator.utils.config import BaseConfig, dataclass2dict
 from model_navigator.validators import run_command_validators
@@ -87,11 +90,21 @@ class RunTritonConfigCli:
 @cli.options_from_config(ConversionSetConfig, ConversionSetConfigCli)
 @cli.options_from_config(ComparatorConfig, ComparatorConfigCli)
 @cli.options_from_config(DatasetProfileConfig, DatasetProfileConfigCli)
+@cli.options_from_config(TritonCustomBackendParametersConfig, TritonCustomBackendParametersConfigCli)
+@cli.options_from_config(TritonModelInstancesConfig, TritonModelInstancesConfigCli)
 @cli.options_from_config(TritonModelSchedulerConfig, TritonModelSchedulerConfigCli)
 @cli.options_from_config(RunTritonConfig, RunTritonConfigCli)
 @cli.options_from_config(ModelAnalyzerProfileConfig, ModelAnalyzerProfileConfigCli)
 @cli.options_from_config(ModelAnalyzerAnalysisConfig, ModelAnalyzerAnalysisConfigCli)
 @cli.options_from_config(PerfMeasurementConfig, PerfMeasurementConfigCli)
+@click.option(
+    "--launch-mode",
+    type=click.Choice([item.value for item in ConversionLaunchMode]),
+    default=ConversionLaunchMode.DOCKER.value,
+    help="The method by which to launch conversion. "
+    "'local' assume conversion will be run locally. "
+    "'docker' build conversion Docker and perform operations inside it.",
+)
 @click.option(
     "--override-conversion-container", is_flag=True, help="Override conversion container if it already exists."
 )
@@ -132,7 +145,9 @@ def run_cmd(
     conversion_set_config = ConversionSetConfig.from_dict(kwargs)
     comparator_config = ComparatorConfig.from_dict(kwargs)
     dataset_profile_config = DatasetProfileConfig.from_dict(kwargs)
+    instance_config = TritonModelInstancesConfig.from_dict(kwargs)
     scheduler_config = TritonModelSchedulerConfig.from_dict(kwargs)
+    backend_config = TritonCustomBackendParametersConfig.from_dict(kwargs)
     triton_config = RunTritonConfig.from_dict(kwargs)
     profile_config = ModelAnalyzerProfileConfig.from_dict(kwargs)
     analysis_config = ModelAnalyzerAnalysisConfig.from_dict(kwargs)
@@ -161,6 +176,8 @@ def run_cmd(
             **dataclass2dict(src_model_signature_config),
             **dataclass2dict(dataset_profile_config),
             **dataclass2dict(scheduler_config),
+            **dataclass2dict(instance_config),
+            **dataclass2dict(backend_config),
             **dataclass2dict(triton_config),
             **dataclass2dict(profile_config),
             **dataclass2dict(analysis_config),
@@ -215,10 +232,11 @@ def run_cmd(
                 LOGGER.info(f"Running triton model configurator for {variant.name}")
                 config_result = ctx.forward(
                     config_model_on_triton_cmd,
-                    **dataclass2dict(TritonModelInstancesConfig()),
+                    **dataclass2dict(instance_config),
                     **dataclass2dict(model_to_deploy_config),
                     **dataclass2dict(variant.optimization_config),
                     **dataclass2dict(triton_client_config),
+                    **dataclass2dict(backend_config),
                     model_repository=interim_model_repository,
                     load_model=True,
                 )

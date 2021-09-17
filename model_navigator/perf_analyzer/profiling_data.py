@@ -60,14 +60,28 @@ def create_profiling_data(
     def _cast_input(name, value):
         target_type = dtypes[name]
         value = target_type.type(value)  # cast to target numpy dtype
-        value = {"i": int(value), "f": float(value)}[target_type.kind]  # cast to python primitive
+        value = {"i": int(value), "u": int(value), "f": float(value)}[target_type.kind]  # cast to python primitive
         return value
+
+    # FIXME: Workaround for DataLoader behavior
+    #       For input shape tensors, i.e. inputs whose *value* describes a shape in the model, the
+    #       provided shape will be used to populate the values of the inputs, rather than to determine
+    #       their shape.
+    #
+    # WAR: when single value is generated override with min value from range
+    def _create_content(name, data):
+        casted = [_cast_input(name, x) for x in data.flatten().tolist()]
+        if len(casted) == 1:
+            x = value_ranges[name][0]
+            casted = [_cast_input(name, x)]
+
+        return casted
 
     data = {
         "data": [
             {
                 name: {
-                    "content": [_cast_input(name, x) for x in data.flatten().tolist()],
+                    "content": _create_content(name, data),
                     "shape": list(data.shape),
                 }
                 for name, data in feed_dict.items()
