@@ -88,14 +88,14 @@ class TritonEvaluateModelResult:
     log: Optional[str]
 
 
-def _read_csv_file(file: str, additional_fields: Optional[Dict] = None) -> List[Dict]:
+def _read_csv_file(file: str, additional_fields: Dict) -> List[Dict]:
     LOGGER.info(f"Reading data from {file}")
     rows: List[Dict] = []
     with open(file) as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
-            if additional_fields:
-                row = {**additional_fields, **row}
+            avg_latency = _average_latency(row)
+            row = {**additional_fields, **row, "avg latency": avg_latency}
             rows.append(row)
 
     LOGGER.info("done")
@@ -112,6 +112,25 @@ def _save_csv_file(file: str, results: List[Dict]):
         writer.writerows(results)
 
     LOGGER.info("done")
+
+
+def _average_latency(row: Dict):
+    """
+    Calculate average latency for Performance Analyzer single test
+    """
+    avg_sum_fields = [
+        "Client Send",
+        "Network+Server Send/Recv",
+        "Server Queue",
+        "Server Compute",
+        "Server Compute Input",
+        "Server Compute Infer",
+        "Server Compute Output",
+        "Client Recv",
+    ]
+    avg_latency = sum(int(row.get(f, 0)) for f in avg_sum_fields)
+
+    return avg_latency
 
 
 def _perf_analyzer_evaluation(
@@ -151,49 +170,50 @@ def _perf_analyzer_evaluation(
     results = []
     output = ""
     for batch_size in batch_sizes:
-        params = {
-            "model-name": model_name,
-            "model-version": model_version,
-            "batch-size": batch_size,
-            "url": f"{host}:{port}",
-            "protocol": protocol,
-            "input-data": input_data,
-            "measurement-mode": measurement_mode,
-            "measurement-request-count": measurement_request_count,
-            "measurement-interval": measurement_interval,
-            "concurrency-range": f"{min_concurrency}:{max_concurrency}:{step}",
-        }
+        for concurrency in range(min_concurrency, max_concurrency + step, step):
+            params = {
+                "model-name": model_name,
+                "model-version": model_version,
+                "batch-size": batch_size,
+                "url": f"{host}:{port}",
+                "protocol": protocol,
+                "input-data": input_data,
+                "measurement-mode": measurement_mode,
+                "measurement-request-count": measurement_request_count,
+                "measurement-interval": measurement_interval,
+                "concurrency-range": f"{concurrency}:{concurrency}:1",
+            }
 
-        if latency_report_file:
-            params["latency-report-file"] = latency_report_file
+            if latency_report_file:
+                params["latency-report-file"] = latency_report_file
 
-        if verbose:
-            params["verbose"] = True
+            if verbose:
+                params["verbose"] = True
 
-        if evaluation_mode == EvaluationMode.OFFLINE:
-            params["shared-memory"] = offline_mode.value
+            if evaluation_mode == EvaluationMode.OFFLINE:
+                params["shared-memory"] = offline_mode.value
 
-        if verbose:
-            log_dict(f"Perf Analyzer config for {batch_size}", params)
+            if verbose:
+                log_dict(f"Perf Analyzer config for {batch_size}", params)
 
-        perf_config = PerfAnalyzerConfig()
-        for param, value in params.items():
-            perf_config[param] = value
+            perf_config = PerfAnalyzerConfig()
+            for param, value in params.items():
+                perf_config[param] = value
 
-        for shape in input_shapes:
-            perf_config["shape"] = shape
+            for shape in input_shapes:
+                perf_config["shape"] = shape
 
-        perf_analyzer = PerfAnalyzer(
-            perf_config,
-            timeout=timeout,
-            stream_output=verbose,
-        )
-        perf_analyzer.run()
-        output += perf_analyzer.output()
+            perf_analyzer = PerfAnalyzer(
+                perf_config,
+                timeout=timeout,
+                stream_output=verbose,
+            )
+            perf_analyzer.run()
+            output += perf_analyzer.output()
 
-        if latency_report_file:
-            partial_result = _read_csv_file(latency_report_file, additional_fields={"Batch": batch_size})
-            results.extend(partial_result)
+            if latency_report_file:
+                partial_result = _read_csv_file(latency_report_file, additional_fields={"Batch": batch_size})
+                results.extend(partial_result)
 
     if latency_report_file and results:
         _save_csv_file(latency_report_file, results)
