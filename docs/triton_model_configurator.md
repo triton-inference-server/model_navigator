@@ -135,6 +135,9 @@ model_repository: path
 # Target model precision for TensorRT acceleration.
 [ tensorrt_precision: choice(fp16, fp32) ]
 
+# The maximum GPU memory in bytes the model can use temporarily during execution for TensorRT acceleration.
+[ tensorrt_max_workspace_size: integer | default: 2147483648 ]
+
 # Enable CUDA capture graph feature on the TensorRT backend.
 [ tensorrt_capture_cuda_graph: boolean ]
 

@@ -25,6 +25,7 @@ limitations under the License.
 - Configuration Model on Triton related
   - Removed default value for `engine_count_per_device`
   - Added possibility to define Triton Custom Backend parameters with `triton_backend_parameters` command
+  - Added possibility to define max workspace size for TensorRT backend accelerator using argument `tensorrt_max_workspace_size`
 - fixes and improvements
 
 ## 0.2.2 (2021-09-06)

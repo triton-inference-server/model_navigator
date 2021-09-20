@@ -17,6 +17,8 @@ from typing import Dict, List, Optional
 
 from model_navigator.utils.config import BaseConfig
 
+DEFAULT_TENSORRT_MAX_WORKSPACE_SIZE = 2 * 2 ** 30  # 2GB
+
 
 class ModelControlMode(Enum):
     EXPLICIT = "explicit"
@@ -48,6 +50,7 @@ class TritonClientConfig(BaseConfig):
 class TritonModelOptimizationConfig(BaseConfig):
     backend_accelerator: Optional[BackendAccelerator] = dataclasses.field(default=None)
     tensorrt_precision: Optional[TensorRTOptPrecision] = dataclasses.field(default=None)
+    tensorrt_max_workspace_size: int = DEFAULT_TENSORRT_MAX_WORKSPACE_SIZE
     tensorrt_capture_cuda_graph: bool = False
 
 

@@ -31,6 +31,7 @@ class TensorFlowBackendConfigurator(BaseBackendConfigurator):
             accelerator = model_config.optimization.execution_accelerators.gpu_execution_accelerator.add()
             accelerator.name = "tensorrt"
             accelerator.parameters["precision_mode"] = optimization_config.tensorrt_precision.value.upper()
+            accelerator.parameters["max_workspace_size_bytes"] = str(optimization_config.tensorrt_max_workspace_size)
         elif optimization_config.backend_accelerator == BackendAccelerator.AMP:
             accelerator = model_config.optimization.execution_accelerators.gpu_execution_accelerator.add()
             accelerator.name = "auto_mixed_precision"

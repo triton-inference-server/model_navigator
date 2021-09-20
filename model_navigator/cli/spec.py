@@ -271,6 +271,9 @@ class TritonModelOptimizationConfigCli:
     backend_accelerator = CliSpec(help="Select Backend Accelerator used to serve the model.")
     # TODO: ensure that it works for also for ONNX backend
     tensorrt_precision = CliSpec(help="Target model precision for TensorRT acceleration.")
+    tensorrt_max_workspace_size = CliSpec(
+        help="The maximum GPU memory in bytes the model can use temporarily during execution for TensorRT acceleration."
+    )
     tensorrt_capture_cuda_graph = CliSpec(help="Enable CUDA capture graph feature on the TensorRT backend.")
 
 
