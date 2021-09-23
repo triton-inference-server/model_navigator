@@ -29,6 +29,7 @@ from model_navigator.cli.spec import (
     PerfMeasurementConfigCli,
     TritonClientConfigCli,
 )
+from model_navigator.cli.utils import exit_cli_command, is_cli_command
 from model_navigator.converter import DatasetProfileConfig
 from model_navigator.exceptions import ModelNavigatorException
 from model_navigator.log import log_dict, set_logger
@@ -392,5 +393,8 @@ def triton_evaluate_model_cmd(
             status=Status(state=State.FAILED, message=message),
             log=perf_analyzer_log,
         )
+
+    if is_cli_command(ctx):
+        exit_cli_command(result.status)
 
     return result

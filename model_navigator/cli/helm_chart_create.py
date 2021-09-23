@@ -31,6 +31,7 @@ from model_navigator.cli.spec import (
     TritonModelOptimizationConfigCli,
     TritonModelSchedulerConfigCli,
 )
+from model_navigator.cli.utils import exit_cli_command, is_cli_command
 from model_navigator.converter.config import ComparatorConfig, DatasetProfileConfig
 from model_navigator.converter.utils import FORMAT2FRAMEWORK
 from model_navigator.exceptions import ModelNavigatorException
@@ -195,5 +196,8 @@ def helm_chart_create_cmd(
 
     results_store = ResultsStore(workspace)
     results_store.dump(ctx.command.name.replace("-", "_"), [helm_chart_generation_result])
+
+    if is_cli_command(ctx):
+        exit_cli_command(helm_chart_generation_result.status)
 
     return helm_chart_generation_result

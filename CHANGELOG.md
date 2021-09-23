@@ -18,6 +18,7 @@ limitations under the License.
 
 ## unreleased
 - Fixed `model_repository` path to be  not relative to `<navigator_workspace>` dir
+- Handle exit codes correctly from CLI commands
 - Profiling related
   - Added `config_search` prefix  to all profiling parameters (BREAKING CHANGE)
   - Added `config_search_max_preferred_batch_size` parameter

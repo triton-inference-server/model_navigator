@@ -21,6 +21,7 @@ from typing import List
 import click
 
 from model_navigator.cli.spec import ModelAnalyzerAnalysisConfigCli
+from model_navigator.cli.utils import exit_cli_command, is_cli_command
 from model_navigator.log import init_logger, log_dict
 from model_navigator.model_analyzer.analyzer import Analyzer
 from model_navigator.model_analyzer.config import ModelAnalyzerAnalysisConfig
@@ -89,6 +90,7 @@ def analyze_cmd(
         analyze_results = analyzer.run()
         if analyze_results:
             _prepare_summary(analysis_config=analysis_config, analyze_results=analyze_results)
+
     except Exception:
         message = traceback.format_exc()
         LOGGER.warning(f"Encountered exception \n{message}")
@@ -104,6 +106,10 @@ def analyze_cmd(
 
     results_store = ResultsStore(workspace)
     results_store.dump(ctx.command.name.replace("-", "_"), analyze_results)
+
+    failed_analyze_results = [result for result in analyze_results if result.status.state == State.FAILED]
+    if failed_analyze_results and is_cli_command(ctx):
+        exit_cli_command(failed_analyze_results[0].status)
 
     return analyze_results
 

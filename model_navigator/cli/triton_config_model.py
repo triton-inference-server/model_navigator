@@ -32,6 +32,7 @@ from model_navigator.cli.spec import (
     TritonModelOptimizationConfigCli,
     TritonModelSchedulerConfigCli,
 )
+from model_navigator.cli.utils import exit_cli_command, is_cli_command
 from model_navigator.exceptions import BadParameterModelNavigatorDeployerException, ModelNavigatorDeployerException
 from model_navigator.log import init_logger, log_dict
 from model_navigator.model import Model, ModelConfig, ModelSignatureConfig
@@ -249,5 +250,8 @@ def config_model_on_triton_cmd(
         and isinstance(exception, BadParameterModelNavigatorDeployerException)
     ):
         raise UsageError(config_model_result.status.message)
+
+    if is_cli_command(ctx):
+        exit_cli_command(config_model_result.status)
 
     return config_model_result

@@ -26,6 +26,7 @@ from model_navigator.cli.spec import (
     ModelAnalyzerTritonConfigCli,
     PerfMeasurementConfigCli,
 )
+from model_navigator.cli.utils import exit_cli_command, is_cli_command
 from model_navigator.converter.config import DatasetProfileConfig
 from model_navigator.kubernetes.triton import TritonServer
 from model_navigator.log import init_logger, log_dict
@@ -145,5 +146,8 @@ def profile_cmd(
 
     results_store = ResultsStore(workspace)
     results_store.dump(ctx.command.name.replace("-", "_"), [profile_result])
+
+    if is_cli_command(ctx):
+        exit_cli_command(profile_result.status)
 
     return profile_result

@@ -369,6 +369,7 @@ def _get_triton_server(*, triton_docker_image, gpus, analyzer_config):
             image=triton_docker_image,
             config=triton_config,
             gpus=get_gpus(gpus=gpus),
+            path=analyzer_config.triton_server_path,
         )
     else:
         raise ModelNavigatorException(f"Unsupported triton_launch_mode: {analyzer_config.triton_launch_mode}")
