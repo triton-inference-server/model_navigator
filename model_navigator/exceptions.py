@@ -58,6 +58,10 @@ class ModelNavigatorConverterCommandException(ModelNavigatorException):
     pass
 
 
+class ModelNavigatorProfileException(ModelNavigatorException):
+    pass
+
+
 class ModelNavigatorAnalyzeException(ModelNavigatorException):
     pass
 

@@ -19,6 +19,7 @@ from typing import List, Optional
 import yaml
 
 from model_navigator.converter import DatasetProfileConfig
+from model_navigator.exceptions import ModelNavigatorProfileException
 from model_navigator.kubernetes.yaml import CustomDumper
 from model_navigator.model_analyzer import ModelAnalyzer, ModelAnalyzerProfileConfig
 from model_navigator.model_analyzer.config import BaseConfigGenerator, ModelAnalyzerTritonConfig
@@ -26,6 +27,7 @@ from model_navigator.model_analyzer.model_analyzer import ModelAnalyzerMode
 from model_navigator.model_analyzer.model_analyzer_config import ModelAnalyzerConfig
 from model_navigator.perf_analyzer import PerfMeasurementConfig
 from model_navigator.triton import DeviceKind
+from model_navigator.triton.model_config import TritonModelConfigGenerator
 from model_navigator.utils import Workspace
 
 LOGGER = logging.getLogger(__name__)
@@ -145,9 +147,11 @@ class ProfileConfigGenerator(BaseConfigGenerator):
         for model_name in model_names:
             LOGGER.info(f"\t- {model_name}")
 
-        model_configuration = self._model_configuration
-        if len(model_configuration) > 0:
-            model_names = {model_name: model_configuration for model_name in model_names}
+        model_names_with_profile_config = {
+            model_name: self._get_profile_config_for_model(model_name) for model_name in model_names
+        }
+        if any(profile_config for model_name, profile_config in model_names_with_profile_config.items()):
+            model_names = model_names_with_profile_config
 
         if self._profile_config.config_search_max_preferred_batch_size > 0:
             max_preferred_batch_size = self._profile_config.config_search_max_preferred_batch_size
@@ -201,9 +205,13 @@ class ProfileConfigGenerator(BaseConfigGenerator):
 
         return configuration
 
-    @property
-    def _model_configuration(self):
+    def _get_profile_config_for_model(self, model_dir_name):
+
+        original_model_config_path = self._triton_config.model_repository / model_dir_name / "config.pbtxt"
+        original_model_config = TritonModelConfigGenerator.parse_triton_config_pbtxt(original_model_config_path)
+
         model_config = {}
+
         if self._profile_config.config_search_instance_counts:
             mapping = {DeviceKind.GPU: "KIND_GPU", DeviceKind.CPU: "KIND_CPU"}
             model_config["instance_group"] = [
@@ -220,9 +228,17 @@ class ProfileConfigGenerator(BaseConfigGenerator):
             }
 
         if self._profile_config.config_search_backend_parameters:
+            original_backend_parameters = original_model_config.backend_parameters_config.triton_backend_parameters
+            original_backend_parameters = {
+                param_name: {"string_value": [param_value]}
+                for param_name, param_value in original_backend_parameters.items()
+            }
             model_config["parameters"] = {
-                param_name: {"string_value": list(map(str, param_values))}
-                for param_name, param_values in self._profile_config.config_search_backend_parameters.items()
+                **original_backend_parameters,
+                **{
+                    param_name: {"string_value": list(map(str, param_values))}
+                    for param_name, param_values in self._profile_config.config_search_backend_parameters.items()
+                },
             }
 
         configuration = {}
@@ -230,5 +246,15 @@ class ProfileConfigGenerator(BaseConfigGenerator):
             configuration["model_config_parameters"] = model_config
         if self._profile_config.config_search_concurrency:
             configuration["parameters"] = {"concurrency": self._profile_config.config_search_concurrency}
+
+        engine_count_per_device = original_model_config.instances_config.engine_count_per_device
+        if self._profile_config.config_search_max_instance_count and engine_count_per_device:
+            if len(set(engine_count_per_device)) > 1:
+                raise ModelNavigatorProfileException(
+                    "Triton Model config instance group have more than 1 device kind. "
+                    "Use manual profile to swipe over instance group count"
+                )
+            elif DeviceKind.CPU in engine_count_per_device:
+                configuration["cpu_only"] = True
 
         return configuration
