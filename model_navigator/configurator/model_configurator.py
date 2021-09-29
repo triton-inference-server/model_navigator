@@ -46,7 +46,8 @@ class ModelConfigurator:
                 )
 
                 variant_name = self._get_variant_name(model.name, [accelerator, capture_cuda_graph, precision])
-                yield Variant(variant_name, optimization_config)
+
+                yield Variant(variant_name, optimization_config, num_required_gpus=model.num_required_gpus)
 
     def _get_variant_name(self, model_name, parameters):
         def _format_param(param):

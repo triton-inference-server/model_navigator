@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import json
+import re
 import sys
 from io import TextIOWrapper
 from pathlib import Path
@@ -153,11 +154,12 @@ def the_concurrency_in_latest_profile_checkpoint_are(run_context, model_name: st
     assert used_concurrency == expected_concurrency
 
 
-@then(parse("the {substring} substring is present on command output"))
-def substring_is_present_on_stderr(run_context, substring: str):
-    if substring not in run_context.output or True:
-        print(f"Searching for: {substring}")
+@then(parse("the {pattern} pattern is present on command output"))
+def substring_is_present_on_stderr(run_context, pattern: str):
+    fragments_found = re.findall(pattern, run_context.output, re.IGNORECASE)
+    if not fragments_found:
+        print(f"Searching for pattern: {pattern}")
         print("Command output:")
         for line in run_context.output.splitlines():
             print(line)
-    assert substring in run_context.output
+    assert fragments_found

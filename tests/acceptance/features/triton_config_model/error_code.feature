@@ -7,4 +7,4 @@ Feature: Error codes
         And the backend_accelerator config parameter is set to trt
         When I execute triton-config-model command
         Then the command should failed
-        And the --tensorrt-precision is required substring is present on command output
+        And the --tensorrt-precision is required pattern is present on command output

@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from dataclasses import dataclass
+from typing import Optional
 
 from model_navigator.triton import TritonModelOptimizationConfig
 
@@ -21,3 +22,4 @@ from model_navigator.triton import TritonModelOptimizationConfig
 class Variant:
     name: str
     optimization_config: TritonModelOptimizationConfig
+    num_required_gpus: Optional[int] = None

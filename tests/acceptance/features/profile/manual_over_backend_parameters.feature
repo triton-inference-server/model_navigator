@@ -21,6 +21,7 @@ Feature: Model Profiling over backend parameters
         And removed the triton_backend_parameters config parameter
         When I execute profile command
         Then the command should succeeded
+        And the Running manual.*config search for model pattern is present on command output
         And the my_model model configs in latest profile checkpoint are
             {"maxBatchSize": 4, "parameters": {"param1": {"stringValue": "a"}, "param2": {"stringValue": "2"}, "param3": {"stringValue": "0.1"}}, "cpu_only": false}
             {"maxBatchSize": 4, "parameters": {"param1": {"stringValue": "a"}, "param2": {"stringValue": "2"}, "param3": {"stringValue": "0.9"}}, "cpu_only": false}

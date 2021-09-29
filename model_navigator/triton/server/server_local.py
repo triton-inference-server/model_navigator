@@ -11,14 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import logging
-from subprocess import PIPE, STDOUT, Popen, TimeoutExpired
+import os
+
+import sh
 
 from model_navigator.triton.client import TritonClient
 from model_navigator.triton.server.server import TritonServer
 
-SERVER_OUTPUT_TIMEOUT_SECS = 5
+SERVER_OUTPUT_TIMEOUT_SECS = 30
 LOGGER = logging.getLogger(__name__)
 
 
@@ -28,7 +29,7 @@ class TritonServerLocal(TritonServer):
     tritonserver locally as as subprocess.
     """
 
-    def __init__(self, path, config):
+    def __init__(self, *, path, config, gpus):
         """
         Parameters
         ----------
@@ -37,51 +38,69 @@ class TritonServerLocal(TritonServer):
         config : TritonServerConfig
             the config object containing arguments for this server instance
         """
-        self._server_path = path
-        self._server_config = config
-        self._tritonserver_process = None
-        self._log = None
+        super().__init__(config=config, gpus=gpus, path=path)
+        self._tritonserver_running_cmd = None
+        self._tritonserver_logs = ""
 
         assert self._server_config["model-repository"], "Triton Server requires --model-repository argument to be set."
 
     def start(self):
         """
-        Starts the tritonserver container locally
+        Starts the tritonserver locally
         """
 
-        if self._server_path:
-            # Create command list and run subprocess
-            cmd = self._server_path.split(" ")
-            cmd += self._server_config.to_cli_string().replace("=", " ").split()
-
-            self._tritonserver_process = Popen(
-                cmd, start_new_session=True, stdout=PIPE, stderr=STDOUT, universal_newlines=True
+        if self.is_alive():
+            raise RuntimeError(
+                f"You have to stop previously started tritonserver process first "
+                f"pid={self._tritonserver_running_cmd.pid}"
             )
-            LOGGER.debug("Triton Server started.")
+        else:
+            env = self._get_env()
+
+            tritonserver_cmd, *rest = self._server_path.split(" ", 1)
+            tritonserver_cmd = sh.Command(tritonserver_cmd)
+            tritonserver_cmd = tritonserver_cmd.bake(*rest)
+
+            tritonserver_args = self._server_config.to_cli_string().replace("=", " ").split()
+
+            self._tritonserver_logs = ""
+            self._tritonserver_running_cmd = tritonserver_cmd(
+                *tritonserver_args, _env=env, _err_to_out=True, _out=self._record_logs, _bg=True
+            )
+
+    def _record_logs(self, line):
+        self._tritonserver_logs += line
+
+    def _get_env(self):
+        env = None
+        if self._gpus:
+            env = os.environ.copy()
+            env["CUDA_VISIBLE_DEVICES"] = ",".join(self._gpus)
+        return env
 
     def stop(self):
         """
         Stops the running tritonserver
         """
 
-        # Terminate process, capture output
-        if self._tritonserver_process is not None:
-            self._tritonserver_process.terminate()
+        if self.is_alive():
+            self._tritonserver_running_cmd.process.terminate()
             try:
-                self._log, _ = self._tritonserver_process.communicate(timeout=SERVER_OUTPUT_TIMEOUT_SECS)
-            except TimeoutExpired:
-                self._tritonserver_process.kill()
-                self._log, _ = self._tritonserver_process.communicate()
-            self._tritonserver_process = None
-            LOGGER.debug("Triton Server stopped.")
+                self._tritonserver_running_cmd.wait(timeout=SERVER_OUTPUT_TIMEOUT_SECS)
+            except sh.TimeoutException:
+                self._tritonserver_running_cmd.process.kill()
+                try:
+                    self._tritonserver_running_cmd.wait(timeout=SERVER_OUTPUT_TIMEOUT_SECS)
+                except sh.TimeoutException:
+                    LOGGER.warning(f"Could not kill triton server pid={self._tritonserver_running_cmd.pid}")
+                except ProcessLookupError:
+                    pass
+
+    def is_alive(self):
+        return self._tritonserver_running_cmd is not None and self._tritonserver_running_cmd.is_alive()
 
     def logs(self):
-        """
-        Retrieves the Triton server's stdout
-        as a str
-        """
-
-        return self._log
+        return self._tritonserver_logs
 
     def get_ports(self):
         return {

@@ -69,15 +69,16 @@ class Summary:
         return self._gpu_metrics[idx]
 
     def _show_results(self, results: List[Dict], section: str):
-        max_index = min(len(results), self._analysis_config.top_n_configs)
-        index = range(1, max_index + 1)
-        header = ["No"]
-
-        header = header + list(results[0].keys())
-        summary = map(lambda x: list(map(lambda item: item[1], x.items())), results)
-
         print(f"{section}:")
-        print(tabulate(summary, headers=header, showindex=index, tablefmt="plain"))
+        if results:
+            max_index = min(len(results), self._analysis_config.top_n_configs)
+            index = range(1, max_index + 1)
+            header = ["No"] + list(results[0].keys())
+            summary = map(lambda x: list(map(lambda item: item[1], x.items())), results)
+
+            print(tabulate(summary, headers=header, showindex=index, tablefmt="plain"))
+        else:
+            print("<Missing data>")
 
     def _prepare(self):
         if len(self._inference) > 0:
@@ -119,22 +120,11 @@ class Summary:
         return top_results
 
     def _top_metrics(self, metrics: List[Dict], results: List[Dict]):
-        metrics_hashed = {}
-        results_hashed = []
-
-        for metric in metrics:
-            key = self._hash_result(metric)
-            metrics_hashed[key] = metric
-
-        for result in results:
-            key = self._hash_result(result)
-            results_hashed.append(key)
-
-        filtered_metrics = []
-        for result_hash in results_hashed:
-            metric = metrics_hashed[result_hash]
-            filtered_metrics.append(metric)
-
+        metrics_hashed = {self._hash_result(metric): metric for metric in metrics}
+        results_hashes = [self._hash_result(result) for result in results]
+        filtered_metrics = [
+            metrics_hashed[result_hash] for result_hash in results_hashes if result_hash in metrics_hashed
+        ]
         return filtered_metrics
 
     def _hash_result(self, result: Dict):

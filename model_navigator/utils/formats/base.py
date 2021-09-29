@@ -13,7 +13,7 @@
 # limitations under the License.
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from model_navigator.model import ModelSignatureConfig
 
@@ -33,3 +33,7 @@ class BaseFormatUtils(ABC):
     @abstractmethod
     def get_properties(cls, path: Path) -> Any:
         raise NotImplementedError()
+
+    @classmethod
+    def get_num_required_gpus(cls, properties: Any) -> Optional[int]:
+        return None

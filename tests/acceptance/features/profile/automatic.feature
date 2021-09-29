@@ -23,6 +23,7 @@ Feature: Model Automatic Profiling
         And removed the model_name config parameter
         When I execute profile command
         Then the command should succeeded
+        And the Running auto.*config search for model pattern is present on command output
         And the my_model model configs in latest profile checkpoint are
             {"maxBatchSize": 4, "instanceGroup": [{"count": 1, "kind": "KIND_GPU"}], "cpu_only": false}
             {"maxBatchSize": 4, "instanceGroup": [{"count": 2, "kind": "KIND_GPU"}], "cpu_only": false}
@@ -50,6 +51,7 @@ Feature: Model Automatic Profiling
         And removed the engine_count_per_device config parameter
         When I execute profile command
         Then the command should succeeded
+        And the Running auto.*config search for model pattern is present on command output
         And the my_model model configs in latest profile checkpoint are
             {"maxBatchSize": 4, "instanceGroup": [{"count": 1, "kind": "KIND_CPU"}], "cpu_only": true}
             {"maxBatchSize": 4, "instanceGroup": [{"count": 2, "kind": "KIND_CPU"}], "cpu_only": true}
@@ -77,7 +79,7 @@ Feature: Model Automatic Profiling
         And removed the engine_count_per_device config parameter
         When I execute profile command
         Then the command should failed
-        And the Triton Model config instance group have more than 1 device kind. Use manual profile to swipe over instance group count substring is present on command output
+        And the Triton Model config instance group have more than 1 device kind. Use manual profile to swipe over instance group count pattern is present on command output
 
 # TODO: failed due to default value for config_search_max_instance_count
 #    Scenario: User uses Model Analyzer Automatic Configuration Search with instance count swipe on cpu and gpu group instances
@@ -93,6 +95,7 @@ Feature: Model Automatic Profiling
 #        And removed the engine_count_per_device config parameter
 #        When I execute profile command
 #        Then the command should succeeded
+#        And the Running auto.*config search for model pattern is present on command output
 #        And the my_model model configs in latest profile checkpoint are
 #            {"maxBatchSize": 4, "instanceGroup": [{"count": 1, "kind": "KIND_CPU"}, {"count": 1, "kind": "KIND_GPU"}], "cpu_only": false}
 #            {"maxBatchSize": 4, "instanceGroup": [{"count": 1, "kind": "KIND_CPU"}, {"count": 1, "kind": "KIND_GPU"}], "dynamicBatching": {}, "cpu_only": false}

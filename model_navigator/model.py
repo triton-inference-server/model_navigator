@@ -59,6 +59,7 @@ class Model(BaseConfig):
     format: Format = field(init=False)
     signature: Optional[ModelSignatureConfig] = field(init=False)
     properties: Any = field(init=False)
+    num_required_gpus: Optional[int] = field(init=False)
     signature_if_missing: InitVar[Optional[ModelSignatureConfig]] = None
     explicit_format: InitVar[Optional[Format]] = None
 
@@ -70,6 +71,7 @@ class Model(BaseConfig):
         adapter = FORMAT2ADAPTER[self.format]
         self.signature = self._get_signature(adapter, signature_if_missing)
         self.properties = adapter.get_properties(self.path)
+        self.num_required_gpus = adapter.get_num_required_gpus(self.properties)
 
     def _get_signature(self, adapter, signature_if_missing):
         signature = adapter.get_signature(self.path)

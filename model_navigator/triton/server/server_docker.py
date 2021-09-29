@@ -34,7 +34,7 @@ class TritonServerDocker(TritonServer):
     triton in a docker container.
     """
 
-    def __init__(self, image, config, gpus, path):
+    def __init__(self, *, image, config, gpus, path):
         """
         Parameters
         ----------
@@ -46,13 +46,11 @@ class TritonServerDocker(TritonServer):
             list of GPUs to be used
         """
 
-        self._server_path = path
-        self._server_config = config
+        super().__init__(config=config, gpus=gpus, path=path)
         self._docker_client = docker.from_env()
         self._tritonserver_image = image
         self._tritonserver_container = None
         self._tritonserver_log_gen = None
-        self._gpus = gpus
 
         assert self._server_config["model-repository"], "Triton Server requires --model-repository argument to be set."
 
@@ -125,7 +123,7 @@ class TritonServerDocker(TritonServer):
 
         logger.debug("Stopping triton server.")
 
-        if self._tritonserver_container is not None:
+        if self.is_alive():
             logger.debug(f"Stopping Triton Server id={self._tritonserver_container.id}")
             self._tritonserver_container.stop()
             self._tritonserver_container.remove(force=True)
@@ -134,6 +132,10 @@ class TritonServerDocker(TritonServer):
             self._docker_client.close()
 
         logger.debug("Triton server stopped")
+
+    def is_alive(self):
+        # TODO: check if tritonserver process is running inside container
+        return self._tritonserver_container is not None
 
     def logs(self):
         """

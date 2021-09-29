@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from abc import ABC, abstractmethod
+from typing import List
 
 
 class TritonServer(ABC):
@@ -20,6 +21,11 @@ class TritonServer(ABC):
     Defines the interface for the objects created by
     TritonServerFactory
     """
+
+    def __init__(self, *, config, gpus, path):
+        self._server_path = path
+        self._server_config = config
+        self._gpus = gpus
 
     @abstractmethod
     def start(self):
@@ -34,6 +40,10 @@ class TritonServer(ABC):
         """
 
     @abstractmethod
+    def is_alive(self):
+        pass
+
+    @abstractmethod
     def logs(self):
         """
         Gets the server's stdout logs as a string
@@ -46,3 +56,8 @@ class TritonServer(ABC):
     @abstractmethod
     def create_http_client(self):
         pass
+
+    def set_gpus(self, gpus: List[str]):
+        if self.is_alive():
+            raise RuntimeError("Triton Inference Server is running thus could not change gpus")
+        self._gpus = gpus

@@ -22,7 +22,7 @@ class TritonServerFactory:
     """
 
     @staticmethod
-    def create_server_docker(image, config, gpus, path):
+    def create_server_docker(*, image, config, gpus, path):
         """
         Parameters
         ----------
@@ -41,7 +41,7 @@ class TritonServerFactory:
         return TritonServerDocker(image=image, config=config, gpus=gpus, path=path)
 
     @staticmethod
-    def create_server_local(path, config):
+    def create_server_local(*, path, config, gpus):
         """
         Parameters
         ----------
@@ -55,4 +55,4 @@ class TritonServerFactory:
         TritonServerLocal
         """
 
-        return TritonServerLocal(path=path, config=config)
+        return TritonServerLocal(path=path, config=config, gpus=gpus)

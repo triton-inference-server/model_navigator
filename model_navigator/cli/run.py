@@ -218,6 +218,7 @@ def run_cmd(
             {**dataclass2dict(triton_config), **{"model_repository": interim_model_repository}}
         ),
     )
+
     for model_to_deploy in succeeded_models:
         LOGGER.info(f"Running triton model configuration variants generation for {model_to_deploy.name}")
         for variant in configurator.get_models_variants(model_to_deploy):
@@ -225,6 +226,13 @@ def run_cmd(
             error_logs = []
             try:
                 LOGGER.info(f"Verifying model variant: {variant.name}")
+                if variant.num_required_gpus is not None and len(gpus) < variant.num_required_gpus:
+                    LOGGER.warning(
+                        f"Variant {variant.name} requires {variant.num_required_gpus} gpus "
+                        f"while only {len(gpus)} is available."
+                    )
+                    continue
+                triton_server.set_gpus(gpus[: variant.num_required_gpus])
                 triton_server.start()
                 triton_client = triton_server.create_grpc_client()
                 triton_client_config = TritonClientConfig(server_url=triton_client.server_url)
@@ -363,13 +371,14 @@ def _get_triton_server(*, triton_docker_image, gpus, analyzer_config):
         triton_server = TritonServerFactory.create_server_local(
             path=analyzer_config.triton_server_path,
             config=triton_config,
+            gpus=get_gpus(gpus=gpus),
         )
     elif analyzer_config.triton_launch_mode == TritonLaunchMode.DOCKER:
         triton_server = TritonServerFactory.create_server_docker(
             image=triton_docker_image,
+            path=analyzer_config.triton_server_path,
             config=triton_config,
             gpus=get_gpus(gpus=gpus),
-            path=analyzer_config.triton_server_path,
         )
     else:
         raise ModelNavigatorException(f"Unsupported triton_launch_mode: {analyzer_config.triton_launch_mode}")

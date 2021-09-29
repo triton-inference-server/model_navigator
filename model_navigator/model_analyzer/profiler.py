@@ -142,31 +142,36 @@ class ProfileConfigGenerator(BaseConfigGenerator):
 
     def generate_config(self):
         model_repository = self._triton_config.model_repository
-        model_names = [model_dir.name for model_dir in model_repository.glob("*") if model_dir.is_dir()]
-        LOGGER.info(f"Prepare profiling for {len(model_names)} models from {model_repository}:")
-        for model_name in model_names:
+        models_list = [model_dir.name for model_dir in model_repository.glob("*") if model_dir.is_dir()]
+        LOGGER.info(f"Prepare profiling for {len(models_list)} models from {model_repository}:")
+        for model_name in models_list:
             LOGGER.info(f"\t- {model_name}")
 
         model_names_with_profile_config = {
-            model_name: self._get_profile_config_for_model(model_name) for model_name in model_names
+            model_name: self._get_profile_config_for_model(model_name) for model_name in models_list
         }
         if any(profile_config for model_name, profile_config in model_names_with_profile_config.items()):
-            model_names = model_names_with_profile_config
+            models_list = model_names_with_profile_config
 
         if self._profile_config.config_search_max_preferred_batch_size > 0:
             max_preferred_batch_size = self._profile_config.config_search_max_preferred_batch_size
         else:
             max_preferred_batch_size = 1
 
+        manual_config_search = all(
+            isinstance(models_list, dict) and models_list[model_name].get("model_config_parameters")
+            for model_name in models_list
+        )
+
         # https://github.com/triton-inference-server/model_analyzer/blob/r21.08/docs/config.md
         config = {
-            "profile_models": model_names,
+            "run_config_search_disable": manual_config_search,
+            "profile_models": models_list,
             "triton_docker_image": self._triton_docker_image,
             "triton_launch_mode": self._triton_config.triton_launch_mode.value,
             "model_repository": model_repository.resolve().as_posix(),
             "checkpoint_directory": self._analyzer_checkpoints_dir_path.as_posix(),
             "output_model_repository_path": self.output_model_repository_path.as_posix(),
-            "summarize": self._verbose,
             "export_path": self._analyzer_path.resolve().as_posix(),
             "triton_server_flags": {"strict-model-config": False},
             "run_config_search_max_concurrency": self._profile_config.config_search_max_concurrency,
@@ -177,11 +182,11 @@ class ProfileConfigGenerator(BaseConfigGenerator):
             "triton_server_path": self._triton_config.triton_server_path,
             "override_output_model_repository": True,
             "gpus": list(self._gpus),
+            "summarize": self._verbose,
+            "verbose": self._verbose,
+            "perf_output": self._verbose,
+            "triton_output_path": self.triton_log_path.as_posix(),
         }
-
-        if self._verbose:
-            config["perf_output"] = True
-            config["triton_output_path"] = self.triton_log_path.as_posix()
 
         return config
 
