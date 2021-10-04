@@ -38,7 +38,9 @@ class OutputErrorStat:
 
     @property
     def reldiff(self):
-        return self.absdiff / np.abs(self.out1)
+        _reldiff = self.absdiff / np.abs(self.out1)
+        _reldiff[self.absdiff == 0] = 0
+        return _reldiff
 
     def min_out(self):
         return np.amin([np.amin(self.out0), np.amin(self.out1)])

@@ -21,6 +21,7 @@ limitations under the License.
 - Handle exit codes correctly from CLI commands
 - Conversion related
   - Added support for precision modes to support multiple precision during conversion to TensorRT
+  - Fixed nan values appearing in relative tolerance during conversion to TensorRT
 - Configuration Model on Triton related
   - Removed default value for `engine_count_per_device`
   - Added possibility to define Triton Custom Backend parameters with `triton_backend_parameters` command
