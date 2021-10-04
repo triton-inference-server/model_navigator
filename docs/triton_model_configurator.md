@@ -141,23 +141,23 @@ model_repository: path
 # Enable CUDA capture graph feature on the TensorRT backend.
 [ tensorrt_capture_cuda_graph: boolean ]
 
-# Maximum batch size allowed for inference. A max_batch_size value of 0 indicates that batching is not allowed for the
-# model
+# Maximum batch size allowed for inference.
+# A max_batch_size value of 0 indicates that batching is not allowed for the model
 [ max_batch_size: integer | default: 32 ]
 
-# Batch sizes that the dynamic batcher should attempt to create. In case --max-queue-delay-us is set and this parameter is
-# not, default value will be --max-batch-size.
+# Batch sizes that the dynamic batcher should attempt to create.
+# In case --max-queue-delay-us is set and this parameter is not, default value will be --max-batch-size.
 [ preferred_batch_sizes: list[integer] ]
 
 # Max delay time that the dynamic batcher will wait to form a batch.
 [ max_queue_delay_us: integer ]
 
-# Mapping of device kind to model instances count on a single device. Available devices: [cpu|gpu]. Format: --engine-
-# count-per-device <kind>=<count>
+# Mapping of device kind to model instances count on a single device. Available devices: [cpu|gpu].
+# Format: --engine-count-per-device <kind>=<count>
 [ engine_count_per_device: list[str] ]
 
-# Triton Inference Server Custom Backend parameters map. Format: --triton-backend-parameters <name1>=<value1> ..
-# <nameN>=<valueN>
+# Triton Inference Server Custom Backend parameters map.
+# Format: --triton-backend-parameters <name1>=<value1> .. <nameN>=<valueN>
 [ triton_backend_parameters: list[str] ]
 
 # Inference server URL in format protocol://host[:port]

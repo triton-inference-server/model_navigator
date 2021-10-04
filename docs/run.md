@@ -163,61 +163,75 @@ model_path: path
 # Configure TensorRT builder for precision layer selection.
 [ target_precisions: list[choice(int8, fp16, fp32, tf32)] | default: ['fp16', 'tf32'] ]
 
+# Enable explicit precision for TensorRT builder when model already contain quantized layers.
+[ target_precisions_explicit: boolean ]
+
+# Select how target precision should be applied during conversion:
+# 'hierarchy': enable possible precisions for values passed in target precisions int8 enable tf32, fp16 and int8
+# 'single': each precision passed in target precisions is applied separately
+# 'mixed': combine both strategies
+[ target_precisions_mode: choice(hierarchy, single, mixed) | default: hierarchy ]
+
 # Generate an ONNX graph that uses only ops available in a given opset.
 [ onnx_opsets: list[integer] | default: [13] ]
 
 # The amount of workspace the ICudaEngine uses.
 [ max_workspace_size: integer ]
 
-# Absolute tolerance parameter for output comparison. To specify per-output tolerances, use the format: --atol
-# [<out_name>=]<atol>. Example: --atol 1e-5 out0=1e-4 out1=1e-3
+# Absolute tolerance parameter for output comparison.
+# To specify per-output tolerances, use the format: --atol [<out_name>=]<atol>.
+# Example: --atol 1e-5 out0=1e-4 out1=1e-3
 [ atol: list[str] | default: ['1e-05'] ]
 
-# Relative tolerance parameter for output comparison. To specify per-output tolerances, use the format: --rtol
-# [<out_name>=]<rtol>. Example: --rtol 1e-5 out0=1e-4 out1=1e-3
+# Relative tolerance parameter for output comparison.
+# To specify per-output tolerances, use the format: --rtol [<out_name>=]<rtol>.
+# Example: --rtol 1e-5 out0=1e-4 out1=1e-3
 [ rtol: list[str] | default: ['1e-05'] ]
 
-# Maximum batch size allowed for inference. A max_batch_size value of 0 indicates that batching is not allowed for the
-# model
+# Maximum batch size allowed for inference.
+# A max_batch_size value of 0 indicates that batching is not allowed for the model
 [ max_batch_size: integer | default: 32 ]
 
-# Map of features names and minimum shapes visible in the dataset. Format: --min-shapes <input0>=D0,D1,..,DN ..
-# <inputN>=D0,D1,..,DN
+# Map of features names and minimum shapes visible in the dataset.
+# Format: --min-shapes <input0>=D0,D1,..,DN .. <inputN>=D0,D1,..,DN
 [ min_shapes: list[str] ]
 
-# Map of features names and optimal shapes visible in the dataset. Used during the definition of the TensorRT optimization
-# profile. Format: --opt-shapes <input0>=D0,D1,..,DN .. <inputN>=D0,D1,..,DN
+# Map of features names and optimal shapes visible in the dataset.
+# Used during the definition of the TensorRT optimization profile.
+# Format: --opt-shapes <input0>=D0,D1,..,DN .. <inputN>=D0,D1,..,DN
 [ opt_shapes: list[str] ]
 
-# Map of features names and maximal shapes visible in the dataset. Format: --max-shapes <input0>=D0,D1,..,DN ..
-# <inputN>=D0,D1,..,DN
+# Map of features names and maximal shapes visible in the dataset.
+# Format: --max-shapes <input0>=D0,D1,..,DN .. <inputN>=D0,D1,..,DN
 [ max_shapes: list[str] ]
 
-# Map of features names and range of values visible in the dataset. Format: --value-ranges
-# <input0>=<lower_bound>,<upper_bound> .. <inputN>=<lower_bound>,<upper_bound> <default_lower_bound>,<default_upper_bound>
+# Map of features names and range of values visible in the dataset.
+# Format: --value-ranges <input0>=<lower_bound>,<upper_bound> ..
+# <inputN>=<lower_bound>,<upper_bound> <default_lower_bound>,<default_upper_bound>
 [ value_ranges: list[str] ]
 
-# Map of features names and numpy dtypes visible in the dataset. Format: --dtypes <input0>=<dtype> <input1>=<dtype>
-# <default_dtype>
+# Map of features names and numpy dtypes visible in the dataset.
+# Format: --dtypes <input0>=<dtype> <input1>=<dtype> <default_dtype>
 [ dtypes: list[str] ]
 
-# Triton Inference Server Custom Backend parameters map. Format: --triton-backend-parameters <name1>=<value1> ..
-# <nameN>=<valueN>
+# Triton Inference Server Custom Backend parameters map.
+# Format: --triton-backend-parameters <name1>=<value1> .. <nameN>=<valueN>
 [ triton_backend_parameters: list[str] ]
 
-# Mapping of device kind to model instances count on a single device. Available devices: [cpu|gpu]. Format: --engine-
-# count-per-device <kind>=<count>
+# Mapping of device kind to model instances count on a single device. Available devices: [cpu|gpu].
+# Format: --engine-count-per-device <kind>=<count>
 [ engine_count_per_device: list[str] ]
 
-# Batch sizes that the dynamic batcher should attempt to create. In case --max-queue-delay-us is set and this parameter is
-# not, default value will be --max-batch-size.
+# Batch sizes that the dynamic batcher should attempt to create.
+# In case --max-queue-delay-us is set and this parameter is not, default value will be --max-batch-size.
 [ preferred_batch_sizes: list[integer] ]
 
 # Max delay time that the dynamic batcher will wait to form a batch.
 [ max_queue_delay_us: integer ]
 
-# The method used  to launch the Triton Server. 'local' assume tritonserver binary is available locally. 'docker' pulls
-# and launches a triton docker container with the specified version.
+# The method used  to launch the Triton Server.
+# 'local' assume tritonserver binary is available locally.
+# 'docker' pulls and launches a triton docker container with the specified version.
 [ triton_launch_mode: choice(local, docker) | default: local ]
 
 # Path to the Triton Server binary when the local mode is enabled.
@@ -232,24 +246,28 @@ model_path: path
 # Maximum preferred batch size allowed for inference used for automatic config search in analysis.
 [ config_search_max_preferred_batch_size: integer | default: 32 ]
 
-# List of concurrency values used for manual config search in analysis. Forces manual config search. Format: --config-
-# search-concurrency 1 2 4 ...
+# List of concurrency values used for manual config search in analysis.
+# Forces manual config search.
+# Format: --config-search-concurrency 1 2 4 ...
 [ config_search_concurrency: list[integer] ]
 
-# List of model instance count values used for manual config search in analysis. Forces manual config search. Format:
-# --config-search-instance-counts <DeviceKind>=<count>,<count> <DeviceKind>=<count> ...
+# List of model instance count values used for manual config search in analysis.
+# Forces manual config search.
+# Format: --config-search-instance-counts <DeviceKind>=<count>,<count> <DeviceKind>=<count> ...
 [ config_search_instance_counts: list[str] ]
 
-# List of max batch sizes used for manual config search in analysis. Forces manual config search. Format: --config-search-
-# max-batch-sizes 1 2 4 ...
+# List of max batch sizes used for manual config search in analysis. Forces manual config search.
+# Format: --config-search-max-batch-sizes 1 2 4 ...
 [ config_search_max_batch_sizes: list[integer] ]
 
-# List of preferred batch sizes used for manual config search in analysis. Forces manual config search. Format: --config-
-# search-preferred-batch-sizes 4,8,16 8,16 16 ...
+# List of preferred batch sizes used for manual config search in analysis.
+# Forces manual config search.
+# Format: --config-search-preferred-batch-sizes 4,8,16 8,16 16 ...
 [ config_search_preferred_batch_sizes: list[str] ]
 
-# List of custom backend parameters used for manual config search in analysis. Forces manual config search. Format:
-# --config-search-backend-parameters <param_name1>=<value1>,<value2> <param_name2>=<value3> ...
+# List of custom backend parameters used for manual config search in analysis.
+# Forces manual config search.
+# Format: --config-search-backend-parameters <param_name1>=<value1>,<value2> <param_name2>=<value3> ...
 [ config_search_backend_parameters: list[str] ]
 
 # Number of top final configurations selected from the analysis.

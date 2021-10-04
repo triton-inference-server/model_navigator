@@ -41,7 +41,7 @@ from model_navigator.converter import (
     Converter,
     DatasetProfileConfig,
 )
-from model_navigator.converter.config import TargetFormatConfigSetIterator, TensorRTPrecision
+from model_navigator.converter.config import TargetFormatConfigSetIterator, TensorRTPrecision, TensorRTPrecisionMode
 from model_navigator.converter.utils import FORMAT2FRAMEWORK
 from model_navigator.device.utils import get_gpus
 from model_navigator.exceptions import ModelNavigatorCliException, ModelNavigatorException
@@ -73,6 +73,8 @@ class ConversionSetConfig(BaseConfig):
     target_precisions: List[TensorRTPrecision] = dataclasses.field(
         default_factory=lambda: [TensorRTPrecision.FP16, TensorRTPrecision.TF32]
     )
+    target_precisions_explicit: bool = False
+    target_precisions_mode: TensorRTPrecisionMode = TensorRTPrecisionMode.HIERARCHY
     # ONNX related
     onnx_opsets: List[int] = dataclasses.field(default_factory=lambda: [13])
     # TRT related
@@ -91,6 +93,8 @@ class ConversionSetConfig(BaseConfig):
                 target_precisions=[],
                 onnx_opsets=[],
                 max_workspace_size=config.max_workspace_size,
+                target_precisions_mode=config.target_precision_mode,
+                target_precisions_explicit=config.target_precision_explicit,
             )
 
         return cls(
@@ -98,6 +102,8 @@ class ConversionSetConfig(BaseConfig):
             target_precisions=[config.target_precision] if config.target_precision else [],
             onnx_opsets=[config.onnx_opset] if config.onnx_opset else [],
             max_workspace_size=config.max_workspace_size,
+            target_precisions_mode=config.target_precision_mode,
+            target_precisions_explicit=config.target_precision_explicit,
         )
 
 

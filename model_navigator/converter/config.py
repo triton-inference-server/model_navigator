@@ -41,6 +41,12 @@ class TensorRTPrecision(Enum):
     TF32 = "tf32"
 
 
+class TensorRTPrecisionMode(Enum):
+    HIERARCHY = "hierarchy"
+    SINGLE = "single"
+    MIXED = "mixed"
+
+
 @dataclass
 class ComparatorConfig(BaseConfig):
     """Key equal empty string is default tolerance value"""
@@ -62,10 +68,12 @@ class DatasetProfileConfig(BaseConfig):
 @dataclass
 class ConversionConfig(BaseConfig):
     target_format: Format
-    target_precision: Optional[TensorRTPrecision] = None
     # ONNX related
     onnx_opset: Optional[int] = None
     # TRT related
+    target_precision: Optional[TensorRTPrecision] = None
+    target_precision_explicit: bool = False
+    target_precision_mode: TensorRTPrecisionMode = TensorRTPrecisionMode.HIERARCHY
     max_workspace_size: Optional[int] = None
 
 

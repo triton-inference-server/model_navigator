@@ -89,8 +89,10 @@ def _generate_config_description_lines(options_with_cmds):
 
     for option in options:
         if option.help:
-            help_lines = textwrap.wrap(option.help, width=120)
-            lines.extend([f"# {help_line}" for help_line in help_lines])
+            help_lines_splatted = option.help.splitlines()
+            for line in help_lines_splatted:
+                help_lines = textwrap.wrap(line, width=120)
+                lines.extend([f"# {help_line}" for help_line in help_lines])
         type_str = _get_type(option)
         line = f"{option.name}: {type_str}"
         if option.default:

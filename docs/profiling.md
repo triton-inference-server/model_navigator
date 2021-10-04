@@ -161,8 +161,9 @@ model_repository: path
 # Perf Analyzer time windows time in [ms] used for stabilization.
 [ perf_measurement_interval: integer | default: 5000 ]
 
-# The method used  to launch the Triton Server. 'local' assume tritonserver binary is available locally. 'docker' pulls
-# and launches a triton docker container with the specified version.
+# The method used  to launch the Triton Server.
+# 'local' assume tritonserver binary is available locally.
+# 'docker' pulls and launches a triton docker container with the specified version.
 [ triton_launch_mode: choice(local, docker) | default: local ]
 
 # Path to the Triton Server binary when the local mode is enabled.
@@ -177,44 +178,50 @@ model_repository: path
 # Maximum preferred batch size allowed for inference used for automatic config search in analysis.
 [ config_search_max_preferred_batch_size: integer | default: 32 ]
 
-# List of concurrency values used for manual config search in analysis. Forces manual config search. Format: --config-
-# search-concurrency 1 2 4 ...
+# List of concurrency values used for manual config search in analysis.
+# Forces manual config search.
+# Format: --config-search-concurrency 1 2 4 ...
 [ config_search_concurrency: list[integer] ]
 
-# List of model instance count values used for manual config search in analysis. Forces manual config search. Format:
-# --config-search-instance-counts <DeviceKind>=<count>,<count> <DeviceKind>=<count> ...
+# List of model instance count values used for manual config search in analysis.
+# Forces manual config search.
+# Format: --config-search-instance-counts <DeviceKind>=<count>,<count> <DeviceKind>=<count> ...
 [ config_search_instance_counts: list[str] ]
 
-# List of max batch sizes used for manual config search in analysis. Forces manual config search. Format: --config-search-
-# max-batch-sizes 1 2 4 ...
+# List of max batch sizes used for manual config search in analysis. Forces manual config search.
+# Format: --config-search-max-batch-sizes 1 2 4 ...
 [ config_search_max_batch_sizes: list[integer] ]
 
-# List of preferred batch sizes used for manual config search in analysis. Forces manual config search. Format: --config-
-# search-preferred-batch-sizes 4,8,16 8,16 16 ...
+# List of preferred batch sizes used for manual config search in analysis.
+# Forces manual config search.
+# Format: --config-search-preferred-batch-sizes 4,8,16 8,16 16 ...
 [ config_search_preferred_batch_sizes: list[str] ]
 
-# List of custom backend parameters used for manual config search in analysis. Forces manual config search. Format:
-# --config-search-backend-parameters <param_name1>=<value1>,<value2> <param_name2>=<value3> ...
+# List of custom backend parameters used for manual config search in analysis.
+# Forces manual config search.
+# Format: --config-search-backend-parameters <param_name1>=<value1>,<value2> <param_name2>=<value3> ...
 [ config_search_backend_parameters: list[str] ]
 
-# Map of features names and minimum shapes visible in the dataset. Format: --min-shapes <input0>=D0,D1,..,DN ..
-# <inputN>=D0,D1,..,DN
+# Map of features names and minimum shapes visible in the dataset.
+# Format: --min-shapes <input0>=D0,D1,..,DN .. <inputN>=D0,D1,..,DN
 [ min_shapes: list[str] ]
 
-# Map of features names and optimal shapes visible in the dataset. Used during the definition of the TensorRT optimization
-# profile. Format: --opt-shapes <input0>=D0,D1,..,DN .. <inputN>=D0,D1,..,DN
+# Map of features names and optimal shapes visible in the dataset.
+# Used during the definition of the TensorRT optimization profile.
+# Format: --opt-shapes <input0>=D0,D1,..,DN .. <inputN>=D0,D1,..,DN
 [ opt_shapes: list[str] ]
 
-# Map of features names and maximal shapes visible in the dataset. Format: --max-shapes <input0>=D0,D1,..,DN ..
-# <inputN>=D0,D1,..,DN
+# Map of features names and maximal shapes visible in the dataset.
+# Format: --max-shapes <input0>=D0,D1,..,DN .. <inputN>=D0,D1,..,DN
 [ max_shapes: list[str] ]
 
-# Map of features names and range of values visible in the dataset. Format: --value-ranges
-# <input0>=<lower_bound>,<upper_bound> .. <inputN>=<lower_bound>,<upper_bound> <default_lower_bound>,<default_upper_bound>
+# Map of features names and range of values visible in the dataset.
+# Format: --value-ranges <input0>=<lower_bound>,<upper_bound> ..
+# <inputN>=<lower_bound>,<upper_bound> <default_lower_bound>,<default_upper_bound>
 [ value_ranges: list[str] ]
 
-# Map of features names and numpy dtypes visible in the dataset. Format: --dtypes <input0>=<dtype> <input1>=<dtype>
-# <default_dtype>
+# Map of features names and numpy dtypes visible in the dataset.
+# Format: --dtypes <input0>=<dtype> <input1>=<dtype> <default_dtype>
 [ dtypes: list[str] ]
 
 ```

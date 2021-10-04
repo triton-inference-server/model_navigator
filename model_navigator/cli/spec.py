@@ -143,30 +143,30 @@ class DatasetProfileConfigCli:
     min_shapes = CliSpec(
         help=(
             "Map of features names and minimum shapes visible in the dataset. "
-            "Format: --min-shapes <input0>=D0,D1,..,DN .. <inputN>=D0,D1,..,DN"
+            "\nFormat: --min-shapes <input0>=D0,D1,..,DN .. <inputN>=D0,D1,..,DN"
         ),
         parse_and_verify_callback=parse_shapes,
     )
     opt_shapes = CliSpec(
         help=(
             "Map of features names and optimal shapes visible in the dataset. "
-            "Used during the definition of the TensorRT optimization profile. "
-            "Format: --opt-shapes <input0>=D0,D1,..,DN .. <inputN>=D0,D1,..,DN"
+            "\nUsed during the definition of the TensorRT optimization profile. "
+            "\nFormat: --opt-shapes <input0>=D0,D1,..,DN .. <inputN>=D0,D1,..,DN"
         ),
         parse_and_verify_callback=parse_shapes,
     )
     max_shapes = CliSpec(
         help=(
             "Map of features names and maximal shapes visible in the dataset. "
-            "Format: --max-shapes <input0>=D0,D1,..,DN .. <inputN>=D0,D1,..,DN"
+            "\nFormat: --max-shapes <input0>=D0,D1,..,DN .. <inputN>=D0,D1,..,DN"
         ),
         parse_and_verify_callback=parse_shapes,
     )
     value_ranges = CliSpec(
         help=(
             "Map of features names and range of values visible in the dataset. "
-            "Format: --value-ranges <input0>=<lower_bound>,<upper_bound> .. "
-            "<inputN>=<lower_bound>,<upper_bound> <default_lower_bound>,<default_upper_bound>"
+            "\nFormat: --value-ranges <input0>=<lower_bound>,<upper_bound> .. "
+            "\n<inputN>=<lower_bound>,<upper_bound> <default_lower_bound>,<default_upper_bound>"
         ),
         parse_and_verify_callback=parse_value_ranges,
         serialize_default_callback=serialize_value_ranges,
@@ -174,7 +174,7 @@ class DatasetProfileConfigCli:
     dtypes = CliSpec(
         help=(
             "Map of features names and numpy dtypes visible in the dataset. "
-            "Format: --dtypes <input0>=<dtype> <input1>=<dtype> <default_dtype>"
+            "\nFormat: --dtypes <input0>=<dtype> <input1>=<dtype> <default_dtype>"
         ),
         parse_and_verify_callback=parse_dtypes,
         serialize_default_callback=serialize_dtypes,
@@ -230,12 +230,20 @@ class ConversionSetConfigCli:
         parse_and_verify_callback=_parse_target_formats,
         serialize_default_callback=_serialize_target_formats,
     )
-
     # ONNX specific
     onnx_opsets = CliSpec(help="Generate an ONNX graph that uses only ops available in a given opset.")
 
     # TRT specific
     target_precisions = CliSpec(help="Configure TensorRT builder for precision layer selection.")
+    target_precisions_explicit = CliSpec(
+        help="Enable explicit precision for TensorRT builder when model already contain quantized layers."
+    )
+    target_precisions_mode = CliSpec(
+        help="Select how target precision should be applied during conversion: "
+        "\n'hierarchy': enable possible precisions for values passed in target precisions int8 enable tf32, fp16 and int8 "
+        "\n'single': each precision passed in target precisions is applied separately "
+        "\n'mixed': combine both strategies"
+    )
     max_workspace_size = CliSpec(help="The amount of workspace the ICudaEngine uses.")
 
 
@@ -260,6 +268,15 @@ class ConversionSetHelmChartConfigCli:
     target_precisions = CliSpec(
         help="Configure TensorRT builder for precision layer selection.", default_factory=lambda: []
     )
+    target_precisions_explicit = CliSpec(
+        help="Enable explicit precision for TensorRT builder when model already contain quantized layers."
+    )
+    target_precisions_mode = CliSpec(
+        help="Select how target precision should be applied during conversion: "
+        "\n'hierarchy': enable possible precisions for values passed in target precisions int8 enable tf32, fp16 and int8 "
+        "\n'single': each precision passed in target precisions is applied separately "
+        "\n'mixed': combine both strategies"
+    )
     max_workspace_size = CliSpec(help="The amount of workspace the ICudaEngine uses.")
 
 
@@ -280,11 +297,11 @@ class TritonModelOptimizationConfigCli:
 class TritonModelSchedulerConfigCli:
     max_batch_size = CliSpec(
         help="Maximum batch size allowed for inference. "
-        "A max_batch_size value of 0 indicates that batching is not allowed for the model"
+        "\nA max_batch_size value of 0 indicates that batching is not allowed for the model"
     )
     preferred_batch_sizes = CliSpec(
         help="Batch sizes that the dynamic batcher should attempt to create. "
-        "In case --max-queue-delay-us is set and this parameter is not, default value will be --max-batch-size."
+        "\nIn case --max-queue-delay-us is set and this parameter is not, default value will be --max-batch-size."
     )
     max_queue_delay_us = CliSpec(help="Max delay time that the dynamic batcher will wait to form a batch.")
 
@@ -311,7 +328,7 @@ def _parse_engine_count(ctx, param, value):
 class TritonModelInstancesConfigCli:
     engine_count_per_device = CliSpec(
         help="Mapping of device kind to model instances count on a single device. Available devices: [cpu|gpu]. "
-        "Format: --engine-count-per-device <kind>=<count>",
+        "\nFormat: --engine-count-per-device <kind>=<count>",
         parse_and_verify_callback=_parse_engine_count,
         serialize_default_callback=_serialize_engine_count,
     )
@@ -335,7 +352,7 @@ def _serialize_backend_parameters(param, value: Dict[str, str]):
 class TritonCustomBackendParametersConfigCli:
     triton_backend_parameters = CliSpec(
         help="Triton Inference Server Custom Backend parameters map. "
-        "Format: --triton-backend-parameters <name1>=<value1> .. <nameN>=<valueN>",
+        "\nFormat: --triton-backend-parameters <name1>=<value1> .. <nameN>=<valueN>",
         parse_and_verify_callback=_parse_backend_parameters,
         serialize_default_callback=_serialize_backend_parameters,
     )
@@ -371,8 +388,8 @@ class ComparatorConfigCli:
     atol = CliSpec(
         help=(
             "Absolute tolerance parameter for output comparison. "
-            "To specify per-output tolerances, use the format: --atol [<out_name>=]<atol>. "
-            "Example: --atol 1e-5 out0=1e-4 out1=1e-3"
+            "\nTo specify per-output tolerances, use the format: --atol [<out_name>=]<atol>. "
+            "\nExample: --atol 1e-5 out0=1e-4 out1=1e-3"
         ),
         parse_and_verify_callback=_parse_tolerance_parameters,
         serialize_default_callback=_serialize_tolerance_parameters,
@@ -380,8 +397,8 @@ class ComparatorConfigCli:
     rtol = CliSpec(
         help=(
             "Relative tolerance parameter for output comparison. "
-            "To specify per-output tolerances, use the format: --rtol [<out_name>=]<rtol>. "
-            "Example: --rtol 1e-5 out0=1e-4 out1=1e-3"
+            "\nTo specify per-output tolerances, use the format: --rtol [<out_name>=]<rtol>. "
+            "\nExample: --rtol 1e-5 out0=1e-4 out1=1e-3"
         ),
         parse_and_verify_callback=_parse_tolerance_parameters,
         serialize_default_callback=_serialize_tolerance_parameters,
@@ -469,8 +486,8 @@ def parse_config_search_preferred_batch_sizes(ctx, param, value):
 class ModelAnalyzerTritonConfigCli:
     triton_launch_mode = CliSpec(
         help="The method used  to launch the Triton Server. "
-        "'local' assume tritonserver binary is available locally. "
-        "'docker' pulls and launches a triton docker container with the specified version."
+        "\n'local' assume tritonserver binary is available locally. "
+        "\n'docker' pulls and launches a triton docker container with the specified version."
     )
     model_repository = CliSpec(help="Path to the Triton Model Repository.")
     triton_server_path = CliSpec(help="Path to the Triton Server binary when the local mode is enabled.")
@@ -486,29 +503,29 @@ class ModelAnalyzerProfileConfigCli:
     )
     config_search_concurrency = CliSpec(
         help="List of concurrency values used for manual config search in analysis. "
-        "Forces manual config search. "
-        "Format: --config-search-concurrency 1 2 4 ...",
+        "\nForces manual config search. "
+        "\nFormat: --config-search-concurrency 1 2 4 ...",
     )
     config_search_instance_counts = CliSpec(
         help="List of model instance count values used for manual config search in analysis. "
-        "Forces manual config search. "
-        "Format: --config-search-instance-counts <DeviceKind>=<count>,<count> <DeviceKind>=<count> ...",
+        "\nForces manual config search. "
+        "\nFormat: --config-search-instance-counts <DeviceKind>=<count>,<count> <DeviceKind>=<count> ...",
         parse_and_verify_callback=parse_instance_counts,
     )
     config_search_max_batch_sizes = CliSpec(
         help="List of max batch sizes used for manual config search in analysis. Forces manual config search. "
-        "Format: --config-search-max-batch-sizes 1 2 4 ...",
+        "\nFormat: --config-search-max-batch-sizes 1 2 4 ...",
     )
     config_search_preferred_batch_sizes = CliSpec(
         help="List of preferred batch sizes used for manual config search in analysis. "
-        "Forces manual config search. "
-        "Format: --config-search-preferred-batch-sizes 4,8,16 8,16 16 ...",
+        "\nForces manual config search. "
+        "\nFormat: --config-search-preferred-batch-sizes 4,8,16 8,16 16 ...",
         parse_and_verify_callback=parse_config_search_preferred_batch_sizes,
     )
     config_search_backend_parameters = CliSpec(
         help="List of custom backend parameters used for manual config search in analysis. "
-        "Forces manual config search. "
-        "Format: --config-search-backend-parameters <param_name1>=<value1>,<value2> <param_name2>=<value3> ...",
+        "\nForces manual config search. "
+        "\nFormat: --config-search-backend-parameters <param_name1>=<value1>,<value2> <param_name2>=<value3> ...",
         parse_and_verify_callback=parse_backend_parameters,
     )
 

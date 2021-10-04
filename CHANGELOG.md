@@ -19,14 +19,16 @@ limitations under the License.
 ## unreleased
 - Fixed `model_repository` path to be  not relative to `<navigator_workspace>` dir
 - Handle exit codes correctly from CLI commands
-- Profiling related
-  - Added `config_search` prefix  to all profiling parameters (BREAKING CHANGE)
-  - Added `config_search_max_preferred_batch_size` parameter
-  - Added `config_search_backend_parameters` parameter
+- Conversion related
+  - Added support for precision modes to support multiple precision during conversion to TensorRT
 - Configuration Model on Triton related
   - Removed default value for `engine_count_per_device`
   - Added possibility to define Triton Custom Backend parameters with `triton_backend_parameters` command
   - Added possibility to define max workspace size for TensorRT backend accelerator using argument `tensorrt_max_workspace_size`
+- Profiling related
+  - Added `config_search` prefix  to all profiling parameters (BREAKING CHANGE)
+  - Added `config_search_max_preferred_batch_size` parameter
+  - Added `config_search_backend_parameters` parameter
 - fixes and improvements
 
 ## 0.2.2 (2021-09-06)

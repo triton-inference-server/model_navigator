@@ -20,7 +20,7 @@ from typing import Dict, Optional
 import polygraphy
 import sh
 
-from model_navigator.converter.config import DatasetProfileConfig, TensorRTPrecision
+from model_navigator.converter.config import DatasetProfileConfig, TensorRTPrecision, TensorRTPrecisionMode
 from model_navigator.converter.polygraphy.comparator import ToleranceParameterHelper
 from model_navigator.converter.utils import execute_sh_command, prepare_log_header
 from model_navigator.exceptions import ModelNavigatorConverterCommandException, ModelNavigatorConverterException
@@ -199,6 +199,8 @@ def onnx2trt(
     output_path: Path,
     log_path: Path,
     precision: TensorRTPrecision,
+    precision_mode: TensorRTPrecisionMode,
+    explicit_precision: bool = False,
     max_batch_size: Optional[int] = None,
     max_workspace_size: Optional[int] = None,
     profiles: Optional[DatasetProfileConfig] = None,
@@ -210,12 +212,24 @@ def onnx2trt(
 
     LOGGER.info("Polygraphy onnx2trt started.")
 
-    trt_precision_flags = {
-        TensorRTPrecision.FP32: "--tf32",
-        TensorRTPrecision.TF32: "--tf32",
-        TensorRTPrecision.FP16: "--fp16",
-        TensorRTPrecision.INT8: "--int8",
-    }[precision]
+    if precision_mode == TensorRTPrecisionMode.HIERARCHY:
+        trt_precision_flags = {
+            TensorRTPrecision.FP32: "--tf32",
+            TensorRTPrecision.TF32: "--tf32",
+            TensorRTPrecision.FP16: "--tf32 --fp16",
+            TensorRTPrecision.INT8: "--tf32 --fp16 --int8",
+        }[precision]
+    elif precision_mode == TensorRTPrecisionMode.SINGLE:
+        trt_precision_flags = {
+            TensorRTPrecision.FP32: "--tf32",
+            TensorRTPrecision.TF32: "--tf32",
+            TensorRTPrecision.FP16: "--fp16",
+            TensorRTPrecision.INT8: "--int8",
+        }[precision]
+    else:
+        raise ModelNavigatorConverterException(
+            f"Unsupported precision mode {precision_mode}. Only {TensorRTPrecisionMode.HIERARCHY} and {TensorRTPrecisionMode.SINGLE} are allowed"
+        )
 
     LOGGER.warning("This conversion should be done on target GPU platform")
 
@@ -275,6 +289,10 @@ def onnx2trt(
         "--save-engine",
         output_path,
     ]
+
+    if explicit_precision:
+        args += ["--explicit-precision"]
+
     if verbose:
         args += ["-v"]
 

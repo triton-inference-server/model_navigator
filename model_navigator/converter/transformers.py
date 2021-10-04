@@ -206,6 +206,8 @@ class ONNX2TRTCommand(BaseConvertCommand):
             output_path=output_path,
             log_path=log_path,
             precision=self._conversion_config.target_precision,
+            precision_mode=self._conversion_config.target_precision_mode,
+            explicit_precision=self._conversion_config.target_precision_explicit,
             max_batch_size=self._comparator_config.max_batch_size if self._comparator_config else None,
             max_workspace_size=self._conversion_config.max_workspace_size,
             profiles=self._dataset_profile,
@@ -227,7 +229,8 @@ class ONNX2TRTCommand(BaseConvertCommand):
     @property
     def name(self):
         precision = self._conversion_config.target_precision
-        parameters = {"": precision.value}
+        precision_mode = self._conversion_config.target_precision_mode
+        parameters = {"": precision.value, "m": precision_mode.value[0]}
         parameters_suffix = PARAMETERS_SEP.join([f"{k}{KEY_VALUE_SEP}{v}" for k, v in parameters.items()])
         return f"polygraphyonnx2trt{PARAMETERS_SEP}{parameters_suffix}"
 
