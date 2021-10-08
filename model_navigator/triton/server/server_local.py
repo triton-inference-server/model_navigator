@@ -107,8 +107,8 @@ class TritonServerLocal(TritonServer):
                 LOGGER.debug("Timeout waiting for server. Trying to kill process.")
                 message = traceback.format_exc()
                 LOGGER.debug(f"Error message: \n{message}")
-                self._tritonserver_running_cmd.process.kill()
                 try:
+                    self._tritonserver_running_cmd.process.kill()
                     self._tritonserver_running_cmd.wait(timeout=SERVER_OUTPUT_TIMEOUT_SECS)
                 except Exception:
                     LOGGER.debug(f"Could not kill triton server pid={self._tritonserver_running_cmd.pid}")
