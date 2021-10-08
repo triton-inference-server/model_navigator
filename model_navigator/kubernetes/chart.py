@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import List, Optional, Type, Union
 
 from model_navigator.cli.convert_model import ConversionSetConfig
+from model_navigator.common.config import TensorRTCommonConfig
 from model_navigator.converter.config import (
     ComparatorConfig,
     ConversionConfig,
@@ -53,6 +54,7 @@ class ChartGenerator:
         src_model: ModelConfig,
         src_model_signature_config: Optional[ModelSignatureConfig],
         conversion_config: ConversionConfig,
+        tensorrt_common_config: TensorRTCommonConfig,
         comparator_config: ComparatorConfig,
         dataset_profile_config: DatasetProfileConfig,
         optimization_config: TritonModelOptimizationConfig,
@@ -88,6 +90,7 @@ class ChartGenerator:
             config_file.save_config(optimization_config)
             config_file.save_config(scheduler_config)
             config_file.save_config(instances_config)
+            config_file.save_config(tensorrt_common_config)
 
             if conversion_config.target_format:
                 config_file.save_config(conversion_set_config)
@@ -101,6 +104,7 @@ class ChartGenerator:
             src_model_config=src_model,
             src_model_signature_config=src_model_signature_config,
             conversion_config=conversion_config,
+            tensorrt_common_config=tensorrt_common_config,
             comparator_config=comparator_config,
             dataset_profile_config=dataset_profile_config,
             optimization_config=optimization_config,

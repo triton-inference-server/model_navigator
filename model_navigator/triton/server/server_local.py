@@ -13,6 +13,7 @@
 # limitations under the License.
 import logging
 import os
+import traceback
 
 import sh
 
@@ -21,6 +22,14 @@ from model_navigator.triton.server.server import TritonServer
 
 SERVER_OUTPUT_TIMEOUT_SECS = 30
 LOGGER = logging.getLogger(__name__)
+
+
+def handle_exit(cmd, success, exit_code):
+    if not success:
+        LOGGER.warning("Triton Inference Server exited with failure. Please wait.")
+        LOGGER.debug(f"Triton Inference Server exit code {exit_code}")
+    else:
+        LOGGER.debug("Triton Inference Server stopped")
 
 
 class TritonServerLocal(TritonServer):
@@ -65,7 +74,13 @@ class TritonServerLocal(TritonServer):
 
             self._tritonserver_logs = ""
             self._tritonserver_running_cmd = tritonserver_cmd(
-                *tritonserver_args, _env=env, _err_to_out=True, _out=self._record_logs, _bg=True
+                *tritonserver_args,
+                _env=env,
+                _err_to_out=True,
+                _out=self._record_logs,
+                _bg=True,
+                _bg_exc=False,
+                _done=handle_exit,
             )
 
     def _record_logs(self, line):
@@ -76,6 +91,7 @@ class TritonServerLocal(TritonServer):
         if self._gpus:
             env = os.environ.copy()
             env["CUDA_VISIBLE_DEVICES"] = ",".join(self._gpus)
+
         return env
 
     def stop(self):
@@ -87,14 +103,17 @@ class TritonServerLocal(TritonServer):
             self._tritonserver_running_cmd.process.terminate()
             try:
                 self._tritonserver_running_cmd.wait(timeout=SERVER_OUTPUT_TIMEOUT_SECS)
-            except sh.TimeoutException:
+            except Exception:
+                LOGGER.debug("Timeout waiting for server. Trying to kill process.")
+                message = traceback.format_exc()
+                LOGGER.debug(f"Error message: \n{message}")
                 self._tritonserver_running_cmd.process.kill()
                 try:
                     self._tritonserver_running_cmd.wait(timeout=SERVER_OUTPUT_TIMEOUT_SECS)
-                except sh.TimeoutException:
-                    LOGGER.warning(f"Could not kill triton server pid={self._tritonserver_running_cmd.pid}")
-                except ProcessLookupError:
-                    pass
+                except Exception:
+                    LOGGER.debug(f"Could not kill triton server pid={self._tritonserver_running_cmd.pid}")
+                    message = traceback.format_exc()
+                    LOGGER.debug(f"Error message: \n{message}")
 
     def is_alive(self):
         return self._tritonserver_running_cmd is not None and self._tritonserver_running_cmd.is_alive()

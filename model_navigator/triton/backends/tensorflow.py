@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from model_navigator.exceptions import BadParameterModelNavigatorDeployerException
+from model_navigator.common.config import TensorRTCommonConfig
 from model_navigator.model import Format
 from model_navigator.triton import TritonModelOptimizationConfig
 from model_navigator.triton.backends.base import BaseBackendConfigurator
@@ -22,16 +22,12 @@ class TensorFlowBackendConfigurator(BaseBackendConfigurator):
     backend_name = "tensorflow"
     supported_formats = [Format.TF_SAVEDMODEL]
 
-    def _set_backend_acceleration(self, model_config, optimization_config: TritonModelOptimizationConfig):
-        if optimization_config.backend_accelerator == BackendAccelerator.TRT:
-            if optimization_config.tensorrt_precision is None:
-                raise BadParameterModelNavigatorDeployerException(
-                    "--tensorrt-precision is required while using tensorrt backend accelerator"
-                )
-            accelerator = model_config.optimization.execution_accelerators.gpu_execution_accelerator.add()
-            accelerator.name = "tensorrt"
-            accelerator.parameters["precision_mode"] = optimization_config.tensorrt_precision.value.upper()
-            accelerator.parameters["max_workspace_size_bytes"] = str(optimization_config.tensorrt_max_workspace_size)
-        elif optimization_config.backend_accelerator == BackendAccelerator.AMP:
+    def _set_backend_acceleration(
+        self,
+        model_config,
+        optimization_config: TritonModelOptimizationConfig,
+        tensorrt_common_config: TensorRTCommonConfig,
+    ):
+        if optimization_config.backend_accelerator == BackendAccelerator.AMP:
             accelerator = model_config.optimization.execution_accelerators.gpu_execution_accelerator.add()
             accelerator.name = "auto_mixed_precision"

@@ -234,17 +234,24 @@ class ConversionSetConfigCli:
     onnx_opsets = CliSpec(help="Generate an ONNX graph that uses only ops available in a given opset.")
 
     # TRT specific
-    target_precisions = CliSpec(help="Configure TensorRT builder for precision layer selection.")
-    target_precisions_explicit = CliSpec(
-        help="Enable explicit precision for TensorRT builder when model already contain quantized layers."
+    tensorrt_precisions = CliSpec(
+        help="Configure TensorRT builder for precision layer selection.",
+        param_decls=["--tensorrt-precisions", "--target-precisions"],
     )
-    target_precisions_mode = CliSpec(
+    tensorrt_precisions_mode = CliSpec(
         help="Select how target precision should be applied during conversion: "
         "\n'hierarchy': enable possible precisions for values passed in target precisions int8 enable tf32, fp16 and int8 "
         "\n'single': each precision passed in target precisions is applied separately "
-        "\n'mixed': combine both strategies"
+        "\n'mixed': combine both strategies",
+        param_decls=["--tensorrt-precisions-mode", "--target-precisions-mode"],
     )
-    max_workspace_size = CliSpec(help="The amount of workspace the ICudaEngine uses.")
+    tensorrt_explicit_precision = CliSpec(
+        help="Enable explicit precision for TensorRT builder when model already contain quantized layers."
+    )
+    tensorrt_strict_types = CliSpec(
+        help="Enable strict types in TensorRT, forcing it to choose tactics based on the layer precision set, even if another precision is faster."
+    )
+    tensorrt_sparse_weights = CliSpec(help="Enable optimizations for sparse weights in TensorRT.")
 
 
 class ConversionSetHelmChartConfigCli:
@@ -265,19 +272,31 @@ class ConversionSetHelmChartConfigCli:
     )
 
     # TRT specific
-    target_precisions = CliSpec(
-        help="Configure TensorRT builder for precision layer selection.", default_factory=lambda: []
+    tensorrt_precisions = CliSpec(
+        help="Configure TensorRT builder for precision layer selection.",
+        param_decls=["--tensorrt-precisions", "--target-precisions"],
     )
-    target_precisions_explicit = CliSpec(
-        help="Enable explicit precision for TensorRT builder when model already contain quantized layers."
-    )
-    target_precisions_mode = CliSpec(
+    tensorrt_precisions_mode = CliSpec(
         help="Select how target precision should be applied during conversion: "
         "\n'hierarchy': enable possible precisions for values passed in target precisions int8 enable tf32, fp16 and int8 "
         "\n'single': each precision passed in target precisions is applied separately "
-        "\n'mixed': combine both strategies"
+        "\n'mixed': combine both strategies",
+        param_decls=["--tensorrt-precisions-mode", "--target-precisions-mode"],
     )
-    max_workspace_size = CliSpec(help="The amount of workspace the ICudaEngine uses.")
+    tensorrt_explicit_precision = CliSpec(
+        help="Enable explicit precision for TensorRT builder when model already contain quantized layers."
+    )
+    tensorrt_strict_types = CliSpec(
+        help="Enable strict types in TensorRT, forcing it to choose tactics based on the layer precision set, even if another precision is faster."
+    )
+    tensorrt_sparse_weights = CliSpec(help="Enable optimizations for sparse weights in TensorRT.")
+
+
+class TensorRTCommonConfigCli:
+    tensorrt_max_workspace_size = CliSpec(
+        help="The maximum GPU memory in bytes the model can use temporarily during execution for TensorRT acceleration.",
+        param_decls=["--tensorrt-max-workspace-size", "--max-workspace-size"],
+    )
 
 
 class TritonClientConfigCli:
@@ -288,9 +307,6 @@ class TritonModelOptimizationConfigCli:
     backend_accelerator = CliSpec(help="Select Backend Accelerator used to serve the model.")
     # TODO: ensure that it works for also for ONNX backend
     tensorrt_precision = CliSpec(help="Target model precision for TensorRT acceleration.")
-    tensorrt_max_workspace_size = CliSpec(
-        help="The maximum GPU memory in bytes the model can use temporarily during execution for TensorRT acceleration."
-    )
     tensorrt_capture_cuda_graph = CliSpec(help="Enable CUDA capture graph feature on the TensorRT backend.")
 
 

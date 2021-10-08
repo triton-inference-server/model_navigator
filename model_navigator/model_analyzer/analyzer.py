@@ -144,7 +144,7 @@ class AnalysisConfigGenerator(BaseConfigGenerator):
         for model_name in model_names:
             LOGGER.info(f"\t- {model_name}")
 
-        # https://github.com/triton-inference-server/model_analyzer/blob/r21.08/docs/config.md
+        # https://github.com/triton-inference-server/model_analyzer/blob/r21.09/docs/config.md
         config = {
             "analysis_models": model_names,
             "checkpoint_directory": self._analyzer_checkpoints_dir_path.as_posix(),

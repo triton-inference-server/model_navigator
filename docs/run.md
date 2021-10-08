@@ -116,8 +116,9 @@ model_name: str
 # Path to the model file.
 model_path: path
 
-# Path to the configuration file containing default parameter values to use. For more information about configuration
-# files, refer to: https://github.com/triton-inference-server/model_navigator/blob/main/docs/run.md
+# Path to the configuration file containing default parameter values to use.
+# For more information about configuration files, refer to:
+# https://github.com/triton-inference-server/model_navigator/blob/main/docs/run.md
 [ config_path: path ]
 
 # Path to the output workspace directory.
@@ -126,20 +127,22 @@ model_path: path
 # Clean workspace directory before command execution.
 [ override_workspace: boolean ]
 
-# NVIDIA framework and Triton container version to use (refer to https://docs.nvidia.com/deeplearning/frameworks/support-
-# matrix/index.html and https://docs.nvidia.com/deeplearning/triton-inference-server/release-notes/index.html for
-# details).
-[ container_version: str | default: 21.08 ]
+# NVIDIA framework and Triton container version to use. For details refer to
+# https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html and
+# https://docs.nvidia.com/deeplearning/triton-inference-server/release-notes/index.html for details).
+[ container_version: str | default: 21.09 ]
 
 # Custom framework docker image to use. If not provided
 # nvcr.io/nvidia/<framework>:<container_version>-<framework_and_python_version> will be used
 [ framework_docker_image: str ]
 
-# Custom Triton Inference Server docker image to use. If not provided nvcr.io/nvidia/tritonserver:<container_version>-py3
-# will be used
+# Custom Triton Inference Server docker image to use.
+# If not provided nvcr.io/nvidia/tritonserver:<container_version>-py3 will be used
 [ triton_docker_image: str ]
 
-# List of GPU UUIDs to be used for the conversion and/or profiling. Use 'all' to profile all the GPUs visible by CUDA.
+# List of GPU UUIDs or Device IDs to be used for the conversion and/or profiling.
+# All values have to be provided in the same format.
+# Use 'all' to profile all the GPUs visible by CUDA.
 [ gpus: str | default: ['all'] ]
 
 # Provide verbose logs.
@@ -160,23 +163,27 @@ model_path: path
 # Target format to generate.
 [ target_formats: list[str] | default: ['tf-savedmodel', 'onnx', 'trt', 'torchscript'] ]
 
-# Configure TensorRT builder for precision layer selection.
-[ target_precisions: list[choice(int8, fp16, fp32, tf32)] | default: ['fp16', 'tf32'] ]
+# Generate an ONNX graph that uses only ops available in a given opset.
+[ onnx_opsets: list[integer] | default: [13] ]
 
-# Enable explicit precision for TensorRT builder when model already contain quantized layers.
-[ target_precisions_explicit: boolean ]
+# Configure TensorRT builder for precision layer selection.
+[ tensorrt_precisions: list[choice(int8, fp16, fp32, tf32)] | default: ['fp16', 'tf32'] ]
 
 # Select how target precision should be applied during conversion:
 # 'hierarchy': enable possible precisions for values passed in target precisions int8 enable tf32, fp16 and int8
 # 'single': each precision passed in target precisions is applied separately
 # 'mixed': combine both strategies
-[ target_precisions_mode: choice(hierarchy, single, mixed) | default: hierarchy ]
+[ tensorrt_precisions_mode: choice(hierarchy, single, mixed) | default: hierarchy ]
 
-# Generate an ONNX graph that uses only ops available in a given opset.
-[ onnx_opsets: list[integer] | default: [13] ]
+# Enable explicit precision for TensorRT builder when model already contain quantized layers.
+[ tensorrt_explicit_precision: boolean ]
 
-# The amount of workspace the ICudaEngine uses.
-[ max_workspace_size: integer ]
+# Enable strict types in TensorRT, forcing it to choose tactics based on the layer precision set, even if another
+# precision is faster.
+[ tensorrt_strict_types: boolean ]
+
+# Enable optimizations for sparse weights in TensorRT.
+[ tensorrt_sparse_weights: boolean ]
 
 # Absolute tolerance parameter for output comparison.
 # To specify per-output tolerances, use the format: --atol [<out_name>=]<atol>.
@@ -228,6 +235,9 @@ model_path: path
 
 # Max delay time that the dynamic batcher will wait to form a batch.
 [ max_queue_delay_us: integer ]
+
+# The maximum GPU memory in bytes the model can use temporarily during execution for TensorRT acceleration.
+[ tensorrt_max_workspace_size: integer ]
 
 # The method used  to launch the Triton Server.
 # 'local' assume tritonserver binary is available locally.

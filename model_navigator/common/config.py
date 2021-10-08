@@ -11,24 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import re
-from typing import NamedTuple
+
+from dataclasses import dataclass
+from typing import Optional
+
+from model_navigator.utils.config import BaseConfig
 
 
-class Container(NamedTuple):
-    image: str = ""
-    tag: str = ""
-
-    @classmethod
-    def container_image(cls, version: str):
-        if version is not None and not re.match("^[1-9][0-9].[0-9]{2}([.][0-9])*$", version):
-            raise ValueError(
-                f"""Invalid container version: {version}. Please provide in following format are allowed: """
-                """20.06, 20.06.1"""
-            )
-
-        return f"{cls.image}:{version}-{cls.tag}"
-
-
-DEFAULT_CONTAINER_VERSION = "21.09"
-DEFAULT_TENSORRT_MAX_WORKSPACE_SIZE = 4 * 2 ** 30  # 4GB
+@dataclass
+class TensorRTCommonConfig(BaseConfig):
+    tensorrt_max_workspace_size: Optional[int] = None

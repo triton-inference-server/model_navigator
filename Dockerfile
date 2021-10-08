@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ARG BASE_IMAGE=nvcr.io/nvidia/tritonserver:21.08-py3
+ARG BASE_IMAGE=nvcr.io/nvidia/tritonserver:21.09-py3
 FROM $BASE_IMAGE
 
 # DCGM version to install for Model Analyzer
-ENV DCGM_VERSION=2.0.13
+ENV DCGM_VERSION=2.2.9
 ENV MODEL_NAVIGATOR_CONTAINER=1
 
 # Ensure apt-get won't prompt for selecting options
@@ -37,9 +37,11 @@ RUN apt-get update && \
     apt-get update && \
     apt-get install --no-install-recommends -y nvidia-docker2 && \
     \
-    curl -s -L -O https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/datacenter-gpu-manager_${DCGM_VERSION}_amd64.deb && \
-    dpkg -i datacenter-gpu-manager_${DCGM_VERSION}_amd64.deb && \
-    rm datacenter-gpu-manager_${DCGM_VERSION}_amd64.deb && \
+    wget --progress=dot:giga https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin && \
+    mv cuda-ubuntu2004.pin /etc/apt/preferences.d/cuda-repository-pin-600 && \
+    apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/7fa2af80.pub && \
+    add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/ /" && \
+    apt-get install -y datacenter-gpu-manager=1:${DCGM_VERSION} && \
     \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \

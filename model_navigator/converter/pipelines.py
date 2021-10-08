@@ -15,6 +15,7 @@ import abc
 import logging
 from typing import Iterator, List, Optional, Sequence
 
+from model_navigator.common.config import TensorRTCommonConfig
 from model_navigator.converter.config import ComparatorConfig, ConversionConfig, DatasetProfileConfig
 from model_navigator.converter.transformers import CompositeConvertCommand, PassTransformer, TFSavedModel2ONNXTransform
 from model_navigator.model import Format, Model, ModelConfig, ModelSignatureConfig
@@ -28,6 +29,7 @@ class BaseModelPipeline(metaclass=abc.ABCMeta):
         self,
         *,
         conversion_config: ConversionConfig,
+        tensorrt_common_config: TensorRTCommonConfig,
         signature_config: Optional[ModelSignatureConfig] = None,
         comparator_config: Optional[ComparatorConfig] = None,
         dataset_profile: Optional[DatasetProfileConfig] = None,
@@ -43,6 +45,7 @@ class SavedModelPipeline(BaseModelPipeline):
         self,
         *,
         conversion_config: ConversionConfig,
+        tensorrt_common_config: TensorRTCommonConfig,
         signature_config: Optional[ModelSignatureConfig] = None,
         comparator_config: Optional[ComparatorConfig] = None,
         dataset_profile: Optional[DatasetProfileConfig] = None,
@@ -72,6 +75,7 @@ class SavedModelPipeline(BaseModelPipeline):
             onnx2trt_command = ONNX2TRTCommand(
                 tf2onnx_converter,
                 conversion_config=conversion_config,
+                tensorrt_common_config=tensorrt_common_config,
                 comparator_config=comparator_config,
                 dataset_profile=dataset_profile,
             )
@@ -87,6 +91,7 @@ class TorchScriptPipeline(BaseModelPipeline):
         self,
         *,
         conversion_config: ConversionConfig,
+        tensorrt_common_config: TensorRTCommonConfig,
         signature_config: Optional[ModelSignatureConfig] = None,
         comparator_config: Optional[ComparatorConfig] = None,
         dataset_profile: Optional[DatasetProfileConfig] = None,
@@ -126,6 +131,7 @@ class TorchScriptPipeline(BaseModelPipeline):
             onnx2trt_command = ONNX2TRTCommand(
                 ts2onnx_converter,
                 conversion_config=conversion_config,
+                tensorrt_common_config=tensorrt_common_config,
                 comparator_config=comparator_config,
                 dataset_profile=dataset_profile,
             )
@@ -143,6 +149,7 @@ class ONNXPipeline(BaseModelPipeline):
         self,
         *,
         conversion_config: ConversionConfig,
+        tensorrt_common_config: TensorRTCommonConfig,
         signature_config: Optional[ModelSignatureConfig] = None,
         comparator_config: Optional[ComparatorConfig] = None,
         dataset_profile: Optional[DatasetProfileConfig] = None,
@@ -156,6 +163,7 @@ class ONNXPipeline(BaseModelPipeline):
         elif conversion_config.target_format == Format.TENSORRT:
             cmd = ONNX2TRTCommand(
                 conversion_config=conversion_config,
+                tensorrt_common_config=tensorrt_common_config,
                 comparator_config=comparator_config,
                 dataset_profile=dataset_profile,
             )
@@ -170,6 +178,7 @@ class TRTPipeline(BaseModelPipeline):
         self,
         *,
         conversion_config: ConversionConfig,
+        tensorrt_common_config: TensorRTCommonConfig,
         signature_config: Optional[ModelSignatureConfig] = None,
         comparator_config: Optional[ComparatorConfig] = None,
         dataset_profile: Optional[DatasetProfileConfig] = None,
@@ -188,6 +197,7 @@ class ConvertCommandsRegistry:
         *,
         model_config: ModelConfig,
         conversion_config: ConversionConfig,
+        tensorrt_common_config: TensorRTCommonConfig,
         signature_config: Optional[ModelSignatureConfig] = None,
         comparator_config: Optional[ComparatorConfig] = None,
         dataset_profile_config: Optional[DatasetProfileConfig] = None,
@@ -197,6 +207,7 @@ class ConvertCommandsRegistry:
         for pipeline in self._get_pipelines_for_model(model):
             yield pipeline.get_commands(
                 conversion_config=conversion_config,
+                tensorrt_common_config=tensorrt_common_config,
                 signature_config=signature_config,
                 comparator_config=comparator_config,
                 dataset_profile=dataset_profile_config,

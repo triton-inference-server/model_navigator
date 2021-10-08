@@ -32,12 +32,14 @@ from model_navigator.cli.spec import (
     ModelConfigCli,
     ModelSignatureConfigCli,
     PerfMeasurementConfigCli,
+    TensorRTCommonConfigCli,
     TritonCustomBackendParametersConfigCli,
     TritonModelInstancesConfigCli,
     TritonModelSchedulerConfigCli,
 )
 from model_navigator.cli.triton_config_model import config_model_on_triton_cmd
 from model_navigator.cli.triton_evaluate_model import triton_evaluate_model_cmd
+from model_navigator.common.config import TensorRTCommonConfig
 from model_navigator.configurator import Configurator, log_configuration_error
 from model_navigator.converter import ComparatorConfig, ConversionLaunchMode, ConversionResult, DatasetProfileConfig
 from model_navigator.converter.utils import FORMAT2FRAMEWORK
@@ -93,6 +95,7 @@ class RunTritonConfigCli:
 @cli.options_from_config(TritonCustomBackendParametersConfig, TritonCustomBackendParametersConfigCli)
 @cli.options_from_config(TritonModelInstancesConfig, TritonModelInstancesConfigCli)
 @cli.options_from_config(TritonModelSchedulerConfig, TritonModelSchedulerConfigCli)
+@cli.options_from_config(TensorRTCommonConfig, TensorRTCommonConfigCli)
 @cli.options_from_config(RunTritonConfig, RunTritonConfigCli)
 @cli.options_from_config(ModelAnalyzerProfileConfig, ModelAnalyzerProfileConfigCli)
 @cli.options_from_config(ModelAnalyzerAnalysisConfig, ModelAnalyzerAnalysisConfigCli)
@@ -143,6 +146,7 @@ def run_cmd(
     src_model_config = ModelConfig.from_dict(kwargs)
     src_model_signature_config = ModelSignatureConfig.from_dict(kwargs)
     conversion_set_config = ConversionSetConfig.from_dict(kwargs)
+    tensorrt_common_config = TensorRTCommonConfig.from_dict(kwargs)
     comparator_config = ComparatorConfig.from_dict(kwargs)
     dataset_profile_config = DatasetProfileConfig.from_dict(kwargs)
     instance_config = TritonModelInstancesConfig.from_dict(kwargs)
@@ -172,6 +176,7 @@ def run_cmd(
         {
             **dataclass2dict(src_model_config),
             **dataclass2dict(conversion_set_config),
+            **dataclass2dict(tensorrt_common_config),
             **dataclass2dict(comparator_config),
             **dataclass2dict(src_model_signature_config),
             **dataclass2dict(dataset_profile_config),
@@ -210,7 +215,8 @@ def run_cmd(
     results_to_analyze = []
     configurator = Configurator()
 
-    # TODO: refactor that loop
+    gpus = get_gpus(gpus=gpus)
+
     triton_server = _get_triton_server(
         triton_docker_image=triton_docker_image,
         gpus=gpus,
@@ -245,6 +251,7 @@ def run_cmd(
                     **dataclass2dict(variant.optimization_config),
                     **dataclass2dict(triton_client_config),
                     **dataclass2dict(backend_config),
+                    **dataclass2dict(tensorrt_common_config),
                     model_repository=interim_model_repository,
                     load_model=True,
                 )
@@ -282,7 +289,9 @@ def run_cmd(
                         server_log=server_log,
                         errors=error_logs,
                     )
-                    LOGGER.warning(f"Unable to evaluate model {variant.name}. Logs: {log_file}")
+                    LOGGER.warning(
+                        f"Unable to evaluate model {variant.name}.Details can be found in logfile: {log_file.absolute()}"
+                    )
 
     # move when triton server for testing purposes is shutdown
     for config_result in results_to_analyze:
@@ -340,6 +349,7 @@ def run_cmd(
             **dataclass2dict(analyze_result.optimization_config),
             **dataclass2dict(analyze_result.scheduler_config),
             **dataclass2dict(analyze_result.instances_config),
+            **dataclass2dict(tensorrt_common_config),
         )
 
         if create_helm_chart_result.status.state != State.SUCCEEDED:
@@ -371,14 +381,14 @@ def _get_triton_server(*, triton_docker_image, gpus, analyzer_config):
         triton_server = TritonServerFactory.create_server_local(
             path=analyzer_config.triton_server_path,
             config=triton_config,
-            gpus=get_gpus(gpus=gpus),
+            gpus=gpus,
         )
     elif analyzer_config.triton_launch_mode == TritonLaunchMode.DOCKER:
         triton_server = TritonServerFactory.create_server_docker(
             image=triton_docker_image,
             path=analyzer_config.triton_server_path,
             config=triton_config,
-            gpus=get_gpus(gpus=gpus),
+            gpus=gpus,
         )
     else:
         raise ModelNavigatorException(f"Unsupported triton_launch_mode: {analyzer_config.triton_launch_mode}")

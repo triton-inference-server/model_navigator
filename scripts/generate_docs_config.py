@@ -107,7 +107,8 @@ def _generate_config_description_lines(options_with_cmds):
 def _check_if_there_are_duplicated_options(options_with_cmds):
     options = {}
     for (option, cmd) in options_with_cmds:
-        key = f"{option.name}-{option.help}-{_get_type_name(option)}"
+        opts = "-".join([opt[2:].replace("-", "_") for opt in option.opts])
+        key = f"{opts}-{option.help}-{_get_type_name(option)}"
         options.setdefault(key, []).append((option, cmd))
 
     counter = Counter([options_and_cmds_[0][0].name for key, options_and_cmds_ in options.items()])
@@ -127,6 +128,8 @@ def _check_if_there_are_duplicated_options(options_with_cmds):
                         "\t\t",
                         "cmd:",
                         cmd.name,
+                        "opts:",
+                        option.opts,
                         "type:",
                         option.type.name,
                         "default:",

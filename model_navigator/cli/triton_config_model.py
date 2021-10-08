@@ -26,6 +26,7 @@ from click import UsageError
 from model_navigator.cli.spec import (
     ModelConfigCli,
     ModelSignatureConfigCli,
+    TensorRTCommonConfigCli,
     TritonClientConfigCli,
     TritonCustomBackendParametersConfigCli,
     TritonModelInstancesConfigCli,
@@ -33,6 +34,7 @@ from model_navigator.cli.spec import (
     TritonModelSchedulerConfigCli,
 )
 from model_navigator.cli.utils import exit_cli_command, is_cli_command
+from model_navigator.common.config import TensorRTCommonConfig
 from model_navigator.exceptions import BadParameterModelNavigatorDeployerException, ModelNavigatorDeployerException
 from model_navigator.log import init_logger, log_dict
 from model_navigator.model import Model, ModelConfig, ModelSignatureConfig
@@ -61,6 +63,7 @@ class ConfigModelResult:
     optimization_config: TritonModelOptimizationConfig
     scheduler_config: TritonModelSchedulerConfig
     instances_config: TritonModelInstancesConfig
+    tensorrt_common_config: TensorRTCommonConfig
     model_dir_in_model_store: Optional[Path] = None
 
 
@@ -129,6 +132,7 @@ CMD_NAME = "triton-config-model"
 @options_from_config(TritonModelInstancesConfig, TritonModelInstancesConfigCli)
 @options_from_config(TritonCustomBackendParametersConfig, TritonCustomBackendParametersConfigCli)
 @options_from_config(TritonClientConfig, TritonClientConfigCli)
+@options_from_config(TensorRTCommonConfig, TensorRTCommonConfigCli)
 @click.pass_context
 def config_model_on_triton_cmd(
     ctx,
@@ -161,6 +165,7 @@ def config_model_on_triton_cmd(
     model_config = ModelConfig.from_dict(kwargs)
     signature_config = ModelSignatureConfig.from_dict(kwargs)
     optimization_config = TritonModelOptimizationConfig.from_dict(kwargs)
+    tensorrt_common_config = TensorRTCommonConfig.from_dict(kwargs)
     scheduler_config = TritonModelSchedulerConfig.from_dict(kwargs)
     instances_config = TritonModelInstancesConfig.from_dict(kwargs)
     backend_parameters_config = TritonCustomBackendParametersConfig.from_dict(kwargs)
@@ -181,6 +186,7 @@ def config_model_on_triton_cmd(
                 },
                 **dataclasses.asdict(signature_config),
                 **dataclasses.asdict(optimization_config),
+                **dataclasses.asdict(tensorrt_common_config),
                 **dataclasses.asdict(scheduler_config),
                 **dataclasses.asdict(instances_config),
                 **dataclasses.asdict(backend_parameters_config),
@@ -204,6 +210,7 @@ def config_model_on_triton_cmd(
             model=model,
             model_version=model_version,
             optimization_config=optimization_config,
+            tensorrt_common_config=tensorrt_common_config,
             scheduler_config=scheduler_config,
             instances_config=instances_config,
             backend_parameters_config=backend_parameters_config,
@@ -235,6 +242,7 @@ def config_model_on_triton_cmd(
         model_config=model_config,
         model_version=model_version,
         optimization_config=optimization_config,
+        tensorrt_common_config=tensorrt_common_config,
         scheduler_config=scheduler_config,
         instances_config=instances_config,
         model_dir_in_model_store=model_dir_in_model_store,

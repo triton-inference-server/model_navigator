@@ -93,8 +93,9 @@ Analyzer [objectives here](https://github.com/triton-inference-server/model_anal
 # Path to the Triton Model Repository.
 model_repository: path
 
-# Path to the configuration file containing default parameter values to use. For more information about configuration
-# files, refer to: https://github.com/triton-inference-server/model_navigator/blob/main/docs/run.md
+# Path to the configuration file containing default parameter values to use.
+# For more information about configuration files, refer to:
+# https://github.com/triton-inference-server/model_navigator/blob/main/docs/run.md
 [ config_path: path ]
 
 # Path to the output workspace directory.
@@ -103,20 +104,22 @@ model_repository: path
 # Clean workspace directory before command execution.
 [ override_workspace: boolean ]
 
-# NVIDIA framework and Triton container version to use (refer to https://docs.nvidia.com/deeplearning/frameworks/support-
-# matrix/index.html and https://docs.nvidia.com/deeplearning/triton-inference-server/release-notes/index.html for
-# details).
-[ container_version: str | default: 21.08 ]
+# NVIDIA framework and Triton container version to use. For details refer to
+# https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html and
+# https://docs.nvidia.com/deeplearning/triton-inference-server/release-notes/index.html for details).
+[ container_version: str | default: 21.09 ]
 
 # Custom framework docker image to use. If not provided
 # nvcr.io/nvidia/<framework>:<container_version>-<framework_and_python_version> will be used
 [ framework_docker_image: str ]
 
-# Custom Triton Inference Server docker image to use. If not provided nvcr.io/nvidia/tritonserver:<container_version>-py3
-# will be used
+# Custom Triton Inference Server docker image to use.
+# If not provided nvcr.io/nvidia/tritonserver:<container_version>-py3 will be used
 [ triton_docker_image: str ]
 
-# List of GPU UUIDs to be used for the conversion and/or profiling. Use 'all' to profile all the GPUs visible by CUDA.
+# List of GPU UUIDs or Device IDs to be used for the conversion and/or profiling.
+# All values have to be provided in the same format.
+# Use 'all' to profile all the GPUs visible by CUDA.
 [ gpus: str | default: ['all'] ]
 
 # Provide verbose logs.

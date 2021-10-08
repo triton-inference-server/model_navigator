@@ -385,8 +385,8 @@ def common_options(f):
             "--config-path",
             help=(
                 "Path to the configuration file containing default parameter values to use. "
-                "For more information about configuration files, refer to: "
-                "https://github.com/triton-inference-server/model_navigator/blob/main/docs/run.md"
+                "\nFor more information about configuration files, refer to: "
+                "\nhttps://github.com/triton-inference-server/model_navigator/blob/main/docs/run.md"
             ),
             type=click.Path(dir_okay=False, exists=True),
             show_default=True,
@@ -410,8 +410,9 @@ def common_options(f):
         click.option(
             "--container-version",
             help=(
-                "NVIDIA framework and Triton container version to use "
-                "(refer to https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html and https://docs.nvidia.com/deeplearning/triton-inference-server/release-notes/index.html for details)."
+                "NVIDIA framework and Triton container version to use. For details refer to"
+                "\nhttps://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html and"
+                "\nhttps://docs.nvidia.com/deeplearning/triton-inference-server/release-notes/index.html for details)."
             ),
             default=DEFAULT_CONTAINER_VERSION,
         ),
@@ -419,8 +420,7 @@ def common_options(f):
             "--framework-docker-image",
             help=(
                 "Custom framework docker image to use. If not provided "
-                "nvcr.io/nvidia/<framework>:<container_version>-<framework_and_python_version> "
-                "will be used"
+                "\nnvcr.io/nvidia/<framework>:<container_version>-<framework_and_python_version> will be used"
             ),
             type=str,
             required=False,
@@ -429,7 +429,7 @@ def common_options(f):
             "--triton-docker-image",
             help=(
                 "Custom Triton Inference Server docker image to use. "
-                f"If not provided {TritonServer.image}:<container_version>-{TritonServer.tag} will be used"
+                f"\nIf not provided {TritonServer.image}:<container_version>-{TritonServer.tag} will be used"
             ),
             type=str,
             required=False,
@@ -437,8 +437,9 @@ def common_options(f):
         click.option(
             "--gpus",
             help=(
-                "List of GPU UUIDs to be used for the conversion and/or profiling. "
-                "Use 'all' to profile all the GPUs visible by CUDA."
+                "List of GPU UUIDs or Device IDs to be used for the conversion and/or profiling."
+                "\nAll values have to be provided in the same format. "
+                "\nUse 'all' to profile all the GPUs visible by CUDA."
             ),
             default=["all"],
             show_default=True,

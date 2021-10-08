@@ -13,6 +13,8 @@
 # limitations under the License.
 import logging
 import shutil
+import sys
+from distutils.version import LooseVersion
 from pathlib import Path
 from typing import List, Optional
 
@@ -31,6 +33,15 @@ from model_navigator.triton.model_config import TritonModelConfigGenerator
 from model_navigator.utils import Workspace
 
 LOGGER = logging.getLogger(__name__)
+
+if LooseVersion(sys.version) >= LooseVersion("3.8.0"):
+    from importlib.metadata import version
+
+    TRITON_MODEL_ANALYZER_VERSION = LooseVersion(version("triton-model-analyzer"))
+else:
+    import pkg_resources
+
+    TRITON_MODEL_ANALYZER_VERSION = LooseVersion(pkg_resources.get_distribution("triton-model-analyzer").version)
 
 
 class Profiler:
@@ -163,7 +174,7 @@ class ProfileConfigGenerator(BaseConfigGenerator):
             for model_name in models_list
         )
 
-        # https://github.com/triton-inference-server/model_analyzer/blob/r21.08/docs/config.md
+        # https://github.com/triton-inference-server/model_analyzer/blob/r21.09/docs/config.md
         config = {
             "run_config_search_disable": manual_config_search,
             "profile_models": models_list,
@@ -194,16 +205,24 @@ class ProfileConfigGenerator(BaseConfigGenerator):
         configuration = {}
         # TODO: what if we provide shapes but model have no dynamic axes?
         if self._profiling_data_path:
-            configuration["input-data"] = self._profiling_data_path.as_posix()
+            if TRITON_MODEL_ANALYZER_VERSION >= LooseVersion("1.8.0"):
+                configuration["input-data"] = [self._profiling_data_path.as_posix()]
+            else:
+                configuration["input-data"] = self._profiling_data_path.as_posix()
         elif self._dataset_profile_config and self._dataset_profile_config.max_shapes:
 
             def _shape_param_format(name, shape_):
                 return f"{name}:{','.join(map(str, shape_[1:]))}"
 
-            # FIXME: Model Analyzer should allow to pass multiple values for shape
-            configuration["shape"] = " ".join(
-                [_shape_param_format(name, shape_) for name, shape_ in self._dataset_profile_config.max_shapes.items()]
-            )
+            shapes = [
+                _shape_param_format(name, shape_) for name, shape_ in self._dataset_profile_config.max_shapes.items()
+            ]
+
+            if TRITON_MODEL_ANALYZER_VERSION >= LooseVersion("1.8.0"):
+                configuration["shape"] = shapes
+            else:
+                configuration["shape"] = " ".join(shapes)
+
         configuration["measurement-interval"] = self._perf_measurement_config.perf_measurement_interval
         configuration["measurement-mode"] = self._perf_measurement_config.perf_measurement_mode
         configuration["measurement-request-count"] = self._perf_measurement_config.perf_measurement_request_count

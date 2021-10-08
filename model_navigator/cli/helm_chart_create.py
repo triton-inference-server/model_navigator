@@ -27,11 +27,13 @@ from model_navigator.cli.spec import (
     DatasetProfileConfigCli,
     ModelConfigCli,
     ModelSignatureConfigCli,
+    TensorRTCommonConfigCli,
     TritonModelInstancesConfigCli,
     TritonModelOptimizationConfigCli,
     TritonModelSchedulerConfigCli,
 )
 from model_navigator.cli.utils import exit_cli_command, is_cli_command
+from model_navigator.common.config import TensorRTCommonConfig
 from model_navigator.converter.config import ComparatorConfig, DatasetProfileConfig
 from model_navigator.converter.utils import FORMAT2FRAMEWORK
 from model_navigator.exceptions import ModelNavigatorException
@@ -66,6 +68,7 @@ LOGGER = logging.getLogger("helm_chart_create")
 @click.option("--chart-version", required=False, help="Version of the chart in Helm Charts repository.")
 @options_from_config(ModelSignatureConfig, ModelSignatureConfigCli)
 @options_from_config(ConversionSetConfig, ConversionSetHelmChartConfigCli)
+@options_from_config(TensorRTCommonConfig, TensorRTCommonConfigCli)
 @options_from_config(ComparatorConfig, ComparatorConfigCli)
 @options_from_config(DatasetProfileConfig, DatasetProfileConfigCli)
 @options_from_config(TritonModelOptimizationConfig, TritonModelOptimizationConfigCli)
@@ -110,6 +113,7 @@ def helm_chart_create_cmd(
     src_model_config = ModelConfig.from_dict(kwargs)
     src_model_signature_config = ModelSignatureConfig.from_dict(kwargs)
     conversion_set_config = ConversionSetConfig.from_dict(kwargs)
+    tensorrt_common_config = TensorRTCommonConfig.from_dict(kwargs)
     comparator_config = ComparatorConfig.from_dict(kwargs)
     dataset_profile_config = DatasetProfileConfig.from_dict(kwargs)
     optimization_config = TritonModelOptimizationConfig.from_dict(kwargs)
@@ -137,6 +141,7 @@ def helm_chart_create_cmd(
                 **dataclasses.asdict(src_model_config),
                 **dataclasses.asdict(src_model_signature_config),
                 **dataclasses.asdict(conversion_set_config),
+                **dataclasses.asdict(tensorrt_common_config),
                 **dataclasses.asdict(comparator_config),
                 **dataclasses.asdict(dataset_profile_config),
                 **dataclasses.asdict(optimization_config),
@@ -167,6 +172,7 @@ def helm_chart_create_cmd(
             src_model=src_model_config,
             src_model_signature_config=src_model_signature_config,
             conversion_config=conversion_config,
+            tensorrt_common_config=tensorrt_common_config,
             comparator_config=comparator_config,
             dataset_profile_config=dataset_profile_config,
             optimization_config=optimization_config,
@@ -186,6 +192,7 @@ def helm_chart_create_cmd(
             src_model_config=src_model_config,
             src_model_signature_config=src_model_signature_config,
             conversion_config=conversion_config,
+            tensorrt_common_config=tensorrt_common_config,
             comparator_config=comparator_config,
             dataset_profile_config=dataset_profile_config,
             optimization_config=optimization_config,

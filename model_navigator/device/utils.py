@@ -20,21 +20,27 @@ from model_navigator.device.gpu_device_factory import GPUDeviceFactory
 
 def get_gpus(gpus: Optional[List[str]] = None):
     """
-    Creates a list of GPU UUIDs corresponding to the GPUs visible to
-    model_analyzer.
+    Creates a list of GPU UUIDs corresponding to the GPUs visible to Model Navigator.
     """
     gpus = gpus or ["all"]
 
-    deployer_gpus = []
+    navigator_gpus = []
     if len(gpus) == 1 and gpus[0] == "all":
         devices = numba.cuda.list_devices()
         for device in devices:
             gpu_device = GPUDeviceFactory.create_device_by_cuda_index(device.id)
-            deployer_gpus.append(str(gpu_device.device_uuid(), encoding="ascii"))
+            navigator_gpus.append(str(gpu_device.device_uuid(), encoding="ascii"))
     else:
-        devices = gpus
-        for device in devices:
-            gpu_device = GPUDeviceFactory.create_device_by_uuid(device)
-            deployer_gpus.append(str(gpu_device.device_uuid(), encoding="ascii"))
+        try:
+            devices = list(map(int, gpus))
 
-    return deployer_gpus
+            for idx in devices:
+                gpu_device = GPUDeviceFactory.create_device_by_cuda_index(idx)
+                navigator_gpus.append(str(gpu_device.device_uuid(), encoding="ascii"))
+
+        except ValueError:
+            for device in gpus:
+                gpu_device = GPUDeviceFactory.create_device_by_uuid(device)
+                navigator_gpus.append(str(gpu_device.device_uuid(), encoding="ascii"))
+
+    return navigator_gpus

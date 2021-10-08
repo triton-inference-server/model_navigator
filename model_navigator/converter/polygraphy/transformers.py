@@ -23,12 +23,12 @@ import sh
 from model_navigator.converter.config import DatasetProfileConfig, TensorRTPrecision, TensorRTPrecisionMode
 from model_navigator.converter.polygraphy.comparator import ToleranceParameterHelper
 from model_navigator.converter.utils import execute_sh_command, prepare_log_header
+from model_navigator.core import DEFAULT_TENSORRT_MAX_WORKSPACE_SIZE
 from model_navigator.exceptions import ModelNavigatorConverterCommandException, ModelNavigatorConverterException
 from model_navigator.model import Format, Model
 from model_navigator.tensor import TensorSpec
 
 LOGGER = logging.getLogger("polygraphy.transformers")
-DEFAULT_MAX_WORKSPACE_SIZE = 4 * 2 ** 30  # 4GB
 
 POLYGRAPHY_VERSION = LooseVersion(polygraphy.__version__)
 DEFAULT_TOLERANCES = {"rtol": 1e-5, "atol": 1e-5}
@@ -201,6 +201,8 @@ def onnx2trt(
     precision: TensorRTPrecision,
     precision_mode: TensorRTPrecisionMode,
     explicit_precision: bool = False,
+    tensorrt_sparse_weights: bool = False,
+    tensorrt_strict_types: bool = False,
     max_batch_size: Optional[int] = None,
     max_workspace_size: Optional[int] = None,
     profiles: Optional[DatasetProfileConfig] = None,
@@ -214,17 +216,17 @@ def onnx2trt(
 
     if precision_mode == TensorRTPrecisionMode.HIERARCHY:
         trt_precision_flags = {
-            TensorRTPrecision.FP32: "--tf32",
-            TensorRTPrecision.TF32: "--tf32",
-            TensorRTPrecision.FP16: "--tf32 --fp16",
-            TensorRTPrecision.INT8: "--tf32 --fp16 --int8",
+            TensorRTPrecision.FP32: ["--tf32"],
+            TensorRTPrecision.TF32: ["--tf32"],
+            TensorRTPrecision.FP16: ["--tf32", "--fp16"],
+            TensorRTPrecision.INT8: ["--tf32", "--fp16", "--int8"],
         }[precision]
     elif precision_mode == TensorRTPrecisionMode.SINGLE:
         trt_precision_flags = {
-            TensorRTPrecision.FP32: "--tf32",
-            TensorRTPrecision.TF32: "--tf32",
-            TensorRTPrecision.FP16: "--fp16",
-            TensorRTPrecision.INT8: "--int8",
+            TensorRTPrecision.FP32: ["--tf32"],
+            TensorRTPrecision.TF32: ["--tf32"],
+            TensorRTPrecision.FP16: ["--fp16"],
+            TensorRTPrecision.INT8: ["--int8"],
         }[precision]
     else:
         raise ModelNavigatorConverterException(
@@ -249,8 +251,10 @@ def onnx2trt(
 
     # TODO: obtain free memory on gpu
     if max_workspace_size is None:
-        max_workspace_size = DEFAULT_MAX_WORKSPACE_SIZE
-        LOGGER.warning(f"--max-workspace-size config parameter is missing thus using {DEFAULT_MAX_WORKSPACE_SIZE}")
+        max_workspace_size = DEFAULT_TENSORRT_MAX_WORKSPACE_SIZE
+        LOGGER.warning(
+            f"--max-workspace-size config parameter is missing thus using {DEFAULT_TENSORRT_MAX_WORKSPACE_SIZE}"
+        )
 
     comparator_inputs_path = log_path.with_suffix(".comparator_inputs.json")
     comparator_outputs_path = log_path.with_suffix(".comparator_outputs.json")
@@ -281,7 +285,7 @@ def onnx2trt(
         "--onnx-outputs",
         *list(model.signature.outputs),
         "--shape-inference",
-        trt_precision_flags,
+        *trt_precision_flags,
         *profiles_adapter.profile_flags,
         *comparator_flags,
         "--workspace",
@@ -292,6 +296,12 @@ def onnx2trt(
 
     if explicit_precision:
         args += ["--explicit-precision"]
+
+    if tensorrt_sparse_weights:
+        args += ["--sparse-weights"]
+
+    if tensorrt_strict_types:
+        args += ["--strict-types"]
 
     if verbose:
         args += ["-v"]

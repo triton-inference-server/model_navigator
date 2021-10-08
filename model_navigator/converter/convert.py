@@ -15,6 +15,7 @@ import logging
 import traceback
 from typing import Iterable, Optional
 
+from model_navigator.common.config import TensorRTCommonConfig
 from model_navigator.converter.config import ComparatorConfig, ConversionConfig, DatasetProfileConfig
 from model_navigator.converter.pipelines import ConvertCommandsRegistry
 from model_navigator.converter.results import ConversionResult
@@ -73,6 +74,7 @@ class Converter:
         *,
         src_model: ModelConfig,
         conversion_config: ConversionConfig,
+        tensorrt_common_config: TensorRTCommonConfig,
         signature_config: Optional[ModelSignatureConfig] = None,
         comparator_config: Optional[ComparatorConfig] = None,
         dataset_profile_config: Optional[DatasetProfileConfig] = None,
@@ -86,6 +88,7 @@ class Converter:
             for composite_commands in self._registry.get(
                 model_config=src_model,
                 conversion_config=conversion_config,
+                tensorrt_common_config=tensorrt_common_config,
                 signature_config=signature_config,
                 comparator_config=comparator_config,
                 dataset_profile_config=dataset_profile_config,
@@ -100,6 +103,7 @@ class Converter:
                 status=Status(state=State.FAILED, message=message, log_path=e.log_path),
                 source_model_config=src_model,
                 conversion_config=conversion_config,
+                tensorrt_common_config=tensorrt_common_config,
                 comparator_config=comparator_config,
                 dataset_profile=dataset_profile_config,
             )
@@ -111,6 +115,7 @@ class Converter:
                 status=Status(state=State.FAILED, message=message, log_path=e.log_path),
                 source_model_config=src_model,
                 conversion_config=conversion_config,
+                tensorrt_common_config=tensorrt_common_config,
                 comparator_config=comparator_config,
                 dataset_profile=dataset_profile_config,
             )
@@ -122,6 +127,7 @@ class Converter:
                 status=Status(state=State.FAILED, message=message, log_path=None),
                 source_model_config=src_model,
                 conversion_config=conversion_config,
+                tensorrt_common_config=tensorrt_common_config,
                 comparator_config=comparator_config,
                 dataset_profile=dataset_profile_config,
             )

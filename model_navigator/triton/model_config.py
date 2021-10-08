@@ -18,6 +18,7 @@ from typing import Optional, Union
 from google.protobuf import text_format  # pytype: disable=pyi-error
 from google.protobuf.text_format import MessageToString  # pytype: disable=pyi-error
 
+from model_navigator.common.config import TensorRTCommonConfig
 from model_navigator.model import Model, ModelSignatureConfig
 from model_navigator.tensor import TensorSpec
 from model_navigator.triton.backends.base import BackendConfiguratorSelector
@@ -62,6 +63,7 @@ class ModelConfigParser:
         model_path = Path(model_path)
 
         optimization_config_kwargs = {}
+        tensorrt_common_config_kwargs = {}
         if model_config.optimization.execution_accelerators.gpu_execution_accelerator:
             assert len(model_config.optimization.execution_accelerators.gpu_execution_accelerator) == 1
             backend_accelerator = model_config.optimization.execution_accelerators.gpu_execution_accelerator[0]
@@ -70,9 +72,15 @@ class ModelConfigParser:
                 "auto_mixed_precision": BackendAccelerator.AMP,
             }
             precision_mode = backend_accelerator.parameters.get("precision_mode")
+            max_workspace_size = backend_accelerator.parameters.get("max_workspace_size")
+
             optimization_config_kwargs = {
                 "backend_accelerator": BACKEND_ACCELERATOR_NAMES2ACCELERATORS[backend_accelerator.name],
                 "tensorrt_precision": TensorRTOptPrecision(precision_mode.lower()) if precision_mode else None,
+            }
+
+            tensorrt_common_config_kwargs = {
+                "tensorrt_max_workspace_size": max_workspace_size if max_workspace_size else None
             }
 
         optimization_config = TritonModelOptimizationConfig(
@@ -81,6 +89,8 @@ class ModelConfigParser:
                 model_config.platform == "tensorrt_plan" and model_config.optimization.cuda.graphs
             ),
         )
+
+        tensorrt_common_config = TensorRTCommonConfig(**tensorrt_common_config_kwargs)
 
         scheduler_config = TritonModelSchedulerConfig(
             max_batch_size=model_config.max_batch_size,
@@ -128,6 +138,7 @@ class ModelConfigParser:
         return config_cls(
             model=model,
             optimization_config=optimization_config,
+            tensorrt_common_config=tensorrt_common_config,
             scheduler_config=scheduler_config,
             instances_config=instances_config,
             backend_parameters_config=backend_parameters_config,
@@ -140,6 +151,7 @@ class TritonModelConfigGenerator:
         model: Model,
         *,
         optimization_config: TritonModelOptimizationConfig,
+        tensorrt_common_config: TensorRTCommonConfig,
         scheduler_config: TritonModelSchedulerConfig,
         instances_config: TritonModelInstancesConfig,
         backend_parameters_config: TritonCustomBackendParametersConfig,
@@ -147,6 +159,7 @@ class TritonModelConfigGenerator:
     ):
         self._model = model
         self._optimization_config = optimization_config
+        self._tensorrt_common_config = tensorrt_common_config
         self._scheduler_config = scheduler_config
         self._instances_config = instances_config
         self._backend_parameters_config = backend_parameters_config
@@ -159,6 +172,10 @@ class TritonModelConfigGenerator:
     @property
     def optimization_config(self):
         return self._optimization_config
+
+    @property
+    def tensorrt_common_config(self):
+        return self._tensorrt_common_config
 
     @property
     def scheduler_config(self):
@@ -185,6 +202,7 @@ class TritonModelConfigGenerator:
             model_config,
             self._model,
             optimization_config=self._optimization_config,
+            tensorrt_common_config=self._tensorrt_common_config,
             scheduler_config=self._scheduler_config,
             instances_config=self._instances_config,
             backend_parameters_config=self._backend_parameters_config,

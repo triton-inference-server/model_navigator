@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
+from model_navigator.common.config import TensorRTCommonConfig
 from model_navigator.converter import ComparatorConfig, ConversionConfig, DatasetProfileConfig
 from model_navigator.model import ModelConfig, ModelSignatureConfig
 from model_navigator.results import Status
@@ -29,6 +30,7 @@ class HelmChartGenerationResult:
     src_model_config: ModelConfig
     src_model_signature_config: ModelSignatureConfig
     conversion_config: ConversionConfig
+    tensorrt_common_config: TensorRTCommonConfig
     comparator_config: ComparatorConfig
     dataset_profile_config: DatasetProfileConfig
     optimization_config: TritonModelOptimizationConfig

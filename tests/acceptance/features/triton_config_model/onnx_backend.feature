@@ -18,7 +18,7 @@ Feature: Config ONNX models on Triton Inference Server
         When I execute triton-config-model command
         Then the command should succeeded
         And the my-model model config in model-store is equal to
-            {"name": "my-model", "backend": "onnx", "maxBatchSize": 1, "optimization": {"executionAccelerators": {"gpuExecutionAccelerator": [{"name": "tensorrt", "parameters": {"precision_mode": "FP16", "max_workspace_size_bytes": "2147483648"}}]}}, "cpu_only": false}
+            {"name": "my-model", "backend": "onnx", "maxBatchSize": 1, "optimization": {"executionAccelerators": {"gpuExecutionAccelerator": [{"name": "tensorrt", "parameters": {"precision_mode": "FP16", "max_workspace_size_bytes": "4294967296"}}]}}, "cpu_only": false}
 
 
     Scenario: User successfully config ONNX model with TensorRT acceleration and custom max workspace size

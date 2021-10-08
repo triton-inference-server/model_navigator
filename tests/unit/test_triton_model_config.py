@@ -17,6 +17,7 @@ from tempfile import TemporaryDirectory
 import numpy as np
 import pytest
 
+from model_navigator.common.config import TensorRTCommonConfig
 from model_navigator.model import Model, ModelSignatureConfig
 from model_navigator.tensor import TensorSpec
 from model_navigator.triton import TritonModelConfigGenerator
@@ -83,12 +84,14 @@ def test_model_config_parsing_signature_for_torchscript(monkeypatch, max_batch_s
 
         src_model = Model("dummy", model_path, signature_if_missing=signature)
         optimization_config = TritonModelOptimizationConfig()
+        tensorrt_common_config = TensorRTCommonConfig()
         scheduler_config = TritonModelSchedulerConfig(max_batch_size=max_batch_size)
         instances_config = TritonModelInstancesConfig({DeviceKind.GPU: 1})
         backend_parameters_config = TritonCustomBackendParametersConfig()
         initial_model_config_generator = TritonModelConfigGenerator(
             src_model,
             optimization_config=optimization_config,
+            tensorrt_common_config=tensorrt_common_config,
             scheduler_config=scheduler_config,
             instances_config=instances_config,
             backend_parameters_config=backend_parameters_config,
@@ -120,12 +123,14 @@ def test_model_config_parsing_signature_for_tensorrt_plan(monkeypatch, max_batch
 
         src_model = Model("dummy", model_path, signature_if_missing=signature)
         optimization_config = TritonModelOptimizationConfig()
+        tensorrt_common_config = TensorRTCommonConfig()
         scheduler_config = TritonModelSchedulerConfig(max_batch_size=max_batch_size)
         instances_config = TritonModelInstancesConfig({DeviceKind.GPU: 1})
         backend_parameters_config = TritonCustomBackendParametersConfig()
         initial_model_config_generator = TritonModelConfigGenerator(
             src_model,
             optimization_config=optimization_config,
+            tensorrt_common_config=tensorrt_common_config,
             scheduler_config=scheduler_config,
             instances_config=instances_config,
             backend_parameters_config=backend_parameters_config,

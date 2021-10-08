@@ -17,10 +17,17 @@ limitations under the License.
 # Changelog
 
 ## unreleased
-- Fixed `model_repository` path to be  not relative to `<navigator_workspace>` dir
+- Updated NVIDIA containers defaults to 21.09
+- Improved naming of arguments specific for TensorRT conversion and acceleration with backward compatibility
+- Use pip package for Triton Model Analyzer installation with minimal version 1.8.0
+- Fixed `model_repository` path to be not relative to `<navigator_workspace>` dir
 - Handle exit codes correctly from CLI commands
+- Support for use device ids for `--gpus` argument
 - Conversion related
-  - Added support for precision modes to support multiple precision during conversion to TensorRT
+  - Added support for precision modes to support multiple precisions during conversion to TensorRT
+  - Added `--tensorrt-sparse-weights` flag for sparse weight optimization for TensorRT
+  - Added `--tensorrt-strict-types` flag forcing it to choose tactics based on the layer precision for TensorRT
+  - Added `--tensorrt-explicit-precision` flag enabling explicit precision mode
   - Fixed nan values appearing in relative tolerance during conversion to TensorRT
 - Configuration Model on Triton related
   - Removed default value for `engine_count_per_device`
@@ -31,6 +38,23 @@ limitations under the License.
   - Added `config_search_max_preferred_batch_size` parameter
   - Added `config_search_backend_parameters` parameter
 - fixes and improvements
+
+[//]: <> (put here on external component update with short summary what change or link to changelog)
+- Versions of used external components:
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.32.0
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.13
+    - tf2onnx: [v1.9.2](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.9.2) (support for ONNX opset 14, tf 1.15 and 2.6)
+    - Other component versions depend on the used framework and Triton Inference Server containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
+
+[//]: <> (keep up to date list of known issues inside docs/known_issue.md and paste it here on major and minor release)
+
+- Known issues and limitations
+    - missing support for stateful models (ex. time-series one)
+    - missing support for models without batching support
+    - no verification of conversion results for conversions: TF -> ONNX, TorchScript -> ONNX
+    - possible to define a single profile for TensorRT
 
 ## 0.2.2 (2021-09-06)
 

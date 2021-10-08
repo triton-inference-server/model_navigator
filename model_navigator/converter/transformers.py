@@ -17,6 +17,7 @@ import shutil
 from pathlib import Path
 from typing import List, Optional
 
+from model_navigator.common.config import TensorRTCommonConfig
 from model_navigator.converter.config import ComparatorConfig, ConversionConfig, DatasetProfileConfig
 from model_navigator.converter.polygraphy.transformers import onnx2trt
 from model_navigator.converter.pyt.transformers import ts2onnx
@@ -121,6 +122,7 @@ class PassTransformer(BaseConvertCommand):
             Status(State.SUCCEEDED, "Source model", None),
             source_model_config=model,
             conversion_config=self._conversion_config,
+            tensorrt_common_config=None,
             comparator_config=None,
             dataset_profile=None,
             output_model=Model(model.model_name, path=model.model_path, explicit_format=model.model_format),
@@ -170,9 +172,6 @@ class TorchScriptAnnotationGenerator(BaseConvertCommand):
         return ConversionResult(
             Status(State.SUCCEEDED, "Model annotated", None),
             source_model_config=model,
-            conversion_config=None,
-            comparator_config=None,
-            dataset_profile=None,
             output_model=Model(model.model_name, path=model.model_path, explicit_format=model.model_format),
         )
 
@@ -187,11 +186,13 @@ class ONNX2TRTCommand(BaseConvertCommand):
         parent: Optional[BaseConvertCommand] = None,
         *,
         conversion_config: ConversionConfig,
+        tensorrt_common_config: TensorRTCommonConfig,
         comparator_config: Optional[ComparatorConfig],
         dataset_profile: Optional[DatasetProfileConfig],
     ) -> None:
         super().__init__(parent)
         self._conversion_config = conversion_config
+        self._tensorrt_common_config = tensorrt_common_config
         self._comparator_config = comparator_config
         self._dataset_profile = dataset_profile
 
@@ -205,11 +206,13 @@ class ONNX2TRTCommand(BaseConvertCommand):
             input_path=model.model_path,
             output_path=output_path,
             log_path=log_path,
-            precision=self._conversion_config.target_precision,
-            precision_mode=self._conversion_config.target_precision_mode,
-            explicit_precision=self._conversion_config.target_precision_explicit,
+            precision=self._conversion_config.tensorrt_precision,
+            precision_mode=self._conversion_config.tensorrt_precision_mode,
+            explicit_precision=self._conversion_config.tensorrt_explicit_precision,
+            tensorrt_sparse_weights=self._conversion_config.tensorrt_sparse_weights,
+            tensorrt_strict_types=self._conversion_config.tensorrt_strict_types,
             max_batch_size=self._comparator_config.max_batch_size if self._comparator_config else None,
-            max_workspace_size=self._conversion_config.max_workspace_size,
+            max_workspace_size=self._tensorrt_common_config.tensorrt_max_workspace_size,
             profiles=self._dataset_profile,
             rtol=self._comparator_config.rtol,
             atol=self._comparator_config.atol,
@@ -228,8 +231,8 @@ class ONNX2TRTCommand(BaseConvertCommand):
 
     @property
     def name(self):
-        precision = self._conversion_config.target_precision
-        precision_mode = self._conversion_config.target_precision_mode
+        precision = self._conversion_config.tensorrt_precision
+        precision_mode = self._conversion_config.tensorrt_precision_mode
         parameters = {"": precision.value, "m": precision_mode.value[0]}
         parameters_suffix = PARAMETERS_SEP.join([f"{k}{KEY_VALUE_SEP}{v}" for k, v in parameters.items()])
         return f"polygraphyonnx2trt{PARAMETERS_SEP}{parameters_suffix}"

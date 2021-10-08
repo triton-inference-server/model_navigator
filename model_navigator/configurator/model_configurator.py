@@ -65,7 +65,6 @@ class TFConfigurator(ModelConfigurator):
     accelerators = (
         None,
         BackendAccelerator.AMP,
-        BackendAccelerator.TRT,
     )
 
 

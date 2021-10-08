@@ -25,7 +25,6 @@ from model_navigator.utils.config import BaseConfig
 
 LOGGER = logging.getLogger(__name__)
 
-
 DEFAULT_TOLERANCE_VALUE = 1e-5
 
 
@@ -68,13 +67,16 @@ class DatasetProfileConfig(BaseConfig):
 @dataclass
 class ConversionConfig(BaseConfig):
     target_format: Format
+
     # ONNX related
     onnx_opset: Optional[int] = None
+
     # TRT related
-    target_precision: Optional[TensorRTPrecision] = None
-    target_precision_explicit: bool = False
-    target_precision_mode: TensorRTPrecisionMode = TensorRTPrecisionMode.HIERARCHY
-    max_workspace_size: Optional[int] = None
+    tensorrt_precision: Optional[TensorRTPrecision] = None
+    tensorrt_precision_mode: TensorRTPrecisionMode = TensorRTPrecisionMode.HIERARCHY
+    tensorrt_explicit_precision: bool = False
+    tensorrt_strict_types: bool = False
+    tensorrt_sparse_weights: bool = False
 
 
 class TargetFormatConfigSetIterator(ABC):

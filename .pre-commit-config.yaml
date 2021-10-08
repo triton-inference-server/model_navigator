@@ -60,7 +60,7 @@ repos:
     rev: v2.5.0
     hooks:
       - id: hadolint-docker
-        args: [--ignore, DL3006, --ignore, DL3008, --ignore, DL4006, --ignore, DL3013, --ignore, SC1091, --ignore, SC1083]
+        args: [--ignore, DL3006, --ignore, DL3008, --ignore, DL4001, --ignore, DL4006, --ignore, DL3013, --ignore, SC1091, --ignore, SC1083]
   - repo: local
     hooks:
       - id: docs_config_generator

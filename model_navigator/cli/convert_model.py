@@ -32,6 +32,7 @@ from model_navigator.cli.spec import (
     ModelConfigCli,
     ModelSignatureConfigCli,
 )
+from model_navigator.common.config import TensorRTCommonConfig
 from model_navigator.constants import MODEL_NAVIGATOR_DIR
 from model_navigator.converter import (
     ComparatorConfig,
@@ -70,15 +71,18 @@ TRITON_SUPPORTED_FORMATS = [
 @dataclasses.dataclass
 class ConversionSetConfig(BaseConfig):
     target_formats: List[Format] = dataclasses.field(default_factory=lambda: TRITON_SUPPORTED_FORMATS)
-    target_precisions: List[TensorRTPrecision] = dataclasses.field(
-        default_factory=lambda: [TensorRTPrecision.FP16, TensorRTPrecision.TF32]
-    )
-    target_precisions_explicit: bool = False
-    target_precisions_mode: TensorRTPrecisionMode = TensorRTPrecisionMode.HIERARCHY
+
     # ONNX related
     onnx_opsets: List[int] = dataclasses.field(default_factory=lambda: [13])
+
     # TRT related
-    max_workspace_size: Optional[int] = None
+    tensorrt_precisions: List[TensorRTPrecision] = dataclasses.field(
+        default_factory=lambda: [TensorRTPrecision.FP16, TensorRTPrecision.TF32]
+    )
+    tensorrt_precisions_mode: TensorRTPrecisionMode = TensorRTPrecisionMode.HIERARCHY
+    tensorrt_explicit_precision: bool = False
+    tensorrt_strict_types: bool = False
+    tensorrt_sparse_weights: bool = False
 
     def __iter__(self):
         for target_format in self.target_formats:
@@ -90,20 +94,22 @@ class ConversionSetConfig(BaseConfig):
         if not config.target_format:
             return cls(
                 target_formats=[],
-                target_precisions=[],
+                tensorrt_precisions=[],
                 onnx_opsets=[],
-                max_workspace_size=config.max_workspace_size,
-                target_precisions_mode=config.target_precision_mode,
-                target_precisions_explicit=config.target_precision_explicit,
+                tensorrt_precisions_mode=config.tensorrt_precision_mode,
+                tensorrt_explicit_precision=config.tensorrt_explicit_precision,
+                tensorrt_sparse_weights=config.tensorrt_sparse_weights,
+                tensorrt_strict_types=config.tensorrt_strict_types,
             )
 
         return cls(
             target_formats=[config.target_format],
-            target_precisions=[config.target_precision] if config.target_precision else [],
+            tensorrt_precisions=[config.tensorrt_precision] if config.tensorrt_precision else [],
             onnx_opsets=[config.onnx_opset] if config.onnx_opset else [],
-            max_workspace_size=config.max_workspace_size,
-            target_precisions_mode=config.target_precision_mode,
-            target_precisions_explicit=config.target_precision_explicit,
+            tensorrt_precisions_mode=config.tensorrt_precision_mode,
+            tensorrt_explicit_precision=config.tensorrt_explicit_precision,
+            tensorrt_sparse_weights=config.tensorrt_sparse_weights,
+            tensorrt_strict_types=config.tensorrt_strict_types,
         )
 
 
@@ -114,6 +120,7 @@ def _run_locally(
     src_model_config: ModelConfig,
     model_signature_config: Optional[ModelSignatureConfig] = None,
     conversion_set_config: ConversionSetConfig,
+    tensorrt_common_config: TensorRTCommonConfig,
     comparator_config: Optional[ComparatorConfig] = None,
     dataset_profile_config: Optional[DatasetProfileConfig] = None,
     verbose: bool = False,
@@ -127,6 +134,7 @@ def _run_locally(
         results = converter.convert(
             src_model=src_model_config,
             conversion_config=conversion_config,
+            tensorrt_common_config=tensorrt_common_config,
             signature_config=model_signature_config,
             comparator_config=comparator_config,
             dataset_profile_config=dataset_profile_config,
@@ -145,6 +153,7 @@ def _run_in_docker(
     src_model_config: ModelConfig,
     model_signature_config: Optional[ModelSignatureConfig] = None,
     conversion_set_config: ConversionSetConfig,
+    tensorrt_common_config: TensorRTCommonConfig,
     comparator_config: Optional[ComparatorConfig] = None,
     dataset_profile_config: Optional[DatasetProfileConfig] = None,
     framework_docker_image: str,
@@ -283,6 +292,7 @@ def convert(
     src_model_config = ModelConfig.from_dict(kwargs)
     src_model_signature_config = ModelSignatureConfig.from_dict(kwargs)
     conversion_set_config = ConversionSetConfig.from_dict(kwargs)
+    tensorrt_common_config = TensorRTCommonConfig.from_dict(kwargs)
     comparator_config = ComparatorConfig.from_dict(kwargs)
     dataset_profile_config = DatasetProfileConfig.from_dict(kwargs)
 
@@ -309,6 +319,7 @@ def convert(
             src_model_config=src_model_config,
             model_signature_config=src_model_signature_config,
             conversion_set_config=conversion_set_config,
+            tensorrt_common_config=tensorrt_common_config,
             comparator_config=comparator_config,
             dataset_profile_config=dataset_profile_config,
             framework_docker_image=framework_docker_image,
@@ -324,6 +335,7 @@ def convert(
                 {
                     **dataclasses.asdict(src_model_config),
                     **dataclasses.asdict(conversion_set_config),
+                    **dataclasses.asdict(tensorrt_common_config),
                     **dataclasses.asdict(comparator_config),
                     **dataclasses.asdict(src_model_signature_config),
                     **dataclasses.asdict(dataset_profile_config),
@@ -342,6 +354,7 @@ def convert(
             src_model_config=src_model_config,
             model_signature_config=src_model_signature_config,
             conversion_set_config=conversion_set_config,
+            tensorrt_common_config=tensorrt_common_config,
             comparator_config=comparator_config,
             dataset_profile_config=dataset_profile_config,
             verbose=verbose,

@@ -59,7 +59,7 @@ class PerfAnalyzer:
 
         Raises
         ------
-        ServicAnalyzerException
+        ModelNavigatorException
             If subprocess throws CalledProcessError
         """
         if self._stream_output:
@@ -84,7 +84,7 @@ class PerfAnalyzer:
                     )
                 return
             except CalledProcessError as e:
-                if self._faild_with_measruement_inverval(e.output):
+                if self._failed_with_measurement_inverval(e.output):
                     if self._config["measurement-mode"] is None or self._config["measurement-mode"] == "count_windows":
                         self._increase_request_count()
                     else:
@@ -114,22 +114,36 @@ class PerfAnalyzer:
         commands_lst.extend(command)
         LOGGER.debug(f"Run with stream: {commands_lst}")
         process = Popen(commands_lst, start_new_session=True, stdout=PIPE, encoding="utf-8")
+        streamed_output = ""
         while True:
             output = process.stdout.readline()
             if output == "" and process.poll() is not None:
                 break
             if output:
-                self._output += output
+                streamed_output += output
                 print(output.rstrip())
 
+        self._output += streamed_output
         result = process.poll()
-        if result != 0:
-            raise CalledProcessError(returncode=result, cmd=commands_lst, output=self._output)
+        LOGGER.debug(f"Perf Analyzer process exited with result: {result}")
 
-    def _faild_with_measruement_inverval(self, output: str):
-        return (
-            output.find("Failed to obtain stable measurement") or output.find("Please use a larger time window") != -1
-        )
+        # WAR for Perf Analyzer exit code 0 when stabilization failed
+        if result == 0 and self._failed_with_measurement_inverval(streamed_output):
+            LOGGER.debug("Perf Analyzer finished with exit status 0, however measurement stabilization failed.")
+            result = 1
+
+        if result != 0:
+            raise CalledProcessError(returncode=result, cmd=commands_lst, output=streamed_output)
+
+    def _failed_with_measurement_inverval(self, output: str):
+        checks = [
+            output.find("Failed to obtain stable measurement"),
+            output.find("Please use a larger time window"),
+        ]
+        result = any([status != -1 for status in checks])
+
+        LOGGER.debug(f"Measurement stability message validation: {checks}. Result: {result}.")
+        return result
 
     def _increase_request_count(self):
         self._config["measurement-request-count"] += COUNT_INTERVAL_DELTA

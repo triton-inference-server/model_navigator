@@ -11,14 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import logging
 from distutils.version import LooseVersion
 
+from model_navigator.common.config import TensorRTCommonConfig
+from model_navigator.core import DEFAULT_TENSORRT_MAX_WORKSPACE_SIZE
 from model_navigator.exceptions import BadParameterModelNavigatorDeployerException
 from model_navigator.model import Format, Model
 from model_navigator.triton import TritonModelOptimizationConfig
 from model_navigator.triton.backends.base import BaseBackendConfigurator
 from model_navigator.triton.config import BackendAccelerator
 from model_navigator.triton.utils import rewrite_signature_to_model_config
+
+LOGGER = logging.getLogger(__name__)
 
 
 class OnnxBackendConfigurator(BaseBackendConfigurator):
@@ -35,14 +40,26 @@ class OnnxBackendConfigurator(BaseBackendConfigurator):
         if version_of_triton_with_bug:
             rewrite_signature_to_model_config(model_config, model.signature)
 
-    def _set_backend_acceleration(self, model_config, optimization_config: TritonModelOptimizationConfig):
+    def _set_backend_acceleration(
+        self,
+        model_config,
+        optimization_config: TritonModelOptimizationConfig,
+        tensorrt_common_config: TensorRTCommonConfig,
+    ):
         if optimization_config.backend_accelerator == BackendAccelerator.TRT:
             if optimization_config.tensorrt_precision is None:
                 raise BadParameterModelNavigatorDeployerException(
                     "--tensorrt-precision is required while using tensorrt backend accelerator"
                 )
 
+            max_workspace_size = tensorrt_common_config.tensorrt_max_workspace_size
+            if max_workspace_size is None:
+                max_workspace_size = DEFAULT_TENSORRT_MAX_WORKSPACE_SIZE
+                LOGGER.warning(
+                    f"--max-workspace-size config parameter is missing thus using {DEFAULT_TENSORRT_MAX_WORKSPACE_SIZE}"
+                )
+
             accelerator = model_config.optimization.execution_accelerators.gpu_execution_accelerator.add()
             accelerator.name = "tensorrt"
             accelerator.parameters["precision_mode"] = optimization_config.tensorrt_precision.value.upper()
-            accelerator.parameters["max_workspace_size_bytes"] = str(optimization_config.tensorrt_max_workspace_size)
+            accelerator.parameters["max_workspace_size_bytes"] = str(max_workspace_size)

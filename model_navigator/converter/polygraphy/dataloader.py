@@ -16,7 +16,7 @@ from collections import OrderedDict
 
 import numpy as np
 from polygraphy.logger.logger import G_LOGGER, LogMode
-from polygraphy.util import misc
+from polygraphy.util import util
 
 try:
     from polygraphy import constants
@@ -77,12 +77,12 @@ class DataLoader:
                 return default
             new_tup = []
             for elem, default_elem in zip(tup, default):
-                new_tup.append(misc.default_value(elem, default_elem))
+                new_tup.append(util.default(elem, default_elem))
             return tuple(new_tup)
 
-        self.seed = misc.default_value(seed, constants.DEFAULT_SEED)
-        self.iterations = misc.default_value(iterations, 1)
-        self.user_input_metadata = misc.default_value(input_metadata, {})
+        self.seed = util.default(seed, constants.DEFAULT_SEED)
+        self.iterations = util.default(iterations, 1)
+        self.user_input_metadata = util.default(input_metadata, {})
 
         self.int_range_set = int_range is not None
         self.int_range = default_tuple(int_range, (1, 25))
@@ -91,7 +91,7 @@ class DataLoader:
         self.float_range = default_tuple(float_range, (-1.0, 1.0))
 
         self.input_metadata = None
-        self.val_range = misc.default_value(val_range, default_tuple(val_range, (0.0, 1.0)))
+        self.val_range = util.default(val_range, default_tuple(val_range, (0.0, 1.0)))
 
         if self.user_input_metadata:
             G_LOGGER.info(
@@ -143,10 +143,10 @@ class DataLoader:
 
         def get_static_shape(name, shape):
             static_shape = shape
-            if misc.is_shape_dynamic(shape):
-                static_shape = misc.override_dynamic_shape(shape)
+            if util.is_shape_dynamic(shape):
+                static_shape = util.override_dynamic_shape(shape)
                 if static_shape != shape and name not in self.user_input_metadata:
-                    if not misc.is_valid_shape_override(static_shape, shape):
+                    if not util.is_valid_shape_override(static_shape, shape):
                         G_LOGGER.critical(
                             "Input tensor: {:} | Cannot override original shape: {:} to {:}".format(
                                 name, shape, static_shape
@@ -169,11 +169,11 @@ class DataLoader:
                 return False
 
             _, shape = self.input_metadata[name]
-            is_shape = np.issubdtype(dtype, np.integer) and (not misc.is_shape_dynamic(shape)) and (len(shape) == 1)
+            is_shape = np.issubdtype(dtype, np.integer) and (not util.is_shape_dynamic(shape)) and (len(shape) == 1)
 
             user_shape = self.user_input_metadata[name].shape
             is_shape &= len(user_shape) == shape[0]
-            is_shape &= not misc.is_shape_dynamic(user_shape)  # Shape of shape cannot be dynamic.
+            is_shape &= not util.is_shape_dynamic(user_shape)  # Shape of shape cannot be dynamic.
             return is_shape
 
         def generate_buffer(name, dtype, shape):
@@ -205,9 +205,9 @@ class DataLoader:
             if name in self.user_input_metadata:
                 user_dtype, user_shape = self.user_input_metadata[name]
 
-                dtype = misc.default_value(user_dtype, dtype)
+                dtype = util.default(user_dtype, dtype)
 
-                is_valid_shape_override = user_shape is not None and misc.is_valid_shape_override(user_shape, shape)
+                is_valid_shape_override = user_shape is not None and util.is_valid_shape_override(user_shape, shape)
                 if not is_valid_shape_override and not is_shape_tensor(name, dtype):
                     G_LOGGER.warning(
                         "Input tensor: {:} | Cannot use provided custom shape: {:} "
@@ -215,7 +215,7 @@ class DataLoader:
                         mode=LogMode.ONCE,
                     )
                 else:
-                    shape = misc.default_value(user_shape, shape)
+                    shape = util.default(user_shape, shape)
 
             static_shape = get_static_shape(name, shape)
             buffers[name] = generate_buffer(name, dtype, shape=static_shape)
@@ -226,7 +226,7 @@ class DataLoader:
                 msg = "Input tensor: {:} | Metadata was provided, but the input does not exist in one or more runners.".format(
                     name
                 )
-                close_match = misc.find_in_dict(name, self.input_metadata)
+                close_match = util.find_in_dict(name, self.input_metadata)
                 if close_match:
                     msg += f"\nMaybe you meant to set: {close_match}"
                 G_LOGGER.warning(msg)

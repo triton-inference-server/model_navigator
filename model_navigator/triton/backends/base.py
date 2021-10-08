@@ -14,6 +14,7 @@
 import logging
 from typing import Optional
 
+from model_navigator.common.config import TensorRTCommonConfig
 from model_navigator.exceptions import ModelNavigatorDeployerException
 from model_navigator.model import Model
 from model_navigator.triton import (
@@ -45,6 +46,7 @@ class BaseBackendConfigurator:
         model: Model,
         *,
         optimization_config: Optional[TritonModelOptimizationConfig] = None,
+        tensorrt_common_config: Optional[TensorRTCommonConfig] = None,
         scheduler_config: Optional[TritonModelSchedulerConfig] = None,
         instances_config: Optional[TritonModelInstancesConfig] = None,
         backend_parameters_config: Optional[TritonCustomBackendParametersConfig] = None,
@@ -55,7 +57,11 @@ class BaseBackendConfigurator:
         if self.platform_name is not None:
             model_config.platform = self.platform_name
         self._extract_signature(model_config, model)
-        self._set_backend_acceleration(model_config, optimization_config or TritonModelOptimizationConfig())
+        self._set_backend_acceleration(
+            model_config,
+            optimization_config or TritonModelOptimizationConfig(),
+            tensorrt_common_config or TensorRTCommonConfig(),
+        )
         self._set_scheduler(model_config, scheduler_config=scheduler_config or TritonModelSchedulerConfig())
         self._set_instance_group(model_config, instances_config=instances_config or TritonModelInstancesConfig())
         self._set_custom_backend_parameters(
@@ -66,7 +72,12 @@ class BaseBackendConfigurator:
     def _extract_signature(self, model_config, model: Model):
         pass
 
-    def _set_backend_acceleration(self, model_config, optimization_config: TritonModelOptimizationConfig):
+    def _set_backend_acceleration(
+        self,
+        model_config,
+        optimization_config: TritonModelOptimizationConfig,
+        tensorrt_common_config: TensorRTCommonConfig,
+    ):
         pass
 
     def _set_scheduler(self, model_config, scheduler_config: TritonModelSchedulerConfig):
