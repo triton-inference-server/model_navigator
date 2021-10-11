@@ -364,6 +364,9 @@ model_path: path
 # Signature of the model outputs.
 [ outputs: list[str] ]
 
+# The maximum GPU memory in bytes the model can use temporarily during execution for TensorRT acceleration.
+[ tensorrt_max_workspace_size: integer ]
+
 # Target format to generate.
 [ target_formats: list[str] | default: ['tf-savedmodel', 'onnx', 'trt', 'torchscript'] ]
 

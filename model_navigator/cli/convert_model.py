@@ -31,6 +31,7 @@ from model_navigator.cli.spec import (
     DatasetProfileConfigCli,
     ModelConfigCli,
     ModelSignatureConfigCli,
+    TensorRTCommonConfigCli,
 )
 from model_navigator.common.config import TensorRTCommonConfig
 from model_navigator.constants import MODEL_NAVIGATOR_DIR
@@ -388,6 +389,7 @@ def convert(
     "--override-conversion-container", is_flag=True, help="Override conversion container if it already exists."
 )
 @options_from_config(ModelSignatureConfig, ModelSignatureConfigCli)
+@options_from_config(TensorRTCommonConfig, TensorRTCommonConfigCli)
 @options_from_config(ConversionSetConfig, ConversionSetConfigCli)
 @options_from_config(ComparatorConfig, ComparatorConfigCli)
 @options_from_config(DatasetProfileConfig, DatasetProfileConfigCli)
