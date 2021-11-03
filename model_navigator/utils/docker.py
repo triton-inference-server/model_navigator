@@ -28,7 +28,7 @@ ContainerIpAddress = str
 CONTAINER_ID_LENGTH = 10
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, order=True)
 class ContainerMount:
     host_path: Path
     container_path: Path
@@ -250,6 +250,7 @@ def get_docker_container_id() -> Optional[ContainerIdType]:
     try:
         cpuset_path = Path("/proc/1/cpuset")
         cpuset_content = cpuset_path.read_text("utf-8")
-        return Path(cpuset_content).name[:CONTAINER_ID_LENGTH]
+        path = Path(cpuset_content).name[:CONTAINER_ID_LENGTH].strip()
+        return path or None
     except FileNotFoundError:
         return None
