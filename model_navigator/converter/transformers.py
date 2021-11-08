@@ -95,7 +95,7 @@ class CopyModelFilesCommand(BaseConvertCommand):
             conversion_config=None,
             comparator_config=None,
             dataset_profile=None,
-            output_model=Model(model.model_name, path=output_path),
+            output_model=Model(model.model_name, path=output_path, explicit_format=model.model_format),
         )
 
     def _get_output_path(self, executor, model, path_to_copy):
@@ -217,6 +217,7 @@ class ONNX2TRTCommand(BaseConvertCommand):
             rtol=self._comparator_config.rtol,
             atol=self._comparator_config.atol,
             verbose=bool(verbose),
+            input_format=model.model_format,
         )
 
         model_name = extend_model_name(model.model_name, transform_name=self.name)
@@ -411,3 +412,7 @@ class TFSavedModelOptimizationTransform(BaseConvertCommand):
             dataset_profile=self._dataset_profile,
             output_model=Model(model_name, path=output_path),
         )
+
+    @property
+    def file_suffix(self):
+        return ".savedmodel"

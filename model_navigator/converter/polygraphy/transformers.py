@@ -209,6 +209,7 @@ def onnx2trt(
     rtol: Optional[Dict[str, float]] = None,
     atol: Optional[Dict[str, float]] = None,
     verbose: bool = False,
+    input_format: Optional[Format] = None,
 ):
     from sh import polygraphy  # noqa
 
@@ -235,7 +236,7 @@ def onnx2trt(
 
     LOGGER.warning("This conversion should be done on target GPU platform")
 
-    model = Model("model_to_convert", input_path)
+    model = Model("model_to_convert", input_path, explicit_format=input_format)
     profiles_adapter = ProfilesAdapter(profiles)
     if not profiles_adapter.is_defined() and not model.signature.has_input_dynamic_axes():
         if max_batch_size is None:

@@ -107,7 +107,7 @@ class TensorSpec:
         )
 
 
-class TensorUtils:
+class TensorUtils(abc.ABC):
     @staticmethod
     def for_data(data):
         if isinstance(data, dict):
