@@ -84,6 +84,8 @@ class TritonServerLocal(TritonServer):
             )
 
     def _record_logs(self, line):
+        if isinstance(line, bytes):
+            line = line.decode("utf-8")
         self._tritonserver_logs += line
 
     def _get_env(self):
