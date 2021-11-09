@@ -17,6 +17,6 @@ limitations under the License.
 
 The NVIDIA [Triton Inference Server](https://github.com/triton-inference-server) provides a robust and configurable solution for deploying and managing AI models. The [Triton
 Model Navigator](https://github.com/triton-inference-server/model_navigator) is a tool that provides the ability to automate the process of model deployment on the Triton Inference Server.
-The tool optimize models running conversion to available formats and applying addition Triton backends optimizations. Finally, the [Triton Model Analyzer](https://github.com/triton-inference-server/model_analyzer)
+The tool optimize models running conversion to available formats and applying addition Triton backends optimizations. Finally, it uses the [Triton Model Analyzer](https://github.com/triton-inference-server/model_analyzer)
 to find the best Triton Model configuration, matches the provided constraints, and optimize performance.
 
