@@ -16,7 +16,7 @@ limitations under the License.
 
 # Changelog
 
-## unreleased
+## 0.2.3 (2021-11-10)
 - Updated NVIDIA containers defaults to 21.09
 - Improved naming of arguments specific for TensorRT conversion and acceleration with backward compatibility
 - Use pip package for Triton Model Analyzer installation with minimal version 1.8.0
