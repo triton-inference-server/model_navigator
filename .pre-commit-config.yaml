@@ -61,29 +61,6 @@ repos:
     hooks:
       - id: hadolint-docker
         args: [--ignore, DL3006, --ignore, DL3008, --ignore, DL4001, --ignore, DL4006, --ignore, DL3013, --ignore, SC1091, --ignore, SC1083]
-  - repo: https://github.com/Lucas-C/pre-commit-hooks
-    rev: v1.1.10
-    hooks:
-    -   id: forbid-crlf
-    -   id: remove-crlf
-    -   id: forbid-tabs
-    -   id: remove-tabs
-    -   id: insert-license
-        name: Add license for all py/yaml files
-        files: \.py$|\.yaml$
-        args:
-        - --license-filepath
-        - license_templates/license_header.txt          # defaults to: license.txt
-        - --fuzzy-match-generates-todo
-    -   id: insert-license
-        name: Add license for all md files
-        files: \.md$
-        args:
-        - --comment-style
-        - "<!--|| -->"
-        - --license-filepath
-        - license_templates/license_header.txt          # defaults to: license.txt
-        - --fuzzy-match-generates-todo
   - repo: local
     hooks:
       - id: docs_config_generator

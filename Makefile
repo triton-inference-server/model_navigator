@@ -110,6 +110,9 @@ dist: clean ## builds source and wheel package
 install: clean ## install the package to the active Python's site-packages
 	pip install -e .
 
+install-with-cloud-extras: clean
+	pip install --upgrade --upgrade-strategy only-if-needed .[cloud]
+
 install-with-framework-extras: clean
 ifeq ($(origin TENSORFLOW_VERSION), undefined)
 	pip install --upgrade --upgrade-strategy only-if-needed .[pyt]
