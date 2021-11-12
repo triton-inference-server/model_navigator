@@ -113,7 +113,7 @@ def parse_value_ranges(ctx, param, value):
 def serialize_value_ranges(param, value: Dict[str, Tuple]):
     return [
         f"{name}={value_range[0]},{value_range[1]}"
-        if name == ALL_OTHER_INPUTS
+        if name != ALL_OTHER_INPUTS
         else f"{value_range[0]},{value_range[1]}"
         for name, value_range in value.items()
     ]
