@@ -41,6 +41,7 @@ from model_navigator.perf_analyzer import (
 )
 from model_navigator.results import State, Status
 from model_navigator.triton import TritonClientConfig, parse_server_url
+from model_navigator.triton.utils import get_shape_params
 from model_navigator.utils import Workspace, cli
 
 LOGGER = logging.getLogger("triton_evaluate_model")
@@ -222,18 +223,6 @@ def _perf_analyzer_evaluation(
     return output
 
 
-def _get_shape_params(dataset_profile_config):
-    if not dataset_profile_config.max_shapes:
-        return None
-
-    def _shape_param_format(name, shape_):
-        return f"{name}:{','.join(map(str, shape_[1:]))}"
-
-    shape_param = [_shape_param_format(name, shape_) for name, shape_ in dataset_profile_config.max_shapes.items()]
-
-    return shape_param
-
-
 @cli.common_options
 @click.command(name="triton-evaluate-model", help="Evaluate model on Triton using Perf Analyzer")
 @click.option("--model-name", required=True, help=ModelConfigCli.model_name.help)
@@ -341,13 +330,13 @@ def triton_evaluate_model_cmd(
     shapes = []
 
     try:
-        shape_params = _get_shape_params(dataset_profile_config)
+        shapes_params = get_shape_params(dataset_profile_config)
         if dataset_profile_config.value_ranges and dataset_profile_config.dtypes:
             profiling_data_path = workspace.path / DEFAULT_RANDOM_DATA_FILENAME
             ctx.forward(create_profiling_data_cmd, data_output_path=profiling_data_path)
             profiling_data = profiling_data_path
-        elif shape_params:
-            shapes = shape_params
+        elif shapes_params:
+            shapes = shapes_params
 
         perf_analyzer_log = _perf_analyzer_evaluation(
             server_url=triton_client_config.server_url,

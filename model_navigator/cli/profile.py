@@ -105,7 +105,7 @@ def profile_cmd(
         )
 
     profiling_data_path = None
-    if dataset_profile_config.value_ranges:
+    if dataset_profile_config.value_ranges and dataset_profile_config.dtypes:
         profiling_data_path = workspace.path / DEFAULT_RANDOM_DATA_FILENAME
         ctx.forward(
             create_profiling_data_cmd,

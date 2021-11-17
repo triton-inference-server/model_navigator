@@ -16,6 +16,9 @@ limitations under the License.
 
 # Changelog
 
+## unreleased
+- Fixed generating profiling data when `dtypes` are not passed
+
 ## 0.2.3 (2021-11-10)
 - Updated NVIDIA containers defaults to 21.09
 - Improved naming of arguments specific for TensorRT conversion and acceleration with backward compatibility

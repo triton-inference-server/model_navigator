@@ -30,6 +30,7 @@ from model_navigator.model_analyzer.model_analyzer_config import ModelAnalyzerCo
 from model_navigator.perf_analyzer import PerfMeasurementConfig
 from model_navigator.triton import DeviceKind
 from model_navigator.triton.model_config import TritonModelConfigGenerator
+from model_navigator.triton.utils import get_shape_params
 from model_navigator.utils import Workspace
 
 LOGGER = logging.getLogger(__name__)
@@ -203,7 +204,6 @@ class ProfileConfigGenerator(BaseConfigGenerator):
 
     def _get_perf_analyzer_flags(self):
         configuration = {}
-        # TODO: what if we provide shapes but model have no dynamic axes?
         if self._profiling_data_path:
             if TRITON_MODEL_ANALYZER_VERSION >= LooseVersion("1.8.0"):
                 configuration["input-data"] = [self._profiling_data_path.as_posix()]
@@ -211,12 +211,7 @@ class ProfileConfigGenerator(BaseConfigGenerator):
                 configuration["input-data"] = self._profiling_data_path.as_posix()
         elif self._dataset_profile_config and self._dataset_profile_config.max_shapes:
 
-            def _shape_param_format(name, shape_):
-                return f"{name}:{','.join(map(str, shape_[1:]))}"
-
-            shapes = [
-                _shape_param_format(name, shape_) for name, shape_ in self._dataset_profile_config.max_shapes.items()
-            ]
+            shapes = get_shape_params(self._dataset_profile_config)
 
             if TRITON_MODEL_ANALYZER_VERSION >= LooseVersion("1.8.0"):
                 configuration["shape"] = shapes

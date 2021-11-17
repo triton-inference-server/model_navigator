@@ -75,3 +75,15 @@ def rewrite_signature_to_model_config(model_config, signature: ModelSignatureCon
     for _name, spec in signature.outputs.items():
         output_item = model_config.output.add()
         _rewrite_io_spec(spec, output_item)
+
+
+def get_shape_params(dataset_profile_config):
+    if not dataset_profile_config.max_shapes:
+        return None
+
+    def _shape_param_format(name, shape_):
+        return f"{name}:{','.join(map(str, shape_[1:]))}"
+
+    shapes_param = [_shape_param_format(name, shape_) for name, shape_ in dataset_profile_config.max_shapes.items()]
+
+    return shapes_param
