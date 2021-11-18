@@ -39,19 +39,13 @@ Refer to the [changelog](../CHANGELOG.md) for any related issues on these models
 ## Third-Party Packages
 
 A set of component versions are imposed by the used `container_version` parameter value.
-By default, we're using the 21.08 container version that contains:
+By default, we're using the 21.10 container version that contains:
 
-- PyTorch 1.10.0a0+3fd9dcf
+- PyTorch 1.10.0a0+0aef44c
 - TensorFlow 2.6.0 / 1.15.5
 - TensorRT TensorRT 8.0.3
 - [Triton Inference Server 2.14.0](https://github.com/triton-inference-server/server/releases/tag/v2.14.0)
-  - [ONNX Runtime 1.8.1](https://github.com/microsoft/onnxruntime/releases/tag/v1.8.1)
-- [Polygraphy 0.32.0](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy)
+- [ONNX Runtime 1.9.0](https://github.com/microsoft/onnxruntime/releases/tag/v1.9.0)
 
 Refer to [the containers support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
 for a detailed summary for each version.
-
-The Triton Model Navigator installs additional components:
-
-- [tf2onnx 1.9.2](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.9.2)
-- [Triton Model Analyzer 21.09](https://github.com/triton-inference-server/model_analyzer/tree/r21.09)

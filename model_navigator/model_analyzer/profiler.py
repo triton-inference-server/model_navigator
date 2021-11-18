@@ -175,7 +175,7 @@ class ProfileConfigGenerator(BaseConfigGenerator):
             for model_name in models_list
         )
 
-        # https://github.com/triton-inference-server/model_analyzer/blob/r21.09/docs/config.md
+        # https://github.com/triton-inference-server/model_analyzer/blob/r21.10/docs/config.md
         config = {
             "run_config_search_disable": manual_config_search,
             "profile_models": models_list,

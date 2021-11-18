@@ -35,6 +35,7 @@ endef
 export PRINT_HELP_PYSCRIPT
 
 BROWSER := python -c "$$BROWSER_PYSCRIPT"
+PIP_INSTALL := pip install --extra-index-url https://pypi.ngc.nvidia.com
 
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
@@ -108,21 +109,21 @@ dist: clean ## builds source and wheel package
 	ls -l dist
 
 install: clean ## install the package to the active Python's site-packages
-	pip install -e .
+	$(PIP_INSTALL) -e .
 
 install-with-cloud-extras: clean
-	pip install --upgrade --upgrade-strategy only-if-needed .[cloud]
+	$(PIP_INSTALL) --upgrade --upgrade-strategy only-if-needed .[cloud]
 
 install-with-framework-extras: clean
 ifeq ($(origin TENSORFLOW_VERSION), undefined)
-	pip install --upgrade --upgrade-strategy only-if-needed .[pyt]
+	$(PIP_INSTALL) --upgrade --upgrade-strategy only-if-needed .[pyt]
 else
-	pip install --upgrade --upgrade-strategy only-if-needed .[tf]
+	$(PIP_INSTALL) --upgrade --upgrade-strategy only-if-needed .[tf]
 endif
 
 install-dev: clean
-	pip install -e .
-	pip install -r dev_requirements.txt
+	$(PIP_INSTALL) -e .
+	$(PIP_INSTALL) -r dev_requirements.txt
 
 docker: clean
 	docker build --network host -t model-navigator:latest .

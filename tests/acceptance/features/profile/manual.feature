@@ -16,7 +16,7 @@ Feature: Model Manual Profiling
         And the model_name config parameter is set to my_model
         When I execute triton-config-model command
         Then the command should succeeded
-        Given the config_search_preferred_batch_sizes config parameter is set to 2,4 4 8
+        Given the config_search_preferred_batch_sizes config parameter is set to 2,4 4
         And removed the max_batch_size config parameter
         And removed the model_name config parameter
         When I execute profile command
@@ -33,7 +33,8 @@ Feature: Model Manual Profiling
         When I execute triton-config-model command
         Then the command should succeeded
         Given the config_search_concurrency config parameter is set to 1 2
-        Given the config_search_preferred_batch_sizes config parameter is set to 2,4 4 8
+        And the config_search_max_instance_count config parameter is set to 1
+        And the config_search_preferred_batch_sizes config parameter is set to 2,4 4
         And removed the max_batch_size config parameter
         And removed the model_name config parameter
         When I execute profile command
@@ -51,7 +52,7 @@ Feature: Model Manual Profiling
         Then the command should succeeded
         Given the config_search_instance_counts config parameter is set to gpu=1,3 cpu=3
         Given the config_search_max_batch_sizes config parameter is set to 4 32
-        Given the config_search_preferred_batch_sizes config parameter is set to 2,4 4 8
+        Given the config_search_preferred_batch_sizes config parameter is set to 2,4 8
         Given the config_search_backend_parameters config parameter is set to param1=value1.1,value1.2 param2=value2.1
         And removed the max_batch_size config parameter
         And removed the model_name config parameter
@@ -63,18 +64,10 @@ Feature: Model Manual Profiling
             {"maxBatchSize": 4, "instanceGroup": [{"count": 1, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [2, 4]}, "parameters": {"param1": {"stringValue": "value1.2"}, "param2": {"stringValue": "value2.1"}}, "cpu_only": false}
             {"maxBatchSize": 4, "instanceGroup": [{"count": 3, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [2, 4]}, "parameters": {"param1": {"stringValue": "value1.1"}, "param2": {"stringValue": "value2.1"}}, "cpu_only": false}
             {"maxBatchSize": 4, "instanceGroup": [{"count": 3, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [2, 4]}, "parameters": {"param1": {"stringValue": "value1.2"}, "param2": {"stringValue": "value2.1"}}, "cpu_only": false}
-            {"maxBatchSize": 4, "instanceGroup": [{"count": 1, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [4]}, "parameters": {"param2": {"stringValue": "value2.1"}, "param1": {"stringValue": "value1.1"}}, "cpu_only": false}
-            {"maxBatchSize": 4, "instanceGroup": [{"count": 1, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [4]}, "parameters": {"param1": {"stringValue": "value1.2"}, "param2": {"stringValue": "value2.1"}}, "cpu_only": false}
-            {"maxBatchSize": 4, "instanceGroup": [{"count": 3, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [4]}, "parameters": {"param2": {"stringValue": "value2.1"}, "param1": {"stringValue": "value1.1"}}, "cpu_only": false}
-            {"maxBatchSize": 4, "instanceGroup": [{"count": 3, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [4]}, "parameters": {"param2": {"stringValue": "value2.1"}, "param1": {"stringValue": "value1.2"}}, "cpu_only": false}
             {"maxBatchSize": 32, "instanceGroup": [{"count": 1, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [2, 4]}, "parameters": {"param1": {"stringValue": "value1.1"}, "param2": {"stringValue": "value2.1"}}, "cpu_only": false}
             {"maxBatchSize": 32, "instanceGroup": [{"count": 1, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [2, 4]}, "parameters": {"param1": {"stringValue": "value1.2"}, "param2": {"stringValue": "value2.1"}}, "cpu_only": false}
             {"maxBatchSize": 32, "instanceGroup": [{"count": 3, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [2, 4]}, "parameters": {"param1": {"stringValue": "value1.1"}, "param2": {"stringValue": "value2.1"}}, "cpu_only": false}
             {"maxBatchSize": 32, "instanceGroup": [{"count": 3, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [2, 4]}, "parameters": {"param1": {"stringValue": "value1.2"}, "param2": {"stringValue": "value2.1"}}, "cpu_only": false}
-            {"maxBatchSize": 32, "instanceGroup": [{"count": 1, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [4]}, "parameters": {"param1": {"stringValue": "value1.1"}, "param2": {"stringValue": "value2.1"}}, "cpu_only": false}
-            {"maxBatchSize": 32, "instanceGroup": [{"count": 1, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [4]}, "parameters": {"param1": {"stringValue": "value1.2"}, "param2": {"stringValue": "value2.1"}}, "cpu_only": false}
-            {"maxBatchSize": 32, "instanceGroup": [{"count": 3, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [4]}, "parameters": {"param1": {"stringValue": "value1.1"}, "param2": {"stringValue": "value2.1"}}, "cpu_only": false}
-            {"maxBatchSize": 32, "instanceGroup": [{"count": 3, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [4]}, "parameters": {"param2": {"stringValue": "value2.1"}, "param1": {"stringValue": "value1.2"}}, "cpu_only": false}
             {"maxBatchSize": 32, "instanceGroup": [{"count": 1, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [8]}, "parameters": {"param2": {"stringValue": "value2.1"}, "param1": {"stringValue": "value1.1"}}, "cpu_only": false}
             {"maxBatchSize": 32, "instanceGroup": [{"count": 1, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [8]}, "parameters": {"param2": {"stringValue": "value2.1"}, "param1": {"stringValue": "value1.2"}}, "cpu_only": false}
             {"maxBatchSize": 32, "instanceGroup": [{"count": 3, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [8]}, "parameters": {"param1": {"stringValue": "value1.1"}, "param2": {"stringValue": "value2.1"}}, "cpu_only": false}

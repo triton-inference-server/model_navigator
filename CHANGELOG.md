@@ -18,6 +18,26 @@ limitations under the License.
 
 ## unreleased
 - Fixed generating profiling data when `dtypes` are not passed
+- fixes and improvements
+
+[//]: <> (put here on external component update with short summary what change or link to changelog)
+- Versions of used external components:
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.33.1
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.14
+    - [Triton Model Analyzer 1.8.2](https://github.com/triton-inference-server/model_analyzer)
+    - tf2onnx: [v1.9.3](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.9.3)
+    - Other component versions depend on the used framework and Triton Inference Server containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
+
+[//]: <> (keep up to date list of known issues inside docs/known_issue.md and paste it here on major and minor release)
+
+- Known issues and limitations
+    - missing support for stateful models (ex. time-series one)
+    - missing support for models without batching support
+    - no verification of conversion results for conversions: TF -> ONNX, TorchScript -> ONNX
+    - possible to define a single profile for TensorRT
+
 
 ## 0.2.3 (2021-11-10)
 - Updated NVIDIA containers defaults to 21.09
@@ -47,6 +67,7 @@ limitations under the License.
     - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.32.0
     - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.13
     - tf2onnx: [v1.9.2](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.9.2) (support for ONNX opset 14, tf 1.15 and 2.6)
+    - [Triton Model Analyzer 1.8.2](https://github.com/triton-inference-server/model_analyzer)
     - Other component versions depend on the used framework and Triton Inference Server containers versions.
       See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
       for a detailed summary.

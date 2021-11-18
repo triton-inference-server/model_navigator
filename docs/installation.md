@@ -66,6 +66,10 @@ The Model Navigator can be installed from the source:
 ```shell
 $ make install
 ```
+or using Pip:
+```shell
+pip install --extra-index-url https://pypi.ngc.nvidia.com .
+```
 
 If you are using this approach, you need to install DCGM. In order to install it on Ubuntu 20.04, run:
 ```shell
