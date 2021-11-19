@@ -34,10 +34,10 @@ limitations under the License.
 **Note** If you run the tests from inside of container run `make install` to handle paths in tests correctly.
 
 ## Running unit tests
-- tests defined inside `tests/test_*.py` are run with pytest
-  - `tests/test_*_pyt.py` are run inside PyTorch container
-  - `tests/test_*_tf1.py` are run inside Tensorflow1 container
-  - `tests/test_*_tf2.py` are run inside Tensorflow2 container
+- tests defined inside `tests/unit/test_*.py` are run with pytest
+  - `tests/unit/test_*_pyt.py` are run inside PyTorch container
+  - `tests/unit/test_*_tf1.py` are run inside Tensorflow1 container
+  - `tests/unit/test_*_tf2.py` are run inside Tensorflow2 container
   - rest is run inside `python:<version>` container
 - to run tests locally inside your current venv run `make test`
 - to run linters run `make lint`
