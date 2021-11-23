@@ -13,6 +13,7 @@
 # limitations under the License.
 # pylint: skip-file
 # flake8: noqa
+# pytype: skip-file
 from ctypes import *
 
 from . import dcgm_structs

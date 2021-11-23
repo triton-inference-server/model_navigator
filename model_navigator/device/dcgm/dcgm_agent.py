@@ -13,8 +13,7 @@
 # limitations under the License.
 # pylint: skip-file
 # flake8: noqa
-# pytype: disable=not-callable
-# pytype: disable=invalid-typevar
+# pytype: skip-file
 from ctypes import *
 
 from . import dcgm_fields, dcgm_structs

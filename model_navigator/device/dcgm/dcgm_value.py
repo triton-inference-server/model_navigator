@@ -13,9 +13,7 @@
 # limitations under the License.
 # pylint: skip-file
 # flake8: noqa
-# pytype: disable=attribute-error
-# pytype: disable=name-error
-# pytype: disable=unsupported-operands
+# pytype: skip-file
 DCGM_INT32_BLANK = 0x7FFFFFF0
 DCGM_INT64_BLANK = 0x7FFFFFFFFFFFFFF0
 

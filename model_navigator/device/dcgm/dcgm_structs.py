@@ -13,8 +13,7 @@
 # limitations under the License.
 # pylint: skip-file
 # flake8: noqa
-# pytype: disable=module-attr
-# pytype: disable=invalid-typevar
+# pytype: skip-file
 import json
 import os
 import platform

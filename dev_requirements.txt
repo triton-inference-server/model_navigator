@@ -25,7 +25,7 @@ pytest>=6.2.4
 pytest-bdd>=4.1.0
 pytest-datadir-mgr>=1.2.5
 pytest-mock>=3.6.1
-pytype>=2021.2.9
+pytype>=2021.2.9,!=2021.11.18
 recommonmark>=0.7.1
 Sphinx>=4.0.1
 sphinx-rtd-theme>=0.5.2
