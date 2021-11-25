@@ -24,6 +24,7 @@ from model_navigator.utils.config import BaseConfig
 class Format(Enum):
     TORCHSCRIPT = "torchscript"
     TF_SAVEDMODEL = "tf-savedmodel"
+    TF_TRT = "tf-trt"
     ONNX = "onnx"
     TENSORRT = "trt"
 

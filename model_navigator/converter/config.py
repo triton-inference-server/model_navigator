@@ -93,11 +93,13 @@ class TargetFormatConfigSetIterator(ABC):
         from model_navigator.converter.pyt.config import PyTorchConfigSetIterator
         from model_navigator.converter.tensorrt.config import TensorRTConfigSetIterator
         from model_navigator.converter.tf.config import TensorFlowConfigSetIterator
+        from model_navigator.converter.tf_trt.config import TFTRTConfigSetIterator
 
         iterator_cls = {
             Format.ONNX: OnnxConfigSetIterator,
             Format.TENSORRT: TensorRTConfigSetIterator,
             Format.TF_SAVEDMODEL: TensorFlowConfigSetIterator,
             Format.TORCHSCRIPT: PyTorchConfigSetIterator,
+            Format.TF_TRT: TFTRTConfigSetIterator,
         }[target_format]
         return iterator_cls(config_set)

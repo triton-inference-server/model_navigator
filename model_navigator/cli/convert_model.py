@@ -62,6 +62,7 @@ LOGGER = logging.getLogger("convert")
 _RUN_BY_MODEL_NAVIGATOR = "MODEL_NAVIGATOR_RUN_BY"
 
 TRITON_SUPPORTED_FORMATS = [
+    Format.TF_TRT,
     Format.TF_SAVEDMODEL,
     Format.ONNX,
     Format.TENSORRT,

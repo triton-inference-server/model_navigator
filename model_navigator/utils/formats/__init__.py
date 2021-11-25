@@ -22,6 +22,7 @@ from model_navigator.utils.formats.tensorflow import TensorFlowSavedModelUtils
 from model_navigator.utils.formats.tensorrt import TensorRTUtils
 
 SUFFIX2FORMAT = {
+    ".trtsavedmodel": Format.TF_TRT,
     ".savedmodel": Format.TF_SAVEDMODEL,
     ".plan": Format.TENSORRT,
     ".onnx": Format.ONNX,
@@ -46,4 +47,5 @@ FORMAT2ADAPTER = {
     Format.TORCHSCRIPT: TorchScriptUtils,
     Format.TENSORRT: TensorRTUtils,
     Format.TF_SAVEDMODEL: TensorFlowSavedModelUtils,
+    Format.TF_TRT: TensorFlowSavedModelUtils,
 }

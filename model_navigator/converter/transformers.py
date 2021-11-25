@@ -14,9 +14,13 @@
 import abc
 import logging
 import shutil
+import sys
 from pathlib import Path
 from typing import List, Optional
 
+import sh
+
+import model_navigator.exceptions as nav_exc
 from model_navigator.common.config import TensorRTCommonConfig
 from model_navigator.converter.config import ComparatorConfig, ConversionConfig, DatasetProfileConfig
 from model_navigator.converter.polygraphy.transformers import onnx2trt
@@ -29,6 +33,7 @@ from model_navigator.model import Model, ModelConfig, ModelSignatureConfig
 from model_navigator.results import State, Status
 from model_navigator.tensor import TensorSpec
 from model_navigator.utils.config import YamlConfigFile
+from model_navigator.cli.spec import serialize_shapes, serialize_value_ranges
 
 LOGGER = logging.getLogger(__name__)
 
@@ -372,6 +377,69 @@ class TFSavedModel2ONNXTransform(BaseConvertCommand):
     @property
     def file_suffix(self):
         return ".onnx"
+
+
+class TFSavedModel2TFTRTTransform(BaseConvertCommand):
+    def __init__(
+        self,
+        parent: Optional[BaseConvertCommand] = None,
+        *,
+        conversion_config: ConversionConfig,
+        comparator_config: Optional[ComparatorConfig],
+        dataset_profile: Optional[DatasetProfileConfig],
+        tensorrt_common_config: TensorRTCommonConfig,
+    ) -> None:
+        super().__init__(parent)
+        self._conversion_config = conversion_config
+        self._comparator_config = comparator_config
+        self._dataset_profile = dataset_profile
+        self._tensorrt_common_config = tensorrt_common_config
+
+    def transform(self, executor, model: ModelConfig, *, verbose: int = 0) -> ConversionResult:
+        LOGGER.debug(f"Running command {self.name} on {model.model_path}")
+
+        input_path = model.model_path.as_posix()
+        output_path = executor.get_output_path(model, self).as_posix()
+        log_path = Path(f"{output_path}.log")
+        prec = self._conversion_config.tensorrt_precision
+
+        try:
+            sh.python3(
+                '-mmodel_navigator.converter.tf_trt.tf_trt_convert',
+                # order matters here! Positional args go first.
+                input_path,
+                output_path,
+                '--trt-max-shapes', *serialize_shapes(None, value=self._dataset_profile.max_shapes),
+                '--trt-min-shapes', *serialize_shapes(None, value=self._dataset_profile.min_shapes),
+                '--value-ranges', *serialize_value_ranges(None, value=self._dataset_profile.value_ranges),
+                precision=prec.value if prec else "FP32",
+                max_workspace_size=self._tensorrt_common_config.tensorrt_max_workspace_size or 0,
+                verbose=bool(verbose),
+                _err=sys.stderr,
+            )
+        except sh.ErrorReturnCode as exc:
+            raise nav_exc.ModelNavigatorConverterCommandException(exc.stderr.decode())
+
+        model_name = extend_model_name(model.model_name, transform_name=self.name)
+        return ConversionResult(
+            Status(State.SUCCEEDED, "TF SavedModel converted to TF-TRT SavedModel", log_path.as_posix()),
+            source_model_config=model,
+            conversion_config=self._conversion_config,
+            comparator_config=self._comparator_config,
+            dataset_profile=self._dataset_profile,
+            output_model=Model(model_name, path=output_path),
+        )
+
+    @property
+    def name(self) -> str:
+        precision = self._conversion_config.tensorrt_precision
+        parameters = {"": precision.value}
+        parameters_suffix = PARAMETERS_SEP.join([f"{k}{KEY_VALUE_SEP}{v}" for k, v in parameters.items()])
+        return f"tf-trt{PARAMETERS_SEP}{parameters_suffix}"
+
+    @property
+    def file_suffix(self):
+        return ".savedmodel"
 
 
 class TFSavedModelOptimizationTransform(BaseConvertCommand):

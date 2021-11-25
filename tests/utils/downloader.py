@@ -11,12 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import io
 import logging
+import tarfile
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Optional
 from urllib.parse import ParseResult, urlparse
+from urllib.request import urlopen
 
 from model_navigator.framework import PyTorch, TensorFlow2
 
@@ -53,10 +56,21 @@ class ModelDownloader(ABC):
         pass
 
 
+class TarModelDownloader(ModelDownloader):
+    """ Download tar-compressed models from url and extract to output_path. """
+    schemes = ["http", "https"]
+
+    def download_model(self, downloader_config: DownloaderConfig, output_path: Path):
+        url = downloader_config.model_url
+        resp = urlopen(url.geturl())
+        tar = tarfile.open(fileobj=io.BytesIO(resp.read()))
+        tar.extractall(output_path)
+
+
 def _fill_downloaders_registry():
     from tests.utils.downloaders.torchhub import TorchHubDownloader
 
-    downloaders = [TorchHubDownloader]
+    downloaders = [TorchHubDownloader, TarModelDownloader]
 
     try:
         from tests.utils.downloaders.bermuda import BermudaTestDataDownloader  # pytype: disable=import-error

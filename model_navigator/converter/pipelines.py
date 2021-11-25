@@ -17,7 +17,12 @@ from typing import Iterator, List, Optional, Sequence
 
 from model_navigator.common.config import TensorRTCommonConfig
 from model_navigator.converter.config import ComparatorConfig, ConversionConfig, DatasetProfileConfig
-from model_navigator.converter.transformers import CompositeConvertCommand, PassTransformer, TFSavedModel2ONNXTransform
+from model_navigator.converter.transformers import (
+    CompositeConvertCommand,
+    PassTransformer,
+    TFSavedModel2ONNXTransform,
+    TFSavedModel2TFTRTTransform,
+)
 from model_navigator.model import Format, Model, ModelConfig, ModelSignatureConfig
 
 LOGGER = logging.getLogger(__name__)
@@ -80,6 +85,14 @@ class SavedModelPipeline(BaseModelPipeline):
                 dataset_profile=dataset_profile,
             )
             commands.append(CompositeConvertCommand(cmds=[tf2onnx_converter, onnx2trt_command]))
+        elif conversion_config.target_format == Format.TF_TRT:
+            tf2trt_cmd = TFSavedModel2TFTRTTransform(
+                conversion_config=conversion_config,
+                tensorrt_common_config=tensorrt_common_config,
+                comparator_config=comparator_config,
+                dataset_profile=dataset_profile,
+            )
+            commands.append(CompositeConvertCommand(cmds=[tf2trt_cmd]))
 
         return commands
 

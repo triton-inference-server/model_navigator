@@ -24,6 +24,7 @@ import tensorflow as tf
 from tf2onnx import tf_loader, utils
 
 from model_navigator.converter.tf2onnx.tf_saver import to_savedmodel
+from model_navigator.converter.tf.utils import obtain_inputs
 from model_navigator.tensor import TensorSpec
 
 # pytype: enable=import-error
@@ -60,20 +61,7 @@ def handle_tensor_specs(
 def _obtain_inputs(input_names, concrete_func_and_imported):
     if tf_loader.is_tf2():
         concrete_func, imported = concrete_func_and_imported
-        # inspired by https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/tools/saved_model_cli.py#L205
-        if concrete_func.structured_input_signature:
-            input_args, input_kwargs = concrete_func.structured_input_signature
-            input_names = list(input_kwargs)
-            assert (
-                not input_args
-            ), f"Not supported args in concrete function signature args={input_args}, kwargs={input_kwargs}"
-        elif concrete_func._arg_keywords:  # pylint: disable=protected-access
-            # For pure ConcreteFunctions we might have nothing better than _arg_keywords.
-            assert concrete_func._num_positional_args in [0, 1]
-            input_names = concrete_func._arg_keywords
-
-        input_tensors = [tensor for tensor in concrete_func.inputs if tensor.dtype != tf.dtypes.resource]
-        inputs = {name: tensor.name for name, tensor in zip(input_names, input_tensors)}
+        inputs = obtain_inputs(concrete_func)
     else:
         raise NotImplementedError()
     return inputs
