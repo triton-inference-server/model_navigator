@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Dict, Tuple, Optional
 
 # pytype: disable=import-error
+import tensorflow as tf
 from tensorflow.python.compiler.tensorrt import trt_convert as trtc
 # pytype: enable=import-error
 
@@ -41,7 +42,6 @@ def convert_tf2(input_path: Path,
     Store the resulting SavedModel at `output_path`.
     """
     if precision.lower() == 'tf32':
-        # TODO this may be not enough
         LOGGER.info("Precision TF32 is equivalent to FP32")
         precision = 'fp32'
 
@@ -135,6 +135,12 @@ def _setup_logging(args):
 
 
 def _main():
+    # don't allow TF to preallocate gpu memory, because TF-TRT
+    # will not have enough (it seem to allocate some outside the TF pool).
+    gpu_devices = tf.config.experimental.list_physical_devices('GPU')
+    for gpu in gpu_devices:
+        tf.config.experimental.set_memory_growth(gpu, True)
+
     args = _parse_args()
     _setup_logging(args)
 

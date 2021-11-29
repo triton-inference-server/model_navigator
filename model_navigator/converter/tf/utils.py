@@ -78,7 +78,7 @@ def generate_inputs(concrete_func, shapes, value_ranges=None):
         value_ranges = {}
         for inp in func_inputs.values():
             value_ranges[inp] = (0.0, 1.0)
-        LOGGER.info("Value ranges not provided, using default: {value_ranges}.")
+        LOGGER.info(f"Value ranges not provided, using default: {value_ranges}.")
 
     def generate_sample(shapes):
         profile_inputs = sorted(shapes.keys())

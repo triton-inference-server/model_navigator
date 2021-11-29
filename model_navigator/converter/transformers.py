@@ -404,14 +404,27 @@ class TFSavedModel2TFTRTTransform(BaseConvertCommand):
         prec = self._conversion_config.tensorrt_precision
 
         try:
+            args = []
+            if self._dataset_profile:
+                if self._dataset_profile.max_shapes:
+                    args += [
+                        "--trt-max-shapes",
+                        *serialize_shapes(None, value=self._dataset_profile.max_shapes),
+                    ]
+                if self._dataset_profile.min_shapes:
+                    args += [
+                        "--trt-min-shapes",
+                        *serialize_shapes(None, value=self._dataset_profile.min_shapes),
+                    ]
+                if self._dataset_profile.value_ranges:
+                    args += ["--value-ranges", *serialize_value_ranges(None, value=self._dataset_profile.value_ranges)]
+
             sh.python3(
                 '-mmodel_navigator.converter.tf_trt.tf_trt_convert',
                 # order matters here! Positional args go first.
                 input_path,
                 output_path,
-                '--trt-max-shapes', *serialize_shapes(None, value=self._dataset_profile.max_shapes),
-                '--trt-min-shapes', *serialize_shapes(None, value=self._dataset_profile.min_shapes),
-                '--value-ranges', *serialize_value_ranges(None, value=self._dataset_profile.value_ranges),
+                *args,
                 precision=prec.value if prec else "FP32",
                 max_workspace_size=self._tensorrt_common_config.tensorrt_max_workspace_size or 0,
                 verbose=bool(verbose),
