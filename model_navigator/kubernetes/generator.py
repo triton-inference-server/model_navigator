@@ -20,9 +20,10 @@ from jinja2 import Environment, FileSystemLoader
 from semver import VersionInfo
 
 from model_navigator.framework import Framework
-from model_navigator.kubernetes import internals, utils
 from model_navigator.kubernetes.evaluator import EvaluatorChartCreator
 from model_navigator.kubernetes.inference import InferenceChartCreator
+from model_navigator.kubernetes.internals import Paths, package_dir
+from model_navigator.kubernetes.utils import append_copyright
 from model_navigator.utils.source import navigator_install_url
 
 
@@ -102,7 +103,7 @@ class Generator:
         evaluator_chart_creator: EvaluatorChartCreator,
     ):
         docker_template = "Dockerfile.jinja2"
-        template_path = internals.package_dir / "templates"
+        template_path = package_dir / "templates"
         env = Environment(loader=FileSystemLoader(template_path.as_posix()))
 
         install_url = navigator_install_url(framework, extras=["cloud"])
@@ -116,7 +117,7 @@ class Generator:
             "EVALUATOR_LOCAL": evaluator_chart_creator.entrypoint_local_path,
             "EVALUATOR_DOCKER": evaluator_chart_creator.entrypoint_docker_path,
             "CONFIG_LOCAL": config_local_path,
-            "CONFIG_DOCKER": internals.Paths.CONFIG_PATH,
+            "CONFIG_DOCKER": Paths.CONFIG_PATH,
         }
 
         template = env.get_template(docker_template)
@@ -125,7 +126,7 @@ class Generator:
         with open(dockerfile, "w") as fh:
             fh.write(template.render(**tags))
 
-        utils.append_copyright(filename=dockerfile, tag="#")
+        append_copyright(filename=dockerfile, tag="#")
 
 
 generator = Generator()

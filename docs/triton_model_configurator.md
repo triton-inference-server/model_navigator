@@ -112,7 +112,7 @@ model_repository: path
 [ verbose: boolean ]
 
 # Format of the model. Should be provided in case it is not possible to obtain format from model filename.
-[ model_format: choice(torchscript, tf-savedmodel, onnx, trt) ]
+[ model_format: choice(torchscript, tf-savedmodel, tf-trt, onnx, trt) ]
 
 # Version of model used by the Triton Inference Server.
 [ model_version: str | default: 1 ]

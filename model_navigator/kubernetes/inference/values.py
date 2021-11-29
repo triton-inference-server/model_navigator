@@ -11,10 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from model_navigator.kubernetes import helm
+from model_navigator.kubernetes.helm import Values as ValuesConfig
 
 
-class Values(helm.Values):
+class Values(ValuesConfig):
     def __init__(self, docker_image: str):
         self.docker_image = docker_image
 

@@ -11,5 +11,5 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from .chart import ChartGenerator  # noqa: F401
-from .results import HelmChartGenerationResult  # noqa: F401
+from model_navigator.kubernetes.chart import ChartGenerator  # noqa: F401
+from model_navigator.kubernetes.results import HelmChartGenerationResult  # noqa: F401

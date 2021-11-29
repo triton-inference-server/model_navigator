@@ -16,8 +16,10 @@ import shutil
 import typing
 
 from model_navigator import framework
-from model_navigator.kubernetes import internals, utils, yaml
 from model_navigator.kubernetes.helm import chart, entrypoint
+from model_navigator.kubernetes.internals import package_dir
+from model_navigator.kubernetes.utils import append_copyright
+from model_navigator.kubernetes.yaml import generator as yaml_generator
 
 
 def hasclass(name):
@@ -103,7 +105,7 @@ class ChartCreator:
         self.template_dir.mkdir(parents=True)
 
     def _create_yaml_file(self, file_path: pathlib.Path, data: typing.Dict):
-        yaml.generator(file=file_path, data=data)
+        yaml_generator(file=file_path, data=data)
 
     @hasclass("CHART_CLS")
     def _create_chart_file(self):
@@ -116,7 +118,7 @@ class ChartCreator:
         chart_file = self.chart_dir / "Chart.yaml"
         self._create_yaml_file(file_path=chart_file, data=chart.data())
 
-        utils.append_copyright(filename=chart_file, tag="#")
+        append_copyright(filename=chart_file, tag="#")
 
     @hasclass("VALUES_CLS")
     def _create_values_file(self):
@@ -125,7 +127,7 @@ class ChartCreator:
         values_file = self.chart_dir / "values.yaml"
         self._create_yaml_file(file_path=values_file, data=values.data())
 
-        utils.append_copyright(filename=values_file, tag="#")
+        append_copyright(filename=values_file, tag="#")
 
     @hasclass("DEPLOYMENT_CLS")
     def _create_deployment_file(self):
@@ -135,7 +137,7 @@ class ChartCreator:
         deployment_file = self.template_dir / "deployment.yaml"
         self._create_yaml_file(file_path=deployment_file, data=deployment.data())
 
-        utils.append_copyright(filename=deployment_file, tag="#")
+        append_copyright(filename=deployment_file, tag="#")
 
     @hasclass("SERVICE_CLS")
     def _create_service_file(self):
@@ -143,7 +145,7 @@ class ChartCreator:
         values_file = self.template_dir / "service.yaml"
         self._create_yaml_file(file_path=values_file, data=service.data())
 
-        utils.append_copyright(filename=values_file, tag="#")
+        append_copyright(filename=values_file, tag="#")
 
     @hasclass("ENTRYPOINT_CLS")
     def _create_entrypoint_script(self):
@@ -154,12 +156,12 @@ class ChartCreator:
         entrypoint_script = entrypoint.Entrypoint(filename=entrypoint_file, cmds=self.cmds)
         entrypoint_script.create()
 
-        utils.append_copyright(filename=entrypoint_file, tag="#")
+        append_copyright(filename=entrypoint_file, tag="#")
 
     def _create_helpers_file(self):
         tpl_file = "_helpers.tpl"
-        local_tpl_file_path = internals.package_dir / "templates" / tpl_file
+        local_tpl_file_path = package_dir / "templates" / tpl_file
         tpl_file_path = self.chart_dir / "templates" / tpl_file
         shutil.copy(local_tpl_file_path.as_posix(), tpl_file_path.as_posix())
 
-        utils.append_copyright(filename=tpl_file_path, tag="#")
+        append_copyright(filename=tpl_file_path, tag="#")

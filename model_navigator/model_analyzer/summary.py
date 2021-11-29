@@ -18,7 +18,7 @@ import logging
 from pathlib import Path
 from typing import Dict, List
 
-from tabulate import tabulate
+import tabulate
 
 from model_navigator.model_analyzer.config import ModelAnalyzerAnalysisConfig
 from model_navigator.model_analyzer.measurement import Measurement
@@ -76,7 +76,7 @@ class Summary:
             header = ["No"] + list(results[0].keys())
             summary = map(lambda x: list(map(lambda item: item[1], x.items())), results)
 
-            print(tabulate(summary, headers=header, showindex=index, tablefmt="plain"))
+            print(tabulate.tabulate(summary, headers=header, showindex=index, tablefmt="plain"))
         else:
             print("<Missing data>")
 

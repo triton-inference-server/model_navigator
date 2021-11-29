@@ -11,10 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from model_navigator.kubernetes import helm
+from model_navigator.kubernetes.helm import Service as ServiceConfig
 
 
-class Service(helm.Service):
+class Service(ServiceConfig):
     def data(self):
         service = {
             "apiVersion": "v1",

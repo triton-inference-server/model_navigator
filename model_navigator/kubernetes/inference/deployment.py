@@ -13,7 +13,10 @@
 # limitations under the License.
 import typing
 
-from model_navigator.kubernetes import helm, internals, triton
+from model_navigator.kubernetes.helm import Deployment as DeploymentConfig
+from model_navigator.kubernetes.helm import Volume
+from model_navigator.kubernetes.internals import Paths
+from model_navigator.kubernetes.triton import TRITON_LOAD_MODE, TritonServer
 
 
 def wrap(lst: typing.List, condition: str, required: typing.Optional[str] = None):
@@ -38,18 +41,18 @@ def wrap(lst: typing.List, condition: str, required: typing.Optional[str] = None
     )
 
 
-class Deployment(helm.Deployment):
+class Deployment(DeploymentConfig):
     @property
     def volumes(self):
         volumes = [
-            helm.Volume(
+            Volume(
                 name="model-repository",
                 env="MODEL_REPOSITORY_PATH",
-                path=internals.Paths.MODEL_REPOSITORY_PATH,
+                path=Paths.MODEL_REPOSITORY_PATH,
                 empty_dir={},
             ),
-            helm.Volume(name="shared-dir", env="SHARED_DIR", path=internals.Paths.SHARED_DIR, empty_dir={}),
-            helm.Volume(name="shared-memory", env=None, path="/dev/shm", empty_dir={"medium": "Memory"}),
+            Volume(name="shared-dir", env="SHARED_DIR", path=Paths.SHARED_DIR, empty_dir={}),
+            Volume(name="shared-memory", env=None, path="/dev/shm", empty_dir={"medium": "Memory"}),
         ]
 
         return volumes
@@ -79,11 +82,11 @@ class Deployment(helm.Deployment):
         ]
         wrap(lst=model_uri, condition=".Values.deployer.modelUri", required="Model URI is required.")
 
-        env = list()
+        env = []
         env.extend(model_uri)
 
-        volumeMounts = list()
-        volumeAttach = list()
+        volumeMounts = []
+        volumeAttach = []
 
         self._prepare_volumes(env, volumeAttach, volumeMounts)
 
@@ -117,11 +120,11 @@ class Deployment(helm.Deployment):
             }
         ]
 
-        triton_command = triton.TritonServer.command(
+        triton_command = TritonServer.command(
             framework=self.framework,
-            repository_path=internals.Paths.MODEL_REPOSITORY_PATH,
+            repository_path=Paths.MODEL_REPOSITORY_PATH,
             strict_mode=False,
-            load_mode=triton.TRITON_LOAD_MODE.POLL_ONCE,
+            load_mode=TRITON_LOAD_MODE.POLL_ONCE,
         )
 
         triton_container = {
@@ -147,7 +150,7 @@ class Deployment(helm.Deployment):
             ],
             "livenessProbe": {
                 "httpGet": {
-                    "path": triton.TritonServer.api_method("livenessProbe"),
+                    "path": TritonServer.api_method("livenessProbe"),
                     "port": "http",
                 }
             },
@@ -155,7 +158,7 @@ class Deployment(helm.Deployment):
                 "initialDelaySeconds": 10,
                 "periodSeconds": 5,
                 "httpGet": {
-                    "path": triton.TritonServer.api_method("readinessProbe"),
+                    "path": TritonServer.api_method("readinessProbe"),
                     "port": "http",
                 },
             },

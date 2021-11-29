@@ -343,7 +343,7 @@ model_path: path
 [ verbose: boolean ]
 
 # Format of the model. Should be provided in case it is not possible to obtain format from model filename.
-[ model_format: choice(torchscript, tf-savedmodel, onnx, trt) ]
+[ model_format: choice(torchscript, tf-savedmodel, tf-trt, onnx, trt) ]
 
 # Version of model used by the Triton Inference Server.
 [ model_version: str | default: 1 ]
@@ -368,7 +368,7 @@ model_path: path
 [ tensorrt_max_workspace_size: integer ]
 
 # Target format to generate.
-[ target_formats: list[str] | default: ['tf-savedmodel', 'onnx', 'trt', 'torchscript'] ]
+[ target_formats: list[str] | default: ['tf-trt', 'tf-savedmodel', 'onnx', 'trt', 'torchscript'] ]
 
 # Generate an ONNX graph that uses only ops available in a given opset.
 [ onnx_opsets: list[integer] | default: [13] ]

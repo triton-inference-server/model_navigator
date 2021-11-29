@@ -24,9 +24,9 @@ from model_navigator.converter.config import (
     DatasetProfileConfig,
 )
 from model_navigator.framework import PyTorch, TensorFlow2
-from model_navigator.kubernetes import internals
 from model_navigator.kubernetes.generator import generator
 from model_navigator.kubernetes.inference import InferenceChartCreator
+from model_navigator.kubernetes.internals import Paths
 from model_navigator.kubernetes.results import HelmChartGenerationResult
 from model_navigator.model import ModelConfig, ModelSignatureConfig
 from model_navigator.results import State, Status
@@ -132,7 +132,7 @@ class ChartGenerator:
         commands.append(
             rf"""
             model-navigator convert \
-                --config-path {internals.Paths.CONFIG_PATH} \
+                --config-path {Paths.CONFIG_PATH} \
                 --model-path {docker_src_model_path} \
                 --output-path {docker_converted_model_path} \
                 --launch-mode {ConversionLaunchMode.LOCAL.value}
@@ -142,9 +142,9 @@ class ChartGenerator:
         commands.append(
             rf"""
             model-navigator triton-config-model \
-                --config-path {internals.Paths.CONFIG_PATH} \
+                --config-path {Paths.CONFIG_PATH} \
                 --model-path {docker_converted_model_path} \
-                --model-repository {internals.Paths.MODEL_REPOSITORY_PATH}
+                --model-repository {Paths.MODEL_REPOSITORY_PATH}
             """
         )
 
@@ -155,7 +155,7 @@ class ChartGenerator:
         commands = [
             rf"""
             model-navigator triton-evaluate-model \
-                --config-path {internals.Paths.CONFIG_PATH} \
+                --config-path {Paths.CONFIG_PATH} \
                 --server-url  {server_url} \
                 --evaluation-mode static \
                 --evaluation-mode dynamic \
