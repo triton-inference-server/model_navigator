@@ -18,6 +18,7 @@
 .venv/
 .gitignore
 .flake8
+.tox/
 *.egg-info/
 build/
 dist/
