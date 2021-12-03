@@ -16,7 +16,7 @@ limitations under the License.
 
 # Changelog
 
-## unreleased
+## 0.2.4 (2021-12-06)
 - Updated NVIDIA containers defaults to 21.10
 - Fixed generating profiling data when `dtypes` are not passed
 - Conversion related:
@@ -42,6 +42,7 @@ limitations under the License.
     - missing support for models without batching support
     - no verification of conversion results for conversions: TF -> ONNX, TorchScript -> ONNX
     - possible to define a single profile for TensorRT
+    - TF-TRT conversion lost outputs shapes info
 
 ## 0.2.3 (2021-11-10)
 - Updated NVIDIA containers defaults to 21.09
