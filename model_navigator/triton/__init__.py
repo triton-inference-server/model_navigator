@@ -14,10 +14,11 @@
 from .client import TritonClient, client_utils  # noqa: F401
 from .config import (  # noqa: F401
     DeviceKind,
+    TritonBatchingConfig,
     TritonClientConfig,
+    TritonDynamicBatchingConfig,
     TritonModelInstancesConfig,
     TritonModelOptimizationConfig,
-    TritonModelSchedulerConfig,
 )
 from .model_config import TritonModelConfigGenerator  # noqa: F401
 from .model_store import TritonModelStore  # noqa: F401

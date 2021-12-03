@@ -146,8 +146,7 @@ chart_name: str
 [ rtol: list[str] | default: ['1e-05'] ]
 
 # Maximum batch size allowed for inference.
-# A max_batch_size value of 0 indicates that batching is not allowed for the model
-[ max_batch_size: integer | default: 32 ]
+[ max_batch_size: integer | default: 1 ]
 
 # Map of features names and minimum shapes visible in the dataset.
 # Format: --min-shapes <input0>=D0,D1,..,DN .. <inputN>=D0,D1,..,DN
@@ -171,6 +170,9 @@ chart_name: str
 # Format: --dtypes <input0>=<dtype> <input1>=<dtype> <default_dtype>
 [ dtypes: list[str] ]
 
+# Triton batching used for model. Supported: disabled, static, dynamic
+[ batching: choice(disabled, static, dynamic) | default: static ]
+
 # Select Backend Accelerator used to serve the model.
 [ backend_accelerator: choice(none, amp, trt) ]
 
@@ -180,11 +182,11 @@ chart_name: str
 # Enable CUDA capture graph feature on the TensorRT backend.
 [ tensorrt_capture_cuda_graph: boolean ]
 
-# Batch sizes that the dynamic batcher should attempt to create.
+# Batch sizes that the dynamic batching should attempt to create.
 # In case --max-queue-delay-us is set and this parameter is not, default value will be --max-batch-size.
 [ preferred_batch_sizes: list[integer] ]
 
-# Max delay time that the dynamic batcher will wait to form a batch.
+# Max delay time that the dynamic batching will wait to form a batch.
 [ max_queue_delay_us: integer ]
 
 # Mapping of device kind to model instances count on a single device. Available devices: [cpu|gpu].

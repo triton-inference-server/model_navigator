@@ -134,7 +134,7 @@ class Summary:
             "Concurrency",
             "Model Config Path",
             "Instance Group",
-            "Dynamic Batcher Sizes",
+            "Dynamic Batching Sizes",
             "Satisfies Constraints",
         }
 

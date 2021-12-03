@@ -19,7 +19,12 @@ from model_navigator.common.config import TensorRTCommonConfig
 from model_navigator.converter import ComparatorConfig, ConversionConfig, DatasetProfileConfig
 from model_navigator.model import ModelConfig, ModelSignatureConfig
 from model_navigator.results import Status
-from model_navigator.triton import TritonModelInstancesConfig, TritonModelOptimizationConfig, TritonModelSchedulerConfig
+from model_navigator.triton import (
+    TritonDynamicBatchingConfig,
+    TritonModelInstancesConfig,
+    TritonModelOptimizationConfig,
+)
+from model_navigator.triton.config import TritonBatchingConfig
 
 
 @dataclass
@@ -33,7 +38,8 @@ class HelmChartGenerationResult:
     tensorrt_common_config: TensorRTCommonConfig
     comparator_config: ComparatorConfig
     dataset_profile_config: DatasetProfileConfig
+    batching_config: TritonBatchingConfig
     optimization_config: TritonModelOptimizationConfig
-    scheduler_config: TritonModelSchedulerConfig
+    dynamic_batching_config: TritonDynamicBatchingConfig
     instances_config: TritonModelInstancesConfig
     helm_chart_dir_path: Optional[Path]

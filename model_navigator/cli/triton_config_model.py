@@ -27,11 +27,12 @@ from model_navigator.cli.spec import (
     ModelConfigCli,
     ModelSignatureConfigCli,
     TensorRTCommonConfigCli,
+    TritonBatchingConfigCli,
     TritonClientConfigCli,
     TritonCustomBackendParametersConfigCli,
+    TritonDynamicBatchingConfigCli,
     TritonModelInstancesConfigCli,
     TritonModelOptimizationConfigCli,
-    TritonModelSchedulerConfigCli,
 )
 from model_navigator.cli.utils import exit_cli_command, is_cli_command
 from model_navigator.common.config import TensorRTCommonConfig
@@ -42,11 +43,12 @@ from model_navigator.results import ResultsStore, State, Status
 from model_navigator.triton import TritonClient, TritonModelStore
 from model_navigator.triton.config import (
     ModelControlMode,
+    TritonBatchingConfig,
     TritonClientConfig,
     TritonCustomBackendParametersConfig,
+    TritonDynamicBatchingConfig,
     TritonModelInstancesConfig,
     TritonModelOptimizationConfig,
-    TritonModelSchedulerConfig,
 )
 from model_navigator.utils import Workspace
 from model_navigator.utils.cli import common_options, options_from_config
@@ -60,8 +62,9 @@ class ConfigModelResult:
     status: Status
     model_config: ModelConfig
     model_version: str
+    batching_config: TritonBatchingConfig
     optimization_config: TritonModelOptimizationConfig
-    scheduler_config: TritonModelSchedulerConfig
+    dynamic_batching_config: TritonDynamicBatchingConfig
     instances_config: TritonModelInstancesConfig
     tensorrt_common_config: TensorRTCommonConfig
     model_dir_in_model_store: Optional[Path] = None
@@ -128,7 +131,8 @@ CMD_NAME = "triton-config-model"
 )
 @options_from_config(ModelSignatureConfig, ModelSignatureConfigCli)
 @options_from_config(TritonModelOptimizationConfig, TritonModelOptimizationConfigCli)
-@options_from_config(TritonModelSchedulerConfig, TritonModelSchedulerConfigCli)
+@options_from_config(TritonBatchingConfig, TritonBatchingConfigCli)
+@options_from_config(TritonDynamicBatchingConfig, TritonDynamicBatchingConfigCli)
 @options_from_config(TritonModelInstancesConfig, TritonModelInstancesConfigCli)
 @options_from_config(TritonCustomBackendParametersConfig, TritonCustomBackendParametersConfigCli)
 @options_from_config(TritonClientConfig, TritonClientConfigCli)
@@ -164,9 +168,10 @@ def config_model_on_triton_cmd(
 
     model_config = ModelConfig.from_dict(kwargs)
     signature_config = ModelSignatureConfig.from_dict(kwargs)
+    batching_config = TritonBatchingConfig.from_dict(kwargs)
     optimization_config = TritonModelOptimizationConfig.from_dict(kwargs)
     tensorrt_common_config = TensorRTCommonConfig.from_dict(kwargs)
-    scheduler_config = TritonModelSchedulerConfig.from_dict(kwargs)
+    dynamic_batching_config = TritonDynamicBatchingConfig.from_dict(kwargs)
     instances_config = TritonModelInstancesConfig.from_dict(kwargs)
     backend_parameters_config = TritonCustomBackendParametersConfig.from_dict(kwargs)
     triton_client_config = TritonClientConfig.from_dict(kwargs)
@@ -185,9 +190,10 @@ def config_model_on_triton_cmd(
                     "model_control_mode": model_control_mode,
                 },
                 **dataclasses.asdict(signature_config),
+                **dataclasses.asdict(batching_config),
                 **dataclasses.asdict(optimization_config),
                 **dataclasses.asdict(tensorrt_common_config),
-                **dataclasses.asdict(scheduler_config),
+                **dataclasses.asdict(dynamic_batching_config),
                 **dataclasses.asdict(instances_config),
                 **dataclasses.asdict(backend_parameters_config),
                 **dataclasses.asdict(triton_client_config),
@@ -209,9 +215,10 @@ def config_model_on_triton_cmd(
         model_dir_in_model_store = model_store.deploy_model(
             model=model,
             model_version=model_version,
+            batching_config=batching_config,
             optimization_config=optimization_config,
             tensorrt_common_config=tensorrt_common_config,
-            scheduler_config=scheduler_config,
+            dynamic_batching_config=dynamic_batching_config,
             instances_config=instances_config,
             backend_parameters_config=backend_parameters_config,
         )
@@ -241,9 +248,10 @@ def config_model_on_triton_cmd(
         status=status,
         model_config=model_config,
         model_version=model_version,
+        batching_config=batching_config,
         optimization_config=optimization_config,
         tensorrt_common_config=tensorrt_common_config,
-        scheduler_config=scheduler_config,
+        dynamic_batching_config=dynamic_batching_config,
         instances_config=instances_config,
         model_dir_in_model_store=model_dir_in_model_store,
     )

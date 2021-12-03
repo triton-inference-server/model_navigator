@@ -22,7 +22,12 @@ from model_navigator.model_analyzer.config import (
     ModelAnalyzerTritonConfig,
 )
 from model_navigator.results import Status
-from model_navigator.triton import TritonModelInstancesConfig, TritonModelOptimizationConfig, TritonModelSchedulerConfig
+from model_navigator.triton import (
+    TritonDynamicBatchingConfig,
+    TritonModelInstancesConfig,
+    TritonModelOptimizationConfig,
+)
+from model_navigator.triton.config import TritonBatchingConfig
 
 
 @dataclass
@@ -44,7 +49,8 @@ class AnalyzeResult:
     model_name: Optional[str] = None
     model_config_path: Optional[str] = None
     optimization_config: Optional[TritonModelOptimizationConfig] = None
-    scheduler_config: Optional[TritonModelSchedulerConfig] = None
+    batching_config: Optional[TritonBatchingConfig] = None
+    dynamic_batching_config: Optional[TritonDynamicBatchingConfig] = None
     instances_config: Optional[TritonModelInstancesConfig] = None
     results_path: Optional[Path] = None
     metrics_path: Optional[Path] = None

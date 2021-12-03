@@ -18,6 +18,12 @@ from typing import Dict, List, Optional
 from model_navigator.utils.config import BaseConfig
 
 
+class Batching(Enum):
+    DISABLED = "disabled"
+    STATIC = "static"
+    DYNAMIC = "dynamic"
+
+
 class ModelControlMode(Enum):
     EXPLICIT = "explicit"
     POLL = "poll"
@@ -41,6 +47,12 @@ class BackendAccelerator(Enum):
 
 
 @dataclass
+class TritonBatchingConfig(BaseConfig):
+    max_batch_size: int = 1
+    batching: Batching = Batching.STATIC
+
+
+@dataclass
 class TritonClientConfig(BaseConfig):
     server_url: str = "grpc://localhost:8001"
 
@@ -53,8 +65,7 @@ class TritonModelOptimizationConfig(BaseConfig):
 
 
 @dataclass
-class TritonModelSchedulerConfig(BaseConfig):
-    max_batch_size: int = 32
+class TritonDynamicBatchingConfig(BaseConfig):
     preferred_batch_sizes: Optional[List[int]] = None
     max_queue_delay_us: int = 0
 

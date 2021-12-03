@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,15 +15,17 @@ import logging
 
 # pytype: disable=import-error
 import tensorflow as tf
-# pytype: enable=import-error
 
 from model_navigator.exceptions import ModelNavigatorProfileException
+
+# pytype: enable=import-error
+
 
 LOGGER = logging.getLogger(__name__)
 
 
 def obtain_inputs(concrete_func):
-    """ Get input names for a TF2 ConcreteFunc """
+    """Get input names for a TF2 ConcreteFunc"""
     # inspired by https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/tools/saved_model_cli.py#L205
     if concrete_func.structured_input_signature:
         input_args, input_kwargs = concrete_func.structured_input_signature
@@ -44,15 +45,13 @@ def obtain_inputs(concrete_func):
 
 def get_default_profile(concrete_func, max_batch_size: int):
     shapes = {
-        'min': {},
-        'max': {},
+        "min": {},
+        "max": {},
     }
     if max_batch_size == 0:
         return None
     if max_batch_size < 0:
-        raise ModelNavigatorProfileException(
-            "Cannot construct default dataset profile: max_batch_size negative"
-        )
+        raise ModelNavigatorProfileException("Cannot construct default dataset profile: max_batch_size negative")
     for inp in concrete_func.inputs:
         min_shape = inp.shape.as_list()
         min_shape[0] = 1
@@ -65,14 +64,13 @@ def get_default_profile(concrete_func, max_batch_size: int):
                     f"too many dynamic axes in the model input {inp.name}: {inp.shape.as_list()}. "
                     "Please provide a full dataset profile instead of max_batch_size."
                 )
-        shapes['min'][inp.name] = min_shape
-        shapes['max'][inp.name] = max_shape
+        shapes["min"][inp.name] = min_shape
+        shapes["max"][inp.name] = max_shape
     return shapes
 
 
 def generate_inputs(concrete_func, shapes, value_ranges=None):
-    """ Generate random input data for `concrete_func`.
-    """
+    """Generate random input data for `concrete_func`."""
     func_inputs = {v: k for k, v in obtain_inputs(concrete_func).items()}
     if not value_ranges:
         value_ranges = {}
@@ -103,16 +101,13 @@ def generate_inputs(concrete_func, shapes, value_ranges=None):
                 else:
                     sample_inp_shape.append(x)
             ranges = value_ranges[func_inputs[inp.name]]
-            sample.append(tf.random.uniform(tuple(sample_inp_shape),
-                                            minval=ranges[0],
-                                            maxval=ranges[1]))
+            sample.append(tf.random.uniform(tuple(sample_inp_shape), minval=ranges[0], maxval=ranges[1]))
         return sample
 
-    inputs = [
-        generate_sample(shape) for shape in shapes.values()
-    ]
+    inputs = [generate_sample(shape) for shape in shapes.values()]
 
     def _gen():
         for inp in inputs:
             yield tuple(inp)
+
     return _gen

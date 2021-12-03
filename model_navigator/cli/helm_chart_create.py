@@ -28,9 +28,10 @@ from model_navigator.cli.spec import (
     ModelConfigCli,
     ModelSignatureConfigCli,
     TensorRTCommonConfigCli,
+    TritonBatchingConfigCli,
+    TritonDynamicBatchingConfigCli,
     TritonModelInstancesConfigCli,
     TritonModelOptimizationConfigCli,
-    TritonModelSchedulerConfigCli,
 )
 from model_navigator.cli.utils import exit_cli_command, is_cli_command
 from model_navigator.common.config import TensorRTCommonConfig
@@ -44,9 +45,10 @@ from model_navigator.log import init_logger, log_dict
 from model_navigator.model import ModelConfig, ModelSignatureConfig
 from model_navigator.results import ResultsStore, State, Status
 from model_navigator.triton.config import (
+    TritonBatchingConfig,
+    TritonDynamicBatchingConfig,
     TritonModelInstancesConfig,
     TritonModelOptimizationConfig,
-    TritonModelSchedulerConfig,
 )
 from model_navigator.utils.cli import common_options, options_from_config
 from model_navigator.utils.workspace import Workspace
@@ -71,8 +73,9 @@ LOGGER = logging.getLogger("helm_chart_create")
 @options_from_config(TensorRTCommonConfig, TensorRTCommonConfigCli)
 @options_from_config(ComparatorConfig, ComparatorConfigCli)
 @options_from_config(DatasetProfileConfig, DatasetProfileConfigCli)
+@options_from_config(TritonBatchingConfig, TritonBatchingConfigCli)
 @options_from_config(TritonModelOptimizationConfig, TritonModelOptimizationConfigCli)
-@options_from_config(TritonModelSchedulerConfig, TritonModelSchedulerConfigCli)
+@options_from_config(TritonDynamicBatchingConfig, TritonDynamicBatchingConfigCli)
 @options_from_config(TritonModelInstancesConfig, TritonModelInstancesConfigCli)
 @click.pass_context
 def helm_chart_create_cmd(
@@ -116,8 +119,9 @@ def helm_chart_create_cmd(
     tensorrt_common_config = TensorRTCommonConfig.from_dict(kwargs)
     comparator_config = ComparatorConfig.from_dict(kwargs)
     dataset_profile_config = DatasetProfileConfig.from_dict(kwargs)
+    batching_config = TritonBatchingConfig.from_dict(kwargs)
     optimization_config = TritonModelOptimizationConfig.from_dict(kwargs)
-    scheduler_config = TritonModelSchedulerConfig.from_dict(kwargs)
+    dynamic_batching_config = TritonDynamicBatchingConfig.from_dict(kwargs)
     instances_config = TritonModelInstancesConfig.from_dict(kwargs)
 
     if src_model_config.model_format:
@@ -144,8 +148,9 @@ def helm_chart_create_cmd(
                 **dataclasses.asdict(tensorrt_common_config),
                 **dataclasses.asdict(comparator_config),
                 **dataclasses.asdict(dataset_profile_config),
+                **dataclasses.asdict(batching_config),
                 **dataclasses.asdict(optimization_config),
-                **dataclasses.asdict(scheduler_config),
+                **dataclasses.asdict(dynamic_batching_config),
                 **dataclasses.asdict(instances_config),
                 "charts_repository": charts_repository,
                 "chart_name": chart_name,
@@ -175,8 +180,9 @@ def helm_chart_create_cmd(
             tensorrt_common_config=tensorrt_common_config,
             comparator_config=comparator_config,
             dataset_profile_config=dataset_profile_config,
+            batching_config=batching_config,
             optimization_config=optimization_config,
-            scheduler_config=scheduler_config,
+            dynamic_batching_config=dynamic_batching_config,
             instances_config=instances_config,
             output_path=output_path,
             chart_version=chart_version,
@@ -195,8 +201,9 @@ def helm_chart_create_cmd(
             tensorrt_common_config=tensorrt_common_config,
             comparator_config=comparator_config,
             dataset_profile_config=dataset_profile_config,
+            batching_config=batching_config,
             optimization_config=optimization_config,
-            scheduler_config=scheduler_config,
+            dynamic_batching_config=dynamic_batching_config,
             instances_config=instances_config,
             helm_chart_dir_path=None,
         )

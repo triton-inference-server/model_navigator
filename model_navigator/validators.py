@@ -20,6 +20,7 @@ from typing import Any, Dict, List
 from model_navigator.converter import ConversionLaunchMode
 from model_navigator.exceptions import ModelNavigatorException
 from model_navigator.log import log_dict
+from model_navigator.triton.config import Batching
 from model_navigator.utils.env import EnvironmentState, get_environment_state
 
 LOGGER = logging.getLogger(__name__)
@@ -33,6 +34,23 @@ class BaseValidator(ABC):
 
 class CommandValidator(BaseValidator):
     commands_names: List[str]
+
+
+class ModelNavigatorBatchingConfiguration(CommandValidator):
+    commands_names = ["triton-config-model"]
+
+    def validate(self, environment_state: EnvironmentState, configuration: Dict[str, Any]):
+        max_batch_size = configuration["max_batch_size"]
+        batching = configuration["batching"]
+
+        LOGGER.debug(
+            "ModelNavigatorBatchingConfiguration " f"\nbatching={batching} " f"\nmax_batch_size={max_batch_size} "
+        )
+        if batching != Batching.DISABLED and max_batch_size == 0:
+            raise ModelNavigatorException(
+                f"max_batch_size should be > 0 if batching is enabled. "
+                f"\nPlease use batching={Batching.DISABLED.value} to disable batching for model."
+            )
 
 
 class ModelNavigatorDockerContainerShouldHaveMountedWorkspaceDir(CommandValidator):

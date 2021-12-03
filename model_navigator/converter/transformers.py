@@ -14,26 +14,22 @@
 import abc
 import logging
 import shutil
-import sys
 from pathlib import Path
 from typing import List, Optional
 
-import sh
-
-import model_navigator.exceptions as nav_exc
 from model_navigator.common.config import TensorRTCommonConfig
 from model_navigator.converter.config import ComparatorConfig, ConversionConfig, DatasetProfileConfig
 from model_navigator.converter.polygraphy.transformers import onnx2trt
 from model_navigator.converter.pyt.transformers import ts2onnx
 from model_navigator.converter.results import ConversionResult
 from model_navigator.converter.tf2onnx.transformers import tf2onnx, tfopt
+from model_navigator.converter.tf_trt.transformers import tf2tftrt
 from model_navigator.converter.utils import KEY_VALUE_SEP, PARAMETERS_SEP, extend_model_name
 from model_navigator.exceptions import ModelNavigatorConverterException
 from model_navigator.model import Model, ModelConfig, ModelSignatureConfig
 from model_navigator.results import State, Status
 from model_navigator.tensor import TensorSpec
 from model_navigator.utils.config import YamlConfigFile
-from model_navigator.cli.spec import serialize_shapes, serialize_value_ranges
 
 LOGGER = logging.getLogger(__name__)
 
@@ -398,40 +394,19 @@ class TFSavedModel2TFTRTTransform(BaseConvertCommand):
     def transform(self, executor, model: ModelConfig, *, verbose: int = 0) -> ConversionResult:
         LOGGER.debug(f"Running command {self.name} on {model.model_path}")
 
-        input_path = model.model_path.as_posix()
-        output_path = executor.get_output_path(model, self).as_posix()
+        output_path = executor.get_output_path(model, self)
         log_path = Path(f"{output_path}.log")
-        prec = self._conversion_config.tensorrt_precision
 
-        try:
-            args = []
-            if self._dataset_profile:
-                if self._dataset_profile.max_shapes:
-                    args += [
-                        "--trt-max-shapes",
-                        *serialize_shapes(None, value=self._dataset_profile.max_shapes),
-                    ]
-                if self._dataset_profile.min_shapes:
-                    args += [
-                        "--trt-min-shapes",
-                        *serialize_shapes(None, value=self._dataset_profile.min_shapes),
-                    ]
-                if self._dataset_profile.value_ranges:
-                    args += ["--value-ranges", *serialize_value_ranges(None, value=self._dataset_profile.value_ranges)]
-
-            sh.python3(
-                '-mmodel_navigator.converter.tf_trt.tf_trt_convert',
-                # order matters here! Positional args go first.
-                input_path,
-                output_path,
-                *args,
-                precision=prec.value if prec else "FP32",
-                max_workspace_size=self._tensorrt_common_config.tensorrt_max_workspace_size or 0,
-                verbose=bool(verbose),
-                _err=sys.stderr,
-            )
-        except sh.ErrorReturnCode as exc:
-            raise nav_exc.ModelNavigatorConverterCommandException(exc.stderr.decode())
+        tf2tftrt(
+            input_path=model.model_path.as_posix(),
+            output_path=output_path,
+            log_path=log_path,
+            precision=self._conversion_config.tensorrt_precision,
+            dataset_profile=self._dataset_profile,
+            max_workspace_size=self._tensorrt_common_config.tensorrt_max_workspace_size,
+            max_batch_size=self._comparator_config.max_batch_size if self._comparator_config else None,
+            verbose=bool(verbose),
+        )
 
         model_name = extend_model_name(model.model_name, transform_name=self.name)
         return ConversionResult(

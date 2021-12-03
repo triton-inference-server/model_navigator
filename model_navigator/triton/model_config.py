@@ -17,6 +17,7 @@ from typing import Optional, Union
 
 from google.protobuf import text_format  # pytype: disable=pyi-error
 from google.protobuf.text_format import MessageToString  # pytype: disable=pyi-error
+from tritonclient.grpc import model_config_pb2
 
 from model_navigator.common.config import TensorRTCommonConfig
 from model_navigator.model import Model, ModelSignatureConfig
@@ -25,12 +26,14 @@ from model_navigator.triton.backends.base import BackendConfiguratorSelector
 from model_navigator.triton.client import client_utils, grpc_client
 from model_navigator.triton.config import (
     BackendAccelerator,
+    Batching,
     DeviceKind,
     TensorRTOptPrecision,
+    TritonBatchingConfig,
     TritonCustomBackendParametersConfig,
+    TritonDynamicBatchingConfig,
     TritonModelInstancesConfig,
     TritonModelOptimizationConfig,
-    TritonModelSchedulerConfig,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -40,8 +43,8 @@ class ModelConfigParser:
     @classmethod
     def parse(cls, *, config_path: Path, external_model_path: Optional[Path] = None, config_cls):
         INT_DATATYPE2STR_DATATYPE = {
-            getattr(grpc_client.model_config_pb2, attr_name): attr_name.split("_")[1]  # remove TYPE_ prefix
-            for attr_name in vars(grpc_client.model_config_pb2)
+            getattr(model_config_pb2, attr_name): attr_name.split("_")[1]  # remove TYPE_ prefix
+            for attr_name in vars(model_config_pb2)
             if attr_name.startswith("TYPE_")
         }
 
@@ -49,7 +52,7 @@ class ModelConfigParser:
 
         with config_path.open("r") as config_file:
             payload = config_file.read()
-            model_config = text_format.Parse(payload, grpc_client.model_config_pb2.ModelConfig())
+            model_config = text_format.Parse(payload, model_config_pb2.ModelConfig())
 
         model_name = model_config.name
 
@@ -83,6 +86,17 @@ class ModelConfigParser:
                 "tensorrt_max_workspace_size": max_workspace_size if max_workspace_size else None
             }
 
+        if model_config.dynamic_batching.preferred_batch_size:
+            batching = Batching.DYNAMIC
+        elif model_config.max_batch_size > 0:
+            batching = Batching.STATIC
+        else:
+            batching = Batching.DISABLED
+
+        batching_config = TritonBatchingConfig(
+            max_batch_size=model_config.max_batch_size,
+            batching=batching,
+        )
         optimization_config = TritonModelOptimizationConfig(
             **optimization_config_kwargs,
             tensorrt_capture_cuda_graph=(
@@ -92,8 +106,7 @@ class ModelConfigParser:
 
         tensorrt_common_config = TensorRTCommonConfig(**tensorrt_common_config_kwargs)
 
-        scheduler_config = TritonModelSchedulerConfig(
-            max_batch_size=model_config.max_batch_size,
+        dynamic_batching_config = TritonDynamicBatchingConfig(
             preferred_batch_sizes=list(model_config.dynamic_batching.preferred_batch_size) or None,
             max_queue_delay_us=model_config.dynamic_batching.max_queue_delay_microseconds,
         )
@@ -137,9 +150,10 @@ class ModelConfigParser:
 
         return config_cls(
             model=model,
+            batching_config=batching_config,
             optimization_config=optimization_config,
+            dynamic_batching_config=dynamic_batching_config,
             tensorrt_common_config=tensorrt_common_config,
-            scheduler_config=scheduler_config,
             instances_config=instances_config,
             backend_parameters_config=backend_parameters_config,
         )
@@ -150,17 +164,19 @@ class TritonModelConfigGenerator:
         self,
         model: Model,
         *,
+        batching_config: TritonBatchingConfig,
         optimization_config: TritonModelOptimizationConfig,
         tensorrt_common_config: TensorRTCommonConfig,
-        scheduler_config: TritonModelSchedulerConfig,
+        dynamic_batching_config: TritonDynamicBatchingConfig,
         instances_config: TritonModelInstancesConfig,
         backend_parameters_config: TritonCustomBackendParametersConfig,
         target_triton_version: Optional[str] = None,
     ):
         self._model = model
+        self._batching_config = batching_config
         self._optimization_config = optimization_config
         self._tensorrt_common_config = tensorrt_common_config
-        self._scheduler_config = scheduler_config
+        self._dynamic_batching_config = dynamic_batching_config
         self._instances_config = instances_config
         self._backend_parameters_config = backend_parameters_config
         self._target_triton_version = target_triton_version
@@ -168,6 +184,10 @@ class TritonModelConfigGenerator:
     @property
     def model(self):
         return self._model
+
+    @property
+    def batching_config(self):
+        return self._batching_config
 
     @property
     def optimization_config(self):
@@ -178,8 +198,8 @@ class TritonModelConfigGenerator:
         return self._tensorrt_common_config
 
     @property
-    def scheduler_config(self):
-        return self._scheduler_config
+    def dynamic_batching_config(self):
+        return self._dynamic_batching_config
 
     @property
     def instances_config(self):
@@ -201,9 +221,10 @@ class TritonModelConfigGenerator:
         backend_configurator.update_config_for_model(
             model_config,
             self._model,
+            batching_config=self._batching_config,
             optimization_config=self._optimization_config,
             tensorrt_common_config=self._tensorrt_common_config,
-            scheduler_config=self._scheduler_config,
+            dynamic_batching_config=self._dynamic_batching_config,
             instances_config=self._instances_config,
             backend_parameters_config=self._backend_parameters_config,
         )

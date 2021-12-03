@@ -21,6 +21,7 @@ class Resource:
     ONNX = "ONNX"
     PYTORCH = "PyTorch"
     TENSORFLOW = "TensorFlow"
+    TENSORFLOW_TRT = "TensorRT in TensorFlow"
     TENSORRT = "TensorRT"
     TRITON_SERVER = "Triton Inference Server"
     AMP_ACCELERATOR = "Automatic FP16 Optimization"
@@ -36,6 +37,7 @@ FORMAT_RESOURCES = {
     Resource.PYTORCH: ResourceItem(name=Resource.PYTORCH, link="https://github.com/pytorch/pytorch"),
     Resource.TENSORFLOW: ResourceItem(name=Resource.TENSORFLOW, link="https://github.com/tensorflow/tensorflow"),
     Resource.TENSORRT: ResourceItem(name=Resource.TENSORRT, link="https://github.com/NVIDIA/TensorRT"),
+    Resource.TENSORFLOW_TRT: ResourceItem(name=Resource.TENSORFLOW_TRT, link="https://github.com/tensorflow/tensorrt"),
 }
 
 TRITON_RESOURCES = {
@@ -55,6 +57,7 @@ TRITON_RESOURCES = {
 
 FORMAT2RESOURCE = {
     Format.TF_SAVEDMODEL: Resource.TENSORFLOW,
+    Format.TF_TRT: Resource.TENSORFLOW_TRT,
     Format.ONNX: Resource.ONNX,
     Format.TENSORRT: Resource.TENSORRT,
     Format.TORCHSCRIPT: Resource.PYTORCH,

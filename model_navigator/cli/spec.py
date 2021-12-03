@@ -303,6 +303,11 @@ class TritonClientConfigCli:
     server_url = CliSpec(help="Inference server URL in format protocol://host[:port]")
 
 
+class TritonBatchingConfigCli:
+    max_batch_size = CliSpec(help="Maximum batch size allowed for inference.")
+    batching = CliSpec(help="Triton batching used for model. Supported: disabled, static, dynamic")
+
+
 class TritonModelOptimizationConfigCli:
     backend_accelerator = CliSpec(help="Select Backend Accelerator used to serve the model.")
     # TODO: ensure that it works for also for ONNX backend
@@ -310,16 +315,12 @@ class TritonModelOptimizationConfigCli:
     tensorrt_capture_cuda_graph = CliSpec(help="Enable CUDA capture graph feature on the TensorRT backend.")
 
 
-class TritonModelSchedulerConfigCli:
-    max_batch_size = CliSpec(
-        help="Maximum batch size allowed for inference. "
-        "\nA max_batch_size value of 0 indicates that batching is not allowed for the model"
-    )
+class TritonDynamicBatchingConfigCli:
     preferred_batch_sizes = CliSpec(
-        help="Batch sizes that the dynamic batcher should attempt to create. "
+        help="Batch sizes that the dynamic batching should attempt to create. "
         "\nIn case --max-queue-delay-us is set and this parameter is not, default value will be --max-batch-size."
     )
-    max_queue_delay_us = CliSpec(help="Max delay time that the dynamic batcher will wait to form a batch.")
+    max_queue_delay_us = CliSpec(help="Max delay time that the dynamic batching will wait to form a batch.")
 
 
 def _serialize_engine_count(param, value: Dict[DeviceKind, int]):
@@ -419,7 +420,7 @@ class ComparatorConfigCli:
         parse_and_verify_callback=_parse_tolerance_parameters,
         serialize_default_callback=_serialize_tolerance_parameters,
     )
-    max_batch_size = CliSpec(help=TritonModelSchedulerConfigCli.max_batch_size.help)
+    max_batch_size = CliSpec(help=TritonBatchingConfigCli.max_batch_size.help)
 
 
 def _serialize_objectives(param, value: Dict[str, int]):

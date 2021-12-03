@@ -84,6 +84,12 @@ def log_dict(title: str, dict_: Dict[str, Any]):
         LOGGER.info(f"\t{key} = {value}")
 
 
+def print_dict(title: str, dict_: Dict[str, Any]):
+    print(title)
+    for key, value in dict_.items():
+        print(f"\t{key} = {value}")
+
+
 def dump_sh_logs(name, logs, limit: Optional[int] = None):
     LOGGER = logging.getLogger(__name__)
     lines = logs.decode("utf-8").split("\n")

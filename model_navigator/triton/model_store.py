@@ -21,10 +21,11 @@ from model_navigator.exceptions import ModelNavigatorDeployerException
 from model_navigator.model import Model
 from model_navigator.triton.backends.base import BackendConfiguratorSelector
 from model_navigator.triton.config import (
+    TritonBatchingConfig,
     TritonCustomBackendParametersConfig,
+    TritonDynamicBatchingConfig,
     TritonModelInstancesConfig,
     TritonModelOptimizationConfig,
-    TritonModelSchedulerConfig,
 )
 from model_navigator.triton.model_config import TritonModelConfigGenerator
 
@@ -45,25 +46,29 @@ class TritonModelStore:
         *,
         model: Model,
         model_version: str,
+        batching_config: TritonBatchingConfig,
         optimization_config: TritonModelOptimizationConfig,
         tensorrt_common_config: TensorRTCommonConfig,
-        scheduler_config: TritonModelSchedulerConfig,
+        dynamic_batching_config: TritonDynamicBatchingConfig,
         instances_config: TritonModelInstancesConfig,
         backend_parameters_config: TritonCustomBackendParametersConfig,
     ) -> Path:
 
         triton_model_config_generator = TritonModelConfigGenerator(
             model=model,
+            batching_config=batching_config,
             optimization_config=optimization_config,
             tensorrt_common_config=tensorrt_common_config,
-            scheduler_config=scheduler_config,
+            dynamic_batching_config=dynamic_batching_config,
             instances_config=instances_config,
             backend_parameters_config=backend_parameters_config,
             target_triton_version=self._target_triton_version,
         )
         LOGGER.debug(
-            f"Deploying model {model.path} in Triton Model Store {self._model_store_path} "
-            f"with optimization config: {optimization_config} and scheduler_config: {scheduler_config}"
+            f"Deploying model {model.path} in Triton Model Store {self._model_store_path} with: "
+            f"\nbatching config: {batching_config}"
+            f"\noptimization config: {optimization_config}"
+            f"\ndynamic batching config: {dynamic_batching_config}"
         )
 
         # Order of model repository files might be important while using Triton server in polling model_control_mode

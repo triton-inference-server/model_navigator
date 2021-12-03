@@ -196,8 +196,7 @@ model_path: path
 [ rtol: list[str] | default: ['1e-05'] ]
 
 # Maximum batch size allowed for inference.
-# A max_batch_size value of 0 indicates that batching is not allowed for the model
-[ max_batch_size: integer | default: 32 ]
+[ max_batch_size: integer | default: 1 ]
 
 # Map of features names and minimum shapes visible in the dataset.
 # Format: --min-shapes <input0>=D0,D1,..,DN .. <inputN>=D0,D1,..,DN
@@ -229,12 +228,8 @@ model_path: path
 # Format: --engine-count-per-device <kind>=<count>
 [ engine_count_per_device: list[str] ]
 
-# Batch sizes that the dynamic batcher should attempt to create.
-# In case --max-queue-delay-us is set and this parameter is not, default value will be --max-batch-size.
-[ preferred_batch_sizes: list[integer] ]
-
-# Max delay time that the dynamic batcher will wait to form a batch.
-[ max_queue_delay_us: integer ]
+# Triton batching used for model. Supported: disabled, static, dynamic
+[ batching: choice(disabled, static, dynamic) | default: static ]
 
 # The maximum GPU memory in bytes the model can use temporarily during execution for TensorRT acceleration.
 [ tensorrt_max_workspace_size: integer ]

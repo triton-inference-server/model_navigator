@@ -19,12 +19,12 @@ from model_navigator.exceptions import ModelNavigatorDeployerException
 from model_navigator.model import Model
 from model_navigator.triton import (
     DeviceKind,
+    TritonDynamicBatchingConfig,
     TritonModelInstancesConfig,
     TritonModelOptimizationConfig,
-    TritonModelSchedulerConfig,
 )
 from model_navigator.triton.client import grpc_client
-from model_navigator.triton.config import TritonCustomBackendParametersConfig
+from model_navigator.triton.config import Batching, TritonBatchingConfig, TritonCustomBackendParametersConfig
 from model_navigator.utils.formats import FORMAT2SUFFIX
 
 LOGGER = logging.getLogger(__name__)
@@ -44,10 +44,11 @@ class BaseBackendConfigurator:
         self,
         model_config: ModelConfigProtobufType,
         model: Model,
+        batching_config: TritonBatchingConfig,
         *,
         optimization_config: Optional[TritonModelOptimizationConfig] = None,
+        dynamic_batching_config: Optional[TritonDynamicBatchingConfig] = None,
         tensorrt_common_config: Optional[TensorRTCommonConfig] = None,
-        scheduler_config: Optional[TritonModelSchedulerConfig] = None,
         instances_config: Optional[TritonModelInstancesConfig] = None,
         backend_parameters_config: Optional[TritonCustomBackendParametersConfig] = None,
     ):
@@ -57,12 +58,16 @@ class BaseBackendConfigurator:
         if self.platform_name is not None:
             model_config.platform = self.platform_name
         self._extract_signature(model_config, model)
+        self._set_batching(
+            model_config,
+            batching_config=batching_config,
+            dynamic_batching_config=dynamic_batching_config or TritonDynamicBatchingConfig(),
+        )
         self._set_backend_acceleration(
             model_config,
             optimization_config or TritonModelOptimizationConfig(),
             tensorrt_common_config or TensorRTCommonConfig(),
         )
-        self._set_scheduler(model_config, scheduler_config=scheduler_config or TritonModelSchedulerConfig())
         self._set_instance_group(model_config, instances_config=instances_config or TritonModelInstancesConfig())
         self._set_custom_backend_parameters(
             model_config, backend_parameters_config or TritonCustomBackendParametersConfig()
@@ -80,19 +85,29 @@ class BaseBackendConfigurator:
     ):
         pass
 
-    def _set_scheduler(self, model_config, scheduler_config: TritonModelSchedulerConfig):
-        model_config.max_batch_size = scheduler_config.max_batch_size
-        if any([scheduler_config.preferred_batch_sizes, scheduler_config.max_queue_delay_us > 0]):
-            model_support_batching = scheduler_config.max_batch_size > 0
-            if model_support_batching:
-                model_config.dynamic_batching.max_queue_delay_microseconds = max(
-                    int(scheduler_config.max_queue_delay_us), 0
+    def _set_batching(
+        self, model_config, batching_config: TritonBatchingConfig, dynamic_batching_config: TritonDynamicBatchingConfig
+    ):
+        if batching_config.batching == Batching.DISABLED:
+            model_config.max_batch_size = 0
+            LOGGER.debug("Batching for model is disabled. Supported request batch size=1.")
+            return
+
+        model_config.max_batch_size = batching_config.max_batch_size
+        if batching_config.batching == Batching.DYNAMIC:
+
+            if dynamic_batching_config.max_queue_delay_us > 0:
+                model_config.dynamic_batching.max_queue_delay_microseconds = int(
+                    dynamic_batching_config.max_queue_delay_us
                 )
-                preferred_batch_sizes = scheduler_config.preferred_batch_sizes or [scheduler_config.max_batch_size]
-                for preferred_batch_size in preferred_batch_sizes:
+
+            if dynamic_batching_config.preferred_batch_sizes:
+                for preferred_batch_size in dynamic_batching_config.preferred_batch_sizes:
                     model_config.dynamic_batching.preferred_batch_size.append(int(preferred_batch_size))
             else:
-                LOGGER.warning("Ignore dynamic batching parameters as model doesn't support batching")
+                model_config.dynamic_batching.preferred_batch_size.append(int(batching_config.max_batch_size))
+        else:
+            LOGGER.debug("Default batching used")
 
     def _set_instance_group(self, model_config, instances_config: TritonModelInstancesConfig):
         for kind, count in instances_config.engine_count_per_device.items():

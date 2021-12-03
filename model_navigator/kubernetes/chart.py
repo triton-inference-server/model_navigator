@@ -31,9 +31,10 @@ from model_navigator.kubernetes.results import HelmChartGenerationResult
 from model_navigator.model import ModelConfig, ModelSignatureConfig
 from model_navigator.results import State, Status
 from model_navigator.triton.config import (
+    TritonBatchingConfig,
+    TritonDynamicBatchingConfig,
     TritonModelInstancesConfig,
     TritonModelOptimizationConfig,
-    TritonModelSchedulerConfig,
 )
 from model_navigator.utils.config import YamlConfigFile
 from model_navigator.utils.formats import FORMAT2SUFFIX
@@ -57,8 +58,9 @@ class ChartGenerator:
         tensorrt_common_config: TensorRTCommonConfig,
         comparator_config: ComparatorConfig,
         dataset_profile_config: DatasetProfileConfig,
+        batching_config: TritonBatchingConfig,
         optimization_config: TritonModelOptimizationConfig,
-        scheduler_config: TritonModelSchedulerConfig,
+        dynamic_batching_config: TritonDynamicBatchingConfig,
         instances_config: TritonModelInstancesConfig,
         output_path: Path,
         framework: Type[Union[PyTorch, TensorFlow2]],
@@ -72,7 +74,7 @@ class ChartGenerator:
             triton_docker_image=self._triton_docker_image,
             framework=framework,
             navigator_cmds=self._navigator_commands(src_model=src_model, conversion_config=conversion_config),
-            evaluator_cmds=self._evaluator_commands(src_model=src_model, scheduler_config=scheduler_config),
+            evaluator_cmds=self._evaluator_commands(src_model=src_model, batching_config=batching_config),
             create_dockerfile=True,
         )
 
@@ -87,8 +89,9 @@ class ChartGenerator:
             config_file.save_config(src_model_signature_config)
             config_file.save_config(comparator_config)
             config_file.save_config(dataset_profile_config)
+            config_file.save_config(batching_config)
             config_file.save_config(optimization_config)
-            config_file.save_config(scheduler_config)
+            config_file.save_config(dynamic_batching_config)
             config_file.save_config(instances_config)
             config_file.save_config(tensorrt_common_config)
 
@@ -107,8 +110,9 @@ class ChartGenerator:
             tensorrt_common_config=tensorrt_common_config,
             comparator_config=comparator_config,
             dataset_profile_config=dataset_profile_config,
+            batching_config=batching_config,
             optimization_config=optimization_config,
-            scheduler_config=scheduler_config,
+            dynamic_batching_config=dynamic_batching_config,
             instances_config=instances_config,
             helm_chart_dir_path=output_path,
         )
@@ -150,7 +154,7 @@ class ChartGenerator:
 
         return commands
 
-    def _evaluator_commands(self, src_model: ModelConfig, scheduler_config: TritonModelSchedulerConfig) -> List[str]:
+    def _evaluator_commands(self, src_model: ModelConfig, batching_config: TritonBatchingConfig) -> List[str]:
         server_url = f"http://{src_model.model_name.lower().replace('_', '-')}-{InferenceChartCreator.NAME}:8000"
         commands = [
             rf"""
@@ -159,7 +163,7 @@ class ChartGenerator:
                 --server-url  {server_url} \
                 --evaluation-mode static \
                 --evaluation-mode dynamic \
-                --max-batch-size {scheduler_config.max_batch_size} \
+                --max-batch-size {batching_config.max_batch_size} \
                 --model-version {src_model.model_version} \
                 --verbose
             """,

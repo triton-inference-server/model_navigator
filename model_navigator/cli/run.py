@@ -33,9 +33,9 @@ from model_navigator.cli.spec import (
     ModelSignatureConfigCli,
     PerfMeasurementConfigCli,
     TensorRTCommonConfigCli,
+    TritonBatchingConfigCli,
     TritonCustomBackendParametersConfigCli,
     TritonModelInstancesConfigCli,
-    TritonModelSchedulerConfigCli,
 )
 from model_navigator.cli.triton_config_model import config_model_on_triton_cmd
 from model_navigator.cli.triton_evaluate_model import triton_evaluate_model_cmd
@@ -60,9 +60,9 @@ from model_navigator.model_analyzer import (
 from model_navigator.perf_analyzer import PerfMeasurementConfig
 from model_navigator.results import State
 from model_navigator.triton import (
+    TritonBatchingConfig,
     TritonClientConfig,
     TritonModelInstancesConfig,
-    TritonModelSchedulerConfig,
     TritonServerConfig,
     TritonServerFactory,
 )
@@ -94,7 +94,7 @@ class RunTritonConfigCli:
 @cli.options_from_config(DatasetProfileConfig, DatasetProfileConfigCli)
 @cli.options_from_config(TritonCustomBackendParametersConfig, TritonCustomBackendParametersConfigCli)
 @cli.options_from_config(TritonModelInstancesConfig, TritonModelInstancesConfigCli)
-@cli.options_from_config(TritonModelSchedulerConfig, TritonModelSchedulerConfigCli)
+@cli.options_from_config(TritonBatchingConfig, TritonBatchingConfigCli)
 @cli.options_from_config(TensorRTCommonConfig, TensorRTCommonConfigCli)
 @cli.options_from_config(RunTritonConfig, RunTritonConfigCli)
 @cli.options_from_config(ModelAnalyzerProfileConfig, ModelAnalyzerProfileConfigCli)
@@ -150,7 +150,7 @@ def run_cmd(
     comparator_config = ComparatorConfig.from_dict(kwargs)
     dataset_profile_config = DatasetProfileConfig.from_dict(kwargs)
     instance_config = TritonModelInstancesConfig.from_dict(kwargs)
-    scheduler_config = TritonModelSchedulerConfig.from_dict(kwargs)
+    batching_config = TritonBatchingConfig.from_dict(kwargs)
     backend_config = TritonCustomBackendParametersConfig.from_dict(kwargs)
     triton_config = RunTritonConfig.from_dict(kwargs)
     profile_config = ModelAnalyzerProfileConfig.from_dict(kwargs)
@@ -180,7 +180,7 @@ def run_cmd(
             **dataclass2dict(comparator_config),
             **dataclass2dict(src_model_signature_config),
             **dataclass2dict(dataset_profile_config),
-            **dataclass2dict(scheduler_config),
+            **dataclass2dict(batching_config),
             **dataclass2dict(instance_config),
             **dataclass2dict(backend_config),
             **dataclass2dict(triton_config),
@@ -246,6 +246,7 @@ def run_cmd(
                 LOGGER.info(f"Running triton model configurator for {variant.name}")
                 config_result = ctx.forward(
                     config_model_on_triton_cmd,
+                    **dataclass2dict(batching_config),
                     **dataclass2dict(instance_config),
                     **dataclass2dict(model_to_deploy_config),
                     **dataclass2dict(variant.optimization_config),
@@ -347,7 +348,7 @@ def run_cmd(
             chart_name=analyze_result.model_config_path,
             **dataclass2dict(selected_conversion_set_config),
             **dataclass2dict(analyze_result.optimization_config),
-            **dataclass2dict(analyze_result.scheduler_config),
+            **dataclass2dict(analyze_result.batching_config),
             **dataclass2dict(analyze_result.instances_config),
             **dataclass2dict(tensorrt_common_config),
         )

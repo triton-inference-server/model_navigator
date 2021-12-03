@@ -17,7 +17,12 @@ limitations under the License.
 # Changelog
 
 ## unreleased
+- Updated NVIDIA containers defaults to 21.10
 - Fixed generating profiling data when `dtypes` are not passed
+- Conversion related:
+  - [Experimental] Added support for TF-TRT conversion
+- Configuration Model on Triton related
+  - Added possibility to select batching mode - default, dynamic and disabled options supported
 - fixes and improvements
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
@@ -37,7 +42,6 @@ limitations under the License.
     - missing support for models without batching support
     - no verification of conversion results for conversions: TF -> ONNX, TorchScript -> ONNX
     - possible to define a single profile for TensorRT
-
 
 ## 0.2.3 (2021-11-10)
 - Updated NVIDIA containers defaults to 21.09
