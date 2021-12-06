@@ -89,12 +89,12 @@ class RunTritonConfigCli:
 @cli.common_options
 @cli.options_from_config(ModelConfig, ModelConfigCli)
 @cli.options_from_config(ModelSignatureConfig, ModelSignatureConfigCli)
+@cli.options_from_config(TritonBatchingConfig, TritonBatchingConfigCli)
 @cli.options_from_config(ConversionSetConfig, ConversionSetConfigCli)
 @cli.options_from_config(ComparatorConfig, ComparatorConfigCli)
 @cli.options_from_config(DatasetProfileConfig, DatasetProfileConfigCli)
 @cli.options_from_config(TritonCustomBackendParametersConfig, TritonCustomBackendParametersConfigCli)
 @cli.options_from_config(TritonModelInstancesConfig, TritonModelInstancesConfigCli)
-@cli.options_from_config(TritonBatchingConfig, TritonBatchingConfigCli)
 @cli.options_from_config(TensorRTCommonConfig, TensorRTCommonConfigCli)
 @cli.options_from_config(RunTritonConfig, RunTritonConfigCli)
 @cli.options_from_config(ModelAnalyzerProfileConfig, ModelAnalyzerProfileConfigCli)

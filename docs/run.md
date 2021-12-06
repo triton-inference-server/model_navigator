@@ -160,6 +160,12 @@ model_path: path
 # Signature of the model outputs.
 [ outputs: list[str] ]
 
+# Maximum batch size allowed for inference.
+[ max_batch_size: integer | default: 32 ]
+
+# Triton batching used for model. Supported: disabled, static, dynamic
+[ batching: choice(disabled, static, dynamic) | default: static ]
+
 # Target format to generate.
 [ target_formats: list[str] | default: ['tf-trt', 'tf-savedmodel', 'onnx', 'trt', 'torchscript'] ]
 
@@ -195,9 +201,6 @@ model_path: path
 # Example: --rtol 1e-5 out0=1e-4 out1=1e-3
 [ rtol: list[str] | default: ['1e-05'] ]
 
-# Maximum batch size allowed for inference.
-[ max_batch_size: integer | default: 1 ]
-
 # Map of features names and minimum shapes visible in the dataset.
 # Format: --min-shapes <input0>=D0,D1,..,DN .. <inputN>=D0,D1,..,DN
 [ min_shapes: list[str] ]
@@ -227,9 +230,6 @@ model_path: path
 # Mapping of device kind to model instances count on a single device. Available devices: [cpu|gpu].
 # Format: --engine-count-per-device <kind>=<count>
 [ engine_count_per_device: list[str] ]
-
-# Triton batching used for model. Supported: disabled, static, dynamic
-[ batching: choice(disabled, static, dynamic) | default: static ]
 
 # The maximum GPU memory in bytes the model can use temporarily during execution for TensorRT acceleration.
 [ tensorrt_max_workspace_size: integer ]

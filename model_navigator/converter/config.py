@@ -52,7 +52,7 @@ class ComparatorConfig(BaseConfig):
 
     atol: Dict[str, float] = field(default_factory=lambda: {ALL_OTHER_INPUTS: DEFAULT_TOLERANCE_VALUE})
     rtol: Dict[str, float] = field(default_factory=lambda: {ALL_OTHER_INPUTS: DEFAULT_TOLERANCE_VALUE})
-    max_batch_size: int = 1
+    max_batch_size: int = 32
 
 
 @dataclass

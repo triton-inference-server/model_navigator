@@ -104,7 +104,10 @@ class Generator:
     ):
         docker_template = "Dockerfile.jinja2"
         template_path = package_dir / "templates"
-        env = Environment(loader=FileSystemLoader(template_path.as_posix()))
+        env = Environment(
+            loader=FileSystemLoader(template_path.as_posix()),
+            autoescape=True,
+        )
 
         install_url = navigator_install_url(framework, extras=["cloud"])
 

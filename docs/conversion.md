@@ -403,7 +403,7 @@ model_path: path
 [ rtol: list[str] | default: ['1e-05'] ]
 
 # Maximum batch size allowed for inference.
-[ max_batch_size: integer | default: 1 ]
+[ max_batch_size: integer | default: 32 ]
 
 # Map of features names and minimum shapes visible in the dataset.
 # Format: --min-shapes <input0>=D0,D1,..,DN .. <inputN>=D0,D1,..,DN
