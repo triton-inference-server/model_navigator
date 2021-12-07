@@ -16,17 +16,18 @@ limitations under the License.
 
 # Changelog
 
-## 0.2.4 (2021-12-06)
+## 0.2.4 (2021-12-07)
 - Updated NVIDIA containers defaults to 21.10
 - Fixed generating profiling data when `dtypes` are not passed
 - Conversion related:
   - [Experimental] Added support for TF-TRT conversion
 - Configuration Model on Triton related
   - Added possibility to select batching mode - default, dynamic and disabled options supported
+- Install dependencies from pip packages instead of wheels for Polygraphy and Triton Model Analyzer
 - fixes and improvements
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
-- Versions of used external components:
+- Version of external components used during testing:
     - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.33.1
     - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.14
     - [Triton Model Analyzer 1.8.2](https://github.com/triton-inference-server/model_analyzer)
@@ -38,11 +39,13 @@ limitations under the License.
 [//]: <> (keep up to date list of known issues inside docs/known_issue.md and paste it here on major and minor release)
 
 - Known issues and limitations
-    - missing support for stateful models (ex. time-series one)
-    - missing support for models without batching support
-    - no verification of conversion results for conversions: TF -> ONNX, TorchScript -> ONNX
-    - possible to define a single profile for TensorRT
-    - TF-TRT conversion lost outputs shapes info
+  - missing support for stateful models (ex. time-series one)
+  - no verification of conversion results for conversions: TF -> ONNX, TF->TF-TRT, TorchScript -> ONNX
+  - possible to define a single profile for TensorRT
+  - no custom ops support
+  - Triton Inference Server stays in the background when the profile
+    process is interrupted by the user
+  - TF-TRT conversion lost outputs shapes info
 
 ## 0.2.3 (2021-11-10)
 - Updated NVIDIA containers defaults to 21.09

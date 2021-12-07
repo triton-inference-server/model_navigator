@@ -144,7 +144,10 @@ model_repository: path
 # Maximum batch size allowed for inference.
 [ max_batch_size: integer | default: 1 ]
 
-# Triton batching used for model. Supported: disabled, static, dynamic
+# Triton batching used for model. Supported:
+# disabled: model does not support batching,
+# static: Default Scheduler is used, batch has to be formed on client side,
+# dynamic: Dynamic Batcher is used, batch is formed on Triton Inference Server side.
 [ batching: choice(disabled, static, dynamic) | default: static ]
 
 # Batch sizes that the dynamic batching should attempt to create.

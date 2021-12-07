@@ -170,7 +170,10 @@ chart_name: str
 # Format: --dtypes <input0>=<dtype> <input1>=<dtype> <default_dtype>
 [ dtypes: list[str] ]
 
-# Triton batching used for model. Supported: disabled, static, dynamic
+# Triton batching used for model. Supported:
+# disabled: model does not support batching,
+# static: Default Scheduler is used, batch has to be formed on client side,
+# dynamic: Dynamic Batcher is used, batch is formed on Triton Inference Server side.
 [ batching: choice(disabled, static, dynamic) | default: static ]
 
 # Select Backend Accelerator used to serve the model.

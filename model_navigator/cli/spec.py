@@ -305,7 +305,12 @@ class TritonClientConfigCli:
 
 class TritonBatchingConfigCli:
     max_batch_size = CliSpec(help="Maximum batch size allowed for inference.")
-    batching = CliSpec(help="Triton batching used for model. Supported: disabled, static, dynamic")
+    batching = CliSpec(
+        help="Triton batching used for model. Supported: "
+        "\n disabled: model does not support batching, "
+        "\n static: Default Scheduler is used, batch has to be formed on client side, "
+        "\n dynamic: Dynamic Batcher is used, batch is formed on Triton Inference Server side."
+    )
 
 
 class TritonModelOptimizationConfigCli:
