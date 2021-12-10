@@ -57,7 +57,8 @@ class ModelDownloader(ABC):
 
 
 class TarModelDownloader(ModelDownloader):
-    """ Download tar-compressed models from url and extract to output_path. """
+    """Download tar-compressed models from url and extract to output_path."""
+
     schemes = ["http", "https"]
 
     def download_model(self, downloader_config: DownloaderConfig, output_path: Path):
@@ -73,9 +74,9 @@ def _fill_downloaders_registry():
     downloaders = [TorchHubDownloader, TarModelDownloader]
 
     try:
-        from tests.utils.downloaders.bermuda import BermudaTestDataDownloader  # pytype: disable=import-error
+        from tests.utils.downloaders.internal import InternalTestDataDownloader  # pytype: disable=import-error
 
-        downloaders += [BermudaTestDataDownloader]
+        downloaders += [InternalTestDataDownloader]
     except ImportError:
         pass
 
