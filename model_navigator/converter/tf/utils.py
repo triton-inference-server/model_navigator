@@ -83,8 +83,8 @@ def generate_inputs(concrete_func, shapes, value_ranges=None):
         if sorted(func_inputs.values()) != profile_inputs:
             raise ModelNavigatorProfileException(
                 "Dataset profile does not match model inputs. "
-                f"ConcreteFunction inputs: {func_inputs}; "
-                f"profile inputs: {profile_inputs}."
+                f"Model ConcreteFunction has following inputs: {list(func_inputs.values())}; "
+                f"while the profile given to model-navigator has inputs: {profile_inputs}."
             )
         sample = []
         for inp in concrete_func.inputs:

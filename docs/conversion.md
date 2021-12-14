@@ -45,9 +45,9 @@ $ model-navigator convert \
    --model-name EfficientNet \
    --model-path /storage/efficientnet_tf2_fp32.onnx \
    --output-path efficientnet_tf2_fp16.plan \
-   --min-shapes input_1:1,32,32,3 \
-   --opt-shapes input_1:16,116,116,3 \
-   --max-shapes input_1:32,224,224,3 \
+   --min-shapes input_1=1,32,32,3 \
+   --opt-shapes input_1=16,116,116,3 \
+   --max-shapes input_1=32,224,224,3 \
    --target-precisions fp16
 
 # model with all static axes
@@ -77,7 +77,7 @@ $ model-navigator convert \
   --model-path navigator_workspace/convert/ResNet50/resnet50.savedmodel \
   --target-formats onnx \
   # required because this is model with model inputs containing dynamic axes
-  --max-shapes image:128,3,600,800
+  --max-shapes image=128,3,600,800
 ```
 
 ## TorchScript to ONNX conversion
@@ -96,13 +96,13 @@ $ model-navigator convert \
   --model-path navigator_workspace/convert/pytorch_vision/pytorch_vision/ResNet50/resnet50_ts_trace.pt \
   --target-formats onnx \
   # for TorchScript models it's required to define model signature in case of missing annotation file
-  --inputs image__0:-1,3,-1,-1:float32 \
-  --outputs output__0:-1,1000:float32 \
+  --inputs image__0=-1,3,-1,-1:float32 \
+  --outputs output__0=-1,1000:float32 \
   # parameters required by ts2onnx converter
   --value-ranges image__0=0,1 \
   --dtypes image__0=float32 \
   # required because this is model with model inputs containing dynamic axes
-  --max-shapes image__0:128,3,600,800
+  --max-shapes image__0=128,3,600,800
 ```
 
 Example config file
@@ -221,7 +221,7 @@ $ model-navigator convert \
    --model-path /storage/fastpitch_pyt_fp32.pt \
    --inputs input__0:-1,-1:int64 input__1:-1,1:int64 \
    --outputs output__0:-1,80,-1:float16 output__1:-1,1:int64 output__2:-1,-1:float16 output__3:-1,-1:float16 \
-   --max-shapes input__0:8,128
+   --max-shapes input__0=8,128
 ```
 
 The following is a sample configuration/annotation file:
