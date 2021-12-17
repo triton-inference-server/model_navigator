@@ -43,7 +43,6 @@ from model_navigator.common.config import TensorRTCommonConfig
 from model_navigator.configurator import Configurator, log_configuration_error
 from model_navigator.converter import ComparatorConfig, ConversionLaunchMode, ConversionResult, DatasetProfileConfig
 from model_navigator.converter.utils import FORMAT2FRAMEWORK
-from model_navigator.device.utils import get_gpus
 from model_navigator.exceptions import ModelNavigatorException
 from model_navigator.framework import SUFFIX2FRAMEWORK
 from model_navigator.kubernetes.triton import TritonServer
@@ -69,6 +68,7 @@ from model_navigator.triton import (
 from model_navigator.triton.config import TritonCustomBackendParametersConfig
 from model_navigator.utils import Workspace, cli
 from model_navigator.utils.config import BaseConfig, dataclass2dict
+from model_navigator.utils.device import get_gpus
 from model_navigator.validators import run_command_validators
 
 LOGGER = logging.getLogger("run")

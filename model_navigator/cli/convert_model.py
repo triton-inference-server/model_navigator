@@ -45,7 +45,6 @@ from model_navigator.converter import (
 )
 from model_navigator.converter.config import TargetFormatConfigSetIterator, TensorRTPrecision, TensorRTPrecisionMode
 from model_navigator.converter.utils import FORMAT2FRAMEWORK
-from model_navigator.device.utils import get_gpus
 from model_navigator.exceptions import ModelNavigatorCliException, ModelNavigatorException
 from model_navigator.log import init_logger, log_dict
 from model_navigator.model import Format, Model, ModelConfig, ModelSignatureConfig
@@ -53,6 +52,7 @@ from model_navigator.results import ResultsStore, State
 from model_navigator.utils import Workspace
 from model_navigator.utils.cli import clean_workspace_if_needed, common_options, options_from_config
 from model_navigator.utils.config import BaseConfig, YamlConfigFile
+from model_navigator.utils.device import get_gpus
 from model_navigator.utils.docker import DockerBuilder, DockerImage
 from model_navigator.utils.source import navigator_install_url, navigator_is_editable
 from model_navigator.validators import run_command_validators

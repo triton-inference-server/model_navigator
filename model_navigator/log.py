@@ -64,7 +64,6 @@ def set_logger(*, verbose: bool = False, colored_logs: bool = False):
     logging.getLogger("docker.api.build").setLevel(logging.WARNING)
     logging.getLogger("docker.auth").setLevel(logging.WARNING)
     logging.getLogger("docker.utils.config").setLevel(logging.WARNING)
-    logging.getLogger("numba.cuda.cudadrv.driver").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 
