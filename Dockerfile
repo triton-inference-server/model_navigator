@@ -50,6 +50,6 @@ RUN apt-get update && \
 
 WORKDIR /opt/model-navigator
 COPY . /opt/model-navigator
-RUN pip3 install --extra-index-url https://pypi.ngc.nvidia.com --no-cache-dir -e .
+RUN pip3 install --extra-index-url https://pypi.ngc.nvidia.com --no-cache-dir .
 
 ENTRYPOINT []
