@@ -109,7 +109,7 @@ dist: clean ## builds source and wheel package
 	ls -l dist
 
 install: clean ## install the package to the active Python's site-packages
-	$(PIP_INSTALL) -e .
+	$(PIP_INSTALL) .
 
 install-with-cloud-extras: clean
 	$(PIP_INSTALL) --upgrade --upgrade-strategy only-if-needed .[cloud]
