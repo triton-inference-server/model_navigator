@@ -52,6 +52,7 @@ def get_default_profile(concrete_func, max_batch_size: int):
         return None
     if max_batch_size < 0:
         raise ModelNavigatorProfileException("Cannot construct default dataset profile: max_batch_size negative")
+    tensor_name_to_input_name = {v: k for k, v in obtain_inputs(concrete_func).items()}
     for inp in concrete_func.inputs:
         min_shape = inp.shape.as_list()
         min_shape[0] = 1
@@ -64,8 +65,11 @@ def get_default_profile(concrete_func, max_batch_size: int):
                     f"too many dynamic axes in the model input {inp.name}: {inp.shape.as_list()}. "
                     "Please provide a full dataset profile instead of max_batch_size."
                 )
-        shapes["min"][inp.name] = min_shape
-        shapes["max"][inp.name] = max_shape
+        # Triton needs input names, not tensor names
+        name = tensor_name_to_input_name[inp.name]
+        shapes["min"][name] = min_shape
+        shapes["max"][name] = max_shape
+    LOGGER.info("Generated default dataset profile: %s.", shapes)
     return shapes
 
 
