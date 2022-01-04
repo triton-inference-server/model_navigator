@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ARG BASE_IMAGE=nvcr.io/nvidia/tritonserver:21.10-py3
+ARG BASE_IMAGE=nvcr.io/nvidia/tritonserver:21.12-py3
 FROM $BASE_IMAGE
 
 # DCGM version to install for Model Analyzer
@@ -48,8 +48,11 @@ RUN apt-get update && \
     \
     mkdir -p /opt/model-navigator
 
+# WAR for PEP660
+RUN pip install --no-cache-dir --upgrade pip==21.2.4 setuptools==57.4.0
+
 WORKDIR /opt/model-navigator
 COPY . /opt/model-navigator
-RUN pip3 install --extra-index-url https://pypi.ngc.nvidia.com --no-cache-dir .
+RUN pip3 install --extra-index-url https://pypi.ngc.nvidia.com --no-cache-dir -e .
 
 ENTRYPOINT []

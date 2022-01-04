@@ -123,11 +123,11 @@ You should see an output similar to the output below:
 2021-12-06 13:23:01 - INFO - model_navigator.log: 	workspace_path = navigator_workspace
 2021-12-06 13:23:01 - INFO - model_navigator.log: 	override_workspace = False
 2021-12-06 13:23:01 - INFO - model_navigator.log: 	override_conversion_container = False
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	framework_docker_image = nvcr.io/nvidia/pytorch:21.10-py3
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	triton_docker_image = nvcr.io/nvidia/tritonserver:21.10-py3
+2021-12-06 13:23:01 - INFO - model_navigator.log: 	framework_docker_image = nvcr.io/nvidia/pytorch:21.12-py3
+2021-12-06 13:23:01 - INFO - model_navigator.log: 	triton_docker_image = nvcr.io/nvidia/tritonserver:21.12-py3
 2021-12-06 13:23:01 - INFO - model_navigator.log: 	gpus = ('all',)
 2021-12-06 13:23:01 - INFO - model_navigator.log: 	verbose = False
-2021-12-06 13:23:03 - INFO - model_navigator.utils.docker: Run docker container with image model_navigator_converter:21.10-py3; using workdir: model_navigator
+2021-12-06 13:23:03 - INFO - model_navigator.utils.docker: Run docker container with image model_navigator_converter:21.12-py3; using workdir: model_navigator
 2021-12-06 13:23:05 - INFO - model_navigator.converter.transformers: Running command copy on examples/quick-start/model.pt
 2021-12-06 13:23:05 - INFO - model_navigator.converter.transformers: Running command annotation on model_navigator/navigator_workspace/converted/model.pt
 2021-12-06 13:23:05 - INFO - model_navigator.converter.transformers: Saving annotations to model_navigator/navigator_workspace/converted/model.pt.yaml

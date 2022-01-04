@@ -27,7 +27,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 class OnnxBackendConfigurator(BaseBackendConfigurator):
-    backend_name = "onnx"
+    backend_name = "onnxruntime"
     supported_formats = [Format.ONNX]
 
     def _extract_signature(self, model_config, model: Model):

@@ -16,7 +16,7 @@ import logging
 # pytype: disable=import-error
 import tensorflow as tf
 
-from model_navigator.exceptions import ModelNavigatorProfileException
+from model_navigator.exceptions import ModelNavigatorException
 
 # pytype: enable=import-error
 
@@ -51,7 +51,7 @@ def get_default_profile(concrete_func, max_batch_size: int):
     if max_batch_size == 0:
         return None
     if max_batch_size < 0:
-        raise ModelNavigatorProfileException("Cannot construct default dataset profile: max_batch_size negative")
+        raise ModelNavigatorException("Cannot construct default dataset profile: max_batch_size negative")
     tensor_name_to_input_name = {v: k for k, v in obtain_inputs(concrete_func).items()}
     for inp in concrete_func.inputs:
         min_shape = inp.shape.as_list()
@@ -60,7 +60,7 @@ def get_default_profile(concrete_func, max_batch_size: int):
         max_shape[0] = max_batch_size
         for x in max_shape:
             if not x:
-                raise ModelNavigatorProfileException(
+                raise ModelNavigatorException(
                     "Cannot construct default dataset profile: "
                     f"too many dynamic axes in the model input {inp.name}: {inp.shape.as_list()}. "
                     "Please provide a full dataset profile instead of max_batch_size."
@@ -85,7 +85,7 @@ def generate_inputs(concrete_func, shapes, value_ranges=None):
     def generate_sample(shapes):
         profile_inputs = sorted(shapes.keys())
         if sorted(func_inputs.values()) != profile_inputs:
-            raise ModelNavigatorProfileException(
+            raise ModelNavigatorException(
                 "Dataset profile does not match model inputs. "
                 f"Model ConcreteFunction has following inputs: {list(func_inputs.values())}; "
                 f"while the profile given to model-navigator has inputs: {profile_inputs}."
@@ -95,7 +95,7 @@ def generate_inputs(concrete_func, shapes, value_ranges=None):
             sample_inp_shape = []
             for x, px in zip(inp.shape, shapes[func_inputs[inp.name]]):
                 if x and x != px:
-                    raise ModelNavigatorProfileException(
+                    raise ModelNavigatorException(
                         "Dataset profile does not match model inputs. "
                         f"For input {inp.name}, shape is {inp.shape} "
                         f"but profile specifies: {shapes[func_inputs[inp.name]]}."

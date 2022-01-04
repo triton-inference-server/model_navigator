@@ -83,7 +83,7 @@ def tf2tftrt(
         output_path.parent.mkdir(parents=True, exist_ok=True)
         with log_path.open("w") as log_file:
             prepare_log_header(log_file, Format.TF_SAVEDMODEL, Format.TF_TRT)
-            execute_sh_command(python.bake(*tf2tf_trt_args), log_file=log_file, verbose=bool(verbose))
+            execute_sh_command(python.bake(*tf2tf_trt_args), log_file=log_file, verbose=verbose)
         LOGGER.info("tf2tftrt command succeed.")
     except sh.ErrorReturnCode as e:
         LOGGER.warning(f"tf2tftrt conversion failed. Details can be found in logfile: {log_path}")
