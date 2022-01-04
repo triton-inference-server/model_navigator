@@ -9,28 +9,28 @@ Feature: Config models on Triton Inference Server with batcher
         When I execute triton-config-model command
         Then the command should succeeded
         And the my-model model config in model-store is equal to
-            {"name": "my-model", "backend": "onnx", "maxBatchSize": 1, "cpu_only": false}
+            {"name": "my-model", "backend": "onnxruntime", "maxBatchSize": 1, "cpu_only": false}
 
     Scenario: Max batch size is set passed value when static option used
         Given the batching config parameter is set to static
         When I execute triton-config-model command
         Then the command should succeeded
         And the my-model model config in model-store is equal to
-            {"name": "my-model", "backend": "onnx", "maxBatchSize": 1, "cpu_only": false}
+            {"name": "my-model", "backend": "onnxruntime", "maxBatchSize": 1, "cpu_only": false}
 
     Scenario: Max batch size is set to 0 when disabled option used
         Given the batching config parameter is set to disabled
         When I execute triton-config-model command
         Then the command should succeeded
         And the my-model model config in model-store is equal to
-            {"name": "my-model", "backend": "onnx", "cpu_only": false}
+            {"name": "my-model", "backend": "onnxruntime", "cpu_only": false}
 
     Scenario: Dynamic batching is configured when dynamic options is used
          Given the batching config parameter is set to dynamic
         When I execute triton-config-model command
         Then the command should succeeded
         And the my-model model config in model-store is equal to
-            {"name": "my-model", "backend": "onnx", "maxBatchSize": 1, "cpu_only": false, "dynamicBatching": {"preferredBatchSize": [1]}}
+            {"name": "my-model", "backend": "onnxruntime", "maxBatchSize": 1, "cpu_only": false, "dynamicBatching": {"preferredBatchSize": [1]}}
 
     Scenario: Dynamic batching is configured when dynamic options is used and additional parameters passed
         Given the batching config parameter is set to dynamic
@@ -39,4 +39,4 @@ Feature: Config models on Triton Inference Server with batcher
         When I execute triton-config-model command
         Then the command should succeeded
         And the my-model model config in model-store is equal to
-            {"name": "my-model", "backend": "onnx", "maxBatchSize": 1, "cpu_only": false, "dynamicBatching": {"preferredBatchSize": [1, 2], "maxQueueDelayMicroseconds": "1000"}}
+            {"name": "my-model", "backend": "onnxruntime", "maxBatchSize": 1, "cpu_only": false, "dynamicBatching": {"preferredBatchSize": [1, 2], "maxQueueDelayMicroseconds": "1000"}}
