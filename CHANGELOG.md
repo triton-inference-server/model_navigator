@@ -19,7 +19,7 @@ limitations under the License.
 ## 0.2.5
 - Updated NVIDIA containers defaults to 21.12
 - Conversion related:
-  - [Experimental] TF-TRT - fixed input names verification
+  - [Experimental] TF-TRT - fixed default dataset profile generation
 - Configuration Model on Triton related
   - Fixed name for onnxruntime backend in Triton model deployment configuration
 
