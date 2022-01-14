@@ -223,6 +223,7 @@ def run_cmd(
         analyzer_config=ModelAnalyzerTritonConfig.from_dict(
             {**dataclass2dict(triton_config), **{"model_repository": interim_model_repository}}
         ),
+        verbose=verbose,
     )
 
     for model_to_deploy in succeeded_models:
@@ -291,7 +292,8 @@ def run_cmd(
                         errors=error_logs,
                     )
                     LOGGER.warning(
-                        f"Unable to evaluate model {variant.name}.Details can be found in logfile: {log_file.absolute()}"
+                        f"Unable to evaluate model {variant.name}. "
+                        f"Details can be found in logfile: {log_file.absolute()}"
                     )
 
     # move when triton server for testing purposes is shutdown
@@ -373,11 +375,13 @@ def _obtain_conversion_config(
     return new_conversion_set_config
 
 
-def _get_triton_server(*, triton_docker_image, gpus, analyzer_config):
+def _get_triton_server(*, triton_docker_image, gpus, analyzer_config, verbose: bool = False):
     triton_config = TritonServerConfig()
     triton_config["model-repository"] = analyzer_config.model_repository.resolve().as_posix()
     triton_config["model-control-mode"] = "explicit"
     triton_config["strict-model-config"] = "false"
+    if verbose:
+        triton_config["log-verbose"] = "1"
     if analyzer_config.triton_launch_mode == TritonLaunchMode.LOCAL:
         triton_server = TritonServerFactory.create_server_local(
             path=analyzer_config.triton_server_path,

@@ -11,22 +11,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import io
 import logging
-import os
+import pathlib
+import typing
 
 import docker
 
 from model_navigator.triton.client import TritonClient
 from model_navigator.triton.server.exceptions import TritonServerException
 from model_navigator.triton.server.server import TritonServer
-from model_navigator.utils.docker import DockerContainer
+from model_navigator.utils.docker import DockerContainer, DockerImage
 
 LOCAL_HTTP_PORT = 8000
 LOCAL_GRPC_PORT = 8001
 LOCAL_METRICS_PORT = 8002
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 class TritonServerDocker(TritonServer):
@@ -48,10 +49,10 @@ class TritonServerDocker(TritonServer):
         """
 
         super().__init__(config=config, gpus=gpus, path=path)
-        self._docker_client = docker.from_env()
-        self._tritonserver_image = image
-        self._tritonserver_container = None
-        self._tritonserver_log_gen = None
+        self._docker_image = DockerImage(image)
+        self._docker_container: typing.Optional[DockerContainer] = None
+        self._server_logs_buffer = io.StringIO()
+        self._server_logs_gen = None
 
         assert self._server_config["model-repository"], "Triton Server requires --model-repository argument to be set."
 
@@ -59,51 +60,25 @@ class TritonServerDocker(TritonServer):
         """
         Starts the tritonserver docker container using docker-py
         """
-        logger.debug("Starting triton server.")
-
-        if len(self._gpus) == 1 and self._gpus[0] == "all":
-            devices = [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])]
-        else:
-            devices = [docker.types.DeviceRequest(device_ids=self._gpus, capabilities=[["gpu"]])]
-
-        # Mount required directories
-        volumes = {
-            self._server_config["model-repository"]: {"bind": self._server_config["model-repository"], "mode": "ro"}
-        }
+        devices = self._get_devices()
+        mount_as_volumes = [pathlib.Path(self._server_config["model-repository"])]
 
         # Map ports, use config values but set to server defaults if not
         # specified
-        triton_ports = self.get_ports()
-
-        ports = {
-            triton_ports["http"]: triton_ports["http"],
-            triton_ports["grpc"]: triton_ports["grpc"],
-            triton_ports["metrics"]: triton_ports["metrics"],
-        }
+        ports = self.get_ports()
+        ports = {port_number: port_number for port_number in ports.values()}
 
         try:
-            # Run the docker container
-            logger.debug(
-                f"Starting docker container with {self._tritonserver_image} device_requests={devices} "
-                f"volumes={volumes} ports={ports}"
-            )
-            self._tritonserver_container = self._docker_client.containers.run(
-                image=self._tritonserver_image,
-                device_requests=devices,
-                volumes=volumes,
+            self._docker_container: DockerContainer = self._docker_image.run_container(
+                devices=devices,
+                mount_as_volumes=mount_as_volumes,
                 ports=ports,
-                publish_all_ports=True,
-                tty=True,
-                stdin_open=True,
-                detach=True,
-                ipc_mode="host",
-                user=os.getuid(),
             )
         except docker.errors.APIError as error:
             if error.explanation.find("port is already allocated") != -1:
                 raise TritonServerException(
                     "One of the following port(s) are already allocated: "
-                    f"{', '.join(map(str, triton_ports.values()))}.\n"
+                    f"{', '.join(map(str, ports.values()))}.\n"
                     "Change the Triton server ports using"
                     " --triton-http-endpoint, --triton-grpc-endpoint,"
                     " and --triton-metrics-endpoint flags."
@@ -113,9 +88,14 @@ class TritonServerDocker(TritonServer):
 
         # Run the command in the container
         cmd = self._server_path + " " + self._server_config.to_cli_string()
+        self._server_logs_gen = self._docker_container.run_cmd(cmd=cmd, detached=True)
 
-        logger.debug(f"Run command {cmd} in docker container id={self._tritonserver_container.id}")
-        _, self._tritonserver_log_gen = self._tritonserver_container.exec_run(cmd=cmd, stream=True)
+    def _get_devices(self):
+        if len(self._gpus) == 1 and self._gpus[0] == "all":
+            devices = [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])]
+        else:
+            devices = [docker.types.DeviceRequest(device_ids=self._gpus, capabilities=[["gpu"]])]
+        return devices
 
     def stop(self):
         """
@@ -123,29 +103,25 @@ class TritonServerDocker(TritonServer):
         and cleans up docker client
         """
 
-        logger.debug("Stopping triton server.")
-
-        if self.is_alive():
-            logger.debug(f"Stopping Triton Server id={self._tritonserver_container.id}")
-            self._tritonserver_container.stop()
-            self._tritonserver_container.remove(force=True)
-
-            self._tritonserver_container = None
-            self._docker_client.close()
-
-        logger.debug("Triton server stopped")
+        if self._docker_container:
+            LOGGER.debug(f"Stopping Triton Inference Server (container={self._docker_container.id}).")
+            self._docker_container.kill()
+        LOGGER.debug("Triton server stopped")
 
     def is_alive(self):
         # TODO: check if tritonserver process is running inside container
-        return self._tritonserver_container is not None
+        return self._docker_container is not None
 
     def logs(self):
         """
         Retrieves the Triton server's stdout
         as a str
         """
+        if self._server_logs_gen:
+            for chunk in self._server_logs_gen:
+                self._server_logs_buffer.write(chunk.decode("utf-8"))
 
-        return b"".join(list(self._tritonserver_log_gen)).decode("utf-8")
+        return self._server_logs_buffer.getvalue()
 
     def get_ports(self):
         return {
@@ -156,10 +132,9 @@ class TritonServerDocker(TritonServer):
 
     def create_grpc_client(self):
         port = self.get_ports()["grpc"]
-        container = DockerContainer(self._tritonserver_container.id)
-        return TritonClient(f"grpc://{container.ip_address}:{port}")
+        return TritonClient(f"grpc://{self._docker_container.ip_address}:{port}")
 
     def create_http_client(self):
         port = self.get_ports()["http"]
-        container = DockerContainer(self._tritonserver_container.id)
+        container = DockerContainer(self._docker_container.id)
         return TritonClient(f"http://{container.ip_address}:{port}")

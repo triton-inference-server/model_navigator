@@ -11,11 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import io
 import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, TextIO, Union
+from typing import Any, Dict, List, Optional, TextIO, Tuple, Union
 
 import dockerpty
 from docker import APIClient, from_env
@@ -51,21 +52,30 @@ class DockerContainer:
     def run_cmd(
         self,
         cmd: str,
+        detached: bool = False,
         stdin: Optional[TextIO] = None,
         stdout: Optional[TextIO] = None,
         stderr: Optional[TextIO] = None,
     ):
         LOGGER.debug(f"Running cmd: {cmd}")
         interactive = stdin.isatty() if hasattr(stdin, "isatty") else False
-        dockerpty.exec_command(
-            self._docker_api_client,
-            self._container.id,
-            command=cmd,
-            stdin=stdin,
-            stdout=stdout,
-            stderr=stderr,
-            interactive=interactive,
-        )
+        for text_io in [stdout, stderr]:
+            # dockerpty requires either fileno attribute or send method from stdout/stderr
+            if text_io and isinstance(text_io, io.StringIO):
+                text_io.send = lambda b: text_io.write(b.decode("UTF-8"))
+        if detached:
+            _, logs_gen = self._container.exec_run(cmd=cmd, stream=True)
+            return logs_gen
+        else:
+            dockerpty.exec_command(
+                self._docker_api_client,
+                self._container.id,
+                command=cmd,
+                stdin=stdin,
+                stdout=stdout,
+                stderr=stderr,
+                interactive=interactive,
+            )
 
     @property
     def id(self):
@@ -115,11 +125,19 @@ class DockerImage:
         devices: Optional[List[DeviceRequest]] = None,
         environment: Optional[Dict[str, str]] = None,
         mount_as_volumes: Optional[List[Path]] = None,
+        ports: Optional[Union[Dict[int, int], List[int]]] = None,
     ):
         devices = devices or []
         environment = environment or {}
         volumes = self._get_volumes(mount_as_volumes)
-        return self._run_container(devices=devices, volumes=volumes, environment=environment, workdir_path=workdir_path)
+        ports = ports or []
+        return self._run_container(
+            devices=devices,
+            volumes=volumes,
+            environment=environment,
+            ports=ports,
+            workdir_path=workdir_path,
+        )
 
     def _get_volumes(self, mount_as_volumes: Optional[List[Path]]):
 
@@ -171,6 +189,7 @@ class DockerImage:
         workdir_path: Optional[Path] = None,
         devices: Optional[List[DeviceRequest]] = None,
         volumes: Optional[Dict[str, Dict[str, str]]] = None,
+        ports: Optional[List[Union[int, Tuple[int, int]]]] = None,
         environment: Optional[Dict[str, str]] = None,
     ):
         LOGGER.info(f"Run docker container with image {self._image_name}; using workdir: {workdir_path}")
@@ -181,12 +200,17 @@ class DockerImage:
         for host_path, volume_spec in volumes.items():
             LOGGER.debug(f"Mounting volume: {host_path}:{volume_spec['bind']}")
         environment = environment or {}
+        ports = ports or []
+        if not isinstance(ports, dict):
+            ports = {port: None for port in ports}  # on host side bind to random port
+
         LOGGER.debug(f"Setting environment: {environment}")
         container = self._docker_client.containers.run(
             image=self._image_name,
             device_requests=devices,
             environment=environment,
             volumes=volumes,
+            ports=ports,
             stdin_open=True,
             tty=True,
             stream=True,
