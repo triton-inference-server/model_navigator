@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import logging
+import os
 
 import docker
 
@@ -96,6 +97,7 @@ class TritonServerDocker(TritonServer):
                 stdin_open=True,
                 detach=True,
                 ipc_mode="host",
+                user=os.getuid(),
             )
         except docker.errors.APIError as error:
             if error.explanation.find("port is already allocated") != -1:

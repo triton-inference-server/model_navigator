@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, TextIO, Union
@@ -193,6 +194,7 @@ class DockerImage:
             auto_remove=True,
             ipc_mode="host",
             working_dir=workdir_path.as_posix() if workdir_path else None,
+            user=os.getuid(),
         )
         LOGGER.debug(f"Started docker container {container.id[:8]}")
 
