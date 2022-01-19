@@ -54,7 +54,11 @@ class ConvertCommandsExecutor:
             if result.status.state == State.FAILED:
                 break
 
-            src_model = ModelConfig(model_name=result.output_model.name, model_path=result.output_model.path)
+            src_model = ModelConfig(
+                model_name=result.output_model.name,
+                model_path=result.output_model.path,
+                model_format=result.output_model.format,
+            )
         else:
             yield result
 

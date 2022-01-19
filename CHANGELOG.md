@@ -20,6 +20,7 @@ limitations under the License.
 - Fixes and improvements
   - Processes inside containers started by Model Navigator now run without root privileges
   - Fix for volume mounts while running Triton Inference Server in container from other container
+  - Fix for conversion of models without file extension on input and output paths
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 - Version of external components used during testing:
@@ -58,6 +59,17 @@ limitations under the License.
     - Other component versions depend on the used framework and Triton Inference Server containers versions.
       See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
       for a detailed summary.
+
+[//]: <> (keep up to date list of known issues inside docs/known_issue.md and paste it here on major and minor release)
+
+- Known issues and limitations
+  - missing support for stateful models (ex. time-series one)
+  - no verification of conversion results for conversions: TF -> ONNX, TF->TF-TRT, TorchScript -> ONNX
+  - possible to define a single profile for TensorRT
+  - no custom ops support
+  - Triton Inference Server stays in the background when the profile
+    process is interrupted by the user
+  - TF-TRT conversion lost outputs shapes info
 
 ## 0.2.4 (2021-12-07)
 - Updated NVIDIA containers defaults to 21.10
