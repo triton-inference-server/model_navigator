@@ -106,6 +106,7 @@ class TritonServerDocker(TritonServer):
         if self._docker_container:
             LOGGER.debug(f"Stopping Triton Inference Server (container={self._docker_container.id}).")
             self._docker_container.kill()
+            self._docker_container = None
         LOGGER.debug("Triton server stopped")
 
     def is_alive(self):
