@@ -17,6 +17,7 @@ limitations under the License.
 # Changelog
 
 ## unreleased
+- [Experimental] Added support for Torch-TensorRT conversion
 - Fixes and improvements
   - Processes inside containers started by Model Navigator now run without root privileges
   - Fix for volume mounts while running Triton Inference Server in container from other container

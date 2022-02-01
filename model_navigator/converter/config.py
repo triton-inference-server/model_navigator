@@ -80,8 +80,9 @@ class ConversionConfig(BaseConfig):
 
 
 class TargetFormatConfigSetIterator(ABC):
-    def __init__(self, conversion_set_config):
+    def __init__(self, conversion_set_config, target_format=None):
         self._conversion_set_config = conversion_set_config
+        self._target_format = target_format
 
     @abstractmethod
     def __iter__(self):
@@ -101,5 +102,6 @@ class TargetFormatConfigSetIterator(ABC):
             Format.TF_SAVEDMODEL: TensorFlowConfigSetIterator,
             Format.TORCHSCRIPT: PyTorchConfigSetIterator,
             Format.TF_TRT: TFTRTConfigSetIterator,
+            Format.TORCH_TRT: TensorRTConfigSetIterator,
         }[target_format]
-        return iterator_cls(config_set)
+        return iterator_cls(config_set, target_format=target_format)

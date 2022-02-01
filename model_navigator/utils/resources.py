@@ -61,6 +61,7 @@ FORMAT2RESOURCE = {
     Format.ONNX: Resource.ONNX,
     Format.TENSORRT: Resource.TENSORRT,
     Format.TORCHSCRIPT: Resource.PYTORCH,
+    Format.TORCH_TRT: Resource.PYTORCH,
 }
 
 ACCELERATOR2RESOURCE = {

@@ -25,23 +25,11 @@ import torch
 from model_navigator.cli.spec import parse_shapes, parse_value_ranges
 from model_navigator.log import log_dict, set_logger, set_tf_verbosity
 from model_navigator.model import ModelSignatureConfig
-from model_navigator.utils.config import YamlConfigFile
+from model_navigator.utils.signature import load_annotation
+
+from .utils import numpy_to_torch_type
 
 LOGGER = logging.getLogger("ts2onnx")
-
-NUMPY_TO_TORCH_DTYPE_DICT = {
-    np.bool: torch.bool,
-    np.uint8: torch.uint8,
-    np.int8: torch.int8,
-    np.int16: torch.int16,
-    np.int32: torch.int32,
-    np.int64: torch.int64,
-    np.float16: torch.float16,
-    np.float32: torch.float32,
-    np.float64: torch.float64,
-    np.complex64: torch.complex64,
-    np.complex128: torch.complex128,
-}
 
 
 def main():
@@ -88,11 +76,7 @@ def main():
     LOGGER.debug(f"Parsed shapes: {shapes}")
     LOGGER.debug(f"Parsed value ranges: {value_ranges}")
 
-    annotation_path = input_model_path.parent / f"{input_model_path.name}.yaml"
-    with YamlConfigFile(annotation_path) as config_file:
-        io_spec: ModelSignatureConfig = config_file.load(
-            ModelSignatureConfig
-        )  # pytype: disable=annotation-type-mismatch
+    io_spec: ModelSignatureConfig = load_annotation(input_model_path)
 
     def _extract_dyn_axes(spec):
         indexes = np.where(np.array(spec.shape) == -1)[0]
@@ -119,11 +103,11 @@ def main():
         size = (*_extend_dyn_axes(spec_.name, spec_.shape),)
         if dtype.kind == "i":
             return torch.randint(value_range[0], value_range[1], size=size, device=device).type(
-                NUMPY_TO_TORCH_DTYPE_DICT[spec_.dtype.type]
+                numpy_to_torch_type(spec_.dtype.type)
             )
         elif dtype.kind == "f":
             return (
-                torch.randn(size=size, device=device).type(NUMPY_TO_TORCH_DTYPE_DICT[spec_.dtype.type])
+                torch.randn(size=size, device=device).type(numpy_to_torch_type(spec_.dtype.type))
                 * (value_range[1] - value_range[0])
                 + value_range[0]
             )

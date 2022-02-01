@@ -27,6 +27,7 @@ class Format(Enum):
     TF_TRT = "tf-trt"
     ONNX = "onnx"
     TENSORRT = "trt"
+    TORCH_TRT = "torch-trt"
 
 
 @dataclass

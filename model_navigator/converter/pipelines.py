@@ -114,6 +114,7 @@ class TorchScriptPipeline(BaseModelPipeline):
             ONNX2TRTCommand,
             TorchScript2ONNXCommand,
             TorchScriptAnnotationGenerator,
+            TorchTensorRTCommand,
         )
 
         commands = []
@@ -151,6 +152,20 @@ class TorchScriptPipeline(BaseModelPipeline):
             commands.append(
                 CompositeConvertCommand(cmds=[copy_command, annotation_command, ts2onnx_converter, onnx2trt_command])
             )
+
+        elif conversion_config.target_format == Format.TORCH_TRT:
+            copy_command = CopyModelFilesCommand()
+            # TODO: remove annotation step?
+            annotation_command = TorchScriptAnnotationGenerator(copy_command, signature_config=signature_config)
+            ts2trt_converter = TorchTensorRTCommand(
+                annotation_command,
+                conversion_config=conversion_config,
+                comparator_config=comparator_config,
+                tensorrt_common_config=tensorrt_common_config,
+                dataset_profile=dataset_profile,
+                signature_config=signature_config,
+            )
+            commands.append(CompositeConvertCommand(cmds=[copy_command, annotation_command, ts2trt_converter]))
 
         return commands
 

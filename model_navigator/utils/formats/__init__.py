@@ -47,4 +47,5 @@ FORMAT2ADAPTER = {
     Format.TENSORRT: TensorRTUtils,
     Format.TF_SAVEDMODEL: TensorFlowSavedModelUtils,
     Format.TF_TRT: TensorFlowSavedModelUtils,
+    Format.TORCH_TRT: TorchScriptUtils,
 }

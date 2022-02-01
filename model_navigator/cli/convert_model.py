@@ -67,6 +67,7 @@ TRITON_SUPPORTED_FORMATS = [
     Format.ONNX,
     Format.TENSORRT,
     Format.TORCHSCRIPT,
+    Format.TORCH_TRT,
 ]
 
 

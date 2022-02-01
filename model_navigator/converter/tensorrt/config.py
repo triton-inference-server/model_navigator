@@ -16,7 +16,6 @@ from typing import Generator
 from model_navigator.converter import ConversionConfig
 from model_navigator.converter.config import TargetFormatConfigSetIterator, TensorRTPrecisionMode
 from model_navigator.exceptions import ModelNavigatorException
-from model_navigator.model import Format
 
 
 class TensorRTConfigSetIterator(TargetFormatConfigSetIterator):
@@ -24,7 +23,7 @@ class TensorRTConfigSetIterator(TargetFormatConfigSetIterator):
         for onnx_opset in self._conversion_set_config.onnx_opsets:
             for tensorrt_precision, tensorrt_precision_mode in self._precision_modes():
                 yield ConversionConfig(
-                    target_format=Format.TENSORRT,
+                    target_format=self._target_format,
                     onnx_opset=onnx_opset,
                     tensorrt_precision=tensorrt_precision,
                     tensorrt_precision_mode=tensorrt_precision_mode,

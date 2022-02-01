@@ -24,12 +24,13 @@ from model_navigator.converter.pyt.transformers import ts2onnx
 from model_navigator.converter.results import ConversionResult
 from model_navigator.converter.tf2onnx.transformers import tf2onnx, tfopt
 from model_navigator.converter.tf_trt.transformers import tf2tftrt
+from model_navigator.converter.torch_tensorrt import ts2torchtrt
 from model_navigator.converter.utils import KEY_VALUE_SEP, PARAMETERS_SEP, extend_model_name
 from model_navigator.exceptions import ModelNavigatorConverterException
 from model_navigator.model import Model, ModelConfig, ModelSignatureConfig
 from model_navigator.results import State, Status
-from model_navigator.tensor import TensorSpec
 from model_navigator.utils.config import YamlConfigFile
+from model_navigator.utils.dataset import get_shapes, get_value_ranges
 
 LOGGER = logging.getLogger(__name__)
 
@@ -262,34 +263,8 @@ class TorchScript2ONNXCommand(BaseConvertCommand):
         LOGGER.debug(f"Running command {self.name} on {model.model_path}")
 
         model_parsed = Model(model.model_name, model.model_path, explicit_format=model.model_format)
-        if not model_parsed.signature.has_input_dynamic_axes():
-            shapes = {name: spec.shape for name, spec in model_parsed.signature.inputs.items()}
-            # assume first axis is batch size; use batch_size=1
-            shapes = {name: (1,) + shape[1:] for name, shape in shapes.items()}
-        else:
-            if not self._dataset_profile or not self._dataset_profile.max_shapes:
-                raise ModelNavigatorConverterException(
-                    "Missing model input shapes required during conversion of model with dynamic axes. "
-                    "Use `max_shapes` config to define missing dataset profiles."
-                )
-            shapes = self._dataset_profile.max_shapes
-
-        if not self._dataset_profile or not self._dataset_profile.value_ranges:
-
-            def _get_default_value_range(spec: TensorSpec):
-                return {"i": (0, 15), "f": (0.0, 1.0)}[spec.dtype.kind]
-
-            value_ranges = {
-                name: _get_default_value_range(spec) for name, spec in model_parsed.signature.inputs.items()
-            }
-
-            LOGGER.info(
-                "Missing model input value ranges required during conversion. "
-                "Use `value_ranges` config to define missing dataset profiles. "
-                f"Used default values_ranges: {value_ranges}"
-            )
-        else:
-            value_ranges = self._dataset_profile.value_ranges
+        shapes = get_shapes(model_parsed.signature, self._dataset_profile)
+        value_ranges = get_value_ranges(model_parsed.signature, self._dataset_profile)
 
         output_path = executor.get_output_path(model, self)
         log_path = Path(f"{output_path}.log")
@@ -323,6 +298,66 @@ class TorchScript2ONNXCommand(BaseConvertCommand):
     @property
     def file_suffix(self):
         return ".onnx"
+
+
+class TorchTensorRTCommand(BaseConvertCommand):
+    """Convert a TorchScript module into a Torch module that executes on TensorRT
+    or into a tensorrt plan."""
+
+    def __init__(
+        self,
+        parent: Optional[BaseConvertCommand] = None,
+        *,
+        conversion_config: ConversionConfig,
+        tensorrt_common_config: TensorRTCommonConfig,
+        comparator_config: Optional[ComparatorConfig],
+        dataset_profile: Optional[DatasetProfileConfig],
+        signature_config: Optional[ModelSignatureConfig] = None,
+    ) -> None:
+        super().__init__(parent)
+        self._conversion_config = conversion_config
+        self._tensorrt_common_config = tensorrt_common_config
+        self._comparator_config = comparator_config
+        self._dataset_profile = dataset_profile
+        self._signature_config = signature_config
+
+    def transform(self, executor, model: ModelConfig, *, verbose: int = 0) -> ConversionResult:
+        LOGGER.debug(f"Running command {self.name} on {model.model_path}")
+
+        output_path = executor.get_output_path(model, self)
+        log_path = Path(f"{output_path}.log")
+
+        ts2torchtrt(
+            input_path=model.model_path,
+            output_path=output_path,
+            log_path=log_path,
+            dataset_profile=self._dataset_profile,
+            conversion_config=self._conversion_config,
+            signature_config=self._signature_config,
+            max_workspace_size=self._tensorrt_common_config.tensorrt_max_workspace_size or 0,
+            max_batch_size=self._comparator_config.max_batch_size if self._comparator_config else 0,
+            verbose=bool(verbose),
+        )
+
+        model_name = extend_model_name(model.model_name, transform_name=self.name)
+        return ConversionResult(
+            Status(State.SUCCEEDED, "TorchScript converted to TensorRT", log_path.as_posix()),
+            source_model_config=model,
+            conversion_config=self._conversion_config,
+            comparator_config=self._comparator_config,
+            dataset_profile=self._dataset_profile,
+            output_model=Model(model_name, path=output_path),
+        )
+
+    @property
+    def name(self) -> str:
+        parameters = {"precision": self._conversion_config.tensorrt_precision}
+        parameters_suffix = PARAMETERS_SEP.join([f"{k}{KEY_VALUE_SEP}{v}" for k, v in parameters.items()])
+        return f"torch_tensorrt_module{PARAMETERS_SEP}{parameters_suffix}"
+
+    @property
+    def file_suffix(self):
+        return ".pt"
 
 
 class TFSavedModel2ONNXTransform(BaseConvertCommand):
