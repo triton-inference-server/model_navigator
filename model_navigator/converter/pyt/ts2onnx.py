@@ -114,21 +114,19 @@ def main():
         else:
             raise ValueError(f"Don't know how to generate random tensor for dtype={dtype}")
 
-    dummy_input = {spec.name: _generate_random(spec, spec.dtype, device) for name, spec in inputs.items()}
+    # FIXME: argument handling here is really awful, unintuitive and can break easily.
+    # Ideally, Triton could support kwargs in the model's forward method,
+    # which has been recently implemented in libtorch.
     input_names = [name for name, spec in inputs.items()]
     output_names = [name for name, spec in outputs.items()]
 
     LOGGER.info(f"Dynamic axes indexes: {dynamic_axes}")
 
-    with torch.no_grad():
-        dummy_output = model(*(data_sample for name, data_sample in dummy_input.items()))
+    dummy_input = [_generate_random(spec, spec.dtype, device) for spec in inputs.values()]
 
-    # Map to list of dicts
-    dummy_input = [{name: tensor} for name, tensor in dummy_input.items()]
     torch.onnx.export(
         model=model,
         args=dummy_input,
-        example_outputs=dummy_output,
         f=args.onnx_path,
         opset_version=args.opset_version,
         verbose=args.verbose,
@@ -136,7 +134,6 @@ def main():
         input_names=input_names,
         output_names=output_names,
         dynamic_axes=dynamic_axes,
-        enable_onnx_checker=True,
     )
 
 
