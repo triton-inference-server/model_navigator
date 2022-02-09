@@ -262,10 +262,13 @@ def _copy_to_output_path(conversion_results: Sequence[ConversionResult], output_
     if result_to_copy is not None:
         result_model_path = result_to_copy.output_model.path
         LOGGER.debug(f"Copy {result_model_path} to {output_path}")
-        if result_model_path.is_dir():
+        try:
             shutil.copytree(result_model_path, output_path)
-        else:
-            shutil.copy(result_model_path, output_path)
+        except NotADirectoryError:
+            try:
+                shutil.copy(result_model_path, output_path)
+            except shutil.SameFileError:
+                LOGGER.info("Result model is already at output path, not copying.")
         # copy also supplementary files - ex. model io annotation file
         # they have just changed suffix comparing to model path
         for supplementary_file in result_model_path.parent.glob(f"{result_model_path.stem}.*"):
