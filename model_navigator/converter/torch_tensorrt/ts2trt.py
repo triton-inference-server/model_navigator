@@ -206,9 +206,9 @@ def _setup_logging(verbose=False, **kwargs):
 @click.option("--log-path", type=Path)
 @click.option("--precision", type=TensorRTPrecision)
 @click.option("--precision-mode", type=TensorRTPrecisionMode)
-@click.option("--trt-min-shapes", type=str, default=None)
-@click.option("--trt-max-shapes", type=str, default=None)
-@click.option("--trt-opt-shapes", type=str, default=None)
+@click.option("--trt-min-shapes", type=str, default=[], multiple=True)
+@click.option("--trt-max-shapes", type=str, default=[], multiple=True)
+@click.option("--trt-opt-shapes", type=str, default=[], multiple=True)
 @click.option("--tensorrt-sparse-weights", default=False, type=bool)
 @click.option("--tensorrt-strict-types", default=False, type=bool)
 @click.option("--max-batch-size", default=0, type=int)
@@ -238,13 +238,15 @@ def main(
     try:
         shapes = {}
         if trt_max_shapes:
-            shapes["max"] = parse_shapes(None, None, trt_max_shapes)
+            shapes["max"] = parse_shapes(None, None, list(trt_max_shapes))
         if trt_min_shapes:
-            shapes["min"] = parse_shapes(None, None, trt_min_shapes)
+            shapes["min"] = parse_shapes(None, None, list(trt_min_shapes))
         if trt_opt_shapes:
-            shapes["opt"] = parse_shapes(None, None, trt_opt_shapes)
-    except Exception:
+            shapes["opt"] = parse_shapes(None, None, list(trt_opt_shapes))
+    except Exception as e:
+        LOGGER.debug(f"parsing shapes failed: {e}")
         shapes = None
+
     io_spec = load_annotation(input_model)
 
     if not shapes and not max_batch_size:

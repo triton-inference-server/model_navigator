@@ -28,15 +28,18 @@ LOGGER = logging.getLogger(__name__)
 
 def _get_shapes(dataset_profile):
     if dataset_profile is None:
-        return {}
+        return []
 
-    shapes = {}
+    shapes = []
     if dataset_profile.min_shapes:
-        shapes["trt_min_shapes"] = serialize_shapes(None, value=dataset_profile.min_shapes)
+        for shape in serialize_shapes(None, value=dataset_profile.min_shapes):
+            shapes += ["--trt-min-shapes", shape]
     if dataset_profile.max_shapes:
-        shapes["trt_max_shapes"] = serialize_shapes(None, value=dataset_profile.max_shapes)
+        for shape in serialize_shapes(None, value=dataset_profile.max_shapes):
+            shapes += ["--trt-max-shapes", shape]
     if dataset_profile.opt_shapes:
-        shapes["trt_opt_shapes"] = serialize_shapes(None, value=dataset_profile.opt_shapes)
+        for shape in serialize_shapes(None, value=dataset_profile.opt_shapes):
+            shapes += ["--trt-opt-shapes", shape]
     return shapes
 
 
@@ -54,12 +57,13 @@ def ts2torchtrt(
 ):
     LOGGER.info("%s command started.", __name__)
     with log_path.open("w") as log_file:
-        prepare_log_header(log_file, Format.TF_SAVEDMODEL, Format.TF_TRT)
+        prepare_log_header(log_file, Format.TORCHSCRIPT, Format.TORCH_TRT)
         shapes = _get_shapes(dataset_profile)
         try:
             execute_sh_command(
                 sh.python3.bake(
                     "-mmodel_navigator.converter.torch_tensorrt.ts2trt",
+                    *shapes,
                     **{
                         "input_model": input_path,
                         "output_path": output_path,
@@ -72,7 +76,6 @@ def ts2torchtrt(
                         "max_workspace_size": max_workspace_size,
                         "verbose": bool(verbose),
                     },
-                    **shapes,
                 ),
                 log_file=log_file,
             )
