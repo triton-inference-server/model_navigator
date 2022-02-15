@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,15 +17,19 @@ limitations under the License.
 # Changelog
 
 ## unreleased
-- [Experimental] Added support for Torch-TensorRT conversion
+- Updated NVIDIA containers defaults to 22.01
+- Removed support for Python 3.6 due to EOL
+- Conversion related:
+  - Added support for Torch-TensorRT conversion
 - Fixes and improvements
   - Processes inside containers started by Model Navigator now run without root privileges
   - Fix for volume mounts while running Triton Inference Server in container from other container
   - Fix for conversion of models without file extension on input and output paths
+  - Fix using `--model-format` argument when input and output files have no extension
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 - Version of external components used during testing:
-    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.33.1
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.35.1
     - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.14
     - [Triton Model Analyzer 1.8.2](https://github.com/triton-inference-server/model_analyzer)
     - tf2onnx: [v1.9.3](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.9.3)

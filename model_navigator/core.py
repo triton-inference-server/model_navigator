@@ -1,4 +1,4 @@
-# Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,5 +30,5 @@ class Container(NamedTuple):
         return f"{cls.image}:{version}-{cls.tag}"
 
 
-DEFAULT_CONTAINER_VERSION = "21.12"
+DEFAULT_CONTAINER_VERSION = "22.01"
 DEFAULT_TENSORRT_MAX_WORKSPACE_SIZE = 4 * 2 ** 30  # 4GB

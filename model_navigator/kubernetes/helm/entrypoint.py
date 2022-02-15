@@ -1,4 +1,4 @@
-# Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ class Entrypoint:
     def create(self):
         init_commands = self._initial_cmds()
 
-        entrypoint_cmds = list()
+        entrypoint_cmds = []
         entrypoint_cmds.extend(init_commands)
 
         for cmd in self.cmds:

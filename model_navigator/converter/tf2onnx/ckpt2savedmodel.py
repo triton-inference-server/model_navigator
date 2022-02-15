@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -90,8 +90,8 @@ def main():
     graph_util.remove_training_nodes(meta_graph_def.graph_def, args.outputs)
 
     frozen_graph, input_names, output_names = from_checkpoint(args.checkpoint, None, None)
-    inputs = dict()
-    outputs = dict()
+    inputs = {}
+    outputs = {}
     to_savedmodel(frozen_graph, inputs, outputs, args.output)
 
 

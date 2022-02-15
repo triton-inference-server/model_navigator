@@ -1,4 +1,4 @@
-# Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,5 +20,4 @@ from model_navigator.model import Format
 class TFTRTConfigSetIterator(TargetFormatConfigSetIterator):
     def __iter__(self):
         for tensorrt_precision in self._conversion_set_config.tensorrt_precisions:
-            yield ConversionConfig(target_format=Format.TF_TRT,
-                                   tensorrt_precision=tensorrt_precision)
+            yield ConversionConfig(target_format=Format.TF_TRT, tensorrt_precision=tensorrt_precision)

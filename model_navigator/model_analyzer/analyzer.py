@@ -1,4 +1,4 @@
-# Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -145,7 +145,7 @@ class AnalysisConfigGenerator(BaseConfigGenerator):
         for model_name in model_names:
             LOGGER.info(f"\t- {model_name}")
 
-        # https://github.com/triton-inference-server/model_analyzer/blob/r21.12/docs/config.md
+        # https://github.com/triton-inference-server/model_analyzer/blob/r22.01/docs/config.md
         config = {
             "analysis_models": model_names,
             "checkpoint_directory": self._analyzer_checkpoints_dir_path.as_posix(),

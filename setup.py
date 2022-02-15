@@ -1,4 +1,4 @@
-# Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ def _get_info():
     repository_url = config_parser.get("metadata", "url")
 
     try:
-        from git import GitCommandError, InvalidGitRepositoryError, Repo
+        from git import InvalidGitRepositoryError, Repo
 
         try:
             repo = Repo(navigator_dir.as_posix())

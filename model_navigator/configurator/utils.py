@@ -1,4 +1,4 @@
-# Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ class FileLogger:
 
 
 def _prepare_log_header(source_model: Model, variant: Variant) -> str:
-    lines = list()
+    lines = []
     lines.append(f"Deploying model in format {FORMAT2RESOURCE[source_model.format]} on Triton Inference Server.\n")
     lines.append("In case of any issue please review helpful link section to address problems correctly.")
 
@@ -103,7 +103,7 @@ def _get_model_config_info(source_model: Model, variant: Variant) -> str:
         ),
     }
 
-    config = list()
+    config = []
     for key, value in data.items():
         config.append(f"{key}: {value}")
 

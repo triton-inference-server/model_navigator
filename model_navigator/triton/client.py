@@ -1,4 +1,4 @@
-# Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -240,7 +240,7 @@ class TritonClient:
         """
 
         def handle_http_response(models):
-            models_states = dict()
+            models_states = {}
             for model in models:
                 if not model.get("version"):
                     continue
@@ -251,7 +251,7 @@ class TritonClient:
             return models_states
 
         def handle_grpc_response(models):
-            models_states = dict()
+            models_states = {}
             for model in models:
                 if not model.version:
                     continue
