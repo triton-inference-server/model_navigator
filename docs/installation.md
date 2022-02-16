@@ -43,7 +43,7 @@ In order to run the Triton Model Navigator inside the Docker container the comma
 
 Running the Triton Model Navigator container:
 ```shell
-$ docker run -it \
+$ docker run -it --rm \
 --gpus 1 \
 -v /var/run/docker.sock:/var/run/docker.sock \
 -v <path-to-model-catalog>:<path-to-model-catalog> \
