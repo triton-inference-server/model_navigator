@@ -20,7 +20,10 @@ from model_navigator.triton.config import BackendAccelerator
 
 class TensorFlowBackendConfigurator(BaseBackendConfigurator):
     backend_name = "tensorflow"
-    supported_formats = [Format.TF_SAVEDMODEL]
+    supported_formats = [
+        Format.TF_SAVEDMODEL,
+        Format.TF_TRT,
+    ]
 
     def _set_backend_acceleration(
         self,

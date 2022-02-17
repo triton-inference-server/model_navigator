@@ -18,7 +18,10 @@ from model_navigator.triton.utils import rewrite_signature_to_model_config
 
 class PyTorchBackendConfigurator(BaseBackendConfigurator):
     backend_name = "pytorch"
-    supported_formats = [Format.TORCHSCRIPT]
+    supported_formats = [
+        Format.TORCHSCRIPT,
+        Format.TORCH_TRT,
+    ]
 
     def _extract_signature(self, model_config, model: Model):
         rewrite_signature_to_model_config(model_config, model.signature)

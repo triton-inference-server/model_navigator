@@ -138,6 +138,7 @@ class ChartGenerator:
             model-navigator convert \
                 --config-path {Paths.CONFIG_PATH} \
                 --model-path {docker_src_model_path} \
+                --target-formats {conversion_config.target_format.value} \
                 --output-path {docker_converted_model_path} \
                 --launch-mode {ConversionLaunchMode.LOCAL.value}
             """,
@@ -148,6 +149,7 @@ class ChartGenerator:
             model-navigator triton-config-model \
                 --config-path {Paths.CONFIG_PATH} \
                 --model-path {docker_converted_model_path} \
+                --model-format {conversion_config.target_format.value} \
                 --model-repository {Paths.MODEL_REPOSITORY_PATH}
             """
         )

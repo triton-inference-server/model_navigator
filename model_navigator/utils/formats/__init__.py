@@ -28,6 +28,13 @@ SUFFIX2FORMAT = {
     ".pt": Format.TORCHSCRIPT,
 }
 FORMAT2SUFFIX = {format_: suffix for suffix, format_ in SUFFIX2FORMAT.items()}
+FORMAT2SUFFIX = {
+    **FORMAT2SUFFIX,
+    **{
+        Format.TF_TRT: ".savedmodel",
+        Format.TORCH_TRT: ".pt",
+    },
+}
 
 
 def guess_format(model_path: Union[str, Path]):
