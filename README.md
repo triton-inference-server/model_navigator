@@ -26,6 +26,7 @@ to find the best Triton Model configuration, matches the provided constraints, a
 * [Support Matrix](docs/support_matrix.md)
 * [Quick Start](docs/quick_start.md)
 * [Installation](docs/installation.md)
+* [Framework Navigator](docs/framework_navigator.md)
 * [Running the Triton Model Navigator](docs/run.md)
 * [Model Conversions](docs/conversion.md)
 * [Triton Model Configurator](docs/triton_model_configurator.md)

@@ -17,4 +17,4 @@ FROM ${FROM_IMAGE_NAME}
 ARG INSTALL_URL
 
 RUN pip install --extra-index-url https://pypi.ngc.nvidia.com --no-cache-dir --upgrade --upgrade-strategy only-if-needed \
-    ${INSTALL_URL}
+    ${INSTALL_URL} -e .[cli]

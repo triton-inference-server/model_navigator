@@ -53,6 +53,6 @@ RUN pip install --no-cache-dir --upgrade pip==21.2.4 setuptools==57.4.0
 
 WORKDIR /opt/model-navigator
 COPY . /opt/model-navigator
-RUN pip3 install --extra-index-url https://pypi.ngc.nvidia.com --no-cache-dir -e .
+RUN pip3 install --extra-index-url https://pypi.ngc.nvidia.com --no-cache-dir -e .[cli]
 
 ENTRYPOINT []

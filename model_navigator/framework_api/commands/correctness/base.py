@@ -1,0 +1,72 @@
+# Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+from typing import List, Optional, Tuple
+
+import numpy
+from polygraphy.backend.base import BaseRunner
+
+from model_navigator.framework_api.commands.core import Command, Tolerance
+from model_navigator.framework_api.utils import Framework, sample_to_tuple, to_numpy
+
+
+def get_assert_message(atol: float, rtol: float):
+    return f"Current atol = {atol}, rtol = {rtol}, try to adjust tolerance values"
+
+
+class CorrectnessBase(Command):
+    def _get_runners(self, **kwargs) -> Tuple[BaseRunner, BaseRunner]:
+        raise NotImplementedError
+
+    def __call__(
+        self,
+        samples: List,
+        input_names: Tuple[str],
+        framework: Framework,
+        rtol: Optional[float] = None,
+        atol: Optional[float] = None,
+        **kwargs,
+    ) -> Tolerance:
+
+        base_runner, comp_runner = self._get_runners(
+            samples=samples, input_names=input_names, framework=framework, atol=atol, rtol=rtol, **kwargs
+        )
+        atols = []
+        rtols = []
+        with base_runner, comp_runner:
+            for sample in samples:
+                feed_dict = {
+                    name: to_numpy(tensor, framework) for name, tensor in zip(input_names, sample_to_tuple(sample))
+                }
+                original_output = base_runner.infer(feed_dict)
+                comp_output = comp_runner.infer(feed_dict)
+
+                original_output, comp_output = sample_to_tuple(original_output), sample_to_tuple(comp_output)
+                if atol and rtol:
+                    assert len(original_output) == len(comp_output), get_assert_message(atol, rtol)
+                    all_close_checks = [
+                        numpy.allclose(tensor_A, tensor_B, atol=atol, rtol=rtol)
+                        for tensor_A, tensor_B in zip(original_output, comp_output)
+                    ]
+
+                    assert all(all_close_checks), get_assert_message(atol, rtol)
+                else:  # TODO iterate all outputs
+                    input_output_element_wise_diff = numpy.fabs(original_output[0] - comp_output[0])
+                    atols.append(numpy.max(input_output_element_wise_diff))
+                    # Mean Square Error for relative tolerance
+                    rtols.append(numpy.mean(input_output_element_wise_diff ** 2))
+        if not atol or not rtol:
+            return Tolerance(atol=numpy.max(atols).item(), rtol=numpy.max(rtols).item())
+        else:
+            return Tolerance(atol, rtol)

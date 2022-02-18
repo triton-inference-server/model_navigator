@@ -18,4 +18,4 @@ WORKDIR /workspace/model-navigator
 
 COPY . /workspace/model-navigator
 
-RUN make install-with-framework-extras
+RUN make install-with-framework-and-cli-extras

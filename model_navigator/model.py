@@ -25,9 +25,9 @@ class Format(Enum):
     TORCHSCRIPT = "torchscript"
     TF_SAVEDMODEL = "tf-savedmodel"
     TF_TRT = "tf-trt"
+    TORCH_TRT = "torch-trt"
     ONNX = "onnx"
     TENSORRT = "trt"
-    TORCH_TRT = "torch-trt"
 
 
 @dataclass

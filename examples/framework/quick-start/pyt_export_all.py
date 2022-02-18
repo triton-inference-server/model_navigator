@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,23 +11,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-black>=20.8b1
-build>=0.3.1.post1
-bump2version>=1.0.1
-coverage>=5.5
-flake8>=3.9.2
-ipython>=7.16.1
-isort>=5.8.0
-pdbpp>=0.10.2
-pip>=21.1.1
-pre-commit>=2.13.0
-pytest>=6.2.4
-pytest-bdd>=4.1.0
-pytest-datadir-mgr>=1.2.5
-pytest-mock>=3.6.1
-pytype>=2021.2.9,!=2021.11.18,!=2022.2.17
-recommonmark>=0.7.1
-Sphinx>=4.0.1
-sphinx-rtd-theme>=0.5.2
-tox>=3.23.1
-watchdog[watchmedo]>=2.1.1
+import torch
+
+import model_navigator.framework_api as nav
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
+
+def dataloader():
+    for _ in range(10):
+        yield torch.full((3, 5), 1.0, device=device)
+
+
+model = torch.nn.Linear(5, 7).to(device).eval()
+
+
+nav.torch.export(
+    model=model,
+    dataloader=dataloader,
+    override_workdir=True,
+)

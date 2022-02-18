@@ -16,6 +16,9 @@ limitations under the License.
 
 # Changelog
 
+## unreleased
+- [Experimental] Added Framework Navigator API
+
 ## 0.2.6
 - Updated NVIDIA containers defaults to 22.01
 - Removed support for Python 3.6 due to EOL
