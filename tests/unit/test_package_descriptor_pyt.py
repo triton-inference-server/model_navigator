@@ -64,6 +64,7 @@ def test_pyt_package_descriptor():
             target_jit_type=(JitType.SCRIPT,),
             sample_count=1,
             save_data=False,
+            disable_git_info=False,
         )
 
         cmd_export_result = CommandResults(

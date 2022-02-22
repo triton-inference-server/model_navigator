@@ -64,6 +64,7 @@ def test_tf2_package_descriptor():
             target_formats=(Format.TF_SAVEDMODEL,),
             sample_count=1,
             save_data=False,
+            disable_git_info=False,
         )
 
         cmd_export_result = CommandResults(
