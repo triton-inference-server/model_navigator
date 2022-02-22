@@ -69,6 +69,9 @@ class PytRunner(BaseRunner):
                 inputs_dict = dict(zip(self._forward_kw_names, inputs))
                 outputs = self.model(**inputs_dict)
 
+        if torch.is_tensor(outputs):
+            outputs = (outputs,)
+
         out_dict = OrderedDict()
         if self.output_names is None:
             self.output_names = [f"output__{i}" for i in range(len(outputs))]
