@@ -380,8 +380,7 @@ def _get_triton_server(*, triton_docker_image, gpus, analyzer_config, verbose: b
     triton_config["model-repository"] = analyzer_config.model_repository.resolve().as_posix()
     triton_config["model-control-mode"] = "explicit"
     triton_config["strict-model-config"] = "false"
-    if verbose:
-        triton_config["log-verbose"] = "1"
+
     if analyzer_config.triton_launch_mode == TritonLaunchMode.LOCAL:
         triton_server = TritonServerFactory.create_server_local(
             path=analyzer_config.triton_server_path,

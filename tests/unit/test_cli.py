@@ -254,16 +254,16 @@ def test_cli_raise_exception_on_not_matching_name():
             print(config)
 
 
-def _parse_and_validate_nested_struct(ctx, param, value, cls):
+def _parse_and_validate_nested_struct(ctx, param, value, clazz):
     if isinstance(value, str):
         types = [str, int, str]
         parts = value.split(":")
         value = [cls_(part) for part, cls_ in zip(parts, types)]
 
     if isinstance(value, (list, tuple)) and not hasattr(value, "_fields"):
-        return cls(*value)
+        return clazz(*value)
     elif isinstance(value, dict):
-        return cls(**value)
+        return clazz(**value)
     else:
         return value
 
@@ -293,16 +293,16 @@ class WithStructConfig(BaseConfig):
 
 class WithStructConfigCli:
     config_nested_config2 = CliSpec(
-        parse_and_verify_callback=functools.partial(_parse_and_validate_nested_struct, cls=NestedStructConfig),
+        parse_and_verify_callback=functools.partial(_parse_and_validate_nested_struct, clazz=NestedStructConfig),
     )
     config_nested_config = CliSpec(
-        parse_and_verify_callback=functools.partial(_parse_and_validate_nested_struct, cls=NestedStructConfig),
+        parse_and_verify_callback=functools.partial(_parse_and_validate_nested_struct, clazz=NestedStructConfig),
     )
     config_optional_nested_config2 = CliSpec(
-        parse_and_verify_callback=functools.partial(_parse_and_validate_nested_struct, cls=NestedStructConfig)
+        parse_and_verify_callback=functools.partial(_parse_and_validate_nested_struct, clazz=NestedStructConfig)
     )
     config_optional_nested_config = CliSpec(
-        parse_and_verify_callback=functools.partial(_parse_and_validate_nested_struct, cls=NestedStructConfig)
+        parse_and_verify_callback=functools.partial(_parse_and_validate_nested_struct, clazz=NestedStructConfig)
     )
 
 
@@ -457,14 +457,14 @@ class MyConfigWithStructsMultipleValues:
 
 class MyConfigWithStructsMultipleValuesCli:
     config_b = CliSpec(
-        parse_and_verify_callback=functools.partial(_parse_and_validate_nested_struct, cls=NestedStructConfig)
+        parse_and_verify_callback=functools.partial(_parse_and_validate_nested_struct, clazz=NestedStructConfig)
     )
     config_c = CliSpec(
-        parse_and_verify_callback=functools.partial(_parse_and_validate_nested_struct, cls=NestedStructConfig),
+        parse_and_verify_callback=functools.partial(_parse_and_validate_nested_struct, clazz=NestedStructConfig),
         serialize_default_callback=_serialize_nested_struct,
     )
     config_d = CliSpec(
-        parse_and_verify_callback=functools.partial(_parse_and_validate_nested_struct, cls=NestedStructConfig),
+        parse_and_verify_callback=functools.partial(_parse_and_validate_nested_struct, clazz=NestedStructConfig),
         serialize_default_callback=_serialize_nested_struct,
     )
 
