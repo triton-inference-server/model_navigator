@@ -35,6 +35,7 @@ class Config(DataObject):
     target_formats: Tuple[Format]
     sample_count: int
     save_data: bool
+    disable_git_info: bool
     timestamp: Optional[str] = None
     _input_names: Optional[Tuple[str]] = None
     _output_names: Optional[Tuple[str]] = None

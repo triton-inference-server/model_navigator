@@ -52,6 +52,7 @@ def export(
     save_data: bool = True,
     max_workspace_size: Optional[int] = None,
     target_device: Optional[str] = None,
+    disable_git_info: bool = False,
 ) -> PackageDescriptor:
     """Function exports PyTorch model to all supported formats."""
 
@@ -114,6 +115,7 @@ def export(
         max_workspace_size=max_workspace_size,
         trt_dynamic_axes=trt_dynamic_axes,
         target_device=target_device,
+        disable_git_info=disable_git_info,
     )
 
     pipeline_manager = TorchPipelineManager()

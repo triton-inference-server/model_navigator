@@ -144,10 +144,14 @@ class PackageDescriptor:
                         )
                     )
 
+        if not config.disable_git_info:
+            git_info = get_git_info()
+        else:
+            git_info = None
         self.navigator_status = NavigatorStatus(
             uuid=str(uuid.uuid1()),
             format_version=NAV_PACKAGE_FORMAT_VERSION,
-            git_info=get_git_info(),
+            git_info=git_info,
             environment=get_env(),
             framework_navigator_config=self.config.to_dict(
                 filter_fields=[

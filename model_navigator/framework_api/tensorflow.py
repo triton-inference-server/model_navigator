@@ -44,6 +44,7 @@ def export(
     atol: Optional[float] = None,
     rtol: Optional[float] = None,
     save_data: bool = True,
+    disable_git_info: bool = False,
 ) -> PackageDescriptor:
     """Function exports TensorFlow 2 model to all supported formats."""
     if model_name is None:
@@ -81,6 +82,7 @@ def export(
         atol=atol,
         rtol=rtol,
         save_data=save_data,
+        disable_git_info=disable_git_info,
     )
 
     pipeline_manager = TFPipelineManager()
