@@ -21,9 +21,6 @@ from pathlib import Path
 from typing import List, Optional, Sequence
 
 import click
-from docker.errors import DockerException
-from docker.types import DeviceRequest
-from docker.utils import parse_repository_tag
 
 from model_navigator.cli.spec import (
     ComparatorConfigCli,
@@ -176,6 +173,8 @@ def _run_in_docker(
         config_file.save_config(dataset_profile_config)
 
     framework = FORMAT2FRAMEWORK[model_format]
+    from docker.utils import parse_repository_tag
+
     _, framework_docker_tag = parse_repository_tag(framework_docker_image)
     converter_docker_image = f"model_navigator_converter:{framework_docker_tag}"
 
@@ -214,6 +213,8 @@ def _run_in_docker(
         f"{workspace_flags}'"
     )
     gpus = get_gpus(gpus)
+    from docker.types import DeviceRequest
+
     devices = [DeviceRequest(device_ids=[gpus[0]], capabilities=[["gpu"]])]
     cwd = Path.cwd()
 
@@ -224,6 +225,7 @@ def _run_in_docker(
     container = conversion_image.run_container(
         devices=devices, workdir_path=cwd, mount_as_volumes=required_paths, environment=env
     )
+    from docker.errors import DockerException
 
     try:
         LOGGER.debug(f"Running cmd: {cmd}")

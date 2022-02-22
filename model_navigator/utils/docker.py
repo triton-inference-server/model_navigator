@@ -18,11 +18,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, TextIO, Tuple, Union
 
-import dockerpty
-from docker import APIClient, from_env
-from docker.errors import BuildError
-from docker.types import DeviceRequest
-
 LOGGER = logging.getLogger(__name__)
 
 ContainerIdType = str
@@ -39,6 +34,8 @@ class ContainerMount:
 
 class DockerContainer:
     def __init__(self, container_id: ContainerIdType):
+        from docker import APIClient, from_env
+
         self._docker_api_client = APIClient()
         self._docker_client = from_env()
         containers = self._docker_client.containers.list(filters={"id": container_id})
@@ -59,6 +56,8 @@ class DockerContainer:
     ):
         LOGGER.debug(f"Running cmd: {cmd}")
         interactive = stdin.isatty() if hasattr(stdin, "isatty") else False
+        import dockerpty
+
         for text_io in [stdout, stderr]:
             # dockerpty requires either fileno attribute or send method from stdout/stderr
             if text_io and isinstance(text_io, io.StringIO):
@@ -114,6 +113,8 @@ class DockerContainer:
 
 class DockerImage:
     def __init__(self, image_name: str):
+        from docker import APIClient, from_env
+
         self._image_name = image_name
         self._docker_client = from_env()
         self._docker_api_client = APIClient()
@@ -122,7 +123,7 @@ class DockerImage:
         self,
         *,
         workdir_path: Optional[Path] = None,
-        devices: Optional[List[DeviceRequest]] = None,
+        devices: Optional[List] = None,  # docker.types.DeviceRequest
         environment: Optional[Dict[str, str]] = None,
         mount_as_volumes: Optional[List[Path]] = None,
         ports: Optional[Union[Dict[int, int], List[int]]] = None,
@@ -187,7 +188,7 @@ class DockerImage:
         self,
         *,
         workdir_path: Optional[Path] = None,
-        devices: Optional[List[DeviceRequest]] = None,
+        devices: Optional[List] = None,  # docker.types.DeviceRequest
         volumes: Optional[Dict[str, Dict[str, str]]] = None,
         ports: Optional[List[Union[int, Tuple[int, int]]]] = None,
         environment: Optional[Dict[str, str]] = None,
@@ -233,6 +234,8 @@ class DockerImage:
 
 class DockerBuilder:
     def __init__(self):
+        from docker import from_env
+
         self._docker_client = from_env()
 
     def build(
@@ -250,6 +253,9 @@ class DockerBuilder:
         LOGGER.debug(f"    Dockerfile: {dockerfile_path}")
         LOGGER.debug(f"    Build args: {build_args}")
         build_logs = []
+
+        from docker.errors import BuildError
+
         try:
             _, build_logs = self._docker_client.images.build(
                 path=workdir_path.resolve().as_posix(),
