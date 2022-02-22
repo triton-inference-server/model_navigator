@@ -20,7 +20,6 @@ import numpy
 
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.model import Format
-from model_navigator.tensor import TensorSpec
 
 
 def numpy_to_torch_dtype(np_dtype):
@@ -127,55 +126,6 @@ def to_numpy(tensor, from_framework: Framework):
         return tensor.numpy()
 
 
-def extract_input_shape(dataloader: Callable, framework: Framework):
-    inputs_spec = {}
-    sample = next(dataloader())
-
-    if isinstance(sample, (tuple, list)):
-        for i, tensor in enumerate(sample, 1):
-            np_tensor = to_numpy(tensor, framework)
-            input_name = f"input_{i}"
-            inputs_spec[input_name] = TensorSpec(input_name, tuple(tensor.shape), np_tensor.dtype)
-    elif isinstance(sample, dict):
-        for input_name, tensor in sample.items():
-            np_tensor = to_numpy(tensor, framework)
-            inputs_spec[input_name] = TensorSpec(input_name, tuple(np_tensor.shape), np_tensor.dtype)
-    else:
-        np_tensor = to_numpy(sample, framework)
-        input_name = "input__1"
-        inputs_spec[input_name] = TensorSpec(input_name, tuple(np_tensor.shape), np_tensor.dtype)
-
-    return inputs_spec
-
-
-def extract_output_shape(model, dataloader: Callable, framework: Framework):
-    outputs_spec = {}
-    if framework == Framework.PYT:
-        dummy_input = get_torch_tensor(dataloader)
-        output = model_forward_torch(model, dummy_input)
-    else:
-        # import tensorflow  # pytype: disable=import-error
-
-        sample = next(dataloader())
-        output = model.predict(sample)
-
-    if isinstance(output, (tuple, list)):
-        for i, tensor in enumerate(output, start=1):
-            np_tensor = to_numpy(tensor, framework)
-            output_name = f"output__{i}"
-            outputs_spec[output_name] = TensorSpec(output_name, tuple(np_tensor.shape), np_tensor.dtype)
-    elif isinstance(output, dict):
-        for output_name, tensor in output.items():
-            np_tensor = to_numpy(tensor, framework)
-            outputs_spec[output_name] = TensorSpec(output_name, tuple(np_tensor.shape))
-    else:
-        output_name = "output__1"
-        np_tensor = to_numpy(output, framework)
-        outputs_spec[output_name] = TensorSpec(output_name, tuple(np_tensor.shape), np_tensor.dtype)
-
-    return outputs_spec
-
-
 def get_package_path(workdir: Path, model_name: str):
     return workdir / f"{model_name}.nav"
 
@@ -251,14 +201,6 @@ class DataObject:
             items.append(item)
 
         return items
-
-
-def model_forward_torch(model, input):
-    if isinstance(input, (tuple, list)):
-        return model(*input)
-    if isinstance(input, dict):
-        return model(**input)
-    return model(input)
 
 
 def sample_to_tuple(input):

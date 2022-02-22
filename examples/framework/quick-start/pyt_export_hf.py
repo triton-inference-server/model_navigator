@@ -20,14 +20,13 @@ def get_args():
 def get_model_names():
     return [
         "gpt2",
-        "cardiffnlp/twitter-roberta-base-sentiment",
+        # "cardiffnlp/twitter-roberta-base-sentiment",
         "bert-base-uncased",
         "distilgpt2",
         "distilbert-base-uncased",
         "sentence-transformers/multi-qa-MiniLM-L6-cos-v1",
-        "cl-tohoku/bert-base-japanese-char",
-        "deepset/roberta-base-squad2",
-        "roberta-base",
+        # "deepset/roberta-base-squad2",
+        # "roberta-base",
         "bert-base-chinese",
     ]
 
@@ -42,10 +41,10 @@ if __name__ == "__main__":
         try:
 
             nav_workdir = Path(args.workspace) / "navigator_workdir"
-
             artifacts_library = nav.huggingface.torch.export(
                 model_name=model_name,
-                override_workdir=False,
+                dataset_name="imdb",
+                override_workdir=True,
                 keep_workdir=True,
                 workdir=nav_workdir,
             )

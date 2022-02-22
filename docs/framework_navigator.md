@@ -152,6 +152,8 @@ def export(
     model_name: Optional[str] = None,
     opset: Optional[int] = None, # ONNX opset, by default latest is used
     target_formats: Optional[Tuple[Format]] = None,
+    target_precisions: Optional[Tuple[Precision]] = None,
+    max_workspace_size: Optional[int] = None,
     jit_options: Optional[Tuple[JitType]] = None,
     workdir: Optional[Path] = None, # default workdir is navigator_workdir in current working directory
     override_workdir: bool = False,
@@ -161,6 +163,7 @@ def export(
     rtol: Optional[float] = None, # relative tolerance used for correctness tests. If None, value will be calculated during run
     input_names: Optional[Tuple[str]] = None, # model input name in the same order as in samples returned from dataloader
     dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None, # for ONNX export, see https://pytorch.org/docs/1.9.1/onnx.html#functions
+    target_device: Optional[str] = None, # target device for exporting the model
 ) -> PackageDescriptor:
     """Function exports PyTorch model to all supported formats."""
 ```

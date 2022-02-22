@@ -14,7 +14,6 @@
 
 
 from pathlib import Path
-from typing import Dict, Tuple
 
 import torch  # pytype: disable=import-error
 from polygraphy.backend.base import BaseRunner
@@ -27,11 +26,11 @@ from model_navigator.framework_api.commands.convert.onnx import ConvertONNX2TRT
 from model_navigator.framework_api.commands.core import CommandType
 from model_navigator.framework_api.commands.export.pyt import ExportPYT2ONNX
 from model_navigator.framework_api.commands.performance.base import PerformanceBase
+from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.runners.pyt import PytRunner
 from model_navigator.framework_api.runners.trt import TrtRunner
 from model_navigator.framework_api.utils import JitType, format_to_relative_model_path, get_package_path
 from model_navigator.model import Format
-from model_navigator.tensor import TensorSpec
 
 
 class PerformanceTorchScript(PerformanceBase):
@@ -46,9 +45,10 @@ class PerformanceTorchScript(PerformanceBase):
     def _get_runner(
         self,
         workdir: Path,
-        input_metadata: Dict[str, TensorSpec],
-        output_names: Tuple[str],
+        input_metadata: TensorMetadata,
+        output_metadata: TensorMetadata,
         model_name: str,
+        target_device: str,
         **kwargs,
     ) -> BaseRunner:
 
@@ -56,7 +56,10 @@ class PerformanceTorchScript(PerformanceBase):
             format=self.target_format, jit_type=self.target_jit_type
         )
         ts_runner = PytRunner(
-            torch.jit.load(exported_model_path), input_metadata=input_metadata, output_names=output_names
+            torch.jit.load(exported_model_path),
+            input_metadata=input_metadata,
+            output_names=list(output_metadata.keys()),
+            target_device=target_device,
         )
 
         return ts_runner

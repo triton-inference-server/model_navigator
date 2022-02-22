@@ -63,8 +63,6 @@ def test_tf2_package_descriptor():
             keep_workdir=True,
             target_formats=(Format.TF_SAVEDMODEL,),
             sample_count=1,
-            input_metadata={},
-            output_metadata={},
             save_data=False,
         )
 

@@ -14,7 +14,7 @@
 
 
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Optional, Tuple
 
 import torch  # pytype: disable=import-error
 from polygraphy.backend.base import BaseRunner
@@ -27,11 +27,11 @@ from model_navigator.framework_api.commands.convert.onnx import ConvertONNX2TRT
 from model_navigator.framework_api.commands.core import CommandType
 from model_navigator.framework_api.commands.correctness.base import CorrectnessBase
 from model_navigator.framework_api.commands.export.pyt import ExportPYT2ONNX
+from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.runners.pyt import PytRunner
 from model_navigator.framework_api.runners.trt import TrtRunner
 from model_navigator.framework_api.utils import JitType, format_to_relative_model_path, get_package_path
 from model_navigator.model import Format
-from model_navigator.tensor import TensorSpec
 
 
 def get_assert_message(atol: float, rtol: float):
@@ -51,22 +51,32 @@ class CorrectnessPYT2TorchScript(CorrectnessBase):
         self,
         model: torch.nn.Module,
         workdir: Path,
-        input_metadata: Dict[str, TensorSpec],
-        output_names: Tuple[str],
+        input_metadata: TensorMetadata,
+        output_metadata: TensorMetadata,
         model_name: str,
+        target_device: str,
         forward_kw_names: Optional[Tuple[str]] = None,
         **kwargs,
     ) -> Tuple[BaseRunner, BaseRunner]:
 
+        output_names = list(output_metadata.keys())
+
         pyt_runner = PytRunner(
-            model, input_metadata=input_metadata, output_names=output_names, forward_kw_names=forward_kw_names
+            model,
+            input_metadata=input_metadata,
+            output_names=output_names,
+            target_device=target_device,
+            forward_kw_names=forward_kw_names,
         )
 
         exported_model_path = get_package_path(workdir, model_name) / format_to_relative_model_path(
             format=self.target_format, jit_type=self.target_jit_type
         )
         ts_runner = PytRunner(
-            torch.jit.load(exported_model_path), input_metadata=input_metadata, output_names=output_names
+            torch.jit.load(exported_model_path),
+            input_metadata=input_metadata,
+            output_names=output_names,
+            target_device=target_device,
         )
 
         return pyt_runner, ts_runner
@@ -84,15 +94,20 @@ class CorrectnessPYT2ONNX(CorrectnessBase):
         self,
         model: torch.nn.Module,
         workdir: Path,
-        input_metadata: Dict[str, TensorSpec],
-        output_names: Tuple[str],
-        forward_kw_names: Tuple[str],
+        input_metadata: TensorMetadata,
+        output_metadata: TensorMetadata,
         model_name: str,
+        target_device: str,
+        forward_kw_names: Optional[Tuple[str]] = None,
         **kwargs,
     ) -> Tuple[BaseRunner, BaseRunner]:
 
         pyt_runner = PytRunner(
-            model, input_metadata=input_metadata, output_names=output_names, forward_kw_names=forward_kw_names
+            model,
+            input_metadata=input_metadata,
+            output_names=list(output_metadata.keys()),
+            target_device=target_device,
+            forward_kw_names=forward_kw_names,
         )
 
         exported_model_path = get_package_path(workdir, model_name) / ExportPYT2ONNX().get_output_relative_path()
@@ -114,15 +129,20 @@ class CorrectnessPYT2TRT(CorrectnessBase):
         self,
         model: torch.nn.Module,
         workdir: Path,
-        input_metadata: Dict[str, TensorSpec],
-        output_names: Tuple[str],
-        forward_kw_names: Tuple[str],
+        input_metadata: TensorMetadata,
+        output_metadata: TensorMetadata,
         model_name: str,
+        target_device: str,
+        forward_kw_names: Optional[Tuple[str]] = None,
         **kwargs,
     ) -> Tuple[BaseRunner, BaseRunner]:
 
         pyt_runner = PytRunner(
-            model, input_metadata=input_metadata, output_names=output_names, forward_kw_names=forward_kw_names
+            model,
+            input_metadata=input_metadata,
+            output_names=list(output_metadata.keys()),
+            forward_kw_names=forward_kw_names,
+            target_device=target_device,
         )
 
         converted_model_path = (

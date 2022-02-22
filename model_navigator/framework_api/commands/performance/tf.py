@@ -14,17 +14,17 @@
 
 
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Optional
 
 import tensorflow  # pytype: disable=import-error
 
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.core import CommandType
 from model_navigator.framework_api.commands.performance.base import PerformanceBase
+from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.runners.tf import TFRunner, TFTRTRunner
 from model_navigator.framework_api.utils import format_to_relative_model_path, get_package_path
 from model_navigator.model import Format
-from model_navigator.tensor import TensorSpec
 
 
 class PerformanceSavedModel(PerformanceBase):
@@ -39,12 +39,13 @@ class PerformanceSavedModel(PerformanceBase):
     def _get_runner(
         self,
         workdir: Path,
-        input_metadata: Dict[str, TensorSpec],
-        output_names: Tuple[str],
+        input_metadata: TensorMetadata,
+        output_metadata: TensorMetadata,
         model_name: str,
         **kwargs,
     ):
 
+        output_names = list(output_metadata.keys())
         exported_model_path = get_package_path(workdir, model_name) / format_to_relative_model_path(
             format=self.target_format,
             precision=self.target_precision,

@@ -47,6 +47,7 @@ class ModelStatus(DataObject):
     precision: Optional[TensorRTPrecision] = None
     verified: bool = False
     performance: Optional[Performance] = None
+    err_msg: Optional[str] = None
 
 
 @dataclass
@@ -116,8 +117,10 @@ class PackageDescriptor:
 
                     if command_results.status == Status.OK and correctness_results.status == Status.OK:
                         status = Status.OK
+                        err_msg = None
                     else:
                         status = Status.FAIL
+                        err_msg = command_results.err_msg
 
                     performance_results = self._get_performance_for_model(
                         commands_results=pipeline_results.commands_results,
@@ -137,6 +140,7 @@ class PackageDescriptor:
                             torch_jit=command_results.target_jit_type,
                             precision=command_results.target_precision,
                             performance=performance_results,
+                            err_msg=err_msg,
                         )
                     )
 

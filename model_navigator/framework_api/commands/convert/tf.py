@@ -24,6 +24,7 @@ from model_navigator.framework_api.utils import (
     ArtifactType,
     format_to_relative_model_path,
     get_package_path,
+    sample_to_tuple,
 )
 from model_navigator.model import Format
 
@@ -58,7 +59,7 @@ class ConvertSavedModel2TFTRT(Command):
         # generate samples as tuples for TF-TRT converter
         def _dataloader():
             for sample in samples:
-                yield sample,
+                yield sample_to_tuple(sample)
 
         exported_model_path = get_package_path(workdir, model_name) / ExportTF2SavedModel().get_output_relative_path()
         converted_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()

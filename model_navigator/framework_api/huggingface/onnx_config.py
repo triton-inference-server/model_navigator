@@ -44,10 +44,10 @@ _MODEL_TO_ONNX_CONFIG = {
 }
 
 
-def get_onnx_config(model):
+def get_onnx_config(config):
 
     for config_class, onnx_config_class in _MODEL_TO_ONNX_CONFIG.items():
-        if isinstance(model.config, config_class):
-            return onnx_config_class(model.config)
+        if type(config) == config_class:
+            return onnx_config_class(config)
 
-    raise ValueError(f"No default ONNX config for {type(model)}. Plase provide the config.")
+    raise ValueError(f"No default ONNX config for {type(config)}. Plase provide the config.")

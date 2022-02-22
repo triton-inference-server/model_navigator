@@ -21,8 +21,6 @@ from model_navigator.framework_api.package_descriptor import PackageDescriptor
 from model_navigator.framework_api.pipelines import TFPipelineManager
 from model_navigator.framework_api.utils import (
     Framework,
-    extract_input_shape,
-    extract_output_shape,
     get_default_max_workspace_size,
     get_default_model_name,
     get_default_workdir,
@@ -66,9 +64,6 @@ def export(
     if sample_count is None:
         sample_count = 100
 
-    input_metadata = extract_input_shape(dataloader, Framework.TF2)
-    output_metadata = extract_output_shape(model, dataloader, Framework.TF2)
-
     config = Config(
         Framework.TF2,
         model=model,
@@ -86,8 +81,6 @@ def export(
         atol=atol,
         rtol=rtol,
         save_data=save_data,
-        input_metadata=input_metadata,
-        output_metadata=output_metadata,
     )
 
     pipeline_manager = TFPipelineManager()

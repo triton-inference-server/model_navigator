@@ -63,8 +63,6 @@ def test_pyt_package_descriptor():
             target_formats=(Format.TORCHSCRIPT,),
             target_jit_type=(JitType.SCRIPT,),
             sample_count=1,
-            input_metadata={},
-            output_metadata={},
             save_data=False,
         )
 

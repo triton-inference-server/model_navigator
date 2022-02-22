@@ -56,6 +56,7 @@ def test_tf2_dump_model_input():
         dump_cmd = DumpInputModelData()
 
         input_data = next(dataloader())
+        np_input = input_data.numpy()
 
         dump_cmd(
             framework=Framework.TF2,
@@ -63,7 +64,8 @@ def test_tf2_dump_model_input():
             model_name=model_name,
             dataloader=dataloader,
             sample_count=1,
-            samples=[input_data],
+            samples=[{"input__1": np_input}],
+            input_metadata={"input__1": TensorSpec("input__1", np_input.shape, np_input.dtype)},
         )
 
         for sample in [numpy.load(npz_file) for npz_file in model_input_dir.iterdir() if model_input_dir.is_dir()]:
@@ -85,8 +87,8 @@ def test_tf2_dump_model_output():
         model_output_dir = package_dir / "model_output"
 
         input_data = next(dataloader())
-
-        model_output = model.predict(input_data)
+        np_output = model.predict(input_data)
+        np_input = input_data.numpy()
 
         dump_cmd = DumpOutputModelData()
 
@@ -96,11 +98,13 @@ def test_tf2_dump_model_output():
             model=model,
             model_name=model_name,
             sample_count=1,
-            samples=[input_data],
+            samples=[{"input__1": np_input}],
+            input_metadata={"input__1": TensorSpec("input__1", np_input.shape, np_input.dtype)},
+            output_metadata={"output__1": TensorSpec("output__1", np_output.shape, np_output.dtype)},
         )
 
         for sample in [numpy.load(npz_file) for npz_file in model_output_dir.iterdir() if model_output_dir.is_dir()]:
-            for dumped, reference in zip([sample[array_name] for array_name in sample.files], [model_output]):
+            for dumped, reference in zip([sample[array_name] for array_name in sample.files], [np_output]):
                 assert len(dumped) == len(reference)
                 assert numpy.allclose(dumped, reference)
 
@@ -117,6 +121,8 @@ def test_tf2_correctness():
         tensorflow.keras.models.save_model(model=model, filepath=model_path, overwrite=True)
 
         input_data = next(dataloader())
+        np_output = model.predict(input_data)
+        np_input = input_data.numpy()
 
         correctness_cmd = CorrectnessSavedModel(target_format=Format.TF_SAVEDMODEL)
         correctness_cmd(
@@ -126,10 +132,9 @@ def test_tf2_correctness():
             workdir=workdir,
             rtol=0.0,
             atol=0.0,
-            samples=[input_data],
-            input_names=("input__1",),
-            input_metadata={"input__1": TensorSpec("input__1", input_data.numpy().shape, input_data.numpy().dtype)},
-            output_names=("output__1",),
+            samples=[{"input__1": np_input}],
+            input_metadata={"input__1": TensorSpec("input__1", np_input.shape, np_input.dtype)},
+            output_metadata={"output__1": TensorSpec("output__1", np_output.shape, np_output.dtype)},
         )
 
 

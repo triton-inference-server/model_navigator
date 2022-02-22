@@ -14,12 +14,16 @@
 
 import subprocess
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
+
+import numpy as np
 
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.export.pyt import ExportPYT2ONNX
-from model_navigator.framework_api.utils import format_to_relative_model_path, get_package_path, sample_to_tuple
+from model_navigator.framework_api.common import TensorMetadata
+from model_navigator.framework_api.logger import LOGGER
+from model_navigator.framework_api.utils import format_to_relative_model_path, get_package_path
 from model_navigator.model import Format
 
 
@@ -49,7 +53,10 @@ class ConvertONNX2TRT(Command):
         workdir: Path,
         model_name: str,
         samples: List,
-        input_names: Optional[Tuple[str]] = None,
+        input_metadata: TensorMetadata,
+        max_workspace_size: Optional[int] = None,
+        dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None,
+        trt_dynamic_axes: Optional[Dict[str, Dict[int, Tuple[int, int, int]]]] = None,
         **kwargs,
     ) -> Optional[Path]:
 
@@ -59,23 +66,49 @@ class ConvertONNX2TRT(Command):
         if converted_model_path.is_file() or converted_model_path.is_dir():
             return None
         converted_model_path.parent.mkdir(parents=True, exist_ok=True)
-        dummy_input = samples[0]
 
         convert_cmd = ["polygraphy", "convert", exported_model_path.as_posix()]
         convert_cmd.extend(["--convert-to", "trt"])
         convert_cmd.extend(["-o", converted_model_path.as_posix()])
 
-        # TODO: how to handle min / max / opt shapes?
-        for arg in ("min-shapes", "opt-shapes", "max-shapes"):
-            shapes = []
-            for input_name, tensor in zip(input_names, sample_to_tuple(dummy_input)):
-                shape = ",".join([str(d) for d in tensor.shape])
-                shapes.append(f"{input_name}:[{shape}]")
-            convert_cmd.extend([f"--trt-{arg}"] + shapes)
+        if dynamic_axes is not None:
+            if trt_dynamic_axes is None:
+
+                trt_dynamic_axes_shapes = {
+                    name: {ax: [] for ax in axes} for name, axes in dynamic_axes.items() if name in input_metadata
+                }
+                trt_dynamic_axes = {}
+                for sample in samples:
+                    for name, tensor in sample.items():
+                        for i, dim in enumerate(tensor.shape):
+                            trt_dynamic_axes_shapes[name][i].append(dim)
+
+                for name, axes in trt_dynamic_axes_shapes.items():
+                    trt_dynamic_axes[name] = {}
+                    for ax, shapes in axes.items():
+                        trt_dynamic_axes[name][ax] = (min(shapes), int(np.median(shapes)), max(shapes))
+
+                LOGGER.warning(
+                    f"No TRT (min, opt, max) values for axes provided. Using values derived from samples: {trt_dynamic_axes}"
+                )
+
+            sample = samples[0]
+            for i, arg in enumerate(("--trt-min-shapes", "--trt-opt-shapes", "--trt-max-shapes")):
+                shapes = []
+                for input_name, tensor in sample.items():
+                    tensor_shape = list(tensor.shape)
+                    for ax, val in trt_dynamic_axes[input_name].items():
+                        tensor_shape[ax] = val[i]
+                    shape = ",".join([str(d) for d in tensor_shape])
+                    shapes.append(f"{input_name}:[{shape}]")
+                convert_cmd.extend([f"{arg}"] + shapes)
 
         precision_arg = self.trt_precision_to_arg[self.target_precision]
         if precision_arg:
             convert_cmd.append(precision_arg)
+
+        if max_workspace_size is not None:
+            convert_cmd.append(f"--workspace={max_workspace_size}")
 
         subprocess.run(convert_cmd, check=True)
 

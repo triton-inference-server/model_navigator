@@ -54,6 +54,7 @@ def test_pyt_dump_model_input():
         model_input_dir = package_dir / "model_input"
 
         input_data = next(dataloader())
+        numpy_data = input_data.cpu().numpy()
 
         dump_cmd = DumpInputModelData()
 
@@ -62,7 +63,9 @@ def test_pyt_dump_model_input():
             workdir=workdir,
             model_name=model_name,
             dataloader=dataloader,
-            samples=[input_data],
+            samples=[{"input__1": numpy_data}],
+            input_metadata={"input__1": TensorSpec("input__1", numpy_data.shape, numpy_data.dtype)},
+            output_metadata={"output__1": TensorSpec("output__1", numpy_data.shape, numpy_data.dtype)},
             sample_count=1,
         )
 
@@ -84,8 +87,9 @@ def test_pyt_dump_model_output():
         model_input_dir.mkdir(parents=True, exist_ok=True)
         model_output_dir = package_dir / "model_output"
 
-        input_data = next(dataloader()).numpy()
-        numpy.savez(model_input_dir / "sample.npz", input_data)
+        input_data = next(dataloader())
+        numpy_data = input_data.cpu().numpy()
+        numpy.savez(model_input_dir / "sample.npz", numpy_data)
 
         model_output = model(*input_data)
 
@@ -97,8 +101,11 @@ def test_pyt_dump_model_output():
             model=model,
             model_name=model_name,
             dataloader=dataloader,
-            samples=[input_data],
+            samples=[{"input__1": numpy_data}],
+            input_metadata={"input__1": TensorSpec("input__1", numpy_data.shape, numpy_data.dtype)},
+            output_metadata={"output__1": TensorSpec("output__1", numpy_data.shape, numpy_data.dtype)},
             sample_count=1,
+            target_device="cpu",
         )
 
         for sample in [numpy.load(npz_file) for npz_file in model_output_dir.iterdir() if model_output_dir.is_dir()]:
@@ -131,10 +138,10 @@ def test_pyt_correctness():
             model_name=model_name,
             rtol=0.0,
             atol=0.0,
-            samples=[input_data],
-            input_names=("input__1",),
+            samples=[{"input__1": numpy_data}],
             input_metadata={"input__1": TensorSpec("input__1", numpy_data.shape, numpy_data.dtype)},
-            output_names=("output__1",),
+            output_metadata={"output__1": TensorSpec("output__1", numpy_data.shape, numpy_data.dtype)},
+            target_device="cpu",
         )
 
 
@@ -148,7 +155,11 @@ def test_pyt_export_torchscript():
         export_cmd = ExportPYT2TorchScript(target_jit_type=JitType.SCRIPT)
 
         exported_model_path = package_dir / export_cmd(
-            model=model, model_name=model_name, workdir=workdir, dataloader=dataloader
+            model=model,
+            model_name=model_name,
+            workdir=workdir,
+            dataloader=dataloader,
+            target_device="cpu",
         )
 
         torch.jit.load(exported_model_path.as_posix())
@@ -170,6 +181,7 @@ def test_pyt_export_onnx():
         model_ = torch.nn.Linear(5, 7).to(device).eval()
 
         input_data = next(_dataloader())
+        samples = [{"input": input_data.detach().cpu().numpy()}]
 
         export_cmd = ExportPYT2ONNX()
         exported_model_path = package_dir / export_cmd(
@@ -177,9 +189,11 @@ def test_pyt_export_onnx():
             model_name=model_name,
             workdir=workdir,
             opset=OPSET,
-            input_names=("input",),
             dynamic_axes={"input": {0: "batch"}},
-            samples=[input_data],
+            samples=samples,
+            input_metadata={"input": TensorSpec("input", (-1, 5), numpy.dtype("float32"))},
+            output_metadata={"output": TensorSpec("output", (-1, 7), numpy.dtype("float32"))},
+            target_device=device,
         )
 
         onnx.checker.check_model(exported_model_path.as_posix())

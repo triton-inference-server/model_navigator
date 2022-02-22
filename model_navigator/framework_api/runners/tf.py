@@ -15,6 +15,7 @@
 import time
 from collections import OrderedDict
 
+import numpy
 from polygraphy.backend.base import BaseRunner
 from polygraphy.common import TensorMetadata
 
@@ -24,7 +25,7 @@ class TFRunner(BaseRunner):
     Runs inference using TensorFlow2.
     """
 
-    def __init__(self, model, input_metadata, output_names, name=None):
+    def __init__(self, model, input_metadata, output_names=None, name=None):
         """
         Args:
             model (tensorflow.keras.Model):
@@ -55,7 +56,12 @@ class TFRunner(BaseRunner):
         outputs = self.model.predict(list(feed_dict.values()))
         end = time.time()
 
+        if isinstance(outputs, numpy.ndarray):
+            outputs = (outputs,)
+
         out_dict = OrderedDict()
+        if self.output_names is None:
+            self.output_names = [f"output__{i}" for i in range(len(outputs))]
         for name, output in zip(self.output_names, outputs):
             out_dict[name] = output
         self.inference_time = end - start

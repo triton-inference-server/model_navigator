@@ -21,6 +21,7 @@ from model_navigator.framework_api.commands.data_dump.samples import (
     FetchInputModelData,
 )
 from model_navigator.framework_api.commands.export.tf import ExportTF2SavedModel
+from model_navigator.framework_api.commands.infer_metadata import InferInputMetadata, InferOutputMetadata
 from model_navigator.framework_api.commands.performance.tf import PerformanceSavedModel
 from model_navigator.framework_api.pipelines.pipeline import Pipeline
 from model_navigator.framework_api.pipelines.pipeline_manager_base import PipelineManager
@@ -31,7 +32,9 @@ from model_navigator.model import Format
 class TFPipelineManager(PipelineManager):
     def _get_pipeline(self, config) -> Pipeline:
         commands = [
+            InferInputMetadata(),
             FetchInputModelData(),
+            InferOutputMetadata(),
             ExportTF2SavedModel(),
             CorrectnessSavedModel(target_format=Format.TF_SAVEDMODEL),
             PerformanceSavedModel(target_format=Format.TF_SAVEDMODEL),

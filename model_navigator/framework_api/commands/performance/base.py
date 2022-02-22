@@ -12,13 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List, Optional, Tuple
+from typing import List
 
 import numpy
 from polygraphy.backend.base import BaseRunner
 
 from model_navigator.framework_api.commands.core import Command, Performance
-from model_navigator.framework_api.utils import Framework, sample_to_tuple, to_numpy
 
 
 class PerformanceBase(Command):
@@ -28,24 +27,15 @@ class PerformanceBase(Command):
     def __call__(
         self,
         samples: List,
-        input_names: Tuple[str],
-        framework: Framework,
-        rtol: Optional[float] = None,
-        atol: Optional[float] = None,
         **kwargs,
     ) -> Performance:
 
-        runner = self._get_runner(
-            samples=samples, input_names=input_names, framework=framework, atol=atol, rtol=rtol, **kwargs
-        )
+        runner = self._get_runner(samples=samples, **kwargs)
 
         time_measurements = []
         with runner:
             for sample in samples:
-                feed_dict = {
-                    name: to_numpy(tensor, framework) for name, tensor in zip(input_names, sample_to_tuple(sample))
-                }
-                runner.infer(feed_dict)
+                runner.infer(sample)
                 time_measurements.append(runner.last_inference_time())
 
         latency_sec = float(numpy.median(time_measurements))

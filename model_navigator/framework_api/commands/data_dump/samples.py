@@ -13,13 +13,14 @@
 # limitations under the License.
 
 from pathlib import Path
-from typing import Callable, List
+from typing import Callable, List, Optional, Tuple
 
 import numpy
 
 from model_navigator.framework_api.commands.core import Command, CommandType
+from model_navigator.framework_api.common import Sample, TensorMetadata
 from model_navigator.framework_api.exceptions import TensorTypeError
-from model_navigator.framework_api.utils import Framework, get_package_path, model_forward_torch, to_numpy
+from model_navigator.framework_api.utils import Framework, get_package_path, sample_to_tuple, to_numpy
 
 
 # TODO: Add support for: Numpy Arrays, Dict??, tf.data??, keras.utils.Sequence??
@@ -64,14 +65,17 @@ class FetchInputModelData(Command):
         framework: Framework,
         dataloader: Callable,
         sample_count: int,
+        input_metadata: TensorMetadata,
         **kwargs,
-    ):
+    ) -> List[Sample]:
         generator = dataloader()
         samples = []
         for i, sample in enumerate(generator):
             if i >= sample_count:
                 break
             is_tensor(sample, framework)
+            sample = sample_to_tuple(sample)
+            sample = {n: to_numpy(t, framework) for n, t in zip(input_metadata, sample)}
             samples.append(sample)
         return samples
 
@@ -89,11 +93,9 @@ class DumpInputModelData(Command):
 
     def __call__(
         self,
-        framework: Framework,
         workdir: Path,
         model_name: str,
         samples: List,
-        sample_count: int,
         **kwargs,
     ):
         sample_data_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
@@ -101,15 +103,7 @@ class DumpInputModelData(Command):
 
         for i, sample in enumerate(samples):
             sample_file_path = sample_data_path / f"sample_{i}.npz"
-            if isinstance(sample, (list, tuple)):
-                sample = [to_numpy(item, framework) for item in sample]
-                numpy.savez(sample_file_path, *sample)
-            elif isinstance(sample, dict):
-                sample = {name: to_numpy(tensor, framework) for name, tensor in sample.items()}
-                numpy.savez(sample_file_path, **sample)
-            else:
-                sample = to_numpy(sample, framework)
-                numpy.savez(sample_file_path, sample)
+            numpy.savez(sample_file_path, **sample)
 
         return samples
 
@@ -132,35 +126,34 @@ class DumpOutputModelData(Command):
         model,
         model_name: str,
         samples: List,
-        sample_count: int,
+        input_metadata: TensorMetadata,
+        output_metadata: TensorMetadata,
+        target_device: Optional[str] = None,
+        forward_kw_names: Optional[Tuple[str]] = None,
         **kwargs,
     ):
+        output_names = list(output_metadata.keys())
         outputs = []
         output_data_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
         output_data_path.mkdir(parents=True, exist_ok=True)
 
         for sample in samples:
             if framework == Framework.PYT:
-                import torch  # pytype: disable=import-error
+                from model_navigator.framework_api.runners.pyt import PytRunner
 
-                inputs = sample
-                output = model_forward_torch(model, inputs)
-                if isinstance(output, (list, tuple)) and isinstance(output[0], torch.Tensor):
-                    output = [to_numpy(tensor, framework) for tensor in output]
-                elif isinstance(output, dict):
-                    output = {name: to_numpy(tensor, framework) for name, tensor in output.items()}
-                elif isinstance(output, torch.Tensor):
-                    output = to_numpy(output, framework)
-                outputs.append(output)
+                runner = PytRunner(
+                    model, input_metadata, output_names, target_device=target_device, forward_kw_names=forward_kw_names
+                )
             else:
-                outputs.append(to_numpy(model.predict(sample), framework))
+                from model_navigator.framework_api.runners.tf import TFRunner
+
+                runner = TFRunner(model, input_metadata, output_names)
+
+            with runner:
+                output = runner.infer(sample)
+                outputs.append(output)
 
         for i, output in enumerate(outputs):
-            if isinstance(output, (list, tuple)):
-                numpy.savez(output_data_path / f"sample_{i}.npz", *output)
-            elif isinstance(output, dict):
-                numpy.savez(output_data_path / f"sample_{i}.npz", **output)
-            else:
-                numpy.savez(output_data_path / f"sample_{i}.npz", output)
+            numpy.savez(output_data_path / f"sample_{i}.npz", **output)
 
         return self.get_output_relative_path()

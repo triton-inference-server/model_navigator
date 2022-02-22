@@ -20,7 +20,6 @@ from typing import Callable, Dict, List, Optional, Tuple, Union
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.utils import DataObject, Framework, JitType
 from model_navigator.model import Format
-from model_navigator.tensor import TensorSpec
 
 
 @dataclass(frozen=True)
@@ -35,19 +34,23 @@ class Config(DataObject):
     keep_workdir: bool
     target_formats: Tuple[Format]
     sample_count: int
-    input_metadata: Dict[str, TensorSpec]
-    output_metadata: Dict[str, TensorSpec]
     save_data: bool
     timestamp: Optional[str] = None
+    _input_names: Optional[Tuple[str]] = None
+    _output_names: Optional[Tuple[str]] = None
 
-    # TF-TRT params
+    # TRT params
     max_workspace_size: Optional[int] = None
     target_precisions: Optional[Tuple[TensorRTPrecision]] = None
+    trt_dynamic_axes: Optional[Dict[str, Dict[int, Tuple[int, int, int]]]] = None
+
+    # TF-TRT params
     minimum_segment_size: Optional[int] = None
 
     # PyTorch
     target_jit_type: Optional[Tuple[JitType]] = None
     forward_kw_names: Optional[Tuple[str]] = None
+    target_device: str = "cpu"
 
     # ONNX
     opset: Optional[int] = None
@@ -61,5 +64,3 @@ class Config(DataObject):
 
     def __post_init__(self):
         object.__setattr__(self, "timestamp", f"{datetime.datetime.now():%Y-%m-%dT%H:%M:%S.%f}")
-        object.__setattr__(self, "input_names", tuple(self.input_metadata.keys()))
-        object.__setattr__(self, "output_names", tuple(self.output_metadata.keys()))

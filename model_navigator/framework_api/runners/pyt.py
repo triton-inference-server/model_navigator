@@ -25,12 +25,12 @@ class PytRunner(BaseRunner):
     Runs inference using PyTorch.
     """
 
-    def __init__(self, model, input_metadata, output_names, name=None, forward_kw_names=None):
+    def __init__(self, model, input_metadata, output_names=None, target_device="cpu", name=None, forward_kw_names=None):
         """
         Args:
             model (Union[torch.nn.Module, Callable() -> torch.nn.Module]):
                     A torch.nn.Module or subclass or a callable that returns one.
-            input_metadata (Dict[str, TensorSpec]): Mapping of input names to their specs (data types and shapes).
+            input_metadata (TensorMetadata): Mapping of input names to their data types and shapes.
             output_names (List[str]):
                     A list of output names of the model. This information is used by the
                     Comparator to determine which outputs to compare.
@@ -41,7 +41,8 @@ class PytRunner(BaseRunner):
                     A runner count and timestamp will be appended to this prefix.
         """
         super().__init__(name=name, prefix="pytorch-runner")
-        self.model = model
+        self.model = model.to(target_device)
+        self._target_device = target_device
 
         self.input_metadata = TensorMetadata()
         for name, spec in input_metadata.items():
@@ -56,24 +57,24 @@ class PytRunner(BaseRunner):
         return self.input_metadata
 
     def infer_impl(self, feed_dict):
+        start = time.time()
         with torch.no_grad():
             inputs = [
-                torch.from_numpy(val.astype(dtype)).cuda()
+                torch.from_numpy(val.astype(dtype)).to(self._target_device)
                 for (val, (dtype, _)) in zip(feed_dict.values(), self.input_metadata.values())
             ]
             if self._forward_kw_names is None:
-                start = time.time()
                 outputs = self.model(*inputs)
-                end = time.time()
             else:
                 inputs_dict = dict(zip(self._forward_kw_names, inputs))
-                start = time.time()
                 outputs = self.model(**inputs_dict)
-                end = time.time()
 
         out_dict = OrderedDict()
+        if self.output_names is None:
+            self.output_names = [f"output__{i}" for i in range(len(outputs))]
         for name, output in zip(self.output_names, outputs):
             out_dict[name] = output.cpu().numpy()
+        end = time.time()
         self.inference_time = end - start
         return out_dict
 

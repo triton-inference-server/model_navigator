@@ -61,6 +61,7 @@ class CommandResults(DataObject):
     target_precision: Optional[TensorRTPrecision]
     missing_params: Optional[dict]
     output: Any
+    err_msg: Optional[str] = None
 
 
 class Command(metaclass=ABCMeta):
@@ -80,6 +81,7 @@ class Command(metaclass=ABCMeta):
         status = self._validate(**kwargs)
         missing_params = {}
         results = None
+        err_msg = None
         try:
             if status == Status.OK:
                 results = self.__call__(**kwargs)
@@ -88,6 +90,7 @@ class Command(metaclass=ABCMeta):
                 missing_params = self._get_missing_params(**kwargs)
         except Exception as e:
             status = Status.FAIL
+            err_msg = str(e)
             LOGGER.error(traceback.format_exc())
             import os
 
@@ -106,6 +109,7 @@ class Command(metaclass=ABCMeta):
             missing_params=missing_params,
             # path=results if isinstance(results, Path) else None,
             # tolerance=results if isinstance(results, Tolerance) else None,
+            err_msg=err_msg,
             output=results,
         )
 

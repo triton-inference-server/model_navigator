@@ -29,6 +29,7 @@ from model_navigator.framework_api.commands.export.pyt import (
     ExportPYT2TorchScript,
     ExportPYT2TorchTensorRT,
 )
+from model_navigator.framework_api.commands.infer_metadata import InferInputMetadata, InferOutputMetadata
 from model_navigator.framework_api.commands.performance.pyt import (
     PerformanceONNX,
     PerformanceTorchScript,
@@ -42,7 +43,7 @@ from model_navigator.model import Format
 
 class TorchPipelineManager(PipelineManager):
     def _get_pipeline(self, config) -> Pipeline:
-        commands = [FetchInputModelData()]
+        commands = [InferInputMetadata(), FetchInputModelData(), InferOutputMetadata()]
         if Format.TORCHSCRIPT in config.target_formats:
             for target_jit_type in config.target_jit_type:
                 commands.append(ExportPYT2TorchScript(target_jit_type=target_jit_type))

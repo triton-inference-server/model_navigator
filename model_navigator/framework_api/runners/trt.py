@@ -12,12 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
-
 import numpy as np
 from polygraphy.backend.trt import TrtRunner as _TrtRunner
 
-LOGGER = logging.getLogger(__name__)
+from model_navigator.framework_api.logger import LOGGER
 
 
 class TrtRunner(_TrtRunner):

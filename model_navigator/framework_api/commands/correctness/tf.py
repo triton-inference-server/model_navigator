@@ -14,17 +14,17 @@
 
 
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Optional
 
 import tensorflow  # pytype: disable=import-error
 
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.core import CommandType
 from model_navigator.framework_api.commands.correctness.base import CorrectnessBase
+from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.runners.tf import TFRunner, TFTRTRunner
 from model_navigator.framework_api.utils import format_to_relative_model_path, get_package_path
 from model_navigator.model import Format
-from model_navigator.tensor import TensorSpec
 
 
 def get_assert_message(atol: float, rtol: float):
@@ -45,13 +45,12 @@ class CorrectnessSavedModel(CorrectnessBase):
         model,
         model_name: str,
         workdir: Path,
-        input_metadata: Dict[str, TensorSpec],
-        output_names: Tuple[str],
-        rtol: Optional[float] = None,
-        atol: Optional[float] = None,
+        input_metadata: TensorMetadata,
+        output_metadata: TensorMetadata,
         **kwargs,
     ):
 
+        output_names = list(output_metadata.keys())
         tf_runner = TFRunner(model, input_metadata=input_metadata, output_names=output_names)
 
         exported_model_path = get_package_path(workdir, model_name) / format_to_relative_model_path(

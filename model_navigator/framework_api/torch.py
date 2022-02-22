@@ -24,8 +24,7 @@ from model_navigator.framework_api.pipelines import TorchPipelineManager
 from model_navigator.framework_api.utils import (
     Framework,
     JitType,
-    extract_input_shape,
-    extract_output_shape,
+    get_default_max_workspace_size,
     get_default_model_name,
     get_default_workdir,
 )
@@ -48,13 +47,18 @@ def export(
     input_names: Optional[Tuple[str]] = None,
     output_names: Optional[Tuple[str]] = None,
     dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None,
+    trt_dynamic_axes: Optional[Dict[str, Dict[int, Tuple[int, int, int]]]] = None,
     target_precisions: Optional[Tuple[TensorRTPrecision]] = None,
     save_data: bool = True,
+    max_workspace_size: Optional[int] = None,
+    target_device: Optional[str] = None,
 ) -> PackageDescriptor:
     """Function exports PyTorch model to all supported formats."""
 
     if model_name is None:
         model_name = get_default_model_name()
+    if max_workspace_size is None:
+        max_workspace_size = get_default_max_workspace_size()
     if workdir is None:
         workdir = get_default_workdir()
     if target_formats is None:
@@ -84,13 +88,8 @@ def export(
     else:
         forward_kw_names = None
 
-    input_metadata = extract_input_shape(dataloader, Framework.PYT)
-    if input_names is not None:
-        input_metadata = dict(zip(input_names, input_metadata.values()))
-
-    output_metadata = extract_output_shape(model, dataloader, Framework.PYT)
-    if output_names is not None:
-        output_metadata = dict(zip(output_names, output_metadata.values()))
+    if target_device is None:
+        target_device = "cuda" if torch.cuda.is_available() else "cpu"
 
     config = Config(
         framework=Framework.PYT,
@@ -109,9 +108,12 @@ def export(
         dynamic_axes=dynamic_axes,
         target_precisions=target_precisions,
         save_data=save_data,
-        input_metadata=input_metadata,
-        output_metadata=output_metadata,
+        _input_names=input_names,
+        _output_names=output_names,
         forward_kw_names=forward_kw_names,
+        max_workspace_size=max_workspace_size,
+        trt_dynamic_axes=trt_dynamic_axes,
+        target_device=target_device,
     )
 
     pipeline_manager = TorchPipelineManager()
