@@ -16,7 +16,6 @@ import shutil
 import typing
 
 from jinja2 import Environment, FileSystemLoader
-from semver import VersionInfo
 
 from model_navigator.framework import Framework
 from model_navigator.kubernetes.evaluator import EvaluatorChartCreator
@@ -27,6 +26,7 @@ from model_navigator.utils.source import navigator_install_url
 
 
 def _chart_version_from_docker_tag(docker_tag):
+    from semver import VersionInfo
     return docker_tag if docker_tag and VersionInfo.isvalid(docker_tag) else None
 
 

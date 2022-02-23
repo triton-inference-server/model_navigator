@@ -14,8 +14,6 @@
 import logging
 from typing import Optional
 
-import sh
-
 from model_navigator.cli.spec import serialize_shapes
 from model_navigator.converter import DatasetProfileConfig
 from model_navigator.converter.config import ConversionConfig
@@ -56,6 +54,8 @@ def ts2torchtrt(
     verbose: bool = False,
 ):
     LOGGER.info("%s command started.", __name__)
+    import sh
+
     with log_path.open("w") as log_file:
         prepare_log_header(log_file, Format.TORCHSCRIPT, Format.TORCH_TRT)
         shapes = _get_shapes(dataset_profile)

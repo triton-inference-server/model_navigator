@@ -14,8 +14,6 @@
 import logging
 from typing import Dict, Tuple
 
-import sh
-
 from model_navigator.cli.spec import serialize_shapes, serialize_value_ranges
 from model_navigator.converter.utils import execute_sh_command, prepare_log_header
 from model_navigator.exceptions import ModelNavigatorConverterCommandException
@@ -41,6 +39,8 @@ def ts2onnx(
         ts2onnx_args += ["--shapes"] + serialize_shapes(None, value=shapes)
     if verbose:
         ts2onnx_args += ["-v"]
+
+    import sh
 
     python = sh.Command("python")
     try:

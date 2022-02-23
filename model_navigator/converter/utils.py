@@ -14,8 +14,6 @@
 import logging
 from collections import deque
 
-import sh
-
 from model_navigator.framework import PyTorch, TensorFlow2
 from model_navigator.model import Format
 from model_navigator.utils.resources import FORMAT2RESOURCE, FORMAT_RESOURCE
@@ -42,7 +40,7 @@ def extend_model_name(model_name, transform_name):
     return f"{basename}{MODEL_COMMAND_SEP}{transform_spec}"
 
 
-def execute_sh_command(cmd: sh.Command, *, log_file, verbose: bool = False):
+def execute_sh_command(cmd, *, log_file, verbose: bool = False):
     tf_cpp_min_log_level = 0 if verbose else 2
     envs = {
         "TF_CPP_MIN_LOG_LEVEL": str(tf_cpp_min_log_level),

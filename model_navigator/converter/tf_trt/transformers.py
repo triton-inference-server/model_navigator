@@ -14,8 +14,6 @@
 import logging
 from typing import Optional
 
-import sh
-
 from model_navigator.cli.spec import serialize_shapes, serialize_value_ranges
 from model_navigator.converter import DatasetProfileConfig
 from model_navigator.converter.config import TensorRTPrecision
@@ -39,6 +37,8 @@ def tf2tftrt(
     verbose: bool = False,
 ):
     LOGGER.info("tf2tftrt command started.")
+    import sh
+
     python = sh.Command("python")
     args = []
     if dataset_profile:

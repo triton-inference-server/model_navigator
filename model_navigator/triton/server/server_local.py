@@ -15,8 +15,6 @@ import logging
 import os
 import traceback
 
-import sh
-
 from model_navigator.triton.client import TritonClient
 from model_navigator.triton.server.server import TritonServer
 
@@ -67,6 +65,9 @@ class TritonServerLocal(TritonServer):
             env = self._get_env()
 
             tritonserver_cmd, *rest = self._server_path.split(" ", 1)
+
+            import sh
+
             tritonserver_cmd = sh.Command(tritonserver_cmd)
             tritonserver_cmd = tritonserver_cmd.bake(*rest)
 

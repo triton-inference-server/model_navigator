@@ -13,8 +13,6 @@
 # limitations under the License.
 import logging
 
-import sh
-
 from model_navigator.converter.utils import execute_sh_command, prepare_log_header
 from model_navigator.exceptions import ModelNavigatorConverterCommandException
 from model_navigator.model import Format
@@ -23,6 +21,8 @@ LOGGER = logging.getLogger("tf2onnx.transformers")
 
 
 def tfopt(input_path, output_path, *, log_path, verbose: bool = False):
+    import sh
+
     python = sh.Command("python")
     args = [
         "-mmodel_navigator.converter.tf2onnx.tf_opt",
@@ -67,6 +67,8 @@ def tf2onnx(input_path, output_path, *, log_path, opset: int, verbose: bool = Fa
         output_path,
         output_path,
     ]
+    import sh
+
     if verbose:
         tf2onnx_args += ["-vvv"]
         rename_idx_args += ["-vvv"]

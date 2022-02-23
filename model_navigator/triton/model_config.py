@@ -17,7 +17,6 @@ from typing import Optional, Union
 
 from google.protobuf import text_format  # pytype: disable=pyi-error
 from google.protobuf.text_format import MessageToString  # pytype: disable=pyi-error
-from tritonclient.grpc import model_config_pb2
 
 from model_navigator.common.config import TensorRTCommonConfig
 from model_navigator.model import Model, ModelSignatureConfig
@@ -42,6 +41,8 @@ LOGGER = logging.getLogger(__name__)
 class ModelConfigParser:
     @classmethod
     def parse(cls, *, config_path: Path, external_model_path: Optional[Path] = None, config_cls):
+        from tritonclient.grpc import model_config_pb2  # pytype: disable=import-error
+
         INT_DATATYPE2STR_DATATYPE = {
             getattr(model_config_pb2, attr_name): attr_name.split("_")[1]  # remove TYPE_ prefix
             for attr_name in vars(model_config_pb2)

@@ -29,7 +29,10 @@ from model_navigator.utils.formats import FORMAT2SUFFIX
 
 LOGGER = logging.getLogger(__name__)
 
-ModelConfigProtobufType = grpc_client.model_config_pb2.ModelConfig
+if grpc_client:
+    ModelConfigProtobufType = grpc_client.model_config_pb2.ModelConfig  # pytype: disable=attribute-error
+else:
+    ModelConfigProtobufType = object
 
 
 class BaseBackendConfigurator:
@@ -40,6 +43,7 @@ class BaseBackendConfigurator:
     def __init__(self):
         self._target_triton_version = None
 
+    # pytype: disable=invalid-annotation
     def update_config_for_model(
         self,
         model_config: ModelConfigProtobufType,
@@ -73,6 +77,8 @@ class BaseBackendConfigurator:
             model_config, backend_parameters_config or TritonCustomBackendParametersConfig()
         )
         return model_config
+
+    # pytype: enable=invalid-annotation
 
     def _extract_signature(self, model_config, model: Model):
         pass

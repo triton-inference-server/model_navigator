@@ -18,7 +18,6 @@ from pathlib import Path
 from typing import Dict, Optional
 
 import polygraphy
-import sh
 
 from model_navigator.converter.config import DatasetProfileConfig, TensorRTPrecision, TensorRTPrecisionMode
 from model_navigator.converter.polygraphy.comparator import ToleranceParameterHelper
@@ -307,6 +306,7 @@ def onnx2trt(
     if verbose:
         args += ["-v"]
 
+    import sh
     try:
         log_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.parent.mkdir(parents=True, exist_ok=True)
