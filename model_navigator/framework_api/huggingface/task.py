@@ -15,6 +15,7 @@
 from collections import OrderedDict
 from enum import Enum
 
+# pytype: disable=import-error
 from transformers import PreTrainedModel
 from transformers.models.auto.modeling_auto import (
     MODEL_FOR_CAUSAL_LM_MAPPING_NAMES,
@@ -23,6 +24,8 @@ from transformers.models.auto.modeling_auto import (
     MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING_NAMES,
     MODEL_MAPPING_NAMES,
 )
+
+# pytype: enable=import-error
 
 
 class Task(Enum):

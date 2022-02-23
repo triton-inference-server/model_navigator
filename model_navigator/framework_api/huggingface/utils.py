@@ -15,8 +15,11 @@
 import importlib
 from typing import Optional
 
+# pytype: disable=import-error
 from transformers import PretrainedConfig, PreTrainedModel
 from transformers.models.auto.configuration_auto import CONFIG_MAPPING_NAMES
+
+# pytype: enable=import-error
 
 _CONFIG_MODULE_MAPPING = {v: k for k, v in CONFIG_MAPPING_NAMES.items()}
 

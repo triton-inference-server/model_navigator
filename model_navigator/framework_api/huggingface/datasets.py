@@ -14,8 +14,11 @@
 
 from typing import Callable
 
-from torch.utils.data import DataLoader  # pytype: disable=import-error
+# pytype: disable=import-error
+from torch.utils.data import DataLoader
 from transformers import DataCollatorWithPadding
+
+# pytype: enable=import-error
 
 
 def get_default_preprocess_function(dataset_name, tokenizer, max_sequence_length):

@@ -16,7 +16,8 @@ from itertools import chain
 from pathlib import Path
 from typing import Callable, Dict, Optional, Tuple
 
-import torch  # pytype: disable=import-error
+# pytype: disable=import-error
+import torch
 from datasets import load_dataset
 from transformers import AutoConfig, AutoModel, AutoTokenizer, TensorType
 from transformers.models.gpt2.tokenization_gpt2 import GPT2Tokenizer
@@ -34,6 +35,8 @@ from model_navigator.framework_api.package_descriptor import PackageDescriptor
 from model_navigator.framework_api.pipelines import TorchPipelineManager
 from model_navigator.framework_api.utils import Framework, JitType, get_default_max_workspace_size, get_default_workdir
 from model_navigator.model import Format
+
+# pytype: enable=import-error
 
 
 class HFDataLoader:
