@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # pytype: disable=import-error
+import json
 import tempfile
 from pathlib import Path
 
@@ -32,9 +33,7 @@ VALUE_IN_TENSOR = 9.0
 OPSET = 11
 
 
-def dataloader():
-    for _ in range(10):
-        yield torch.full((1, 1), VALUE_IN_TENSOR)
+dataloader = [torch.full((1, 1), VALUE_IN_TENSOR) for _ in range(10)]
 
 
 class MyModule(torch.nn.Module):
@@ -45,6 +44,19 @@ class MyModule(torch.nn.Module):
 model = MyModule()
 
 
+def _extract_dumped_samples(filepath):
+    with open(filepath) as f:
+        data = json.load(f)
+    dumped_samples = []
+    for sample_data in data["data"]:
+        dumped_sample = {}
+        for name, tensor_data in sample_data.items():
+            tensor = numpy.asarray(tensor_data["content"]).reshape(tensor_data["shape"])
+            dumped_sample[name] = tensor
+        dumped_samples.append(dumped_sample)
+    return dumped_samples
+
+
 def test_pyt_dump_model_input():
     with tempfile.TemporaryDirectory() as tmp_dir:
         model_name = "navigator_model"
@@ -53,26 +65,31 @@ def test_pyt_dump_model_input():
         package_dir = workdir / f"{model_name}.nav"
         model_input_dir = package_dir / "model_input"
 
-        input_data = next(dataloader())
+        input_data = next(iter(dataloader))
         numpy_data = input_data.cpu().numpy()
 
         dump_cmd = DumpInputModelData()
+        samples = [{"input__1": numpy_data}]
 
         dump_cmd(
             framework=Framework.PYT,
             workdir=workdir,
             model_name=model_name,
             dataloader=dataloader,
-            samples=[{"input__1": numpy_data}],
+            profiling_sample=samples[0],
+            conversion_samples=samples,
+            correctness_samples=samples,
             input_metadata={"input__1": TensorSpec("input__1", numpy_data.shape, numpy_data.dtype)},
             output_metadata={"output__1": TensorSpec("output__1", numpy_data.shape, numpy_data.dtype)},
             sample_count=1,
+            batch_dim=None,
         )
 
-        for sample in [numpy.load(npz_file) for npz_file in model_input_dir.iterdir() if model_input_dir.is_dir()]:
-            for dumped, reference in zip([sample[array_name] for array_name in sample.files], [input_data]):
-                assert len(dumped) == len(reference)
-                assert numpy.allclose(dumped, reference)
+        for filepath in model_input_dir.iterdir():
+            dumped_samples = _extract_dumped_samples(filepath)
+            for dumped, reference in zip(dumped_samples, samples):
+                for name in reference:
+                    assert numpy.allclose(dumped[name], reference[name])
 
 
 def test_pyt_dump_model_output():
@@ -87,11 +104,10 @@ def test_pyt_dump_model_output():
         model_input_dir.mkdir(parents=True, exist_ok=True)
         model_output_dir = package_dir / "model_output"
 
-        input_data = next(dataloader())
+        input_data = next(iter(dataloader))
         numpy_data = input_data.cpu().numpy()
-        numpy.savez(model_input_dir / "sample.npz", numpy_data)
-
         model_output = model(*input_data)
+        outputs = [{"output__1": model_output}]
 
         dump_cmd = DumpOutputModelData()
 
@@ -101,16 +117,19 @@ def test_pyt_dump_model_output():
             model=model,
             model_name=model_name,
             dataloader=dataloader,
-            samples=[{"input__1": numpy_data}],
+            profiling_sample={"input__1": numpy_data},
             input_metadata={"input__1": TensorSpec("input__1", numpy_data.shape, numpy_data.dtype)},
             output_metadata={"output__1": TensorSpec("output__1", numpy_data.shape, numpy_data.dtype)},
             sample_count=1,
             target_device="cpu",
+            batch_dim=None,
         )
 
-        for sample in [numpy.load(npz_file) for npz_file in model_output_dir.iterdir() if model_output_dir.is_dir()]:
-            for dumped, reference in zip([sample[array_name] for array_name in sample.files], [model_output]):
-                assert numpy.allclose(dumped, reference)
+        for filepath in model_output_dir.iterdir():
+            dumped_samples = _extract_dumped_samples(filepath)
+            for dumped, reference in zip(dumped_samples, outputs):
+                for name in reference:
+                    assert numpy.allclose(dumped[name], reference[name])
 
 
 def test_pyt_correctness():
@@ -126,7 +145,7 @@ def test_pyt_correctness():
         script_module = torch.jit.script(model)
         torch.jit.save(script_module, model_path.as_posix())
 
-        input_data = next(dataloader())
+        input_data = next(iter(dataloader))
         numpy_data = input_data.cpu().numpy()
 
         correctness_cmd = CorrectnessPYT2TorchScript(target_format=Format.TORCHSCRIPT, target_jit_type=JitType.SCRIPT)
@@ -138,7 +157,7 @@ def test_pyt_correctness():
             model_name=model_name,
             rtol=0.0,
             atol=0.0,
-            samples=[{"input__1": numpy_data}],
+            correctness_samples=[{"input__1": numpy_data}],
             input_metadata={"input__1": TensorSpec("input__1", numpy_data.shape, numpy_data.dtype)},
             output_metadata={"output__1": TensorSpec("output__1", numpy_data.shape, numpy_data.dtype)},
             target_device="cpu",
@@ -153,12 +172,15 @@ def test_pyt_export_torchscript():
         package_dir = workdir / f"{model_name}.nav"
 
         export_cmd = ExportPYT2TorchScript(target_jit_type=JitType.SCRIPT)
+        input_data = next(iter(dataloader))
+        numpy_data = input_data.cpu().numpy()
 
         exported_model_path = package_dir / export_cmd(
             model=model,
             model_name=model_name,
             workdir=workdir,
-            dataloader=dataloader,
+            profiling_sample={"input__1": numpy_data},
+            input_metadata={"input__1": TensorSpec("input__1", numpy_data.shape, numpy_data.dtype)},
             target_device="cpu",
         )
 
@@ -174,14 +196,11 @@ def test_pyt_export_onnx():
 
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        def _dataloader():
-            for _ in range(10):
-                yield torch.full((3, 5), VALUE_IN_TENSOR, device=device)
-
+        dataloader_ = (torch.full((3, 5), VALUE_IN_TENSOR, device=device) for _ in range(10))
         model_ = torch.nn.Linear(5, 7).to(device).eval()
 
-        input_data = next(_dataloader())
-        samples = [{"input": input_data.detach().cpu().numpy()}]
+        input_data = next(iter(dataloader_))
+        sample = {"input": input_data.detach().cpu().numpy()}
 
         export_cmd = ExportPYT2ONNX()
         exported_model_path = package_dir / export_cmd(
@@ -190,7 +209,7 @@ def test_pyt_export_onnx():
             workdir=workdir,
             opset=OPSET,
             dynamic_axes={"input": {0: "batch"}},
-            samples=samples,
+            profiling_sample=sample,
             input_metadata={"input": TensorSpec("input", (-1, 5), numpy.dtype("float32"))},
             output_metadata={"output": TensorSpec("output", (-1, 7), numpy.dtype("float32"))},
             target_device=device,

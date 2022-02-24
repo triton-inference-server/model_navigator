@@ -13,11 +13,12 @@
 # limitations under the License.
 
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Mapping, Optional, Tuple, Union
 
 import torch  # pytype: disable=import-error
 
 from model_navigator.converter.config import TensorRTPrecision
+from model_navigator.framework_api.common import SizedDataLoader
 from model_navigator.framework_api.config import Config
 from model_navigator.framework_api.package_descriptor import PackageDescriptor
 from model_navigator.framework_api.pipelines import TorchPipelineManager
@@ -33,7 +34,7 @@ from model_navigator.model import Format
 
 def export(
     model: torch.nn.Module,
-    dataloader: Callable,
+    dataloader: SizedDataLoader,
     model_name: Optional[str] = None,
     opset: Optional[int] = None,
     target_formats: Optional[Tuple[Format]] = None,
@@ -53,6 +54,7 @@ def export(
     max_workspace_size: Optional[int] = None,
     target_device: Optional[str] = None,
     disable_git_info: bool = False,
+    batch_dim: Optional[int] = 0,
 ) -> PackageDescriptor:
     """Function exports PyTorch model to all supported formats."""
 
@@ -83,8 +85,8 @@ def export(
     if target_precisions is None:
         target_precisions = (TensorRTPrecision.FP32, TensorRTPrecision.FP16)
 
-    sample = next(dataloader())
-    if isinstance(sample, dict):
+    sample = next(iter(dataloader))
+    if isinstance(sample, Mapping):
         forward_kw_names = tuple(sample.keys())
     else:
         forward_kw_names = None
@@ -116,6 +118,7 @@ def export(
         trt_dynamic_axes=trt_dynamic_axes,
         target_device=target_device,
         disable_git_info=disable_git_info,
+        batch_dim=batch_dim,
     )
 
     pipeline_manager = TorchPipelineManager()

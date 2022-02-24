@@ -15,9 +15,10 @@
 import datetime
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 from model_navigator.converter.config import TensorRTPrecision
+from model_navigator.framework_api.common import SizedDataLoader
 from model_navigator.framework_api.utils import DataObject, Framework, JitType
 from model_navigator.model import Format
 
@@ -28,7 +29,7 @@ class Config(DataObject):
     framework: Framework
     model_name: str
     model: object
-    dataloader: Callable
+    dataloader: SizedDataLoader
     workdir: Path
     override_workdir: bool
     keep_workdir: bool
@@ -36,6 +37,8 @@ class Config(DataObject):
     sample_count: int
     save_data: bool
     disable_git_info: bool
+    batch_dim: Optional[int] = 0
+    seed: int = 0
     timestamp: Optional[str] = None
     _input_names: Optional[Tuple[str]] = None
     _output_names: Optional[Tuple[str]] = None

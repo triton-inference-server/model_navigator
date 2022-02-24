@@ -337,7 +337,7 @@ AssertionError: Current atol = 0.001, rtol = 0.001, try to adjust tolerance valu
 ```python
 def export(
     model, # model instance
-    dataloader: Callable, # function returning generator
+    dataloader: SizedDataLoader, # has to implement len() and iter()
     model_name: Optional[str] = None,
     opset: Optional[int] = None, # ONNX opset, by default latest is used
     target_formats: Optional[Tuple[Format]] = None,
@@ -361,7 +361,7 @@ def export(
 ```python
 def export(
     model,
-    dataloader: Callable, # function returning generator
+    dataloader: SizedDataLoader, # has to implement len() and iter()
     target_precisions: Optional[Tuple[Precision]] = None,
     max_workspace_size: Optional[int] = None,
     minimum_segment_size: int = 3,

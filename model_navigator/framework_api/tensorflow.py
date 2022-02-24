@@ -13,9 +13,10 @@
 # limitations under the License.
 
 from pathlib import Path
-from typing import Callable, Optional, Tuple
+from typing import Optional, Tuple
 
 from model_navigator.converter.config import TensorRTPrecision
+from model_navigator.framework_api.common import SizedDataLoader
 from model_navigator.framework_api.config import Config
 from model_navigator.framework_api.package_descriptor import PackageDescriptor
 from model_navigator.framework_api.pipelines import TFPipelineManager
@@ -30,7 +31,7 @@ from model_navigator.model import Format
 
 def export(
     model,
-    dataloader: Callable,
+    dataloader: SizedDataLoader,
     target_precisions: Optional[Tuple[TensorRTPrecision]] = None,
     max_workspace_size: Optional[int] = None,
     minimum_segment_size: int = 3,
@@ -45,6 +46,7 @@ def export(
     rtol: Optional[float] = None,
     save_data: bool = True,
     disable_git_info: bool = False,
+    batch_dim: Optional[int] = 0,
 ) -> PackageDescriptor:
     """Function exports TensorFlow 2 model to all supported formats."""
     if model_name is None:
@@ -83,6 +85,7 @@ def export(
         rtol=rtol,
         save_data=save_data,
         disable_git_info=disable_git_info,
+        batch_dim=batch_dim,
     )
 
     pipeline_manager = TFPipelineManager()

@@ -111,7 +111,7 @@ class CorrectnessPYT2ONNX(CorrectnessBase):
         )
 
         exported_model_path = get_package_path(workdir, model_name) / ExportPYT2ONNX().get_output_relative_path()
-        onnx_runner = OnnxrtRunner(SessionFromOnnx(exported_model_path.as_posix()))
+        onnx_runner = OnnxrtRunner(SessionFromOnnx(exported_model_path.as_posix(), providers=[target_device]))
 
         return pyt_runner, onnx_runner
 

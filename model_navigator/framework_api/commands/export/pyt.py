@@ -13,19 +13,17 @@
 # limitations under the License.
 
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import torch  # pytype: disable=import-error
 
 from model_navigator.framework_api.commands.core import Command, CommandType
-from model_navigator.framework_api.common import TensorMetadata
+from model_navigator.framework_api.common import Sample, TensorMetadata
 from model_navigator.framework_api.utils import (
     JitType,
     format_to_relative_model_path,
     get_package_path,
-    get_torch_tensor,
     numpy_to_torch_dtype,
-    sample_to_tuple,
 )
 from model_navigator.model import Format
 
@@ -43,7 +41,14 @@ class ExportPYT2TorchScript(Command):
         return format_to_relative_model_path(self.target_format, jit_type=self.target_jit_type)
 
     def __call__(
-        self, workdir: Path, model, model_name: str, dataloader: Callable, target_device: str, **kwargs
+        self,
+        workdir: Path,
+        model,
+        model_name: str,
+        profiling_sample: Sample,
+        target_device: str,
+        input_metadata: TensorMetadata,
+        **kwargs,
     ) -> Optional[Path]:
 
         exported_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
@@ -51,11 +56,15 @@ class ExportPYT2TorchScript(Command):
             return None
         exported_model_path.parent.mkdir(parents=True, exist_ok=True)
 
+        model.to(target_device)
         if self.target_jit_type == JitType.SCRIPT:
             script_module = torch.jit.script(model)
         else:
-            dummy_input = get_torch_tensor(dataloader)
-            script_module = torch.jit.trace(model, tuple(t.to(target_device) for t in sample_to_tuple(dummy_input)))
+            dummy_input = tuple(
+                torch.from_numpy(val.astype(spec.dtype)).to(target_device)
+                for (val, spec) in zip(profiling_sample.values(), input_metadata.values())
+            )
+            script_module = torch.jit.trace(model, dummy_input)
 
         torch.jit.save(script_module, exported_model_path.as_posix())
 
@@ -79,7 +88,7 @@ class ExportPYT2ONNX(Command):
         model,
         model_name: str,
         opset: int,
-        samples: List,
+        profiling_sample: Sample,
         input_metadata: TensorMetadata,
         output_metadata: TensorMetadata,
         target_device: str,
@@ -92,9 +101,14 @@ class ExportPYT2ONNX(Command):
             return None
         exported_model_path.parent.mkdir(parents=True, exist_ok=True)
 
-        dummy_input = tuple(torch.from_numpy(val).to(target_device) for val in samples[0].values())
+        dummy_input = tuple(
+            torch.from_numpy(val.astype(spec.dtype)).to(target_device)
+            for (val, spec) in zip(profiling_sample.values(), input_metadata.values())
+        )
         if forward_kw_names is not None:
             dummy_input = ({key: val for key, val in zip(forward_kw_names, dummy_input)},)
+
+        model.to(target_device)
 
         torch.onnx.export(
             model,
@@ -123,7 +137,7 @@ class ExportPYT2TorchTensorRT(Command):
         return format_to_relative_model_path(self.target_format, jit_type=self.target_jit_type)
 
     def __call__(
-        self, workdir: Path, model, model_name: str, opset: int, samples: List, input_metadata: TensorMetadata, **kwargs
+        self, workdir: Path, model, model_name: str, profiling_sample: Sample, input_metadata: TensorMetadata, **kwargs
     ) -> Optional[Path]:
         import torch_tensorrt  # pytype: disable=import-error
 
@@ -132,7 +146,7 @@ class ExportPYT2TorchTensorRT(Command):
             return None
         exported_model_path.parent.mkdir(parents=True, exist_ok=True)
 
-        dummy_input = samples[0]
+        dummy_input = profiling_sample
 
         input_shapes = [
             torch_tensorrt.Input(shape=tensor_spec.shape, dtype=numpy_to_torch_dtype(tensor_spec.dtype))

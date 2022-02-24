@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Mapping, Optional, Tuple, Union
 
 from model_navigator.framework_api.commands.core import Command, CommandType, Tolerance
-from model_navigator.framework_api.common import Sample, TensorMetadata
+from model_navigator.framework_api.common import Sample, SizedDataLoader, TensorMetadata
 from model_navigator.framework_api.utils import Framework, sample_to_tuple, to_numpy
 
 
@@ -33,17 +33,17 @@ class InferInputMetadata(Command):
     def __call__(
         self,
         framework: Framework,
-        dataloader: Callable,
+        dataloader: SizedDataLoader,
         _input_names: Optional[Tuple[str]] = None,
         dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None,
         **kwargs,
     ) -> Tolerance:
 
-        sample = next(iter(dataloader()))
+        sample = next(iter(dataloader))
         input_tuple = sample_to_tuple(sample)
         input_names = _input_names
         if input_names is None:
-            if isinstance(sample, dict):
+            if isinstance(sample, Mapping):
                 input_names = tuple(sample.keys())
             else:
                 input_names = tuple(f"input__{i}" for i in range(len(input_tuple)))
@@ -74,7 +74,7 @@ class InferOutputMetadata(Command):
     def __call__(
         self,
         framework: Framework,
-        samples: List[Sample],
+        profiling_sample: Sample,
         model: object,
         input_metadata: TensorMetadata,
         target_device: Optional[str] = None,
@@ -96,7 +96,7 @@ class InferOutputMetadata(Command):
             runner = TFRunner(model, input_metadata, _output_names)
 
         with runner:
-            output = runner.infer(samples[0])
+            output = runner.infer(profiling_sample)
 
         output_metadata = TensorMetadata()
         for output_name, output_tensor in output.items():

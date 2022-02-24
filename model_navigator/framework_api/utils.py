@@ -14,11 +14,12 @@
 import pathlib
 from enum import Enum
 from pathlib import Path
-from typing import Callable, List, Optional
+from typing import Any, List, Mapping, Optional, Tuple
 
 import numpy
 
 from model_navigator.converter.config import TensorRTPrecision
+from model_navigator.framework_api.common import Sample
 from model_navigator.model import Format
 
 
@@ -98,19 +99,6 @@ def get_default_max_workspace_size():
     return 8589934592
 
 
-def get_torch_tensor(dataloader: Callable):
-    torch_tensor = next(dataloader())
-    return torch_tensor_to_tuple(torch_tensor)
-
-
-def torch_tensor_to_tuple(torch_tensor):
-    import torch  # pytype: disable=import-error
-
-    if isinstance(torch_tensor, torch.Tensor):
-        torch_tensor = (torch_tensor,)
-    return torch_tensor
-
-
 def pad_string(s: str):
     s = f"{30 * '='} {s} "
     s = s.ljust(100, "=")
@@ -176,7 +164,7 @@ class DataObject:
     def _parse_value(self, value):
         if isinstance(value, DataObject):
             value = value.to_dict(parse=True)
-        elif isinstance(value, dict):
+        elif isinstance(value, Mapping):
             value = self._from_dict(value)
         elif isinstance(value, list) or isinstance(value, tuple):
             value = self._from_list(value)
@@ -203,11 +191,17 @@ class DataObject:
         return items
 
 
-def sample_to_tuple(input):
+def sample_to_tuple(input: Any) -> Tuple[Any, ...]:
     if isinstance(input, tuple):
         return input
     if isinstance(input, list):
         return tuple(input)
-    if isinstance(input, dict):
+    if isinstance(input, Mapping):
         return tuple(input.values())
     return (input,)
+
+
+def extract_bs1(sample: Sample, batch_dim: Optional[int]) -> Sample:
+    if batch_dim is not None:
+        return {name: tensor.take([0], batch_dim) for name, tensor in sample.items()}
+    return sample

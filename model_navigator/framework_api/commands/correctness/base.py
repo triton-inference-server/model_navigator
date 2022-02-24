@@ -18,6 +18,7 @@ import numpy
 from polygraphy.backend.base import BaseRunner
 
 from model_navigator.framework_api.commands.core import Command, Tolerance
+from model_navigator.framework_api.common import Sample
 from model_navigator.framework_api.utils import Framework, sample_to_tuple
 
 
@@ -31,7 +32,7 @@ class CorrectnessBase(Command):
 
     def __call__(
         self,
-        samples: List,
+        correctness_samples: List[Sample],
         framework: Framework,
         rtol: Optional[float] = None,
         atol: Optional[float] = None,
@@ -39,16 +40,16 @@ class CorrectnessBase(Command):
     ) -> Tolerance:
 
         base_runner, comp_runner = self._get_runners(
-            samples=samples, framework=framework, atol=atol, rtol=rtol, **kwargs
+            correctness_samples=correctness_samples, framework=framework, atol=atol, rtol=rtol, **kwargs
         )
         atols = []
         rtols = []
         with base_runner, comp_runner:
-            for sample in samples:
+            for sample in correctness_samples:
                 original_output = base_runner.infer(sample)
                 comp_output = comp_runner.infer(sample)
-
                 original_output, comp_output = sample_to_tuple(original_output), sample_to_tuple(comp_output)
+
                 if atol and rtol:
                     assert len(original_output) == len(comp_output), get_assert_message(atol, rtol)
                     all_close_checks = [

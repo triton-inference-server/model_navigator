@@ -13,11 +13,12 @@
 # limitations under the License.
 
 from pathlib import Path
-from typing import Callable, Dict, Optional
+from typing import Dict, Optional
 
 from model_navigator.cli.convert_model import ConversionSetConfig
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.core import Command, CommandType
+from model_navigator.framework_api.common import SizedDataLoader
 from model_navigator.framework_api.utils import (
     Extension,
     Framework,
@@ -65,7 +66,7 @@ class ConfigCli(Command):
         model,
         workdir: Path,
         framework: Framework,
-        dataloader: Callable,
+        dataloader: SizedDataLoader,
         model_name: str,
         opset: int,
         input_metadata: Dict[str, TensorSpec],

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # pytype: disable=import-error
+import json
 import tempfile
 from pathlib import Path
 
@@ -30,9 +31,7 @@ from model_navigator.tensor import TensorSpec
 
 VALUE_IN_TENSOR = 9.0
 
-
-def dataloader():
-    yield tensorflow.fill(dims=[1, 224, 224, 3], value=VALUE_IN_TENSOR)
+dataloader = [tensorflow.fill(dims=[1, 224, 224, 3], value=VALUE_IN_TENSOR) for _ in range(10)]
 
 
 inp = tensorflow.keras.layers.Input((224, 224, 3))
@@ -46,6 +45,19 @@ model_output = tensorflow.keras.layers.Lambda(lambda x: x)(layer_output)
 model = tensorflow.keras.Model(inp, model_output)
 
 
+def _extract_dumped_samples(filepath):
+    with open(filepath) as f:
+        data = json.load(f)
+    dumped_samples = []
+    for sample_data in data["data"]:
+        dumped_sample = {}
+        for name, tensor_data in sample_data.items():
+            tensor = numpy.asarray(tensor_data["content"]).reshape(tensor_data["shape"])
+            dumped_sample[name] = tensor
+        dumped_samples.append(dumped_sample)
+    return dumped_samples
+
+
 def test_tf2_dump_model_input():
     with tempfile.TemporaryDirectory() as tmp_dir:
         model_name = "navigator_model"
@@ -55,8 +67,9 @@ def test_tf2_dump_model_input():
         model_input_dir = package_dir / "model_input"
         dump_cmd = DumpInputModelData()
 
-        input_data = next(dataloader())
+        input_data = next(iter(dataloader))
         np_input = input_data.numpy()
+        samples = [{"input__1": np_input}]
 
         dump_cmd(
             framework=Framework.TF2,
@@ -64,14 +77,18 @@ def test_tf2_dump_model_input():
             model_name=model_name,
             dataloader=dataloader,
             sample_count=1,
-            samples=[{"input__1": np_input}],
+            profiling_sample=samples[0],
+            conversion_samples=samples,
+            correctness_samples=samples,
             input_metadata={"input__1": TensorSpec("input__1", np_input.shape, np_input.dtype)},
+            batch_dim=None,
         )
 
-        for sample in [numpy.load(npz_file) for npz_file in model_input_dir.iterdir() if model_input_dir.is_dir()]:
-            for dumped, reference in zip([sample[array_name] for array_name in sample.files], [input_data]):
-                assert len(dumped) == len(reference)
-                assert numpy.allclose(dumped, reference)
+        for filepath in model_input_dir.iterdir():
+            dumped_samples = _extract_dumped_samples(filepath)
+            for dumped, reference in zip(dumped_samples, samples):
+                for name in reference:
+                    assert numpy.allclose(dumped[name], reference[name])
 
 
 def test_tf2_dump_model_output():
@@ -86,9 +103,10 @@ def test_tf2_dump_model_output():
         model_input_dir.mkdir(parents=True, exist_ok=True)
         model_output_dir = package_dir / "model_output"
 
-        input_data = next(dataloader())
+        input_data = next(iter(dataloader))
         np_output = model.predict(input_data)
         np_input = input_data.numpy()
+        outputs = [{"output__1": np_output}]
 
         dump_cmd = DumpOutputModelData()
 
@@ -98,15 +116,17 @@ def test_tf2_dump_model_output():
             model=model,
             model_name=model_name,
             sample_count=1,
-            samples=[{"input__1": np_input}],
+            profiling_sample={"input__1": np_input},
             input_metadata={"input__1": TensorSpec("input__1", np_input.shape, np_input.dtype)},
             output_metadata={"output__1": TensorSpec("output__1", np_output.shape, np_output.dtype)},
+            batch_dim=None,
         )
 
-        for sample in [numpy.load(npz_file) for npz_file in model_output_dir.iterdir() if model_output_dir.is_dir()]:
-            for dumped, reference in zip([sample[array_name] for array_name in sample.files], [np_output]):
-                assert len(dumped) == len(reference)
-                assert numpy.allclose(dumped, reference)
+        for filepath in model_output_dir.iterdir():
+            dumped_samples = _extract_dumped_samples(filepath)
+            for dumped, reference in zip(dumped_samples, outputs):
+                for name in reference:
+                    assert numpy.allclose(dumped[name], reference[name])
 
 
 def test_tf2_correctness():
@@ -120,7 +140,7 @@ def test_tf2_correctness():
         model_path = model_dir / "model.savedmodel"
         tensorflow.keras.models.save_model(model=model, filepath=model_path, overwrite=True)
 
-        input_data = next(dataloader())
+        input_data = next(iter(dataloader))
         np_output = model.predict(input_data)
         np_input = input_data.numpy()
 
@@ -132,9 +152,10 @@ def test_tf2_correctness():
             workdir=workdir,
             rtol=0.0,
             atol=0.0,
-            samples=[{"input__1": np_input}],
+            correctness_samples=[{"input__1": np_input}],
             input_metadata={"input__1": TensorSpec("input__1", np_input.shape, np_input.dtype)},
             output_metadata={"output__1": TensorSpec("output__1", np_output.shape, np_output.dtype)},
+            batch_dim=None,
         )
 
 
@@ -164,7 +185,7 @@ def test_tf2_convert_tf_trt():
         input_model_path = model_dir / "model.savedmodel"
         tensorflow.keras.models.save_model(model=model, filepath=input_model_path, overwrite=True)
 
-        input_data = next(dataloader())
+        input_data = next(iter(dataloader))
 
         convert_cmd = ConvertSavedModel2TFTRT(target_precision=TensorRTPrecision.FP16)
 
@@ -173,7 +194,7 @@ def test_tf2_convert_tf_trt():
             minimum_segment_size=3,
             workdir=workdir,
             model_name=model_name,
-            samples=[input_data],
+            profiling_sample=input_data,
         )
 
         tensorflow.keras.models.load_model(converted_model_path)

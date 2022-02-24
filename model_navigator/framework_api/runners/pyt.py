@@ -41,7 +41,7 @@ class PytRunner(BaseRunner):
                     A runner count and timestamp will be appended to this prefix.
         """
         super().__init__(name=name, prefix="pytorch-runner")
-        self.model = model.to(target_device)
+        self.model = model
         self._target_device = target_device
 
         self.input_metadata = TensorMetadata()
@@ -51,7 +51,7 @@ class PytRunner(BaseRunner):
         self._forward_kw_names = forward_kw_names
 
     def activate_impl(self):
-        self.model.eval()
+        self.model.to(self._target_device).eval()
 
     def get_input_metadata_impl(self):
         return self.input_metadata
@@ -80,6 +80,3 @@ class PytRunner(BaseRunner):
         end = time.time()
         self.inference_time = end - start
         return out_dict
-
-    def deactivate_impl(self):
-        del self.model

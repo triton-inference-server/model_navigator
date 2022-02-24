@@ -32,9 +32,10 @@ def check_model_dir(model_dir: Path) -> bool:
     return True
 
 
-def dataloader():
-    yield tensorflow.random.uniform(shape=[1, 224, 224, 3], minval=0, maxval=1, dtype=tensorflow.dtypes.float32),
-
+dataloader = [
+    tensorflow.random.uniform(shape=[1, 224, 224, 3], minval=0, maxval=1, dtype=tensorflow.dtypes.float32)
+    for _ in range(10)
+]
 
 inp = tensorflow.keras.layers.Input((224, 224, 3))
 layer_output = tensorflow.keras.layers.Lambda(lambda x: x)(inp)
@@ -69,9 +70,9 @@ def test_tf2_export_savedmodel():
 
         assert status_file.is_file()
         assert model_input_dir.is_dir()
-        assert all([path.suffix == ".npz" for path in model_input_dir.iterdir()])
+        assert all([path.suffix == ".json" for path in model_input_dir.iterdir()])
         assert model_output_dir.is_dir()
-        assert all([path.suffix == ".npz" for path in model_output_dir.iterdir()])
+        assert all([path.suffix == ".json" for path in model_output_dir.iterdir()])
         assert navigator_log_file.is_file()
 
         # Output formats
@@ -104,9 +105,9 @@ def test_tf2_export_tf_trt():
 
         assert status_file.is_file()
         assert model_input_dir.is_dir()
-        assert all([path.suffix == ".npz" for path in model_input_dir.iterdir()])
+        assert all([path.suffix == ".json" for path in model_input_dir.iterdir()])
         assert model_output_dir.is_dir()
-        assert all([path.suffix == ".npz" for path in model_output_dir.iterdir()])
+        assert all([path.suffix == ".json" for path in model_output_dir.iterdir()])
         assert navigator_log_file.is_file()
 
         # Output formats

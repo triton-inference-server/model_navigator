@@ -16,13 +16,10 @@ import subprocess
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
-import numpy as np
-
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.export.pyt import ExportPYT2ONNX
 from model_navigator.framework_api.common import TensorMetadata
-from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.utils import format_to_relative_model_path, get_package_path
 from model_navigator.model import Format
 
@@ -52,7 +49,6 @@ class ConvertONNX2TRT(Command):
         self,
         workdir: Path,
         model_name: str,
-        samples: List,
         input_metadata: TensorMetadata,
         max_workspace_size: Optional[int] = None,
         dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None,
@@ -72,31 +68,10 @@ class ConvertONNX2TRT(Command):
         convert_cmd.extend(["-o", converted_model_path.as_posix()])
 
         if dynamic_axes is not None:
-            if trt_dynamic_axes is None:
-
-                trt_dynamic_axes_shapes = {
-                    name: {ax: [] for ax in axes} for name, axes in dynamic_axes.items() if name in input_metadata
-                }
-                trt_dynamic_axes = {}
-                for sample in samples:
-                    for name, tensor in sample.items():
-                        for i, dim in enumerate(tensor.shape):
-                            trt_dynamic_axes_shapes[name][i].append(dim)
-
-                for name, axes in trt_dynamic_axes_shapes.items():
-                    trt_dynamic_axes[name] = {}
-                    for ax, shapes in axes.items():
-                        trt_dynamic_axes[name][ax] = (min(shapes), int(np.median(shapes)), max(shapes))
-
-                LOGGER.warning(
-                    f"No TRT (min, opt, max) values for axes provided. Using values derived from samples: {trt_dynamic_axes}"
-                )
-
-            sample = samples[0]
             for i, arg in enumerate(("--trt-min-shapes", "--trt-opt-shapes", "--trt-max-shapes")):
                 shapes = []
-                for input_name, tensor in sample.items():
-                    tensor_shape = list(tensor.shape)
+                for input_name, spec in input_metadata.items():
+                    tensor_shape = list(spec.shape)
                     for ax, val in trt_dynamic_axes[input_name].items():
                         tensor_shape[ax] = val[i]
                     shape = ",".join([str(d) for d in tensor_shape])

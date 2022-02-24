@@ -13,13 +13,14 @@
 # limitations under the License.
 
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 from tensorflow.python.compiler.tensorrt import trt_convert as trtc  # pytype: disable=import-error
 
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.export.tf import ExportTF2SavedModel
+from model_navigator.framework_api.common import Sample
 from model_navigator.framework_api.utils import (
     ArtifactType,
     format_to_relative_model_path,
@@ -50,7 +51,7 @@ class ConvertSavedModel2TFTRT(Command):
         minimum_segment_size: int,
         workdir: Path,
         model_name: str,
-        samples: List,
+        profiling_sample: Sample,
         **kwargs,
     ) -> Optional[Path]:
         results = {}
@@ -58,8 +59,7 @@ class ConvertSavedModel2TFTRT(Command):
 
         # generate samples as tuples for TF-TRT converter
         def _dataloader():
-            for sample in samples:
-                yield sample_to_tuple(sample)
+            yield sample_to_tuple(profiling_sample)
 
         exported_model_path = get_package_path(workdir, model_name) / ExportTF2SavedModel().get_output_relative_path()
         converted_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()

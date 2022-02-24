@@ -14,17 +14,18 @@
 
 from itertools import chain
 from pathlib import Path
-from typing import Callable, Dict, Optional, Tuple
+from typing import Callable, Dict, Mapping, Optional, Tuple, Union
 
 # pytype: disable=import-error
 import torch
 from datasets import load_dataset
-from transformers import AutoConfig, AutoModel, AutoTokenizer, TensorType
+from transformers import AutoConfig, AutoTokenizer, TensorType
 from transformers.models.gpt2.tokenization_gpt2 import GPT2Tokenizer
 from transformers.models.gpt2.tokenization_gpt2_fast import GPT2TokenizerFast
 from transformers.onnx import OnnxConfig
 
 from model_navigator.converter.config import TensorRTPrecision
+from model_navigator.framework_api.common import SizedDataLoader
 from model_navigator.framework_api.config import Config
 from model_navigator.framework_api.huggingface.datasets import HFDataLoaderFactory, get_default_preprocess_function
 from model_navigator.framework_api.huggingface.onnx_config import get_onnx_config
@@ -48,16 +49,12 @@ class HFDataLoader:
         self._max_sequence_length = max_sequence_length
 
     def __call__(self):
-        for _ in range(100):
-            yield {
-                n: t
-                for n, t in self._config.generate_dummy_inputs(self._tokenizer, framework=TensorType.PYTORCH).items()
-            }
+        return [self._config.generate_dummy_inputs(self._tokenizer, framework=TensorType.PYTORCH) for _ in range(10)]
 
 
 def export(
     model_name: str,
-    dataloader: Optional[Callable] = None,
+    dataloader: Optional[SizedDataLoader] = None,
     dataset_name: Optional[str] = None,
     dataset_preprocessing_function: Optional[Callable] = None,
     opset: Optional[int] = None,
@@ -76,6 +73,10 @@ def export(
     max_workspace_size: Optional[int] = None,
     target_device: Optional[str] = None,
     disable_git_info: bool = False,
+    max_bs: int = 1,
+    batch_dim: Optional[int] = 0,
+    padding: Union[bool, str] = True,
+    max_sequence_len: Optional[int] = None,
 ) -> PackageDescriptor:
     """Function exports PyTorch model to all supported formats."""
     if workdir is None:
@@ -105,13 +106,14 @@ def export(
     if target_device is None:
         target_device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    config = config = AutoConfig.from_pretrained(model_name)
-    model = AutoModel.from_pretrained(model_name, torchscript=True)
+    config = AutoConfig.from_pretrained(model_name)
     model = get_pretrained_model_from_config(config, torchscript=True)
     model.config.return_dict = True
 
     task = get_task_from_model(model)
-    max_seq_len = get_max_sequence_length(config)
+
+    if max_sequence_len is None:
+        max_sequence_len = get_max_sequence_length(config)
 
     if onnx_config is None:
         onnx_config = get_onnx_config(model.config)
@@ -124,15 +126,23 @@ def export(
         if isinstance(tokenizer, (GPT2Tokenizer, GPT2TokenizerFast)):
             tokenizer.pad_token = tokenizer.eos_token
         if dataset_name is None:
-            dataloader = HFDataLoader(tokenizer, onnx_config, target_device, max_sequence_length=max_seq_len)
+            dataloader = HFDataLoader(tokenizer, onnx_config, target_device, max_sequence_length=max_sequence_len)()
         else:
             dataset = load_dataset(dataset_name)["train"]
             if dataset_preprocessing_function is None:
-                dataset_preprocessing_function = get_default_preprocess_function(dataset_name, tokenizer, max_seq_len)
+                dataset_preprocessing_function = get_default_preprocess_function(
+                    dataset_name, tokenizer, max_sequence_len
+                )
             dataloader_factory = HFDataLoaderFactory(
-                dataset, tokenizer, dataset_preprocessing_function, onnx_config, target_device
+                dataset,
+                tokenizer,
+                dataset_preprocessing_function,
+                onnx_config,
+                target_device,
+                padding=padding,
+                max_sequence_length=max_sequence_len,
             )
-            dataloader = dataloader_factory(1)
+            dataloader = dataloader_factory(max_bs)
 
     if onnx_config.values_override is not None:
         LOGGER.info(f"Overriding {len(onnx_config.values_override)} configuration item(s)")
@@ -146,8 +156,8 @@ def export(
     output_names = tuple(outputs.keys())
     dynamic_axes = {name: axes for name, axes in chain(inputs.items(), outputs.items())}
     model.eval().to(target_device)
-    sample = next(iter(dataloader()))
-    if isinstance(sample, dict):
+    sample = next(iter(dataloader))
+    if isinstance(sample, Mapping):
         forward_kw_names = tuple(sample.keys())
     else:
         forward_kw_names = None
@@ -176,6 +186,7 @@ def export(
         trt_dynamic_axes=trt_dynamic_axes,
         target_device=target_device,
         disable_git_info=disable_git_info,
+        batch_dim=batch_dim,
     )
 
     pipeline_manager = TorchPipelineManager()

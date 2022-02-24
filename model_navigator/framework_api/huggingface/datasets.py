@@ -12,13 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Callable
-
-# pytype: disable=import-error
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader  # pytype: disable=import-error
 from transformers import DataCollatorWithPadding
-
-# pytype: enable=import-error
 
 
 def get_default_preprocess_function(dataset_name, tokenizer, max_sequence_length):
@@ -32,10 +27,12 @@ def get_default_preprocess_function(dataset_name, tokenizer, max_sequence_length
 
 
 class HFDataLoaderFactory:
-    def __init__(self, dataset, tokenizer, preprocess_function, onnx_config, device):
+    def __init__(self, dataset, tokenizer, preprocess_function, onnx_config, device, padding, max_sequence_length):
 
         self._inputs = set(onnx_config.inputs.keys())
-        self._data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
+        self._data_collator = DataCollatorWithPadding(
+            tokenizer=tokenizer, padding=padding, max_length=max_sequence_length
+        )
         self.device = device
 
         tokenized_dataset = dataset.map(preprocess_function, batched=True)
@@ -43,15 +40,9 @@ class HFDataLoaderFactory:
             [c for c in tokenized_dataset.column_names if c not in self._inputs]
         )
 
-    def __call__(self, batch_size: int = 1) -> Callable:
-        dataloader_ = DataLoader(
+    def __call__(self, batch_size: int = 1) -> DataLoader:
+        return DataLoader(
             self._dataset,
             batch_size=batch_size,
             collate_fn=self._data_collator,
         )
-
-        def dataloader():
-            for batch in dataloader_:
-                yield {**batch}
-
-        return dataloader

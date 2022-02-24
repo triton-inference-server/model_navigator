@@ -242,7 +242,7 @@ class PackageDescriptor:
             results[key] = model_status.status
         return results
 
-    def get_formats_latency(self) -> Dict:
+    def get_formats_performance(self) -> Dict:
         """Return dictionary of pairs Format : Float with information about the median latency [ms] for each format."""
         results = {}
         for model_status in self.navigator_status.model_status:
@@ -251,10 +251,7 @@ class PackageDescriptor:
                 key += f"-{model_status.torch_jit.value}"
             if model_status.precision:
                 key += f"-{model_status.precision.value}"
-            if model_status.performance is not None:
-                results[key] = model_status.performance.latency
-            else:
-                results[key] = None
+            results[key] = model_status.performance
         return results
 
     def get_model(

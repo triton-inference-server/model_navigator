@@ -35,8 +35,9 @@ class Tolerance(DataObject):
 
 @dataclass
 class Performance(DataObject):
+    batch_size: int
     latency: float  # ms
-    throuput: float  # infer / sec
+    throughput: float  # infer / sec
 
 
 class CommandType(Parameter):

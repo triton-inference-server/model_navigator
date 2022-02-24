@@ -49,8 +49,14 @@ class Pipeline:
         for command in self._commands:
             LOGGER.info(pad_string(f"Command {command.name} started"))
             results = command.transform(**{**config.to_dict(), **additional_params})
-            if command.get_output_name() is not None:
-                additional_params[command.get_output_name()] = results.output
+
+            output_names = command.get_output_name()
+            outputs = results.output
+            if output_names is not None:
+                if isinstance(output_names, str):
+                    output_names, outputs = (output_names,), (outputs,)
+                for output_name, output in zip(output_names, outputs):
+                    additional_params[output_name] = output
 
             commands_results.append(results)
 

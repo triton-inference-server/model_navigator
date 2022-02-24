@@ -13,7 +13,7 @@
 # limitations under the License.
 # pytype: skip-file
 
-from typing import Dict
+from typing import Dict, Iterator, Protocol, Sequence, Union
 
 import numpy
 
@@ -25,3 +25,14 @@ Sample = Dict[str, numpy.ndarray]
 class TensorMetadata(Dict[str, TensorSpec]):
     def add(self, name, shape, dtype):
         self[name] = TensorSpec(name, shape, dtype)
+
+
+class SizedIterable(Protocol):
+    def __iter__(self) -> Iterator:
+        ...
+
+    def __len__(self) -> int:
+        ...
+
+
+SizedDataLoader = Union[SizedIterable, Sequence]

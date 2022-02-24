@@ -58,9 +58,9 @@ def test_pyt_export_hf_distilbert():
 
         assert status_file.is_file()
         assert model_input_dir.is_dir()
-        assert all([path.suffix == ".npz" for path in model_input_dir.iterdir()])
+        assert all([path.suffix == ".json" for path in model_input_dir.iterdir()])
         assert model_output_dir.is_dir()
-        assert all([path.suffix == ".npz" for path in model_output_dir.iterdir()])
+        assert all([path.suffix == ".json" for path in model_output_dir.iterdir()])
         assert navigator_log_file.is_file()
 
         # Passed formats
@@ -75,7 +75,7 @@ def test_pyt_export_hf_distilbert():
         # Output formats
         from packaging import version
 
-        if version.parse(torch.__version__) > version.parse("1.9.1"):
+        if version.parse(torch.__version__) > version.parse("1.10.1"):
             assert check_model_dir(model_dir=package_dir / "trt-fp16", format=nav.Format.TENSORRT)
             assert check_model_dir(model_dir=package_dir / "trt-fp32", format=nav.Format.TENSORRT)
         else:

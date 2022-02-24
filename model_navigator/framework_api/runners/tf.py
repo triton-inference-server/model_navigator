@@ -67,9 +67,6 @@ class TFRunner(BaseRunner):
         self.inference_time = end - start
         return out_dict
 
-    def deactivate_impl(self):
-        del self.model
-
 
 class TFTRTRunner(BaseRunner):
     """
@@ -116,6 +113,3 @@ class TFTRTRunner(BaseRunner):
             out_dict[name] = output
         self.inference_time = end - start
         return out_dict
-
-    def deactivate_impl(self):
-        del self.model
