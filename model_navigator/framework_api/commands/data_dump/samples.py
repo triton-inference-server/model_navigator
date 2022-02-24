@@ -123,14 +123,13 @@ class FetchInputModelData(Command):
         correctness_samples = []
         conversion_samples = []
         conversion_min_max_sampled = {
-            name: {ax: {"min": False, "max": False} for ax in dynamic_axes[name]} for name in dynamic_axes
+            name: {ax: {"min": False, "max": False} for ax in trt_dynamic_axes[name]} for name in trt_dynamic_axes
         }
         for i, sample in enumerate(dataloader):
             sample = extract_sample(sample, input_metadata, framework)
 
             if i in correctness_samples_ind:
                 correctness_samples.append(extract_bs1(sample, batch_dim))
-
             do_sample_conversion = False
             do_sample_profiling = False
             for name in input_metadata:

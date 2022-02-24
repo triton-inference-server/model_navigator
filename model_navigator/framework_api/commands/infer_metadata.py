@@ -36,6 +36,7 @@ class InferInputMetadata(Command):
         dataloader: SizedDataLoader,
         _input_names: Optional[Tuple[str]] = None,
         dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None,
+        batch_dim: Optional[int] = None,
         **kwargs,
     ) -> Tolerance:
 
@@ -52,6 +53,8 @@ class InferInputMetadata(Command):
         for input_name, input_tensor in zip(input_names, input_tuple):
             np_tensor = to_numpy(input_tensor, framework)
             shape = list(np_tensor.shape)
+            if batch_dim is not None:
+                shape[batch_dim] = -1
             if dynamic_axes is not None:
                 for i in dynamic_axes.get(input_name, {}):
                     shape[i] = -1  # if isinstance(dynamic_axes[input_name], List) else dynamic_axes[input_name][i]
