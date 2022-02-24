@@ -9,7 +9,7 @@ Feature: Set base docker images
     Background:
         Given the TorchScript/simple model with simple config file
         And the target_formats config parameter is set to torchscript
-        And the triton_launch_mode config parameter is set to docker
+#        And the triton_launch_mode config parameter is set to docker
 
     Scenario: User set just container_version parameter therefore nvcr.io docker images are used
         Given the container_version config parameter is set to 21.05

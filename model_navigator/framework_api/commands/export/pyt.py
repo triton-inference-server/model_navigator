@@ -137,7 +137,15 @@ class ExportPYT2TorchTensorRT(Command):
         return format_to_relative_model_path(self.target_format, jit_type=self.target_jit_type)
 
     def __call__(
-        self, workdir: Path, model, model_name: str, profiling_sample: Sample, input_metadata: TensorMetadata, **kwargs
+        self,
+        workdir: Path,
+        model,
+        model_name: str,
+        target_device: str,
+        profiling_sample: Sample,
+        input_metadata: TensorMetadata,
+        trt_dynamic_axes: Optional[Dict[str, Dict[int, Tuple[int, int, int]]]] = None,
+        **kwargs,
     ) -> Optional[Path]:
         import torch_tensorrt  # pytype: disable=import-error
 
@@ -146,17 +154,36 @@ class ExportPYT2TorchTensorRT(Command):
             return None
         exported_model_path.parent.mkdir(parents=True, exist_ok=True)
 
-        dummy_input = profiling_sample
+        dummy_input = tuple(
+            torch.from_numpy(val.astype(spec.dtype)).to(target_device)
+            for (val, spec) in zip(profiling_sample.values(), input_metadata.values())
+        )
+        input_dtypes = [numpy_to_torch_dtype(input_dtype) for input_dtype in input_metadata.values()]
 
-        input_shapes = [
-            torch_tensorrt.Input(shape=tensor_spec.shape, dtype=numpy_to_torch_dtype(tensor_spec.dtype))
-            for tensor_spec in input_metadata.values()
-        ]
+        all_shapes = {}
+        for input_name, spec in input_metadata.items():
+            shapes = {}
+            for i, shape_type in enumerate(("min", "opt", "max")):
+                tensor_shape = list(spec.shape)
+                for ax, val in trt_dynamic_axes[input_name].items():
+                    tensor_shape[ax] = val[i]
+                shapes[shape_type] = tensor_shape
+            all_shapes[input_name] = shapes
+
+        model_input_shapes = []
+        for input_shapes, input_dtype in zip(all_shapes.values(), input_dtypes):
+            model_input_shapes.append(
+                torch_tensorrt.Input(
+                    min_shape=input_shapes["min"],
+                    opt_shape=input_shapes["opt"],
+                    max_shape=input_shapes["max"],
+                    dtype=input_dtype,
+                )
+            )
 
         if self.target_jit_type == JitType.TRACE:
             model = torch.jit.trace(model, dummy_input)
-
-        tr_model_compiled = torch_tensorrt.compile(model, inputs=input_shapes)
+        tr_model_compiled = torch_tensorrt.compile(model, inputs=model_input_shapes)
 
         tr_model_compiled.save(exported_model_path.as_posix())
 
