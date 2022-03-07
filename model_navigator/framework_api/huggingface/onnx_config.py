@@ -20,7 +20,6 @@ from transformers.models.distilbert import DistilBertConfig, DistilBertOnnxConfi
 from transformers.models.gpt2 import GPT2Config, GPT2OnnxConfig
 from transformers.models.gpt_neo import GPTNeoConfig, GPTNeoOnnxConfig
 from transformers.models.layoutlm import LayoutLMConfig, LayoutLMOnnxConfig
-from transformers.models.longformer import LongformerConfig, LongformerOnnxConfig
 from transformers.models.mbart import MBartConfig, MBartOnnxConfig
 from transformers.models.roberta import RobertaConfig, RobertaOnnxConfig
 from transformers.models.t5 import T5Config, T5OnnxConfig
@@ -35,7 +34,6 @@ _MODEL_TO_ONNX_CONFIG = {
     BartConfig: BartOnnxConfig,
     GPTNeoConfig: GPTNeoOnnxConfig,
     LayoutLMConfig: LayoutLMOnnxConfig,
-    LongformerConfig: LongformerOnnxConfig,
     MBartConfig: MBartOnnxConfig,
     GPT2Config: GPT2OnnxConfig,
     RobertaConfig: RobertaOnnxConfig,
