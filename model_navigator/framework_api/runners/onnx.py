@@ -12,27 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import numpy as np
-from polygraphy.backend.trt import TrtRunner as _TrtRunner
-
-from model_navigator.framework_api.logger import LOGGER
+from polygraphy.backend.onnxrt import OnnxrtRunner as _OnnxrtRunner
 
 
-class TrtRunner(_TrtRunner):
-    """
-    Runs inference using PyTorch.
-    """
-
-    trt_casts = {np.dtype(np.int64): np.int32}
-
-    def _cast_tensor(self, tensor):
-        if tensor.dtype in self.trt_casts:
-            LOGGER.debug(f"Casting f{tensor.dtype} tensor to f{self.trt_casts[tensor.dtype]}.")
-            return tensor.astype(self.trt_casts[tensor.dtype])
-        return tensor
-
+class OnnxrtRunner(_OnnxrtRunner):
     def infer(self, feed_dict, check_inputs=None, *args, **kwargs):
-        feed_dict = {
-            name: self._cast_tensor(tensor) for name, tensor in feed_dict.items() if name in self.get_input_metadata()
-        }
+        feed_dict = {name: tensor for name, tensor in feed_dict.items() if name in self.get_input_metadata()}
         return super().infer(feed_dict, check_inputs, *args, **kwargs)

@@ -19,7 +19,7 @@ from typing import Optional, Tuple
 import torch  # pytype: disable=import-error
 from polygraphy.backend.base import BaseRunner
 from polygraphy.backend.common import BytesFromPath
-from polygraphy.backend.onnxrt import OnnxrtRunner, SessionFromOnnx
+from polygraphy.backend.onnxrt import SessionFromOnnx
 from polygraphy.backend.trt import EngineFromBytes
 
 from model_navigator.converter.config import TensorRTPrecision
@@ -28,6 +28,7 @@ from model_navigator.framework_api.commands.core import CommandType
 from model_navigator.framework_api.commands.correctness.base import CorrectnessBase
 from model_navigator.framework_api.commands.export.pyt import ExportPYT2ONNX
 from model_navigator.framework_api.common import TensorMetadata
+from model_navigator.framework_api.runners.onnx import OnnxrtRunner
 from model_navigator.framework_api.runners.pyt import PytRunner
 from model_navigator.framework_api.runners.trt import TrtRunner
 from model_navigator.framework_api.utils import JitType, format_to_relative_model_path, get_package_path
