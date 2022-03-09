@@ -127,6 +127,8 @@ class PackageDescriptor:
                     "input_metadata",
                     "output_metadata",
                     "forward_kw_names",
+                    "disable_git_info",
+                    "zip_package",
                 ],
                 parse=True,
             ),

@@ -88,6 +88,7 @@ def get_env():
 def get_git_info():
     try:
         git_info = {
+            "repository": _command_runner(command=["git", "config", "--get", "remote.origin.url"]),
             "commit": _command_runner(command=["git", "log", "--pretty=format:%H", "HEAD^..HEAD"]),
             "author": _command_runner(command=["git", "log", "--pretty=format:%an", "HEAD^..HEAD"]),
             "email": _command_runner(command=["git", "log", "--pretty=format:%ae", "HEAD^..HEAD"]),
