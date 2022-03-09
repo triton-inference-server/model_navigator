@@ -55,6 +55,7 @@ def export(
     target_device: Optional[str] = None,
     disable_git_info: bool = False,
     batch_dim: Optional[int] = 0,
+    zip_package: Optional[bool] = False,
 ) -> PackageDescriptor:
     """Function exports PyTorch model to all supported formats."""
 
@@ -119,6 +120,7 @@ def export(
         target_device=target_device,
         disable_git_info=disable_git_info,
         batch_dim=batch_dim,
+        zip_package=zip_package,
     )
 
     pipeline_manager = TorchPipelineManager()

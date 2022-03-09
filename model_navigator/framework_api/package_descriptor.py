@@ -13,6 +13,7 @@
 # limitations under the License.
 
 
+import shutil
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
@@ -61,43 +62,6 @@ class NavigatorStatus(DataObject):
 
 
 class PackageDescriptor:
-
-    # TODO Cleanup checking correctness status for exported models.
-    def _get_correctness_for_model(
-        self,
-        commands_results: List[CommandResults],
-        format: Format,
-        jit_type: Optional[JitType] = None,
-        precision: Optional[TensorRTPrecision] = None,
-    ):
-        for command_results in commands_results:
-            if (
-                command_results.command_type == CommandType.CORRECTNESS
-                and command_results.target_format == format
-                and command_results.target_jit_type == jit_type
-                and command_results.target_precision == precision
-            ):
-                return command_results
-        parameters = f"{format}, {precision}, {jit_type}"
-        raise Exception(f"Correctness results not found for given parameters: {parameters}")
-
-    def _get_performance_for_model(
-        self,
-        commands_results: List[CommandResults],
-        format: Format,
-        jit_type: Optional[JitType] = None,
-        precision: Optional[TensorRTPrecision] = None,
-    ):
-        for command_results in commands_results:
-            if (
-                command_results.command_type == CommandType.PERFORMANCE
-                and command_results.target_format == format
-                and command_results.target_jit_type == jit_type
-                and command_results.target_precision == precision
-            ):
-                return command_results
-        return None
-
     def __init__(self, pipelines_results: List[PipelineResults], config: Config):
         self.pipelines_results = pipelines_results
         self.config = config
@@ -170,10 +134,55 @@ class PackageDescriptor:
         )
 
         self._create_status_file()
+        if self.config.zip_package:
+            self._zip_package()
+
         LOGGER.warning(
             "Initially models are not verified. Validate exported models and use "
             "PackageDescriptor.set_verified(format, jit_type, precision) method to set models as verified."
         )
+
+    # TODO Cleanup checking correctness status for exported models.
+    def _get_correctness_for_model(
+        self,
+        commands_results: List[CommandResults],
+        format: Format,
+        jit_type: Optional[JitType] = None,
+        precision: Optional[TensorRTPrecision] = None,
+    ):
+        for command_results in commands_results:
+            if (
+                command_results.command_type == CommandType.CORRECTNESS
+                and command_results.target_format == format
+                and command_results.target_jit_type == jit_type
+                and command_results.target_precision == precision
+            ):
+                return command_results
+        parameters = f"{format}, {precision}, {jit_type}"
+        raise Exception(f"Correctness results not found for given parameters: {parameters}")
+
+    def _get_performance_for_model(
+        self,
+        commands_results: List[CommandResults],
+        format: Format,
+        jit_type: Optional[JitType] = None,
+        precision: Optional[TensorRTPrecision] = None,
+    ):
+        for command_results in commands_results:
+            if (
+                command_results.command_type == CommandType.PERFORMANCE
+                and command_results.target_format == format
+                and command_results.target_jit_type == jit_type
+                and command_results.target_precision == precision
+            ):
+                return command_results
+        return None
+
+    def _zip_package(self):
+        archive_path = self.config.workdir / f"{self.config.model_name}.nav"
+        nav_package_path = self.config.workdir / f"{self.config.model_name}.nav"
+        LOGGER.info(f"Creating zip archive from {self.config.model_name}.nav")
+        shutil.make_archive(archive_path.as_posix(), "zip", nav_package_path)
 
     def _create_status_file(self):
         import yaml

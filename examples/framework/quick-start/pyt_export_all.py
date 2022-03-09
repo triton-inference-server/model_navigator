@@ -17,11 +17,7 @@ import model_navigator.framework_api as nav
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-
-def dataloader():
-    for _ in range(10):
-        yield torch.full((3, 5), 1.0, device=device)
-
+dataloader = [torch.full((3, 5), 1.0, device=device) for _ in range(10)]
 
 model = torch.nn.Linear(5, 7).to(device).eval()
 

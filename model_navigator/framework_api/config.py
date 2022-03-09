@@ -42,6 +42,7 @@ class Config(DataObject):
     timestamp: Optional[str] = None
     _input_names: Optional[Tuple[str]] = None
     _output_names: Optional[Tuple[str]] = None
+    zip_package: bool = False
 
     # TRT params
     max_workspace_size: Optional[int] = None

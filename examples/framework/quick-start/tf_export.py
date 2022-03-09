@@ -15,10 +15,7 @@ import tensorflow as tf
 
 import model_navigator.framework_api as nav
 
-
-def dataloader():
-    yield tf.random.uniform(shape=[1, 224, 224, 3], minval=0, maxval=1, dtype=tf.dtypes.float32),
-
+dataloader = [tf.random.uniform(shape=[1, 224, 224, 3], minval=0, maxval=1, dtype=tf.dtypes.float32) for _ in range(10)]
 
 inp = tf.keras.layers.Input((224, 224, 3))
 layer_output = tf.keras.layers.Lambda(lambda x: x)(inp)
@@ -33,5 +30,6 @@ model = tf.keras.Model(inp, model_output)
 nav.tensorflow.export(
     model=model,
     dataloader=dataloader,
+    zip_package=True,
     override_workdir=True,
 )

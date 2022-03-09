@@ -47,6 +47,7 @@ def export(
     save_data: bool = True,
     disable_git_info: bool = False,
     batch_dim: Optional[int] = 0,
+    zip_package: Optional[bool] = False,
 ) -> PackageDescriptor:
     """Function exports TensorFlow 2 model to all supported formats."""
     if model_name is None:
@@ -86,6 +87,7 @@ def export(
         save_data=save_data,
         disable_git_info=disable_git_info,
         batch_dim=batch_dim,
+        zip_package=zip_package,
     )
 
     pipeline_manager = TFPipelineManager()
