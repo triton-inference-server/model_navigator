@@ -104,5 +104,4 @@ class ConfigCli(Command):
             # config_file.save_config(comparator_config)
             # config_file.save_config(dataset_profile_config)
 
-            # TODO: Fix results for fp16 and fp32
         return config_relative_path

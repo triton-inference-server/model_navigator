@@ -30,7 +30,6 @@ from model_navigator.framework_api.utils import (
 from model_navigator.model import Format
 
 
-# TODO pass min max shapes or dataloader (and no shapes info)?
 class ConvertSavedModel2TFTRT(Command):
     def __init__(self, target_precision: TensorRTPrecision):
         # pytype: disable=wrong-arg-types

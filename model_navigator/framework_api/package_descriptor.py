@@ -144,7 +144,6 @@ class PackageDescriptor:
             "PackageDescriptor.set_verified(format, jit_type, precision) method to set models as verified."
         )
 
-    # TODO Cleanup checking correctness status for exported models.
     def _get_correctness_for_model(
         self,
         commands_results: List[CommandResults],

@@ -58,11 +58,15 @@ class CorrectnessBase(Command):
                     ]
 
                     assert all(all_close_checks), get_assert_message(atol, rtol)
-                else:  # TODO iterate all outputs
-                    input_output_element_wise_diff = numpy.fabs(original_output[0] - comp_output[0])
-                    atols.append(numpy.max(input_output_element_wise_diff))
-                    # Mean Square Error for relative tolerance
-                    rtols.append(numpy.mean(input_output_element_wise_diff ** 2))
+                else:
+                    per_output_atol = []
+                    per_output_rtol = []
+                    for o_out, c_out in zip(original_output, comp_output):
+                        outputs_diff = numpy.fabs(o_out - c_out)
+                        per_output_atol.append(numpy.max(outputs_diff))
+                        per_output_rtol.append(numpy.mean(outputs_diff ** 2))
+                    atols.append(numpy.max(per_output_atol))
+                    rtols.append(numpy.mean(per_output_rtol))
         if not atol or not rtol:
             return Tolerance(atol=numpy.max(atols).item(), rtol=numpy.max(rtols).item())
         else:

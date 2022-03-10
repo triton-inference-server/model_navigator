@@ -152,7 +152,6 @@ class DataObject:
 
         if parse:
             for key, value in filtered_data.items():
-                # Skip value TODO is it safe to skip None values?
                 if value is None:
                     continue
                 data[key] = self._parse_value(value)
