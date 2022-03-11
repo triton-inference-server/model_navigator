@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 from tabulate import tabulate
 
-import model_navigator.framework_api as nav
+import model_navigator as nav
 
 LOGGER = logging.getLogger()
 
@@ -41,7 +41,7 @@ if __name__ == "__main__":
     for model_name in model_names:
         LOGGER.info(f"Exporting {model_name}...")
         nav_workdir = Path(args.workspace) / "navigator_workdir"
-        artifacts_library = nav.huggingface.torch.export(
+        artifacts_library = nav.contrib.huggingface.torch.export(
             model_name=model_name,
             dataset_name="imdb",
             padding="max_length",

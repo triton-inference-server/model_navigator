@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 from tensorflow.python.compiler.tensorrt import trt_convert as trtc  # pytype: disable=import-error
 
@@ -50,7 +50,7 @@ class ConvertSavedModel2TFTRT(Command):
         minimum_segment_size: int,
         workdir: Path,
         model_name: str,
-        profiling_sample: Sample,
+        conversion_samples: List[Sample],
         **kwargs,
     ) -> Optional[Path]:
         results = {}
@@ -58,7 +58,8 @@ class ConvertSavedModel2TFTRT(Command):
 
         # generate samples as tuples for TF-TRT converter
         def _dataloader():
-            yield sample_to_tuple(profiling_sample)
+            for sample in conversion_samples:
+                yield sample_to_tuple(sample)
 
         exported_model_path = get_package_path(workdir, model_name) / ExportTF2SavedModel().get_output_relative_path()
         converted_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()

@@ -76,6 +76,15 @@ def samples_to_json(samples: List[Sample], path: Path, batch_dim: Optional[int])
         json.dump({"data": flatten_samples}, f)
 
 
+def samples_to_npz(samples: List[Sample], path: Path, batch_dim: Optional[int]) -> None:
+    path.mkdir(parents=True, exist_ok=True)
+    for i, sample in enumerate(samples):
+        squeezed_sample = {}
+        for name, tensor in sample.items():
+            squeezed_sample[name] = tensor.squeeze(batch_dim) if batch_dim is not None else tensor
+        numpy.savez((path / f"{i}.npz").as_posix(), **squeezed_sample)
+
+
 def extract_trt_axes(axes_shapes, batch_dim):
     trt_dynamic_axes = {}
     for name, axes in axes_shapes.items():
@@ -238,12 +247,12 @@ class DumpInputModelData(Command):
         sample_data_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
         sample_data_path.mkdir(parents=True, exist_ok=True)
 
-        for samples, filename in [
-            ([profiling_sample], "profiling.json"),
-            (correctness_samples, "correctness.json"),
-            (conversion_samples, "conversion.json"),
+        for samples, dirname in [
+            ([profiling_sample], "profiling"),
+            (correctness_samples, "correctness"),
+            (conversion_samples, "conversion"),
         ]:
-            samples_to_json(samples, sample_data_path / filename, batch_dim)
+            samples_to_npz(samples, sample_data_path / dirname, batch_dim)
 
 
 class DumpOutputModelData(Command):
@@ -264,8 +273,8 @@ class DumpOutputModelData(Command):
         model,
         model_name: str,
         profiling_sample: Sample,
-        # correctness_samples: List[Sample],
-        # conversion_samples: List[Sample],
+        correctness_samples: List[Sample],
+        conversion_samples: List[Sample],
         input_metadata: TensorMetadata,
         output_metadata: TensorMetadata,
         batch_dim: Optional[int],
@@ -288,13 +297,13 @@ class DumpOutputModelData(Command):
 
             runner = TFRunner(model, input_metadata, output_names)
 
-        for samples, filename in [
-            ([profiling_sample], "profiling.json"),
-            # (correctness_samples, "correctness.json"),
-            # (conversion_samples, "conversion.json"),
+        for samples, dirname in [
+            ([profiling_sample], "profiling"),
+            (correctness_samples, "correctness"),
+            (conversion_samples, "conversion"),
         ]:
             with runner:
                 outputs = [runner.infer(sample) for sample in samples]
-            samples_to_json(outputs, output_data_path / filename, batch_dim)
+            samples_to_npz(outputs, output_data_path / dirname, batch_dim)
 
         return self.get_output_relative_path()

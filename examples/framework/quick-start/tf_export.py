@@ -13,7 +13,7 @@
 # limitations under the License.2
 import tensorflow as tf
 
-import model_navigator.framework_api as nav
+import model_navigator as nav
 
 dataloader = [tf.random.uniform(shape=[1, 224, 224, 3], minval=0, maxval=1, dtype=tf.dtypes.float32) for _ in range(10)]
 

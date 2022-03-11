@@ -13,7 +13,10 @@
 # limitations under the License.
 # pytype: skip-file
 
-from model_navigator.framework_api.package_utils import is_torch_available
+from model_navigator.framework_api.package_utils import is_tf_available, is_torch_available
 
 if is_torch_available():
-    from model_navigator.framework_api.huggingface import torch  # noqa: F401
+    from model_navigator.framework_api.contrib.huggingface import torch  # noqa: F401
+
+if is_tf_available():
+    from model_navigator.framework_api.contrib.huggingface import tensorflow  # noqa: F401

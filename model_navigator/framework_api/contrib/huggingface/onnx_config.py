@@ -13,6 +13,7 @@
 # limitations under the License.
 
 # pytype: disable=import-error
+from transformers import PretrainedConfig
 from transformers.models.albert import AlbertConfig, AlbertOnnxConfig
 from transformers.models.bart import BartConfig, BartOnnxConfig
 from transformers.models.bert import BertConfig, BertOnnxConfig
@@ -24,6 +25,7 @@ from transformers.models.mbart import MBartConfig, MBartOnnxConfig
 from transformers.models.roberta import RobertaConfig, RobertaOnnxConfig
 from transformers.models.t5 import T5Config, T5OnnxConfig
 from transformers.models.xlm_roberta import XLMRobertaConfig, XLMRobertaOnnxConfig
+from transformers.onnx.config import OnnxConfig
 
 # pytype: enable=import-error
 
@@ -42,7 +44,7 @@ _MODEL_TO_ONNX_CONFIG = {
 }
 
 
-def get_onnx_config(config):
+def get_onnx_config(config: PretrainedConfig) -> OnnxConfig:
 
     for config_class, onnx_config_class in _MODEL_TO_ONNX_CONFIG.items():
         if type(config) == config_class:

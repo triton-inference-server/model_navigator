@@ -27,10 +27,16 @@ from transformers.onnx import OnnxConfig
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.common import SizedDataLoader
 from model_navigator.framework_api.config import Config
-from model_navigator.framework_api.huggingface.datasets import HFDataLoaderFactory, get_default_preprocess_function
-from model_navigator.framework_api.huggingface.onnx_config import get_onnx_config
-from model_navigator.framework_api.huggingface.task import TASK_OUTPUTS_MAPPING, get_task_from_model
-from model_navigator.framework_api.huggingface.utils import get_max_sequence_length, get_pretrained_model_from_config
+from model_navigator.framework_api.contrib.huggingface.datasets import (
+    HFDataLoaderFactory,
+    get_default_preprocess_function,
+)
+from model_navigator.framework_api.contrib.huggingface.onnx_config import get_onnx_config
+from model_navigator.framework_api.contrib.huggingface.torch.task import TASK_OUTPUTS_MAPPING, get_task_from_model
+from model_navigator.framework_api.contrib.huggingface.torch.utils import (
+    get_max_sequence_length,
+    get_pretrained_model_from_config,
+)
 from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.package_descriptor import PackageDescriptor
 from model_navigator.framework_api.pipelines import TorchPipelineManager
@@ -138,7 +144,7 @@ def export(
                 dataset,
                 tokenizer,
                 dataset_preprocessing_function,
-                onnx_config,
+                list(onnx_config.inputs.keys()),
                 target_device,
                 padding=padding,
                 max_sequence_length=max_sequence_len,

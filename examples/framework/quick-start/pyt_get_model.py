@@ -14,7 +14,7 @@
 import torch
 import torch.nn as nn
 
-import model_navigator.framework_api as nav
+import model_navigator as nav
 
 
 def dataloader():
@@ -35,6 +35,6 @@ package = nav.torch.export(
     override_workdir=True,
 )
 
-model = package.get_model(nav.Format.TORCHSCRIPT, jit_type=nav.utils.JitType.SCRIPT)
-trace_model = package.get_model(nav.Format.TORCHSCRIPT, jit_type=nav.utils.JitType.TRACE)
+model = package.get_model(nav.Format.TORCHSCRIPT, jit_type=nav.JitType.SCRIPT)
+trace_model = package.get_model(nav.Format.TORCHSCRIPT, jit_type=nav.JitType.TRACE)
 onnx_model = package.get_model(nav.Format.ONNX)

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # pytype: disable=import-error
-import json
+
 import tempfile
 from pathlib import Path
 
@@ -44,16 +44,14 @@ class MyModule(torch.nn.Module):
 model = MyModule()
 
 
-def _extract_dumped_samples(filepath):
-    with open(filepath) as f:
-        data = json.load(f)
+def _extract_dumped_samples(filepath: Path):
     dumped_samples = []
-    for sample_data in data["data"]:
-        dumped_sample = {}
-        for name, tensor_data in sample_data.items():
-            tensor = numpy.asarray(tensor_data["content"]).reshape(tensor_data["shape"])
-            dumped_sample[name] = tensor
-        dumped_samples.append(dumped_sample)
+    for sample_path in filepath.iterdir():
+        sample = {}
+        with numpy.load(sample_path.as_posix()) as data:
+            for k, v in data.items():
+                sample[k] = v
+        dumped_samples.append(sample)
     return dumped_samples
 
 
@@ -110,6 +108,7 @@ def test_pyt_dump_model_output():
         outputs = [{"output__1": model_output}]
 
         dump_cmd = DumpOutputModelData()
+        samples = [{"input__1": numpy_data}]
 
         dump_cmd(
             framework=Framework.PYT,
@@ -117,7 +116,9 @@ def test_pyt_dump_model_output():
             model=model,
             model_name=model_name,
             dataloader=dataloader,
-            profiling_sample={"input__1": numpy_data},
+            profiling_sample=samples[0],
+            conversion_samples=samples,
+            correctness_samples=samples,
             input_metadata={"input__1": TensorSpec("input__1", numpy_data.shape, numpy_data.dtype)},
             output_metadata={"output__1": TensorSpec("output__1", numpy_data.shape, numpy_data.dtype)},
             sample_count=1,

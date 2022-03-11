@@ -13,7 +13,7 @@
 # limitations under the License.
 import torch
 
-import model_navigator.framework_api as nav
+import model_navigator as nav
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 

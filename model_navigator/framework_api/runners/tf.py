@@ -14,6 +14,7 @@
 
 import time
 from collections import OrderedDict
+from typing import Mapping
 
 import numpy
 from polygraphy.backend.base import BaseRunner
@@ -56,12 +57,18 @@ class TFRunner(BaseRunner):
         outputs = self.model.predict(list(feed_dict.values()))
         end = time.time()
 
+        if self.output_names is None:
+            if isinstance(outputs, Mapping):
+                self.output_names = outputs.keys()
+            else:
+                self.output_names = [f"output__{i}" for i in range(len(outputs))]
+
         if isinstance(outputs, numpy.ndarray):
             outputs = (outputs,)
+        if isinstance(outputs, Mapping):
+            outputs = outputs.values()
 
         out_dict = OrderedDict()
-        if self.output_names is None:
-            self.output_names = [f"output__{i}" for i in range(len(outputs))]
         for name, output in zip(self.output_names, outputs):
             out_dict[name] = output
         self.inference_time = end - start

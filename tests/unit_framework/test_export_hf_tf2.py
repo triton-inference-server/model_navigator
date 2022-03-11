@@ -15,31 +15,23 @@
 import tempfile
 from pathlib import Path
 
-import torch
-
 import model_navigator as nav
+from model_navigator.converter.config import TensorRTPrecision
 
 # pytype: enable=import-error
 
 
-def check_model_dir(model_dir: Path, format: nav.Format) -> bool:
+def check_model_dir(model_dir: Path) -> bool:
     if not model_dir.is_dir():
         return False
     if not Path(model_dir / "config.yaml").is_file():
         return False
-    if format == nav.Format.ONNX:
-        model_path = model_dir / "model.onnx"
-    elif format == nav.Format.TENSORRT:
-        model_path = model_dir / "model.plan"
-    else:
-        model_path = model_dir / "model.pt"
-    if not model_path.exists():
+    if not Path(model_dir / "model.savedmodel").exists():
         return False
-
     return True
 
 
-def test_pyt_export_hf_distilbert():
+def test_tf2_export_hf_distilbert():
     with tempfile.TemporaryDirectory() as tmp_dir:
         model_name = "distilbert-base-uncased"
 
@@ -51,10 +43,8 @@ def test_pyt_export_hf_distilbert():
         navigator_log_file = package_dir / "navigator.log"
 
         # pytype: disable=not-callable # TODO why is not-calleble being raised by pytype?
-        nav.contrib.huggingface.torch.export(
-            model_name=model_name,
-            override_workdir=True,
-            workdir=workdir,
+        nav.contrib.huggingface.tensorflow.export(
+            model_name=model_name, override_workdir=True, workdir=workdir, target_precisions=(TensorRTPrecision.FP32,)
         )
         # pytype: enable=not-callable
 
@@ -70,20 +60,8 @@ def test_pyt_export_hf_distilbert():
         assert navigator_log_file.is_file()
 
         # Passed formats
-        assert check_model_dir(model_dir=package_dir / "torchscript-trace", format=nav.Format.TORCHSCRIPT)
-        assert check_model_dir(model_dir=package_dir / "onnx", format=nav.Format.ONNX)
+        assert check_model_dir(model_dir=package_dir / "tf-savedmodel")
+        assert check_model_dir(model_dir=package_dir / "tf-trt-fp32")
 
         # Failed formats
-        assert check_model_dir(model_dir=package_dir / "torchscript-script", format=nav.Format.TORCHSCRIPT) is False
-        assert check_model_dir(model_dir=package_dir / "torch-trt-script", format=nav.Format.TORCHSCRIPT) is False
-        assert check_model_dir(model_dir=package_dir / "torch-trt-trace", format=nav.Format.TORCHSCRIPT) is False
-
-        # Output formats
-        from packaging import version
-
-        if version.parse(torch.__version__) > version.parse("1.10.1"):
-            assert check_model_dir(model_dir=package_dir / "trt-fp16", format=nav.Format.TENSORRT)
-            assert check_model_dir(model_dir=package_dir / "trt-fp32", format=nav.Format.TENSORRT)
-        else:
-            assert check_model_dir(model_dir=package_dir / "trt-fp16", format=nav.Format.TENSORRT) is False
-            assert check_model_dir(model_dir=package_dir / "trt-fp32", format=nav.Format.TENSORRT) is False
+        assert check_model_dir(model_dir=package_dir / "tf-trt-fp16") is False

@@ -11,28 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import torch
-import torch.nn as nn
+# pytype: skip-file
 
-import model_navigator as nav
+from model_navigator.framework_api.package_utils import is_hf_available
 
-
-def dataloader():
-    yield torch.randn(1)
-
-
-class MyModule(nn.Module):
-    def forward(self, x):
-        return x + 10
-
-
-model = MyModule()
-
-
-nav.torch.export(
-    model=model,
-    dataloader=dataloader,
-    override_workdir=True,
-    target_formats=(nav.Format.TORCHSCRIPT,),
-    jit_options=(nav.JitType.TRACE,),
-)
+if is_hf_available():
+    from model_navigator.framework_api.contrib import huggingface  # noqa: F401

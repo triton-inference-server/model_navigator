@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from torch.utils.data import DataLoader  # pytype: disable=import-error
-from transformers import DataCollatorWithPadding
+from transformers import DataCollatorWithPadding, TensorType
+
+from model_navigator.framework_api.utils import Framework
 
 
 def get_default_preprocess_function(dataset_name, tokenizer, max_sequence_length):
@@ -27,11 +28,21 @@ def get_default_preprocess_function(dataset_name, tokenizer, max_sequence_length
 
 
 class HFDataLoaderFactory:
-    def __init__(self, dataset, tokenizer, preprocess_function, onnx_config, device, padding, max_sequence_length):
+    def __init__(
+        self,
+        dataset,
+        tokenizer,
+        preprocess_function,
+        inputs,
+        device,
+        padding,
+        max_sequence_length,
+        return_tensors=TensorType.PYTORCH,
+    ):
 
-        self._inputs = set(onnx_config.inputs.keys())
+        self._inputs = inputs
         self._data_collator = DataCollatorWithPadding(
-            tokenizer=tokenizer, padding=padding, max_length=max_sequence_length
+            tokenizer=tokenizer, padding=padding, max_length=max_sequence_length, return_tensors=return_tensors
         )
         self.device = device
 
@@ -40,9 +51,22 @@ class HFDataLoaderFactory:
             [c for c in tokenized_dataset.column_names if c not in self._inputs]
         )
 
-    def __call__(self, batch_size: int = 1) -> DataLoader:
-        return DataLoader(
-            self._dataset,
-            batch_size=batch_size,
-            collate_fn=self._data_collator,
-        )
+    def __call__(self, batch_size: int = 1, framework: Framework = Framework.PYT):
+
+        if framework == Framework.PYT:
+
+            from torch.utils.data import DataLoader  # pytype: disable=import-error
+
+            return DataLoader(
+                self._dataset,
+                batch_size=batch_size,
+                collate_fn=self._data_collator,
+            )
+
+        else:
+            return self._dataset.to_tf_dataset(
+                columns=self._dataset.column_names,
+                shuffle=True,
+                batch_size=batch_size,
+                collate_fn=self._data_collator,
+            )

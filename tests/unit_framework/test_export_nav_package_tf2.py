@@ -17,7 +17,7 @@ from pathlib import Path
 
 import tensorflow
 
-import model_navigator.framework_api as nav
+import model_navigator as nav
 
 # pytype: enable=import-error
 
@@ -70,9 +70,13 @@ def test_tf2_export_savedmodel():
 
         assert status_file.is_file()
         assert model_input_dir.is_dir()
-        assert all([path.suffix == ".json" for path in model_input_dir.iterdir()])
+        assert all(
+            [path.suffix == ".npz" for samples_dir in model_input_dir.iterdir() for path in samples_dir.iterdir()]
+        )
         assert model_output_dir.is_dir()
-        assert all([path.suffix == ".json" for path in model_output_dir.iterdir()])
+        assert all(
+            [path.suffix == ".npz" for samples_dir in model_output_dir.iterdir() for path in samples_dir.iterdir()]
+        )
         assert navigator_log_file.is_file()
 
         # Output formats
@@ -105,9 +109,13 @@ def test_tf2_export_tf_trt():
 
         assert status_file.is_file()
         assert model_input_dir.is_dir()
-        assert all([path.suffix == ".json" for path in model_input_dir.iterdir()])
+        assert all(
+            [path.suffix == ".npz" for samples_dir in model_input_dir.iterdir() for path in samples_dir.iterdir()]
+        )
         assert model_output_dir.is_dir()
-        assert all([path.suffix == ".json" for path in model_output_dir.iterdir()])
+        assert all(
+            [path.suffix == ".npz" for samples_dir in model_output_dir.iterdir() for path in samples_dir.iterdir()]
+        )
         assert navigator_log_file.is_file()
 
         # Output formats

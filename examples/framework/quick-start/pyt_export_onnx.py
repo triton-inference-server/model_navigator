@@ -14,7 +14,7 @@
 import torch
 import torch.nn as nn
 
-import model_navigator.framework_api as nav
+import model_navigator as nav
 
 
 def dataloader():

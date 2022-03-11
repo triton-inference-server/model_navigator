@@ -17,7 +17,7 @@ from pathlib import Path
 
 import torch
 
-import model_navigator.framework_api as nav
+import model_navigator as nav
 
 # pytype: enable=import-error
 
@@ -72,9 +72,13 @@ def test_pyt_export_torchscript():
 
         assert status_file.is_file()
         assert model_input_dir.is_dir()
-        assert all([path.suffix == ".json" for path in model_input_dir.iterdir()])
+        assert all(
+            [path.suffix == ".npz" for samples_dir in model_input_dir.iterdir() for path in samples_dir.iterdir()]
+        )
         assert model_output_dir.is_dir()
-        assert all([path.suffix == ".json" for path in model_output_dir.iterdir()])
+        assert all(
+            [path.suffix == ".npz" for samples_dir in model_output_dir.iterdir() for path in samples_dir.iterdir()]
+        )
         assert navigator_log_file.is_file()
 
         # Output formats
@@ -111,9 +115,13 @@ def test_pyt_export_onnx():
 
         assert status_file.is_file()
         assert model_input_dir.is_dir()
-        assert all([path.suffix == ".json" for path in model_input_dir.iterdir()])
+        assert all(
+            [path.suffix == ".npz" for samples_dir in model_input_dir.iterdir() for path in samples_dir.iterdir()]
+        )
         assert model_output_dir.is_dir()
-        assert all([path.suffix == ".json" for path in model_output_dir.iterdir()])
+        assert all(
+            [path.suffix == ".npz" for samples_dir in model_output_dir.iterdir() for path in samples_dir.iterdir()]
+        )
         assert navigator_log_file.is_file()
 
         # Output formats
@@ -151,9 +159,13 @@ def test_pyt_export_torch_trt_script():
 
         assert status_file.is_file()
         assert model_input_dir.is_dir()
-        assert all([path.suffix == ".json" for path in model_input_dir.iterdir()])
+        assert all(
+            [path.suffix == ".npz" for samples_dir in model_input_dir.iterdir() for path in samples_dir.iterdir()]
+        )
         assert model_output_dir.is_dir()
-        assert all([path.suffix == ".json" for path in model_output_dir.iterdir()])
+        assert all(
+            [path.suffix == ".npz" for samples_dir in model_output_dir.iterdir() for path in samples_dir.iterdir()]
+        )
         assert navigator_log_file.is_file()
 
         # Output formats
@@ -193,9 +205,13 @@ def test_pyt_export_trt():
 
         assert status_file.is_file()
         assert model_input_dir.is_dir()
-        assert all([path.suffix == ".json" for path in model_input_dir.iterdir()])
+        assert all(
+            [path.suffix == ".npz" for samples_dir in model_input_dir.iterdir() for path in samples_dir.iterdir()]
+        )
         assert model_output_dir.is_dir()
-        assert all([path.suffix == ".json" for path in model_output_dir.iterdir()])
+        assert all(
+            [path.suffix == ".npz" for samples_dir in model_output_dir.iterdir() for path in samples_dir.iterdir()]
+        )
         assert navigator_log_file.is_file()
 
         # Output formats
@@ -238,9 +254,13 @@ def test_pyt_export_multi_input():
 
         assert status_file.is_file()
         assert model_input_dir.is_dir()
-        assert all([path.suffix == ".json" for path in model_input_dir.iterdir()])
+        assert all(
+            [path.suffix == ".npz" for samples_dir in model_input_dir.iterdir() for path in samples_dir.iterdir()]
+        )
         assert model_output_dir.is_dir()
-        assert all([path.suffix == ".json" for path in model_output_dir.iterdir()])
+        assert all(
+            [path.suffix == ".npz" for samples_dir in model_output_dir.iterdir() for path in samples_dir.iterdir()]
+        )
         assert navigator_log_file.is_file()
 
         # Output formats

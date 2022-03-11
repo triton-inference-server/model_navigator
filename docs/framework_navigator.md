@@ -173,7 +173,7 @@ Source code shown below exports model to ONNX and TorchScript format.
 
 ```python
 import torch
-import model_navigator.framework_api as nav
+import model_navigator as nav
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -198,7 +198,7 @@ Export model to  ONNX format and check if export status is successful.
 If model exported correctly, load it and return model handle.
 ```python
 import torch
-import model_navigator.framework_api as nav
+import model_navigator as nav
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -228,7 +228,7 @@ Export model to TorchScript format and then verify model accuracy.
 If accuracy verification passed set model format as verified.
 ```python
 import torch
-import model_navigator.framework_api as nav
+import model_navigator as nav
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -268,7 +268,7 @@ Source code shown below exports model to Savedmodel and TF-TRT formats.
 
 ```python
 import tensorflow as tf
-import model_navigator.framework_api as nav
+import model_navigator as nav
 
 def dataloader():
     yield tf.random.uniform(shape=[1, 224, 224, 3], minval=0, maxval=1, dtype=tf.dtypes.float32),

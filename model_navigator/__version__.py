@@ -11,28 +11,5 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import torch
-import torch.nn as nn
 
-import model_navigator as nav
-
-
-def dataloader():
-    yield torch.randn(1)
-
-
-class MyModule(nn.Module):
-    def forward(self, x):
-        return x + 10
-
-
-model = MyModule()
-
-
-nav.torch.export(
-    model=model,
-    dataloader=dataloader,
-    override_workdir=True,
-    target_formats=(nav.Format.TORCHSCRIPT,),
-    jit_options=(nav.JitType.TRACE,),
-)
+__version__ = "0.2.6"

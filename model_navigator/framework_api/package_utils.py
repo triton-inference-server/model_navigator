@@ -35,14 +35,12 @@ except ModuleNotFoundError:
     LOGGER.info("Tensorflow is not available.")
 
 try:
-    import transformers  # pytype: disable=import-error
+    import datasets  # pytype: disable=import-error # noqa: F401
+    import transformers  # pytype: disable=import-error # noqa: F401
 
-    _HF_VERSION = transformers.__version__
     _HF_AVAILABLE = True
-    LOGGER.info(f"Huggingface Transformers version {_HF_VERSION} available.")
 except ModuleNotFoundError:
     _HF_AVAILABLE = False
-    LOGGER.info("Huggingface Transformers is not available.")
 
 
 def is_torch_available() -> bool:

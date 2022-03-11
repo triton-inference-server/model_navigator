@@ -13,7 +13,7 @@
 # limitations under the License.2
 import tensorflow as tf
 
-import model_navigator.framework_api as nav
+import model_navigator as nav
 
 
 def dataloader():
