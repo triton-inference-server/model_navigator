@@ -208,10 +208,10 @@ def helm_chart_create_cmd(
             helm_chart_dir_path=None,
         )
 
-    results_store = ResultsStore(workspace)
-    results_store.dump(ctx.command.name.replace("-", "_"), [helm_chart_generation_result])
-
     if is_cli_command(ctx):
+        results_store = ResultsStore(workspace)
+        results_store.dump(ctx.command.name.replace("-", "_"), [helm_chart_generation_result])
+
         exit_cli_command(helm_chart_generation_result.status)
 
     return helm_chart_generation_result

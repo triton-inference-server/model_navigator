@@ -19,6 +19,8 @@ import typing
 from collections import Counter
 from enum import Enum, EnumMeta
 
+import click
+
 from model_navigator.cli.analyze import analyze_cmd
 from model_navigator.cli.convert_model import convert_cmd
 from model_navigator.cli.helm_chart_create import helm_chart_create_cmd
@@ -156,12 +158,16 @@ def _replace_config_list(tags, doc_path, config_description_lines):
         print(f"Could not find {tags}")
 
 
+def options(params):
+    return [opt for opt in params if not isinstance(opt, click.Argument)]
+
+
 def main():
-    options_with_cmds = [(option, cmd) for entry in CATALOG for cmd in entry.cmds for option in cmd.params]
+    options_with_cmds = [(option, cmd) for entry in CATALOG for cmd in entry.cmds for option in options(cmd.params)]
     _generate_config_description_lines(options_with_cmds)
 
     for entry in CATALOG:
-        options_with_cmds = [(option, cmd) for cmd in entry.cmds for option in cmd.params]
+        options_with_cmds = [(option, cmd) for cmd in entry.cmds for option in options(cmd.params)]
         options_with_cmds = sorted(
             options_with_cmds, key=lambda option_and_cmd: option_and_cmd[0].required, reverse=True
         )

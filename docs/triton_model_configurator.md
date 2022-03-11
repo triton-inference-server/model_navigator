@@ -87,6 +87,9 @@ model_repository: path
 # Path to the output workspace directory.
 [ workspace_path: path | default: navigator_workspace ]
 
+# Path to the output package.
+[ output_package: path ]
+
 # Clean workspace directory before command execution.
 [ override_workspace: boolean ]
 
@@ -112,7 +115,7 @@ model_repository: path
 [ verbose: boolean ]
 
 # Format of the model. Should be provided in case it is not possible to obtain format from model filename.
-[ model_format: choice(torchscript, tf-savedmodel, tf-trt, onnx, trt, torch-trt) ]
+[ model_format: choice(torchscript, tf-savedmodel, tf-trt, torch-trt, onnx, trt) ]
 
 # Version of model used by the Triton Inference Server.
 [ model_version: str | default: 1 ]

@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
 
 import click
+import yaml
 from click.types import UNPROCESSED
 
 from model_navigator.core import DEFAULT_CONTAINER_VERSION
@@ -363,6 +364,21 @@ def options_from_config(config_dataclass, cli_specs=None):  # noqa: C901
     return wrapper_fn
 
 
+def select_input(models):
+    """Automatically select which input model from the .nav package to use as input"""
+    # sorted from most to least preferred
+    PREFERRENCE_ORDER = [
+        {"format": "torchscript", "torch_jit": "script"},
+        {"format": "torchscript", "torch_jit": "trace"},
+        {"format": "savedmodel"},
+        {"format": "onnx"},
+    ]
+    for fmt in PREFERRENCE_ORDER:
+        for mod in models:
+            if fmt.items() <= mod.items():
+                return mod
+
+
 def common_options(f):
     from model_navigator.kubernetes.triton import TritonServer
 
@@ -378,9 +394,44 @@ def common_options(f):
 
         return config_path
 
-    # TODO: add versification if --config-path is first option wrapping command
+    def _load_config_from_nav_package(ctx, param, value):
+        """Set other CLI options defaults based on parameters from nav package"""
+        if not value:
+            return
+
+        package_path = Path(value)
+        with open(package_path / "status.yaml") as f:
+            status = yaml.load(f, Loader=yaml.SafeLoader)
+
+        ctx.default_map = ctx.default_map or {}
+
+        model = select_input(status["model_status"])
+        LOGGER.info("Selected model %s as input", model)
+        config_path = package_path / Path(model["path"]).parent / "config.yaml"
+
+        with YamlConfigFile(config_path=config_path) as config_file:
+            model_path = package_path / config_file.config_dict["model_path"]
+            ctx.default_map.update(config_file.config_dict)
+            # we need to fix the relative path
+            ctx.default_map.update({"model_path": model_path.as_posix()})
+
+        return config_path
+
+    arguments = [
+        # package and config-path should be read before all the options,
+        # as callbacks read config files into ctx.default_map
+        click.argument(
+            "package",
+            type=click.Path(dir_okay=True, file_okay=False, exists=True, resolve_path=True),
+            required=False,
+            callback=_load_config_from_nav_package,
+        ),
+    ]
+
+    # TODO: add verification if --config-path is first option wrapping command
     options = [
-        # should be first option, as callback reads config file into ctx.default_map
+        # package and config-path should be read before all other options,
+        # as callbacks read config files into ctx.default_map
         click.option(
             "--config-path",
             help=(
@@ -398,6 +449,15 @@ def common_options(f):
             help="Path to the output workspace directory.",
             type=click.Path(file_okay=False, writable=True),
             default=DEFAULT_WORKSPACE_PATH,
+            show_default=True,
+            required=False,
+        ),
+        click.option(
+            "-o",
+            "--output-package",
+            help="Path to the output package.",
+            type=click.Path(file_okay=True, dir_okay=False, writable=True),
+            default=None,
             show_default=True,
             required=False,
         ),
@@ -458,6 +518,9 @@ def common_options(f):
     options.reverse()
     for option in options:
         f = option(f)
+
+    for argument in reversed(arguments):
+        f = argument(f)
 
     return f
 

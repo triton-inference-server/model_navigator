@@ -18,39 +18,53 @@ limitations under the License.
 
 The Triton Model Navigator supports a single command to run through the process and step-by-step execution going through each stage.
 
-The `run` command replaces the old default behavior where all the steps are being performed one by one. Review the other commands to learn more about the process:
+The `model-navigator run` command replaces the old default behavior where all the steps are being performed one by one. Review the other commands to learn more about the process:
 - [Model Conversion](conversion.md)
 - [Triton Model Configurator](triton_model_configurator.md)
 - [Profiling](profiling.md)
 - [Analysis](analysis.md)
 - [Helm Chart Generator](helm_charts.md)
 
-## The `run` Command
+## Synopsis
 
-The Model Navigator `run` command performs step-by-step execution of model optimization and profiling.
+```shell
+$ model-navigator run [<options>] [-o _outpackage_] [ _package_ ]
+```
+
+## Description
+
+The `model-navigator run` command performs step-by-step execution of model optimization and profiling.
 The `run` operations start the model conversion to optimized formats like the TensorRT plan, verify
 the conversion correctness, evaluate optimized model versions on Triton, and profile them using
 the Triton Model Analyzer. In the final stage, the `run` command analyzes the obtained results
 based on provided constraints and objectives, and prepares the Helm Charts deployment for
 top N configurations on the Triton Inference Server.
 
-Using CLI arguments:
+The preferred way to use `model-navigator run` is to supply a Framework Navigator package.
+For advanced users, it is also possible to use raw TorchScript/SavedModel models as inputs.
+The output of the procedure is a `triton.nav` package.
+
+## Examples
+
+### Using a package
 
 ```shell
-$ model-navigator run --model-name add_sub \
-    --model-path model_navigator/examples/quick-start/model.pt \
-    --inputs INPUT__0:-1,16:float32 INPUT__1:-1,16:float32 \
-    --outputs OUTPUT__0:-1,16:float32 OUTPUT__1:-1,16:float32 \
-    --max-concurrency 256 \
-    --max-latency-ms 50 \
-    --verbose
+$ model-navigator run model_navigator/examples/quick-start/model.nav
 ```
 
-Using YAML file:
+### Using CLI arguments to override default package settings
+
+```shell
+$ model-navigator run --tensorrt_max_workspace_size 8589934592 \
+    --max-concurrency 256 \
+    --max-latency-ms 50 \
+    --verbose \
+	model_navigator/examples/quick-start/model.nav
+```
+
+### Using a YAML file
 
 ```yaml
-model_name: add_sub
-model_path: model_navigator/examples/quick-start/model.pt
 inputs:
   INPUT__0:
     name: INPUT__0
@@ -85,7 +99,34 @@ verbose: true
 Running the Triton Model Navigator run command:
 
 ```shell
-$ model-navigator run --config-path model_navigator.yaml
+$ model-navigator run --config-path model_navigator.yaml model_navigator/examples/quick-start/model.nav
+```
+
+
+## Advanced usage
+
+Model Navigator can also take raw TorchScript/SavedModel models as inputs, however this
+requires specifying numerous additional options, depending on desired input and output model formats.
+
+### Example using a TorchScript file
+
+Since TorchScript files do not contain signatures of inputs (i.e. their sizes and datatypes),
+those have to be supplied as options.
+
+```shell
+$ model-navigator run --model-name add_sub \
+    --model-path model_navigator/examples/quick-start/model.pt \
+    --inputs INPUT__0:-1,16:float32 INPUT__1:-1,16:float32 \
+    --outputs OUTPUT__0:-1,16:float32 OUTPUT__1:-1,16:float32 \
+    --max-concurrency 256 \
+    --max-latency-ms 50
+```
+
+### Example using a TensorFlow SavedModel
+
+```shell
+$ model-navigator run --model-name add-sub \
+    --model-path model_navigator/examples/quick-start/model.pt
 ```
 
 ## CLI and YAML Config Options
@@ -124,6 +165,9 @@ model_path: path
 # Path to the output workspace directory.
 [ workspace_path: path | default: navigator_workspace ]
 
+# Path to the output package.
+[ output_package: path ]
+
 # Clean workspace directory before command execution.
 [ override_workspace: boolean ]
 
@@ -149,7 +193,7 @@ model_path: path
 [ verbose: boolean ]
 
 # Format of the model. Should be provided in case it is not possible to obtain format from model filename.
-[ model_format: choice(torchscript, tf-savedmodel, tf-trt, onnx, trt, torch-trt) ]
+[ model_format: choice(torchscript, tf-savedmodel, tf-trt, torch-trt, onnx, trt) ]
 
 # Version of model used by the Triton Inference Server.
 [ model_version: str | default: 1 ]

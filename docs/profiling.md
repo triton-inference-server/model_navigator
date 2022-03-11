@@ -128,6 +128,9 @@ model_repository: path
 # Path to the output workspace directory.
 [ workspace_path: path | default: navigator_workspace ]
 
+# Path to the output package.
+[ output_package: path ]
+
 # Clean workspace directory before command execution.
 [ override_workspace: boolean ]
 

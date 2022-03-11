@@ -57,7 +57,7 @@ from model_navigator.model_analyzer import (
     TritonLaunchMode,
 )
 from model_navigator.perf_analyzer import PerfMeasurementConfig
-from model_navigator.results import State
+from model_navigator.results import ResultsStore, State
 from model_navigator.triton import (
     TritonBatchingConfig,
     TritonClientConfig,
@@ -69,6 +69,7 @@ from model_navigator.triton.config import TritonCustomBackendParametersConfig
 from model_navigator.utils import Workspace, cli
 from model_navigator.utils.config import BaseConfig, dataclass2dict
 from model_navigator.utils.device import get_gpus
+from model_navigator.utils.pack_workspace import pack_workspace
 from model_navigator.validators import run_command_validators
 
 LOGGER = logging.getLogger("run")
@@ -127,19 +128,20 @@ def run_cmd(
     init_logger(verbose=verbose)
     LOGGER.debug(f"Running '{ctx.command_path}' with config_path: {kwargs.get('config_path')}")
 
+    configuration = {
+        "workspace_path": workspace_path,
+        "override_workspace": override_workspace,
+        "verbose": verbose,
+        "gpus": gpus,
+        "container_version": container_version,
+        "framework_docker_image": framework_docker_image,
+        "triton_docker_image": triton_docker_image,
+        "override_conversion_container": override_conversion_container,
+        **kwargs,
+    }
     run_command_validators(
         ctx.command.name,
-        configuration={
-            "workspace_path": workspace_path,
-            "override_workspace": override_workspace,
-            "verbose": verbose,
-            "gpus": gpus,
-            "container_version": container_version,
-            "framework_docker_image": framework_docker_image,
-            "triton_docker_image": triton_docker_image,
-            "override_conversion_container": override_conversion_container,
-            **kwargs,
-        },
+        configuration=configuration,
     )
 
     workspace = Workspace(workspace_path)
@@ -338,6 +340,7 @@ def run_cmd(
             )
         return
 
+    create_helm_chart_results = []
     LOGGER.info(f"Running Helm Chart generator for top {analysis_config.top_n_configs} configs")
     for analyze_result in analyze_results:
         charts_repository = workspace.path / "helm_charts"
@@ -354,9 +357,21 @@ def run_cmd(
             **dataclass2dict(analyze_result.instances_config),
             **dataclass2dict(tensorrt_common_config),
         )
+        create_helm_chart_results.append(create_helm_chart_result)
 
         if create_helm_chart_result.status.state != State.SUCCEEDED:
             LOGGER.warning(f"Helm Chart generation failed with message: {create_helm_chart_result.status.message}")
+    results_store = ResultsStore(workspace)
+    results_store.dump("helm-chart-create", create_helm_chart_results)
+    pack_workspace(workspace_path, _get_output_package_path(src_model_config, kwargs), configuration)
+
+
+def _get_output_package_path(model_config, kwargs):
+    try:
+        output_package_path = kwargs["output-package"]
+    except KeyError:
+        output_package_path = model_config.model_name + ".triton.nav"
+    return output_package_path
 
 
 def _obtain_conversion_config(
