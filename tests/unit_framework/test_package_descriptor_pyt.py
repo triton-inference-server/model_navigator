@@ -22,14 +22,12 @@ from model_navigator.framework_api.commands.core import CommandResults, CommandT
 from model_navigator.framework_api.config import Config
 from model_navigator.framework_api.package_descriptor import PackageDescriptor
 from model_navigator.framework_api.pipelines.pipeline import PipelineResults
-from model_navigator.framework_api.utils import Format, Framework, JitType, Status
+from model_navigator.framework_api.utils import Format, Framework, JitType, RuntimeProvider, Status
 
 # pytype: enable=import-error
 
 
-def dataloader():
-    for _ in range(10):
-        yield torch.randn(1)
+dataloader = [torch.randn(1) for _ in range(10)]
 
 
 class MyModule(torch.nn.Module):
@@ -74,6 +72,7 @@ def test_pyt_package_descriptor():
             target_format=Format.TORCHSCRIPT,
             target_jit_type=JitType.SCRIPT,
             target_precision=None,
+            runtime_provider=RuntimeProvider.DEFAULT,
             missing_params={},
             output=None,
         )
@@ -85,6 +84,7 @@ def test_pyt_package_descriptor():
             target_format=Format.TORCHSCRIPT,
             target_jit_type=JitType.SCRIPT,
             target_precision=None,
+            runtime_provider=RuntimeProvider.DEFAULT,
             missing_params={},
             output=None,
         )

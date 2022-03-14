@@ -51,6 +51,13 @@ class Parameter(Enum):
         return representer.represent_scalar(f"{cls.name}: {node._value_}")
 
 
+class RuntimeProvider(str, Parameter):
+    TRT = "TensorrtExecutionProvider"
+    CUDA = "CUDAExecutionProvider"
+    CPU = "CPU"
+    DEFAULT = "Default"
+
+
 class Status(str, Parameter):
     OK = "OK"
     FAIL = "FAIL"
@@ -62,7 +69,7 @@ class Framework(Parameter):
     PYT = "pytorch"
 
 
-class Indent(Parameter):
+class Indent(str, Parameter):
     SINGLE = "  "
     DOUBLE = 2 * SINGLE
     TRIPLE = 3 * SINGLE

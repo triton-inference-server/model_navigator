@@ -30,7 +30,12 @@ from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.runners.onnx import OnnxrtRunner
 from model_navigator.framework_api.runners.pyt import PytRunner
 from model_navigator.framework_api.runners.trt import TrtRunner
-from model_navigator.framework_api.utils import JitType, format_to_relative_model_path, get_package_path
+from model_navigator.framework_api.utils import (
+    JitType,
+    RuntimeProvider,
+    format_to_relative_model_path,
+    get_package_path,
+)
 from model_navigator.model import Format
 
 
@@ -67,12 +72,13 @@ class PerformanceTorchScript(PerformanceBase):
 
 
 class PerformanceONNX(PerformanceBase):
-    def __init__(self):
+    def __init__(self, runtime_provider: RuntimeProvider):
         super().__init__(
             name="Performance ONNX",
             command_type=CommandType.PERFORMANCE,
             target_format=Format.ONNX,
         )
+        self.runtime_provider = runtime_provider
 
     def _get_runner(
         self,
@@ -81,9 +87,10 @@ class PerformanceONNX(PerformanceBase):
         target_device: str,
         **kwargs,
     ) -> BaseRunner:
-
         exported_model_path = get_package_path(workdir, model_name) / ExportPYT2ONNX().get_output_relative_path()
-        onnx_runner = OnnxrtRunner(SessionFromOnnx(exported_model_path.as_posix(), providers=[target_device]))
+        onnx_runner = OnnxrtRunner(
+            SessionFromOnnx(exported_model_path.as_posix(), providers=[self.runtime_provider.value])
+        )
 
         return onnx_runner
 

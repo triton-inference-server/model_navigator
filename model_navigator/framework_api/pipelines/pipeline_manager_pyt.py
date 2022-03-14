@@ -37,7 +37,7 @@ from model_navigator.framework_api.commands.performance.pyt import (
 )
 from model_navigator.framework_api.pipelines.pipeline import Pipeline
 from model_navigator.framework_api.pipelines.pipeline_manager_base import PipelineManager
-from model_navigator.framework_api.utils import Framework
+from model_navigator.framework_api.utils import Framework, RuntimeProvider
 from model_navigator.model import Format
 
 
@@ -56,8 +56,9 @@ class TorchPipelineManager(PipelineManager):
                 commands.append(ConfigCli(target_format=Format.TORCHSCRIPT, target_jit_type=target_jit_type))
         if Format.ONNX in config.target_formats:
             commands.append(ExportPYT2ONNX())
-            commands.append(CorrectnessPYT2ONNX())
-            commands.append(PerformanceONNX())
+            for provider in [RuntimeProvider.CUDA, RuntimeProvider.TRT, RuntimeProvider.CPU]:
+                commands.append(CorrectnessPYT2ONNX(runtime_provider=provider))
+                commands.append(PerformanceONNX(runtime_provider=provider))
             commands.append(ConfigCli(target_format=Format.ONNX))
         if Format.TORCH_TRT in config.target_formats:
             for target_jit_type in config.target_jit_type:
@@ -70,7 +71,8 @@ class TorchPipelineManager(PipelineManager):
         if Format.TENSORRT in config.target_formats:
             if Format.ONNX not in config.target_formats:
                 commands.append(ExportPYT2ONNX())
-                commands.append(CorrectnessPYT2ONNX())
+                for provider in [RuntimeProvider.CUDA, RuntimeProvider.TRT, RuntimeProvider.CPU]:
+                    commands.append(CorrectnessPYT2ONNX(runtime_provider=provider))
             for target_precision in config.target_precisions:
                 commands.append(ConvertONNX2TRT(target_precision=target_precision))
                 commands.append(CorrectnessPYT2TRT(target_precision=target_precision))

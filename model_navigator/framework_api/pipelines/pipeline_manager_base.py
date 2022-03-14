@@ -15,7 +15,6 @@
 import shutil
 from typing import List
 
-from model_navigator.framework_api.commands.core import CommandResults
 from model_navigator.framework_api.config import Config
 from model_navigator.framework_api.logger import LOGGER, add_log_file_handler
 from model_navigator.framework_api.package_descriptor import PackageDescriptor
@@ -64,9 +63,6 @@ class PipelineManager:
         if config.keep_workdir is None:
             raise Exception("config.keep_workdir cannot be None")
 
-    def _get_formatted_command_result(self, command_result: CommandResults):
-        return f"[{command_result.status.value:^4}] {command_result.name} {command_result.target_jit_type or ''} {command_result.target_precision or ''}"
-
     def _get_formatted_missing_paramter(self, param_name: str, param_desc: str):
         return f"{Indent.SINGLE}Missing parameter: {param_name}: {param_desc}"
 
@@ -75,10 +71,9 @@ class PipelineManager:
         for pipeline_result in pipelines_results:
             LOGGER.info(pad_string(f"Pipeline {pipeline_result.name} summary"))
             for command_result in pipeline_result.commands_results:
-                LOGGER.warning(
-                    self._get_formatted_command_result(command_result)
-                ) if command_result.status == Status.FAIL else LOGGER.info(
-                    self._get_formatted_command_result(command_result)
+                command_name_and_details = command_result.get_formatted_command_details()
+                LOGGER.warning(command_name_and_details) if command_result.status == Status.FAIL else LOGGER.info(
+                    command_name_and_details
                 )
                 for param_name, param_desc in command_result.missing_params.items():
                     LOGGER.info(self._get_formatted_missing_paramter(param_name, param_desc))

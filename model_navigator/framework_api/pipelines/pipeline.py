@@ -47,7 +47,15 @@ class Pipeline:
 
         commands_results = []
         for command in self._commands:
-            LOGGER.info(pad_string(f"Command {command.name} started"))
+            cmd_name_and_details = command.name
+            if hasattr(command, "target_jit_type"):
+                cmd_name_and_details += f" {command.target_jit_type}"
+            if hasattr(command, "target_precision"):
+                cmd_name_and_details += f" {command.target_precision}"
+            if hasattr(command, "runtime_provider"):
+                cmd_name_and_details += f" {command.runtime_provider}"
+
+            LOGGER.info(pad_string(cmd_name_and_details))
             results = command.transform(**{**config.to_dict(), **additional_params})
 
             output_names = command.get_output_name()

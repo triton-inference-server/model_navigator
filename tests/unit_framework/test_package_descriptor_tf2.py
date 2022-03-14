@@ -22,13 +22,12 @@ from model_navigator.framework_api.commands.core import CommandResults, CommandT
 from model_navigator.framework_api.config import Config
 from model_navigator.framework_api.package_descriptor import PackageDescriptor
 from model_navigator.framework_api.pipelines.pipeline import PipelineResults
-from model_navigator.framework_api.utils import Format, Framework, Status
+from model_navigator.framework_api.utils import Format, Framework, RuntimeProvider, Status
 
 # pytype: enable=import-error
 
 
-def dataloader():
-    yield tensorflow.random.uniform(shape=[1, 224, 224, 3], minval=0, maxval=1, dtype=tensorflow.dtypes.float32),
+dataloader = [tensorflow.random.uniform(shape=[1, 224, 224, 3], minval=0, maxval=1, dtype=tensorflow.dtypes.float32)]
 
 
 inp = tensorflow.keras.layers.Input((224, 224, 3))
@@ -74,6 +73,7 @@ def test_tf2_package_descriptor():
             target_format=Format.TF_SAVEDMODEL,
             target_jit_type=None,
             target_precision=None,
+            runtime_provider=RuntimeProvider.DEFAULT,
             missing_params={},
             output=None,
         )
@@ -85,6 +85,7 @@ def test_tf2_package_descriptor():
             target_format=Format.TF_SAVEDMODEL,
             target_jit_type=None,
             target_precision=None,
+            runtime_provider=RuntimeProvider.DEFAULT,
             missing_params={},
             output=None,
         )

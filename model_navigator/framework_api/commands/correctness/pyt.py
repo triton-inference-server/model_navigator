@@ -31,7 +31,12 @@ from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.runners.onnx import OnnxrtRunner
 from model_navigator.framework_api.runners.pyt import PytRunner
 from model_navigator.framework_api.runners.trt import TrtRunner
-from model_navigator.framework_api.utils import JitType, format_to_relative_model_path, get_package_path
+from model_navigator.framework_api.utils import (
+    JitType,
+    RuntimeProvider,
+    format_to_relative_model_path,
+    get_package_path,
+)
 from model_navigator.model import Format
 
 
@@ -84,12 +89,13 @@ class CorrectnessPYT2TorchScript(CorrectnessBase):
 
 
 class CorrectnessPYT2ONNX(CorrectnessBase):
-    def __init__(self):
+    def __init__(self, runtime_provider: RuntimeProvider):
         super().__init__(
             name="Correctness PyTorch to ONNX",
             command_type=CommandType.CORRECTNESS,
             target_format=Format.ONNX,
         )
+        self.runtime_provider = runtime_provider
 
     def _get_runners(
         self,
@@ -112,7 +118,9 @@ class CorrectnessPYT2ONNX(CorrectnessBase):
         )
 
         exported_model_path = get_package_path(workdir, model_name) / ExportPYT2ONNX().get_output_relative_path()
-        onnx_runner = OnnxrtRunner(SessionFromOnnx(exported_model_path.as_posix(), providers=[target_device]))
+        onnx_runner = OnnxrtRunner(
+            SessionFromOnnx(exported_model_path.as_posix(), providers=[self.runtime_provider.value])
+        )
 
         return pyt_runner, onnx_runner
 

@@ -23,7 +23,7 @@ import typing_inspect
 
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.logger import LOGGER
-from model_navigator.framework_api.utils import DataObject, JitType, Parameter, Status
+from model_navigator.framework_api.utils import DataObject, JitType, Parameter, RuntimeProvider, Status
 from model_navigator.model import Format
 
 
@@ -60,9 +60,22 @@ class CommandResults(DataObject):
     status: Status
     target_jit_type: Optional[JitType]
     target_precision: Optional[TensorRTPrecision]
+    runtime_provider: Optional[RuntimeProvider]
     missing_params: Optional[dict]
     output: Any
     err_msg: Optional[str] = None
+
+    def get_formatted_command_details(
+        self,
+    ):
+        cmd_name_and_details = f"[{self.status.value:^4}] {self.name}"
+        if self.target_jit_type:
+            cmd_name_and_details += f" {self.target_jit_type}"
+        if self.target_precision:
+            cmd_name_and_details += f" {self.target_precision}"
+        if self.runtime_provider:
+            cmd_name_and_details += f" {self.runtime_provider}"
+        return cmd_name_and_details
 
 
 class Command(metaclass=ABCMeta):
@@ -75,8 +88,12 @@ class Command(metaclass=ABCMeta):
         self.name = name
         self.command_type = command_type
         self.target_format = target_format
-        self.target_jit_type = None
-        self.target_precision = None
+
+    def __getattr__(self, item):
+        if item == "runtime_provider":
+            return RuntimeProvider.DEFAULT
+        else:
+            return None
 
     def transform(self, **kwargs) -> CommandResults:
         status = self._validate(**kwargs)
@@ -108,8 +125,7 @@ class Command(metaclass=ABCMeta):
             target_jit_type=self.target_jit_type,
             target_precision=self.target_precision,
             missing_params=missing_params,
-            # path=results if isinstance(results, Path) else None,
-            # tolerance=results if isinstance(results, Tolerance) else None,
+            runtime_provider=self.runtime_provider,
             err_msg=err_msg,
             output=results,
         )

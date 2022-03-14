@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from model_navigator.converter.config import TensorRTPrecision
-from model_navigator.framework_api.commands.core import CommandResults, CommandType, Performance, Tolerance
+from model_navigator.framework_api.commands.core import CommandResults, CommandType
 from model_navigator.framework_api.config import Config
 from model_navigator.framework_api.environment_info import get_env, get_git_info
 from model_navigator.framework_api.logger import LOGGER
@@ -29,6 +29,7 @@ from model_navigator.framework_api.utils import (
     DataObject,
     Framework,
     JitType,
+    RuntimeProvider,
     Status,
     format_to_relative_model_path,
     get_package_path,
@@ -42,13 +43,14 @@ NAV_PACKAGE_FORMAT_VERSION = "0.1.0"
 class ModelStatus(DataObject):
     format: Format
     path: Path
-    status: Status
-    tolerance: Tolerance
+    status: dict
+    tolerance: dict
     torch_jit: Optional[JitType] = None
     precision: Optional[TensorRTPrecision] = None
+    provider: Optional[RuntimeProvider] = None
     verified: bool = False
-    performance: Optional[Performance] = None
-    err_msg: Optional[str] = None
+    performance: Optional[dict] = None
+    err_msg: Optional[dict] = None
 
 
 @dataclass
@@ -72,39 +74,58 @@ class PackageDescriptor:
 
             for command_results in pipeline_results.commands_results:
                 if command_results.command_type in (CommandType.EXPORT, CommandType.CONVERT):
-                    correctness_results = self._get_correctness_for_model(
-                        commands_results=pipeline_results.commands_results,
-                        format=command_results.target_format,
-                        jit_type=command_results.target_jit_type,
-                        precision=command_results.target_precision,
-                    )
 
-                    if command_results.status == Status.OK and correctness_results.status == Status.OK:
-                        status = Status.OK
-                        err_msg = None
+                    status_per_provider = {}
+                    err_mgs_per_provider = {}
+                    correctness_results_per_provider = {}
+                    performance_results_per_provider = {}
+
+                    if command_results.target_format == Format.ONNX:
+                        runtimes = [RuntimeProvider.CPU.value, RuntimeProvider.CUDA.value, RuntimeProvider.TRT.value]
                     else:
-                        status = Status.FAIL
-                        err_msg = command_results.err_msg
+                        runtimes = [RuntimeProvider.DEFAULT.value]
 
-                    performance_results = self._get_performance_for_model(
-                        commands_results=pipeline_results.commands_results,
-                        format=command_results.target_format,
-                        jit_type=command_results.target_jit_type,
-                        precision=command_results.target_precision,
-                    )
-                    if performance_results is not None:
-                        performance_results = performance_results.output
+                    for provider in runtimes:
+                        correctness_results = self._get_correctness_for_model(
+                            commands_results=pipeline_results.commands_results,
+                            format=command_results.target_format,
+                            jit_type=command_results.target_jit_type,
+                            precision=command_results.target_precision,
+                            runtime_provider=provider,
+                        )
+                        if correctness_results is not None:
+                            correctness_results_per_provider[provider] = correctness_results.output
+
+                        if command_results.status == Status.OK and correctness_results.status == Status.OK:
+                            status_per_provider[provider] = Status.OK
+                            err_mgs_per_provider[provider] = None
+                        else:
+                            status_per_provider[provider] = Status.FAIL
+                            err_mgs_per_provider[provider] = command_results.err_msg
+
+                        performance_results = self._get_performance_for_model(
+                            commands_results=pipeline_results.commands_results,
+                            format=command_results.target_format,
+                            jit_type=command_results.target_jit_type,
+                            precision=command_results.target_precision,
+                            runtime_provider=provider,
+                        )
+                        if performance_results is not None:
+                            performance_results_per_provider[provider] = performance_results.output
+
+                    if all(msg is None for msg in err_mgs_per_provider.values()):
+                        err_mgs_per_provider = None
 
                     model_status.append(
                         ModelStatus(
                             format=command_results.target_format,
                             path=command_results.output,
-                            status=status,
-                            tolerance=correctness_results.output,
+                            status=status_per_provider,
+                            tolerance=correctness_results_per_provider,
                             torch_jit=command_results.target_jit_type,
                             precision=command_results.target_precision,
-                            performance=performance_results,
-                            err_msg=err_msg,
+                            performance=performance_results_per_provider,
+                            err_msg=err_mgs_per_provider,
                         )
                     )
 
@@ -150,6 +171,7 @@ class PackageDescriptor:
         format: Format,
         jit_type: Optional[JitType] = None,
         precision: Optional[TensorRTPrecision] = None,
+        runtime_provider: Optional[RuntimeProvider] = None,
     ):
         for command_results in commands_results:
             if (
@@ -157,9 +179,10 @@ class PackageDescriptor:
                 and command_results.target_format == format
                 and command_results.target_jit_type == jit_type
                 and command_results.target_precision == precision
+                and command_results.runtime_provider == runtime_provider
             ):
                 return command_results
-        parameters = f"{format}, {precision}, {jit_type}"
+        parameters = f"{format}, {precision}, {jit_type}", {runtime_provider}
         raise Exception(f"Correctness results not found for given parameters: {parameters}")
 
     def _get_performance_for_model(
@@ -168,6 +191,7 @@ class PackageDescriptor:
         format: Format,
         jit_type: Optional[JitType] = None,
         precision: Optional[TensorRTPrecision] = None,
+        runtime_provider: Optional[RuntimeProvider] = None,
     ):
         for command_results in commands_results:
             if (
@@ -175,6 +199,7 @@ class PackageDescriptor:
                 and command_results.target_format == format
                 and command_results.target_jit_type == jit_type
                 and command_results.target_precision == precision
+                and command_results.runtime_provider == runtime_provider
             ):
                 return command_results
         return None
@@ -226,16 +251,21 @@ class PackageDescriptor:
                 return
 
     def get_status(
-        self, format: Format, jit_type: Optional[JitType] = None, precision: Optional[TensorRTPrecision] = None
+        self,
+        format: Format,
+        jit_type: Optional[JitType] = None,
+        precision: Optional[TensorRTPrecision] = None,
+        runtime_provider: Optional[RuntimeProvider] = RuntimeProvider.DEFAULT,
     ) -> bool:
-        """Return status (True or False) of export operation for particular format, jit_type and precision."""
+        """Return status (True or False) of export operation for particular format, jit_type,
+        precision and runtime_provider."""
         status = False
         for model_status in self.navigator_status.model_status:
             if (
                 model_status.format == format
                 and model_status.torch_jit == jit_type
                 and model_status.precision == precision
-                and model_status.status == Status.OK
+                and model_status.status[runtime_provider] == Status.OK
             ):
                 status = True
         return status
