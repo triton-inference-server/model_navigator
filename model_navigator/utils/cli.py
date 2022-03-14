@@ -23,6 +23,7 @@ import yaml
 from click.types import UNPROCESSED
 
 from model_navigator.core import DEFAULT_CONTAINER_VERSION
+from model_navigator.exceptions import ModelNavigatorInvalidPackageException
 from model_navigator.utils.config import YamlConfigFile
 from model_navigator.utils.workspace import DEFAULT_WORKSPACE_PATH, Workspace
 
@@ -375,8 +376,11 @@ def select_input(models):
     ]
     for fmt in PREFERRENCE_ORDER:
         for mod in models:
-            if fmt.items() <= mod.items():
+            if fmt.items() <= mod.items() and mod["status"] == "OK":
                 return mod
+
+    msg = "\n".join(f"{mod['format']}, status: {mod['status']}" for mod in models)
+    raise ModelNavigatorInvalidPackageException(f"No valid models found in package. Models found: {msg}")
 
 
 def common_options(f):

@@ -68,3 +68,7 @@ class ModelNavigatorAnalyzeException(ModelNavigatorException):
 
 class ModelNavigatorCliException(ClickException):
     pass
+
+
+class ModelNavigatorInvalidPackageException(ClickException):
+    pass

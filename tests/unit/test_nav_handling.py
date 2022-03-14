@@ -11,6 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import pytest
+
+from model_navigator.exceptions import ModelNavigatorInvalidPackageException
 from model_navigator.utils.cli import select_input
 
 
@@ -43,3 +46,23 @@ def test_select_prefer_savedmodel_over_onnx():
     inp_onnx = {"format": "onnx", "path": "/x.onnx", "status": "OK"}
     assert select_input([inp_sm, inp_onnx]) == inp_sm
     assert select_input([inp_onnx, inp_sm]) == inp_sm
+
+
+def test_select_only_ok():
+    inp_sm = {"format": "savedmodel", "path": "/x.savedmodel", "status": "FAIL"}
+    inp_onnx = {"format": "onnx", "path": "/x.onnx", "status": "OK"}
+    assert select_input([inp_sm, inp_onnx]) == inp_onnx
+    assert select_input([inp_onnx, inp_sm]) == inp_onnx
+
+
+def test_empty():
+    with pytest.raises(ModelNavigatorInvalidPackageException):
+        select_input([])
+
+    inp_sm = {"format": "savedmodel", "path": "/x.savedmodel", "status": "FAIL"}
+    inp_onnx = {"format": "onnx", "path": "/x.onnx", "status": "FAIL"}
+    with pytest.raises(ModelNavigatorInvalidPackageException):
+        select_input([inp_onnx, inp_sm])
+
+    with pytest.raises(ModelNavigatorInvalidPackageException):
+        select_input([inp_sm, inp_onnx])
