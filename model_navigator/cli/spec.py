@@ -521,7 +521,7 @@ class ModelAnalyzerProfileConfigCli:
         help="Max number of model instances used for automatic config search in analysis."
     )
     config_search_max_preferred_batch_size = CliSpec(
-        help="Maximum preferred batch size allowed for inference used for automatic config search in analysis."
+        help="[Deprecated] Maximum preferred batch size allowed for inference used for automatic config search in analysis."
     )
     config_search_concurrency = CliSpec(
         help="List of concurrency values used for manual config search in analysis. "

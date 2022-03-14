@@ -27,4 +27,8 @@ class TensorRTBackendConfigurator(BaseBackendConfigurator):
         optimization_config: TritonModelOptimizationConfig,
         tensorrt_common_config: TensorRTCommonConfig,
     ):
-        model_config.optimization.cuda.graphs = int(optimization_config.tensorrt_capture_cuda_graph)
+        model_config["optimization"] = {
+            "cuda": {
+                "graphs": int(optimization_config.tensorrt_capture_cuda_graph) == 1,
+            },
+        }

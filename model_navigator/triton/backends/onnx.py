@@ -59,7 +59,15 @@ class OnnxBackendConfigurator(BaseBackendConfigurator):
                     f"--max-workspace-size config parameter is missing thus using {DEFAULT_TENSORRT_MAX_WORKSPACE_SIZE}"
                 )
 
-            accelerator = model_config.optimization.execution_accelerators.gpu_execution_accelerator.add()
-            accelerator.name = "tensorrt"
-            accelerator.parameters["precision_mode"] = optimization_config.tensorrt_precision.value.upper()
-            accelerator.parameters["max_workspace_size_bytes"] = str(max_workspace_size)
+            gpu_execution_accelerator = {
+                "name": "tensorrt",
+                "parameters": {
+                    "precision_mode": optimization_config.tensorrt_precision.value.upper(),
+                    "max_workspace_size_bytes": str(max_workspace_size),
+                },
+            }
+            model_config["optimization"] = {
+                "execution_accelerators": {
+                    "gpu_execution_accelerator": [gpu_execution_accelerator],
+                },
+            }

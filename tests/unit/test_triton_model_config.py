@@ -271,10 +271,7 @@ def test_model_config_parsing_signature_with_dynamic_batching(monkeypatch, max_b
             backend_parameters_config=backend_parameters_config,
         )
         initial_model_config_generator.save(config_path)
-
         parsed_model_config_generator = TritonModelConfigGenerator.parse_triton_config_pbtxt(config_path)
-
-        dynamic_batching_config.preferred_batch_sizes = [max_batch_size]
 
         assert parsed_model_config_generator.batching_config == batching_config
         assert parsed_model_config_generator.model.signature == src_model.signature

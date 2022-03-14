@@ -11,19 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import json
 import logging
 from pathlib import Path
-from typing import Optional, Union
+from typing import Dict, List, Optional, Union
 
-from google.protobuf import text_format  # pytype: disable=pyi-error
-from google.protobuf.text_format import MessageToString  # pytype: disable=pyi-error
+from google.protobuf import json_format, text_format  # pytype: disable=pyi-error
 from tritonclient.grpc import model_config_pb2
 
 from model_navigator.common.config import TensorRTCommonConfig
 from model_navigator.model import Model, ModelSignatureConfig
 from model_navigator.tensor import TensorSpec
 from model_navigator.triton.backends.base import BackendConfiguratorSelector
-from model_navigator.triton.client import client_utils, grpc_client
+from model_navigator.triton.client import client_utils
 from model_navigator.triton.config import (
     BackendAccelerator,
     Batching,
@@ -42,19 +42,17 @@ LOGGER = logging.getLogger(__name__)
 class ModelConfigParser:
     @classmethod
     def parse(cls, *, config_path: Path, external_model_path: Optional[Path] = None, config_cls):
-        INT_DATATYPE2STR_DATATYPE = {
-            getattr(model_config_pb2, attr_name): attr_name.split("_")[1]  # remove TYPE_ prefix
-            for attr_name in vars(model_config_pb2)
-            if attr_name.startswith("TYPE_")
-        }
-
         LOGGER.debug(f"Parsing Triton config model config_path={config_path} external_model_path={external_model_path}")
 
         with config_path.open("r") as config_file:
             payload = config_file.read()
-            model_config = text_format.Parse(payload, model_config_pb2.ModelConfig())
+            model_config_proto = text_format.Parse(payload, model_config_pb2.ModelConfig())
 
-        model_name = model_config.name
+        model_config_dict = json_format.MessageToDict(model_config_proto, preserving_proto_field_name=True)
+
+        LOGGER.debug(f"Parsed model config: \n{json.dumps(model_config_dict, indent=4)}")
+
+        model_name = model_config_dict["name"]
 
         if not external_model_path:
             from model_navigator.triton import TritonModelStore
@@ -63,22 +61,25 @@ class ModelConfigParser:
             model_path = model_store.get_model_path(config_path.parent.name)
         else:
             model_path = external_model_path
+
         model_path = Path(model_path)
 
         optimization_config_kwargs = {}
         tensorrt_common_config_kwargs = {}
-        if model_config.optimization.execution_accelerators.gpu_execution_accelerator:
-            assert len(model_config.optimization.execution_accelerators.gpu_execution_accelerator) == 1
-            backend_accelerator = model_config.optimization.execution_accelerators.gpu_execution_accelerator[0]
+        gpu_execution_accelerator = cls._get_gpu_execution_accelerator(model_config_dict)
+        if gpu_execution_accelerator:
+            assert len(gpu_execution_accelerator) == 1
+            backend_accelerator = gpu_execution_accelerator[0]
             BACKEND_ACCELERATOR_NAMES2ACCELERATORS = {
                 "tensorrt": BackendAccelerator.TRT,
                 "auto_mixed_precision": BackendAccelerator.AMP,
             }
-            precision_mode = backend_accelerator.parameters.get("precision_mode")
-            max_workspace_size = backend_accelerator.parameters.get("max_workspace_size")
+            parameters = backend_accelerator.get("parameters", {})
+            precision_mode = parameters.get("precision_mode")
+            max_workspace_size = parameters.get("max_workspace_size")
 
             optimization_config_kwargs = {
-                "backend_accelerator": BACKEND_ACCELERATOR_NAMES2ACCELERATORS[backend_accelerator.name],
+                "backend_accelerator": BACKEND_ACCELERATOR_NAMES2ACCELERATORS[backend_accelerator["name"]],
                 "tensorrt_precision": TensorRTOptPrecision(precision_mode.lower()) if precision_mode else None,
             }
 
@@ -86,44 +87,49 @@ class ModelConfigParser:
                 "tensorrt_max_workspace_size": max_workspace_size if max_workspace_size else None
             }
 
-        if model_config.dynamic_batching.preferred_batch_size:
+        if "dynamic_batching" in model_config_dict:
             batching = Batching.DYNAMIC
-        elif model_config.max_batch_size > 0:
+        elif model_config_dict.get("max_batch_size", 0) > 0:
             batching = Batching.STATIC
         else:
             batching = Batching.DISABLED
 
         batching_config = TritonBatchingConfig(
-            max_batch_size=model_config.max_batch_size,
+            max_batch_size=model_config_dict.get("max_batch_size", 0),
             batching=batching,
         )
+
+        if "dynamic_batching" in model_config_dict:
+            dynamic_batching = model_config_dict["dynamic_batching"]
+            dynamic_batching_config = TritonDynamicBatchingConfig(
+                preferred_batch_sizes=dynamic_batching.get("preferred_batch_size"),
+                max_queue_delay_us=int(dynamic_batching.get("max_queue_delay_microseconds", 0)),
+            )
+        else:
+            dynamic_batching_config = TritonDynamicBatchingConfig()
+
+        capture_cuda_graphs = cls._get_tensorrt_capture_cuda_graphs(model_config_dict)
         optimization_config = TritonModelOptimizationConfig(
             **optimization_config_kwargs,
-            tensorrt_capture_cuda_graph=(
-                model_config.platform == "tensorrt_plan" and model_config.optimization.cuda.graphs
-            ),
+            tensorrt_capture_cuda_graph=(model_config_dict.get("platform") == "tensorrt_plan" and capture_cuda_graphs),
         )
 
         tensorrt_common_config = TensorRTCommonConfig(**tensorrt_common_config_kwargs)
 
-        dynamic_batching_config = TritonDynamicBatchingConfig(
-            preferred_batch_sizes=list(model_config.dynamic_batching.preferred_batch_size) or None,
-            max_queue_delay_us=model_config.dynamic_batching.max_queue_delay_microseconds,
-        )
-
         KIND_MAP = {
-            grpc_client.model_config_pb2.ModelInstanceGroup.KIND_CPU: DeviceKind.CPU,
-            grpc_client.model_config_pb2.ModelInstanceGroup.KIND_GPU: DeviceKind.GPU,
+            "KIND_CPU": DeviceKind.CPU,
+            "KIND_GPU": DeviceKind.GPU,
         }
 
         instances_config = TritonModelInstancesConfig(
-            engine_count_per_device={KIND_MAP[entry.kind]: entry.count for entry in model_config.instance_group}
+            engine_count_per_device={
+                KIND_MAP[entry["kind"]]: entry["count"] for entry in model_config_dict.get("instance_group", [])
+            }
         )
 
+        backend_parameters = model_config_dict.get("parameters", [])
         backend_parameters_config = TritonCustomBackendParametersConfig(
-            triton_backend_parameters={
-                name: model_config.parameters[name].string_value for name in model_config.parameters
-            }
+            triton_backend_parameters={name: backend_parameters[name]["string_value"] for name in backend_parameters}
         )
 
         explicit_format = None
@@ -133,18 +139,18 @@ class ModelConfigParser:
         if model.signature is not None and model.signature.is_missing():
 
             def _rewrite_io_spec(item):
-                data_type = INT_DATATYPE2STR_DATATYPE[item.data_type]
+                data_type = item["data_type"].split("_")[1]
                 np_class = client_utils.triton_to_np_dtype(data_type)
                 dummy_instance = np_class()
                 dtype = dummy_instance.dtype
-                if len(item.dims) == 0:
+                if len(item["dims"]) == 0:
                     shape = (-1,)
                 else:
-                    shape = (-1,) + tuple(item.dims)
-                return TensorSpec(name=item.name, shape=shape, dtype=dtype)
+                    shape = (-1,) + tuple(map(lambda s: int(s), item["dims"]))
+                return TensorSpec(name=item["name"], shape=shape, dtype=dtype)
 
-            inputs = {item.name: _rewrite_io_spec(item) for item in model_config.input}
-            outputs = {item.name: _rewrite_io_spec(item) for item in model_config.output}
+            inputs = {item["name"]: _rewrite_io_spec(item) for item in model_config_dict["input"]}
+            outputs = {item["name"]: _rewrite_io_spec(item) for item in model_config_dict["output"]}
             signature = ModelSignatureConfig(inputs=inputs, outputs=outputs)
             model = Model(model_name, model_path, signature_if_missing=signature, explicit_format=explicit_format)
 
@@ -157,6 +163,36 @@ class ModelConfigParser:
             instances_config=instances_config,
             backend_parameters_config=backend_parameters_config,
         )
+
+    @classmethod
+    def _get_gpu_execution_accelerator(cls, model_config: Dict) -> List:
+        if "optimization" not in model_config:
+            return []
+
+        optimization = model_config["optimization"]
+        if "execution_accelerators" not in optimization:
+            return []
+
+        execution_accelerators = optimization["execution_accelerators"]
+        if "gpu_execution_accelerator" not in execution_accelerators:
+            return []
+
+        return execution_accelerators["gpu_execution_accelerator"]
+
+    @classmethod
+    def _get_tensorrt_capture_cuda_graphs(cls, model_config: Dict) -> bool:
+        if "optimization" not in model_config:
+            return False
+
+        optimization = model_config["optimization"]
+        if "cuda" not in optimization:
+            return False
+
+        cuda = optimization["cuda"]
+        if "graphs" not in cuda:
+            return False
+
+        return cuda["graphs"]
 
 
 class TritonModelConfigGenerator:
@@ -216,7 +252,7 @@ class TritonModelConfigGenerator:
         """
 
         # https://github.com/triton-inference-server/common/blob/main/protobuf/model_config.proto
-        model_config = grpc_client.model_config_pb2.ModelConfig()
+        model_config = {}
         backend_configurator = BackendConfiguratorSelector.for_model(self._model)
         backend_configurator.update_config_for_model(
             model_config,
@@ -229,13 +265,18 @@ class TritonModelConfigGenerator:
             backend_parameters_config=self._backend_parameters_config,
         )
 
-        config_payload = MessageToString(model_config)
-        LOGGER.debug(f"Generated Triton config:\n{config_payload}")
+        LOGGER.debug(f"Generated Triton config:\n{json.dumps(model_config, indent=4)}")
+
+        config_payload = json_format.ParseDict(model_config, model_config_pb2.ModelConfig())
+        LOGGER.debug(f"Generated Triton config payload:\n{config_payload}")
 
         config_path = Path(config_path)
         config_path.parent.mkdir(parents=True, exist_ok=True)
-        with config_path.open("w+") as cfg:
-            cfg.write(config_payload)
+
+        model_config_bytes = text_format.MessageToBytes(config_payload)
+        with config_path.open("wb") as cfg:
+            cfg.write(model_config_bytes)
+
         return config_payload
 
     @classmethod

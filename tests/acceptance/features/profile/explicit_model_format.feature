@@ -23,7 +23,6 @@ Feature: Model Automatic Profiling Explicit Model Format
         When I execute profile command
         Then the command should succeeded
         And the my_model model configs in latest profile checkpoint are
-            {"maxBatchSize": 2, "instanceGroup": [{"count": 1, "kind": "KIND_GPU"}], "cpu_only": false}
+            {"maxBatchSize": 2, "cpu_only": false}
             {"maxBatchSize": 2, "instanceGroup": [{"count": 1, "kind": "KIND_GPU"}], "dynamicBatching": {}, "cpu_only": false}
-            {"maxBatchSize": 2, "instanceGroup": [{"count": 1, "kind": "KIND_GPU"}], "dynamicBatching": {"preferredBatchSize": [1]}, "cpu_only": false}
         And the my_model model was profiled with 1 concurrency levels
