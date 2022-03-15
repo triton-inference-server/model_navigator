@@ -44,6 +44,21 @@ def extension2format(extension: str):
         return None
 
 
+TRITON_SUPPORTED_FORMATS_PYT = [
+    Format.ONNX,
+    Format.TENSORRT,
+    Format.TORCHSCRIPT,
+    Format.TORCH_TRT,
+]
+
+TRITON_SUPPORTED_FORMATS_TF = [
+    Format.TF_TRT,
+    Format.TF_SAVEDMODEL,
+    Format.ONNX,
+    Format.TENSORRT,
+]
+
+
 class ConfigCli(Command):
     supported_extensions = [Extension.ONNX.value, Extension.PT.value, Extension.SAVEDMODEL.value]
 
@@ -92,8 +107,12 @@ class ConfigCli(Command):
             )
             conversion_set_config = ConversionSetConfig(
                 onnx_opsets=[opset],
-                target_formats=[self.target_format],
-                tensorrt_precisions=[self.target_precision],
+                target_formats=TRITON_SUPPORTED_FORMATS_PYT
+                if framework == Framework.PYT
+                else TRITON_SUPPORTED_FORMATS_TF,
+                tensorrt_precisions=[self.target_precision]
+                if self.target_precision
+                else [TensorRTPrecision.FP16, TensorRTPrecision.TF32],
             )
             # comparator_config = ComparatorConfig()
             # dataset_profile_config = DatasetProfileConfig()
