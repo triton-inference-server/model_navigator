@@ -61,7 +61,7 @@ class CorrectnessPYT2TorchScript(CorrectnessBase):
         output_metadata: TensorMetadata,
         model_name: str,
         target_device: str,
-        forward_kw_names: Optional[Tuple[str]] = None,
+        forward_kw_names: Optional[Tuple[str, ...]] = None,
         **kwargs,
     ) -> Tuple[BaseRunner, BaseRunner]:
 
@@ -105,7 +105,7 @@ class CorrectnessPYT2ONNX(CorrectnessBase):
         output_metadata: TensorMetadata,
         model_name: str,
         target_device: str,
-        forward_kw_names: Optional[Tuple[str]] = None,
+        forward_kw_names: Optional[Tuple[str, ...]] = None,
         **kwargs,
     ) -> Tuple[BaseRunner, BaseRunner]:
 
@@ -142,7 +142,7 @@ class CorrectnessPYT2TRT(CorrectnessBase):
         output_metadata: TensorMetadata,
         model_name: str,
         target_device: str,
-        forward_kw_names: Optional[Tuple[str]] = None,
+        forward_kw_names: Optional[Tuple[str, ...]] = None,
         **kwargs,
     ) -> Tuple[BaseRunner, BaseRunner]:
 

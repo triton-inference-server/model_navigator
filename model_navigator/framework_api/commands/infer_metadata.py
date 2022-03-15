@@ -34,7 +34,7 @@ class InferInputMetadata(Command):
         self,
         framework: Framework,
         dataloader: SizedDataLoader,
-        _input_names: Optional[Tuple[str]] = None,
+        _input_names: Optional[Tuple[str, ...]] = None,
         dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None,
         batch_dim: Optional[int] = None,
         **kwargs,
@@ -81,9 +81,9 @@ class InferOutputMetadata(Command):
         model: object,
         input_metadata: TensorMetadata,
         target_device: Optional[str] = None,
-        _output_names: Optional[Tuple[str]] = None,
+        _output_names: Optional[Tuple[str, ...]] = None,
         dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None,
-        forward_kw_names: Optional[Tuple[str]] = None,
+        forward_kw_names: Optional[Tuple[str, ...]] = None,
         **kwargs,
     ) -> Tolerance:
 

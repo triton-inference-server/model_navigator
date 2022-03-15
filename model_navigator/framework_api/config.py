@@ -33,15 +33,15 @@ class Config(DataObject):
     workdir: Path
     override_workdir: bool
     keep_workdir: bool
-    target_formats: Tuple[Format]
+    target_formats: Tuple[Format, ...]
     sample_count: int
     save_data: bool
     disable_git_info: bool
     batch_dim: Optional[int] = 0
     seed: int = 0
     timestamp: Optional[str] = None
-    _input_names: Optional[Tuple[str]] = None
-    _output_names: Optional[Tuple[str]] = None
+    _input_names: Optional[Tuple[str, ...]] = None
+    _output_names: Optional[Tuple[str, ...]] = None
     zip_package: bool = False
 
     # TRT params
@@ -53,8 +53,8 @@ class Config(DataObject):
     minimum_segment_size: Optional[int] = None
 
     # PyTorch
-    target_jit_type: Optional[Tuple[JitType]] = None
-    forward_kw_names: Optional[Tuple[str]] = None
+    target_jit_type: Optional[Tuple[JitType, ...]] = None
+    forward_kw_names: Optional[Tuple[str, ...]] = None
     target_device: str = "cpu"
 
     # ONNX

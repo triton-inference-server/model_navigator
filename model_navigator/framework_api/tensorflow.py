@@ -32,11 +32,11 @@ from model_navigator.model import Format
 def export(
     model,
     dataloader: SizedDataLoader,
-    target_precisions: Optional[Tuple[TensorRTPrecision]] = None,
+    target_precisions: Optional[Tuple[TensorRTPrecision, ...]] = None,
     max_workspace_size: Optional[int] = None,
     minimum_segment_size: int = 3,
     model_name: Optional[str] = None,
-    target_formats: Optional[Tuple[Format]] = None,
+    target_formats: Optional[Tuple[Format, ...]] = None,
     workdir: Optional[Path] = None,
     override_workdir: bool = False,
     keep_workdir: bool = True,

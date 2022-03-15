@@ -93,7 +93,7 @@ class ExportPYT2ONNX(Command):
         output_metadata: TensorMetadata,
         target_device: str,
         dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None,
-        forward_kw_names: Optional[Tuple[str]] = None,
+        forward_kw_names: Optional[Tuple[str, ...]] = None,
         **kwargs,
     ) -> Optional[Path]:
         exported_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()

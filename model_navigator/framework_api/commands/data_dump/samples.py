@@ -279,7 +279,7 @@ class DumpOutputModelData(Command):
         output_metadata: TensorMetadata,
         batch_dim: Optional[int],
         target_device: Optional[str] = None,
-        forward_kw_names: Optional[Tuple[str]] = None,
+        forward_kw_names: Optional[Tuple[str, ...]] = None,
         **kwargs,
     ):
         output_names = list(output_metadata.keys())

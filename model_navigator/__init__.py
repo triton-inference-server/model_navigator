@@ -15,8 +15,9 @@
 from model_navigator.__version__ import __version__  # noqa: F401
 from model_navigator.converter.config import TensorRTPrecision  # noqa: F401
 from model_navigator.framework_api import commands, config, pipelines  # noqa: F401
+from model_navigator.framework_api.logger import LOGGER  # noqa: F401
 from model_navigator.framework_api.package_utils import is_tf_available, is_torch_available
-from model_navigator.framework_api.utils import Framework, JitType  # noqa: F401
+from model_navigator.framework_api.utils import Framework, JitType, Status  # noqa: F401
 from model_navigator.model import Format  # noqa: F401
 from model_navigator.tensor import TensorSpec  # noqa: F401
 

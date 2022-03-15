@@ -18,6 +18,7 @@ from typing import Callable, Optional, Tuple, Union
 import tensorflow as tf  # pytype: disable=import-error
 from datasets import load_dataset
 from transformers import AutoConfig, AutoTokenizer, TensorType
+from transformers.models.gpt2 import GPT2Tokenizer, GPT2TokenizerFast
 from transformers.onnx.config import OnnxConfig
 
 from model_navigator.converter.config import TensorRTPrecision
@@ -65,7 +66,7 @@ def export(
     atol: Optional[float] = None,
     rtol: Optional[float] = None,
     onnx_config: Optional[OnnxConfig] = None,
-    target_precisions: Optional[Tuple[TensorRTPrecision]] = None,
+    target_precisions: Optional[Tuple[TensorRTPrecision, ...]] = None,
     save_data: bool = True,
     max_workspace_size: Optional[int] = None,
     minimum_segment_size: int = 3,
@@ -88,12 +89,6 @@ def export(
         onnx_config = get_onnx_config(model.config)
 
     inputs = onnx_config.inputs
-    input_spec = tuple(
-        tf.keras.Input(shape=tuple(None for d in list(input_.values())[1:]), dtype=tf.int32)
-        for input_ in inputs.values()
-    )
-    model._saved_model_inputs_spec = None
-    model._set_save_spec(input_spec)
 
     task = get_task_from_model(model)
     outputs = TASK_OUTPUTS_MAPPING.get(task, onnx_config.outputs)
@@ -102,8 +97,8 @@ def export(
 
     if dataloader is None:
         tokenizer = AutoTokenizer.from_pretrained(model_name)
-        # if isinstance(tokenizer, (GPT2Tokenizer, GPT2TokenizerFast)):
-        #     tokenizer.pad_token = tokenizer.eos_token
+        if isinstance(tokenizer, (GPT2Tokenizer, GPT2TokenizerFast)):
+            tokenizer.pad_token = tokenizer.eos_token
         if dataset_name is None:
             # raise NotImplementedError
             dataloader = HFDataLoader(tokenizer, onnx_config, target_device, max_sequence_length=max_sequence_len)()
@@ -142,6 +137,14 @@ def export(
         opset = 14
     if sample_count is None:
         sample_count = 100
+
+    sample = next(iter(dataloader))
+    input_spec = tuple(
+        tf.keras.Input(shape=tuple(None for d in list(tensor.shape)[1:]), dtype=tensor.dtype, name=input_name)
+        for input_name, tensor in sample.items()
+    )
+    model._saved_model_inputs_spec = None
+    model._set_save_spec(input_spec)
 
     config = Config(
         Framework.TF2,
