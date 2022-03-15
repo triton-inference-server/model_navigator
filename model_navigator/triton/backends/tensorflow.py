@@ -32,5 +32,12 @@ class TensorFlowBackendConfigurator(BaseBackendConfigurator):
         tensorrt_common_config: TensorRTCommonConfig,
     ):
         if optimization_config.backend_accelerator == BackendAccelerator.AMP:
-            accelerator = model_config.optimization.execution_accelerators.gpu_execution_accelerator.add()
-            accelerator.name = "auto_mixed_precision"
+            model_config["optimization"] = {
+                "execution_accelerators": {
+                    "gpu_execution_accelerator": [
+                        {
+                            "name": "auto_mixed_precision",
+                        }
+                    ],
+                }
+            }

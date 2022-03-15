@@ -18,21 +18,15 @@ Feature: Model Automatic Profiling
         Then the command should succeeded
         Given the config_search_max_concurrency config parameter is set to 2
         And the config_search_max_instance_count config parameter is set to 2
-        And the config_search_max_preferred_batch_size config parameter is set to 2
         And removed the max_batch_size config parameter
         And removed the model_name config parameter
         When I execute profile command
         Then the command should succeeded
-        And the Running auto.*config search for model pattern is present on command output
+        And the 'run_config_search_disable': False pattern is present on command output
         And the my_model model configs in latest profile checkpoint are
-            {"maxBatchSize": 2, "instanceGroup": [{"count": 1, "kind": "KIND_GPU"}], "cpu_only": false}
-            {"maxBatchSize": 2, "instanceGroup": [{"count": 2, "kind": "KIND_GPU"}], "cpu_only": false}
+            {"maxBatchSize": 2, "cpu_only": false}
             {"maxBatchSize": 2, "instanceGroup": [{"count": 1, "kind": "KIND_GPU"}], "dynamicBatching": {}, "cpu_only": false}
             {"maxBatchSize": 2, "instanceGroup": [{"count": 2, "kind": "KIND_GPU"}], "dynamicBatching": {}, "cpu_only": false}
-            {"maxBatchSize": 2, "instanceGroup": [{"count": 1, "kind": "KIND_GPU"}], "dynamicBatching": {"preferredBatchSize": [1]}, "cpu_only": false}
-            {"maxBatchSize": 2, "instanceGroup": [{"count": 2, "kind": "KIND_GPU"}], "dynamicBatching": {"preferredBatchSize": [1]}, "cpu_only": false}
-            {"maxBatchSize": 2, "instanceGroup": [{"count": 1, "kind": "KIND_GPU"}], "dynamicBatching": {"preferredBatchSize": [2]}, "cpu_only": false}
-            {"maxBatchSize": 2, "instanceGroup": [{"count": 2, "kind": "KIND_GPU"}], "dynamicBatching": {"preferredBatchSize": [2]}, "cpu_only": false}
         And the my_model model was profiled with 1 2 concurrency levels
 
     Scenario: User uses Model Analyzer Automatic Configuration Search on cpu only instances
@@ -43,22 +37,16 @@ Feature: Model Automatic Profiling
         Then the command should succeeded
         Given the config_search_max_concurrency config parameter is set to 2
         And the config_search_max_instance_count config parameter is set to 2
-        And the config_search_max_preferred_batch_size config parameter is set to 2
         And removed the max_batch_size config parameter
         And removed the model_name config parameter
         And removed the engine_count_per_device config parameter
         When I execute profile command
         Then the command should succeeded
-        And the Running auto.*config search for model pattern is present on command output
+        And the 'run_config_search_disable': False pattern is present on command output
         And the my_model model configs in latest profile checkpoint are
             {"maxBatchSize": 2, "instanceGroup": [{"count": 1, "kind": "KIND_CPU"}], "cpu_only": true}
-            {"maxBatchSize": 2, "instanceGroup": [{"count": 2, "kind": "KIND_CPU"}], "cpu_only": true}
             {"maxBatchSize": 2, "instanceGroup": [{"count": 1, "kind": "KIND_CPU"}], "dynamicBatching": {}, "cpu_only": true}
             {"maxBatchSize": 2, "instanceGroup": [{"count": 2, "kind": "KIND_CPU"}], "dynamicBatching": {}, "cpu_only": true}
-            {"maxBatchSize": 2, "instanceGroup": [{"count": 1, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [1]}, "cpu_only": true}
-            {"maxBatchSize": 2, "instanceGroup": [{"count": 2, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [1]}, "cpu_only": true}
-            {"maxBatchSize": 2, "instanceGroup": [{"count": 1, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [2]}, "cpu_only": true}
-            {"maxBatchSize": 2, "instanceGroup": [{"count": 2, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [2]}, "cpu_only": true}
         And the my_model model was profiled with 1 2 concurrency levels
 
     Scenario: User received error when uses Model Analyzer Automatic Configuration Search with instance count swipe on cpu and gpu group instances
@@ -69,7 +57,6 @@ Feature: Model Automatic Profiling
         Then the command should succeeded
         Given the config_search_max_concurrency config parameter is set to 2
         And the config_search_max_instance_count config parameter is set to 2
-        And the config_search_max_preferred_batch_size config parameter is set to 2
         And removed the max_batch_size config parameter
         And removed the model_name config parameter
         And removed the engine_count_per_device config parameter
@@ -91,7 +78,7 @@ Feature: Model Automatic Profiling
 #        And removed the engine_count_per_device config parameter
 #        When I execute profile command
 #        Then the command should succeeded
-#        And the Running auto.*config search for model pattern is present on command output
+#        And the 'run_config_search_disable': True pattern is present on command output
 #        And the my_model model configs in latest profile checkpoint are
 #            {"maxBatchSize": 4, "instanceGroup": [{"count": 1, "kind": "KIND_CPU"}, {"count": 1, "kind": "KIND_GPU"}], "cpu_only": false}
 #            {"maxBatchSize": 4, "instanceGroup": [{"count": 1, "kind": "KIND_CPU"}, {"count": 1, "kind": "KIND_GPU"}], "dynamicBatching": {}, "cpu_only": false}

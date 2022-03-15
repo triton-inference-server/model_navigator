@@ -58,23 +58,28 @@ def rewrite_signature_to_model_config(model_config, signature: ModelSignatureCon
             "Signature is required to create Triton Model Configuration. Could not obtain it."
         )
 
-    def _rewrite_io_spec(spec_, item):
+    def _rewrite_io_spec(spec_):
         dtype = f"TYPE_{client_utils.np_to_triton_dtype(spec_.dtype)}"
         dims = [1] if len(spec_.shape) <= 1 else spec_.shape[1:]  # do not pass batch size
 
-        item.name = spec_.name
-        item.dims.extend(dims)
-        item.data_type = getattr(grpc_client.model_config_pb2, dtype)
+        item = {
+            "name": spec_.name,
+            "dims": list(dims),
+            "data_type": getattr(grpc_client.model_config_pb2, dtype),
+        }
+
         if len(spec_.shape) <= 1:
-            item.reshape.shape.extend([])
+            item["reshape"] = {"shape": []}
 
-    for _name, spec in signature.inputs.items():
-        input_item = model_config.input.add()
-        _rewrite_io_spec(spec, input_item)
+        return item
 
-    for _name, spec in signature.outputs.items():
-        output_item = model_config.output.add()
-        _rewrite_io_spec(spec, output_item)
+    inputs = [_rewrite_io_spec(spec) for _, spec in signature.inputs.items()]
+    if inputs:
+        model_config["input"] = inputs
+
+    outputs = [_rewrite_io_spec(spec) for _, spec in signature.outputs.items()]
+    if inputs:
+        model_config["output"] = outputs
 
 
 def get_shape_params(dataset_profile_config):

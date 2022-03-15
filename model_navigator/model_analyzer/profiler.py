@@ -165,17 +165,12 @@ class ProfileConfigGenerator(BaseConfigGenerator):
         if any(profile_config for model_name, profile_config in model_names_with_profile_config.items()):
             models_list = model_names_with_profile_config
 
-        if self._profile_config.config_search_max_preferred_batch_size > 0:
-            max_preferred_batch_size = self._profile_config.config_search_max_preferred_batch_size
-        else:
-            max_preferred_batch_size = 1
-
         manual_config_search = all(
             isinstance(models_list, dict) and models_list[model_name].get("model_config_parameters")
             for model_name in models_list
         )
 
-        # https://github.com/triton-inference-server/model_analyzer/blob/r22.01/docs/config.md
+        # https://github.com/triton-inference-server/model_analyzer/blob/r22.02/docs/config.md
         config = {
             "run_config_search_disable": manual_config_search,
             "profile_models": models_list,
@@ -188,7 +183,6 @@ class ProfileConfigGenerator(BaseConfigGenerator):
             "triton_server_flags": {"strict-model-config": False},
             "run_config_search_max_concurrency": self._profile_config.config_search_max_concurrency,
             "run_config_search_max_instance_count": self._profile_config.config_search_max_instance_count,
-            "run_config_search_max_preferred_batch_size": max_preferred_batch_size,
             "perf_analyzer_timeout": self._perf_measurement_config.perf_analyzer_timeout,
             "perf_analyzer_flags": self._get_perf_analyzer_flags(),
             "triton_server_path": self._triton_config.triton_server_path,

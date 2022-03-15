@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
-from typing import Optional
+from typing import Dict, Optional
 
 from model_navigator.common.config import TensorRTCommonConfig
 from model_navigator.exceptions import ModelNavigatorDeployerException
@@ -46,7 +46,7 @@ class BaseBackendConfigurator:
     # pytype: disable=invalid-annotation
     def update_config_for_model(
         self,
-        model_config: ModelConfigProtobufType,
+        model_config: Dict,
         model: Model,
         batching_config: TritonBatchingConfig,
         *,
@@ -56,11 +56,11 @@ class BaseBackendConfigurator:
         instances_config: Optional[TritonModelInstancesConfig] = None,
         backend_parameters_config: Optional[TritonCustomBackendParametersConfig] = None,
     ):
-        model_config.name = model.name
+        model_config["name"] = model.name
         if self.backend_name is not None:
-            model_config.backend = self.backend_name
+            model_config["backend"] = self.backend_name
         if self.platform_name is not None:
-            model_config.platform = self.platform_name
+            model_config["platform"] = self.platform_name
         self._extract_signature(model_config, model)
         self._set_batching(
             model_config,
@@ -95,40 +95,52 @@ class BaseBackendConfigurator:
         self, model_config, batching_config: TritonBatchingConfig, dynamic_batching_config: TritonDynamicBatchingConfig
     ):
         if batching_config.batching == Batching.DISABLED:
-            model_config.max_batch_size = 0
+            model_config["max_batch_size"] = 0
             LOGGER.debug("Batching for model is disabled. Supported request batch size=1.")
             return
 
-        model_config.max_batch_size = batching_config.max_batch_size
+        model_config["max_batch_size"] = batching_config.max_batch_size
         if batching_config.batching == Batching.DYNAMIC:
-
+            dynamic_batching = {}
             if dynamic_batching_config.max_queue_delay_us > 0:
-                model_config.dynamic_batching.max_queue_delay_microseconds = int(
-                    dynamic_batching_config.max_queue_delay_us
-                )
+                dynamic_batching["maxQueueDelayMicroseconds"] = int(dynamic_batching_config.max_queue_delay_us)
 
             if dynamic_batching_config.preferred_batch_sizes:
-                for preferred_batch_size in dynamic_batching_config.preferred_batch_sizes:
-                    model_config.dynamic_batching.preferred_batch_size.append(int(preferred_batch_size))
-            else:
-                model_config.dynamic_batching.preferred_batch_size.append(int(batching_config.max_batch_size))
+                dynamic_batching["preferredBatchSize"] = [
+                    int(preferred_batch_size) for preferred_batch_size in dynamic_batching_config.preferred_batch_sizes
+                ]
+            model_config["dynamic_batching"] = dynamic_batching
         else:
             LOGGER.debug("Default batching used")
 
     def _set_instance_group(self, model_config, instances_config: TritonModelInstancesConfig):
+        instance_groups = []
         for kind, count in instances_config.engine_count_per_device.items():
-            instance_group = model_config.instance_group.add()
-            instance_group.kind = {
-                DeviceKind.CPU: instance_group.KIND_CPU,
-                DeviceKind.GPU: instance_group.KIND_GPU,
+            config_kind = {
+                DeviceKind.CPU: "KIND_CPU",
+                DeviceKind.GPU: "KIND_GPU",
             }[kind]
-            instance_group.count = count
+            instance_groups.append(
+                {
+                    "count": count,
+                    "kind": config_kind,
+                }
+            )
+
+        if instance_groups:
+            model_config["instance_group"] = instance_groups
 
     def _set_custom_backend_parameters(
         self, model_config, backend_parameters_config: TritonCustomBackendParametersConfig
     ):
+        parameters = {}
         for key, value in backend_parameters_config.triton_backend_parameters.items():
-            model_config.parameters[key].string_value = str(value)
+            parameters[key] = {
+                "string_value": str(value),
+            }
+
+        if parameters:
+            model_config["parameters"] = parameters
 
     @classmethod
     def is_supporting_model(cls, model):
