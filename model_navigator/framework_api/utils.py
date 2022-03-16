@@ -55,7 +55,7 @@ class RuntimeProvider(str, Parameter):
     TRT = "TensorrtExecutionProvider"
     CUDA = "CUDAExecutionProvider"
     CPU = "CPU"
-    DEFAULT = "Default"
+    DEFAULT = "DefaultRuntime"
 
 
 class Status(str, Parameter):

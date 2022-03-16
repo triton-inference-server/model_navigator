@@ -90,10 +90,7 @@ class Command(metaclass=ABCMeta):
         self.target_format = target_format
 
     def __getattr__(self, item):
-        if item == "runtime_provider":
-            return RuntimeProvider.DEFAULT
-        else:
-            return None
+        return None
 
     def transform(self, **kwargs) -> CommandResults:
         status = self._validate(**kwargs)

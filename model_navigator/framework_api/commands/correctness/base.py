@@ -17,9 +17,10 @@ from typing import List, Optional, Tuple
 import numpy
 from polygraphy.backend.base import BaseRunner
 
-from model_navigator.framework_api.commands.core import Command, Tolerance
+from model_navigator.framework_api.commands.core import Command, CommandType, Tolerance
 from model_navigator.framework_api.common import Sample
-from model_navigator.framework_api.utils import Framework, sample_to_tuple
+from model_navigator.framework_api.utils import Framework, RuntimeProvider, sample_to_tuple
+from model_navigator.model import Format
 
 
 def get_assert_message(atol: float, rtol: float):
@@ -27,6 +28,14 @@ def get_assert_message(atol: float, rtol: float):
 
 
 class CorrectnessBase(Command):
+    def __init__(self, name: str, command_type: CommandType, target_format: Format):
+        super().__init__(
+            name=name,
+            command_type=command_type,
+            target_format=target_format,
+        )
+        self.runtime_provider = RuntimeProvider.DEFAULT
+
     def _get_runners(self, **kwargs) -> Tuple[BaseRunner, BaseRunner]:
         raise NotImplementedError
 
