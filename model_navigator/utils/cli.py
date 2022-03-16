@@ -376,7 +376,7 @@ def select_input(models):
     ]
     for fmt in PREFERRENCE_ORDER:
         for mod in models:
-            if fmt.items() <= mod.items() and mod["status"] == "OK":
+            if fmt.items() <= mod.items() and mod.get("path") is not None:
                 return mod
 
     msg = "\n".join(f"{mod['format']}, status: {mod['status']}" for mod in models)

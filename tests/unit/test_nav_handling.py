@@ -49,7 +49,7 @@ def test_select_prefer_savedmodel_over_onnx():
 
 
 def test_select_only_ok():
-    inp_sm = {"format": "savedmodel", "path": "/x.savedmodel", "status": "FAIL"}
+    inp_sm = {"format": "savedmodel", "status": {"Default": "FAIL"}}
     inp_onnx = {"format": "onnx", "path": "/x.onnx", "status": "OK"}
     assert select_input([inp_sm, inp_onnx]) == inp_onnx
     assert select_input([inp_onnx, inp_sm]) == inp_onnx
@@ -59,8 +59,8 @@ def test_empty():
     with pytest.raises(ModelNavigatorInvalidPackageException):
         select_input([])
 
-    inp_sm = {"format": "savedmodel", "path": "/x.savedmodel", "status": "FAIL"}
-    inp_onnx = {"format": "onnx", "path": "/x.onnx", "status": "FAIL"}
+    inp_sm = {"format": "savedmodel", "status": {"Default": "FAIL"}}
+    inp_onnx = {"format": "onnx", "status": {"Default": "FAIL"}}
     with pytest.raises(ModelNavigatorInvalidPackageException):
         select_input([inp_onnx, inp_sm])
 
