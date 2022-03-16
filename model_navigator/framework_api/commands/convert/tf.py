@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from tensorflow.python.compiler.tensorrt import trt_convert as trtc  # pytype: disable=import-error
 
@@ -21,6 +21,7 @@ from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.export.tf import ExportTF2SavedModel
 from model_navigator.framework_api.common import Sample
+from model_navigator.framework_api.errors import ExternalErrorContext
 from model_navigator.framework_api.utils import (
     ArtifactType,
     format_to_relative_model_path,
@@ -31,12 +32,13 @@ from model_navigator.model import Format
 
 
 class ConvertSavedModel2TFTRT(Command):
-    def __init__(self, target_precision: TensorRTPrecision):
+    def __init__(self, target_precision: TensorRTPrecision, requires: Tuple[Command, ...] = ()):
         # pytype: disable=wrong-arg-types
         super().__init__(
             name="Convert SavedModel to TF-TRT",
             command_type=CommandType.CONVERT,
             target_format=Format.TF_TRT,
+            requires=requires,
         )
         self.target_precision = target_precision
         # pytype: enable=wrong-arg-types
@@ -70,13 +72,14 @@ class ConvertSavedModel2TFTRT(Command):
             minimum_segment_size=minimum_segment_size,
         )
         # TODO: allow setting dynamic_shape_profile_strategy
-        converter = trtc.TrtGraphConverterV2(
-            input_saved_model_dir=exported_model_path.as_posix(), use_dynamic_shape=True, conversion_params=params
-        )
+        with ExternalErrorContext():
+            converter = trtc.TrtGraphConverterV2(
+                input_saved_model_dir=exported_model_path.as_posix(), use_dynamic_shape=True, conversion_params=params
+            )
 
-        converter.convert()
-        converter.build(_dataloader)
-        converter.save(converted_model_path.as_posix())
+            converter.convert()
+            converter.build(_dataloader)
+            converter.save(converted_model_path.as_posix())
 
         results[f"{ArtifactType.CONVERTED_MODEL_PATH.value}_{self.target_precision.value}"] = converted_model_path
 

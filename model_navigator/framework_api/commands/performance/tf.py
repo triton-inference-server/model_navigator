@@ -14,12 +14,12 @@
 
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 
 import tensorflow  # pytype: disable=import-error
 
 from model_navigator.converter.config import TensorRTPrecision
-from model_navigator.framework_api.commands.core import CommandType
+from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.performance.base import PerformanceBase
 from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.runners.tf import TFRunner, TFTRTRunner
@@ -28,11 +28,17 @@ from model_navigator.model import Format
 
 
 class PerformanceSavedModel(PerformanceBase):
-    def __init__(self, target_format: Format, target_precision: Optional[TensorRTPrecision] = None):
+    def __init__(
+        self,
+        target_format: Format,
+        target_precision: Optional[TensorRTPrecision] = None,
+        requires: Tuple[Command, ...] = (),
+    ):
         super().__init__(
             name="Performance SavedModel",
             command_type=CommandType.PERFORMANCE,
             target_format=target_format,
+            requires=requires,
         )
         self.target_precision = target_precision
 

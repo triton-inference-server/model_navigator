@@ -14,6 +14,7 @@
 
 
 from pathlib import Path
+from typing import Tuple
 
 import torch  # pytype: disable=import-error
 from polygraphy.backend.base import BaseRunner
@@ -23,7 +24,7 @@ from polygraphy.backend.trt import EngineFromBytes
 
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.convert.onnx import ConvertONNX2TRT
-from model_navigator.framework_api.commands.core import CommandType
+from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.export.pyt import ExportPYT2ONNX
 from model_navigator.framework_api.commands.performance.base import PerformanceBase
 from model_navigator.framework_api.common import TensorMetadata
@@ -40,11 +41,12 @@ from model_navigator.model import Format
 
 
 class PerformanceTorchScript(PerformanceBase):
-    def __init__(self, target_format: Format, target_jit_type: JitType):
+    def __init__(self, target_format: Format, target_jit_type: JitType, requires: Tuple[Command, ...] = ()):
         super().__init__(
             name="Performance TorchScript",
             command_type=CommandType.PERFORMANCE,
             target_format=target_format,
+            requires=requires,
         )
         self.target_jit_type = target_jit_type
 
@@ -72,11 +74,9 @@ class PerformanceTorchScript(PerformanceBase):
 
 
 class PerformanceONNX(PerformanceBase):
-    def __init__(self, runtime_provider: RuntimeProvider):
+    def __init__(self, runtime_provider: RuntimeProvider, requires: Tuple[Command, ...] = ()):
         super().__init__(
-            name="Performance ONNX",
-            command_type=CommandType.PERFORMANCE,
-            target_format=Format.ONNX,
+            name="Performance ONNX", command_type=CommandType.PERFORMANCE, target_format=Format.ONNX, requires=requires
         )
         self.runtime_provider = runtime_provider
 
@@ -96,11 +96,12 @@ class PerformanceONNX(PerformanceBase):
 
 
 class PerformanceTRT(PerformanceBase):
-    def __init__(self, target_precision: TensorRTPrecision):
+    def __init__(self, target_precision: TensorRTPrecision, requires: Tuple[Command, ...] = ()):
         super().__init__(
             name="Performance TensorRT",
             command_type=CommandType.PERFORMANCE,
             target_format=Format.TENSORRT,
+            requires=requires,
         )
         self.target_precision = target_precision
 

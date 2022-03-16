@@ -62,6 +62,8 @@ class Status(str, Parameter):
     OK = "OK"
     FAIL = "FAIL"
     NOOP = "NOOP"
+    INITIALIZED = "INITIALIZED"
+    SKIPPED = "SKIPPED"
 
 
 class Framework(Parameter):

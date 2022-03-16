@@ -16,15 +16,13 @@ from typing import Dict, List, Mapping, Optional, Tuple, Union
 
 from model_navigator.framework_api.commands.core import Command, CommandType, Tolerance
 from model_navigator.framework_api.common import Sample, SizedDataLoader, TensorMetadata
+from model_navigator.framework_api.errors import ExternalErrorContext
 from model_navigator.framework_api.utils import Framework, sample_to_tuple, to_numpy
 
 
 class InferInputMetadata(Command):
-    def __init__(self):
-        super().__init__(
-            name="Infer input metadata.",
-            command_type=CommandType.CUSTOM,
-        )
+    def __init__(self, requires: Tuple[Command, ...] = ()):
+        super().__init__(name="Infer input metadata.", command_type=CommandType.CUSTOM, requires=requires)
 
     @staticmethod
     def get_output_name():
@@ -64,10 +62,11 @@ class InferInputMetadata(Command):
 
 
 class InferOutputMetadata(Command):
-    def __init__(self):
+    def __init__(self, requires: Tuple[Command, ...] = ()):
         super().__init__(
             name="Infer output metadata.",
             command_type=CommandType.CUSTOM,
+            requires=requires,
         )
 
     @staticmethod
@@ -98,7 +97,7 @@ class InferOutputMetadata(Command):
 
             runner = TFRunner(model, input_metadata, _output_names)
 
-        with runner:
+        with runner, ExternalErrorContext():
             output = runner.infer(profiling_sample)
 
         output_metadata = TensorMetadata()

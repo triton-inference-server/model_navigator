@@ -31,24 +31,48 @@ from model_navigator.model import Format
 
 class TFPipelineManager(PipelineManager):
     def _get_pipeline(self, config) -> Pipeline:
+        infer_input = InferInputMetadata()
+        fetch_input = FetchInputModelData(requires=(infer_input,))
+        infer_output = InferOutputMetadata(requires=(infer_input, fetch_input))
+        export_savedmodel = ExportTF2SavedModel(requires=(infer_input, fetch_input, infer_output))
+
         commands = [
-            InferInputMetadata(),
-            FetchInputModelData(),
-            InferOutputMetadata(),
-            ExportTF2SavedModel(),
-            CorrectnessSavedModel(target_format=Format.TF_SAVEDMODEL),
-            PerformanceSavedModel(target_format=Format.TF_SAVEDMODEL),
-            ConfigCli(target_format=Format.TF_SAVEDMODEL),
+            infer_input,
+            fetch_input,
+            infer_output,
+            export_savedmodel,
+            CorrectnessSavedModel(target_format=Format.TF_SAVEDMODEL, requires=(export_savedmodel,)),
+            PerformanceSavedModel(target_format=Format.TF_SAVEDMODEL, requires=(export_savedmodel,)),
+            ConfigCli(target_format=Format.TF_SAVEDMODEL, requires=(export_savedmodel,)),
         ]
 
         if Format.TF_TRT in config.target_formats:
             for target_precision in config.target_precisions:
-                commands.append(ConvertSavedModel2TFTRT(target_precision=target_precision))
-                commands.append(CorrectnessSavedModel(target_format=Format.TF_TRT, target_precision=target_precision))
-                commands.append(PerformanceSavedModel(target_format=Format.TF_TRT, target_precision=target_precision))
-                commands.append(ConfigCli(target_format=Format.TF_TRT, target_precision=target_precision))
+                convert_savedmodel2trt = ConvertSavedModel2TFTRT(
+                    target_precision=target_precision, requires=(export_savedmodel,)
+                )
+                commands.extend(
+                    [
+                        convert_savedmodel2trt,
+                        CorrectnessSavedModel(
+                            target_format=Format.TF_TRT,
+                            target_precision=target_precision,
+                            requires=(convert_savedmodel2trt,),
+                        ),
+                        PerformanceSavedModel(
+                            target_format=Format.TF_TRT,
+                            target_precision=target_precision,
+                            requires=(convert_savedmodel2trt,),
+                        ),
+                        ConfigCli(
+                            target_format=Format.TF_TRT,
+                            target_precision=target_precision,
+                            requires=(convert_savedmodel2trt,),
+                        ),
+                    ]
+                )
 
         if config.save_data:
-            commands.append(DumpInputModelData())
-            commands.append(DumpOutputModelData())
+            commands.append(DumpInputModelData(requires=(infer_input, fetch_input)))
+            commands.append(DumpOutputModelData(requires=(fetch_input, infer_output)))
         return Pipeline(name="TensorFlow 2 pipeline", framework=Framework.TF2, commands=commands)

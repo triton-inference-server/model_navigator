@@ -107,11 +107,8 @@ def extract_dynamic_axes(trt_dynamic_axes):
 
 
 class FetchInputModelData(Command):
-    def __init__(self):
-        super().__init__(
-            name="Fetch input model data",
-            command_type=CommandType.DUMP_MODEL_INPUT,
-        )
+    def __init__(self, requires: Tuple[Command, ...] = ()):
+        super().__init__(name="Fetch input model data", command_type=CommandType.DUMP_MODEL_INPUT, requires=requires)
 
     @staticmethod
     def get_output_name():
@@ -224,11 +221,8 @@ class FetchInputModelData(Command):
 
 
 class DumpInputModelData(Command):
-    def __init__(self):
-        super().__init__(
-            name="Dump input model data",
-            command_type=CommandType.DUMP_MODEL_INPUT,
-        )
+    def __init__(self, requires: Tuple[Command, ...] = ()):
+        super().__init__(name="Dump input model data", command_type=CommandType.DUMP_MODEL_INPUT, requires=requires)
 
     @staticmethod
     def get_output_relative_path() -> Path:
@@ -256,11 +250,8 @@ class DumpInputModelData(Command):
 
 
 class DumpOutputModelData(Command):
-    def __init__(self):
-        super().__init__(
-            name="Dump output model data",
-            command_type=CommandType.DUMP_MODEL_OUTPUT,
-        )
+    def __init__(self, requires: Tuple[Command, ...] = ()):
+        super().__init__(name="Dump output model data", command_type=CommandType.DUMP_MODEL_OUTPUT, requires=requires)
 
     @staticmethod
     def get_output_relative_path() -> Path:

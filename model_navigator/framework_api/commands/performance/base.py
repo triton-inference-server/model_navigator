@@ -12,13 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import numpy
 from polygraphy.backend.base import BaseRunner
 
 from model_navigator.framework_api.commands.core import Command, CommandType, Performance
 from model_navigator.framework_api.common import Sample
+from model_navigator.framework_api.errors import ExternalErrorContext
 from model_navigator.framework_api.utils import RuntimeProvider
 from model_navigator.model import Format
 
@@ -31,12 +32,8 @@ def expand_sample(sample: Sample, axis: int, n: int):
 
 
 class PerformanceBase(Command):
-    def __init__(self, name: str, command_type: CommandType, target_format: Format):
-        super().__init__(
-            name=name,
-            command_type=command_type,
-            target_format=target_format,
-        )
+    def __init__(self, name: str, command_type: CommandType, target_format: Format, requires: Tuple[Command, ...] = ()):
+        super().__init__(name=name, command_type=command_type, target_format=target_format, requires=requires)
         self.runtime_provider = RuntimeProvider.DEFAULT
 
     def _get_runner(self, **kwargs) -> BaseRunner:
@@ -59,10 +56,12 @@ class PerformanceBase(Command):
         time_measurements = {1: [], max_batch_size: []}
         with runner:
             for _ in range(10):
-                runner.infer(profiling_sample)
+                with ExternalErrorContext():
+                    runner.infer(profiling_sample)
                 time_measurements[1].append(runner.last_inference_time())
 
-                runner.infer(expanded_sample)
+                with ExternalErrorContext():
+                    runner.infer(expanded_sample)
                 time_measurements[max_batch_size].append(runner.last_inference_time())
 
         latency = {key: float(numpy.median(val)) for key, val in time_measurements.items()}

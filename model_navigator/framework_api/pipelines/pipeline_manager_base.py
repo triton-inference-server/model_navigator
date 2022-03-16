@@ -72,8 +72,11 @@ class PipelineManager:
             LOGGER.info(pad_string(f"Pipeline {pipeline_result.name} summary"))
             for command_result in pipeline_result.commands_results:
                 command_name_and_details = command_result.get_formatted_command_details()
-                LOGGER.warning(command_name_and_details) if command_result.status == Status.FAIL else LOGGER.info(
-                    command_name_and_details
-                )
+                if command_result.status == Status.OK:
+                    LOGGER.info(command_name_and_details)
+                elif command_result.status == Status.FAIL:
+                    LOGGER.error(command_name_and_details)
+                else:
+                    LOGGER.warning(command_name_and_details)
                 for param_name, param_desc in command_result.missing_params.items():
                     LOGGER.info(self._get_formatted_missing_paramter(param_name, param_desc))

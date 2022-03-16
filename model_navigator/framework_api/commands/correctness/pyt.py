@@ -24,7 +24,7 @@ from polygraphy.backend.trt import EngineFromBytes
 
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.convert.onnx import ConvertONNX2TRT
-from model_navigator.framework_api.commands.core import CommandType
+from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.correctness.base import CorrectnessBase
 from model_navigator.framework_api.commands.export.pyt import ExportPYT2ONNX
 from model_navigator.framework_api.common import TensorMetadata
@@ -45,11 +45,12 @@ def get_assert_message(atol: float, rtol: float):
 
 
 class CorrectnessPYT2TorchScript(CorrectnessBase):
-    def __init__(self, target_format: Format, target_jit_type: JitType):
+    def __init__(self, target_format: Format, target_jit_type: JitType, requires: Tuple[Command, ...] = ()):
         super().__init__(
             name="Correctness PyTorch to TorchScript",
             command_type=CommandType.CORRECTNESS,
             target_format=target_format,
+            requires=requires,
         )
         self.target_jit_type = target_jit_type
 
@@ -89,11 +90,12 @@ class CorrectnessPYT2TorchScript(CorrectnessBase):
 
 
 class CorrectnessPYT2ONNX(CorrectnessBase):
-    def __init__(self, runtime_provider: RuntimeProvider):
+    def __init__(self, runtime_provider: RuntimeProvider, requires: Tuple[Command, ...] = ()):
         super().__init__(
             name="Correctness PyTorch to ONNX",
             command_type=CommandType.CORRECTNESS,
             target_format=Format.ONNX,
+            requires=requires,
         )
         self.runtime_provider = runtime_provider
 
@@ -126,11 +128,12 @@ class CorrectnessPYT2ONNX(CorrectnessBase):
 
 
 class CorrectnessPYT2TRT(CorrectnessBase):
-    def __init__(self, target_precision: TensorRTPrecision):
+    def __init__(self, target_precision: TensorRTPrecision, requires: Tuple[Command, ...] = ()):
         super().__init__(
             name="Correctness PyTorch to TensorRT",
             command_type=CommandType.CORRECTNESS,
             target_format=Format.TENSORRT,
+            requires=requires,
         )
         self.target_precision = target_precision
 

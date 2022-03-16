@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
 from model_navigator.cli.convert_model import ConversionSetConfig
 from model_navigator.converter.config import TensorRTPrecision
@@ -67,11 +67,13 @@ class ConfigCli(Command):
         target_format: Format,
         target_jit_type: Optional[JitType] = None,
         target_precision: Optional[TensorRTPrecision] = None,
+        requires: Tuple[Command, ...] = (),
     ):
         super().__init__(
             name="Generate configurations for Navigator CLI",
             command_type=CommandType.GEN_CONFIG,
             target_format=target_format,
+            requires=requires,
         )
         self.target_jit_type = target_jit_type
         self.target_precision = target_precision

@@ -14,14 +14,15 @@
 
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 
 import tensorflow  # pytype: disable=import-error
 
 from model_navigator.converter.config import TensorRTPrecision
-from model_navigator.framework_api.commands.core import CommandType
+from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.correctness.base import CorrectnessBase
 from model_navigator.framework_api.common import TensorMetadata
+from model_navigator.framework_api.errors import ExternalErrorContext
 from model_navigator.framework_api.runners.tf import TFRunner, TFTRTRunner
 from model_navigator.framework_api.utils import format_to_relative_model_path, get_package_path
 from model_navigator.model import Format
@@ -32,11 +33,17 @@ def get_assert_message(atol: float, rtol: float):
 
 
 class CorrectnessSavedModel(CorrectnessBase):
-    def __init__(self, target_format: Format, target_precision: Optional[TensorRTPrecision] = None):
+    def __init__(
+        self,
+        target_format: Format,
+        target_precision: Optional[TensorRTPrecision] = None,
+        requires: Tuple[Command, ...] = (),
+    ):
         super().__init__(
             name="Correctness SavedModel",
             command_type=CommandType.CORRECTNESS,
             target_format=target_format,
+            requires=requires,
         )
         self.target_precision = target_precision
 
@@ -58,17 +65,18 @@ class CorrectnessSavedModel(CorrectnessBase):
             precision=self.target_precision,
         )
 
-        if self.target_format == Format.TF_TRT:
-            savedmodel_runner = TFTRTRunner(
-                tensorflow.keras.models.load_model(exported_model_path),
-                input_metadata=input_metadata,
-                output_names=output_names,
-            )
-        else:
-            savedmodel_runner = TFRunner(
-                tensorflow.keras.models.load_model(exported_model_path),
-                input_metadata=input_metadata,
-                output_names=output_names,
-            )
+        with ExternalErrorContext():
+            if self.target_format == Format.TF_TRT:
+                savedmodel_runner = TFTRTRunner(
+                    tensorflow.keras.models.load_model(exported_model_path),
+                    input_metadata=input_metadata,
+                    output_names=output_names,
+                )
+            else:
+                savedmodel_runner = TFRunner(
+                    tensorflow.keras.models.load_model(exported_model_path),
+                    input_metadata=input_metadata,
+                    output_names=output_names,
+                )
 
         return tf_runner, savedmodel_runner

@@ -22,6 +22,7 @@ from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.export.pyt import ExportPYT2ONNX
 from model_navigator.framework_api.common import TensorMetadata
+from model_navigator.framework_api.errors import ExternalErrorContext
 from model_navigator.framework_api.runners.onnx import OnnxrtRunner
 from model_navigator.framework_api.utils import format_to_relative_model_path, get_package_path
 from model_navigator.model import Format
@@ -35,12 +36,13 @@ class ConvertONNX2TRT(Command):
         TensorRTPrecision.INT8: "--int8",
     }
 
-    def __init__(self, target_precision: TensorRTPrecision):
+    def __init__(self, target_precision: TensorRTPrecision, requires: Tuple[Command, ...] = ()):
         # pytype: disable=wrong-arg-types
         super().__init__(
             name="Convert ONNX to TensorRT",
             command_type=CommandType.CONVERT,
             target_format=Format.TENSORRT,
+            requires=requires,
         )
         self.target_precision = target_precision
         # pytype: enable=wrong-arg-types
@@ -67,25 +69,27 @@ class ConvertONNX2TRT(Command):
             return None
         converted_model_path.parent.mkdir(parents=True, exist_ok=True)
 
-        onnx_runner = OnnxrtRunner(SessionFromOnnx(exported_model_path.as_posix(), providers=[target_device]))
+        with ExternalErrorContext():
+            onnx_runner = OnnxrtRunner(SessionFromOnnx(exported_model_path.as_posix(), providers=[target_device]))
+            with onnx_runner:
+                onnx_input_metadata = onnx_runner.get_input_metadata()
 
         convert_cmd = ["polygraphy", "convert", exported_model_path.as_posix()]
         convert_cmd.extend(["--convert-to", "trt"])
         convert_cmd.extend(["-o", converted_model_path.as_posix()])
 
         if dynamic_axes is not None:
-            with onnx_runner:
-                for i, arg in enumerate(("--trt-min-shapes", "--trt-opt-shapes", "--trt-max-shapes")):
-                    shapes = []
-                    for input_name, spec in input_metadata.items():
-                        if input_name not in onnx_runner.get_input_metadata():
-                            continue
-                        tensor_shape = list(spec.shape)
-                        for ax, val in trt_dynamic_axes[input_name].items():
-                            tensor_shape[ax] = val[i]
-                        shape = ",".join([str(d) for d in tensor_shape])
-                        shapes.append(f"{input_name}:[{shape}]")
-                    convert_cmd.extend([f"{arg}"] + shapes)
+            for i, arg in enumerate(("--trt-min-shapes", "--trt-opt-shapes", "--trt-max-shapes")):
+                shapes = []
+                for input_name, spec in input_metadata.items():
+                    if input_name not in onnx_input_metadata:
+                        continue
+                    tensor_shape = list(spec.shape)
+                    for ax, val in trt_dynamic_axes[input_name].items():
+                        tensor_shape[ax] = val[i]
+                    shape = ",".join([str(d) for d in tensor_shape])
+                    shapes.append(f"{input_name}:[{shape}]")
+                convert_cmd.extend([f"{arg}"] + shapes)
 
         precision_arg = self.trt_precision_to_arg[self.target_precision]
         if precision_arg:
@@ -94,6 +98,7 @@ class ConvertONNX2TRT(Command):
         if max_workspace_size is not None:
             convert_cmd.append(f"--workspace={max_workspace_size}")
 
-        subprocess.run(convert_cmd, check=True)
+        with ExternalErrorContext():
+            subprocess.run(convert_cmd, check=True)
 
         return self.get_output_relative_path()

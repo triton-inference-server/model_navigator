@@ -17,11 +17,12 @@ import typing
 from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass
 from inspect import getfullargspec
-from typing import Any, Optional
+from typing import Any, Optional, Tuple
 
 import typing_inspect
 
 from model_navigator.converter.config import TensorRTPrecision
+from model_navigator.framework_api.errors import ExternalError
 from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.utils import DataObject, JitType, Parameter, RuntimeProvider, Status
 from model_navigator.model import Format
@@ -84,10 +85,13 @@ class Command(metaclass=ABCMeta):
         name: str,
         command_type: CommandType,
         target_format: Optional[Format] = None,
+        requires: Tuple["Command", ...] = (),
     ):
         self.name = name
         self.command_type = command_type
         self.target_format = target_format
+        self.status = Status.INITIALIZED
+        self._requires = requires
 
     def __getattr__(self, item):
         return None
@@ -97,26 +101,39 @@ class Command(metaclass=ABCMeta):
         missing_params = {}
         results = None
         err_msg = None
-        try:
-            if status == Status.OK:
-                results = self.__call__(**kwargs)
 
-            else:
-                missing_params = self._get_missing_params(**kwargs)
-        except Exception as e:
-            status = Status.FAIL
-            err_msg = str(e)
-            LOGGER.error(traceback.format_exc())
-            import os
+        if self._check_requires():
+            try:
+                if status == Status.OK:
+                    results = self.__call__(**kwargs)
 
-            if "NAV_DEBUG" in os.environ:
-                raise e
-            else:
-                LOGGER.info("You can disable error suppression for debugging with flag NAV_DEBUG=1")
+                else:
+                    missing_params = self._get_missing_params(**kwargs)
+            except Exception as e:
 
+                status = Status.FAIL
+                err_msg = str(e)
+
+                LOGGER.error(f"{type(e).__name__} raised.")
+                if isinstance(e, ExternalError):
+                    LOGGER.warning(
+                        "External errors are usually caused by incompatibilites between the model and the target formats and/or runtimes."
+                    )
+                LOGGER.error(traceback.format_exc())
+                import os
+
+                if "NAV_DEBUG" in os.environ:
+                    raise e
+                else:
+                    LOGGER.info("You can disable error suppression for debugging with flag NAV_DEBUG=1")
+
+        else:
+            status = Status.SKIPPED
+
+        self.status = status
         return CommandResults(
             name=self.name,
-            status=status,
+            status=self.status,
             command_type=self.command_type,
             target_format=self.target_format,
             target_jit_type=self.target_jit_type,
@@ -126,6 +143,13 @@ class Command(metaclass=ABCMeta):
             err_msg=err_msg,
             output=results,
         )
+
+    def _check_requires(self):
+        for req in self._requires:
+            if req.status != Status.OK:
+                LOGGER.warning(f"This command requires '{req.name}' but it's status is {req.status.value}. Skipping...")
+                return False
+        return True
 
     @staticmethod
     def get_output_name() -> Optional[str]:

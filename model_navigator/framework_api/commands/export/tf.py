@@ -13,21 +13,23 @@
 # limitations under the License.
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 
 import tensorflow as tf  # pytype: disable=import-error
 
 from model_navigator.framework_api.commands.core import Command, CommandType
+from model_navigator.framework_api.errors import ExternalErrorContext
 from model_navigator.framework_api.utils import format_to_relative_model_path, get_package_path
 from model_navigator.model import Format
 
 
 class ExportTF2SavedModel(Command):
-    def __init__(self):
+    def __init__(self, requires: Tuple[Command, ...] = ()):
         super().__init__(
             name="Export TensorFlow2 to SavedModel",
             command_type=CommandType.EXPORT,
             target_format=Format.TF_SAVEDMODEL,
+            requires=requires,
         )
 
     def get_output_relative_path(
@@ -41,6 +43,7 @@ class ExportTF2SavedModel(Command):
         if exported_model_path.is_file() or exported_model_path.is_dir():
             return None
         exported_model_path.parent.mkdir(parents=True, exist_ok=True)
-        tf.keras.models.save_model(model=model, filepath=exported_model_path, overwrite=True)
+        with ExternalErrorContext():
+            tf.keras.models.save_model(model=model, filepath=exported_model_path, overwrite=True)
 
         return self.get_output_relative_path()

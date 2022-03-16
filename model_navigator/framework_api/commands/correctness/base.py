@@ -19,6 +19,7 @@ from polygraphy.backend.base import BaseRunner
 
 from model_navigator.framework_api.commands.core import Command, CommandType, Tolerance
 from model_navigator.framework_api.common import Sample
+from model_navigator.framework_api.errors import ExternalErrorContext
 from model_navigator.framework_api.utils import Framework, RuntimeProvider, sample_to_tuple
 from model_navigator.model import Format
 
@@ -28,12 +29,8 @@ def get_assert_message(atol: float, rtol: float):
 
 
 class CorrectnessBase(Command):
-    def __init__(self, name: str, command_type: CommandType, target_format: Format):
-        super().__init__(
-            name=name,
-            command_type=command_type,
-            target_format=target_format,
-        )
+    def __init__(self, name: str, command_type: CommandType, target_format: Format, requires: Tuple[Command, ...] = ()):
+        super().__init__(name=name, command_type=command_type, target_format=target_format, requires=requires)
         self.runtime_provider = RuntimeProvider.DEFAULT
 
     def _get_runners(self, **kwargs) -> Tuple[BaseRunner, BaseRunner]:
@@ -55,8 +52,9 @@ class CorrectnessBase(Command):
         rtols = []
         with base_runner, comp_runner:
             for sample in correctness_samples:
-                original_output = base_runner.infer(sample)
-                comp_output = comp_runner.infer(sample)
+                with ExternalErrorContext():
+                    original_output = base_runner.infer(sample)
+                    comp_output = comp_runner.infer(sample)
                 original_output, comp_output = sample_to_tuple(original_output), sample_to_tuple(comp_output)
 
                 if atol and rtol:

@@ -43,43 +43,71 @@ from model_navigator.model import Format
 
 class TorchPipelineManager(PipelineManager):
     def _get_pipeline(self, config) -> Pipeline:
-        commands = [InferInputMetadata(), FetchInputModelData(), InferOutputMetadata()]
+        infer_input = InferInputMetadata()
+        fetch_input = FetchInputModelData(requires=(infer_input,))
+        infer_output = InferOutputMetadata(requires=(infer_input, fetch_input))
+        commands = [infer_input, fetch_input, infer_output]
         if Format.TORCHSCRIPT in config.target_formats:
             for target_jit_type in config.target_jit_type:
-                commands.append(ExportPYT2TorchScript(target_jit_type=target_jit_type))
+                export = ExportPYT2TorchScript(
+                    target_jit_type=target_jit_type, requires=(infer_input, fetch_input, infer_output)
+                )
+                commands.append(export)
                 commands.append(
-                    CorrectnessPYT2TorchScript(target_format=Format.TORCHSCRIPT, target_jit_type=target_jit_type)
+                    CorrectnessPYT2TorchScript(
+                        target_format=Format.TORCHSCRIPT, target_jit_type=target_jit_type, requires=(export,)
+                    )
                 )
                 commands.append(
-                    PerformanceTorchScript(target_format=Format.TORCHSCRIPT, target_jit_type=target_jit_type)
+                    PerformanceTorchScript(
+                        target_format=Format.TORCHSCRIPT, target_jit_type=target_jit_type, requires=(export,)
+                    )
                 )
-                commands.append(ConfigCli(target_format=Format.TORCHSCRIPT, target_jit_type=target_jit_type))
+                commands.append(
+                    ConfigCli(target_format=Format.TORCHSCRIPT, target_jit_type=target_jit_type, requires=(export,))
+                )
         if Format.ONNX in config.target_formats:
-            commands.append(ExportPYT2ONNX())
+            onnx_export = ExportPYT2ONNX(requires=(infer_input, fetch_input, infer_output))
+            commands.append(onnx_export)
             for provider in [RuntimeProvider.CUDA, RuntimeProvider.TRT, RuntimeProvider.CPU]:
-                commands.append(CorrectnessPYT2ONNX(runtime_provider=provider))
-                commands.append(PerformanceONNX(runtime_provider=provider))
-            commands.append(ConfigCli(target_format=Format.ONNX))
+                commands.append(CorrectnessPYT2ONNX(runtime_provider=provider, requires=(onnx_export,)))
+                commands.append(PerformanceONNX(runtime_provider=provider, requires=(onnx_export,)))
+            commands.append(ConfigCli(target_format=Format.ONNX, requires=(onnx_export,)))
         if Format.TORCH_TRT in config.target_formats:
             for target_jit_type in config.target_jit_type:
-                commands.append(ExportPYT2TorchTensorRT(target_jit_type=target_jit_type))
-                commands.append(
-                    CorrectnessPYT2TorchScript(target_format=Format.TORCH_TRT, target_jit_type=target_jit_type)
+                export = ExportPYT2TorchTensorRT(
+                    target_jit_type=target_jit_type, requires=(infer_input, fetch_input, infer_output)
                 )
-                commands.append(PerformanceTorchScript(target_format=Format.TORCH_TRT, target_jit_type=target_jit_type))
-                commands.append(ConfigCli(target_format=Format.TORCH_TRT, target_jit_type=target_jit_type))
+                commands.append(export)
+                commands.append(
+                    CorrectnessPYT2TorchScript(
+                        target_format=Format.TORCH_TRT, target_jit_type=target_jit_type, requires=(export,)
+                    )
+                )
+                commands.append(
+                    PerformanceTorchScript(
+                        target_format=Format.TORCH_TRT, target_jit_type=target_jit_type, requires=(export,)
+                    )
+                )
+                commands.append(
+                    ConfigCli(target_format=Format.TORCH_TRT, target_jit_type=target_jit_type, requires=(export,))
+                )
         if Format.TENSORRT in config.target_formats:
             if Format.ONNX not in config.target_formats:
-                commands.append(ExportPYT2ONNX())
+                onnx_export = ExportPYT2ONNX(requires=(infer_input, fetch_input, infer_output))
+                commands.append(onnx_export)
                 for provider in [RuntimeProvider.CUDA, RuntimeProvider.TRT, RuntimeProvider.CPU]:
-                    commands.append(CorrectnessPYT2ONNX(runtime_provider=provider))
+                    commands.append(CorrectnessPYT2ONNX(runtime_provider=provider, requires=(onnx_export,)))
             for target_precision in config.target_precisions:
-                commands.append(ConvertONNX2TRT(target_precision=target_precision))
-                commands.append(CorrectnessPYT2TRT(target_precision=target_precision))
-                commands.append(PerformanceTRT(target_precision=target_precision))
-                commands.append(ConfigCli(target_format=Format.TENSORRT, target_precision=target_precision))
+                convert = ConvertONNX2TRT(target_precision=target_precision, requires=(onnx_export,))
+                commands.append(convert)
+                commands.append(CorrectnessPYT2TRT(target_precision=target_precision, requires=(convert,)))
+                commands.append(PerformanceTRT(target_precision=target_precision, requires=(convert,)))
+                commands.append(
+                    ConfigCli(target_format=Format.TENSORRT, target_precision=target_precision, requires=(convert,))
+                )
 
         if config.save_data:
-            commands.append(DumpInputModelData())
-            commands.append(DumpOutputModelData())
+            commands.append(DumpInputModelData(requires=(infer_input, fetch_input)))
+            commands.append(DumpOutputModelData(requires=(fetch_input, infer_output)))
         return Pipeline(name="PyTorch pipeline", framework=Framework.PYT, commands=commands)

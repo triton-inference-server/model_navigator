@@ -12,16 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from polygraphy.backend.onnxrt import OnnxrtRunner as _OnnxrtRunner
 
-from model_navigator.framework_api.errors import ExternalErrorContext
+import contextlib
 
 
-class OnnxrtRunner(_OnnxrtRunner):
-    def activate(self):
-        with ExternalErrorContext():
-            return super().activate()
+class ExternalError(Exception):
+    pass
 
-    def infer(self, feed_dict, check_inputs=None, *args, **kwargs):
-        feed_dict = {name: tensor for name, tensor in feed_dict.items() if name in self.get_input_metadata()}
-        return super().infer(feed_dict, check_inputs, *args, **kwargs)
+
+class ExternalErrorContext(contextlib.AbstractContextManager):
+    def __exit__(self, exc_type, exc_value, traceback):
+        if exc_type is None:
+            return
+        raise ExternalError(exc_value)
