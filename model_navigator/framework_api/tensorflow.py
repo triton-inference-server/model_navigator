@@ -44,6 +44,8 @@ def export(
     opset: Optional[int] = None,
     atol: Optional[float] = None,
     rtol: Optional[float] = None,
+    input_names: Optional[Tuple[str, ...]] = None,
+    output_names: Optional[Tuple[str, ...]] = None,
     save_data: bool = True,
     disable_git_info: bool = False,
     batch_dim: Optional[int] = 0,
@@ -58,6 +60,8 @@ def export(
         target_formats = (
             Format.TF_SAVEDMODEL,
             Format.TF_TRT,
+            Format.ONNX,
+            Format.TENSORRT,
         )
     if max_workspace_size is None:
         max_workspace_size = get_default_max_workspace_size()
@@ -85,6 +89,8 @@ def export(
         atol=atol,
         rtol=rtol,
         save_data=save_data,
+        _input_names=input_names,
+        _output_names=output_names,
         disable_git_info=disable_git_info,
         batch_dim=batch_dim,
         zip_package=zip_package,

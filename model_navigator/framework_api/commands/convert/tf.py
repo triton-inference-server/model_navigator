@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import subprocess
 from pathlib import Path
 from typing import List, Optional, Tuple
 
@@ -29,6 +30,48 @@ from model_navigator.framework_api.utils import (
     sample_to_tuple,
 )
 from model_navigator.model import Format
+
+
+class ConvertSavedModel2ONNX(Command):
+    def __init__(self, requires: Tuple[Command, ...] = ()):
+        # pytype: disable=wrong-arg-types
+        super().__init__(
+            name="Convert SavedModel to ONNX",
+            command_type=CommandType.CONVERT,
+            target_format=Format.ONNX,
+            requires=requires,
+        )
+        # pytype: enable=wrong-arg-types
+
+    def get_output_relative_path(self) -> Path:
+        return format_to_relative_model_path(self.target_format)
+
+    def __call__(
+        self,
+        workdir: Path,
+        opset: int,
+        model_name: str,
+        **kwargs,
+    ):
+        exported_model_path = get_package_path(workdir, model_name) / ExportTF2SavedModel().get_output_relative_path()
+        converted_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
+
+        convert_cmd = [
+            "python",
+            "-mtf2onnx.convert",
+            "--saved-model",
+            exported_model_path.as_posix(),
+            "--output",
+            converted_model_path.as_posix(),
+            "--opset",
+            str(opset),
+            "-vvv",
+        ]
+
+        with ExternalErrorContext():
+            subprocess.run(convert_cmd, check=True)
+
+        return self.get_output_relative_path()
 
 
 class ConvertSavedModel2TFTRT(Command):

@@ -52,7 +52,6 @@ class PerformanceBase(Command):
         expanded_sample = (
             expand_sample(profiling_sample, batch_dim, max_batch_size) if batch_dim is not None else profiling_sample
         )
-
         time_measurements = {1: [], max_batch_size: []}
         with runner:
             for _ in range(10):

@@ -30,11 +30,9 @@ from model_navigator.framework_api.commands.export.pyt import (
     ExportPYT2TorchTensorRT,
 )
 from model_navigator.framework_api.commands.infer_metadata import InferInputMetadata, InferOutputMetadata
-from model_navigator.framework_api.commands.performance.pyt import (
-    PerformanceONNX,
-    PerformanceTorchScript,
-    PerformanceTRT,
-)
+from model_navigator.framework_api.commands.performance.onnx import PerformanceONNX
+from model_navigator.framework_api.commands.performance.pyt import PerformanceTorchScript
+from model_navigator.framework_api.commands.performance.trt import PerformanceTRT
 from model_navigator.framework_api.pipelines.pipeline import Pipeline
 from model_navigator.framework_api.pipelines.pipeline_manager_base import PipelineManager
 from model_navigator.framework_api.utils import Framework, RuntimeProvider
@@ -98,6 +96,7 @@ class TorchPipelineManager(PipelineManager):
                 commands.append(onnx_export)
                 for provider in [RuntimeProvider.CUDA, RuntimeProvider.TRT, RuntimeProvider.CPU]:
                     commands.append(CorrectnessPYT2ONNX(runtime_provider=provider, requires=(onnx_export,)))
+                    commands.append(PerformanceONNX(runtime_provider=provider, requires=(onnx_export,)))
             for target_precision in config.target_precisions:
                 convert = ConvertONNX2TRT(target_precision=target_precision, requires=(onnx_export,))
                 commands.append(convert)

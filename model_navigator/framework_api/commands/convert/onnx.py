@@ -20,11 +20,10 @@ from polygraphy.backend.onnxrt import SessionFromOnnx
 
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.core import Command, CommandType
-from model_navigator.framework_api.commands.export.pyt import ExportPYT2ONNX
 from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.errors import ExternalErrorContext
 from model_navigator.framework_api.runners.onnx import OnnxrtRunner
-from model_navigator.framework_api.utils import format_to_relative_model_path, get_package_path
+from model_navigator.framework_api.utils import Framework, format_to_relative_model_path, get_package_path
 from model_navigator.model import Format
 
 
@@ -53,6 +52,7 @@ class ConvertONNX2TRT(Command):
     def __call__(
         self,
         workdir: Path,
+        framework: Framework,
         model_name: str,
         input_metadata: TensorMetadata,
         target_device: str,
@@ -62,7 +62,16 @@ class ConvertONNX2TRT(Command):
         **kwargs,
     ) -> Optional[Path]:
 
-        exported_model_path = get_package_path(workdir, model_name) / ExportPYT2ONNX().get_output_relative_path()
+        if framework == Framework.PYT:
+            from model_navigator.framework_api.commands.export.pyt import ExportPYT2ONNX
+
+            exported_model_path = get_package_path(workdir, model_name) / ExportPYT2ONNX().get_output_relative_path()
+        else:
+            from model_navigator.framework_api.commands.convert.tf import ConvertSavedModel2ONNX
+
+            exported_model_path = (
+                get_package_path(workdir, model_name) / ConvertSavedModel2ONNX().get_output_relative_path()
+            )
         converted_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
 
         if converted_model_path.is_file() or converted_model_path.is_dir():

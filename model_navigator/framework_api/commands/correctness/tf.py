@@ -17,19 +17,103 @@ from pathlib import Path
 from typing import Optional, Tuple
 
 import tensorflow  # pytype: disable=import-error
+from polygraphy.backend.common import BytesFromPath
+from polygraphy.backend.onnxrt import SessionFromOnnx
+from polygraphy.backend.trt import EngineFromBytes
 
 from model_navigator.converter.config import TensorRTPrecision
+from model_navigator.framework_api.commands.convert.onnx import ConvertONNX2TRT
+from model_navigator.framework_api.commands.convert.tf import ConvertSavedModel2ONNX
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.correctness.base import CorrectnessBase
 from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.errors import ExternalErrorContext
+from model_navigator.framework_api.runners.onnx import OnnxrtRunner
 from model_navigator.framework_api.runners.tf import TFRunner, TFTRTRunner
-from model_navigator.framework_api.utils import format_to_relative_model_path, get_package_path
+from model_navigator.framework_api.runners.trt import TrtRunner
+from model_navigator.framework_api.utils import RuntimeProvider, format_to_relative_model_path, get_package_path
 from model_navigator.model import Format
 
 
 def get_assert_message(atol: float, rtol: float):
     return f"Current atol = {atol}, rtol = {rtol}, try to adjust tolerance values"
+
+
+class CorrectnessTensorFlow2ONNX(CorrectnessBase):
+    def __init__(
+        self,
+        runtime_provider: RuntimeProvider,
+        requires: Tuple[Command, ...] = (),
+    ):
+        super().__init__(
+            name="Correctness TensorFlow to ONNX",
+            command_type=CommandType.CORRECTNESS,
+            target_format=Format.ONNX,
+            requires=requires,
+        )
+        self.runtime_provider = runtime_provider
+
+    def _get_runners(
+        self,
+        model,
+        model_name: str,
+        workdir: Path,
+        input_metadata: TensorMetadata,
+        output_metadata: TensorMetadata,
+        **kwargs,
+    ):
+
+        output_names = list(output_metadata.keys())
+
+        with ExternalErrorContext():
+            tf_runner = TFRunner(model, input_metadata=input_metadata, output_names=output_names)
+
+            exported_model_path = (
+                get_package_path(workdir, model_name) / ConvertSavedModel2ONNX().get_output_relative_path()
+            )
+            onnx_runner = OnnxrtRunner(
+                SessionFromOnnx(exported_model_path.as_posix(), providers=[self.runtime_provider.value])
+            )
+
+        return tf_runner, onnx_runner
+
+
+class CorrectnessTensorFlow2TRT(CorrectnessBase):
+    def __init__(
+        self,
+        target_precision: Optional[TensorRTPrecision] = None,
+        requires: Tuple[Command, ...] = (),
+    ):
+        super().__init__(
+            name="Correctness TensorFlow to TensorRT",
+            command_type=CommandType.CORRECTNESS,
+            target_format=Format.TENSORRT,
+            requires=requires,
+        )
+        self.target_precision = target_precision
+
+    def _get_runners(
+        self,
+        model,
+        model_name: str,
+        workdir: Path,
+        input_metadata: TensorMetadata,
+        output_metadata: TensorMetadata,
+        **kwargs,
+    ):
+
+        output_names = list(output_metadata.keys())
+
+        with ExternalErrorContext():
+            tf_runner = TFRunner(model, input_metadata=input_metadata, output_names=output_names)
+
+            converted_model_path = (
+                get_package_path(workdir, model_name)
+                / ConvertONNX2TRT(target_precision=self.target_precision).get_output_relative_path()
+            )
+            trt_runner = TrtRunner(EngineFromBytes(BytesFromPath(converted_model_path.as_posix())))
+
+        return tf_runner, trt_runner
 
 
 class CorrectnessSavedModel(CorrectnessBase):

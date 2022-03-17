@@ -95,7 +95,11 @@ class PackageDescriptor:
                         if correctness_results is not None:
                             correctness_results_per_provider[provider] = correctness_results.output
 
-                        if command.status == Status.OK and correctness_results.status == Status.OK:
+                        if (
+                            command.status == Status.OK
+                            and correctness_results is not None
+                            and correctness_results.status == Status.OK
+                        ):
                             status_per_provider[provider] = Status.OK
                             err_mgs_per_provider[provider] = None
                         else:
@@ -180,8 +184,7 @@ class PackageDescriptor:
                 and command.runtime_provider == runtime_provider
             ):
                 return command
-        parameters = f"{format}, {precision}, {jit_type}", {runtime_provider}
-        raise Exception(f"Correctness results not found for given parameters: {parameters}")
+        return None
 
     @staticmethod
     def _get_performance_command_for_model(
