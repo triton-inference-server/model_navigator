@@ -21,10 +21,9 @@ from typing import Any, Optional, Tuple
 
 import typing_inspect
 
-from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.errors import ExternalError
 from model_navigator.framework_api.logger import LOGGER
-from model_navigator.framework_api.utils import DataObject, JitType, Parameter, RuntimeProvider, Status
+from model_navigator.framework_api.utils import DataObject, Parameter, Status
 from model_navigator.model import Format
 
 
@@ -53,32 +52,6 @@ class CommandType(Parameter):
     PERFORMANCE = "performance"
 
 
-@dataclass
-class CommandResults(DataObject):
-    name: str
-    command_type: CommandType
-    target_format: Format
-    status: Status
-    target_jit_type: Optional[JitType]
-    target_precision: Optional[TensorRTPrecision]
-    runtime_provider: Optional[RuntimeProvider]
-    missing_params: Optional[dict]
-    output: Any
-    err_msg: Optional[str] = None
-
-    def get_formatted_command_details(
-        self,
-    ):
-        cmd_name_and_details = f"[{self.status.value:^4}] {self.name}"
-        if self.target_jit_type:
-            cmd_name_and_details += f" {self.target_jit_type}"
-        if self.target_precision:
-            cmd_name_and_details += f" {self.target_precision}"
-        if self.runtime_provider:
-            cmd_name_and_details += f" {self.runtime_provider}"
-        return cmd_name_and_details
-
-
 class Command(metaclass=ABCMeta):
     def __init__(
         self,
@@ -90,29 +63,38 @@ class Command(metaclass=ABCMeta):
         self.name = name
         self.command_type = command_type
         self.target_format = target_format
+        self.missing_params: Optional[dict] = {}
+        self.output: Any = None
+        self.err_msg: Optional[str] = None
         self.status = Status.INITIALIZED
         self._requires = requires
 
     def __getattr__(self, item):
         return None
 
-    def transform(self, **kwargs) -> CommandResults:
-        status = self._validate(**kwargs)
-        missing_params = {}
-        results = None
-        err_msg = None
+    def get_formatted_command_details(
+        self,
+    ):
+        cmd_name_and_details = f"{self.name}"
+        if self.target_jit_type:
+            cmd_name_and_details += f" {self.target_jit_type}"
+        if self.target_precision:
+            cmd_name_and_details += f" {self.target_precision}"
+        if self.runtime_provider:
+            cmd_name_and_details += f" {self.runtime_provider}"
+        return cmd_name_and_details
 
+    def transform(self, **kwargs):
+        self.status = self._validate(**kwargs)
         if self._check_requires():
             try:
-                if status == Status.OK:
-                    results = self.__call__(**kwargs)
-
+                if self.status == Status.OK:
+                    self.output = self.__call__(**kwargs)
                 else:
-                    missing_params = self._get_missing_params(**kwargs)
+                    self.missing_params = self._get_missing_params(**kwargs)
             except Exception as e:
-
-                status = Status.FAIL
-                err_msg = str(e)
+                self.status = Status.FAIL
+                self.err_msg = str(e)
 
                 LOGGER.error(f"{type(e).__name__} raised.")
                 if isinstance(e, ExternalError):
@@ -128,21 +110,7 @@ class Command(metaclass=ABCMeta):
                     LOGGER.info("You can disable error suppression for debugging with flag NAV_DEBUG=1")
 
         else:
-            status = Status.SKIPPED
-
-        self.status = status
-        return CommandResults(
-            name=self.name,
-            status=self.status,
-            command_type=self.command_type,
-            target_format=self.target_format,
-            target_jit_type=self.target_jit_type,
-            target_precision=self.target_precision,
-            missing_params=missing_params,
-            runtime_provider=self.runtime_provider,
-            err_msg=err_msg,
-            output=results,
-        )
+            self.status = Status.SKIPPED
 
     def _check_requires(self):
         for req in self._requires:

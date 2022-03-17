@@ -18,11 +18,12 @@ from pathlib import Path
 import tensorflow
 
 from model_navigator.converter.config import TensorRTPrecision
-from model_navigator.framework_api.commands.core import CommandResults, CommandType
+from model_navigator.framework_api.commands.correctness.tf import CorrectnessSavedModel
+from model_navigator.framework_api.commands.export.tf import ExportTF2SavedModel
 from model_navigator.framework_api.config import Config
 from model_navigator.framework_api.package_descriptor import PackageDescriptor
-from model_navigator.framework_api.pipelines.pipeline import PipelineResults
-from model_navigator.framework_api.utils import Format, Framework, RuntimeProvider, Status
+from model_navigator.framework_api.pipelines.pipeline import Pipeline
+from model_navigator.framework_api.utils import Format, Framework, Status
 
 # pytype: enable=import-error
 
@@ -66,40 +67,23 @@ def test_tf2_package_descriptor():
             disable_git_info=False,
         )
 
-        cmd_export_result = CommandResults(
-            name="Mock export command",
-            status=Status.OK,
-            command_type=CommandType.EXPORT,
-            target_format=Format.TF_SAVEDMODEL,
-            target_jit_type=None,
-            target_precision=None,
-            runtime_provider=RuntimeProvider.DEFAULT,
-            missing_params={},
-            output=None,
-        )
+        cmd_export = ExportTF2SavedModel()
+        cmd_export.status = Status.OK
 
-        cmd_correctness_result = CommandResults(
-            name="Mock correctness command",
-            status=Status.OK,
-            command_type=CommandType.CORRECTNESS,
+        cmd_correctness = CorrectnessSavedModel(
             target_format=Format.TF_SAVEDMODEL,
-            target_jit_type=None,
-            target_precision=None,
-            runtime_provider=RuntimeProvider.DEFAULT,
-            missing_params={},
-            output=None,
         )
+        cmd_correctness.status = Status.OK
 
-        pipeline_results = [
-            PipelineResults(
+        pipelines = [
+            Pipeline(
                 name="Mock pipeline",
-                id="mock-pipeline",
                 framework=Framework.TF2,
-                commands_results=[cmd_export_result, cmd_correctness_result],
+                commands=[cmd_export, cmd_correctness],
             )
         ]
 
-        package_desc = PackageDescriptor(pipeline_results, config)
+        package_desc = PackageDescriptor(pipelines, config)
 
         # Check model status and load model
         assert package_desc.get_status(format=Format.TF_SAVEDMODEL)

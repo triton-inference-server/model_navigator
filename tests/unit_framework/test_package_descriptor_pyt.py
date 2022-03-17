@@ -18,11 +18,12 @@ from pathlib import Path
 import torch
 
 from model_navigator.converter.config import TensorRTPrecision
-from model_navigator.framework_api.commands.core import CommandResults, CommandType
+from model_navigator.framework_api.commands.correctness.pyt import CorrectnessPYT2TorchScript
+from model_navigator.framework_api.commands.export.pyt import ExportPYT2TorchScript
 from model_navigator.framework_api.config import Config
 from model_navigator.framework_api.package_descriptor import PackageDescriptor
-from model_navigator.framework_api.pipelines.pipeline import PipelineResults
-from model_navigator.framework_api.utils import Format, Framework, JitType, RuntimeProvider, Status
+from model_navigator.framework_api.pipelines.pipeline import Pipeline
+from model_navigator.framework_api.utils import Format, Framework, JitType, Status
 
 # pytype: enable=import-error
 
@@ -65,40 +66,26 @@ def test_pyt_package_descriptor():
             disable_git_info=False,
         )
 
-        cmd_export_result = CommandResults(
-            name="Mock export command",
-            status=Status.OK,
-            command_type=CommandType.EXPORT,
+        cmd_export = ExportPYT2TorchScript(
+            target_jit_type=JitType.SCRIPT,
+        )
+        cmd_export.status = Status.OK
+
+        cmd_correctness = CorrectnessPYT2TorchScript(
             target_format=Format.TORCHSCRIPT,
             target_jit_type=JitType.SCRIPT,
-            target_precision=None,
-            runtime_provider=RuntimeProvider.DEFAULT,
-            missing_params={},
-            output=None,
         )
+        cmd_correctness.status = Status.OK
 
-        cmd_correctness_result = CommandResults(
-            name="Mock correctness command",
-            status=Status.OK,
-            command_type=CommandType.CORRECTNESS,
-            target_format=Format.TORCHSCRIPT,
-            target_jit_type=JitType.SCRIPT,
-            target_precision=None,
-            runtime_provider=RuntimeProvider.DEFAULT,
-            missing_params={},
-            output=None,
-        )
-
-        pipeline_results = [
-            PipelineResults(
+        pipelines = [
+            Pipeline(
                 name="Mock pipeline",
-                id="mock-pipeline",
                 framework=Framework.PYT,
-                commands_results=[cmd_export_result, cmd_correctness_result],
+                commands=[cmd_export, cmd_correctness],
             )
         ]
 
-        package_desc = PackageDescriptor(pipeline_results, config)
+        package_desc = PackageDescriptor(pipelines, config)
 
         # Check model status and load model
         assert package_desc.get_status(format=Format.TORCHSCRIPT, jit_type=JitType.SCRIPT)
