@@ -12,10 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import locale
+import os
 import platform
 import re
 from subprocess import CalledProcessError
 from typing import List
+
+import psutil
 
 from model_navigator.framework_api.logger import LOGGER
 
@@ -74,12 +77,22 @@ def _remove(input: str, regex: str):
 
 def get_env():
     packages = _get_packages()
+
+    os_details = {
+        "name": os.name,
+        "platform": platform.system(),
+        "release": platform.release(),
+    }
+
     env = {
-        "python_version": platform.python_version(),
+        "cpu": platform.processor(),
+        "memory": psutil._common.bytes2human(psutil.virtual_memory().total),
         "gpu": _split_to_dict(
             _remove(_command_runner(command=["nvidia-smi", "-L"]), regex=r"\(UUID: .+?\)").splitlines(), ":"
         ),
         "driver_version": _search(input=_command_runner(command=["nvidia-smi"]), regex=r"Driver Version: (.*?) "),
+        "os": os_details,
+        "python_version": platform.python_version(),
         "python_packages": {k: v for k, v in packages.items() if k in package_filter},
     }
     return env
