@@ -60,7 +60,9 @@ if __name__ == "__main__":
     with tempfile.TemporaryDirectory() as tmp_dir:
         nav_workdir = Path(tmp_dir) / "navigator_workdir"
 
-        pkg_desc = nav.tensorflow.export(model=model, dataloader=DATALOADER, workdir=nav_workdir)
+        pkg_desc = nav.tensorflow.export(
+            model=model, dataloader=DATALOADER, workdir=nav_workdir, target_precisions=(nav.TensorRTPrecision.FP32,)
+        )
         expected_formats = ("tf-savedmodel",)
         for format, status in pkg_desc.get_formats_status().items():
             status = list(status.values())[0]

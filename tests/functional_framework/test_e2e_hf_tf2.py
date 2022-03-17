@@ -26,7 +26,7 @@ EXPORT_CONFIGS = [
         "max_sequence_len": 384,
         "max_bs": 2,
         "sample_count": 10,
-        "expected_formats": ("tf-savedmodel", "tf-trt-fp32", "tf-trt-fp16"),
+        "expected_formats": ("tf-savedmodel", "tf-trt-fp32"),
     },
     {
         "model_name": "gpt2",
@@ -44,7 +44,7 @@ EXPORT_CONFIGS = [
         "max_sequence_len": 384,
         "max_bs": 2,
         "sample_count": 10,
-        "expected_formats": ("tf-savedmodel", "tf-trt-fp32", "tf-trt-fp16"),
+        "expected_formats": ("tf-savedmodel", "tf-trt-fp32"),
     },
     {
         "model_name": "distilgpt2",
@@ -65,8 +65,7 @@ if __name__ == "__main__":
             expected_formats = export_config.pop("expected_formats")
             # pytype: disable=not-callable # TODO why is not-calleble being raised by pytype?
             pkg_desc = nav.contrib.huggingface.tensorflow.export(
-                workdir=nav_workdir,
-                **export_config,
+                workdir=nav_workdir, **export_config, target_precisions=(nav.TensorRTPrecision.FP32,)
             )
             # pytype: enable=not-callable
             for format, status in pkg_desc.get_formats_status().items():

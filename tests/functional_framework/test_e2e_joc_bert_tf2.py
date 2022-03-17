@@ -153,8 +153,9 @@ if __name__ == "__main__":
             dataloader=dataloader,
             sample_count=10,
             target_formats=(nav.Format.TF_TRT,),
+            target_precisions=(nav.TensorRTPrecision.FP32,),
         )
-        expected_formats = ("tf-trt-fp32", "tf-trt-fp16")
+        expected_formats = ("tf-trt-fp32",)
         for format, status in pkg_desc.get_formats_status().items():
             status = list(status.values())[0]
             assert (status == nav.Status.OK) == (
