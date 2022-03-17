@@ -15,17 +15,16 @@
 
 set -ex
 
+TEMPDIR=$(mktemp -d)
+
 function cleanup {
     echo "Cleanup..."
-    rm -r DeepLearningExamples/
+    rm -r ${TEMPDIR}
 }
 
 trap cleanup EXIT
 
-CURRENT_DATE=$(date "+%Y%m%d_%H%M%S")
+git clone https://github.com/NVIDIA/DeepLearningExamples ${TEMPDIR}/DeepLearningExamples
+export PYTHONPATH="${PYTHONPATH}:${TEMPDIR}/DeepLearningExamples/PyTorch/Classification/ConvNets/"
 
-git clone https://github.com/NVIDIA/DeepLearningExamples
-export PYTHONPATH="${PYTHONPATH}:DeepLearningExamples/PyTorch/Classification/ConvNets/"
-
-./tests/functional_framework/test_e2e_joc_convnets_pyt.py 2>&1 # | tee ${CURRENT_DATE}_workspace_e2e_joc_convnets_pyt.logret=$?
-
+./tests/functional_framework/test_e2e_joc_convnets_pyt.py

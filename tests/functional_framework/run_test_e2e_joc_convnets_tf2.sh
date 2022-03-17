@@ -15,15 +15,17 @@
 
 set -ex
 
+TEMPDIR=$(mktemp -d)
+
 function cleanup {
     echo "Cleanup..."
-    rm -r DeepLearningExamples/
+    rm -r ${TEMPDIR}
 }
 
 trap cleanup EXIT
 
-git clone https://github.com/NVIDIA/DeepLearningExamples
-export PYTHONPATH="${PYTHONPATH}:DeepLearningExamples/TensorFlow2/Classification/ConvNets/"
+git clone https://github.com/NVIDIA/DeepLearningExamples ${TEMPDIR}/DeepLearningExamples
+export PYTHONPATH="${PYTHONPATH}:${TEMPDIR}/DeepLearningExamples/TensorFlow2/Classification/ConvNets/"
 
 ./tests/functional_framework/test_e2e_joc_convnets_tf2.py --model-name EfficientNet-v1-B0
 ./tests/functional_framework/test_e2e_joc_convnets_tf2.py --model-name EfficientNet-v1-B4

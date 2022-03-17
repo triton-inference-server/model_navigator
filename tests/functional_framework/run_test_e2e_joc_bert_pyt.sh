@@ -15,17 +15,17 @@
 
 set -ex
 
+TEMPDIR=$(mktemp -d)
+
 function cleanup {
     echo "Cleanup..."
-    rm -r DeepLearningExamples/
+    rm -r ${TEMPDIR}
 }
 
 trap cleanup EXIT
 
-CURRENT_DATE=$(date "+%Y%m%d_%H%M%S")
-
-git clone https://github.com/NVIDIA/DeepLearningExamples
-BERT_PATH="DeepLearningExamples/PyTorch/LanguageModeling/BERT/"
+git clone https://github.com/NVIDIA/DeepLearningExamples ${TEMPDIR}/DeepLearningExamples
+BERT_PATH="${TEMPDIR}/DeepLearningExamples/PyTorch/LanguageModeling/BERT/"
 
 export BERT_PREP_WORKING_DIR="${BERT_PATH}/bert_prep"
 mkdir -p ${BERT_PREP_WORKING_DIR}
@@ -39,5 +39,3 @@ python3 ${BERT_PATH}/data/bertPrep.py --action download --dataset squad
   --config_file ${BERT_PATH}/bert_configs/base.json \
   --predict_file ${BERT_PREP_WORKING_DIR}/download/squad/v1.1/dev-v1.1.json \
   --vocab_file ${BERT_PATH}/vocab/vocab
-  # 2>&1 | tee ${CURRENT_DATE}_workspace_e2e_joc_bert_pyt.logret=$?
-

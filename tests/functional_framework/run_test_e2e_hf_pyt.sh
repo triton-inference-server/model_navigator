@@ -15,6 +15,4 @@
 
 set -ex
 
-CURRENT_DATE=$(date "+%Y%m%d_%H%M%S")
-
-./tests/functional_framework/test_e2e_hf_pyt.py 2>&1 # | tee ${CURRENT_DATE}_workspace_e2e_hf_pyt.log
+./tests/functional_framework/test_e2e_hf_pyt.py 2>&1
