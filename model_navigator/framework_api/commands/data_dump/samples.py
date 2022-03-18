@@ -108,7 +108,7 @@ def extract_dynamic_axes(trt_dynamic_axes):
 
 class FetchInputModelData(Command):
     def __init__(self, requires: Tuple[Command, ...] = ()):
-        super().__init__(name="Fetch input model data", command_type=CommandType.DUMP_MODEL_INPUT, requires=requires)
+        super().__init__(name="Fetch input model data", command_type=CommandType.FETCH_MODEL_INPUT, requires=requires)
 
     @staticmethod
     def get_output_name():
@@ -188,7 +188,7 @@ class FetchInputModelData(Command):
         correctness_samples_ind = set(numpy.random.choice(num_samples, size=sample_count, replace=False))
 
         axes_shapes = {name: {ax: [] for ax in range(len(spec.shape))} for name, spec in input_metadata.items()}
-        max_batch_size = -1
+        max_batch_size = 0
         for _, sample in enumerate(dataloader):
             sample = extract_sample(sample, input_metadata, framework)
             for name, tensor in sample.items():

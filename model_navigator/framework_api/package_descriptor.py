@@ -70,6 +70,7 @@ class PackageDescriptor:
 
         # pipeline_results to navigator_status
         model_status = []
+        max_batch_size = None
         for pipeline in self.pipelines:
             for command in pipeline.commands:
                 if command.command_type in (CommandType.EXPORT, CommandType.CONVERT):
@@ -131,30 +132,36 @@ class PackageDescriptor:
                             err_msg=err_mgs_per_provider,
                         )
                     )
+                elif command.command_type == CommandType.FETCH_MODEL_INPUT:
+                    if command.status == Status.OK:
+                        max_batch_size = dict(zip(command.get_output_name(), command.output))["max_batch_size"]
+
         if not config.disable_git_info:
             git_info = get_git_info()
         else:
             git_info = None
+        config = self.config.to_dict(
+            filter_fields=[
+                "model",
+                "dataloader",
+                "workdir",
+                "keep_workdir",
+                "override_workdir",
+                "input_metadata",
+                "output_metadata",
+                "forward_kw_names",
+                "disable_git_info",
+                "zip_package",
+            ],
+            parse=True,
+        )
+        config["dataloader_batch_size"] = max_batch_size
         self.navigator_status = NavigatorStatus(
             uuid=str(uuid.uuid1()),
             format_version=NAV_PACKAGE_FORMAT_VERSION,
             git_info=git_info,
             environment=get_env(),
-            framework_navigator_config=self.config.to_dict(
-                filter_fields=[
-                    "model",
-                    "dataloader",
-                    "workdir",
-                    "keep_workdir",
-                    "override_workdir",
-                    "input_metadata",
-                    "output_metadata",
-                    "forward_kw_names",
-                    "disable_git_info",
-                    "zip_package",
-                ],
-                parse=True,
-            ),
+            framework_navigator_config=config,
             model_status=model_status,
         )
 

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from collections import defaultdict
 from typing import List, Optional, Tuple
 
 import numpy
@@ -52,12 +53,13 @@ class PerformanceBase(Command):
         expanded_sample = (
             expand_sample(profiling_sample, batch_dim, max_batch_size) if batch_dim is not None else profiling_sample
         )
-        time_measurements = {1: [], max_batch_size: []}
+        time_measurements = defaultdict(list)
         with runner:
             for _ in range(10):
-                with ExternalErrorContext():
-                    runner.infer(profiling_sample)
-                time_measurements[1].append(runner.last_inference_time())
+                if batch_dim is not None:
+                    with ExternalErrorContext():
+                        runner.infer(profiling_sample)
+                    time_measurements[1].append(runner.last_inference_time())
 
                 with ExternalErrorContext():
                     runner.infer(expanded_sample)

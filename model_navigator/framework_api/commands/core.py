@@ -17,7 +17,7 @@ import typing
 from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass
 from inspect import getfullargspec
-from typing import Any, Optional, Tuple
+from typing import Any, Iterable, Optional, Tuple, Union
 
 import typing_inspect
 
@@ -120,7 +120,7 @@ class Command(metaclass=ABCMeta):
         return True
 
     @staticmethod
-    def get_output_name() -> Optional[str]:
+    def get_output_name() -> Optional[Union[Iterable[str], str]]:
         return None
 
     @abstractmethod
