@@ -18,8 +18,11 @@ from pathlib import Path
 import torch
 
 from model_navigator.converter.config import TensorRTPrecision
+from model_navigator.framework_api.commands.correctness.base import Tolerance
 from model_navigator.framework_api.commands.correctness.pyt import CorrectnessPYT2TorchScript
 from model_navigator.framework_api.commands.export.pyt import ExportPYT2TorchScript
+from model_navigator.framework_api.commands.performance.base import Performance
+from model_navigator.framework_api.commands.performance.pyt import PerformanceTorchScript
 from model_navigator.framework_api.config import Config
 from model_navigator.framework_api.package_descriptor import PackageDescriptor
 from model_navigator.framework_api.pipelines.pipeline import Pipeline
@@ -76,12 +79,20 @@ def test_pyt_package_descriptor():
             target_jit_type=JitType.SCRIPT,
         )
         cmd_correctness.status = Status.OK
+        cmd_correctness.output = Tolerance(0, 0)
+
+        cmd_performance = PerformanceTorchScript(
+            target_format=Format.TORCHSCRIPT,
+            target_jit_type=JitType.SCRIPT,
+        )
+        cmd_performance.status = Status.OK
+        cmd_performance.output = Performance(0, 0, 0)
 
         pipelines = [
             Pipeline(
                 name="Mock pipeline",
                 framework=Framework.PYT,
-                commands=[cmd_export, cmd_correctness],
+                commands=[cmd_export, cmd_correctness, cmd_performance],
             )
         ]
 

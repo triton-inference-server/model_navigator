@@ -65,7 +65,6 @@ class ConvertSavedModel2ONNX(Command):
             converted_model_path.as_posix(),
             "--opset",
             str(opset),
-            "-vvv",
         ]
 
         with UserErrorContext():

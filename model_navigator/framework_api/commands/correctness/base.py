@@ -12,16 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from dataclasses import dataclass
 from typing import List, Optional, Tuple
 
 import numpy
 from polygraphy.backend.base import BaseRunner
 
-from model_navigator.framework_api.commands.core import Command, CommandType, Tolerance
+from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.common import Sample
 from model_navigator.framework_api.exceptions import UserErrorContext
-from model_navigator.framework_api.utils import Framework, RuntimeProvider, sample_to_tuple
+from model_navigator.framework_api.utils import DataObject, Framework, RuntimeProvider, sample_to_tuple
 from model_navigator.model import Format
+
+
+@dataclass
+class Tolerance(DataObject):
+    atol: float
+    rtol: float
 
 
 def get_assert_message(atol: float, rtol: float):

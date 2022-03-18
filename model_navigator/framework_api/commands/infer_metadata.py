@@ -14,7 +14,8 @@
 
 from typing import Dict, List, Mapping, Optional, Tuple, Union
 
-from model_navigator.framework_api.commands.core import Command, CommandType, Tolerance
+from model_navigator.framework_api.commands.core import Command, CommandType
+from model_navigator.framework_api.commands.correctness.base import Tolerance
 from model_navigator.framework_api.common import Sample, SizedDataLoader, TensorMetadata
 from model_navigator.framework_api.exceptions import UserErrorContext
 from model_navigator.framework_api.utils import Framework, sample_to_tuple, to_numpy

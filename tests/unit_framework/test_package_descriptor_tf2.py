@@ -18,8 +18,11 @@ from pathlib import Path
 import tensorflow
 
 from model_navigator.converter.config import TensorRTPrecision
+from model_navigator.framework_api.commands.correctness.base import Tolerance
 from model_navigator.framework_api.commands.correctness.tf import CorrectnessSavedModel
 from model_navigator.framework_api.commands.export.tf import ExportTF2SavedModel
+from model_navigator.framework_api.commands.performance.base import Performance
+from model_navigator.framework_api.commands.performance.tf import PerformanceSavedModel
 from model_navigator.framework_api.config import Config
 from model_navigator.framework_api.package_descriptor import PackageDescriptor
 from model_navigator.framework_api.pipelines.pipeline import Pipeline
@@ -74,12 +77,19 @@ def test_tf2_package_descriptor():
             target_format=Format.TF_SAVEDMODEL,
         )
         cmd_correctness.status = Status.OK
+        cmd_correctness.output = Tolerance(0, 0)
+
+        cmd_performance = PerformanceSavedModel(
+            target_format=Format.TF_SAVEDMODEL,
+        )
+        cmd_performance.status = Status.OK
+        cmd_performance.output = Performance(0, 0, 0)
 
         pipelines = [
             Pipeline(
                 name="Mock pipeline",
                 framework=Framework.TF2,
-                commands=[cmd_export, cmd_correctness],
+                commands=[cmd_export, cmd_correctness, cmd_performance],
             )
         ]
 

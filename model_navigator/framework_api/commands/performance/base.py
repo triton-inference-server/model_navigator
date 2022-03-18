@@ -13,16 +13,24 @@
 # limitations under the License.
 
 from collections import defaultdict
+from dataclasses import dataclass
 from typing import List, Optional, Tuple
 
 import numpy
 from polygraphy.backend.base import BaseRunner
 
-from model_navigator.framework_api.commands.core import Command, CommandType, Performance
+from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.common import Sample
 from model_navigator.framework_api.exceptions import UserErrorContext
-from model_navigator.framework_api.utils import RuntimeProvider
+from model_navigator.framework_api.utils import DataObject, RuntimeProvider
 from model_navigator.model import Format
+
+
+@dataclass
+class Performance(DataObject):
+    batch_size: int
+    latency: float  # ms
+    throughput: float  # infer / sec
 
 
 def expand_sample(sample: Sample, axis: int, n: int):

@@ -15,7 +15,6 @@
 import traceback
 import typing
 from abc import ABCMeta, abstractmethod
-from dataclasses import dataclass
 from inspect import getfullargspec
 from typing import Any, Iterable, Optional, Tuple, Union
 
@@ -23,21 +22,8 @@ import typing_inspect
 
 from model_navigator.framework_api.exceptions import UserError
 from model_navigator.framework_api.logger import LOGGER
-from model_navigator.framework_api.utils import DataObject, Parameter, Status
+from model_navigator.framework_api.utils import Parameter, Status
 from model_navigator.model import Format
-
-
-@dataclass
-class Tolerance(DataObject):
-    atol: float
-    rtol: float
-
-
-@dataclass
-class Performance(DataObject):
-    batch_size: int
-    latency: float  # ms
-    throughput: float  # infer / sec
 
 
 class CommandType(Parameter):
