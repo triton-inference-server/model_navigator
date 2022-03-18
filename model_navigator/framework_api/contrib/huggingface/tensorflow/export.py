@@ -148,6 +148,9 @@ def export(
     model._saved_model_inputs_spec = None
     model._set_save_spec(input_spec)
 
+    if hasattr(model.config, "use_cache"):
+        model.config.use_cache = False
+
     config = Config(
         Framework.TF2,
         model=model,

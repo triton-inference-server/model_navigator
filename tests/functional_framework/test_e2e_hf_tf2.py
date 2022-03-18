@@ -36,7 +36,7 @@ EXPORT_CONFIGS = {
         "max_sequence_len": 384,
         "max_bs": 2,
         "sample_count": 10,
-        "expected_formats": ("tf-savedmodel"),  # TODO why tr-trt failes correctness on shapes
+        "expected_formats": ("tf-savedmodel", "tf-trt-fp32"),
     },
 }
 
