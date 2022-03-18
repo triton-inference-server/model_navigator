@@ -20,7 +20,7 @@ from polygraphy.backend.base import BaseRunner
 
 from model_navigator.framework_api.commands.core import Command, CommandType, Performance
 from model_navigator.framework_api.common import Sample
-from model_navigator.framework_api.errors import ExternalErrorContext
+from model_navigator.framework_api.exceptions import UserErrorContext
 from model_navigator.framework_api.utils import RuntimeProvider
 from model_navigator.model import Format
 
@@ -57,11 +57,11 @@ class PerformanceBase(Command):
         with runner:
             for _ in range(10):
                 if batch_dim is not None:
-                    with ExternalErrorContext():
+                    with UserErrorContext():
                         runner.infer(profiling_sample)
                     time_measurements[1].append(runner.last_inference_time())
 
-                with ExternalErrorContext():
+                with UserErrorContext():
                     runner.infer(expanded_sample)
                 time_measurements[max_batch_size].append(runner.last_inference_time())
 

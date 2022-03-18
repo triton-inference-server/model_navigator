@@ -15,4 +15,5 @@
 
 set -ex
 
-./tests/functional_framework/test_e2e_hf_tf2.py
+./tests/functional_framework/test_e2e_hf_tf2.py --model-name distilbert-base-uncased
+./tests/functional_framework/test_e2e_hf_tf2.py --model-name distilgpt2

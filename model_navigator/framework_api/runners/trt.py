@@ -15,7 +15,7 @@
 import numpy as np
 from polygraphy.backend.trt import TrtRunner as _TrtRunner
 
-from model_navigator.framework_api.errors import ExternalErrorContext
+from model_navigator.framework_api.exceptions import UserErrorContext
 from model_navigator.framework_api.logger import LOGGER
 
 
@@ -27,7 +27,7 @@ class TrtRunner(_TrtRunner):
     trt_casts = {np.dtype(np.int64): np.int32}
 
     def activate(self):
-        with ExternalErrorContext():
+        with UserErrorContext():
             return super().activate()
 
     def _cast_tensor(self, tensor):

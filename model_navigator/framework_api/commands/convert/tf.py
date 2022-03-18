@@ -22,7 +22,7 @@ from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.export.tf import ExportTF2SavedModel
 from model_navigator.framework_api.common import Sample
-from model_navigator.framework_api.errors import ExternalErrorContext
+from model_navigator.framework_api.exceptions import UserErrorContext
 from model_navigator.framework_api.utils import (
     ArtifactType,
     format_to_relative_model_path,
@@ -68,7 +68,7 @@ class ConvertSavedModel2ONNX(Command):
             "-vvv",
         ]
 
-        with ExternalErrorContext():
+        with UserErrorContext():
             subprocess.run(convert_cmd, check=True)
 
         return self.get_output_relative_path()
@@ -115,7 +115,7 @@ class ConvertSavedModel2TFTRT(Command):
             minimum_segment_size=minimum_segment_size,
         )
         # TODO: allow setting dynamic_shape_profile_strategy
-        with ExternalErrorContext():
+        with UserErrorContext():
             converter = trtc.TrtGraphConverterV2(
                 input_saved_model_dir=exported_model_path.as_posix(), use_dynamic_shape=True, conversion_params=params
             )

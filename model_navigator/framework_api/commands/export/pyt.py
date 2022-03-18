@@ -20,7 +20,7 @@ import torch  # pytype: disable=import-error
 
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.common import Sample, TensorMetadata
-from model_navigator.framework_api.errors import ExternalErrorContext
+from model_navigator.framework_api.exceptions import UserErrorContext
 from model_navigator.framework_api.utils import (
     JitType,
     format_to_relative_model_path,
@@ -61,17 +61,17 @@ class ExportPYT2TorchScript(Command):
 
         model.to(target_device)
         if self.target_jit_type == JitType.SCRIPT:
-            with ExternalErrorContext():
+            with UserErrorContext():
                 script_module = torch.jit.script(model)
         else:
             dummy_input = tuple(
                 torch.from_numpy(val.astype(spec.dtype)).to(target_device)
                 for (val, spec) in zip(profiling_sample.values(), input_metadata.values())
             )
-            with ExternalErrorContext():
+            with UserErrorContext():
                 script_module = torch.jit.trace(model, dummy_input)
 
-        with ExternalErrorContext():
+        with UserErrorContext():
             torch.jit.save(script_module, exported_model_path.as_posix())
 
         return self.get_output_relative_path()
@@ -114,7 +114,7 @@ class ExportPYT2ONNX(Command):
 
         model.to(target_device)
 
-        with ExternalErrorContext():
+        with UserErrorContext():
             torch.onnx.export(
                 model,
                 args=dummy_input,
@@ -192,7 +192,7 @@ class ExportPYT2TorchTensorRT(Command):
                 )
             )
 
-        with ExternalErrorContext():
+        with UserErrorContext():
             if self.target_jit_type == JitType.TRACE:
                 model = torch.jit.trace(model, dummy_input)
             tr_model_compiled = torch_tensorrt.compile(model, inputs=model_input_shapes)

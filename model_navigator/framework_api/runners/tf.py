@@ -54,7 +54,10 @@ class TFRunner(BaseRunner):
     def infer_impl(self, feed_dict):
 
         start = time.time()
-        outputs = self.model.predict(list(feed_dict.values()))
+        if isinstance(self.model._saved_model_inputs_spec, Mapping):
+            outputs = self.model.predict(dict(zip(self.model._saved_model_inputs_spec.keys(), feed_dict.values())))
+        else:
+            outputs = self.model.predict(list(feed_dict.values()))
         end = time.time()
 
         if self.output_names is None:

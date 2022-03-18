@@ -27,7 +27,7 @@ from model_navigator.framework_api.commands.convert.tf import ConvertSavedModel2
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.correctness.base import CorrectnessBase
 from model_navigator.framework_api.common import TensorMetadata
-from model_navigator.framework_api.errors import ExternalErrorContext
+from model_navigator.framework_api.exceptions import UserErrorContext
 from model_navigator.framework_api.runners.onnx import OnnxrtRunner
 from model_navigator.framework_api.runners.tf import TFRunner, TFTRTRunner
 from model_navigator.framework_api.runners.trt import TrtRunner
@@ -65,7 +65,7 @@ class CorrectnessTensorFlow2ONNX(CorrectnessBase):
 
         output_names = list(output_metadata.keys())
 
-        with ExternalErrorContext():
+        with UserErrorContext():
             tf_runner = TFRunner(model, input_metadata=input_metadata, output_names=output_names)
 
             exported_model_path = (
@@ -104,7 +104,7 @@ class CorrectnessTensorFlow2TRT(CorrectnessBase):
 
         output_names = list(output_metadata.keys())
 
-        with ExternalErrorContext():
+        with UserErrorContext():
             tf_runner = TFRunner(model, input_metadata=input_metadata, output_names=output_names)
 
             converted_model_path = (
@@ -149,7 +149,7 @@ class CorrectnessSavedModel(CorrectnessBase):
             precision=self.target_precision,
         )
 
-        with ExternalErrorContext():
+        with UserErrorContext():
             if self.target_format == Format.TF_TRT:
                 savedmodel_runner = TFTRTRunner(
                     tensorflow.keras.models.load_model(exported_model_path),

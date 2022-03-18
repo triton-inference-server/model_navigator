@@ -21,7 +21,7 @@ from polygraphy.backend.onnxrt import SessionFromOnnx
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.common import TensorMetadata
-from model_navigator.framework_api.errors import ExternalErrorContext
+from model_navigator.framework_api.exceptions import UserErrorContext
 from model_navigator.framework_api.runners.onnx import OnnxrtRunner
 from model_navigator.framework_api.utils import Framework, format_to_relative_model_path, get_package_path
 from model_navigator.model import Format
@@ -78,7 +78,7 @@ class ConvertONNX2TRT(Command):
             return None
         converted_model_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with ExternalErrorContext():
+        with UserErrorContext():
             onnx_runner = OnnxrtRunner(SessionFromOnnx(exported_model_path.as_posix(), providers=[target_device]))
             with onnx_runner:
                 onnx_input_metadata = onnx_runner.get_input_metadata()
@@ -107,7 +107,7 @@ class ConvertONNX2TRT(Command):
         if max_workspace_size is not None:
             convert_cmd.append(f"--workspace={max_workspace_size}")
 
-        with ExternalErrorContext():
+        with UserErrorContext():
             subprocess.run(convert_cmd, check=True)
 
         return self.get_output_relative_path()

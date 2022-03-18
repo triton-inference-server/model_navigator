@@ -19,7 +19,7 @@ from polygraphy.backend.base import BaseRunner
 
 from model_navigator.framework_api.commands.core import Command, CommandType, Tolerance
 from model_navigator.framework_api.common import Sample
-from model_navigator.framework_api.errors import ExternalErrorContext
+from model_navigator.framework_api.exceptions import UserErrorContext
 from model_navigator.framework_api.utils import Framework, RuntimeProvider, sample_to_tuple
 from model_navigator.model import Format
 
@@ -52,7 +52,7 @@ class CorrectnessBase(Command):
         rtols = []
         with base_runner, comp_runner:
             for sample in correctness_samples:
-                with ExternalErrorContext():
+                with UserErrorContext():
                     original_output = base_runner.infer(sample)
                     comp_output = comp_runner.infer(sample)
                 original_output, comp_output = sample_to_tuple(original_output), sample_to_tuple(comp_output)

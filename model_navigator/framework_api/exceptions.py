@@ -13,5 +13,19 @@
 # limitations under the License.
 
 
+import contextlib
+
+
+class UserError(Exception):
+    pass
+
+
+class UserErrorContext(contextlib.AbstractContextManager):
+    def __exit__(self, exc_type, exc_value, traceback):
+        if exc_type is None:
+            return
+        raise UserError(exc_value)
+
+
 class TensorTypeError(TypeError):
     pass

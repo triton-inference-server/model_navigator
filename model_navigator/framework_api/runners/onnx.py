@@ -14,12 +14,12 @@
 
 from polygraphy.backend.onnxrt import OnnxrtRunner as _OnnxrtRunner
 
-from model_navigator.framework_api.errors import ExternalErrorContext
+from model_navigator.framework_api.exceptions import UserErrorContext
 
 
 class OnnxrtRunner(_OnnxrtRunner):
     def activate(self):
-        with ExternalErrorContext():
+        with UserErrorContext():
             return super().activate()
 
     def infer(self, feed_dict, check_inputs=None, *args, **kwargs):

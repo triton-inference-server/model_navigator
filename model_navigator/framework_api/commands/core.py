@@ -21,7 +21,7 @@ from typing import Any, Iterable, Optional, Tuple, Union
 
 import typing_inspect
 
-from model_navigator.framework_api.errors import ExternalError
+from model_navigator.framework_api.exceptions import UserError
 from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.utils import DataObject, Parameter, Status
 from model_navigator.model import Format
@@ -97,7 +97,7 @@ class Command(metaclass=ABCMeta):
                 self.err_msg = str(e)
 
                 LOGGER.error(f"{type(e).__name__} raised.")
-                if isinstance(e, ExternalError):
+                if isinstance(e, UserError):
                     LOGGER.warning(
                         "External errors are usually caused by incompatibilites between the model and the target formats and/or runtimes."
                     )

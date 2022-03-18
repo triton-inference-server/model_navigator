@@ -139,10 +139,12 @@ def export(
         sample_count = 100
 
     sample = next(iter(dataloader))
-    input_spec = tuple(
-        tf.keras.Input(shape=tuple(None for d in list(tensor.shape)[1:]), dtype=tensor.dtype, name=input_name)
+    input_spec = {
+        input_name: tf.keras.Input(
+            shape=tuple(None for d in list(tensor.shape)[1:]), dtype=tensor.dtype, name=input_name
+        )
         for input_name, tensor in sample.items()
-    )
+    }
     model._saved_model_inputs_spec = None
     model._set_save_spec(input_spec)
 

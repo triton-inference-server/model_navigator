@@ -42,6 +42,8 @@ class Pipeline:
             output_names = command.get_output_name()
             outputs = command.output
             if output_names is not None:
+                if outputs is None:
+                    outputs = ()
                 if isinstance(output_names, str):
                     output_names, outputs = (output_names,), (outputs,)
                 for output_name, output in zip(output_names, outputs):

@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from packaging import version
+
 from model_navigator.framework_api.logger import LOGGER
 
 try:
@@ -28,11 +30,16 @@ try:
     import tensorflow  # pytype: disable=import-error
 
     _TF_VERSION = tensorflow.__version__
-    _TF_AVAILABLE = True
-    LOGGER.info(f"Tensorflow version {_TF_VERSION} available.")
+
+    if version.parse(_TF_VERSION) < version.parse("2.0.0"):
+        _TF_AVAILABLE = False
+        LOGGER.info("TensorFlow2 is not available.")
+    else:
+        _TF_AVAILABLE = True
+        LOGGER.info(f"TensorFlow2 version {_TF_VERSION} available.")
 except ModuleNotFoundError:
     _TF_AVAILABLE = False
-    LOGGER.info("Tensorflow is not available.")
+    LOGGER.info("TensorFlow2 is not available.")
 
 try:
     import datasets  # pytype: disable=import-error # noqa: F401
