@@ -22,7 +22,7 @@ from polygraphy.backend.base import BaseRunner
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.common import Sample
 from model_navigator.framework_api.exceptions import UserErrorContext
-from model_navigator.framework_api.utils import DataObject, RuntimeProvider
+from model_navigator.framework_api.utils import DataObject, format2runtimes
 from model_navigator.model import Format
 
 
@@ -43,7 +43,7 @@ def expand_sample(sample: Sample, axis: int, n: int):
 class PerformanceBase(Command):
     def __init__(self, name: str, command_type: CommandType, target_format: Format, requires: Tuple[Command, ...] = ()):
         super().__init__(name=name, command_type=command_type, target_format=target_format, requires=requires)
-        self.runtime_provider = RuntimeProvider.DEFAULT
+        self.runtime_provider = format2runtimes(target_format)[0]
 
     def _get_runner(self, **kwargs) -> BaseRunner:
         raise NotImplementedError

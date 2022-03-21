@@ -35,7 +35,7 @@ from model_navigator.framework_api.commands.performance.pyt import PerformanceTo
 from model_navigator.framework_api.commands.performance.trt import PerformanceTRT
 from model_navigator.framework_api.pipelines.pipeline import Pipeline
 from model_navigator.framework_api.pipelines.pipeline_manager_base import PipelineManager
-from model_navigator.framework_api.utils import Framework, RuntimeProvider
+from model_navigator.framework_api.utils import Framework, format2runtimes
 from model_navigator.model import Format
 
 
@@ -67,7 +67,7 @@ class TorchPipelineManager(PipelineManager):
         if Format.ONNX in config.target_formats:
             onnx_export = ExportPYT2ONNX(requires=(infer_input, fetch_input, infer_output))
             commands.append(onnx_export)
-            for provider in [RuntimeProvider.CUDA, RuntimeProvider.TRT, RuntimeProvider.CPU]:
+            for provider in format2runtimes(Format.ONNX):
                 commands.append(CorrectnessPYT2ONNX(runtime_provider=provider, requires=(onnx_export,)))
                 commands.append(PerformanceONNX(runtime_provider=provider, requires=(onnx_export,)))
             commands.append(ConfigCli(target_format=Format.ONNX, requires=(onnx_export,)))
@@ -94,7 +94,7 @@ class TorchPipelineManager(PipelineManager):
             if Format.ONNX not in config.target_formats:
                 onnx_export = ExportPYT2ONNX(requires=(infer_input, fetch_input, infer_output))
                 commands.append(onnx_export)
-                for provider in [RuntimeProvider.CUDA, RuntimeProvider.TRT, RuntimeProvider.CPU]:
+                for provider in format2runtimes(Format.ONNX):
                     commands.append(CorrectnessPYT2ONNX(runtime_provider=provider, requires=(onnx_export,)))
                     commands.append(PerformanceONNX(runtime_provider=provider, requires=(onnx_export,)))
             for target_precision in config.target_precisions:

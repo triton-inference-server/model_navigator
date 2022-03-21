@@ -32,7 +32,7 @@ from model_navigator.framework_api.commands.performance.tf import PerformanceSav
 from model_navigator.framework_api.commands.performance.trt import PerformanceTRT
 from model_navigator.framework_api.pipelines.pipeline import Pipeline
 from model_navigator.framework_api.pipelines.pipeline_manager_base import PipelineManager
-from model_navigator.framework_api.utils import Framework, RuntimeProvider
+from model_navigator.framework_api.utils import Framework, format2runtimes
 from model_navigator.model import Format
 
 
@@ -56,21 +56,19 @@ class TFPipelineManager(PipelineManager):
         if Format.ONNX in config.target_formats:
             onnx_convert = ConvertSavedModel2ONNX(requires=(export_savedmodel,))
             commands.append(onnx_convert)
-            for provider in [RuntimeProvider.CUDA, RuntimeProvider.TRT, RuntimeProvider.CPU]:
+            for provider in format2runtimes(Format.ONNX):
                 commands.append(CorrectnessTensorFlow2ONNX(runtime_provider=provider, requires=(onnx_convert,)))
                 commands.append(PerformanceONNX(runtime_provider=provider, requires=(onnx_convert,)))
         if Format.TENSORRT in config.target_formats:
             if Format.ONNX not in config.target_formats:
                 onnx_convert = ConvertSavedModel2ONNX(requires=(export_savedmodel,))
                 commands.append(onnx_convert)
-                for provider in [RuntimeProvider.CUDA, RuntimeProvider.TRT, RuntimeProvider.CPU]:
+                for provider in format2runtimes(Format.ONNX):
                     commands.append(CorrectnessTensorFlow2ONNX(runtime_provider=provider, requires=(onnx_convert,)))
                     commands.append(PerformanceONNX(runtime_provider=provider, requires=(onnx_convert,)))
             for target_precision in config.target_precisions:
                 onnx_convert = ConvertONNX2TRT(target_precision=target_precision, requires=(onnx_convert,))
                 commands.append(onnx_convert)
-                for provider in [RuntimeProvider.CUDA, RuntimeProvider.TRT, RuntimeProvider.CPU]:
-                    commands.append(CorrectnessTensorFlow2ONNX(runtime_provider=provider, requires=(onnx_convert,)))
                 commands.append(CorrectnessTensorFlow2TRT(target_precision=target_precision, requires=(onnx_convert,)))
                 commands.append(PerformanceTRT(target_precision=target_precision, requires=(onnx_convert,)))
                 commands.append(

@@ -31,6 +31,7 @@ from model_navigator.framework_api.utils import (
     JitType,
     RuntimeProvider,
     Status,
+    format2runtimes,
     format_to_relative_model_path,
     get_package_path,
 )
@@ -80,12 +81,7 @@ class PackageDescriptor:
             for command in pipeline.commands:
                 if command.command_type in (CommandType.EXPORT, CommandType.CONVERT):
                     runtime_results = []
-                    if command.target_format == Format.ONNX:
-                        runtimes = [RuntimeProvider.CPU.value, RuntimeProvider.CUDA.value, RuntimeProvider.TRT.value]
-                    else:
-                        runtimes = [RuntimeProvider.DEFAULT.value]
-
-                    for runtime_provider in runtimes:
+                    for runtime_provider in format2runtimes(command.target_format):
                         correctness_results = self._get_correctness_command_for_model(
                             commands=pipeline.commands,
                             format=command.target_format,
@@ -285,12 +281,15 @@ class PackageDescriptor:
     def get_status(
         self,
         format: Format,
+        runtime_provider: Optional[RuntimeProvider] = None,
         jit_type: Optional[JitType] = None,
         precision: Optional[TensorRTPrecision] = None,
-        runtime_provider: Optional[RuntimeProvider] = RuntimeProvider.DEFAULT,
     ) -> bool:
         """Return status (True or False) of export operation for particular format, jit_type,
         precision and runtime_provider."""
+        if runtime_provider is None:
+            runtime_provider = format2runtimes(format)[0]
+
         status = False
         for model_status in self.navigator_status.model_status:
             if (

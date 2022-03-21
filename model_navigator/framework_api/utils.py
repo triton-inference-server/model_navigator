@@ -54,8 +54,22 @@ class Parameter(Enum):
 class RuntimeProvider(str, Parameter):
     TRT = "TensorrtExecutionProvider"
     CUDA = "CUDAExecutionProvider"
-    CPU = "CPU"
-    DEFAULT = "DefaultRuntime"
+    CPU = "CPUExecutionProvider"
+    TF = "TensorFlowExecutionProvider"
+    PYT = "PyTorchExecutionProvider"
+
+
+def format2runtimes(format: Format) -> Optional[Tuple]:
+    if format == format.ONNX:
+        return RuntimeProvider.TRT, RuntimeProvider.CUDA, RuntimeProvider.CPU
+    elif format == format.TORCHSCRIPT or format == format.TORCH_TRT:
+        return (RuntimeProvider.PYT,)
+    elif format == format.TF_SAVEDMODEL or format == format.TF_TRT:
+        return (RuntimeProvider.TF,)
+    elif format == format.TENSORRT:
+        return (RuntimeProvider.TRT,)
+    else:
+        return None
 
 
 class Status(str, Parameter):
