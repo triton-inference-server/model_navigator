@@ -132,6 +132,8 @@ class FetchInputModelData(Command):
             name: {ax: {"min": False, "max": False} for ax in trt_dynamic_axes[name]} for name in trt_dynamic_axes
         }
         for i, sample in enumerate(dataloader):
+            if i >= len(dataloader):
+                break
             sample = extract_sample(sample, input_metadata, framework)
 
             if i in correctness_samples_ind:
@@ -189,13 +191,18 @@ class FetchInputModelData(Command):
 
         axes_shapes = {name: {ax: [] for ax in range(len(spec.shape))} for name, spec in input_metadata.items()}
         max_batch_size = 0
-        for _, sample in enumerate(dataloader):
+        for i, sample in enumerate(dataloader):
+            if i >= num_samples:
+                LOGGER.warning(f"{len(dataloader)=}, but more samples found.")
+                break
             sample = extract_sample(sample, input_metadata, framework)
             for name, tensor in sample.items():
-                for i, dim in enumerate(tensor.shape):
-                    axes_shapes[name][i].append(dim)
+                for k, dim in enumerate(tensor.shape):
+                    axes_shapes[name][k].append(dim)
             if batch_dim is not None:
                 max_batch_size = max(max_batch_size, sample_to_tuple(sample)[0].shape[batch_dim])
+
+        assert i + 1 >= len(dataloader), f"{len(dataloader)=}, but only {i + 1} samples found."
 
         if trt_dynamic_axes is None:
             trt_dynamic_axes = extract_trt_axes(axes_shapes, batch_dim)
