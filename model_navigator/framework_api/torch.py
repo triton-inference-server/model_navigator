@@ -28,6 +28,7 @@ from model_navigator.framework_api.utils import (
     get_default_max_workspace_size,
     get_default_model_name,
     get_default_workdir,
+    parse_enum,
 )
 from model_navigator.model import Format
 
@@ -37,8 +38,8 @@ def export(
     dataloader: SizedDataLoader,
     model_name: Optional[str] = None,
     opset: Optional[int] = None,
-    target_formats: Optional[Tuple[Format, ...]] = None,
-    jit_options: Optional[Tuple[JitType, ...]] = None,
+    target_formats: Optional[Union[Union[str, Format], Tuple[Union[str, Format], ...]]] = None,
+    jit_options: Optional[Union[Union[str, JitType], Tuple[Union[str, JitType], ...]]] = None,
     workdir: Optional[Path] = None,
     override_workdir: bool = False,
     keep_workdir: bool = True,
@@ -49,7 +50,7 @@ def export(
     output_names: Optional[Tuple[str, ...]] = None,
     dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None,
     trt_dynamic_axes: Optional[Dict[str, Dict[int, Tuple[int, int, int]]]] = None,
-    target_precisions: Optional[Tuple[TensorRTPrecision, ...]] = None,
+    target_precisions: Optional[Union[Union[str, TensorRTPrecision], Tuple[Union[str, TensorRTPrecision], ...]]] = None,
     save_data: bool = True,
     max_workspace_size: Optional[int] = None,
     target_device: Optional[str] = None,
@@ -95,6 +96,11 @@ def export(
     if target_device is None:
         target_device = "cuda" if torch.cuda.is_available() else "cpu"
 
+    target_formats, jit_options, target_precisions = (
+        parse_enum(target_formats, Format),
+        parse_enum(jit_options, JitType),
+        parse_enum(target_precisions, TensorRTPrecision),
+    )
     config = Config(
         framework=Framework.PYT,
         model=model,

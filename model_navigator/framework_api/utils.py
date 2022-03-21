@@ -213,3 +213,10 @@ def extract_bs1(sample: Sample, batch_dim: Optional[int]) -> Sample:
     if batch_dim is not None:
         return {name: tensor.take([0], batch_dim) for name, tensor in sample.items()}
     return sample
+
+
+def parse_enum(value, enum_type):
+    if value is not None:
+        value = tuple(value) if isinstance(value, (tuple, list)) else (value,)
+        value = tuple(enum_type(v) for v in value)
+    return value

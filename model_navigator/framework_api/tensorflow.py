@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.common import SizedDataLoader
@@ -25,6 +25,7 @@ from model_navigator.framework_api.utils import (
     get_default_max_workspace_size,
     get_default_model_name,
     get_default_workdir,
+    parse_enum,
 )
 from model_navigator.model import Format
 
@@ -32,11 +33,11 @@ from model_navigator.model import Format
 def export(
     model,
     dataloader: SizedDataLoader,
-    target_precisions: Optional[Tuple[TensorRTPrecision, ...]] = None,
+    target_precisions: Optional[Union[Union[str, TensorRTPrecision], Tuple[Union[str, TensorRTPrecision], ...]]] = None,
     max_workspace_size: Optional[int] = None,
     minimum_segment_size: int = 3,
     model_name: Optional[str] = None,
-    target_formats: Optional[Tuple[Format, ...]] = None,
+    target_formats: Optional[Union[Union[str, Format], Tuple[Union[str, Format], ...]]] = None,
     workdir: Optional[Path] = None,
     override_workdir: bool = False,
     keep_workdir: bool = True,
@@ -72,6 +73,9 @@ def export(
     if sample_count is None:
         sample_count = 100
 
+    target_formats, target_precisions = parse_enum(target_formats, Format), parse_enum(
+        target_precisions, TensorRTPrecision
+    )
     config = Config(
         Framework.TF2,
         model=model,

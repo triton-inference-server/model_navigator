@@ -40,7 +40,13 @@ from model_navigator.framework_api.contrib.huggingface.torch.utils import (
 from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.package_descriptor import PackageDescriptor
 from model_navigator.framework_api.pipelines import TorchPipelineManager
-from model_navigator.framework_api.utils import Framework, JitType, get_default_max_workspace_size, get_default_workdir
+from model_navigator.framework_api.utils import (
+    Framework,
+    JitType,
+    get_default_max_workspace_size,
+    get_default_workdir,
+    parse_enum,
+)
 from model_navigator.model import Format
 
 # pytype: enable=import-error
@@ -64,8 +70,8 @@ def export(
     dataset_name: Optional[str] = None,
     dataset_preprocessing_function: Optional[Callable] = None,
     opset: Optional[int] = None,
-    target_formats: Optional[Tuple[Format, ...]] = None,
-    jit_options: Optional[Tuple[JitType, ...]] = None,
+    target_formats: Optional[Union[Union[str, Format], Tuple[Union[str, Format], ...]]] = None,
+    jit_options: Optional[Union[Union[str, JitType], Tuple[Union[str, JitType], ...]]] = None,
     workdir: Optional[Path] = None,
     override_workdir: bool = False,
     keep_workdir: bool = True,
@@ -73,7 +79,7 @@ def export(
     atol: Optional[float] = None,
     rtol: Optional[float] = None,
     onnx_config: Optional[OnnxConfig] = None,
-    target_precisions: Optional[Tuple[TensorRTPrecision, ...]] = None,
+    target_precisions: Optional[Union[Union[str, TensorRTPrecision], Tuple[Union[str, TensorRTPrecision], ...]]] = None,
     trt_dynamic_axes: Optional[Dict[str, Dict[int, Tuple[int, int, int]]]] = None,
     save_data: bool = True,
     max_workspace_size: Optional[int] = None,
@@ -169,6 +175,11 @@ def export(
     else:
         forward_kw_names = None
 
+    target_formats, jit_options, target_precisions = (
+        parse_enum(target_formats, Format),
+        parse_enum(jit_options, JitType),
+        parse_enum(target_precisions, TensorRTPrecision),
+    )
     config = Config(
         framework=Framework.PYT,
         model=model,

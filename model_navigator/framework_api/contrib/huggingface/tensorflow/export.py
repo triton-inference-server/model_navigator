@@ -36,7 +36,12 @@ from model_navigator.framework_api.contrib.huggingface.tensorflow.utils import (
 )
 from model_navigator.framework_api.package_descriptor import PackageDescriptor
 from model_navigator.framework_api.pipelines import TFPipelineManager
-from model_navigator.framework_api.utils import Framework, get_default_max_workspace_size, get_default_workdir
+from model_navigator.framework_api.utils import (
+    Framework,
+    get_default_max_workspace_size,
+    get_default_workdir,
+    parse_enum,
+)
 from model_navigator.model import Format
 
 
@@ -58,7 +63,7 @@ def export(
     dataset_name: Optional[str] = None,
     dataset_preprocessing_function: Optional[Callable] = None,
     opset: Optional[int] = None,
-    target_formats: Optional[Tuple[Format]] = None,
+    target_formats: Optional[Union[Union[str, Format], Tuple[Union[str, Format], ...]]] = None,
     workdir: Optional[Path] = None,
     override_workdir: bool = False,
     keep_workdir: bool = True,
@@ -66,7 +71,7 @@ def export(
     atol: Optional[float] = None,
     rtol: Optional[float] = None,
     onnx_config: Optional[OnnxConfig] = None,
-    target_precisions: Optional[Tuple[TensorRTPrecision, ...]] = None,
+    target_precisions: Optional[Union[Union[str, TensorRTPrecision], Tuple[Union[str, TensorRTPrecision], ...]]] = None,
     save_data: bool = True,
     max_workspace_size: Optional[int] = None,
     minimum_segment_size: int = 3,
@@ -151,6 +156,9 @@ def export(
     if hasattr(model.config, "use_cache"):
         model.config.use_cache = False
 
+    target_formats, target_precisions = parse_enum(target_formats, Format), parse_enum(
+        target_precisions, TensorRTPrecision
+    )
     config = Config(
         Framework.TF2,
         model=model,

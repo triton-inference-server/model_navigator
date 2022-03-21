@@ -124,3 +124,43 @@ def test_tf2_export_tf_trt():
 
         # Formats not exported but present as step for tf-trt
         assert check_model_dir(model_dir=package_dir / "tf-savedmodel")
+
+
+def test_tf2_export_string_format():
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        model_name = "navigator_model"
+
+        workdir = Path(tmp_dir) / "navigator_workdir"
+        package_dir = workdir / f"{model_name}.nav"
+        status_file = package_dir / "status.yaml"
+        model_input_dir = package_dir / "model_input"
+        model_output_dir = package_dir / "model_output"
+        navigator_log_file = package_dir / "navigator.log"
+
+        nav.tensorflow.export(
+            model=model,
+            dataloader=dataloader,
+            workdir=workdir,
+            model_name=model_name,
+            override_workdir=True,
+            target_formats="tf-trt",
+            target_precisions="fp32",
+        )
+
+        assert status_file.is_file()
+        assert model_input_dir.is_dir()
+        assert all(
+            [path.suffix == ".npz" for samples_dir in model_input_dir.iterdir() for path in samples_dir.iterdir()]
+        )
+        assert model_output_dir.is_dir()
+        assert all(
+            [path.suffix == ".npz" for samples_dir in model_output_dir.iterdir() for path in samples_dir.iterdir()]
+        )
+        assert navigator_log_file.is_file()
+
+        # Output formats
+        assert check_model_dir(model_dir=package_dir / "tf-trt-fp16") is False
+        assert check_model_dir(model_dir=package_dir / "tf-trt-fp32")
+
+        # Formats not exported but present as step for tf-trt
+        assert check_model_dir(model_dir=package_dir / "tf-savedmodel")

@@ -13,7 +13,7 @@
 # limitations under the License.
 # pytype: skip-file
 
-from typing import Dict, Iterator, Protocol, Sequence, Union
+from typing import Dict, Iterator, Protocol, Sequence, Union, runtime_checkable
 
 import numpy
 
@@ -27,6 +27,7 @@ class TensorMetadata(Dict[str, TensorSpec]):
         self[name] = TensorSpec(name, shape, dtype)
 
 
+@runtime_checkable
 class SizedIterable(Protocol):
     def __iter__(self) -> Iterator:
         ...

@@ -15,11 +15,12 @@
 import datetime
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union, get_args, get_origin
 
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.common import SizedDataLoader
-from model_navigator.framework_api.utils import DataObject, Framework, JitType
+from model_navigator.framework_api.logger import LOGGER
+from model_navigator.framework_api.utils import DataObject, Framework, JitType, pad_string
 from model_navigator.model import Format
 
 
@@ -67,5 +68,43 @@ class Config(DataObject):
     atol: Optional[float] = None
     rtol: Optional[float] = None
 
+    def _check_types(self):
+        try:
+            iter(self.dataloader)
+        except TypeError as e:
+            raise TypeError("Datalaoder must be iterable.") from e
+        try:
+            len(self.dataloader)
+        except TypeError as e:
+            raise TypeError("Datalaoder must must have len().") from e
+
+        for field_name, field in self.__dataclass_fields__.items():
+            expected_type = field.type
+            if get_origin(expected_type) is Union:
+                expected_type = tuple((get_origin(arg) or arg) for arg in get_args(expected_type))
+            else:
+                expected_type = get_origin(expected_type) or expected_type
+            value = getattr(self, field_name)
+            if not isinstance(value, expected_type):
+                raise TypeError(
+                    f"Incorrect type for {field_name}. Expected type {expected_type} got {type(value)} instead."
+                )
+
+    def _log(self):
+        LOGGER.info(pad_string("Config parameters"))
+        log_dict = self.to_dict(
+            filter_fields=[
+                "model",
+                "dataloader",
+                "input_metadata",
+                "output_metadata",
+                "forward_kw_names",
+            ],
+            parse=True,
+        )
+        LOGGER.info(log_dict)
+
     def __post_init__(self):
+        self._check_types()
         object.__setattr__(self, "timestamp", f"{datetime.datetime.now():%Y-%m-%dT%H:%M:%S.%f}")
+        self._log()
