@@ -61,14 +61,14 @@ if __name__ == "__main__":
         nav_workdir = Path(tmp_dir) / "navigator_workdir"
 
         pkg_desc = nav.tensorflow.export(
-            model=model, dataloader=DATALOADER, workdir=nav_workdir, target_precisions=(nav.TensorRTPrecision.FP32,)
+            model=model, workdir=nav_workdir, dataloader=DATALOADER, target_precisions=(nav.TensorRTPrecision.FP32,)
         )
         expected_formats = ("tf-savedmodel",)
-        for format, status in pkg_desc.get_formats_status().items():
-            status = list(status.values())[0]
-            assert (status == nav.Status.OK) == (
-                format in expected_formats
-            ), f"{format} status is {status.value}, but expected formats are {expected_formats}."
+        for format, runtimes_status in pkg_desc.get_formats_status().items():
+            for runtime, status in runtimes_status.items():
+                assert (status == nav.Status.OK) == (
+                    format in expected_formats
+                ), f"{format} {runtime} status is {status}, but expected formats are {expected_formats}."
 
         nav.LOGGER.info(f"{model_name} passed.")
 

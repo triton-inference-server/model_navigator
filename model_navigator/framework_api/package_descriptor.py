@@ -306,14 +306,14 @@ class PackageDescriptor:
         """Return dictionary of pairs Format : Bool. True for successful exports, False for failed exports."""
         results = {}
         for model_status in self.navigator_status.model_status:
+            key = model_status.format.value
+            if model_status.torch_jit:
+                key += f"-{model_status.torch_jit.value}"
+            if model_status.precision:
+                key += f"-{model_status.precision.value}"
+            results[key] = {}
             for runtime_results in model_status.runtime_results:
-                key = model_status.format.value
-                if model_status.torch_jit:
-                    key += f"-{model_status.torch_jit.value}"
-                if model_status.precision:
-                    key += f"-{model_status.precision.value}"
-                key += f"-{runtime_results.runtime.value}"
-                results[key] = runtime_results.status
+                results[key][runtime_results.runtime.value] = runtime_results.status
         return results
 
     def get_formats_performance(self) -> Dict:

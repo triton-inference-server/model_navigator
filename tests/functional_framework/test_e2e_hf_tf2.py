@@ -54,10 +54,10 @@ if __name__ == "__main__":
             workdir=nav_workdir, **export_config, target_precisions=(nav.TensorRTPrecision.FP32,)
         )
         # pytype: enable=not-callable
-        for format, status in pkg_desc.get_formats_status().items():
-            status = list(status.values())[0]
-            assert (status == nav.Status.OK) == (
-                format in expected_formats
-            ), f"{format} status is {status.value}, but expected formats are {expected_formats}."
+        for format, runtimes_status in pkg_desc.get_formats_status().items():
+            for runtime, status in runtimes_status.items():
+                assert (status == nav.Status.OK) == (
+                    format in expected_formats
+                ), f"{format} {runtime} status is {status}, but expected formats are {expected_formats}."
         nav.LOGGER.info(f"{export_config['model_name']} passed.")
     nav.LOGGER.info("All models passed.")

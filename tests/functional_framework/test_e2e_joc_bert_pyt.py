@@ -115,10 +115,10 @@ if __name__ == "__main__":
             input_names=("input_ids", "token_type_ids", "attention_mask"),
         )
         expected_formats = ()  # ("torchscript-script", "torchscript-trace", "onnx", "trt-fp32", "trt-fp16") # fails on the pytorch:22.02 container
-        for format, status in pkg_desc.get_formats_status().items():
-            status = list(status.values())[0]
-            assert (status == nav.Status.OK) == (
-                format in expected_formats
-            ), f"{format} status is {status.value}, but expected formats are {expected_formats}."
+        for format, runtimes_status in pkg_desc.get_formats_status().items():
+            for runtime, status in runtimes_status.items():
+                assert (status == nav.Status.OK) == (
+                    format in expected_formats
+                ), f"{format} {runtime} status is {status}, but expected formats are {expected_formats}."
 
     nav.LOGGER.info("All models passed.")

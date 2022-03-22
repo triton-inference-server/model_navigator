@@ -23,6 +23,12 @@ from model_navigator.framework_api.common import Sample
 from model_navigator.model import Format
 
 
+def get_available_onnx_providers() -> List:
+    import onnxruntime as onnxrt  # pytype: disable=import-error
+
+    return onnxrt.get_available_providers()
+
+
 def numpy_to_torch_dtype(np_dtype):
     np_dtype = numpy.dtype(np_dtype).type
     import torch  # pytype: disable=import-error
@@ -61,7 +67,7 @@ class RuntimeProvider(str, Parameter):
 
 def format2runtimes(format: Format) -> Optional[Tuple]:
     if format == format.ONNX:
-        return RuntimeProvider.TRT, RuntimeProvider.CUDA, RuntimeProvider.CPU
+        return parse_enum(get_available_onnx_providers(), RuntimeProvider)
     elif format == format.TORCHSCRIPT or format == format.TORCH_TRT:
         return (RuntimeProvider.PYT,)
     elif format == format.TF_SAVEDMODEL or format == format.TF_TRT:
