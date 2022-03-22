@@ -18,6 +18,7 @@ import re
 from subprocess import CalledProcessError
 from typing import List
 
+import cpuinfo
 import psutil
 
 from model_navigator.framework_api.logger import LOGGER
@@ -75,29 +76,6 @@ def _remove(input: str, regex: str):
     return re.sub(regex, "", input).strip()
 
 
-def get_env():
-    packages = _get_packages()
-
-    os_details = {
-        "name": os.name,
-        "platform": platform.system(),
-        "release": platform.release(),
-    }
-
-    env = {
-        "cpu": platform.processor(),
-        "memory": psutil._common.bytes2human(psutil.virtual_memory().total),
-        "gpu": _split_to_dict(
-            _remove(_command_runner(command=["nvidia-smi", "-L"]), regex=r"\(UUID: .+?\)").splitlines(), ":"
-        ),
-        "driver_version": _search(input=_command_runner(command=["nvidia-smi"]), regex=r"Driver Version: (.*?) "),
-        "os": os_details,
-        "python_version": platform.python_version(),
-        "python_packages": {k: v for k, v in packages.items() if k in package_filter},
-    }
-    return env
-
-
 def get_git_info():
     try:
         git_info = {
@@ -110,3 +88,53 @@ def get_git_info():
         LOGGER.warning(f"Unable to get git info: {e}")
         git_info = {}
     return git_info
+
+
+def get_env():
+    packages = _get_packages()
+
+    os_details = {
+        "name": os.name,
+        "platform": platform.system(),
+        "release": platform.release(),
+    }
+
+    cpu_details = {
+        "name": cpuinfo.get_cpu_info()["brand_raw"],
+        "physical_cores": psutil.cpu_count(logical=False),
+        "logical_cores": psutil.cpu_count(logical=True),
+        "min_frequency": psutil.cpu_freq().min,
+        "max_frequency": psutil.cpu_freq().max,
+    }
+
+    data = _command_runner(
+        command=["nvidia-smi", "--query-gpu=name,driver_version,memory.total,power.max_limit", "--format=csv"]
+    )
+    lines = data.split(sep="\n")
+    device_details = lines[1].split(",")
+
+    cuda_version = None
+    data = _command_runner(command=["nvidia-smi", "--query"])
+    lines = data.split(sep="\n")
+    for line in lines:
+        if line.startswith("CUDA Version"):
+            cuda_version = line.split(":")[1].strip()
+            break
+
+    gpu_details = {
+        "name": device_details[0].strip(),
+        "driver_version": device_details[1].strip(),
+        "memory": device_details[2].strip(),
+        "tdp": device_details[3].strip(),
+        "cuda_version": cuda_version,
+    }
+
+    env = {
+        "cpu": cpu_details,
+        "memory": psutil._common.bytes2human(psutil.virtual_memory().total),
+        "gpu": gpu_details,
+        "os": os_details,
+        "python_version": platform.python_version(),
+        "python_packages": {k: v for k, v in packages.items() if k in package_filter},
+    }
+    return env

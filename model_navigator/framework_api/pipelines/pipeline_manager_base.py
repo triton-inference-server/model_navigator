@@ -58,8 +58,10 @@ class PipelineManager:
 
     @staticmethod
     def _cleanup(config: Config):
+        # pytype: disable=attribute-error
         if config.workdir.exists() and not config.keep_workdir:
             shutil.rmtree(config.workdir, ignore_errors=True)
+        # pytype: enable=attribute-error
 
     @staticmethod
     def _validate(config: Config):

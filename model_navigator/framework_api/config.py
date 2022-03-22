@@ -31,7 +31,7 @@ class Config(DataObject):
     model_name: str
     model: object
     dataloader: SizedDataLoader
-    workdir: Path
+    workdir: Union[Path, str]
     override_workdir: bool
     keep_workdir: bool
     target_formats: Tuple[Format, ...]
@@ -89,6 +89,9 @@ class Config(DataObject):
                 raise TypeError(
                     f"Incorrect type for {field_name}. Expected type {expected_type} got {type(value)} instead."
                 )
+
+        if isinstance(self.workdir, str):
+            object.__setattr__(self, "workdir", Path(self.workdir))
 
     def _log(self):
         LOGGER.info(pad_string("Config parameters"))
