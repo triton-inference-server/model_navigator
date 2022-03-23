@@ -21,7 +21,7 @@ from tensorflow.python.compiler.tensorrt import trt_convert as trtc  # pytype: d
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.export.tf import ExportTF2SavedModel
-from model_navigator.framework_api.common import Sample
+from model_navigator.framework_api.common import Sample, TensorMetadata
 from model_navigator.framework_api.exceptions import UserErrorContext
 from model_navigator.framework_api.utils import (
     ArtifactType,
@@ -51,6 +51,8 @@ class ConvertSavedModel2ONNX(Command):
         workdir: Path,
         opset: int,
         model_name: str,
+        input_metadata: TensorMetadata,
+        output_metadata: TensorMetadata,
         **kwargs,
     ):
         exported_model_path = get_package_path(workdir, model_name) / ExportTF2SavedModel().get_output_relative_path()
@@ -65,6 +67,10 @@ class ConvertSavedModel2ONNX(Command):
             converted_model_path.as_posix(),
             "--opset",
             str(opset),
+            "--rename-inputs",
+            ",".join(input_metadata.keys()),
+            "--rename-outputs",
+            ",".join(output_metadata.keys()),
         ]
 
         with UserErrorContext():

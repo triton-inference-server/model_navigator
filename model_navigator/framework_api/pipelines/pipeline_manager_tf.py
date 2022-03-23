@@ -59,6 +59,7 @@ class TFPipelineManager(PipelineManager):
             for provider in format2runtimes(Format.ONNX):
                 commands.append(CorrectnessTensorFlow2ONNX(runtime_provider=provider, requires=(onnx_convert,)))
                 commands.append(PerformanceONNX(runtime_provider=provider, requires=(onnx_convert,)))
+            commands.append(ConfigCli(target_format=Format.ONNX, requires=(onnx_convert,)))
         if Format.TENSORRT in config.target_formats:
             if Format.ONNX not in config.target_formats:
                 onnx_convert = ConvertSavedModel2ONNX(requires=(export_savedmodel,))
@@ -66,15 +67,14 @@ class TFPipelineManager(PipelineManager):
                 for provider in format2runtimes(Format.ONNX):
                     commands.append(CorrectnessTensorFlow2ONNX(runtime_provider=provider, requires=(onnx_convert,)))
                     commands.append(PerformanceONNX(runtime_provider=provider, requires=(onnx_convert,)))
+                commands.append(ConfigCli(target_format=Format.ONNX, requires=(onnx_convert,)))
             for target_precision in config.target_precisions:
-                onnx_convert = ConvertONNX2TRT(target_precision=target_precision, requires=(onnx_convert,))
-                commands.append(onnx_convert)
-                commands.append(CorrectnessTensorFlow2TRT(target_precision=target_precision, requires=(onnx_convert,)))
-                commands.append(PerformanceTRT(target_precision=target_precision, requires=(onnx_convert,)))
+                trt_convert = ConvertONNX2TRT(target_precision=target_precision, requires=(onnx_convert,))
+                commands.append(trt_convert)
+                commands.append(CorrectnessTensorFlow2TRT(target_precision=target_precision, requires=(trt_convert,)))
+                commands.append(PerformanceTRT(target_precision=target_precision, requires=(trt_convert,)))
                 commands.append(
-                    ConfigCli(
-                        target_format=Format.TENSORRT, target_precision=target_precision, requires=(onnx_convert,)
-                    )
+                    ConfigCli(target_format=Format.TENSORRT, target_precision=target_precision, requires=(trt_convert,))
                 )
 
         if Format.TF_TRT in config.target_formats:
