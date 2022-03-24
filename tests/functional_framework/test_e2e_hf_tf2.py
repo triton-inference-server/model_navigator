@@ -17,6 +17,8 @@ import argparse
 import tempfile
 from pathlib import Path
 
+import tensorflow  # pytype: disable=import-error
+
 import model_navigator as nav
 
 EXPORT_CONFIGS = {
@@ -27,7 +29,7 @@ EXPORT_CONFIGS = {
         "max_sequence_len": 384,
         "max_bs": 2,
         "sample_count": 10,
-        "expected_formats": ("tf-savedmodel", "tf-trt-fp32"),
+        "expected_formats": ("tf-savedmodel", "tf-trt-fp32", "onnx", "trt-fp32"),
     },
     "distilgpt2": {
         "model_name": "distilgpt2",
@@ -36,7 +38,7 @@ EXPORT_CONFIGS = {
         "max_sequence_len": 384,
         "max_bs": 2,
         "sample_count": 10,
-        "expected_formats": ("tf-savedmodel", "tf-trt-fp32"),
+        "expected_formats": ("tf-savedmodel", "tf-trt-fp32", "onnx", "trt-fp32"),
     },
 }
 
@@ -45,13 +47,21 @@ if __name__ == "__main__":
     parser.add_argument("--model-name", required=True, type=str, choices=list(EXPORT_CONFIGS.keys()))
     args = parser.parse_args()
     export_config = EXPORT_CONFIGS[args.model_name]
+
+    gpus = tensorflow.config.experimental.list_physical_devices("GPU")
+    for gpu in gpus:
+        tensorflow.config.experimental.set_memory_growth(gpu, True)
+
     with tempfile.TemporaryDirectory() as tmp_dir:
         nav_workdir = Path(tmp_dir) / "navigator_workdir"
         nav.LOGGER.info(f"Testing {export_config['model_name']}...")
         expected_formats = export_config.pop("expected_formats")
         # pytype: disable=not-callable # TODO why is not-calleble being raised by pytype?
         pkg_desc = nav.contrib.huggingface.tensorflow.export(
-            workdir=nav_workdir, **export_config, target_precisions=(nav.TensorRTPrecision.FP32,)
+            workdir=nav_workdir,
+            **export_config,
+            target_precisions=(nav.TensorRTPrecision.FP32,),
+            opset=13,
         )
         # pytype: enable=not-callable
         for format, runtimes_status in pkg_desc.get_formats_status().items():

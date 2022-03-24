@@ -27,6 +27,10 @@ from official.utils.misc import distribution_utils  # pytype: disable=import-err
 
 import model_navigator as nav
 
+gpus = tf.config.experimental.list_physical_devices("GPU")
+for gpu in gpus:
+    tf.config.experimental.set_memory_growth(gpu, True)
+
 
 def get_dataset_fn(input_file_pattern, max_seq_length, global_batch_size, is_training, use_horovod):
     """Gets a closure to create a dataset.."""
@@ -152,10 +156,11 @@ if __name__ == "__main__":
             workdir=navigator_workdir,
             dataloader=dataloader,
             sample_count=10,
-            target_formats=(nav.Format.TF_TRT,),
+            target_formats=(nav.Format.TENSORRT,),
             target_precisions=(nav.TensorRTPrecision.FP32,),
+            opset=13,
         )
-        expected_formats = ("tf-trt-fp32",)
+        expected_formats = ("tf-trt-fp32", "onnx")
         for format, runtimes_status in pkg_desc.get_formats_status().items():
             for runtime, status in runtimes_status.items():
                 assert (status == nav.Status.OK) == (

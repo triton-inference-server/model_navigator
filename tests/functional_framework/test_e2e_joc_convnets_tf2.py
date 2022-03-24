@@ -22,6 +22,10 @@ from config.defaults import Config, base_config  # pytype: disable=import-error
 
 import model_navigator as nav
 
+gpus = tf.config.experimental.list_physical_devices("GPU")
+for gpu in gpus:
+    tf.config.experimental.set_memory_growth(gpu, True)
+
 DATALOADER = [tf.random.uniform(shape=[2, 224, 224, 3], minval=0, maxval=1, dtype=tf.dtypes.float32)]
 
 
@@ -61,9 +65,13 @@ if __name__ == "__main__":
         nav_workdir = Path(tmp_dir) / "navigator_workdir"
 
         pkg_desc = nav.tensorflow.export(
-            model=model, workdir=nav_workdir, dataloader=DATALOADER, target_precisions=(nav.TensorRTPrecision.FP32,)
+            model=model,
+            workdir=nav_workdir,
+            dataloader=DATALOADER,
+            target_precisions=(nav.TensorRTPrecision.FP32,),
+            opset=13,
         )
-        expected_formats = ("tf-savedmodel",)
+        expected_formats = ("tf-savedmodel", "onnx", "trt-fp32")
         for format, runtimes_status in pkg_desc.get_formats_status().items():
             for runtime, status in runtimes_status.items():
                 assert (status == nav.Status.OK) == (

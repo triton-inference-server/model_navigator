@@ -169,7 +169,8 @@ def test_tf2_export_tf_onnx():
         # Formats not exported but present as step for onnx
         assert check_model_dir(model_dir=package_dir / "tf-savedmodel", format=nav.Format.TF_SAVEDMODEL)
 
-# TODO Fix onnx to trt conversion or test for TensorFlow2
+
+# TODO: Fix test - tf2 is using all memory
 # def test_tf2_export_trt():
 #     with tempfile.TemporaryDirectory() as tmp_dir:
 #         model_name = "navigator_model"
@@ -188,6 +189,7 @@ def test_tf2_export_tf_onnx():
 #             model_name=model_name,
 #             override_workdir=True,
 #             target_formats=(nav.Format.TENSORRT,),
+#             opset=13,
 #         )
 #
 #         assert status_file.is_file()

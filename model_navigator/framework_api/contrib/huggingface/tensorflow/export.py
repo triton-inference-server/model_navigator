@@ -132,6 +132,8 @@ def export(
         target_formats = (
             Format.TF_SAVEDMODEL,
             Format.TF_TRT,
+            Format.ONNX,
+            Format.TENSORRT,
         )
     if max_workspace_size is None:
         max_workspace_size = get_default_max_workspace_size()
