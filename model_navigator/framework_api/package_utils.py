@@ -14,17 +14,12 @@
 
 from packaging import version
 
-from model_navigator.framework_api.logger import LOGGER
-
 try:
-    import torch  # pytype: disable=import-error
+    import torch  # pytype: disable=import-error # noqa: F401
 
-    _TORCH_VERSION = torch.__version__
     _TORCH_AVAILABLE = True
-    LOGGER.info(f"PyTorch version {_TORCH_VERSION} available.")
 except ModuleNotFoundError:
     _TORCH_AVAILABLE = False
-    LOGGER.info("PyTorch is not available.")
 
 try:
     import tensorflow  # pytype: disable=import-error
@@ -33,13 +28,10 @@ try:
 
     if version.parse(_TF_VERSION) < version.parse("2.0.0"):
         _TF_AVAILABLE = False
-        LOGGER.info("TensorFlow2 is not available.")
     else:
         _TF_AVAILABLE = True
-        LOGGER.info(f"TensorFlow2 version {_TF_VERSION} available.")
 except ModuleNotFoundError:
     _TF_AVAILABLE = False
-    LOGGER.info("TensorFlow2 is not available.")
 
 try:
     import datasets  # pytype: disable=import-error # noqa: F401
