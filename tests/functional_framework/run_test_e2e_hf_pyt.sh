@@ -15,4 +15,11 @@
 
 set -ex
 
-./tests/functional_framework/test_e2e_hf_pyt.py 2>&1
+if [ -z "$1" ]
+then
+    WORKDIR=$(mktemp -d)
+else
+    WORKDIR=${1}
+fi
+
+./tests/functional_framework/test_e2e_hf_pyt.py --workdir ${WORKDIR}

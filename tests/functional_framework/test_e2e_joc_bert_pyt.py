@@ -68,11 +68,16 @@ if __name__ == "__main__":
         "be truncated to this length.",
     )
     parser.add_argument("--predict_batch_size", default=8, type=int, help="Total batch size for predictions.")
+    parser.add_argument(
+        "--workdir",
+        type=str,
+        required=True,
+    )
     args = parser.parse_args()
 
     with tempfile.TemporaryDirectory() as tmp_dir:
 
-        navigator_workdir = Path(tmp_dir) / "navigator_workdir"
+        navigator_workdir = Path(args.workdir)
         download_dir = Path(tmp_dir) / "download"
         download_dir.mkdir(exist_ok=True, parents=True)
 
@@ -108,7 +113,7 @@ if __name__ == "__main__":
 
         pkg_desc = nav.torch.export(
             model=model,
-            model_name="bert",
+            model_name="PyT-BERT",
             workdir=navigator_workdir,
             dataloader=eval_dataloader,
             sample_count=1,

@@ -14,7 +14,7 @@
 # limitations under the License.
 
 import argparse
-import tempfile
+import shutil
 from pathlib import Path
 
 import tensorflow  # pytype: disable=import-error
@@ -45,6 +45,11 @@ EXPORT_CONFIGS = {
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model-name", required=True, type=str, choices=list(EXPORT_CONFIGS.keys()))
+    parser.add_argument(
+        "--workdir",
+        type=str,
+        required=True,
+    )
     args = parser.parse_args()
     export_config = EXPORT_CONFIGS[args.model_name]
 
@@ -52,22 +57,25 @@ if __name__ == "__main__":
     for gpu in gpus:
         tensorflow.config.experimental.set_memory_growth(gpu, True)
 
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        nav_workdir = Path(tmp_dir) / "navigator_workdir"
-        nav.LOGGER.info(f"Testing {export_config['model_name']}...")
-        expected_formats = export_config.pop("expected_formats")
-        # pytype: disable=not-callable # TODO why is not-calleble being raised by pytype?
-        pkg_desc = nav.contrib.huggingface.tensorflow.export(
-            workdir=nav_workdir,
-            **export_config,
-            target_precisions=(nav.TensorRTPrecision.FP32,),
-            opset=13,
-        )
-        # pytype: enable=not-callable
-        for format, runtimes_status in pkg_desc.get_formats_status().items():
-            for runtime, status in runtimes_status.items():
-                assert (status == nav.Status.OK) == (
-                    format in expected_formats
-                ), f"{format} {runtime} status is {status}, but expected formats are {expected_formats}."
-        nav.LOGGER.info(f"{export_config['model_name']} passed.")
-    nav.LOGGER.info("All models passed.")
+    nav_workdir = Path(args.workdir)
+    nav.LOGGER.info(f"Testing {export_config['model_name']}...")
+    expected_formats = export_config.pop("expected_formats")
+    # pytype: disable=not-callable # TODO why is not-calleble being raised by pytype?
+    pkg_desc = nav.contrib.huggingface.tensorflow.export(
+        workdir=nav_workdir,
+        **export_config,
+        target_precisions=(nav.TensorRTPrecision.FP32,),
+        opset=13,
+    )
+    # pytype: enable=not-callable
+    for format, runtimes_status in pkg_desc.get_formats_status().items():
+        for runtime, status in runtimes_status.items():
+            assert (status == nav.Status.OK) == (
+                format in expected_formats
+            ), f"{format} {runtime} status is {status}, but expected formats are {expected_formats}."
+
+    shutil.move(
+        (Path(args.workdir) / f"{export_config['model_name']}.nav").as_posix(),
+        (Path(args.workdir) / f"TF2-{export_config['model_name']}.nav").as_posix(),
+    )
+    nav.LOGGER.info(f"{export_config['model_name']} passed.")

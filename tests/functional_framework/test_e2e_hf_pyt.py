@@ -13,7 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import tempfile
+import argparse
+import shutil
 from pathlib import Path
 
 import model_navigator as nav
@@ -76,21 +77,31 @@ EXPORT_CONFIGS = [
 ]
 
 if __name__ == "__main__":
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        nav_workdir = Path(tmp_dir) / "navigator_workdir"
-        for export_config in EXPORT_CONFIGS:
-            nav.LOGGER.info(f"Testing {export_config['model_name']}...")
-            expected_formats = export_config.pop("expected_formats")
-            # pytype: disable=not-callable # TODO why is not-calleble being raised by pytype?
-            pkg_desc = nav.contrib.huggingface.torch.export(
-                workdir=nav_workdir,
-                **export_config,
-            )
-            # pytype: enable=not-callable
-            for format, runtimes_status in pkg_desc.get_formats_status().items():
-                for runtime, status in runtimes_status.items():
-                    assert (status == nav.Status.OK) == (
-                        format in expected_formats
-                    ), f"{format} {runtime} status is {status}, but expected formats are {expected_formats}."
-            nav.LOGGER.info(f"{export_config['model_name']} passed.")
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--workdir",
+        type=str,
+        required=True,
+    )
+    args = parser.parse_args()
+    nav_workdir = Path(args.workdir)
+    for export_config in EXPORT_CONFIGS:
+        nav.LOGGER.info(f"Testing {export_config['model_name']}...")
+        expected_formats = export_config.pop("expected_formats")
+        # pytype: disable=not-callable # TODO why is not-calleble being raised by pytype?
+        pkg_desc = nav.contrib.huggingface.torch.export(
+            workdir=nav_workdir,
+            **export_config,
+        )
+        # pytype: enable=not-callable
+        for format, runtimes_status in pkg_desc.get_formats_status().items():
+            for runtime, status in runtimes_status.items():
+                assert (status == nav.Status.OK) == (
+                    format in expected_formats
+                ), f"{format} {runtime} status is {status}, but expected formats are {expected_formats}."
+        shutil.move(
+            (Path(args.workdir) / f"{export_config['model_name']}.nav").as_posix(),
+            (Path(args.workdir) / f"PyT-{export_config['model_name']}.nav").as_posix(),
+        )
+        nav.LOGGER.info(f"{export_config['model_name']} passed.")
     nav.LOGGER.info("All models passed.")

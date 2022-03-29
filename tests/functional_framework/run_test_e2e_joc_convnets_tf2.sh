@@ -27,6 +27,14 @@ trap cleanup EXIT
 git clone https://github.com/NVIDIA/DeepLearningExamples ${TEMPDIR}/DeepLearningExamples
 export PYTHONPATH="${PYTHONPATH}:${TEMPDIR}/DeepLearningExamples/TensorFlow2/Classification/ConvNets/"
 
-./tests/functional_framework/test_e2e_joc_convnets_tf2.py --model-name EfficientNet-v1-B0
-./tests/functional_framework/test_e2e_joc_convnets_tf2.py --model-name EfficientNet-v1-B4
-./tests/functional_framework/test_e2e_joc_convnets_tf2.py --model-name EfficientNet-v2-S
+if [ -z "$1" ]
+then
+    WORKDIR=${TEMPDIR}
+else
+    WORKDIR=${1}
+fi
+
+
+./tests/functional_framework/test_e2e_joc_convnets_tf2.py --model-name EfficientNet-v1-B0 --workdir ${WORKDIR}
+./tests/functional_framework/test_e2e_joc_convnets_tf2.py --model-name EfficientNet-v1-B4 --workdir ${WORKDIR}
+./tests/functional_framework/test_e2e_joc_convnets_tf2.py --model-name EfficientNet-v2-S --workdir ${WORKDIR}

@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import tempfile
+import argparse
 from pathlib import Path
 
 import torch  # pytype: disable=import-error
@@ -38,31 +38,39 @@ DATALOADER = [torch.randn(1, 3, 224, 224)]
 
 
 if __name__ == "__main__":
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        nav_workdir = Path(tmp_dir) / "navigator_workdir"
-        for model_name, model_cls in MODELS.items():
-            nav.LOGGER.info(f"Testing {model_name}...")
-            model = model_cls(pretrained=True).eval()
-            pkg_desc = nav.torch.export(
-                model=model,
-                dataloader=DATALOADER,
-                workdir=nav_workdir,
-                target_device="cuda",
-            )
-            expected_formats = (
-                "torchscript-script",
-                "torchscript-trace",
-                "onnx",
-                "torch-trt-script",
-                "torch-trt-trace",
-                "trt-fp32",
-                "trt-fp16",
-            )
-            for format, runtimes_status in pkg_desc.get_formats_status().items():
-                for runtime, status in runtimes_status.items():
-                    assert (status == nav.Status.OK) == (
-                        format in expected_formats
-                    ), f"{format} {runtime} status is {status}, but expected formats are {expected_formats}."
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--workdir",
+        type=str,
+        required=True,
+    )
+    args = parser.parse_args()
 
-            nav.LOGGER.info(f"{model_name} passed.")
+    nav_workdir = Path(args.workdir)
+    for model_name, model_cls in MODELS.items():
+        nav.LOGGER.info(f"Testing {model_name}...")
+        model = model_cls(pretrained=True).eval()
+        pkg_desc = nav.torch.export(
+            model=model,
+            model_name="PyT-" + model_name,
+            dataloader=DATALOADER,
+            workdir=nav_workdir,
+            target_device="cuda",
+        )
+        expected_formats = (
+            "torchscript-script",
+            "torchscript-trace",
+            "onnx",
+            "torch-trt-script",
+            "torch-trt-trace",
+            "trt-fp32",
+            "trt-fp16",
+        )
+        for format, runtimes_status in pkg_desc.get_formats_status().items():
+            for runtime, status in runtimes_status.items():
+                assert (status == nav.Status.OK) == (
+                    format in expected_formats
+                ), f"{format} {runtime} status is {status}, but expected formats are {expected_formats}."
+
+        nav.LOGGER.info(f"{model_name} passed.")
     nav.LOGGER.info("All models passed.")

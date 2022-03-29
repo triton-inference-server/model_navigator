@@ -15,5 +15,12 @@
 
 set -ex
 
-./tests/functional_framework/test_e2e_hf_tf2.py --model-name distilbert-base-uncased
-./tests/functional_framework/test_e2e_hf_tf2.py --model-name distilgpt2
+if [ -z "$1" ]
+then
+    WORKDIR=$(mktemp -d)
+else
+    WORKDIR=${1}
+fi
+
+./tests/functional_framework/test_e2e_hf_tf2.py --model-name distilbert-base-uncased --workdir ${WORKDIR}
+./tests/functional_framework/test_e2e_hf_tf2.py --model-name distilgpt2 --workdir ${WORKDIR}

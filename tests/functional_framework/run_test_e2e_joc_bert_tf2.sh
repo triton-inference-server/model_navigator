@@ -48,9 +48,17 @@ pip install \
 python3 ${BERT_PATH}/data/bertPrep.py --action download --dataset squad
 python3 ${BERT_PATH}/data/bertPrep.py --action download --dataset google_pretrained_weights
 
+if [ -z "$1" ]
+then
+    WORKDIR=${TEMPDIR}
+else
+    WORKDIR=${1}
+fi
+
 ./tests/functional_framework/test_e2e_joc_bert_tf2.py \
   --config_file ${BERT_PREP_WORKING_DIR}/download/google_pretrained_weights/uncased_L-12_H-768_A-12/bert_config.json \
   --predict_file ${BERT_PREP_WORKING_DIR}/download/squad/v1.1/dev-v1.1.json \
   --vocab_file ${BERT_PREP_WORKING_DIR}/download/google_pretrained_weights/uncased_L-12_H-768_A-12/vocab.txt \
-  --checkpoint_path ${BERT_PREP_WORKING_DIR}/download/google_pretrained_weights/uncased_L-12_H-768_A-12/bert_model.ckpt.index
+  --checkpoint_path ${BERT_PREP_WORKING_DIR}/download/google_pretrained_weights/uncased_L-12_H-768_A-12/bert_model.ckpt.index \
+  --workdir ${WORKDIR}
 

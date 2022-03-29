@@ -14,7 +14,6 @@
 # limitations under the License.
 
 import argparse
-import tempfile
 from pathlib import Path
 
 import tensorflow as tf  # pytype: disable=import-error
@@ -36,6 +35,11 @@ if __name__ == "__main__":
         type=str,
         required=True,
         choices=["EfficientNet-v1-B0", "EfficientNet-v1-B4", "EfficientNet-v2-S"],
+    )
+    parser.add_argument(
+        "--workdir",
+        type=str,
+        required=True,
     )
     args = parser.parse_args()
 
@@ -61,23 +65,22 @@ if __name__ == "__main__":
 
     model = Model(config)
 
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        nav_workdir = Path(tmp_dir) / "navigator_workdir"
+    nav_workdir = Path(args.workdir)
 
-        pkg_desc = nav.tensorflow.export(
-            model=model,
-            workdir=nav_workdir,
-            dataloader=DATALOADER,
-            target_precisions=(nav.TensorRTPrecision.FP32,),
-            opset=13,
-        )
-        expected_formats = ("tf-savedmodel", "onnx", "trt-fp32")
-        for format, runtimes_status in pkg_desc.get_formats_status().items():
-            for runtime, status in runtimes_status.items():
-                assert (status == nav.Status.OK) == (
-                    format in expected_formats
-                ), f"{format} {runtime} status is {status}, but expected formats are {expected_formats}."
+    pkg_desc = nav.tensorflow.export(
+        model=model,
+        model_name="TF2-" + model_name,
+        workdir=nav_workdir,
+        dataloader=DATALOADER,
+        target_precisions=(nav.TensorRTPrecision.FP32,),
+        opset=13,
+        override_workdir=True,
+    )
+    expected_formats = ("tf-savedmodel", "onnx", "trt-fp32")
+    for format, runtimes_status in pkg_desc.get_formats_status().items():
+        for runtime, status in runtimes_status.items():
+            assert (status == nav.Status.OK) == (
+                format in expected_formats
+            ), f"{format} {runtime} status is {status}, but expected formats are {expected_formats}."
 
-        nav.LOGGER.info(f"{model_name} passed.")
-
-    nav.LOGGER.info("All models passed.")
+    nav.LOGGER.info(f"{model_name} passed.")

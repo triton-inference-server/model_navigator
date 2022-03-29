@@ -95,11 +95,16 @@ if __name__ == "__main__":
     )
     parser.add_argument("--predict_batch_size", default=8, type=int, help="Total batch size for predictions.")
     parser.add_argument("--checkpoint_path", default=None, type=str, help="Checkpoint path.")
+    parser.add_argument(
+        "--workdir",
+        type=str,
+        required=True,
+    )
     args = parser.parse_args()
 
     with tempfile.TemporaryDirectory() as tmp_dir:
 
-        navigator_workdir = Path(tmp_dir) / "navigator_workdir"
+        navigator_workdir = Path(args.workdir)
 
         bert_config = modeling.BertConfig.from_json_file(args.config_file)
         tokenizer = tokenization.FullTokenizer(args.vocab_file, do_lower_case=args.do_lower_case)
@@ -152,7 +157,7 @@ if __name__ == "__main__":
 
         pkg_desc = nav.tensorflow.export(
             model=squad_model,
-            model_name="bert",
+            model_name="TF2-BERT",
             workdir=navigator_workdir,
             dataloader=dataloader,
             sample_count=10,

@@ -27,4 +27,11 @@ trap cleanup EXIT
 git clone https://github.com/NVIDIA/DeepLearningExamples ${TEMPDIR}/DeepLearningExamples
 export PYTHONPATH="${PYTHONPATH}:${TEMPDIR}/DeepLearningExamples/PyTorch/Classification/ConvNets/"
 
-./tests/functional_framework/test_e2e_joc_convnets_pyt.py
+if [ -z "$1" ]
+then
+    WORKDIR=${TEMPDIR}
+else
+    WORKDIR=${1}
+fi
+
+./tests/functional_framework/test_e2e_joc_convnets_pyt.py --workdir ${WORKDIR}
