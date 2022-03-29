@@ -77,5 +77,5 @@ class ModelAnalyzerAnalysisConfig(BaseConfig):
     top_n_configs: int = 3
     objectives: Dict[str, int] = field(default_factory=lambda: {"perf_throughput": 10})
     max_latency_ms: Optional[int] = None
-    min_throughput: int = 1
+    min_throughput: int = 0
     max_gpu_usage_mb: Optional[int] = None

@@ -138,7 +138,7 @@ model_repository: path
 [ max_latency_ms: integer ]
 
 # Minimal throughput that the analyzed models should match.
-[ min_throughput: integer | default: 1 ]
+[ min_throughput: integer ]
 
 # Maximal GPU memory usage in MB that analyzed model should match.
 [ max_gpu_usage_mb: integer ]

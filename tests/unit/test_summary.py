@@ -65,7 +65,7 @@ def test_top_results_perf():
 
 def test_top_results_latency():
     config = ModelAnalyzerAnalysisConfig()
-    config.objectives = {"perf_latency": 10}
+    config.objectives = {"perf_latency_p99": 10}
 
     results_file = FILES_DIR / "results.csv"
     metrics_file = FILES_DIR / "metrics.csv"
@@ -89,7 +89,7 @@ def test_top_results_latency():
 
 def test_top_results_wighted():
     config = ModelAnalyzerAnalysisConfig()
-    config.objectives = {"perf_throughput": 10, "perf_latency": 5}
+    config.objectives = {"perf_throughput": 10, "perf_latency_p99": 5}
 
     results_file = FILES_DIR / "results.csv"
     metrics_file = FILES_DIR / "metrics.csv"
@@ -133,7 +133,7 @@ def test_prepare_results():
 
 def test_print_results():
     config = ModelAnalyzerAnalysisConfig()
-    config.objectives = {"perf_throughput": 10, "perf_latency": 5}
+    config.objectives = {"perf_throughput": 10, "perf_latency_p99": 5}
 
     results_file = FILES_DIR / "results.csv"
     metrics_file = FILES_DIR / "metrics.csv"

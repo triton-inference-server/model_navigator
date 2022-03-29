@@ -114,7 +114,7 @@ You should see an output similar to the output below:
 2021-12-06 13:23:01 - INFO - model_navigator.log: 	top_n_configs = 3
 2021-12-06 13:23:01 - INFO - model_navigator.log: 	objectives = {'perf_throughput': 10}
 2021-12-06 13:23:01 - INFO - model_navigator.log: 	max_latency_ms = None
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	min_throughput = 1
+2021-12-06 13:23:01 - INFO - model_navigator.log: 	min_throughput = 0
 2021-12-06 13:23:01 - INFO - model_navigator.log: 	max_gpu_usage_mb = None
 2021-12-06 13:23:01 - INFO - model_navigator.log: 	perf_analyzer_timeout = 600
 2021-12-06 13:23:01 - INFO - model_navigator.log: 	perf_measurement_mode = count_windows

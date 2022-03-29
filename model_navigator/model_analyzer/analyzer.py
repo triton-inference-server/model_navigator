@@ -146,6 +146,26 @@ class AnalysisConfigGenerator(BaseConfigGenerator):
             LOGGER.info(f"\t- {model_name}")
 
         # https://github.com/triton-inference-server/model_analyzer/blob/r22.02/docs/config.md
+        inference_output_fields = [
+            "model_name",
+            "batch_size",
+            "concurrency",
+            "model_config_path",
+            "instance_group",
+            "satisfies_constraints",
+            "perf_throughput",
+            "perf_latency_avg",
+            "perf_latency_p90",
+            "perf_latency_p95",
+            "perf_latency_p99",
+            "perf_client_response_wait",
+            "perf_client_send_recv",
+            "perf_server_queue",
+            "perf_server_compute_input",
+            "perf_server_compute_infer",
+            "perf_server_compute_output",
+        ]
+
         config = {
             "analysis_models": model_names,
             "checkpoint_directory": self._analyzer_checkpoints_dir_path.as_posix(),
@@ -155,6 +175,7 @@ class AnalysisConfigGenerator(BaseConfigGenerator):
             "filename_model_gpu": self.metrics_path.name,
             "num_top_model_configs": self._analysis_config.top_n_configs,
             "objectives": self._analysis_config.objectives,
+            "inference_output_fields": inference_output_fields,
         }
 
         constraints = self._get_constraints()
@@ -166,7 +187,7 @@ class AnalysisConfigGenerator(BaseConfigGenerator):
     def _get_constraints(self):
         constraints = {}
         if self._analysis_config.max_latency_ms is not None:
-            constraints["perf_latency"] = {"max": self._analysis_config.max_latency_ms}
+            constraints["perf_latency_p99"] = {"max": self._analysis_config.max_latency_ms}
 
         if self._analysis_config.min_throughput is not None:
             constraints["perf_throughput"] = {"min": self._analysis_config.min_throughput}
