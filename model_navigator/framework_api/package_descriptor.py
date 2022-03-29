@@ -27,7 +27,6 @@ from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.pipelines.pipeline import Pipeline
 from model_navigator.framework_api.utils import (
     DataObject,
-    Framework,
     JitType,
     RuntimeProvider,
     Status,
@@ -248,17 +247,30 @@ class PackageDescriptor:
         status_file_path = get_package_path(self.config.workdir, self.config.model_name) / "status.yaml"
         status_file_path.unlink()
 
-    def _load_model(self, model_path, framework: Framework, format: Format):
+    @staticmethod
+    def _load_model(model_path, format: Format, runtime: Optional[RuntimeProvider] = None):
         LOGGER.info(f"Loading model from path: {model_path}")
-        if framework == Framework.PYT:
-            if format == Format.ONNX:
-                import onnx  # pytype: disable=import-error
 
-                return onnx.load(model_path)
-            else:
-                import torch  # pytype: disable=import-error
+        if runtime is None:
+            runtime = format2runtimes(format)
 
-                return torch.jit.load(model_path)
+        if format == Format.ONNX:
+            from polygraphy.backend.onnxrt import SessionFromOnnx
+
+            from model_navigator.framework_api.runners.onnx import OnnxrtRunner
+
+            return OnnxrtRunner(SessionFromOnnx(model_path, providers=[runtime]))
+        elif format == Format.TENSORRT:
+            from polygraphy.backend.common import BytesFromPath
+            from polygraphy.backend.trt import EngineFromBytes
+
+            from model_navigator.framework_api.runners.trt import TrtRunner
+
+            return TrtRunner(EngineFromBytes(BytesFromPath(model_path.as_posix())))
+        elif format in (Format.TORCHSCRIPT, Format.TORCH_TRT):
+            import torch  # pytype: disable=import-error
+
+            return torch.jit.load(model_path)
         else:
             import tensorflow  # pytype: disable=import-error
 
@@ -331,13 +343,23 @@ class PackageDescriptor:
         return results
 
     def get_model(
-        self, format: Format, jit_type: Optional[JitType] = None, precision: Optional[TensorRTPrecision] = None
+        self,
+        format: Format,
+        jit_type: Optional[JitType] = None,
+        precision: Optional[TensorRTPrecision] = None,
+        runtime: Optional[RuntimeProvider] = None,
     ):
-        """Load exported model for given format, jit_type and precision and return model object"""
+        """
+        Load exported model for given format, jit_type and precision and return model object
+
+        :return
+            model object for TensorFlow and PyTorch
+            Runner (Polygraphy) for ONNX and TRT
+        """
         model_path = get_package_path(
             workdir=self.config.workdir, model_name=self.config.model_name
         ) / format_to_relative_model_path(format=format, jit_type=jit_type, precision=precision)
         if model_path.exists():
-            return self._load_model(model_path=model_path, framework=self.config.framework, format=format)
+            return self._load_model(model_path=model_path, format=format, runtime=runtime)
         else:
             return None
