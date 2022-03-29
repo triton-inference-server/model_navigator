@@ -47,6 +47,7 @@ class RuntimeResults(DataObject):
     rtol: Optional[float] = None
     performance: Optional[dict] = None
     err_msg: Optional[dict] = None
+    verified: bool = False
 
 
 @dataclass
@@ -56,7 +57,6 @@ class ModelStatus(DataObject):
     runtime_results: List[RuntimeResults]
     torch_jit: Optional[JitType] = None
     precision: Optional[TensorRTPrecision] = None
-    verified: bool = False
 
 
 @dataclass
@@ -176,7 +176,7 @@ class PackageDescriptor:
 
         LOGGER.warning(
             "Initially models are not verified. Validate exported models and use "
-            "PackageDescriptor.set_verified(format, jit_type, precision) method to set models as verified."
+            "PackageDescriptor.set_verified(format, runtime, jit_type, precision) method to set models as verified."
         )
 
     @staticmethod
@@ -277,18 +277,24 @@ class PackageDescriptor:
             return tensorflow.keras.models.load_model(model_path)
 
     def set_verified(
-        self, format: Format, jit_type: Optional[JitType] = None, precision: Optional[TensorRTPrecision] = None
+        self,
+        format: Format,
+        runtime: RuntimeProvider,
+        jit_type: Optional[JitType] = None,
+        precision: Optional[TensorRTPrecision] = None,
     ):
         for model_status in self.navigator_status.model_status:
-            if (
-                model_status.format == format
-                and model_status.torch_jit == jit_type
-                and model_status.precision == precision
-            ):
-                model_status.verified = True
-                self._delete_status_file()
-                self._create_status_file()
-                return
+            for runtime_results in model_status.runtime_results:
+                if (
+                    model_status.format == format
+                    and model_status.torch_jit == jit_type
+                    and model_status.precision == precision
+                    and runtime_results.runtime == runtime
+                ):
+                    runtime_results.verified = True
+                    self._delete_status_file()
+                    self._create_status_file()
+                    return
 
     def get_status(
         self,
