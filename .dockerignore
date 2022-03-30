@@ -19,9 +19,13 @@
 .gitignore
 .flake8
 .tox/
+.pytype/
+.mypy_cache/
 *.egg-info/
 build/
 dist/
 workspace/
 navigator_workspace/
 version.yaml
+**/*.pyc
+**/*.pyi
