@@ -362,7 +362,7 @@ def run_cmd(
             LOGGER.warning(f"Helm Chart generation failed with message: {create_helm_chart_result.status.message}")
     results_store = ResultsStore(workspace)
     results_store.dump("helm-chart-create", create_helm_chart_results)
-    pack_workspace(workspace_path, _get_output_package_path(src_model_config, kwargs), configuration)
+    pack_workspace(workspace.path, _get_output_package_path(src_model_config, kwargs), configuration)
 
 
 def _get_output_package_path(model_config, kwargs):
