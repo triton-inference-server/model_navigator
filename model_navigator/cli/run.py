@@ -14,6 +14,7 @@
 import dataclasses
 import logging
 import shutil
+import sys
 from typing import List, Optional
 
 import click
@@ -306,10 +307,9 @@ def run_cmd(
         shutil.move(src_dir.as_posix(), dst_dir.as_posix())
 
     if not results_to_analyze:
-        LOGGER.warning(
+        sys.exit(
             "No models promoted to profiling and analysis. Please, review the error logs and verify the input model."
         )
-        return
 
     LOGGER.info("Running Model Analyzer profiling for promoted models")
     profile_result: ProfileResult = ctx.forward(
@@ -320,8 +320,7 @@ def run_cmd(
         **dataclass2dict(perf_measurement_config),
     )
     if profile_result.status.state != State.SUCCEEDED:
-        LOGGER.error(f"Model Analyzer profiling failed with message: {profile_result.status.message}")
-        return
+        sys.exit(f"Model Analyzer profiling failed with message: {profile_result.status.message}")
 
     LOGGER.info("Running Model Analyzer analysis for profiled models")
     analyze_results: List[AnalyzeResult] = ctx.forward(
@@ -338,7 +337,7 @@ def run_cmd(
             LOGGER.error(
                 f"Model Analyzer analysis failed for {result.model_config_path} with message: {result.status.message}"
             )
-        return
+        sys.exit("Model Analyzer analysis failed. Please, review the log.")
 
     create_helm_chart_results = []
     LOGGER.info(f"Running Helm Chart generator for top {analysis_config.top_n_configs} configs")
