@@ -69,7 +69,7 @@ if __name__ == "__main__":
 
     pkg_desc = nav.tensorflow.export(
         model=model,
-        model_name="TF2-" + model_name,
+        model_name=model_name.lower() + "_tf2",
         workdir=nav_workdir,
         dataloader=DATALOADER,
         target_precisions=(nav.TensorRTPrecision.FP32,),

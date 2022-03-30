@@ -101,7 +101,7 @@ if __name__ == "__main__":
                 ), f"{format} {runtime} status is {status}, but expected formats are {expected_formats}."
         shutil.move(
             (Path(args.workdir) / f"{export_config['model_name']}.nav").as_posix(),
-            (Path(args.workdir) / f"PyT-{export_config['model_name']}.nav").as_posix(),
+            (Path(args.workdir) / f"{export_config['model_name']}_pyt.nav").as_posix(),
         )
         nav.LOGGER.info(f"{export_config['model_name']} passed.")
     nav.LOGGER.info("All models passed.")

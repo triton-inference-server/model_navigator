@@ -52,7 +52,7 @@ if __name__ == "__main__":
         model = model_cls(pretrained=True).eval()
         pkg_desc = nav.torch.export(
             model=model,
-            model_name="PyT-" + model_name,
+            model_name=model_name + "_pyt",
             dataloader=DATALOADER,
             workdir=nav_workdir,
             target_device="cuda",

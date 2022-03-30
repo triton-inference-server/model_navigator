@@ -76,6 +76,6 @@ if __name__ == "__main__":
 
     shutil.move(
         (Path(args.workdir) / f"{export_config['model_name']}.nav").as_posix(),
-        (Path(args.workdir) / f"TF2-{export_config['model_name']}.nav").as_posix(),
+        (Path(args.workdir) / f"{export_config['model_name']}_tf2.nav").as_posix(),
     )
     nav.LOGGER.info(f"{export_config['model_name']} passed.")

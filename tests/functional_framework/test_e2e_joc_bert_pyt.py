@@ -113,7 +113,7 @@ if __name__ == "__main__":
 
         pkg_desc = nav.torch.export(
             model=model,
-            model_name="PyT-BERT",
+            model_name="bert_pyt",
             workdir=navigator_workdir,
             dataloader=eval_dataloader,
             sample_count=1,

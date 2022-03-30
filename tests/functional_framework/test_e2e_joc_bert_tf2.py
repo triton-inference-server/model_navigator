@@ -157,7 +157,7 @@ if __name__ == "__main__":
 
         pkg_desc = nav.tensorflow.export(
             model=squad_model,
-            model_name="TF2-BERT",
+            model_name="bert_tf2",
             workdir=navigator_workdir,
             dataloader=dataloader,
             sample_count=10,
