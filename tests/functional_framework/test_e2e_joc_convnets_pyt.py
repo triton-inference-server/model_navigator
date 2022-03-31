@@ -57,15 +57,21 @@ if __name__ == "__main__":
             workdir=nav_workdir,
             target_device="cuda",
         )
-        expected_formats = (
-            "torchscript-script",
-            "torchscript-trace",
-            "onnx",
-            "torch-trt-script",
-            "torch-trt-trace",
-            "trt-fp32",
-            "trt-fp16",
-        )
+        if model_name == "se-resnext101-32x4d":
+            expected_formats = (
+                "torchscript-script",
+                "torchscript-trace",
+            )
+        else:
+            expected_formats = (
+                "torchscript-script",
+                "torchscript-trace",
+                "onnx",
+                "torch-trt-script",
+                "torch-trt-trace",
+                "trt-fp32",
+                "trt-fp16",
+            )
         for format, runtimes_status in pkg_desc.get_formats_status().items():
             for runtime, status in runtimes_status.items():
                 assert (status == nav.Status.OK) == (
