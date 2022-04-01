@@ -13,6 +13,7 @@
 # limitations under the License.
 import dataclasses
 import logging
+import pathlib
 import shutil
 import sys
 from typing import List, Optional
@@ -116,6 +117,8 @@ class RunTritonConfigCli:
 @click.pass_context
 def run_cmd(
     ctx,
+    config_path: Optional[pathlib.Path],
+    output_package: Optional[pathlib.Path],
     workspace_path: str,
     override_workspace: bool,
     verbose: bool,
@@ -127,7 +130,8 @@ def run_cmd(
     **kwargs,
 ):
     init_logger(verbose=verbose)
-    LOGGER.debug(f"Running '{ctx.command_path}' with config_path: {kwargs.get('config_path')}")
+    if config_path:
+        LOGGER.debug(f"Running '{ctx.command_path}' with config_path: {config_path}")
 
     configuration = {
         "workspace_path": workspace_path,
@@ -362,14 +366,17 @@ def run_cmd(
             LOGGER.warning(f"Helm Chart generation failed with message: {create_helm_chart_result.status.message}")
     results_store = ResultsStore(workspace)
     results_store.dump("helm-chart-create", create_helm_chart_results)
-    pack_workspace(workspace.path, _get_output_package_path(src_model_config, kwargs), configuration)
+    pack_workspace(workspace.path, _get_output_package_path(src_model_config, output_package), configuration)
 
 
-def _get_output_package_path(model_config, kwargs):
-    try:
-        output_package_path = kwargs["output-package"]
-    except KeyError:
-        output_package_path = model_config.model_name + ".triton.nav"
+def _get_output_package_path(model_config, output_package):
+    if output_package:
+        return output_package
+
+    output_package_path = pathlib.Path.cwd() / f"{model_config.model_name}.triton.nav"
+
+    LOGGER.info(f"Output package not provided. Using: {output_package_path}")
+
     return output_package_path
 
 

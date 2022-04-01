@@ -17,17 +17,24 @@ import zipfile
 
 import yaml
 
+from model_navigator import LOGGER
+from model_navigator.exceptions import ModelNavigatorException
 from model_navigator.utils import device
 
 FORMAT_VERSION = "0.0.1"
 
 
 def pack_workspace(workspace_path, package_path, navigator_config, input_package=None):
+    LOGGER.info(f"Creating package from workspace {workspace_path} to {package_path}")
+    LOGGER.debug("Collecting Helm Chart information.")
     with open(workspace_path / "helm-chart-create_results.yaml") as f:
         create_helm_chart_results = yaml.load(f.read(), Loader=yaml.SafeLoader)
+
+    LOGGER.debug("Collecting Model Analyzer results.")
     with open(workspace_path / "analyze_results.yaml") as f:
         analyze_results = yaml.load(f.read(), Loader=yaml.SafeLoader)
 
+    LOGGER.debug("Creating package content.")
     models = {}
     analyzer_csv_reports = set()
     for res in analyze_results:
@@ -59,6 +66,7 @@ def pack_workspace(workspace_path, package_path, navigator_config, input_package
         "environment": device.get_environment_info(),
     }
 
+    LOGGER.debug("Compressing package to single file.")
     with zipfile.ZipFile(package_path, "w", compression=zipfile.ZIP_STORED) as package:
         for helm_chart_res in create_helm_chart_results:
             path = pathlib.Path(helm_chart_res["helm_chart_dir_path"])
@@ -79,6 +87,11 @@ def pack_workspace(workspace_path, package_path, navigator_config, input_package
         if input_package is not None:
             for fs in input_package.glob("**/*"):
                 package.write(fs, arcname=pathlib.Path("input.nav") / fs.relative_to(input_package))
+
+    if not package_path.is_file():
+        raise ModelNavigatorException(f"Package not found in {package_path}.")
+
+    LOGGER.info(f"Package stored in {package_path}.")
 
 
 if __name__ == "__main__":
