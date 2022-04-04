@@ -163,3 +163,10 @@ def substring_is_present_on_stderr(run_context, pattern: str):
         for line in run_context.output.splitlines():
             print(line)
     assert fragments_found
+
+
+@then(parse("the {file_or_dir} exists"))
+def the_file_exists(run_context, file_or_dir: str):
+    """the {file} exists"""
+    dst_path = Path(run_context.cwd) / file_or_dir
+    assert dst_path.is_file() or dst_path.is_dir()
