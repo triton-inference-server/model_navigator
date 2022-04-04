@@ -23,7 +23,7 @@ import yaml
 from click.types import UNPROCESSED
 
 from model_navigator.core import DEFAULT_CONTAINER_VERSION
-from model_navigator.exceptions import ModelNavigatorInvalidPackageException
+from model_navigator.utils import nav_package
 from model_navigator.utils.config import YamlConfigFile
 from model_navigator.utils.workspace import DEFAULT_WORKSPACE_PATH, Workspace
 
@@ -365,24 +365,6 @@ def options_from_config(config_dataclass, cli_specs=None):  # noqa: C901
     return wrapper_fn
 
 
-def select_input(models):
-    """Automatically select which input model from the .nav package to use as input"""
-    # sorted from most to least preferred
-    PREFERRENCE_ORDER = [
-        {"format": "torchscript", "torch_jit": "script"},
-        {"format": "torchscript", "torch_jit": "trace"},
-        {"format": "savedmodel"},
-        {"format": "onnx"},
-    ]
-    for fmt in PREFERRENCE_ORDER:
-        for mod in models:
-            if fmt.items() <= mod.items() and mod.get("path") is not None:
-                return mod
-
-    msg = "\n".join(f"{mod['format']}, status: {mod['status']}" for mod in models)
-    raise ModelNavigatorInvalidPackageException(f"No valid models found in package. Models found: {msg}")
-
-
 def common_options(f):
     from model_navigator.kubernetes.triton import TritonServer
 
@@ -409,7 +391,7 @@ def common_options(f):
 
         ctx.default_map = ctx.default_map or {}
 
-        model = select_input(status["model_status"])
+        model = nav_package.select_input_format(status["model_status"])
         LOGGER.info("Selected model %s as input", model)
         config_path = package_path / Path(model["path"]).parent / "config.yaml"
 
@@ -419,7 +401,7 @@ def common_options(f):
             # we need to fix the relative path
             ctx.default_map.update({"model_path": model_path.as_posix()})
 
-        return config_path
+        return nav_package.NavPackage(package_path)
 
     arguments = [
         # package and config-path should be read before all the options,
@@ -516,6 +498,12 @@ def common_options(f):
             default=False,
             type=bool,
             is_flag=True,
+        ),
+        click.option(
+            "--random-seed",
+            help="Seed to use for random number generation.",
+            default=0,
+            type=int,
         ),
     ]
 

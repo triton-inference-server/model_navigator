@@ -16,6 +16,7 @@ from model_navigator.converter.config import (  # noqa: F401
     ConversionConfig,
     ConversionLaunchMode,
     DatasetProfileConfig,
+    TensorRTConversionConfig,
 )
 from model_navigator.converter.convert import Converter  # noqa: F401
 from model_navigator.converter.polygraphy.dataloader import DataLoader  # noqa: F401

@@ -12,20 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
-import typing
 from distutils.version import LooseVersion
 from pathlib import Path
 from typing import Dict, Optional
 
 import polygraphy
+from polygraphy.backend.onnxrt import OnnxrtRunner, SessionFromOnnx
+from polygraphy.backend.trt import CreateConfig, EngineFromNetwork, NetworkFromOnnxPath, Profile, SaveEngine, TrtRunner
+from polygraphy.comparator import Comparator, CompareFunc
+from polygraphy.logger import G_LOGGER
 
-from model_navigator.converter.config import DatasetProfileConfig, TensorRTPrecision, TensorRTPrecisionMode
+from model_navigator.converter.config import TensorRTConversionConfig, TensorRTPrecision, TensorRTPrecisionMode
+from model_navigator.converter.dataloader import Dataloader
 from model_navigator.converter.polygraphy.comparator import ToleranceParameterHelper
-from model_navigator.converter.utils import execute_sh_command, prepare_log_header
-from model_navigator.core import DEFAULT_TENSORRT_MAX_WORKSPACE_SIZE
+from model_navigator.converter.utils import navigator_subprocess, prepare_log_header
 from model_navigator.exceptions import ModelNavigatorConverterCommandException, ModelNavigatorConverterException
-from model_navigator.model import Format, Model
-from model_navigator.tensor import TensorSpec
+from model_navigator.model import Format
 
 LOGGER = logging.getLogger("polygraphy.transformers")
 
@@ -76,120 +78,55 @@ def _validate_keys(io_type, expected_io_names, io_names):
         )
 
 
-class ProfilesAdapter:
-    def __init__(self, profiles: DatasetProfileConfig):
-        self._profiles = profiles
-
-    def validate_for_model(self, model: Model):
-        # Polygraphy assign profile opt values from min values and max values from opt values if opt or max are missing
-        # Polygraphy checks if set of names of min/opt/max profiles equals
-
-        if not self.is_defined() and model.signature.has_input_dynamic_axes():
-            input_signature_str = ", ".join([str(spec) for spec in model.signature.inputs.values()])
-            raise ModelNavigatorConverterException(
-                f"Missing profile definition for model with inputs containing dynamic axes. "
-                f"Input signature: {input_signature_str}. "
-                "Use [min|opt|max]_shapes for optimization profile definition."
-            )
-
-        inputs = model.signature.inputs or {}
-
-        for type_name, profile_item in [
-            ("min_shapes", self._profiles.min_shapes),
-            ("opt_shapes", self._profiles.opt_shapes),
-            ("max_shapes", self._profiles.max_shapes),
-        ]:
-            profile_item = profile_item or {}
-
-            # Check if batch_size for each input are the same
-            batch_sizes = sorted({shape[0] for name, shape in profile_item.items()})
-            if len(batch_sizes) > 1:
-                raise ModelNavigatorConverterException(
-                    f"Inconsistent batch sizes in optimisation profile {type_name} {', '.join(batch_sizes)}"
-                )
-
-            # check if profile is defined at least for dynamic axes
-            missing_names = [name for name, spec in inputs.items() if spec.is_dynamic() and name not in profile_item]
-            if missing_names:
-                raise ModelNavigatorConverterException(
-                    f"There is missing shape definition for dynamic inputs: {', '.join(missing_names)} in {type_name}"
-                )
-
-    @property
-    def runtime_inputs(self) -> Optional[typing.Dict[str, typing.Tuple]]:
-        runtime_inputs = None
-        if self._profiles:
-            for type_name, profile_item in [
-                ("min_shapes", self._profiles.min_shapes),
-                ("opt_shapes", self._profiles.opt_shapes),
-                ("max_shapes", self._profiles.max_shapes),
-            ]:
-                if profile_item:
-                    runtime_inputs = profile_item
-                    LOGGER.debug(f"Use {type_name}: {runtime_inputs} as runtime shape")
-                    break
-        return runtime_inputs
-
-    @property
-    def profile_flags(self) -> typing.List[str]:
-        profiling_flags = []
-
-        if self._profiles:
-            for flag_name, profile_item in [
-                ("--trt-min-shapes", self._profiles.min_shapes),
-                ("--trt-opt-shapes", self._profiles.opt_shapes),
-                ("--trt-max-shapes", self._profiles.max_shapes),
-            ]:
-                if profile_item:
-                    profiling_flags.extend([flag_name] + _serialize_shapes(profile_item))
-
-        return profiling_flags
-
-    @property
-    def input_flags(self) -> typing.List[str]:
-        inputs_flags = []
-        runtime_inputs = self.runtime_inputs
-        if runtime_inputs is not None:
-            # this is only for runner
-            inputs_flags = ["--inputs"] + _serialize_shapes(runtime_inputs)
-        return inputs_flags
-
-    def is_defined(self):
-        return self._profiles and any([self._profiles.min_shapes, self._profiles.opt_shapes, self._profiles.max_shapes])
-
-    @classmethod
-    def from_model_input(cls, model: Model, max_batch_size: int):
-        def _get_profile_item(batch_size):
-            return {name: (batch_size,) + spec.shape[1:] for name, spec in model.signature.inputs.items()}
-
-        if model.signature.inputs:
-            profile = DatasetProfileConfig(
-                min_shapes=_get_profile_item(1),
-                opt_shapes=_get_profile_item(max_batch_size),
-                max_shapes=_get_profile_item(max_batch_size),
-            )
-        else:
-            profile = None
-
-        return cls(profile)
-
-
-def _validate_names_in_comparator_config(
-    outputs: Dict[str, TensorSpec], rtol: Dict[str, float], atol: Dict[str, float]
+def _run_polygraphy(
+    input_path: Path,
+    output_path: Path,
+    comparator_inputs_path: Path,
+    comparator_outputs_path: Path,
+    tensorrt_config: TensorRTConversionConfig,
+    dataloader: Dataloader,
+    rtol: Dict[str, float],
+    atol: Dict[str, float],
+    trt_precision_flags,
+    verbose: bool,
 ):
-    def _validate_tolerance(name, outputs_: Dict[str, TensorSpec], tolerance_: Dict[str, float]):
-        output_names = list(outputs_)
-        tolerance_names = list(tolerance_)
-        ALL_OTHER_OUTPUTS = ""
-        if ALL_OTHER_OUTPUTS in tolerance_names:
-            missing_names = [name for name in output_names if name not in tolerance_names]
-            tolerance_names += missing_names
-            tolerance_names.remove(ALL_OTHER_OUTPUTS)
+    if verbose:
+        G_LOGGER.severity = G_LOGGER.VERBOSE
+    profile = Profile()
+    for name in dataloader.min_shapes:
+        profile.add(name, dataloader.min_shapes[name], dataloader.opt_shapes[name], dataloader.max_shapes[name])
+    profiles = [profile]
+    config = CreateConfig(
+        max_workspace_size=tensorrt_config.max_workspace_size,
+        profiles=profiles,
+        strict_types=tensorrt_config.strict_types,
+        sparse_weights=tensorrt_config.sparse_weights,
+        **{precision: True for precision in trt_precision_flags},
+    )
 
-        _validate_keys(name, expected_io_names=output_names, io_names=tolerance_names)
+    # Loaders
+    parse_network_from_onnx = NetworkFromOnnxPath(
+        input_path.as_posix(), explicit_precision=tensorrt_config.explicit_precision
+    )
+    build_engine = EngineFromNetwork(parse_network_from_onnx, config=config)
+    save_engine = SaveEngine(build_engine, output_path.as_posix())
+    build_onnxrt_session = SessionFromOnnx(input_path.as_posix())
 
-    _validate_tolerance("rtol", outputs, rtol)
-    _validate_tolerance("atol", outputs, atol)
+    # Runners
+    runners = [
+        TrtRunner(save_engine),
+        OnnxrtRunner(build_onnxrt_session),
+    ]
+
+    # Runner Execution
+    results = Comparator.run(runners, data_loader=dataloader, save_inputs_path=comparator_inputs_path.as_posix())
+    results.save(comparator_outputs_path.as_posix())
+
+    success = True
+    # Accuracy Comparison
+    success &= bool(Comparator.compare_accuracy(results, compare_func=CompareFunc.simple(atol=atol, rtol=rtol)))
+    success &= Comparator.validate(results)
+    return success
 
 
 def onnx2trt(
@@ -197,130 +134,72 @@ def onnx2trt(
     input_path: Path,
     output_path: Path,
     log_path: Path,
-    precision: TensorRTPrecision,
-    precision_mode: TensorRTPrecisionMode,
-    explicit_precision: bool = False,
-    tensorrt_sparse_weights: bool = False,
-    tensorrt_strict_types: bool = False,
-    max_batch_size: Optional[int] = None,
-    max_workspace_size: Optional[int] = None,
-    profiles: Optional[DatasetProfileConfig] = None,
+    tensorrt_config: TensorRTConversionConfig,
+    dataloader: Dataloader,
     rtol: Optional[Dict[str, float]] = None,
     atol: Optional[Dict[str, float]] = None,
     verbose: bool = False,
-    input_format: Optional[Format] = None,
 ):
-    from sh import polygraphy  # noqa
-
     LOGGER.info("Polygraphy onnx2trt started.")
 
-    if precision_mode == TensorRTPrecisionMode.HIERARCHY:
+    if tensorrt_config.precision_mode == TensorRTPrecisionMode.HIERARCHY:
         trt_precision_flags = {
-            TensorRTPrecision.FP32: ["--tf32"],
-            TensorRTPrecision.TF32: ["--tf32"],
-            TensorRTPrecision.FP16: ["--tf32", "--fp16"],
-            TensorRTPrecision.INT8: ["--tf32", "--fp16", "--int8"],
-        }[precision]
-    elif precision_mode == TensorRTPrecisionMode.SINGLE:
+            TensorRTPrecision.FP32: ["tf32"],
+            TensorRTPrecision.TF32: ["tf32"],
+            TensorRTPrecision.FP16: ["tf32", "fp16"],
+            TensorRTPrecision.INT8: ["tf32", "fp16", "int8"],
+        }[tensorrt_config.precision]
+    elif tensorrt_config.precision_mode == TensorRTPrecisionMode.SINGLE:
         trt_precision_flags = {
-            TensorRTPrecision.FP32: ["--tf32"],
-            TensorRTPrecision.TF32: ["--tf32"],
-            TensorRTPrecision.FP16: ["--fp16"],
-            TensorRTPrecision.INT8: ["--int8"],
-        }[precision]
+            TensorRTPrecision.FP32: ["tf32"],
+            TensorRTPrecision.TF32: ["tf32"],
+            TensorRTPrecision.FP16: ["fp16"],
+            TensorRTPrecision.INT8: ["int8"],
+        }[tensorrt_config.precision]
     else:
         raise ModelNavigatorConverterException(
-            f"Unsupported precision mode {precision_mode}. Only {TensorRTPrecisionMode.HIERARCHY} and {TensorRTPrecisionMode.SINGLE} are allowed"
+            f"Unsupported precision mode {tensorrt_config.precision_mode}. Only {TensorRTPrecisionMode.HIERARCHY} and {TensorRTPrecisionMode.SINGLE} are allowed"
         )
 
     LOGGER.warning("This conversion should be done on target GPU platform")
-
-    model = Model("model_to_convert", input_path, explicit_format=input_format)
-    profiles_adapter = ProfilesAdapter(profiles)
-    if not profiles_adapter.is_defined() and not model.signature.has_input_dynamic_axes():
-        if max_batch_size is None:
-            raise ModelNavigatorConverterException(
-                "Missing profile definition. Use [min|opt|max]_shapes for optimization profile definition or "
-                "max_batch_size to create default profile."
-            )
-        profiles_adapter = ProfilesAdapter.from_model_input(model, max_batch_size)
-    else:
-        profiles_adapter.validate_for_model(model)
-
-    _validate_names_in_comparator_config(model.signature.outputs, rtol, atol)
-
-    # TODO: obtain free memory on gpu
-    if max_workspace_size is None:
-        max_workspace_size = DEFAULT_TENSORRT_MAX_WORKSPACE_SIZE
-        LOGGER.warning(
-            f"--max-workspace-size config parameter is missing thus using {DEFAULT_TENSORRT_MAX_WORKSPACE_SIZE}"
-        )
+    if atol is None:
+        atol = {name: DEFAULT_TOLERANCES["atol"] for name in dataloader.max_shapes}
+    if rtol is None:
+        rtol = {name: DEFAULT_TOLERANCES["rtol"] for name in dataloader.max_shapes}
 
     comparator_inputs_path = log_path.with_suffix(".comparator_inputs.json")
     comparator_outputs_path = log_path.with_suffix(".comparator_outputs.json")
-    comparator_flags = [
-        "--save-inputs",
-        comparator_inputs_path.resolve().as_posix(),
-        "--save-outputs",
-        comparator_outputs_path.resolve().as_posix(),
-        "--validate",
-    ]
-
-    def _add_tolerance_params(flags, tolerance_name, tolerance_params):
-        if tolerance_params:
-            tolerance_params.setdefault("", DEFAULT_TOLERANCES[tolerance_name])
-            params = [_serialize_tolerance(name, value) for name, value in tolerance_params.items()]
-            flags.extend([f"--{tolerance_name}"] + params)
-
-    _add_tolerance_params(comparator_flags, "rtol", rtol or {})
-    _add_tolerance_params(comparator_flags, "atol", atol or {})
-
-    args = [
-        "--onnxrt",
-        "--trt",
-        input_path.as_posix(),
-        "--model-type",
-        "onnx",
-        *profiles_adapter.input_flags,
-        "--onnx-outputs",
-        *list(model.signature.outputs),
-        "--shape-inference",
-        *trt_precision_flags,
-        *profiles_adapter.profile_flags,
-        *comparator_flags,
-        "--workspace",
-        max_workspace_size,
-        "--save-engine",
-        output_path,
-    ]
-
-    if explicit_precision:
-        args += ["--explicit-precision"]
-
-    if tensorrt_sparse_weights:
-        args += ["--sparse-weights"]
-
-    if tensorrt_strict_types:
-        args += ["--strict-types"]
-
-    if verbose:
-        args += ["-v"]
-
-    import sh
     try:
         log_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.parent.mkdir(parents=True, exist_ok=True)
         with log_path.open("w") as log_file:
-            prepare_log_header(log_file, Format.ONNX, Format.TENSORRT)
-            execute_sh_command(polygraphy.run.bake(*args), log_file=log_file, verbose=verbose)
-        LOGGER.info("Polygraphy onnx2trt succeed.")
-    except sh.ErrorReturnCode as e:
+            prepare_log_header(log_file, Format.TORCHSCRIPT, Format.ONNX)
+            with navigator_subprocess(log_file=log_file, verbose=verbose) as navigator:
+                success = navigator.module("model_navigator.converter.polygraphy.transformers")._run_polygraphy(
+                    input_path,
+                    output_path,
+                    comparator_inputs_path,
+                    comparator_outputs_path,
+                    tensorrt_config,
+                    dataloader,
+                    rtol,
+                    atol,
+                    trt_precision_flags,
+                    verbose,
+                )
+        LOGGER.info("ts2onnx command succeed.")
+    except Exception as e:
+        LOGGER.warning(f"Polygraphy onnx2trt conversion failed. Details can be found in logfile: {log_path}")
+        raise ModelNavigatorConverterCommandException(message=str(e), log_path=log_path)
 
+    # Report Results
+    if not success:
         if comparator_inputs_path.exists() and comparator_outputs_path.exists():
             _dump_tolerace_parameters_if_possible(comparator_inputs_path, comparator_outputs_path)
 
-        LOGGER.warning(f"Polygraphy onnx2trt conversion failed. Details can be found in logfile: {log_path}")
-        raise ModelNavigatorConverterCommandException(message=e.stdout.decode("utf-8"), log_path=log_path)
+        msg = f"Polygraphy onnx2trt conversion failed. Details can be found in logfile: {log_path}"
+        LOGGER.warning(msg)
+        raise ModelNavigatorConverterCommandException(message=msg, log_path=log_path)
     else:
         if not verbose and comparator_inputs_path.exists():
             LOGGER.debug(f"Remove comparator input file {comparator_inputs_path}")
@@ -328,6 +207,7 @@ def onnx2trt(
         if not verbose and comparator_outputs_path.exists():
             LOGGER.debug(f"Remove comparator output file {comparator_outputs_path}")
             comparator_outputs_path.unlink()
+        LOGGER.info("Polygraphy onnx2trt succeeded.")
 
 
 def _dump_tolerace_parameters_if_possible(comparator_inputs_path, comparator_outputs_path):

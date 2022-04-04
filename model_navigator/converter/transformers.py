@@ -17,8 +17,8 @@ import shutil
 from pathlib import Path
 from typing import List, Optional
 
-from model_navigator.common.config import TensorRTCommonConfig
-from model_navigator.converter.config import ComparatorConfig, ConversionConfig, DatasetProfileConfig
+from model_navigator.converter.config import ComparatorConfig, ConversionConfig
+from model_navigator.converter.dataloader import Dataloader
 from model_navigator.converter.polygraphy.transformers import onnx2trt
 from model_navigator.converter.pyt.transformers import ts2onnx
 from model_navigator.converter.results import ConversionResult
@@ -30,7 +30,6 @@ from model_navigator.exceptions import ModelNavigatorConverterException
 from model_navigator.model import Model, ModelConfig, ModelSignatureConfig
 from model_navigator.results import State, Status
 from model_navigator.utils.config import YamlConfigFile
-from model_navigator.utils.dataset import get_shapes, get_value_ranges
 
 LOGGER = logging.getLogger(__name__)
 
@@ -96,7 +95,6 @@ class CopyModelFilesCommand(BaseConvertCommand):
             source_model_config=model,
             conversion_config=None,
             comparator_config=None,
-            dataset_profile=None,
             output_model=Model(model.model_name, path=output_path, explicit_format=model.model_format),
         )
 
@@ -124,9 +122,7 @@ class PassTransformer(BaseConvertCommand):
             Status(State.SUCCEEDED, "Source model", None),
             source_model_config=model,
             conversion_config=self._conversion_config,
-            tensorrt_common_config=None,
             comparator_config=None,
-            dataset_profile=None,
             output_model=Model(model.model_name, path=model.model_path, explicit_format=model.model_format),
         )
 
@@ -188,15 +184,13 @@ class ONNX2TRTCommand(BaseConvertCommand):
         parent: Optional[BaseConvertCommand] = None,
         *,
         conversion_config: ConversionConfig,
-        tensorrt_common_config: TensorRTCommonConfig,
         comparator_config: Optional[ComparatorConfig],
-        dataset_profile: Optional[DatasetProfileConfig],
+        dataloader: Dataloader,
     ) -> None:
         super().__init__(parent)
         self._conversion_config = conversion_config
-        self._tensorrt_common_config = tensorrt_common_config
         self._comparator_config = comparator_config
-        self._dataset_profile = dataset_profile
+        self._dataloader = dataloader
 
     def transform(self, executor, model: ModelConfig, *, verbose: int = 0) -> ConversionResult:
         LOGGER.debug(f"Running command {self.name} on {model.model_path}")
@@ -208,18 +202,11 @@ class ONNX2TRTCommand(BaseConvertCommand):
             input_path=model.model_path,
             output_path=output_path,
             log_path=log_path,
-            precision=self._conversion_config.tensorrt_precision,
-            precision_mode=self._conversion_config.tensorrt_precision_mode,
-            explicit_precision=self._conversion_config.tensorrt_explicit_precision,
-            tensorrt_sparse_weights=self._conversion_config.tensorrt_sparse_weights,
-            tensorrt_strict_types=self._conversion_config.tensorrt_strict_types,
-            max_batch_size=self._comparator_config.max_batch_size if self._comparator_config else None,
-            max_workspace_size=self._tensorrt_common_config.tensorrt_max_workspace_size,
-            profiles=self._dataset_profile,
+            tensorrt_config=self._conversion_config.tensorrt_config,
+            dataloader=self._dataloader,
             rtol=self._comparator_config.rtol,
             atol=self._comparator_config.atol,
             verbose=bool(verbose),
-            input_format=model.model_format,
         )
 
         model_name = extend_model_name(model.model_name, transform_name=self.name)
@@ -228,14 +215,13 @@ class ONNX2TRTCommand(BaseConvertCommand):
             source_model_config=model,
             conversion_config=self._conversion_config,
             comparator_config=self._comparator_config,
-            dataset_profile=self._dataset_profile,
             output_model=Model(model_name, path=output_path),
         )
 
     @property
     def name(self):
-        precision = self._conversion_config.tensorrt_precision
-        precision_mode = self._conversion_config.tensorrt_precision_mode
+        precision = self._conversion_config.tensorrt_config.precision
+        precision_mode = self._conversion_config.tensorrt_config.precision_mode
         parameters = {"": precision.value, "m": precision_mode.value[0]}
         parameters_suffix = PARAMETERS_SEP.join([f"{k}{KEY_VALUE_SEP}{v}" for k, v in parameters.items()])
         return f"polygraphyonnx2trt{PARAMETERS_SEP}{parameters_suffix}"
@@ -252,19 +238,15 @@ class TorchScript2ONNXCommand(BaseConvertCommand):
         *,
         conversion_config: ConversionConfig,
         comparator_config: Optional[ComparatorConfig],
-        dataset_profile: Optional[DatasetProfileConfig],
+        dataloader: Dataloader,
     ) -> None:
         super().__init__(parent)
         self._conversion_config = conversion_config
         self._comparator_config = comparator_config
-        self._dataset_profile = dataset_profile
+        self._dataloader = dataloader
 
     def transform(self, executor, model: ModelConfig, *, verbose: int = 0) -> ConversionResult:
         LOGGER.debug(f"Running command {self.name} on {model.model_path}")
-
-        model_parsed = Model(model.model_name, model.model_path, explicit_format=model.model_format)
-        shapes = get_shapes(model_parsed.signature, self._dataset_profile)
-        value_ranges = get_value_ranges(model_parsed.signature, self._dataset_profile)
 
         output_path = executor.get_output_path(model, self)
         log_path = Path(f"{output_path}.log")
@@ -274,8 +256,7 @@ class TorchScript2ONNXCommand(BaseConvertCommand):
             output_path=output_path,
             log_path=log_path,
             opset=self._conversion_config.onnx_opset,
-            shapes=shapes,
-            value_ranges=value_ranges,
+            dataloader=self._dataloader,
             verbose=verbose,
         )
 
@@ -285,7 +266,6 @@ class TorchScript2ONNXCommand(BaseConvertCommand):
             source_model_config=model,
             conversion_config=self._conversion_config,
             comparator_config=self._comparator_config,
-            dataset_profile=self._dataset_profile,
             output_model=Model(model_name, path=output_path),
         )
 
@@ -309,16 +289,14 @@ class TorchTensorRTCommand(BaseConvertCommand):
         parent: Optional[BaseConvertCommand] = None,
         *,
         conversion_config: ConversionConfig,
-        tensorrt_common_config: TensorRTCommonConfig,
         comparator_config: Optional[ComparatorConfig],
-        dataset_profile: Optional[DatasetProfileConfig],
+        dataloader: Dataloader,
         signature_config: Optional[ModelSignatureConfig] = None,
     ) -> None:
         super().__init__(parent)
         self._conversion_config = conversion_config
-        self._tensorrt_common_config = tensorrt_common_config
         self._comparator_config = comparator_config
-        self._dataset_profile = dataset_profile
+        self._dataloader = dataloader
         self._signature_config = signature_config
 
     def transform(self, executor, model: ModelConfig, *, verbose: int = 0) -> ConversionResult:
@@ -331,10 +309,9 @@ class TorchTensorRTCommand(BaseConvertCommand):
             input_path=model.model_path,
             output_path=output_path,
             log_path=log_path,
-            dataset_profile=self._dataset_profile,
-            conversion_config=self._conversion_config,
+            dataloader=self._dataloader,
             signature_config=self._signature_config,
-            max_workspace_size=self._tensorrt_common_config.tensorrt_max_workspace_size or 0,
+            tensorrt_config=self._conversion_config.tensorrt_config,
             max_batch_size=self._comparator_config.max_batch_size if self._comparator_config else 0,
             verbose=bool(verbose),
         )
@@ -345,13 +322,12 @@ class TorchTensorRTCommand(BaseConvertCommand):
             source_model_config=model,
             conversion_config=self._conversion_config,
             comparator_config=self._comparator_config,
-            dataset_profile=self._dataset_profile,
             output_model=Model(model_name, path=output_path),
         )
 
     @property
     def name(self) -> str:
-        parameters = {"precision": self._conversion_config.tensorrt_precision}
+        parameters = {"precision": self._conversion_config.tensorrt_config.precision}
         parameters_suffix = PARAMETERS_SEP.join([f"{k}{KEY_VALUE_SEP}{v}" for k, v in parameters.items()])
         return f"torch_tensorrt_module{PARAMETERS_SEP}{parameters_suffix}"
 
@@ -367,12 +343,12 @@ class TFSavedModel2ONNXTransform(BaseConvertCommand):
         *,
         conversion_config: ConversionConfig,
         comparator_config: Optional[ComparatorConfig],
-        dataset_profile: Optional[DatasetProfileConfig],
+        dataloader: Dataloader,
     ) -> None:
         super().__init__(parent)
         self._conversion_config = conversion_config
         self._comparator_config = comparator_config
-        self._dataset_profile = dataset_profile
+        self._dataloader = dataloader
 
     def transform(self, executor, model: ModelConfig, *, verbose: int = 0) -> ConversionResult:
         LOGGER.debug(f"Running command {self.name} on {model.model_path}")
@@ -395,7 +371,6 @@ class TFSavedModel2ONNXTransform(BaseConvertCommand):
             source_model_config=model,
             conversion_config=self._conversion_config,
             comparator_config=self._comparator_config,
-            dataset_profile=self._dataset_profile,
             output_model=Model(model_name, path=output_path),
         )
 
@@ -417,14 +392,12 @@ class TFSavedModel2TFTRTTransform(BaseConvertCommand):
         *,
         conversion_config: ConversionConfig,
         comparator_config: Optional[ComparatorConfig],
-        dataset_profile: Optional[DatasetProfileConfig],
-        tensorrt_common_config: TensorRTCommonConfig,
+        dataloader: Dataloader,
     ) -> None:
         super().__init__(parent)
         self._conversion_config = conversion_config
         self._comparator_config = comparator_config
-        self._dataset_profile = dataset_profile
-        self._tensorrt_common_config = tensorrt_common_config
+        self._dataloader = dataloader
 
     def transform(self, executor, model: ModelConfig, *, verbose: int = 0) -> ConversionResult:
         LOGGER.debug(f"Running command {self.name} on {model.model_path}")
@@ -433,12 +406,11 @@ class TFSavedModel2TFTRTTransform(BaseConvertCommand):
         log_path = Path(f"{output_path}.log")
 
         tf2tftrt(
-            input_path=model.model_path.as_posix(),
+            input_path=model.model_path,
             output_path=output_path,
             log_path=log_path,
-            precision=self._conversion_config.tensorrt_precision,
-            dataset_profile=self._dataset_profile,
-            max_workspace_size=self._tensorrt_common_config.tensorrt_max_workspace_size,
+            dataloader=self._dataloader,
+            tensorrt_config=self._conversion_config.tensorrt_config,
             max_batch_size=self._comparator_config.max_batch_size if self._comparator_config else None,
             verbose=bool(verbose),
         )
@@ -449,13 +421,12 @@ class TFSavedModel2TFTRTTransform(BaseConvertCommand):
             source_model_config=model,
             conversion_config=self._conversion_config,
             comparator_config=self._comparator_config,
-            dataset_profile=self._dataset_profile,
             output_model=Model(model_name, path=output_path),
         )
 
     @property
     def name(self) -> str:
-        precision = self._conversion_config.tensorrt_precision
+        precision = self._conversion_config.tensorrt_config.precision
         parameters = {"": precision.value}
         parameters_suffix = PARAMETERS_SEP.join([f"{k}{KEY_VALUE_SEP}{v}" for k, v in parameters.items()])
         return f"tf-trt{PARAMETERS_SEP}{parameters_suffix}"
@@ -474,12 +445,12 @@ class TFSavedModelOptimizationTransform(BaseConvertCommand):
         *,
         conversion_config: ConversionConfig,
         comparator_config: Optional[ComparatorConfig],
-        dataset_profile: Optional[DatasetProfileConfig],
+        dataloader: Dataloader,
     ) -> None:
         super().__init__(parent)
         self._conversion_config = conversion_config
         self._comparator_config = comparator_config
-        self._dataset_profile = dataset_profile
+        self._dataloader = dataloader
 
     def transform(self, executor, model: ModelConfig, *, verbose: int = 0) -> ConversionResult:
         LOGGER.debug(f"Running command {self.name} on {model.model_path}")
@@ -500,7 +471,6 @@ class TFSavedModelOptimizationTransform(BaseConvertCommand):
             source_model_config=model,
             conversion_config=self._conversion_config,
             comparator_config=self._comparator_config,
-            dataset_profile=self._dataset_profile,
             output_model=Model(model_name, path=output_path),
         )
 

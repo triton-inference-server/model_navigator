@@ -40,6 +40,7 @@ from model_navigator.perf_analyzer import DEFAULT_RANDOM_DATA_FILENAME, PerfMeas
 from model_navigator.results import ResultsStore, State, Status
 from model_navigator.utils import Workspace
 from model_navigator.utils.cli import common_options, options_from_config
+from model_navigator.utils.nav_package import NavPackage
 from model_navigator.validators import run_command_validators
 
 LOGGER = logging.getLogger("profile")
@@ -60,6 +61,7 @@ def profile_cmd(
     container_version: str,
     triton_docker_image: Optional[str],
     gpus: List[str],
+    package: Optional[NavPackage],
     **kwargs,
 ):
     init_logger(verbose=verbose)
@@ -105,7 +107,7 @@ def profile_cmd(
         )
 
     profiling_data_path = None
-    if dataset_profile_config.value_ranges and dataset_profile_config.dtypes:
+    if package or (dataset_profile_config.value_ranges and dataset_profile_config.dtypes):
         profiling_data_path = workspace.path / DEFAULT_RANDOM_DATA_FILENAME
         ctx.forward(
             create_profiling_data_cmd,

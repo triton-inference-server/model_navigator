@@ -252,6 +252,10 @@ class ConversionSetConfigCli:
         help="Enable strict types in TensorRT, forcing it to choose tactics based on the layer precision set, even if another precision is faster."
     )
     tensorrt_sparse_weights = CliSpec(help="Enable optimizations for sparse weights in TensorRT.")
+    tensorrt_max_workspace_size = CliSpec(
+        help="The maximum GPU memory in bytes the model can use temporarily during execution for TensorRT acceleration.",
+        param_decls=["--tensorrt-max-workspace-size", "--max-workspace-size"],
+    )
 
 
 class ConversionSetHelmChartConfigCli:
@@ -290,6 +294,10 @@ class ConversionSetHelmChartConfigCli:
         help="Enable strict types in TensorRT, forcing it to choose tactics based on the layer precision set, even if another precision is faster."
     )
     tensorrt_sparse_weights = CliSpec(help="Enable optimizations for sparse weights in TensorRT.")
+    tensorrt_max_workspace_size = CliSpec(
+        help="The maximum GPU memory in bytes the model can use temporarily during execution for TensorRT acceleration.",
+        param_decls=["--tensorrt-max-workspace-size", "--max-workspace-size"],
+    )
 
 
 class TensorRTCommonConfigCli:

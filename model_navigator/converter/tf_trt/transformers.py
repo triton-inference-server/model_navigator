@@ -12,13 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
-from typing import Optional
 
-from model_navigator.cli.spec import serialize_shapes, serialize_value_ranges
-from model_navigator.converter import DatasetProfileConfig
-from model_navigator.converter.config import TensorRTPrecision
-from model_navigator.converter.utils import execute_sh_command, prepare_log_header
-from model_navigator.core import DEFAULT_TENSORRT_MAX_WORKSPACE_SIZE
+from model_navigator.converter.config import TensorRTConversionConfig
+from model_navigator.converter.dataloader import Dataloader
+from model_navigator.converter.utils import navigator_subprocess, prepare_log_header
 from model_navigator.exceptions import ModelNavigatorConverterCommandException
 from model_navigator.model import Format
 
@@ -30,61 +27,28 @@ def tf2tftrt(
     output_path,
     *,
     log_path,
-    precision: Optional[TensorRTPrecision],
-    dataset_profile: Optional[DatasetProfileConfig],
-    max_workspace_size: Optional[int],
+    tensorrt_config: TensorRTConversionConfig,
+    dataloader: Dataloader,
     max_batch_size: int,
     verbose: bool = False,
 ):
     LOGGER.info("tf2tftrt command started.")
-    import sh
-
-    python = sh.Command("python")
-    args = []
-    if dataset_profile:
-        if dataset_profile.max_shapes:
-            args += [
-                "--trt-max-shapes",
-                *serialize_shapes(None, value=dataset_profile.max_shapes),
-            ]
-        if dataset_profile.min_shapes:
-            args += [
-                "--trt-min-shapes",
-                *serialize_shapes(None, value=dataset_profile.min_shapes),
-            ]
-        if dataset_profile.value_ranges:
-            args += ["--value-ranges", *serialize_value_ranges(None, value=dataset_profile.value_ranges)]
-
-    if max_batch_size:
-        args += [
-            "--max-batch-size",
-            max_batch_size,
-        ]
-
-    tf2tf_trt_args = [
-        "-mmodel_navigator.converter.tf_trt.tf_trt_convert",
-        "--input-path",
-        input_path,
-        "--output-path",
-        output_path,
-        *args,
-        "--precision",
-        precision.value if precision else "FP32",
-        "--max-workspace-size",
-        max_workspace_size or DEFAULT_TENSORRT_MAX_WORKSPACE_SIZE,
-    ]
-    if verbose:
-        tf2tf_trt_args += [
-            "--verbose",
-        ]
 
     try:
         log_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.parent.mkdir(parents=True, exist_ok=True)
         with log_path.open("w") as log_file:
             prepare_log_header(log_file, Format.TF_SAVEDMODEL, Format.TF_TRT)
-            execute_sh_command(python.bake(*tf2tf_trt_args), log_file=log_file, verbose=verbose)
+            with navigator_subprocess(log_file=log_file, verbose=verbose) as navigator:
+                tf_trt_convert = navigator.module("model_navigator.converter.tf_trt.tf_trt_convert")
+                tf_trt_convert.convert_tf2(
+                    input_path=input_path,
+                    output_path=output_path,
+                    max_workspace_size=tensorrt_config.max_workspace_size,
+                    precision=tensorrt_config.precision.value,
+                    dataloader=dataloader,
+                )
         LOGGER.info("tf2tftrt command succeed.")
-    except sh.ErrorReturnCode as e:
+    except Exception as e:
         LOGGER.warning(f"tf2tftrt conversion failed. Details can be found in logfile: {log_path}")
-        raise ModelNavigatorConverterCommandException(message=e.stdout.decode("utf-8"), log_path=log_path)
+        raise ModelNavigatorConverterCommandException(message=str(e), log_path=log_path)

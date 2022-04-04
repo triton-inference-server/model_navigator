@@ -15,8 +15,8 @@ import logging
 import traceback
 from typing import Iterable, Optional
 
-from model_navigator.common.config import TensorRTCommonConfig
-from model_navigator.converter.config import ComparatorConfig, ConversionConfig, DatasetProfileConfig
+from model_navigator.converter.config import ComparatorConfig, ConversionConfig
+from model_navigator.converter.dataloader import Dataloader
 from model_navigator.converter.pipelines import ConvertCommandsRegistry
 from model_navigator.converter.results import ConversionResult
 from model_navigator.converter.transformers import BaseConvertCommand, CompositeConvertCommand
@@ -78,10 +78,9 @@ class Converter:
         *,
         src_model: ModelConfig,
         conversion_config: ConversionConfig,
-        tensorrt_common_config: TensorRTCommonConfig,
         signature_config: Optional[ModelSignatureConfig] = None,
         comparator_config: Optional[ComparatorConfig] = None,
-        dataset_profile_config: Optional[DatasetProfileConfig] = None,
+        dataloader: Dataloader,
     ) -> Iterable[ConversionResult]:
         # if not passed - used default comparator values
         if not comparator_config:
@@ -92,10 +91,9 @@ class Converter:
             for composite_commands in self._registry.get(
                 model_config=src_model,
                 conversion_config=conversion_config,
-                tensorrt_common_config=tensorrt_common_config,
                 signature_config=signature_config,
                 comparator_config=comparator_config,
-                dataset_profile_config=dataset_profile_config,
+                dataloader=dataloader,
             ):
                 for composite_command in composite_commands:
                     yield from self._executor(src_model, composite_command)
@@ -107,9 +105,7 @@ class Converter:
                 status=Status(state=State.FAILED, message=message, log_path=e.log_path),
                 source_model_config=src_model,
                 conversion_config=conversion_config,
-                tensorrt_common_config=tensorrt_common_config,
                 comparator_config=comparator_config,
-                dataset_profile=dataset_profile_config,
             )
             yield result
         except ModelNavigatorConverterCommandException as e:
@@ -119,9 +115,7 @@ class Converter:
                 status=Status(state=State.FAILED, message=message, log_path=e.log_path),
                 source_model_config=src_model,
                 conversion_config=conversion_config,
-                tensorrt_common_config=tensorrt_common_config,
                 comparator_config=comparator_config,
-                dataset_profile=dataset_profile_config,
             )
             yield result
         except Exception:
@@ -131,8 +125,6 @@ class Converter:
                 status=Status(state=State.FAILED, message=message, log_path=None),
                 source_model_config=src_model,
                 conversion_config=conversion_config,
-                tensorrt_common_config=tensorrt_common_config,
                 comparator_config=comparator_config,
-                dataset_profile=dataset_profile_config,
             )
             yield result

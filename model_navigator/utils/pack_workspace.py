@@ -12,19 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import pathlib
+import shutil
 import sys
 import zipfile
+from typing import Optional
 
 import yaml
 
 from model_navigator import LOGGER
 from model_navigator.exceptions import ModelNavigatorException
 from model_navigator.utils import device
+from model_navigator.utils.nav_package import NavPackage
 
 FORMAT_VERSION = "0.0.1"
 
 
-def pack_workspace(workspace_path, package_path, navigator_config, input_package=None):
+def pack_workspace(
+    workspace_path: pathlib.Path,
+    package_path: pathlib.Path,
+    navigator_config,
+    input_package: Optional[NavPackage] = None,
+):
     LOGGER.info(f"Creating package from workspace {workspace_path} to {package_path}")
     LOGGER.debug("Collecting Helm Chart information.")
     with open(workspace_path / "helm-chart-create_results.yaml") as f:
@@ -85,8 +93,14 @@ def pack_workspace(workspace_path, package_path, navigator_config, input_package
         package.writestr("status.yaml", yaml.dump(status))
 
         if input_package is not None:
-            for fs in input_package.glob("**/*"):
-                package.write(fs, arcname=pathlib.Path("input.nav") / fs.relative_to(input_package))
+            for fs in input_package.all_files:
+                try:
+                    with input_package.open(fs) as inf, package.open(
+                        (pathlib.Path("input.nav") / fs).as_posix(), "w"
+                    ) as outf:
+                        shutil.copyfileobj(inf, outf)
+                except IsADirectoryError:
+                    pass
 
     if not package_path.is_file():
         raise ModelNavigatorException(f"Package not found in {package_path}.")
@@ -96,7 +110,7 @@ def pack_workspace(workspace_path, package_path, navigator_config, input_package
 
 if __name__ == "__main__":
     try:
-        input_package = pathlib.Path(sys.argv[1])
+        input_package = NavPackage(pathlib.Path(sys.argv[1]))
     except Exception:
         input_package = None
     pack_workspace(pathlib.Path("navigator_workspace").absolute(), pathlib.Path("test.triton.nav"), {}, input_package)

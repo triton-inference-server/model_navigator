@@ -15,8 +15,8 @@ import abc
 import logging
 from typing import Iterator, List, Optional, Sequence
 
-from model_navigator.common.config import TensorRTCommonConfig
-from model_navigator.converter.config import ComparatorConfig, ConversionConfig, DatasetProfileConfig
+from model_navigator.converter.config import ComparatorConfig, ConversionConfig
+from model_navigator.converter.dataloader import Dataloader
 from model_navigator.converter.transformers import (
     CompositeConvertCommand,
     PassTransformer,
@@ -34,10 +34,9 @@ class BaseModelPipeline(metaclass=abc.ABCMeta):
         self,
         *,
         conversion_config: ConversionConfig,
-        tensorrt_common_config: TensorRTCommonConfig,
         signature_config: Optional[ModelSignatureConfig] = None,
         comparator_config: Optional[ComparatorConfig] = None,
-        dataset_profile: Optional[DatasetProfileConfig] = None,
+        dataloader: Optional[Dataloader] = None,
     ) -> Sequence[CompositeConvertCommand]:
         """Create new transform tree"""
         return []
@@ -50,10 +49,9 @@ class SavedModelPipeline(BaseModelPipeline):
         self,
         *,
         conversion_config: ConversionConfig,
-        tensorrt_common_config: TensorRTCommonConfig,
         signature_config: Optional[ModelSignatureConfig] = None,
         comparator_config: Optional[ComparatorConfig] = None,
-        dataset_profile: Optional[DatasetProfileConfig] = None,
+        dataloader: Optional[Dataloader] = None,
     ) -> Sequence[CompositeConvertCommand]:
 
         from model_navigator.converter.transformers import ONNX2TRTCommand
@@ -67,7 +65,7 @@ class SavedModelPipeline(BaseModelPipeline):
             tf2onnx_converter = TFSavedModel2ONNXTransform(
                 conversion_config=conversion_config,
                 comparator_config=comparator_config,
-                dataset_profile=dataset_profile,
+                dataloader=dataloader,
             )
             commands.append(CompositeConvertCommand(cmds=[tf2onnx_converter]))
 
@@ -75,22 +73,20 @@ class SavedModelPipeline(BaseModelPipeline):
             tf2onnx_converter = TFSavedModel2ONNXTransform(
                 conversion_config=conversion_config,
                 comparator_config=comparator_config,
-                dataset_profile=dataset_profile,
+                dataloader=dataloader,
             )
             onnx2trt_command = ONNX2TRTCommand(
                 tf2onnx_converter,
                 conversion_config=conversion_config,
-                tensorrt_common_config=tensorrt_common_config,
                 comparator_config=comparator_config,
-                dataset_profile=dataset_profile,
+                dataloader=dataloader,
             )
             commands.append(CompositeConvertCommand(cmds=[tf2onnx_converter, onnx2trt_command]))
         elif conversion_config.target_format == Format.TF_TRT:
             tf2trt_cmd = TFSavedModel2TFTRTTransform(
                 conversion_config=conversion_config,
-                tensorrt_common_config=tensorrt_common_config,
                 comparator_config=comparator_config,
-                dataset_profile=dataset_profile,
+                dataloader=dataloader,
             )
             commands.append(CompositeConvertCommand(cmds=[tf2trt_cmd]))
 
@@ -104,10 +100,9 @@ class TorchScriptPipeline(BaseModelPipeline):
         self,
         *,
         conversion_config: ConversionConfig,
-        tensorrt_common_config: TensorRTCommonConfig,
         signature_config: Optional[ModelSignatureConfig] = None,
         comparator_config: Optional[ComparatorConfig] = None,
-        dataset_profile: Optional[DatasetProfileConfig] = None,
+        dataloader: Optional[Dataloader] = None,
     ) -> Sequence[CompositeConvertCommand]:
         from model_navigator.converter.transformers import (
             CopyModelFilesCommand,
@@ -129,7 +124,7 @@ class TorchScriptPipeline(BaseModelPipeline):
                 annotation_command,
                 conversion_config=conversion_config,
                 comparator_config=comparator_config,
-                dataset_profile=dataset_profile,
+                dataloader=dataloader,
             )
             commands.append(CompositeConvertCommand(cmds=[copy_command, annotation_command, ts2onnx_converter]))
 
@@ -140,14 +135,13 @@ class TorchScriptPipeline(BaseModelPipeline):
                 annotation_command,
                 conversion_config=conversion_config,
                 comparator_config=comparator_config,
-                dataset_profile=dataset_profile,
+                dataloader=dataloader,
             )
             onnx2trt_command = ONNX2TRTCommand(
                 ts2onnx_converter,
                 conversion_config=conversion_config,
-                tensorrt_common_config=tensorrt_common_config,
                 comparator_config=comparator_config,
-                dataset_profile=dataset_profile,
+                dataloader=dataloader,
             )
             commands.append(
                 CompositeConvertCommand(cmds=[copy_command, annotation_command, ts2onnx_converter, onnx2trt_command])
@@ -161,8 +155,7 @@ class TorchScriptPipeline(BaseModelPipeline):
                 annotation_command,
                 conversion_config=conversion_config,
                 comparator_config=comparator_config,
-                tensorrt_common_config=tensorrt_common_config,
-                dataset_profile=dataset_profile,
+                dataloader=dataloader,
                 signature_config=signature_config,
             )
             commands.append(CompositeConvertCommand(cmds=[copy_command, annotation_command, ts2trt_converter]))
@@ -177,10 +170,9 @@ class ONNXPipeline(BaseModelPipeline):
         self,
         *,
         conversion_config: ConversionConfig,
-        tensorrt_common_config: TensorRTCommonConfig,
         signature_config: Optional[ModelSignatureConfig] = None,
         comparator_config: Optional[ComparatorConfig] = None,
-        dataset_profile: Optional[DatasetProfileConfig] = None,
+        dataloader: Optional[Dataloader] = None,
     ) -> Sequence[CompositeConvertCommand]:
         from model_navigator.converter.transformers import ONNX2TRTCommand
 
@@ -191,9 +183,8 @@ class ONNXPipeline(BaseModelPipeline):
         elif conversion_config.target_format == Format.TENSORRT:
             cmd = ONNX2TRTCommand(
                 conversion_config=conversion_config,
-                tensorrt_common_config=tensorrt_common_config,
                 comparator_config=comparator_config,
-                dataset_profile=dataset_profile,
+                dataloader=dataloader,
             )
             commands.append(CompositeConvertCommand(cmds=[cmd]))
         return commands
@@ -206,10 +197,9 @@ class TRTPipeline(BaseModelPipeline):
         self,
         *,
         conversion_config: ConversionConfig,
-        tensorrt_common_config: TensorRTCommonConfig,
         signature_config: Optional[ModelSignatureConfig] = None,
         comparator_config: Optional[ComparatorConfig] = None,
-        dataset_profile: Optional[DatasetProfileConfig] = None,
+        dataloader: Optional[Dataloader] = None,
     ) -> Sequence[CompositeConvertCommand]:
         commands = []
         if conversion_config.target_format == Format.TENSORRT:
@@ -225,20 +215,18 @@ class ConvertCommandsRegistry:
         *,
         model_config: ModelConfig,
         conversion_config: ConversionConfig,
-        tensorrt_common_config: TensorRTCommonConfig,
         signature_config: Optional[ModelSignatureConfig] = None,
         comparator_config: Optional[ComparatorConfig] = None,
-        dataset_profile_config: Optional[DatasetProfileConfig] = None,
+        dataloader: Optional[Dataloader] = None,
     ) -> Iterator[Sequence[CompositeConvertCommand]]:
         model = Model(model_config.model_name, model_config.model_path, explicit_format=model_config.model_format)
 
         for pipeline in self._get_pipelines_for_model(model):
             yield pipeline.get_commands(
                 conversion_config=conversion_config,
-                tensorrt_common_config=tensorrt_common_config,
                 signature_config=signature_config,
                 comparator_config=comparator_config,
-                dataset_profile=dataset_profile_config,
+                dataloader=dataloader,
             )
 
     def _get_pipelines_for_model(self, model: Model):

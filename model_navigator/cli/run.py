@@ -358,7 +358,6 @@ def run_cmd(
             **dataclass2dict(analyze_result.optimization_config),
             **dataclass2dict(analyze_result.batching_config),
             **dataclass2dict(analyze_result.instances_config),
-            **dataclass2dict(tensorrt_common_config),
         )
         create_helm_chart_results.append(create_helm_chart_result)
 

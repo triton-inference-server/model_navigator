@@ -14,31 +14,13 @@
 import logging
 from typing import Optional
 
-from model_navigator.cli.spec import serialize_shapes
-from model_navigator.converter import DatasetProfileConfig
-from model_navigator.converter.config import ConversionConfig
-from model_navigator.converter.utils import execute_sh_command, prepare_log_header
+from model_navigator.converter.config import TensorRTConversionConfig
+from model_navigator.converter.dataloader import Dataloader
+from model_navigator.converter.utils import navigator_subprocess, prepare_log_header
 from model_navigator.exceptions import ModelNavigatorConverterCommandException
 from model_navigator.model import Format, ModelSignatureConfig
 
 LOGGER = logging.getLogger(__name__)
-
-
-def _get_shapes(dataset_profile):
-    if dataset_profile is None:
-        return []
-
-    shapes = []
-    if dataset_profile.min_shapes:
-        for shape in serialize_shapes(None, value=dataset_profile.min_shapes):
-            shapes += ["--trt-min-shapes", shape]
-    if dataset_profile.max_shapes:
-        for shape in serialize_shapes(None, value=dataset_profile.max_shapes):
-            shapes += ["--trt-max-shapes", shape]
-    if dataset_profile.opt_shapes:
-        for shape in serialize_shapes(None, value=dataset_profile.opt_shapes):
-            shapes += ["--trt-opt-shapes", shape]
-    return shapes
 
 
 def ts2torchtrt(
@@ -46,39 +28,30 @@ def ts2torchtrt(
     output_path,
     *,
     log_path,
-    dataset_profile: Optional[DatasetProfileConfig],
+    dataloader: Dataloader,
     signature_config: Optional[ModelSignatureConfig],
-    conversion_config: ConversionConfig,
-    max_workspace_size: int,
+    tensorrt_config: TensorRTConversionConfig,
     max_batch_size: int,
     verbose: bool = False,
 ):
     LOGGER.info("%s command started.", __name__)
-    import sh
 
     with log_path.open("w") as log_file:
         prepare_log_header(log_file, Format.TORCHSCRIPT, Format.TORCH_TRT)
-        shapes = _get_shapes(dataset_profile)
         try:
-            execute_sh_command(
-                sh.python3.bake(
-                    "-mmodel_navigator.converter.torch_tensorrt.ts2trt",
-                    *shapes,
+            with navigator_subprocess(log_file=log_file, verbose=verbose) as navigator:
+                ts2trt = navigator.module("model_navigator.converter.torch_tensorrt.ts2trt")
+                ts2trt.compile(
                     **{
                         "input_model": input_path,
                         "output_path": output_path,
                         "log_path": log_path,
-                        "precision": conversion_config.tensorrt_precision.value,
-                        "precision_mode": conversion_config.tensorrt_precision_mode.value,
-                        "tensorrt_sparse_weights": conversion_config.tensorrt_sparse_weights,
-                        "tensorrt_strict_types": conversion_config.tensorrt_strict_types,
+                        "signature_config": signature_config,
+                        "dataloader": dataloader,
+                        "tensorrt_config": tensorrt_config,
                         "max_batch_size": max_batch_size,
-                        "max_workspace_size": max_workspace_size,
-                        "verbose": bool(verbose),
-                    },
-                ),
-                log_file=log_file,
-            )
-        except sh.ErrorReturnCode as e:
+                    }
+                )
+        except Exception as e:
             LOGGER.warning(f"torch-tensorrt conversion failed. Details can be found in logfile: {log_path}")
-            raise ModelNavigatorConverterCommandException(message=e.stdout.decode("utf-8"), log_path=log_path)
+            raise ModelNavigatorConverterCommandException(message=str(e), log_path=log_path)

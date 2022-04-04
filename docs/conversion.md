@@ -345,6 +345,9 @@ model_path: path
 # Provide verbose logs.
 [ verbose: boolean ]
 
+# Seed to use for random number generation.
+[ random_seed: integer ]
+
 # Format of the model. Should be provided in case it is not possible to obtain format from model filename.
 [ model_format: choice(torchscript, tf-savedmodel, tf-trt, torch-trt, onnx, trt) ]
 
@@ -366,9 +369,6 @@ model_path: path
 
 # Signature of the model outputs.
 [ outputs: list[str] ]
-
-# The maximum GPU memory in bytes the model can use temporarily during execution for TensorRT acceleration.
-[ tensorrt_max_workspace_size: integer ]
 
 # Target format to generate.
 [ target_formats: list[str] | default: ['tf-trt', 'tf-savedmodel', 'onnx', 'trt', 'torchscript', 'torch-trt'] ]
@@ -394,6 +394,9 @@ model_path: path
 
 # Enable optimizations for sparse weights in TensorRT.
 [ tensorrt_sparse_weights: boolean ]
+
+# The maximum GPU memory in bytes the model can use temporarily during execution for TensorRT acceleration.
+[ tensorrt_max_workspace_size: integer | default: 4294967296 ]
 
 # Absolute tolerance parameter for output comparison.
 # To specify per-output tolerances, use the format: --atol [<out_name>=]<atol>.

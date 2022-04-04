@@ -13,11 +13,11 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-from typing import Optional
 
+from model_navigator.core import DEFAULT_TENSORRT_MAX_WORKSPACE_SIZE
 from model_navigator.utils.config import BaseConfig
 
 
 @dataclass
 class TensorRTCommonConfig(BaseConfig):
-    tensorrt_max_workspace_size: Optional[int] = None
+    tensorrt_max_workspace_size: int = DEFAULT_TENSORRT_MAX_WORKSPACE_SIZE

@@ -14,11 +14,25 @@
 import tempfile
 from pathlib import Path
 
-from model_navigator.common.config import TensorRTCommonConfig
 from model_navigator.converter import ConversionConfig, Converter
+from model_navigator.converter.dataloader import Dataloader
 from model_navigator.model import Format, ModelConfig
 from model_navigator.results import State
 from model_navigator.utils import Workspace
+
+
+class MockDataloader(Dataloader):
+    def __iter__(self):
+        pass
+
+    def max_shapes(self):
+        return None
+
+    def min_shapes(self):
+        return None
+
+    def opt_shapes(self):
+        return None
 
 
 def test_converter_return_src_model_if_it_matches_conversion_set():
@@ -29,9 +43,9 @@ def test_converter_return_src_model_if_it_matches_conversion_set():
 
         src_model = ModelConfig(model_name="MyModel", model_path=Path("tests/files/models/identity.savedmodel"))
         conversion_config = ConversionConfig(target_format=Format.TF_SAVEDMODEL)
-        tensorrt_common_config = TensorRTCommonConfig()
+        mock_dataloader = MockDataloader()
         conversion_results = converter.convert(
-            src_model=src_model, conversion_config=conversion_config, tensorrt_common_config=tensorrt_common_config
+            src_model=src_model, conversion_config=conversion_config, dataloader=mock_dataloader
         )
         conversion_results = list(conversion_results)
         assert len(conversion_results) == 1
@@ -42,7 +56,7 @@ def test_converter_return_src_model_if_it_matches_conversion_set():
         src_model = ModelConfig(model_name="MyModel", model_path=Path("tests/files/models/identity.onnx"))
         conversion_config = ConversionConfig(target_format=Format.ONNX)
         conversion_results = converter.convert(
-            src_model=src_model, conversion_config=conversion_config, tensorrt_common_config=tensorrt_common_config
+            src_model=src_model, conversion_config=conversion_config, dataloader=mock_dataloader
         )
         conversion_results = list(conversion_results)
         assert len(conversion_results) == 1
@@ -53,7 +67,7 @@ def test_converter_return_src_model_if_it_matches_conversion_set():
         src_model = ModelConfig(model_name="MyModel", model_path=Path("tests/files/models/identity.traced.pt"))
         conversion_config = ConversionConfig(target_format=Format.TORCHSCRIPT)
         conversion_results = converter.convert(
-            src_model=src_model, conversion_config=conversion_config, tensorrt_common_config=tensorrt_common_config
+            src_model=src_model, conversion_config=conversion_config, dataloader=mock_dataloader
         )
         conversion_results = list(conversion_results)
         assert len(conversion_results) == 1
