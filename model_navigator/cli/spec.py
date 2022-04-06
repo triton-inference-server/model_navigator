@@ -579,3 +579,8 @@ class PerfMeasurementConfigCli:
         help="Perf Analyzer count windows number of samples to used for stabilization."
     )
     perf_measurement_interval = CliSpec(help="Perf Analyzer time windows time in [ms] used for stabilization.")
+
+
+class RunTritonConfigCli:
+    triton_launch_mode = ModelAnalyzerTritonConfigCli.triton_launch_mode
+    triton_server_path = ModelAnalyzerTritonConfigCli.triton_server_path

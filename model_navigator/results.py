@@ -19,6 +19,7 @@ from typing import Optional, Sequence
 
 import yaml
 
+from model_navigator.exceptions import ModelNavigatorException
 from model_navigator.utils import Workspace
 from model_navigator.utils.config import dataclass2dict, dict2dataclass
 
@@ -56,6 +57,7 @@ class ResultsStore:
         # TODO: move this to decorator which is called in cli.main() by iterating through commands
         # TODO: missing results for run command
         from model_navigator.cli.triton_config_model import ConfigModelResult
+        from model_navigator.configurator import TritonConfiguratorResult
         from model_navigator.converter import ConversionResult
         from model_navigator.kubernetes import HelmChartGenerationResult
         from model_navigator.model_analyzer import AnalyzeResult, ProfileResult
@@ -63,6 +65,7 @@ class ResultsStore:
         _CLS_FOR_STAGE = {
             "convert_model": ConversionResult,
             "triton_config_model": ConfigModelResult,
+            "configure_models_on_triton": TritonConfiguratorResult,
             "profile": ProfileResult,
             "analyze": AnalyzeResult,
             "helm_chart_create": HelmChartGenerationResult,
@@ -71,8 +74,7 @@ class ResultsStore:
         cls = _CLS_FOR_STAGE[stage]
         results_path: Path = self.get_path(stage)
         if not results_path.exists():
-            LOGGER.debug(f"No results found for {stage}")
-            return []
+            raise ModelNavigatorException(f"No results found for {stage}")
 
         with results_path.open("r") as results_file:
             results = yaml.safe_load(results_file)

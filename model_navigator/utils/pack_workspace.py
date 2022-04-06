@@ -12,95 +12,112 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import pathlib
-import shutil
-import sys
 import zipfile
-from typing import Optional
 
 import yaml
 
 from model_navigator import LOGGER
 from model_navigator.exceptions import ModelNavigatorException
-from model_navigator.utils import device
-from model_navigator.utils.nav_package import NavPackage
+from model_navigator.results import ResultsStore, State
+from model_navigator.utils import Workspace, device
+from model_navigator.utils.config import dataclass2dict
 
 FORMAT_VERSION = "0.0.1"
 
 
 def pack_workspace(
-    workspace_path: pathlib.Path,
+    workspace: Workspace,
     package_path: pathlib.Path,
     navigator_config,
-    input_package: Optional[NavPackage] = None,
 ):
-    LOGGER.info(f"Creating package from workspace {workspace_path} to {package_path}")
-    LOGGER.debug("Collecting Helm Chart information.")
-    with open(workspace_path / "helm-chart-create_results.yaml") as f:
-        create_helm_chart_results = yaml.load(f.read(), Loader=yaml.SafeLoader)
+    LOGGER.info(f"Creating package from workspace {workspace.path} to {package_path}")
 
-    LOGGER.debug("Collecting Model Analyzer results.")
-    with open(workspace_path / "analyze_results.yaml") as f:
-        analyze_results = yaml.load(f.read(), Loader=yaml.SafeLoader)
+    results_store = ResultsStore(workspace)
+
+    LOGGER.debug("Collecting conversion information.")
+    conversion_results = results_store.load("convert_model")
+
+    LOGGER.debug("Collecting Triton configuration results.")
+    configuration_results = results_store.load("configure_models_on_triton")
+
+    conversion_log_path = "conversion-logs"
+    conversion_logs = []
+
+    configurator_log_path = "configurator-logs"
+    configurator_logs = []
 
     LOGGER.debug("Creating package content.")
-    models = {}
-    analyzer_csv_reports = set()
-    for res in analyze_results:
-        analyzer_csv_reports.add(res["metrics_path"])
-        analyzer_csv_reports.add(res["results_path"])
-        path = pathlib.Path(res["model_repository"]) / res["model_name"]
-        models[res["model_name"]] = {
-            "path": path,
-            "package_path": pathlib.Path("model-store") / path.relative_to(res["model_repository"]),
+    models = []
+    for conversion_result in conversion_results:
+        model_data = {
+            "status": conversion_result.status.state.value,
+            "name": conversion_result.output_model.name if conversion_result.output_model else None,
+            "log_file": None,
+            "conversion_config": dataclass2dict(conversion_result.conversion_config),
         }
 
-    helm_charts_status = []
-    for res in create_helm_chart_results:
-        path = pathlib.Path(res["helm_chart_dir_path"])
-        chart_dir = path.parent
-        helm_charts_status.append({"path": (pathlib.Path("helm-charts") / path.relative_to(chart_dir)).as_posix()})
+        if conversion_result.status.state != State.SUCCEEDED or not conversion_result.output_model:
+            log_path = conversion_result.status.log_path
+            if log_path:
+                model_data["log_file"] = pathlib.Path(conversion_log_path) / log_path.name
+                conversion_logs.append(log_path)
+
+            model_data["model_stores"] = []
+        else:
+            model_stores = []
+            for config_result in filter(
+                lambda c: c.model.name == conversion_result.output_model.name, configuration_results
+            ):
+                model_store_data = {
+                    "status": config_result.status.state.value,
+                    "name": config_result.model_config_name,
+                    "log_file": None,
+                    "optimizations": dataclass2dict(config_result.optimization_config),
+                }
+                if config_result.status.state != State.SUCCEEDED:
+                    log_path = config_result.status.log_path
+                    if log_path:
+                        model_store_data["log_file"] = pathlib.Path(configurator_log_path) / log_path.name
+                        configurator_logs.append(log_path)
+
+                model_stores.append(model_store_data)
+
+            model_data["model_stores"] = model_stores
+
+        models.append(model_data)
 
     status = {
         "format_version": FORMAT_VERSION,
-        "navigator_config": navigator_config,
-        "helm_charts": helm_charts_status,
-        "triton_models": [
-            {
-                "name": model,
-                "path": info["package_path"].as_posix(),
-            }
-            for model, info in models.items()
-        ],
+        "config": navigator_config,
+        "models": models,
         "environment": device.get_environment_info(),
     }
 
     LOGGER.debug("Compressing package to single file.")
     with zipfile.ZipFile(package_path, "w", compression=zipfile.ZIP_STORED) as package:
-        for helm_chart_res in create_helm_chart_results:
-            path = pathlib.Path(helm_chart_res["helm_chart_dir_path"])
-            chart_dir = path.parent
-            for fs in path.glob("**/*"):
-                package.write(fs, arcname=pathlib.Path("helm-charts") / fs.relative_to(chart_dir))
+        results_path = pathlib.Path(workspace.path / "analyzer" / "results")
+        results_parent_dir = results_path.parent
+        for result in results_path.iterdir():
+            package.write(result, arcname=pathlib.Path("results") / result.relative_to(results_parent_dir))
 
-        for _, info in models.items():
-            for fs in info["path"].glob("**/*"):
-                package.write(fs, arcname=info["package_path"] / fs.relative_to(info["path"]))
+        checkpoints_path = pathlib.Path(workspace.path / "analyzer" / "checkpoints")
+        checkpoints_parent_dir = checkpoints_path.parent
+        for checkpoint in checkpoints_path.iterdir():
+            package.write(
+                checkpoint, arcname=pathlib.Path("checkpoints") / checkpoint.relative_to(checkpoints_parent_dir)
+            )
 
-        for csv in analyzer_csv_reports:
-            fname = pathlib.Path(csv).name
-            package.write(csv, arcname=pathlib.Path("analyzer-results") / fname)
+        models_path = pathlib.Path(workspace.path / "analyzer" / "model-store")
+        for model in models_path.iterdir():
+            package.write(model, arcname=pathlib.Path("model-store") / model.relative_to(model.parent))
 
-        package.writestr("status.yaml", yaml.dump(status))
+        for log_file in conversion_logs:
+            package.write(log_file, arcname=pathlib.Path(conversion_log_path) / log_file.relative_to(log_file.parent))
 
-        if input_package is not None:
-            for fs in input_package.all_files:
-                try:
-                    with input_package.open(fs) as inf, package.open(
-                        (pathlib.Path("input.nav") / fs).as_posix(), "w"
-                    ) as outf:
-                        shutil.copyfileobj(inf, outf)
-                except IsADirectoryError:
-                    pass
+        for log_file in configurator_logs:
+            package.write(log_file, arcname=pathlib.Path(configurator_log_path) / log_file.relative_to(log_file.parent))
+
+        package.writestr("status.yaml", yaml.dump(status, width=240, sort_keys=False))
 
     if not package_path.is_file():
         raise ModelNavigatorException(f"Package not found in {package_path}.")
@@ -109,8 +126,4 @@ def pack_workspace(
 
 
 if __name__ == "__main__":
-    try:
-        input_package = NavPackage(pathlib.Path(sys.argv[1]))
-    except Exception:
-        input_package = None
-    pack_workspace(pathlib.Path("navigator_workspace").absolute(), pathlib.Path("test.triton.nav"), {}, input_package)
+    pack_workspace(Workspace("navigator_workspace"), pathlib.Path("test.triton.nav"), {})

@@ -93,7 +93,7 @@ class CopyModelFilesCommand(BaseConvertCommand):
         return ConversionResult(
             Status(State.SUCCEEDED, "Model copied", None),
             source_model_config=model,
-            conversion_config=None,
+            conversion_config=ConversionConfig(target_format=model.model_format),
             comparator_config=None,
             output_model=Model(model.model_name, path=output_path, explicit_format=model.model_format),
         )
@@ -170,6 +170,7 @@ class TorchScriptAnnotationGenerator(BaseConvertCommand):
         return ConversionResult(
             Status(State.SUCCEEDED, "Model annotated", None),
             source_model_config=model,
+            conversion_config=ConversionConfig(target_format=model.model_format),
             output_model=Model(model.model_name, path=model.model_path, explicit_format=model.model_format),
         )
 

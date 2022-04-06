@@ -21,7 +21,7 @@ Feature: Set base docker images
         And the profile subcommand results have succeeded state and parameters matching:
             triton_docker_image=nvcr.io/nvidia/tritonserver:21.05-py3
         And the analyze subcommand results have succeeded state
-        And the helm-chart-create subcommand results have succeeded state and parameters matching:
+        And the helm_chart_create subcommand results have succeeded state and parameters matching:
             framework_docker_image=nvcr.io/nvidia/pytorch:21.05-py3
             triton_docker_image=nvcr.io/nvidia/tritonserver:21.05-py3
 
@@ -37,7 +37,7 @@ Feature: Set base docker images
         And the profile subcommand results have succeeded state and parameters matching:
             triton_docker_image=nvcr.io/nvidia/tritonserver:21.02-py3
         And the analyze subcommand results have succeeded state
-        And the helm-chart-create subcommand results have succeeded state and parameters matching:
+        And the helm_chart_create subcommand results have succeeded state and parameters matching:
             framework_docker_image=nvcr.io/nvidia/pytorch:21.02-py3
             triton_docker_image=nvcr.io/nvidia/tritonserver:21.02-py3
 

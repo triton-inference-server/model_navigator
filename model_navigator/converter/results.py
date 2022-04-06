@@ -23,7 +23,7 @@ from model_navigator.results import Status
 class ConversionResult:
     status: Status
     source_model_config: ModelConfig
-    conversion_config: Optional[ConversionConfig] = None
+    conversion_config: ConversionConfig
     model_signature_config: Optional[ModelSignatureConfig] = None
     comparator_config: Optional[ComparatorConfig] = None
     dataset_profile: Optional[DatasetProfileConfig] = None

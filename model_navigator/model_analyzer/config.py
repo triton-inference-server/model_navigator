@@ -14,17 +14,12 @@
 import abc
 import pathlib
 from dataclasses import dataclass, field
-from enum import Enum
 from typing import Dict, List, Optional
 
 from model_navigator.triton import DeviceKind
+from model_navigator.triton.config import TritonLaunchMode
 from model_navigator.utils import Workspace
 from model_navigator.utils.config import BaseConfig
-
-
-class TritonLaunchMode(Enum):
-    LOCAL = "local"
-    DOCKER = "docker"
 
 
 class BaseConfigGenerator(abc.ABC):

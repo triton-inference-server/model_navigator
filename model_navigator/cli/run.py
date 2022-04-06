@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import dataclasses
 import logging
 import pathlib
 import shutil
@@ -30,10 +29,10 @@ from model_navigator.cli.spec import (
     DatasetProfileConfigCli,
     ModelAnalyzerAnalysisConfigCli,
     ModelAnalyzerProfileConfigCli,
-    ModelAnalyzerTritonConfigCli,
     ModelConfigCli,
     ModelSignatureConfigCli,
     PerfMeasurementConfigCli,
+    RunTritonConfigCli,
     TensorRTCommonConfigCli,
     TritonBatchingConfigCli,
     TritonCustomBackendParametersConfigCli,
@@ -42,7 +41,7 @@ from model_navigator.cli.spec import (
 from model_navigator.cli.triton_config_model import config_model_on_triton_cmd
 from model_navigator.cli.triton_evaluate_model import triton_evaluate_model_cmd
 from model_navigator.common.config import TensorRTCommonConfig
-from model_navigator.configurator import Configurator, log_configuration_error
+from model_navigator.configurator import Configurator, TritonConfiguratorResult, log_configuration_error
 from model_navigator.converter import ComparatorConfig, ConversionLaunchMode, ConversionResult, DatasetProfileConfig
 from model_navigator.converter.utils import FORMAT2FRAMEWORK
 from model_navigator.exceptions import ModelNavigatorException
@@ -56,10 +55,9 @@ from model_navigator.model_analyzer import (
     ModelAnalyzerProfileConfig,
     ModelAnalyzerTritonConfig,
     ProfileResult,
-    TritonLaunchMode,
 )
 from model_navigator.perf_analyzer import PerfMeasurementConfig
-from model_navigator.results import ResultsStore, State
+from model_navigator.results import ResultsStore, State, Status
 from model_navigator.triton import (
     TritonBatchingConfig,
     TritonClientConfig,
@@ -67,25 +65,14 @@ from model_navigator.triton import (
     TritonServerConfig,
     TritonServerFactory,
 )
-from model_navigator.triton.config import TritonCustomBackendParametersConfig
+from model_navigator.triton.config import RunTritonConfig, TritonCustomBackendParametersConfig, TritonLaunchMode
 from model_navigator.utils import Workspace, cli
-from model_navigator.utils.config import BaseConfig, dataclass2dict
+from model_navigator.utils.config import dataclass2dict
 from model_navigator.utils.device import get_gpus
 from model_navigator.utils.pack_workspace import pack_workspace
 from model_navigator.validators import run_command_validators
 
 LOGGER = logging.getLogger("run")
-
-RunTritonConfig = dataclasses.make_dataclass(
-    "RunTritonConfig",
-    [(f.name, f.type, f) for f in dataclasses.fields(ModelAnalyzerTritonConfig) if f.name not in ["model_repository"]],
-    bases=(BaseConfig,),
-)
-
-
-class RunTritonConfigCli:
-    triton_launch_mode = ModelAnalyzerTritonConfigCli.triton_launch_mode
-    triton_server_path = ModelAnalyzerTritonConfigCli.triton_server_path
 
 
 @click.command(name="run", help="Run models")
@@ -219,96 +206,36 @@ def run_cmd(
     interim_model_repository.mkdir(parents=True, exist_ok=True)
     final_model_repository.mkdir(parents=True, exist_ok=True)
 
-    results_to_analyze = []
-    configurator = Configurator()
-
-    gpus = get_gpus(gpus=gpus)
-
-    triton_server = _get_triton_server(
+    config_results = _configure_models_on_triton(
+        ctx=ctx,
+        output_model_store=interim_model_repository,
+        converted_models=succeeded_models,
+        batching_config=batching_config,
+        instance_config=instance_config,
+        backend_config=backend_config,
+        tensorrt_common_config=tensorrt_common_config,
+        dataset_profile_config=dataset_profile_config,
+        perf_measurement_config=perf_measurement_config,
+        triton_config=triton_config,
         triton_docker_image=triton_docker_image,
         gpus=gpus,
-        analyzer_config=ModelAnalyzerTritonConfig.from_dict(
-            {**dataclass2dict(triton_config), **{"model_repository": interim_model_repository}}
-        ),
+        workspace=workspace,
         verbose=verbose,
     )
 
-    for model_to_deploy in succeeded_models:
-        LOGGER.info(f"Running triton model configuration variants generation for {model_to_deploy.name}")
-        for variant in configurator.get_models_variants(model_to_deploy):
-            model_to_deploy_config = ModelConfig(variant.name, model_to_deploy.path)
-            error_logs = []
-            try:
-                LOGGER.info(f"Verifying model variant: {variant.name}")
-                if variant.num_required_gpus is not None and len(gpus) < variant.num_required_gpus:
-                    LOGGER.warning(
-                        f"Variant {variant.name} requires {variant.num_required_gpus} gpus "
-                        f"while only {len(gpus)} is available."
-                    )
-                    continue
-                triton_server.set_gpus(gpus[: variant.num_required_gpus])
-                triton_server.start()
-                triton_client = triton_server.create_grpc_client()
-                triton_client_config = TritonClientConfig(server_url=triton_client.server_url)
-                # other Triton related configuration are forwarded with ctx.forward
-                LOGGER.info(f"Running triton model configurator for {variant.name}")
-                config_result = ctx.forward(
-                    config_model_on_triton_cmd,
-                    **dataclass2dict(batching_config),
-                    **dataclass2dict(instance_config),
-                    **dataclass2dict(model_to_deploy_config),
-                    **dataclass2dict(variant.optimization_config),
-                    **dataclass2dict(triton_client_config),
-                    **dataclass2dict(backend_config),
-                    **dataclass2dict(tensorrt_common_config),
-                    model_repository=interim_model_repository,
-                    load_model=True,
-                )
-                if config_result.status.state != State.SUCCEEDED:
-                    error_logs.append(config_result.status.message)
-                    continue
-
-                LOGGER.info(f"Running triton model evaluator for {variant.name}")
-                evaluate_result = ctx.forward(
-                    triton_evaluate_model_cmd,
-                    **dataclass2dict(triton_client_config),
-                    **dataclass2dict(dataset_profile_config),
-                    **dataclass2dict(perf_measurement_config),
-                    model_name=model_to_deploy_config.model_name,
-                    model_version=model_to_deploy_config.model_version,
-                )
-                if evaluate_result.status.state != State.SUCCEEDED:
-                    error_logs.append(evaluate_result.log)
-                    continue
-
-                if not error_logs:
-                    LOGGER.info(f"Promoting {variant.name} to profiling.")
-                    results_to_analyze.append(config_result)
-            finally:
-                triton_server.stop()
-
-                if error_logs:
-                    server_log = triton_server.logs()
-                    LOGGER.debug(server_log)
-
-                    log_file = log_configuration_error(
-                        workspace=workspace_path,
-                        model=model_to_deploy,
-                        variant=variant,
-                        server_log=server_log,
-                        errors=error_logs,
-                    )
-                    LOGGER.warning(
-                        f"Unable to evaluate model {variant.name}. "
-                        f"Details can be found in logfile: {log_file.absolute()}"
-                    )
-
     # move when triton server for testing purposes is shutdown
-    for config_result in results_to_analyze:
-        src_dir = config_result.model_dir_in_model_store
+    results_to_analyze = []
+    for config_result in config_results:
+        if config_result.status.state == State.FAILED:
+            LOGGER.warning(config_result.status.message)
+            continue
+
+        src_dir = config_result.model_config_path
         dst_dir = final_model_repository / src_dir.name
-        LOGGER.info(f"Moving model dir between model stores: {src_dir} -> {dst_dir}")
+        LOGGER.info(f"Model {config_result.model_config_name} evaluation succeed. Moving for profiling.")
+        LOGGER.debug(f"Moving model dir between model stores: {src_dir} -> {dst_dir}")
         shutil.move(src_dir.as_posix(), dst_dir.as_posix())
+        results_to_analyze.append(dst_dir.name)
 
     if not results_to_analyze:
         sys.exit(
@@ -364,9 +291,9 @@ def run_cmd(
         if create_helm_chart_result.status.state != State.SUCCEEDED:
             LOGGER.warning(f"Helm Chart generation failed with message: {create_helm_chart_result.status.message}")
     results_store = ResultsStore(workspace)
-    results_store.dump("helm-chart-create", create_helm_chart_results)
+    results_store.dump("helm_chart_create", create_helm_chart_results)
     output_package_path = _get_output_package_path(src_model_config, output_package)
-    pack_workspace(workspace.path, output_package_path, configuration)
+    pack_workspace(workspace, output_package_path, configuration)
 
 
 def _get_output_package_path(model_config, output_package):
@@ -419,3 +346,137 @@ def _get_triton_server(*, triton_docker_image, gpus, analyzer_config, verbose: b
         raise ModelNavigatorException(f"Unsupported triton_launch_mode: {analyzer_config.triton_launch_mode}")
 
     return triton_server
+
+
+def _configure_models_on_triton(
+    ctx,
+    converted_models: List,
+    output_model_store: pathlib.Path,
+    batching_config: TritonBatchingConfig,
+    instance_config: TritonModelInstancesConfig,
+    backend_config: TritonCustomBackendParametersConfig,
+    tensorrt_common_config: TensorRTCommonConfig,
+    dataset_profile_config: DatasetProfileConfig,
+    perf_measurement_config: PerfMeasurementConfig,
+    triton_config: RunTritonConfig,
+    triton_docker_image: str,
+    gpus: List,
+    workspace: Workspace,
+    verbose: bool,
+):
+    gpus = get_gpus(gpus=gpus)
+
+    triton_server = _get_triton_server(
+        triton_docker_image=triton_docker_image,
+        gpus=gpus,
+        analyzer_config=ModelAnalyzerTritonConfig.from_dict(
+            {**dataclass2dict(triton_config), **{"model_repository": output_model_store}}
+        ),
+        verbose=verbose,
+    )
+
+    config_results = []
+
+    configurator = Configurator()
+
+    LOGGER.info("Running Triton Model Configurator for converted models")
+    for model in converted_models:
+        LOGGER.info(f"\t- {model.name}")
+
+    for model_to_deploy in converted_models:
+        LOGGER.info(f"Running triton model configuration variants generation for {model_to_deploy.name}")
+        for variant in configurator.get_models_variants(model_to_deploy):
+            LOGGER.info(f"Generated model variant {variant.name} for Triton evaluation.")
+            model_to_deploy_config = ModelConfig(variant.name, model_to_deploy.path)
+            model_config_path = None
+            error_logs = []
+            try:
+                if variant.num_required_gpus is not None and len(gpus) < variant.num_required_gpus:
+                    LOGGER.warning(
+                        f"  Variant {variant.name} requires {variant.num_required_gpus} gpus "
+                        f"  while only {len(gpus)} is available."
+                    )
+                    continue
+
+                triton_server.set_gpus(gpus[: variant.num_required_gpus])
+                triton_server.start()
+                triton_client = triton_server.create_grpc_client()
+                triton_client_config = TritonClientConfig(server_url=triton_client.server_url)
+                # other Triton related configuration are forwarded with ctx.forward
+                LOGGER.debug(f"  [{variant.name}] Load on Triton")
+                config_result = ctx.forward(
+                    config_model_on_triton_cmd,
+                    **dataclass2dict(batching_config),
+                    **dataclass2dict(instance_config),
+                    **dataclass2dict(model_to_deploy_config),
+                    **dataclass2dict(variant.optimization_config),
+                    **dataclass2dict(triton_client_config),
+                    **dataclass2dict(backend_config),
+                    **dataclass2dict(tensorrt_common_config),
+                    model_repository=output_model_store,
+                    load_model=True,
+                )
+                if config_result.status.state != State.SUCCEEDED:
+                    error_logs.append(config_result.status.message)
+                    continue
+
+                model_config_path = pathlib.Path(config_result.model_dir_in_model_store)
+
+                LOGGER.debug(f"  [{variant.name}] Run inference requests.")
+                evaluate_result = ctx.forward(
+                    triton_evaluate_model_cmd,
+                    **dataclass2dict(triton_client_config),
+                    **dataclass2dict(dataset_profile_config),
+                    **dataclass2dict(perf_measurement_config),
+                    model_name=model_to_deploy_config.model_name,
+                    model_version=model_to_deploy_config.model_version,
+                )
+                if evaluate_result.status.state != State.SUCCEEDED:
+                    error_logs.append(evaluate_result.log)
+                    continue
+            finally:
+                triton_server.stop()
+
+                if error_logs:
+                    server_log = triton_server.logs()
+                    LOGGER.debug(server_log)
+
+                    log_file = log_configuration_error(
+                        workspace=workspace.path,
+                        model=model_to_deploy,
+                        variant=variant,
+                        server_log=server_log,
+                        errors=error_logs,
+                    )
+                    status = Status(
+                        state=State.FAILED,
+                        log_path=log_file.as_posix(),
+                        message=f"Unable to evaluate model {variant.name}. Details can be found in logfile: {log_file.absolute()}",
+                    )
+                else:
+                    status = Status(
+                        state=State.SUCCEEDED,
+                        message=f"Model {variant.name} successfully loaded.",
+                    )
+
+                config_result = TritonConfiguratorResult(
+                    status=status,
+                    model=model_to_deploy,
+                    model_config_name=variant.name,
+                    model_config_path=model_config_path,
+                    batching_config=batching_config,
+                    backend_config=backend_config,
+                    instance_config=instance_config,
+                    tensorrt_common_config=tensorrt_common_config,
+                    dataset_profile_config=dataset_profile_config,
+                    perf_measurement_config=perf_measurement_config,
+                    optimization_config=variant.optimization_config,
+                    triton_config=triton_config,
+                )
+
+                config_results.append(config_result)
+
+    results_store = ResultsStore(workspace)
+    results_store.dump("configure_models_on_triton", config_results)
+
+    return config_results
