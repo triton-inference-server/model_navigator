@@ -15,6 +15,19 @@ limitations under the License.
 -->
 # Models Profiling
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- [Overview](#overview)
+- [Model Config sweeping process](#model-config-sweeping-process)
+- [Profile Results](#profile-results)
+- [The `profile` Command](#the-profile-command)
+- [CLI and YAML Config Options](#cli-and-yaml-config-options)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+## Overview
+
 The `profile` command evaluates a model on the Triton Inference Server to gather statistics for provided search parameters.
 
 The model's profiling is performed using the [Triton Model Analyzer](https://github.com/triton-inference-server/model_analyzer),

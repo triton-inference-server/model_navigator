@@ -15,15 +15,34 @@ limitations under the License.
 -->
 # Model Conversions
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- [Overview](#overview)
+- [Available Converters](#available-converters)
+  - [Tensorflow SavedModel to ONNX conversion](#tensorflow-savedmodel-to-onnx-conversion)
+- [TorchScript to ONNX conversion](#torchscript-to-onnx-conversion)
+  - [ONNX to TensorRT conversion](#onnx-to-tensorrt-conversion)
+    - [TensorRT Optimization Profiles](#tensorrt-optimization-profiles)
+- [Definition of Model Inputs and Outputs](#definition-of-model-inputs-and-outputs)
+- [Verification of Conversion Correctness](#verification-of-conversion-correctness)
+- [CLI and YAML Config Options](#cli-and-yaml-config-options)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+## Overview
+
 The Triton Model Navigator gathers a set of tools for model conversions between formats.
 Currently, the supported input and target model formats are:
 
 | Input Model Format    | Target Model Format   |
 |-----------------------|-----------------------|
 | TensorFlow SavedModel | TensorFlow SavedModel |
+| TensorFlow SavedModel | TensorFlow-TensorRT |
 | PyTorch TorchScript   | PyTorch TorchScript   |
+| PyTorch TorchScript   | Torch-TensorRT   |
 | ONNX   | ONNX   |
-|    | TensorRT   |
+| ONNX  | TensorRT   |
 
 The list of target formats is a subset of
 [formats handled by Triton Inference Server](https://github.com/triton-inference-server/server/blob/master/docs/model_repository.md#model-files).

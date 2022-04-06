@@ -16,6 +16,19 @@ limitations under the License.
 
 # Models Analysis
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- [Overview](#overview)
+- [The `analyze` Command](#the-analyze-command)
+- [Constrains](#constrains)
+- [Objectives](#objectives)
+- [CLI and YAML Config Options](#cli-and-yaml-config-options)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+## Overview
+
 The Triton Model Navigator uses the [Triton Model Analyzer](https://github.com/triton-inference-server/model_analyzer) for performing
 analysis of profiled models according to provided constraints and objectives.
 The analysis step selects the top N model configurations across all prepared versions of models and

@@ -329,4 +329,5 @@ workspace/
 navigator_workspace/
 docs/CONTRIBUTING.md
 docs/CHANGELOG.md
+docs/api
 version.yaml

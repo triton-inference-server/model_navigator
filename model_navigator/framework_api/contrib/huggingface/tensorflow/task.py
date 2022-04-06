@@ -34,6 +34,7 @@ class Task(Enum):
     CAUSAL_LM = "causal-lm"
     MASKED_LM = "masked-lm"
     BASE = "base"
+    UNKNOWN = "unknown"
 
 
 TASK_MODELS_MAPPING = OrderedDict(
@@ -63,4 +64,4 @@ def get_task_from_model(model: PreTrainedModel) -> Task:
     for task, models in TASK_MODELS_MAPPING.items():
         if model.__class__.__name__ in models:
             return task
-    raise ValueError(f"Taks for {model.__class__.__name__} is unknown")
+    return Task.UNKNOWN

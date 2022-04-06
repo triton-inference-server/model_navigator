@@ -15,16 +15,45 @@ limitations under the License.
 -->
 # Installation
 
-## Requirements
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
-Ensure your system fulfills the following requirements:
-* [NVIDIA Container Toolkit](https://github.com/NVIDIA/nvidia-docker)
-* [NVIDIA Ampere](https://www.nvidia.com/en-us/data-center/nvidia-ampere-gpu-architecture/), [Volta](https://www.nvidia.com/en-us/data-center/volta-gpu-architecture/), or [Turing](https://www.nvidia.com/en-us/geforce/turing/) based GPU
+- [Requirements](#requirements)
+- [Export From Source](#export-from-source)
+- [Optimize for Triton Inference Server](#optimize-for-triton-inference-server)
+- [Using Docker Container](#using-docker-container)
+- [Installing from the Source](#installing-from-the-source)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+## Requirements
+To use Model Navigator Export API you have to have PyTorch or TensorFlow2 already installed on your system.
+To export models to TensorRT you have to have [NVIDIA TensorRT](https://developer.nvidia.com/tensorrt) installed.
+
+NGC Containers are the recommended environments for Model Navigator Export API, they have all required dependencies:
+- [PyTorch](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch)
+- [TensorFlow](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/tensorflow)
+
+
+## Export From Source
+
+Model Navigator Export API is installed with Model Navigator package.
+To install Model Navigator Export API without Model Navigator dependencies use commands:
+
+```shell
+$ pip install --extra-index-url https://pypi.ngc.nvidia.com git+https://github.com/triton-inference-server/model_navigator.git@release/x.x.x [<extras,>] --upgrade
+```
+
+Extras:
+- pyt - Model Navigator Export API for PyTorch
+- tf - Model Navigator Export API for TensorFlow2
+- cli - Model Navigator CLI
+- huggingface - Model Navigator Export API for HuggingFace
+
+## Optimize for Triton Inference Server
 
 ## Using Docker Container
-
 The recommended way of using the Triton Model Navigator is to build a Docker container with all necessary dependencies:
-
 ```shell
 $ make docker
 ```

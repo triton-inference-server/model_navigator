@@ -283,6 +283,7 @@ class PackageDescriptor:
         jit_type: Optional[JitType] = None,
         precision: Optional[TensorRTPrecision] = None,
     ):
+        """Set exported model verified for given format, jit_type and precision"""
         for model_status in self.navigator_status.model_status:
             for runtime_results in model_status.runtime_results:
                 if (

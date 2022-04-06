@@ -39,12 +39,12 @@ class DocCmdsEntry(typing.NamedTuple):
 
 
 CATALOG = [
-    DocCmdsEntry(pathlib.Path("docs/run.md"), [run_cmd]),
-    DocCmdsEntry(pathlib.Path("docs/conversion.md"), [convert_cmd]),
-    DocCmdsEntry(pathlib.Path("docs/triton_model_configurator.md"), [config_model_on_triton_cmd]),
-    DocCmdsEntry(pathlib.Path("docs/helm_charts.md"), [helm_chart_create_cmd]),
-    DocCmdsEntry(pathlib.Path("docs/profiling.md"), [profile_cmd]),
-    DocCmdsEntry(pathlib.Path("docs/analysis.md"), [analyze_cmd]),
+    DocCmdsEntry(pathlib.Path("docs/optimize_for_triton.md"), [run_cmd]),
+    DocCmdsEntry(pathlib.Path("docs/advanced/conversion.md"), [convert_cmd]),
+    DocCmdsEntry(pathlib.Path("docs/advanced/triton_model_configurator.md"), [config_model_on_triton_cmd]),
+    DocCmdsEntry(pathlib.Path("docs/advanced/helm_charts.md"), [helm_chart_create_cmd]),
+    DocCmdsEntry(pathlib.Path("docs/advanced/profiling.md"), [profile_cmd]),
+    DocCmdsEntry(pathlib.Path("docs/advanced/analysis.md"), [analyze_cmd]),
 ]
 
 TYPE_MAPPING = {

@@ -4,16 +4,16 @@ Welcome to Triton Model Navigator documentation!
    :maxdepth: 2
 
    intro
-   overview
-   support_matrix
+   export_from_source
+   optimize_for_triton
    quick_start
-   installation
-   run
-   conversion
-   triton_model_configurator
-   profiling
-   analysis
-   helm_charts
+   advanced
+       advanced/conversion
+       advanced/triton_model_configurator
+       advanced/profiling
+       advanced/analysis
+       advanced/helm_charts
+   support_matrix
    Changelog <CHANGELOG>
    known_issues
    Contributing <CONTRIBUTING>

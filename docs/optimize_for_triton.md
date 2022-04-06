@@ -14,16 +14,32 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-# Running the Triton Model Navigator
+# Optimize for Triton Inference Server
+
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- [Synopsis](#synopsis)
+- [Description](#description)
+- [Examples](#examples)
+  - [Using a package](#using-a-package)
+  - [Using CLI arguments to override default package settings](#using-cli-arguments-to-override-default-package-settings)
+  - [Using a YAML file](#using-a-yaml-file)
+- [Advanced usage](#advanced-usage)
+  - [Example using a TorchScript file](#example-using-a-torchscript-file)
+  - [Example using a TensorFlow SavedModel](#example-using-a-tensorflow-savedmodel)
+- [CLI and YAML Config Options](#cli-and-yaml-config-options)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 The Triton Model Navigator supports a single command to run through the process and step-by-step execution going through each stage.
 
 The `model-navigator run` command replaces the old default behavior where all the steps are being performed one by one. Review the other commands to learn more about the process:
-- [Model Conversion](conversion.md)
-- [Triton Model Configurator](triton_model_configurator.md)
-- [Profiling](profiling.md)
-- [Analysis](analysis.md)
-- [Helm Chart Generator](helm_charts.md)
+- [Model Conversion](advanced/conversion.md)
+- [Triton Model Configurator](advanced/triton_model_configurator.md)
+- [Profiling](advanced/profiling.md)
+- [Analysis](advanced/analysis.md)
+- [Helm Chart Generator](advanced/helm_charts.md)
 
 ## Synopsis
 
@@ -40,7 +56,7 @@ the Triton Model Analyzer. In the final stage, the `run` command analyzes the ob
 based on provided constraints and objectives, and prepares the Helm Charts deployment for
 top N configurations on the Triton Inference Server.
 
-The preferred way to use `model-navigator run` is to supply a Framework Navigator package.
+The preferred way to use `model-navigator run` is to supply a Navigator package.
 For advanced users, it is also possible to use raw TorchScript/SavedModel models as inputs.
 The output of the procedure is a `triton.nav` package.
 
@@ -56,7 +72,7 @@ $ model-navigator run model_navigator/examples/quick-start/model.nav
 
 ```shell
 $ model-navigator run --tensorrt_max_workspace_size 8589934592 \
-    --max-concurrency 256 \
+    --config-search-max-concurrency 256 \
     --max-latency-ms 50 \
     --verbose \
 	model_navigator/examples/quick-start/model.nav
@@ -118,7 +134,7 @@ $ model-navigator run --model-name add_sub \
     --model-path model_navigator/examples/quick-start/model.pt \
     --inputs INPUT__0:-1,16:float32 INPUT__1:-1,16:float32 \
     --outputs OUTPUT__0:-1,16:float32 OUTPUT__1:-1,16:float32 \
-    --max-concurrency 256 \
+    --config-search-max-concurrency 256 \
     --max-latency-ms 50
 ```
 

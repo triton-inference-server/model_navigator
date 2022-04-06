@@ -13,26 +13,43 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
+
 # Triton Model Navigator
 
-The NVIDIA [Triton Inference Server](https://github.com/triton-inference-server) provides a robust and configurable solution for deploying and managing AI models. The [Triton
-Model Navigator](https://github.com/triton-inference-server/model_navigator) is a tool that provides the ability to automate the process of model deployment on the Triton Inference Server.
-The tool optimize models running conversion to available formats and applying addition Triton backends optimizations. Finally, it uses the [Triton Model Analyzer](https://github.com/triton-inference-server/model_analyzer)
+The NVIDIA [Triton Inference Server](https://github.com/triton-inference-server) provides a robust and configurable
+solution for deploying and managing AI models.
+The [Triton Model Navigator](https://github.com/triton-inference-server/model_navigator) is a tool that provides the
+ability to automate the process of moving model from source to optimal format and configuration for deployment on Triton Inference Server.
+The tool support export model from source to all possible formats and apply the Triton Inference Server backend optimizations.
+Finally, it uses the [Triton Model Analyzer](https://github.com/triton-inference-server/model_analyzer)
+to find the best Triton Model configuration, matches the provided constraints, and optimize performance.
+
+## Export from source
+
+Python Export API that helps with exporting model from framework to all possible formats.
+This stage is dedicated to assure the model is inference ready on time of training, by executing conversion, correctness and performance
+tests that help to identify model related issues. Artifacts produced by Triton Model Navigator are stored in a `.nav`
+package that contains checkpoints and all necessary information for further processing by Model Navigator CLI.
+
+## Optimize for Triton Inference Server
+
+The optimizer part use the generated `.nav` package and run all possible conversion to available formats and apply
+addition Triton Inference Server backends optimizations. Finally, it uses internally
+the [Triton Model Analyzer](https://github.com/triton-inference-server/model_analyzer)
 to find the best Triton Model configuration, matches the provided constraints, and optimize performance.
 
 ## Documentation
 
-* [Overview](docs/overview.md)
-* [Support Matrix](docs/support_matrix.md)
+* [Export from Source](docs/export_from_source.md)
+* [Optimize for Triton Inference Server](docs/optimize_for_triton.md)
 * [Quick Start](docs/quick_start.md)
-* [Installation](docs/installation.md)
-* [Framework Navigator](docs/framework_navigator.md)
-* [Running the Triton Model Navigator](docs/run.md)
-* [Model Conversions](docs/conversion.md)
-* [Triton Model Configurator](docs/triton_model_configurator.md)
-* [Models Profiling](docs/profiling.md)
-* [Models Analysis](docs/analysis.md)
-* [Helm Charts](docs/helm_charts.md)
+* [Advanced]()
+  * [Model Conversions](docs/advanced/conversion.md)
+  * [Triton Model Configurator](docs/advanced/triton_model_configurator.md)
+  * [Models Profiling](docs/advanced/profiling.md)
+  * [Models Analysis](docs/advanced/analysis.md)
+  * [Helm Charts](docs/advanced/helm_charts.md)
+* [Support Matrix](docs/support_matrix.md)
 * [Changelog](CHANGELOG.md)
 * [Known Issues](docs/known_issues.md)
 * [Contributing](CONTRIBUTING.md)

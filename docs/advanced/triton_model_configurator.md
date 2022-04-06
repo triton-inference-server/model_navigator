@@ -16,6 +16,17 @@ limitations under the License.
 
 # Triton Model Configurator
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- [Overview](#overview)
+- [The `triton-config-model` Command](#the-triton-config-model-command)
+- [CLI and YAML Config Options](#cli-and-yaml-config-options)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+## Overview
+
 The model configurator command allows generating Triton configuration for passed model and given arguments.
 
 Read more about Triton [model configuration](https://github.com/triton-inference-server/server/blob/master/docs/model_configuration.md)

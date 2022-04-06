@@ -16,6 +16,37 @@ limitations under the License.
 
 # Helm Charts
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- [The `helm-chart-create` Command](#the-helm-chart-create-command)
+- [CLI and YAML Config Options](#cli-and-yaml-config-options)
+- [Using Generated Helm Charts](#using-generated-helm-charts)
+- [Serving Model on the Triton Inference Server](#serving-model-on-the-triton-inference-server)
+- [Scaling and Load Balancing](#scaling-and-load-balancing)
+- [Quick Start Guide](#quick-start-guide)
+  - [Generated Helm Charts](#generated-helm-charts)
+  - [Building Docker Image for Model Deployment](#building-docker-image-for-model-deployment)
+  - [Installing the Helm Chart](#installing-the-helm-chart)
+  - [Optional Customizations](#optional-customizations)
+    - [Adding Pull Secret for Private Container Registry](#adding-pull-secret-for-private-container-registry)
+    - [Scaling Number of Instances](#scaling-number-of-instances)
+    - [Setting number of GPU Units per Triton Inference Server](#setting-number-of-gpu-units-per-triton-inference-server)
+- [Downloading Model](#downloading-model)
+- [Cloud Storages](#cloud-storages)
+  - [AWS S3 Storage](#aws-s3-storage)
+  - [Azure Cloud Storage](#azure-cloud-storage)
+  - [Google Cloud Storage](#google-cloud-storage)
+- [Multi-Instance GPU](#multi-instance-gpu)
+  - [Overview](#overview)
+  - [Strategies](#strategies)
+    - [None](#none)
+    - [Single](#single)
+    - [Mixed](#mixed)
+- [Testing Deployed Model](#testing-deployed-model)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 ## The `helm-chart-create` Command
 
 The `helm-chart-create` command generates the Helm Chart per selected model configuration.

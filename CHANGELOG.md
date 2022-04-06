@@ -17,8 +17,11 @@ limitations under the License.
 # Changelog
 
 ## unreleased
-- Framework Navigator API
-  - TODO - describe features
+- Model Navigator Export API
+  - Support for export models from TensorFlow2 and PyTorch source code to supported target formats
+  - Conversion, Correctness and performance tests for exported models
+  - Definition of package structure for storing all exported models and additional metadata
+
 
 ## 0.2.7
 - Updated NVIDIA containers defaults to 22.02
