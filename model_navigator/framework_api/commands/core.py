@@ -36,6 +36,7 @@ class CommandType(Parameter):
     FETCH_MODEL_INPUT = "fetch-model-input"
     CUSTOM = "custom"
     PERFORMANCE = "performance"
+    COPY = "copy"
 
 
 class Command(metaclass=ABCMeta):

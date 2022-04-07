@@ -316,3 +316,59 @@ def test_pyt_export_string_format():
         assert check_model_dir(model_dir=package_dir / "torch-trt-trace", format=nav.Format.TORCHSCRIPT) is False
         assert check_model_dir(model_dir=package_dir / "trt-fp16", format=nav.Format.TENSORRT) is False
         assert check_model_dir(model_dir=package_dir / "trt-fp32", format=nav.Format.TENSORRT) is False
+
+
+def test_pyt_export_onnx2trt():
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        onnx_model_path = Path(tmp_dir) / "model.onnx"
+
+        _torch_dataloader = [torch.randn(1) for _ in range(10)]
+        _numpy_dataloader = [t.cpu().detach().numpy() for t in _torch_dataloader]
+
+        torch.onnx.export(
+            model,
+            args=_torch_dataloader[0],
+            f=onnx_model_path,
+            verbose=False,
+            opset_version=13,
+        )
+
+        model_name = "navigator_model"
+
+        workdir = Path(tmp_dir) / "navigator_workdir"
+        package_dir = workdir / f"{model_name}.nav"
+        status_file = package_dir / "status.yaml"
+        model_input_dir = package_dir / "model_input"
+        model_output_dir = package_dir / "model_output"
+        navigator_log_file = package_dir / "navigator.log"
+
+        nav.onnx.export(
+            model=onnx_model_path,
+            dataloader=_numpy_dataloader,
+            opset=13,
+            workdir=workdir,
+        )
+
+        assert status_file.is_file()
+        assert model_input_dir.is_dir()
+        assert all(
+            [path.suffix == ".npz" for samples_dir in model_input_dir.iterdir() for path in samples_dir.iterdir()]
+        )
+        assert model_output_dir.is_dir()
+        assert all(
+            [path.suffix == ".npz" for samples_dir in model_output_dir.iterdir() for path in samples_dir.iterdir()]
+        )
+        assert navigator_log_file.is_file()
+
+        # Source format copied to package
+        assert check_model_dir(model_dir=package_dir / "onnx", format=nav.Format.ONNX)
+
+        # Output formats
+        assert check_model_dir(model_dir=package_dir / "trt-fp16", format=nav.Format.TENSORRT)
+        assert check_model_dir(model_dir=package_dir / "trt-fp32", format=nav.Format.TENSORRT)
+
+        # Formats not exported
+        assert check_model_dir(model_dir=package_dir / "torchscript-script", format=nav.Format.TORCHSCRIPT) is False
+        assert check_model_dir(model_dir=package_dir / "torchscript-trace", format=nav.Format.TORCHSCRIPT) is False
+        assert check_model_dir(model_dir=package_dir / "torch-trt-script", format=nav.Format.TORCHSCRIPT) is False
+        assert check_model_dir(model_dir=package_dir / "torch-trt-trace", format=nav.Format.TORCHSCRIPT) is False

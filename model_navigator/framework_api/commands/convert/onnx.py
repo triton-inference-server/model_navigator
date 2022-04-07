@@ -21,7 +21,7 @@ from polygraphy.backend.onnxrt import SessionFromOnnx
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.common import TensorMetadata
-from model_navigator.framework_api.exceptions import UserErrorContext
+from model_navigator.framework_api.exceptions import UserError, UserErrorContext
 from model_navigator.framework_api.runners.onnx import OnnxrtRunner
 from model_navigator.framework_api.utils import Framework, format_to_relative_model_path, get_package_path
 from model_navigator.model import Format
@@ -56,6 +56,7 @@ class ConvertONNX2TRT(Command):
         model_name: str,
         input_metadata: TensorMetadata,
         target_device: str,
+        model: Optional[Path] = None,
         max_workspace_size: Optional[int] = None,
         dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None,
         trt_dynamic_axes: Optional[Dict[str, Dict[int, Tuple[int, int, int]]]] = None,
@@ -65,13 +66,21 @@ class ConvertONNX2TRT(Command):
         if framework == Framework.PYT:
             from model_navigator.framework_api.commands.export.pyt import ExportPYT2ONNX
 
-            exported_model_path = get_package_path(workdir, model_name) / ExportPYT2ONNX().get_output_relative_path()
-        else:
+            input_model_path = (
+                get_package_path(workdir, model_name) / ExportPYT2ONNX().get_output_relative_path()
+            ).as_posix()
+        elif framework == Framework.TF2:
             from model_navigator.framework_api.commands.convert.tf import ConvertSavedModel2ONNX
 
-            exported_model_path = (
+            input_model_path = (
                 get_package_path(workdir, model_name) / ConvertSavedModel2ONNX().get_output_relative_path()
-            )
+            ).as_posix()
+        elif framework == Framework.ONNX:  # ONNX
+            # pytype: disable=attribute-error
+            input_model_path = model.as_posix()
+            # pytype: enable=attribute-error
+        else:
+            raise UserError(f"Unknown framework: {framework.value}")
         converted_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
 
         if converted_model_path.is_file() or converted_model_path.is_dir():
@@ -79,11 +88,11 @@ class ConvertONNX2TRT(Command):
         converted_model_path.parent.mkdir(parents=True, exist_ok=True)
 
         with UserErrorContext():
-            onnx_runner = OnnxrtRunner(SessionFromOnnx(exported_model_path.as_posix(), providers=[target_device]))
+            onnx_runner = OnnxrtRunner(SessionFromOnnx(input_model_path, providers=[target_device]))
             with onnx_runner:
                 onnx_input_metadata = onnx_runner.get_input_metadata()
 
-        convert_cmd = ["polygraphy", "convert", exported_model_path.as_posix()]
+        convert_cmd = ["polygraphy", "convert", input_model_path]
         convert_cmd.extend(["--convert-to", "trt"])
         convert_cmd.extend(["-o", converted_model_path.as_posix()])
 

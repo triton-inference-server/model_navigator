@@ -20,6 +20,7 @@ from polygraphy.backend.onnxrt import SessionFromOnnx
 
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.performance.base import PerformanceBase
+from model_navigator.framework_api.exceptions import UserError
 from model_navigator.framework_api.runners.onnx import OnnxrtRunner
 from model_navigator.framework_api.utils import Framework, RuntimeProvider, get_package_path
 from model_navigator.model import Format
@@ -34,6 +35,7 @@ class PerformanceONNX(PerformanceBase):
 
     def _get_runner(
         self,
+        model: Path,
         workdir: Path,
         framework: Framework,
         model_name: str,
@@ -43,16 +45,22 @@ class PerformanceONNX(PerformanceBase):
         if framework == Framework.PYT:
             from model_navigator.framework_api.commands.export.pyt import ExportPYT2ONNX
 
-            exported_model_path = get_package_path(workdir, model_name) / ExportPYT2ONNX().get_output_relative_path()
-        else:
+            onnx_model_path = (
+                get_package_path(workdir, model_name) / ExportPYT2ONNX().get_output_relative_path()
+            ).as_posix()
+        elif framework == Framework.TF2:
             from model_navigator.framework_api.commands.convert.tf import ConvertSavedModel2ONNX
 
-            exported_model_path = (
+            onnx_model_path = (
                 get_package_path(workdir, model_name) / ConvertSavedModel2ONNX().get_output_relative_path()
-            )
+            ).as_posix()
+        elif framework == Framework.ONNX:
+            # pytype: disable=attribute-error
+            onnx_model_path = model.as_posix()
+            # pytype: enable=attribute-error
+        else:
+            raise UserError(f"Unknown framework: {framework.value}")
 
-        onnx_runner = OnnxrtRunner(
-            SessionFromOnnx(exported_model_path.as_posix(), providers=[self.runtime_provider.value])
-        )
+        onnx_runner = OnnxrtRunner(SessionFromOnnx(onnx_model_path, providers=[self.runtime_provider.value]))
 
         return onnx_runner

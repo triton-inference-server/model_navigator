@@ -89,6 +89,7 @@ class Status(str, Parameter):
 class Framework(Parameter):
     TF2 = "tensorflow2"
     PYT = "pytorch"
+    ONNX = "onnx"
 
 
 class Indent(str, Parameter):

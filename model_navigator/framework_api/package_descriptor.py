@@ -73,12 +73,11 @@ class PackageDescriptor:
     def __init__(self, pipelines: List[Pipeline], config: Config):
         self.pipelines = pipelines
         self.config = config
-
         model_status = []
         max_batch_size = None
         for pipeline in self.pipelines:
             for command in pipeline.commands:
-                if command.command_type in (CommandType.EXPORT, CommandType.CONVERT):
+                if command.command_type in (CommandType.EXPORT, CommandType.CONVERT, CommandType.COPY):
                     runtime_results = []
                     for runtime_provider in format2runtimes(command.target_format):
                         correctness_results = self._get_correctness_command_for_model(
@@ -96,25 +95,30 @@ class PackageDescriptor:
                             runtime_provider=runtime_provider,
                         )
 
+                        if correctness_results:
+                            if correctness_results.status == Status.OK and correctness_results.output:
+                                status = Status.OK
+                                err_msg = None
+                                atol = correctness_results.output.atol
+                                rtol = correctness_results.output.rtol
+                            else:
+                                status = Status.FAIL
+                                err_msg = self.get_err_msg(command, correctness_results, performance_results)
+                                atol = None
+                                rtol = None
+                        else:
+                            status = Status.OK
+                            err_msg = None
+                            atol = None
+                            rtol = None
+
                         if (
-                            command.status == Status.OK
-                            and correctness_results
-                            and correctness_results.output
-                            and correctness_results.status == Status.OK
-                            and performance_results
+                            performance_results
                             and performance_results.output
                             and performance_results.status == Status.OK
                         ):
-                            status = Status.OK
-                            err_msg = None
-                            atol = correctness_results.output.atol
-                            rtol = correctness_results.output.rtol
                             perf = performance_results.output
                         else:
-                            status = Status.FAIL
-                            err_msg = self.get_err_msg(command, correctness_results, performance_results)
-                            atol = None
-                            rtol = None
                             perf = None
 
                         runtime_results.append(

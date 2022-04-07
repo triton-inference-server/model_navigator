@@ -126,9 +126,6 @@ chart_name: str
 # Provide verbose logs.
 [ verbose: boolean ]
 
-# Seed to use for random number generation.
-[ random_seed: integer ]
-
 # Format of the model. Should be provided in case it is not possible to obtain format from model filename.
 [ model_format: choice(torchscript, tf-savedmodel, tf-trt, torch-trt, onnx, trt) ]
 
@@ -170,7 +167,7 @@ chart_name: str
 [ tensorrt_sparse_weights: boolean ]
 
 # The maximum GPU memory in bytes the model can use temporarily during execution for TensorRT acceleration.
-[ tensorrt_max_workspace_size: integer | default: 4294967296 ]
+[ tensorrt_max_workspace_size: integer ]
 
 # Absolute tolerance parameter for output comparison.
 # To specify per-output tolerances, use the format: --atol [<out_name>=]<atol>.

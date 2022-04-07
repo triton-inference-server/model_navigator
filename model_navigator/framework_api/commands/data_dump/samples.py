@@ -18,12 +18,21 @@ from pathlib import Path
 from typing import Dict, List, Mapping, Optional, Tuple, Union
 
 import numpy
+from polygraphy.backend.onnxrt import SessionFromOnnx
 
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.common import Sample, SizedDataLoader, TensorMetadata
-from model_navigator.framework_api.exceptions import TensorTypeError
+from model_navigator.framework_api.exceptions import TensorTypeError, UserError
 from model_navigator.framework_api.logger import LOGGER
-from model_navigator.framework_api.utils import Framework, extract_bs1, get_package_path, sample_to_tuple, to_numpy
+from model_navigator.framework_api.utils import (
+    Format,
+    Framework,
+    extract_bs1,
+    format2runtimes,
+    get_package_path,
+    sample_to_tuple,
+    to_numpy,
+)
 
 
 # TODO: Add support for: Numpy Arrays, Dict??, tf.data??, keras.utils.Sequence??
@@ -33,11 +42,18 @@ def is_tensor(sample, framework: Framework):
 
         tensor_check = torch.is_tensor
         expected_type = type(torch.Tensor)
-    else:
+    elif framework == Framework.TF2:
         import tensorflow  # pytype: disable=import-error
 
         tensor_check = tensorflow.is_tensor
         expected_type = type(tensorflow.Tensor)
+    else:
+
+        def t_check(t):
+            return isinstance(t, numpy.ndarray)
+
+        tensor_check = t_check
+        expected_type = numpy.ndarray
 
     if isinstance(sample, (list, tuple)):
         for tensor in sample:
@@ -290,11 +306,17 @@ class DumpOutputModelData(Command):
             runner = PytRunner(
                 model, input_metadata, output_names, target_device=target_device, forward_kw_names=forward_kw_names
             )
-        else:
+        elif framework == Framework.TF2:
             from model_navigator.framework_api.runners.tf import TFRunner
 
             runner = TFRunner(model, input_metadata, output_names)
 
+        elif framework == Framework.ONNX:
+            from model_navigator.framework_api.runners.onnx import OnnxrtRunner
+
+            runner = OnnxrtRunner(SessionFromOnnx(model.as_posix(), providers=format2runtimes(format=Format.ONNX)[0]))
+        else:
+            raise UserError(f"Unknown framework: {framework.value}")
         for samples, dirname in [
             ([profiling_sample], "profiling"),
             (correctness_samples, "correctness"),

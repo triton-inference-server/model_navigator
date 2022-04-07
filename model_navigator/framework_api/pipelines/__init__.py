@@ -21,3 +21,5 @@ if is_torch_available():
 
 if is_tf_available():
     from model_navigator.framework_api.pipelines.pipeline_manager_tf import TFPipelineManager  # noqa: F401
+
+from model_navigator.framework_api.pipelines.pipeline_manager_onnx import ONNXPipelineManager  # noqa: F401

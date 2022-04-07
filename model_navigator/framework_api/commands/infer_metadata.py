@@ -12,13 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from pathlib import Path
 from typing import Dict, List, Mapping, Optional, Tuple, Union
+
+from polygraphy.backend.onnxrt import SessionFromOnnx
 
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.correctness.base import Tolerance
 from model_navigator.framework_api.common import Sample, SizedDataLoader, TensorMetadata
-from model_navigator.framework_api.exceptions import UserErrorContext
-from model_navigator.framework_api.utils import Framework, sample_to_tuple, to_numpy
+from model_navigator.framework_api.exceptions import UserError, UserErrorContext
+from model_navigator.framework_api.runners.onnx import OnnxrtRunner
+from model_navigator.framework_api.utils import Format, Framework, format2runtimes, sample_to_tuple, to_numpy
 
 
 class InferInputMetadata(Command):
@@ -31,6 +35,7 @@ class InferInputMetadata(Command):
 
     def __call__(
         self,
+        model: Union[object, Path],
         framework: Framework,
         dataloader: SizedDataLoader,
         _input_names: Optional[Tuple[str, ...]] = None,
@@ -43,7 +48,15 @@ class InferInputMetadata(Command):
         input_tuple = sample_to_tuple(sample)
         input_names = _input_names
         if input_names is None:
-            if isinstance(sample, Mapping):
+            if framework == Framework.ONNX:
+                # pytype: disable=attribute-error
+                onnx_runner = OnnxrtRunner(
+                    SessionFromOnnx(model.as_posix(), providers=format2runtimes(format=Format.ONNX)[0])
+                )
+                # pytype: enable=attribute-error
+                with onnx_runner:
+                    return onnx_runner.get_input_metadata()
+            elif isinstance(sample, Mapping):
                 input_names = tuple(sample.keys())
             else:
                 input_names = tuple(f"input__{i}" for i in range(len(input_tuple)))
@@ -78,14 +91,14 @@ class InferOutputMetadata(Command):
         self,
         framework: Framework,
         profiling_sample: Sample,
-        model: object,
+        model: Union[object, Path],
         input_metadata: TensorMetadata,
         target_device: Optional[str] = None,
         _output_names: Optional[Tuple[str, ...]] = None,
         dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None,
         forward_kw_names: Optional[Tuple[str, ...]] = None,
         **kwargs,
-    ) -> Tolerance:
+    ) -> TensorMetadata:
 
         if framework == Framework.PYT:
             from model_navigator.framework_api.runners.pyt import PytRunner
@@ -93,11 +106,16 @@ class InferOutputMetadata(Command):
             runner = PytRunner(
                 model, input_metadata, _output_names, target_device=target_device, forward_kw_names=forward_kw_names
             )
-        else:
+        elif framework == Framework.TF2:
             from model_navigator.framework_api.runners.tf import TFRunner
 
             runner = TFRunner(model, input_metadata, _output_names)
-
+        elif framework == Framework.ONNX:
+            # pytype: disable=attribute-error
+            runner = OnnxrtRunner(SessionFromOnnx(model.as_posix(), providers=format2runtimes(format=Format.ONNX)[0]))
+            # pytype: enable=attribute-error
+        else:
+            raise UserError(f"Unknown framework: {framework.value}")
         with runner, UserErrorContext():
             output = runner.infer(profiling_sample)
 

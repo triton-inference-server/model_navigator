@@ -168,9 +168,6 @@ model_repository: path
 # Provide verbose logs.
 [ verbose: boolean ]
 
-# Seed to use for random number generation.
-[ random_seed: integer ]
-
 # Perf Analyzer measurement timeout in seconds.
 [ perf_analyzer_timeout: integer | default: 600 ]
 
