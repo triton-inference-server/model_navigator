@@ -11,8 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import itertools
 import logging
 from abc import ABC, abstractmethod
+from collections import defaultdict
+from functools import lru_cache
 from typing import Dict, Iterable, Iterator, List, Optional, Tuple
 
 import numpy as np
@@ -145,12 +148,33 @@ def _shapes_from_signature(model_signature, max_batch_size):
 
 
 class RandomDataloader(Dataloader):
+    """Generate synthetic data based on DatasetProfileConfig or model's input signature.
+
+    Args:
+        dataset_profile (DatasetProfileConfig): Specification of possible input sizes, types and values.
+            This is the basic information that is needed for generating data.
+            It is optional and if not provided, the information about inputs is taken from
+            input signature is extracted either from `model_signature_config` or
+            from the model described by `model_config` and from max_batch_size.
+        model_signature_config: Optional. Specification of model inputs.
+        model_config (ModelConfig): Optional. If neither `dataset_profile` nor `model_signature_config`
+            is not provided, then this should at least contain the path to the model file.
+        max_batch_size: Upper limit for generated batch sizes. If `dataset_profile` is provided,
+            the value is ignored, unless `enforce_max_batch_size` is set to True.
+        enforce_max_batch_size:
+            Override batch size range specified in `dataset_profile` to (1, `max_batch_size`),
+            if both those args are provided are provided. This exists only to facilitate
+            compatibility with previous Model Navigator releases and should be deprecated
+            and removed in the future.
+    """
+
     def __init__(
         self,
         model_config: Optional[ModelConfig] = None,
         model_signature_config: Optional[ModelSignatureConfig] = None,
         dataset_profile: Optional[DatasetProfileConfig] = None,
-        max_batch_size: int = 1,
+        max_batch_size: Optional[int] = None,
+        enforce_max_batch_size: bool = False,
         random_seed: int = 0,
     ):
         self.dataset_profile = dataset_profile or DatasetProfileConfig()
@@ -158,6 +182,10 @@ class RandomDataloader(Dataloader):
         if not self._dataset_profile_complete():
             LOGGER.debug("Dataset profile incomplete, reconstructing from model signature.")
             self._generate_default_profile(model_config, model_signature_config, max_batch_size)
+        assert self.dataset_profile.max_shapes.keys() == self.dataset_profile.min_shapes.keys()
+        if enforce_max_batch_size:
+            assert max_batch_size is not None
+            self._ensure_max_batch_size(max_batch_size)
 
     def _dataset_profile_complete(self):
         return None not in (
@@ -166,6 +194,17 @@ class RandomDataloader(Dataloader):
             self.dataset_profile.dtypes,
             self.dataset_profile.value_ranges,
         )
+
+    def _ensure_max_batch_size(self, max_batch_size):
+        if not max_batch_size:
+            return
+        for inp in self.dataset_profile.max_shapes:
+            self.dataset_profile.max_shapes[inp] = (max_batch_size, *self.dataset_profile.max_shapes[inp][1:])
+            self.dataset_profile.opt_shapes[inp] = (
+                min(self.dataset_profile.opt_shapes[inp][0], max_batch_size),
+                *self.dataset_profile.opt_shapes[inp][1:],
+            )
+            self.dataset_profile.min_shapes[inp] = (1, *self.dataset_profile.min_shapes[inp][1:])
 
     def _generate_default_profile(self, model_config, model_signature, max_batch_size):
         if model_config is None and model_signature is None:
@@ -241,22 +280,59 @@ class RandomDataloader(Dataloader):
 
 
 class NavPackageDataloader(Dataloader):
-    def __init__(self, package: NavPackage, dataset: str):
+    """Dataloader for reading inputs dumped in .nav packages
+    It generates batches of size 1 and max_batch_size.
+    """
+
+    def __init__(self, package: NavPackage, dataset: str, max_batch_size: int = 0):
+        if max_batch_size == 0:
+            raise ModelNavigatorException("Please provide the --max-batch-size option")
+        if max_batch_size < 0:
+            raise ModelNavigatorException(f"Provided max_batch_size={max_batch_size} is negative")
+
         self.package = package
         self.dataset = dataset
+        self.max_batch_size = max_batch_size
+        self.size_index = None
         if dataset not in package.datasets:
             raise ModelNavigatorException(f"Dataset {dataset} not found in {package}")
+        self._index_by_shape()
+
+    def _index_by_shape(self):
+        """Group samples by shapes, so that batches can be made when iterating"""
+        self.size_index = defaultdict(list)
+        for file in self.package.datasets[self.dataset]:
+            with self.package.open(file) as fobj:
+                sample = dict(np.load(fobj))
+                key = frozenset((k, v.shape) for k, v in sample.items())
+                self.size_index[key].append(file)
+
+    @staticmethod
+    def _stack_batch(inputs, samples):
+        batch = {}
+        for name, _ in inputs:
+            batch[name] = np.stack(s[name] for s in samples)
+        return batch
 
     def __iter__(self) -> Iterator[Dict[str, np.ndarray]]:
-        self.f_iter = iter(self.package.datasets[self.dataset])
-        return self
-
-    def __next__(self) -> Dict[str, np.ndarray]:
-        file = next(self.f_iter)
-        with self.package.open(file) as fobj:
-            return dict(np.load(fobj))
+        """Make batches from samples of the same size.
+        Produces batches of sizes 1 and max_batch_size,
+        repeatedly reusing samples from the package if needed to make a full batch."""
+        for batch_size in {1, self.max_batch_size}:
+            for inputs, files in self.size_index.items():
+                count = len(files)
+                samples = []
+                for i, file in enumerate(itertools.cycle(files)):
+                    if i > 0 and i % batch_size == 0:
+                        yield self._stack_batch(inputs, samples)
+                        if i >= count:
+                            break
+                        samples = []
+                    with self.package.open(file) as fobj:
+                        samples.append(dict(np.load(fobj)))
 
     @property
+    @lru_cache
     def min_shapes(self) -> Dict[str, List[int]]:
         shape = {}
         for sample in self:
@@ -269,6 +345,7 @@ class NavPackageDataloader(Dataloader):
         return shape
 
     @property
+    @lru_cache
     def max_shapes(self) -> Dict[str, List[int]]:
         shape = {}
         for sample in self:

@@ -137,7 +137,7 @@ def _run_locally(
     conversion_results = []
     for conversion_config in conversion_set_config:
         if package:
-            dataloader = NavPackageDataloader(package, "conversion")
+            dataloader = NavPackageDataloader(package, "conversion", max_batch_size=comparator_config.max_batch_size)
         else:
             dataloader = RandomDataloader(
                 src_model_config,

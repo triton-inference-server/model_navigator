@@ -313,7 +313,6 @@ class TorchTensorRTCommand(BaseConvertCommand):
             dataloader=self._dataloader,
             signature_config=self._signature_config,
             tensorrt_config=self._conversion_config.tensorrt_config,
-            max_batch_size=self._comparator_config.max_batch_size if self._comparator_config else 0,
             verbose=bool(verbose),
         )
 
@@ -412,7 +411,6 @@ class TFSavedModel2TFTRTTransform(BaseConvertCommand):
             log_path=log_path,
             dataloader=self._dataloader,
             tensorrt_config=self._conversion_config.tensorrt_config,
-            max_batch_size=self._comparator_config.max_batch_size if self._comparator_config else None,
             verbose=bool(verbose),
         )
 

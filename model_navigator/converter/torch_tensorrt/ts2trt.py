@@ -66,7 +66,7 @@ def _cast_down(dtype):
     return dtype
 
 
-def _trtorch_inputs(io_spec: ModelSignatureConfig, dataloader, max_batch_size=0):
+def _trtorch_inputs(io_spec: ModelSignatureConfig, dataloader):
     ret = []
 
     for name, input_ in io_spec.inputs.items():
@@ -141,7 +141,6 @@ def convert_to_trt_engine(
     signature_config: Optional[ModelSignatureConfig],
     tensorrt_config: TensorRTConversionConfig,
     dataloader: Dataloader,
-    max_batch_size: int = 0,
 ):
     """Convert TorchScript model from file at `input_path` to a TensorRT model
     and store it at `output_path`."""
@@ -149,7 +148,7 @@ def convert_to_trt_engine(
     out = trtorch.ts.convert_method_to_trt_engine(
         model,
         "forward",
-        inputs=_trtorch_inputs(signature_config, dataloader, max_batch_size),
+        inputs=_trtorch_inputs(signature_config, dataloader),
         strict_types=tensorrt_config.strict_types,
         sparse_weights=tensorrt_config.sparse_weights,
         workspace_size=tensorrt_config.max_workspace_size,
@@ -167,14 +166,13 @@ def compile(
     signature_config: Optional[ModelSignatureConfig],
     tensorrt_config: TensorRTConversionConfig,
     dataloader: Dataloader,
-    max_batch_size: int = 0,
 ):
     """Convert TorchScript model from file at `input_path` to a TensorRT model
     and store it at `output_path`."""
     model = load_model(input_model)
     out = trtorch.ts.compile(
         model,
-        inputs=_trtorch_inputs(signature_config, dataloader, max_batch_size),
+        inputs=_trtorch_inputs(signature_config, dataloader),
         strict_types=tensorrt_config.strict_types,
         sparse_weights=tensorrt_config.sparse_weights,
         workspace_size=tensorrt_config.max_workspace_size,

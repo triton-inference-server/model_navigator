@@ -49,7 +49,7 @@ def create_profiling_data_cmd(ctx, verbose: bool, data_output_path: str, **kwarg
 
     package = kwargs.get("package")
     if package:
-        dataloader = NavPackageDataloader(package, "profiling")
+        dataloader = NavPackageDataloader(package, "profiling", max_batch_size=1)
     else:
         dataset_profile_config = DatasetProfileConfig.from_dict(kwargs)
         dataloader = RandomDataloader(
@@ -57,6 +57,7 @@ def create_profiling_data_cmd(ctx, verbose: bool, data_output_path: str, **kwarg
             model_signature_config=None,
             dataset_profile=dataset_profile_config,
             max_batch_size=1,
+            enforce_max_batch_size=True,
         )
 
     create_profiling_data(

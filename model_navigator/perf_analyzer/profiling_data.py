@@ -25,6 +25,14 @@ def get_profiling_data_path(workspace_path: Path):
     return workspace_path / DEFAULT_RANDOM_DATA_FILENAME
 
 
+def _remove_batch_dim(data):
+    """Skip batch dimensions.
+    This should probably be replaced by better dataset abstraction.
+    """
+    assert data.shape[0] == 1
+    return list(data.shape[1:])
+
+
 def create_profiling_data(
     dataloader,
     output_path: Path,
@@ -35,10 +43,7 @@ def create_profiling_data(
     data = {
         "data": [
             {
-                name: {
-                    "content": data.flatten().tolist(),
-                    "shape": list(data.shape[1:]),  # skip batch dimension
-                }
+                name: {"content": data.flatten().tolist(), "shape": _remove_batch_dim(data)}
                 for name, data in feed_dict.items()
             }
             for idx, feed_dict in enumerate(dataloader)

@@ -29,7 +29,6 @@ def tf2tftrt(
     log_path,
     tensorrt_config: TensorRTConversionConfig,
     dataloader: Dataloader,
-    max_batch_size: int,
     verbose: bool = False,
 ):
     LOGGER.info("tf2tftrt command started.")

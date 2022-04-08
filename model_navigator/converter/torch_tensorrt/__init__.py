@@ -31,7 +31,6 @@ def ts2torchtrt(
     dataloader: Dataloader,
     signature_config: Optional[ModelSignatureConfig],
     tensorrt_config: TensorRTConversionConfig,
-    max_batch_size: int,
     verbose: bool = False,
 ):
     LOGGER.info("%s command started.", __name__)
@@ -49,9 +48,10 @@ def ts2torchtrt(
                         "signature_config": signature_config,
                         "dataloader": dataloader,
                         "tensorrt_config": tensorrt_config,
-                        "max_batch_size": max_batch_size,
                     }
                 )
         except Exception as e:
             LOGGER.warning(f"torch-tensorrt conversion failed. Details can be found in logfile: {log_path}")
             raise ModelNavigatorConverterCommandException(message=str(e), log_path=log_path)
+
+    LOGGER.info("%s command succeeded.", __name__)
