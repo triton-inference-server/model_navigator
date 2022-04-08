@@ -208,6 +208,9 @@ model_path: path
 # Provide verbose logs.
 [ verbose: boolean ]
 
+# Seed to use for random number generation.
+[ random_seed: integer ]
+
 # Format of the model. Should be provided in case it is not possible to obtain format from model filename.
 [ model_format: choice(torchscript, tf-savedmodel, tf-trt, torch-trt, onnx, trt) ]
 
@@ -254,6 +257,9 @@ model_path: path
 # Enable optimizations for sparse weights in TensorRT.
 [ tensorrt_sparse_weights: boolean ]
 
+# The maximum GPU memory in bytes the model can use temporarily during execution for TensorRT acceleration.
+[ tensorrt_max_workspace_size: integer | default: 4294967296 ]
+
 # Absolute tolerance parameter for output comparison.
 # To specify per-output tolerances, use the format: --atol [<out_name>=]<atol>.
 # Example: --atol 1e-5 out0=1e-4 out1=1e-3
@@ -293,9 +299,6 @@ model_path: path
 # Mapping of device kind to model instances count on a single device. Available devices: [cpu|gpu].
 # Format: --engine-count-per-device <kind>=<count>
 [ engine_count_per_device: list[str] ]
-
-# The maximum GPU memory in bytes the model can use temporarily during execution for TensorRT acceleration.
-[ tensorrt_max_workspace_size: integer ]
 
 # The method used  to launch the Triton Server.
 # 'local' assume tritonserver binary is available locally.

@@ -59,6 +59,7 @@ def pack_workspace(
         if conversion_result.status.state != State.SUCCEEDED or not conversion_result.output_model:
             log_path = conversion_result.status.log_path
             if log_path:
+                log_path = pathlib.Path(log_path)
                 model_data["log_file"] = pathlib.Path(conversion_log_path) / log_path.name
                 conversion_logs.append(log_path)
 
@@ -77,6 +78,7 @@ def pack_workspace(
                 if config_result.status.state != State.SUCCEEDED:
                     log_path = config_result.status.log_path
                     if log_path:
+                        log_path = pathlib.Path(log_path)
                         model_store_data["log_file"] = pathlib.Path(configurator_log_path) / log_path.name
                         configurator_logs.append(log_path)
 

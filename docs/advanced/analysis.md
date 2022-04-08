@@ -141,6 +141,9 @@ model_repository: path
 # Provide verbose logs.
 [ verbose: boolean ]
 
+# Seed to use for random number generation.
+[ random_seed: integer ]
+
 # Number of top final configurations selected from the analysis.
 [ top_n_configs: integer | default: 3 ]
 

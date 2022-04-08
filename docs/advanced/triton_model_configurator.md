@@ -125,6 +125,9 @@ model_repository: path
 # Provide verbose logs.
 [ verbose: boolean ]
 
+# Seed to use for random number generation.
+[ random_seed: integer ]
+
 # Format of the model. Should be provided in case it is not possible to obtain format from model filename.
 [ model_format: choice(torchscript, tf-savedmodel, tf-trt, torch-trt, onnx, trt) ]
 
@@ -183,7 +186,7 @@ model_repository: path
 [ server_url: str | default: grpc://localhost:8001 ]
 
 # The maximum GPU memory in bytes the model can use temporarily during execution for TensorRT acceleration.
-[ tensorrt_max_workspace_size: integer ]
+[ tensorrt_max_workspace_size: integer | default: 4294967296 ]
 
 ```
 [comment]: <> (END_CONFIG_LIST)
