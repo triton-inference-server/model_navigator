@@ -222,11 +222,11 @@ def _run_in_docker(
     workspace_flags += " --override-workspace" if override_workspace else ""
     cmd = (
         "bash -c 'model-navigator convert "
-        f"--config-path {config_path} "
+        f"{package.path.as_posix() if package else '--config-path ' + config_path.as_posix()} "
         f"--launch-mode local "
         f"{verbose_flag} "
-        f"{workspace_flags}' "
-        f"{package if package else ''}"
+        f"{workspace_flags} "
+        "'"
     )
     gpus = get_gpus(gpus)
     from docker.types import DeviceRequest
