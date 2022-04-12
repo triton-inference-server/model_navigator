@@ -73,19 +73,19 @@ class Analyzer:
 
         LOGGER.info("Analyzer analysis done.")
 
-        src_report = (
-            self._config_generator.analyzer_path
-            / "reports"
-            / "summaries"
-            / "Best Configs Across All Models"
-            / "result_summary.pdf"
-        )
-        if not src_report.is_file():
-            raise ModelNavigatorAnalyzeException("Model Analyzer summary report not found.")
-
-        dst_report = self._workspace.path / "analyze_report.pdf"
-        shutil.copy(src_report, dst_report)
-        LOGGER.info(f"Report for best config across all models: {dst_report.resolve()}")
+        report_dir = self._config_generator.analyzer_path / "reports" / "summaries" / "Best Configs Across All Models"
+        expected_report_paths = [report_dir / "result_summary.pdf", report_dir / "result_summary.html"]
+        existing_report_paths = [report_path for report_path in expected_report_paths if report_path.is_file()]
+        if not existing_report_paths:
+            raise ModelNavigatorAnalyzeException(
+                f"Model Analyzer summary report not found. "
+                f"Expected: {', '.join([report_path.as_posix() for report_path in expected_report_paths])}"
+            )
+        src_report_path = existing_report_paths[0]
+        report_suffix = "".join(src_report_path.suffixes)
+        dst_report_path = self._workspace.path / f"analyze_report{report_suffix}"
+        shutil.copy(src_report_path, dst_report_path)
+        LOGGER.info(f"Report for best config across all models: {dst_report_path.resolve()}")
 
         return self._wrap_into_analyze_results()
 

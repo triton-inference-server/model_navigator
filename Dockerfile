@@ -24,7 +24,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Install Docker, NVIDIA Docker and DCGM
 RUN apt-get update && \
-    apt-get install --no-install-recommends -y software-properties-common curl python3-dev python3-pip python-is-python3 libb64-dev wget git wkhtmltopdf && \
+    apt-get install --no-install-recommends -y software-properties-common curl python3-dev python3-pip python-is-python3 libb64-dev wget git && \
     \
     curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add - && \
     add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian buster stable" && \

@@ -106,8 +106,3 @@ $ export DCGM_VERSION=2.0.13
 $ wget -q https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/datacenter-gpu-manager_${DCGM_VERSION}_amd64.deb && \
 dpkg -i datacenter-gpu-manager_${DCGM_VERSION}_amd64.deb
 ```
-
-The additional packages required:
-```shell
-$ sudo apt install wkhtmltopdf
-```
