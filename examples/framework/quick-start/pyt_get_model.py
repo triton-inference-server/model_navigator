@@ -35,6 +35,6 @@ package = nav.torch.export(
     override_workdir=True,
 )
 
-model = package.get_model(nav.Format.TORCHSCRIPT, jit_type=nav.JitType.SCRIPT)
-trace_model = package.get_model(nav.Format.TORCHSCRIPT, jit_type=nav.JitType.TRACE)
+model = package.get_model(nav.Format.TORCHSCRIPT_SCRIPT)
+trace_model = package.get_model(nav.Format.TORCHSCRIPT_TRACE)
 onnx_model = package.get_model(nav.Format.ONNX)

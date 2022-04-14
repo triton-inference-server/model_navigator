@@ -20,29 +20,28 @@ import torch  # pytype: disable=import-error
 
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.export.pyt import ExportPYT2TorchScript
-from model_navigator.framework_api.common import TensorMetadata
+from model_navigator.framework_api.common import Format, TensorMetadata
 from model_navigator.framework_api.exceptions import UserErrorContext
 from model_navigator.framework_api.utils import (
-    JitType,
+    Framework,
     format_to_relative_model_path,
+    get_base_format,
     get_package_path,
     numpy_to_torch_dtype,
 )
-from model_navigator.model import Format
 
 
 class ConvertTorchScript2TorchTensorRT(Command):
-    def __init__(self, target_jit_type: JitType, requires: Tuple[Command, ...] = ()):
+    def __init__(self, target_format: Format, requires: Tuple[Command, ...] = ()):
         super().__init__(
             name="Convert TorschScript to TorchTensorRT",
             command_type=CommandType.CONVERT,
-            target_format=Format.TORCH_TRT,
+            target_format=target_format,
             requires=requires,
         )
-        self.target_jit_type = target_jit_type
 
     def get_output_relative_path(self) -> Path:
-        return format_to_relative_model_path(self.target_format, jit_type=self.target_jit_type)
+        return format_to_relative_model_path(self.target_format)
 
     def __call__(
         self,
@@ -54,9 +53,10 @@ class ConvertTorchScript2TorchTensorRT(Command):
     ) -> Optional[Path]:
         import torch_tensorrt  # pytype: disable=import-error
 
+        ts_format = get_base_format(self.target_format, Framework.PYT)
         exported_model_path = (
             get_package_path(workdir, model_name)
-            / ExportPYT2TorchScript(target_jit_type=self.target_jit_type).get_output_relative_path()
+            / ExportPYT2TorchScript(target_format=ts_format).get_output_relative_path()
         )
         converted_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
         if converted_model_path.is_file() or converted_model_path.is_dir():

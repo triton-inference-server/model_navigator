@@ -33,6 +33,5 @@ nav.torch.export(
     model=model,
     dataloader=dataloader,
     override_workdir=True,
-    target_formats=(nav.Format.TORCHSCRIPT,),
-    jit_options=(nav.JitType.TRACE,),
+    target_formats=(nav.Format.TORCHSCRIPT_TRACE,),
 )

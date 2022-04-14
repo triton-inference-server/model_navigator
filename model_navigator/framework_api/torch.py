@@ -18,19 +18,17 @@ from typing import Dict, List, Mapping, Optional, Tuple, Union
 import torch  # pytype: disable=import-error
 
 from model_navigator.converter.config import TensorRTPrecision
-from model_navigator.framework_api.common import SizedDataLoader
+from model_navigator.framework_api.common import Format, SizedDataLoader
 from model_navigator.framework_api.config import Config
 from model_navigator.framework_api.package_descriptor import PackageDescriptor
 from model_navigator.framework_api.pipelines import TorchPipelineManager
 from model_navigator.framework_api.utils import (
     Framework,
-    JitType,
     get_default_max_workspace_size,
     get_default_model_name,
     get_default_workdir,
     parse_enum,
 )
-from model_navigator.model import Format
 
 
 def export(
@@ -39,7 +37,6 @@ def export(
     model_name: Optional[str] = None,
     opset: Optional[int] = None,
     target_formats: Optional[Union[Union[str, Format], Tuple[Union[str, Format], ...]]] = None,
-    jit_options: Optional[Union[Union[str, JitType], Tuple[Union[str, JitType], ...]]] = None,
     workdir: Optional[Path] = None,
     override_workdir: bool = False,
     sample_count: Optional[int] = None,
@@ -65,15 +62,12 @@ def export(
         workdir = get_default_workdir()
     if target_formats is None:
         target_formats = (
-            Format.TORCHSCRIPT,
+            Format.TORCHSCRIPT_SCRIPT,
+            Format.TORCHSCRIPT_TRACE,
             Format.ONNX,
-            Format.TORCH_TRT,
+            Format.TORCH_TRT_SCRIPT,
+            Format.TORCH_TRT_TRACE,
             Format.TENSORRT,
-        )
-    if jit_options is None:
-        jit_options = (
-            JitType.SCRIPT,
-            JitType.TRACE,
         )
     if opset is None:
         opset = torch.onnx.constant_folding_opset_versions[-1]
@@ -93,9 +87,8 @@ def export(
     if target_device is None:
         target_device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    target_formats, jit_options, target_precisions = (
+    target_formats, target_precisions = (
         parse_enum(target_formats, Format),
-        parse_enum(jit_options, JitType),
         parse_enum(target_precisions, TensorRTPrecision),
     )
     config = Config(
@@ -104,7 +97,6 @@ def export(
         model_name=model_name,
         dataloader=dataloader,
         target_formats=target_formats,
-        target_jit_type=jit_options,
         opset=opset,
         workdir=workdir,
         override_workdir=override_workdir,

@@ -79,12 +79,12 @@ def test_pyt_tensor_dataloader():
         assert navigator_log_file.is_file()
 
         # Output formats
-        assert check_model_dir(model_dir=package_dir / "torchscript-script", format=nav.Format.TORCHSCRIPT)
-        assert check_model_dir(model_dir=package_dir / "torchscript-trace", format=nav.Format.TORCHSCRIPT)
+        assert check_model_dir(model_dir=package_dir / "torchscript-script", format=nav.Format.TORCHSCRIPT_SCRIPT)
+        assert check_model_dir(model_dir=package_dir / "torchscript-trace", format=nav.Format.TORCHSCRIPT_TRACE)
         assert check_model_dir(model_dir=package_dir / "onnx", format=nav.Format.ONNX)
-        assert check_model_dir(model_dir=package_dir / "torch-trt-script", format=nav.Format.TORCHSCRIPT)
+        assert check_model_dir(model_dir=package_dir / "torch-trt-script", format=nav.Format.TORCH_TRT_SCRIPT)
         assert (
-            check_model_dir(model_dir=package_dir / "torch-trt-trace", format=nav.Format.TORCHSCRIPT) is False
+            check_model_dir(model_dir=package_dir / "torch-trt-trace", format=nav.Format.TORCHSCRIPT_TRACE) is False
         )  # TODO why does it fail?
         assert check_model_dir(model_dir=package_dir / "trt-fp16", format=nav.Format.TENSORRT)
         assert check_model_dir(model_dir=package_dir / "trt-fp32", format=nav.Format.TENSORRT)
@@ -130,11 +130,11 @@ def test_pyt_sequence_dataloader():
         assert navigator_log_file.is_file()
 
         # Output formats
-        assert check_model_dir(model_dir=package_dir / "torchscript-script", format=nav.Format.TORCHSCRIPT)
-        assert check_model_dir(model_dir=package_dir / "torchscript-trace", format=nav.Format.TORCHSCRIPT)
+        assert check_model_dir(model_dir=package_dir / "torchscript-script", format=nav.Format.TORCHSCRIPT_SCRIPT)
+        assert check_model_dir(model_dir=package_dir / "torchscript-trace", format=nav.Format.TORCHSCRIPT_TRACE)
         assert check_model_dir(model_dir=package_dir / "onnx", format=nav.Format.ONNX)
-        assert check_model_dir(model_dir=package_dir / "torch-trt-script", format=nav.Format.TORCHSCRIPT)
-        assert check_model_dir(model_dir=package_dir / "torch-trt-trace", format=nav.Format.TORCHSCRIPT)
+        assert check_model_dir(model_dir=package_dir / "torch-trt-script", format=nav.Format.TORCH_TRT_SCRIPT)
+        assert check_model_dir(model_dir=package_dir / "torch-trt-trace", format=nav.Format.TORCH_TRT_TRACE)
         assert check_model_dir(model_dir=package_dir / "trt-fp16", format=nav.Format.TENSORRT)
         assert check_model_dir(model_dir=package_dir / "trt-fp32", format=nav.Format.TENSORRT)
 
@@ -179,11 +179,11 @@ def test_pyt_dict_dataloader():
         assert navigator_log_file.is_file()
 
         # Output formats
-        assert check_model_dir(model_dir=package_dir / "torchscript-script", format=nav.Format.TORCHSCRIPT)
-        assert check_model_dir(model_dir=package_dir / "torchscript-trace", format=nav.Format.TORCHSCRIPT)
+        assert check_model_dir(model_dir=package_dir / "torchscript-script", format=nav.Format.TORCHSCRIPT_SCRIPT)
+        assert check_model_dir(model_dir=package_dir / "torchscript-trace", format=nav.Format.TORCHSCRIPT_TRACE)
         assert check_model_dir(model_dir=package_dir / "onnx", format=nav.Format.ONNX)
-        assert check_model_dir(model_dir=package_dir / "torch-trt-script", format=nav.Format.TORCHSCRIPT)
-        assert check_model_dir(model_dir=package_dir / "torch-trt-trace", format=nav.Format.TORCHSCRIPT)
+        assert check_model_dir(model_dir=package_dir / "torch-trt-script", format=nav.Format.TORCH_TRT_SCRIPT)
+        assert check_model_dir(model_dir=package_dir / "torch-trt-trace", format=nav.Format.TORCH_TRT_TRACE)
         assert check_model_dir(model_dir=package_dir / "trt-fp16", format=nav.Format.TENSORRT)
         assert check_model_dir(model_dir=package_dir / "trt-fp32", format=nav.Format.TENSORRT)
 
@@ -216,7 +216,6 @@ def test_pyt_dict_dataloader_with_kwargs():
             workdir=workdir,
             model_name=model_name,
             input_names=("input_x", "input_z"),
-            jit_options=(nav.JitType.SCRIPT,),
             target_formats=(nav.Format.ONNX, nav.Format.TENSORRT),
         )
 
@@ -232,11 +231,15 @@ def test_pyt_dict_dataloader_with_kwargs():
         assert navigator_log_file.is_file()
 
         # Output formats
-        assert check_model_dir(model_dir=package_dir / "torchscript-script", format=nav.Format.TORCHSCRIPT) is False
-        assert check_model_dir(model_dir=package_dir / "torchscript-trace", format=nav.Format.TORCHSCRIPT) is False
+        assert (
+            check_model_dir(model_dir=package_dir / "torchscript-script", format=nav.Format.TORCHSCRIPT_SCRIPT) is False
+        )
+        assert (
+            check_model_dir(model_dir=package_dir / "torchscript-trace", format=nav.Format.TORCHSCRIPT_TRACE) is False
+        )
         assert check_model_dir(model_dir=package_dir / "onnx", format=nav.Format.ONNX)
-        assert check_model_dir(model_dir=package_dir / "torch-trt-script", format=nav.Format.TORCHSCRIPT) is False
-        assert check_model_dir(model_dir=package_dir / "torch-trt-trace", format=nav.Format.TORCHSCRIPT) is False
+        assert check_model_dir(model_dir=package_dir / "torch-trt-script", format=nav.Format.TORCH_TRT_SCRIPT) is False
+        assert check_model_dir(model_dir=package_dir / "torch-trt-trace", format=nav.Format.TORCH_TRT_TRACE) is False
         assert check_model_dir(model_dir=package_dir / "trt-fp16", format=nav.Format.TENSORRT)
         assert check_model_dir(model_dir=package_dir / "trt-fp32", format=nav.Format.TENSORRT)
 
@@ -298,10 +301,14 @@ def test_onnx_sequence_dataloader():
         assert check_model_dir(model_dir=package_dir / "trt-fp32", format=nav.Format.TENSORRT)
 
         # Formats not exported
-        assert check_model_dir(model_dir=package_dir / "torchscript-script", format=nav.Format.TORCHSCRIPT) is False
-        assert check_model_dir(model_dir=package_dir / "torchscript-trace", format=nav.Format.TORCHSCRIPT) is False
-        assert check_model_dir(model_dir=package_dir / "torch-trt-script", format=nav.Format.TORCHSCRIPT) is False
-        assert check_model_dir(model_dir=package_dir / "torch-trt-trace", format=nav.Format.TORCHSCRIPT) is False
+        assert (
+            check_model_dir(model_dir=package_dir / "torchscript-script", format=nav.Format.TORCHSCRIPT_SCRIPT) is False
+        )
+        assert (
+            check_model_dir(model_dir=package_dir / "torchscript-trace", format=nav.Format.TORCHSCRIPT_TRACE) is False
+        )
+        assert check_model_dir(model_dir=package_dir / "torch-trt-script", format=nav.Format.TORCH_TRT_SCRIPT) is False
+        assert check_model_dir(model_dir=package_dir / "torch-trt-trace", format=nav.Format.TORCH_TRT_TRACE) is False
 
 
 def test_onnx_dict_dataloader():
@@ -360,7 +367,11 @@ def test_onnx_dict_dataloader():
         assert check_model_dir(model_dir=package_dir / "trt-fp32", format=nav.Format.TENSORRT)
 
         # Formats not exported
-        assert check_model_dir(model_dir=package_dir / "torchscript-script", format=nav.Format.TORCHSCRIPT) is False
-        assert check_model_dir(model_dir=package_dir / "torchscript-trace", format=nav.Format.TORCHSCRIPT) is False
-        assert check_model_dir(model_dir=package_dir / "torch-trt-script", format=nav.Format.TORCHSCRIPT) is False
-        assert check_model_dir(model_dir=package_dir / "torch-trt-trace", format=nav.Format.TORCHSCRIPT) is False
+        assert (
+            check_model_dir(model_dir=package_dir / "torchscript-script", format=nav.Format.TORCHSCRIPT_SCRIPT) is False
+        )
+        assert (
+            check_model_dir(model_dir=package_dir / "torchscript-trace", format=nav.Format.TORCHSCRIPT_TRACE) is False
+        )
+        assert check_model_dir(model_dir=package_dir / "torch-trt-script", format=nav.Format.TORCH_TRT_SCRIPT) is False
+        assert check_model_dir(model_dir=package_dir / "torch-trt-trace", format=nav.Format.TORCH_TRT_TRACE) is False

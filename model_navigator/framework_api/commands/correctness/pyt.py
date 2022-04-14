@@ -27,28 +27,21 @@ from model_navigator.framework_api.commands.convert.onnx import ConvertONNX2TRT
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.correctness.base import CorrectnessBase
 from model_navigator.framework_api.commands.export.pyt import ExportPYT2ONNX
-from model_navigator.framework_api.common import TensorMetadata
+from model_navigator.framework_api.common import Format, TensorMetadata
 from model_navigator.framework_api.runners.onnx import OnnxrtRunner
 from model_navigator.framework_api.runners.pyt import PytRunner
 from model_navigator.framework_api.runners.trt import TrtRunner
-from model_navigator.framework_api.utils import (
-    JitType,
-    RuntimeProvider,
-    format_to_relative_model_path,
-    get_package_path,
-)
-from model_navigator.model import Format
+from model_navigator.framework_api.utils import RuntimeProvider, format_to_relative_model_path, get_package_path
 
 
 class CorrectnessPYT2TorchScript(CorrectnessBase):
-    def __init__(self, target_format: Format, target_jit_type: JitType, requires: Tuple[Command, ...] = ()):
+    def __init__(self, target_format: Format, requires: Tuple[Command, ...] = ()):
         super().__init__(
             name="Correctness PyTorch to TorchScript",
             command_type=CommandType.CORRECTNESS,
             target_format=target_format,
             requires=requires,
         )
-        self.target_jit_type = target_jit_type
 
     def _get_runner(
         self,
@@ -63,7 +56,7 @@ class CorrectnessPYT2TorchScript(CorrectnessBase):
         output_names = list(output_metadata.keys())
 
         exported_model_path = get_package_path(workdir, model_name) / format_to_relative_model_path(
-            format=self.target_format, jit_type=self.target_jit_type
+            format=self.target_format
         )
         ts_runner = PytRunner(
             torch.jit.load(exported_model_path),

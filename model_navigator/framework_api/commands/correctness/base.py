@@ -20,10 +20,9 @@ from polygraphy.backend.base import BaseRunner
 from polygraphy.comparator import util as comp_util
 
 from model_navigator.framework_api.commands.core import Command, CommandType
-from model_navigator.framework_api.common import DataObject, Sample, TensorMetadata
+from model_navigator.framework_api.common import DataObject, Format, Sample, TensorMetadata
 from model_navigator.framework_api.exceptions import UserErrorContext
 from model_navigator.framework_api.utils import Framework, Status, format2runtimes, sample_to_tuple
-from model_navigator.model import Format
 
 
 @dataclass

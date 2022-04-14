@@ -26,13 +26,12 @@ from model_navigator.framework_api.commands.convert.onnx import ConvertONNX2TRT
 from model_navigator.framework_api.commands.convert.tf import ConvertSavedModel2ONNX
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.correctness.base import CorrectnessBase
-from model_navigator.framework_api.common import TensorMetadata
+from model_navigator.framework_api.common import Format, TensorMetadata
 from model_navigator.framework_api.exceptions import UserErrorContext
 from model_navigator.framework_api.runners.onnx import OnnxrtRunner
 from model_navigator.framework_api.runners.tf import TFRunner, TFTRTRunner
 from model_navigator.framework_api.runners.trt import TrtRunner
 from model_navigator.framework_api.utils import RuntimeProvider, format_to_relative_model_path, get_package_path
-from model_navigator.model import Format
 
 
 class CorrectnessTensorFlow2ONNX(CorrectnessBase):

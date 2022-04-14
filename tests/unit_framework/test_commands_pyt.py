@@ -23,8 +23,8 @@ import torch
 from model_navigator.framework_api.commands.correctness.pyt import CorrectnessPYT2TorchScript
 from model_navigator.framework_api.commands.data_dump.samples import DumpInputModelData, DumpOutputModelData
 from model_navigator.framework_api.commands.export.pyt import ExportPYT2ONNX, ExportPYT2TorchScript
-from model_navigator.framework_api.utils import Framework, JitType
-from model_navigator.model import Format
+from model_navigator.framework_api.common import Format
+from model_navigator.framework_api.utils import Framework
 from model_navigator.tensor import TensorSpec
 
 # pytype: enable=import-error
@@ -150,7 +150,7 @@ def test_pyt_correctness():
         numpy_data = input_data.cpu().numpy()
         numpy_output = model(input_data).detach().cpu().numpy()
 
-        correctness_cmd = CorrectnessPYT2TorchScript(target_format=Format.TORCHSCRIPT, target_jit_type=JitType.SCRIPT)
+        correctness_cmd = CorrectnessPYT2TorchScript(target_format=Format.TORCHSCRIPT_SCRIPT)
 
         correctness_cmd(
             framework=Framework.PYT,
@@ -174,7 +174,7 @@ def test_pyt_export_torchscript():
         workdir = Path(tmp_dir) / "navigator_workdir"
         package_dir = workdir / f"{model_name}.nav.workspace"
 
-        export_cmd = ExportPYT2TorchScript(target_jit_type=JitType.SCRIPT)
+        export_cmd = ExportPYT2TorchScript(target_format=Format.TORCHSCRIPT_SCRIPT)
         input_data = next(iter(dataloader))
         numpy_data = input_data.cpu().numpy()
 

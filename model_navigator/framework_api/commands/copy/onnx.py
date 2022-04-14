@@ -18,8 +18,8 @@ from pathlib import Path
 from typing import Optional, Tuple
 
 from model_navigator.framework_api.commands.core import Command, CommandType
+from model_navigator.framework_api.common import Format
 from model_navigator.framework_api.utils import format_to_relative_model_path, get_package_path
-from model_navigator.model import Format
 
 
 class CopyONNX(Command):

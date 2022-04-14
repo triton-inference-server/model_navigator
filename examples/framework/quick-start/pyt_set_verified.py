@@ -37,7 +37,7 @@ package_desc = nav.torch.export(
 )
 
 package_desc.set_verified(format=nav.Format.ONNX)
-package_desc.set_verified(format=nav.Format.TORCHSCRIPT, jit_type=nav.JitType.SCRIPT)
-package_desc.set_verified(format=nav.Format.TORCHSCRIPT, jit_type=nav.JitType.TRACE)
-package_desc.set_verified(format=nav.Format.TORCH_TRT, jit_type=nav.JitType.SCRIPT)
-package_desc.set_verified(format=nav.Format.TORCH_TRT, jit_type=nav.JitType.TRACE)
+package_desc.set_verified(format=nav.Format.TORCHSCRIPT_SCRIPT)
+package_desc.set_verified(format=nav.Format.TORCHSCRIPT_TRACE)
+package_desc.set_verified(format=nav.Format.TORCH_TRT_SCRIPT)
+package_desc.set_verified(format=nav.Format.TORCH_TRT_TRACE)

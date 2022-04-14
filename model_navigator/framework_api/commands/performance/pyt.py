@@ -21,21 +21,19 @@ from polygraphy.backend.base import BaseRunner
 
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.performance.base import PerformanceBase
-from model_navigator.framework_api.common import TensorMetadata
+from model_navigator.framework_api.common import Format, TensorMetadata
 from model_navigator.framework_api.runners.pyt import PytRunner
-from model_navigator.framework_api.utils import JitType, format_to_relative_model_path, get_package_path
-from model_navigator.model import Format
+from model_navigator.framework_api.utils import format_to_relative_model_path, get_package_path
 
 
 class PerformanceTorchScript(PerformanceBase):
-    def __init__(self, target_format: Format, target_jit_type: JitType, requires: Tuple[Command, ...] = ()):
+    def __init__(self, target_format: Format, requires: Tuple[Command, ...] = ()):
         super().__init__(
             name="Performance TorchScript",
             command_type=CommandType.PERFORMANCE,
             target_format=target_format,
             requires=requires,
         )
-        self.target_jit_type = target_jit_type
 
     def _get_runner(
         self,
@@ -48,7 +46,7 @@ class PerformanceTorchScript(PerformanceBase):
     ) -> BaseRunner:
 
         exported_model_path = get_package_path(workdir, model_name) / format_to_relative_model_path(
-            format=self.target_format, jit_type=self.target_jit_type
+            format=self.target_format
         )
         ts_runner = PytRunner(
             torch.jit.load(exported_model_path),

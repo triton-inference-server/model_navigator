@@ -18,14 +18,9 @@ from typing import Dict, Optional, Tuple
 from model_navigator.cli.convert_model import ConversionSetConfig
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.core import Command, CommandType
-from model_navigator.framework_api.utils import (
-    Extension,
-    Framework,
-    JitType,
-    format_to_relative_model_path,
-    get_package_path,
-)
-from model_navigator.model import Format, ModelConfig, ModelSignatureConfig
+from model_navigator.framework_api.common import Format
+from model_navigator.framework_api.utils import Extension, Framework, format_to_relative_model_path, get_package_path
+from model_navigator.model import ModelConfig, ModelSignatureConfig
 from model_navigator.tensor import TensorSpec
 from model_navigator.utils.config import YamlConfigFile
 
@@ -36,7 +31,7 @@ def extension2format(extension: str):
     elif extension == Extension.SAVEDMODEL:
         return Format.TF_SAVEDMODEL
     elif extension == Extension.PT:
-        return Format.TORCHSCRIPT
+        raise RuntimeError("Could be one of many formats: (ts-script, ts-trace, torch-trt-script, torch-trt-trace).")
     elif extension == Extension.TRT:
         return Format.TENSORRT
     else:
@@ -46,8 +41,10 @@ def extension2format(extension: str):
 TRITON_SUPPORTED_FORMATS_PYT = [
     Format.ONNX,
     Format.TENSORRT,
-    Format.TORCHSCRIPT,
-    Format.TORCH_TRT,
+    Format.TORCHSCRIPT_SCRIPT,
+    Format.TORCHSCRIPT_TRACE,
+    Format.TORCH_TRT_SCRIPT,
+    Format.TORCH_TRT_TRACE,
 ]
 
 TRITON_SUPPORTED_FORMATS_TF = [
@@ -64,7 +61,6 @@ class ConfigCli(Command):
     def __init__(
         self,
         target_format: Format,
-        target_jit_type: Optional[JitType] = None,
         target_precision: Optional[TensorRTPrecision] = None,
         requires: Tuple[Command, ...] = (),
     ):
@@ -74,7 +70,6 @@ class ConfigCli(Command):
             target_format=target_format,
             requires=requires,
         )
-        self.target_jit_type = target_jit_type
         self.target_precision = target_precision
 
     def __call__(
@@ -87,9 +82,7 @@ class ConfigCli(Command):
         output_metadata: Dict[str, TensorSpec],
         **kwargs,
     ) -> Optional[Path]:
-        model_path = format_to_relative_model_path(
-            format=self.target_format, jit_type=self.target_jit_type, precision=self.target_precision
-        )
+        model_path = format_to_relative_model_path(format=self.target_format, precision=self.target_precision)
         config_relative_path = model_path.parent / "config.yaml"
         config_path = get_package_path(workdir, model_name) / config_relative_path
         if config_path.is_file():

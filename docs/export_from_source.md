@@ -275,7 +275,6 @@ def export(
     model_name: Optional[str] = None,
     opset: Optional[int] = None, # ONNX opset, by default latest is used
     target_formats: Optional[Union[Union[str, Format], Tuple[Union[str, Format], ...]]] = None,
-    jit_options: Optional[Union[Union[str, JitType], Tuple[Union[str, JitType], ...]]] = None,
     workdir: Optional[Path] = None, # default workdir is navigator_workdir in current working directory
     override_workdir: bool = False,
     keep_workdir: bool = True,
@@ -338,10 +337,9 @@ def get_status(
     self,
     format: Format,
     runtime_provider: Optional[RuntimeProvider] = None,
-    jit_type: Optional[JitType] = None,
     precision: Optional[TensorRTPrecision] = None,
 ) -> bool:
-    """Return status (True or False) of export operation for particular format, jit_type,
+    """Return status (True or False) of export operation for particular format,
     precision and runtime_provider."""
 ```
 
@@ -350,21 +348,19 @@ def get_status(
 def get_model(
     self,
     format: Format,
-    jit_type: Optional[JitType] = None,
     precision: Optional[Precision] = None,
     runtime: Optional[RuntimeProvider] = None,
 ):
-    """Load exported model for given format, jit_type and precision and return model object"""
+    """Load exported model for given format and precision and return model object"""
 ```
 ```python
 def set_verified(
     self,
     format: Format,
     runtime: RuntimeProvider,
-    jit_type: Optional[JitType] = None,
     precision: Optional[TensorRTPrecision] = None,
 ):
-    """Set exported model verified for given format, jit_type and precision"""
+    """Set exported model verified for given format and precision"""
 ```
 
 ```python

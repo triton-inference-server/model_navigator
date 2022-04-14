@@ -25,6 +25,17 @@ from model_navigator.tensor import TensorSpec
 Sample = Dict[str, numpy.ndarray]
 
 
+class Format(Enum):
+    TORCHSCRIPT_SCRIPT = "torchscript-script"
+    TORCHSCRIPT_TRACE = "torchscript-trace"
+    TF_SAVEDMODEL = "tf-savedmodel"
+    TF_TRT = "tf-trt"
+    TORCH_TRT_SCRIPT = "torch-trt-script"
+    TORCH_TRT_TRACE = "torch-trt-trace"
+    ONNX = "onnx"
+    TENSORRT = "trt"
+
+
 class DataObject:
     def to_dict(self, filter_fields: Optional[List[str]] = None, parse: bool = False):
         data = {}

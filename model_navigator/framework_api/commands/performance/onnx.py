@@ -20,10 +20,10 @@ from polygraphy.backend.onnxrt import SessionFromOnnx
 
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.performance.base import PerformanceBase
+from model_navigator.framework_api.common import Format
 from model_navigator.framework_api.exceptions import UserError
 from model_navigator.framework_api.runners.onnx import OnnxrtRunner
 from model_navigator.framework_api.utils import Framework, RuntimeProvider, get_package_path
-from model_navigator.model import Format
 
 
 class PerformanceONNX(PerformanceBase):

@@ -18,24 +18,22 @@ from typing import Dict, List, Optional, Tuple, Union
 import torch  # pytype: disable=import-error
 
 from model_navigator.framework_api.commands.core import Command, CommandType
-from model_navigator.framework_api.common import Sample, TensorMetadata
+from model_navigator.framework_api.common import Format, Sample, TensorMetadata
 from model_navigator.framework_api.exceptions import UserErrorContext
-from model_navigator.framework_api.utils import JitType, format_to_relative_model_path, get_package_path
-from model_navigator.model import Format
+from model_navigator.framework_api.utils import format_to_relative_model_path, get_package_path
 
 
 class ExportPYT2TorchScript(Command):
-    def __init__(self, target_jit_type: JitType, requires: Tuple[Command, ...] = ()):
+    def __init__(self, target_format: Format, requires: Tuple[Command, ...] = ()):
         super().__init__(
             name="Export PyTorch to TorchScript",
             command_type=CommandType.EXPORT,
-            target_format=Format.TORCHSCRIPT,
+            target_format=target_format,
             requires=requires,
         )
-        self.target_jit_type = target_jit_type
 
     def get_output_relative_path(self) -> Path:
-        return format_to_relative_model_path(self.target_format, jit_type=self.target_jit_type)
+        return format_to_relative_model_path(self.target_format)
 
     def __call__(
         self,
@@ -59,7 +57,7 @@ class ExportPYT2TorchScript(Command):
 
         model.to(target_device)
 
-        if self.target_jit_type == JitType.SCRIPT:
+        if self.target_format == Format.TORCHSCRIPT_SCRIPT:
             with UserErrorContext():
                 script_module = torch.jit.script(model)
         else:
