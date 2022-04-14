@@ -51,7 +51,7 @@ class InferInputMetadata(Command):
             if framework == Framework.ONNX:
                 # pytype: disable=attribute-error
                 onnx_runner = OnnxrtRunner(
-                    SessionFromOnnx(model.as_posix(), providers=format2runtimes(format=Format.ONNX)[0])
+                    SessionFromOnnx(model.as_posix(), providers=format2runtimes(Format.ONNX)[0])
                 )
                 # pytype: enable=attribute-error
                 with onnx_runner:
@@ -112,7 +112,7 @@ class InferOutputMetadata(Command):
             runner = TFRunner(model, input_metadata, _output_names)
         elif framework == Framework.ONNX:
             # pytype: disable=attribute-error
-            runner = OnnxrtRunner(SessionFromOnnx(model.as_posix(), providers=format2runtimes(format=Format.ONNX)[0]))
+            runner = OnnxrtRunner(SessionFromOnnx(model.as_posix(), providers=format2runtimes(Format.ONNX)[0]))
             # pytype: enable=attribute-error
         else:
             raise UserError(f"Unknown framework: {framework.value}")

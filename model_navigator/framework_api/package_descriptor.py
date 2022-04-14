@@ -21,6 +21,7 @@ from typing import Dict, List, Optional
 
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.core import Command, CommandType
+from model_navigator.framework_api.commands.correctness.base import TolerancePerOutputName
 from model_navigator.framework_api.config import Config
 from model_navigator.framework_api.environment_info import get_env, get_git_info
 from model_navigator.framework_api.logger import LOGGER
@@ -43,8 +44,7 @@ NAV_PACKAGE_FORMAT_VERSION = "0.1.0"
 class RuntimeResults(DataObject):
     runtime: RuntimeProvider
     status: Status
-    atol: Optional[float] = None
-    rtol: Optional[float] = None
+    tolerance: Optional[TolerancePerOutputName] = None
     performance: Optional[dict] = None
     err_msg: Optional[dict] = None
     verified: bool = False
@@ -65,7 +65,7 @@ class NavigatorStatus(DataObject):
     uuid: str
     git_info: Dict
     environment: Dict
-    framework_navigator_config: Dict
+    export_config: Dict
     model_status: List[ModelStatus]
 
 
@@ -95,22 +95,16 @@ class PackageDescriptor:
                             runtime_provider=runtime_provider,
                         )
 
+                        per_output_tolerance = None
+                        # Status.OK because for ONNX input because there is no Correctness.
+                        status = Status.OK
+                        err_msg = None
                         if correctness_results:
-                            if correctness_results.status == Status.OK and correctness_results.output:
-                                status = Status.OK
-                                err_msg = None
-                                atol = correctness_results.output.atol
-                                rtol = correctness_results.output.rtol
-                            else:
-                                status = Status.FAIL
-                                err_msg = self.get_err_msg(command, correctness_results, performance_results)
-                                atol = None
-                                rtol = None
-                        else:
-                            status = Status.OK
-                            err_msg = None
-                            atol = None
-                            rtol = None
+                            if correctness_results.output:
+                                per_output_tolerance = correctness_results.output
+
+                            status = correctness_results.status
+                            err_msg = self.get_err_msg(command, correctness_results, performance_results)
 
                         if (
                             performance_results
@@ -125,8 +119,7 @@ class PackageDescriptor:
                             RuntimeResults(
                                 runtime=runtime_provider,
                                 status=status,
-                                atol=atol,
-                                rtol=rtol,
+                                tolerance=per_output_tolerance,
                                 performance=perf,
                                 err_msg=err_msg,
                             )
@@ -170,7 +163,7 @@ class PackageDescriptor:
             format_version=NAV_PACKAGE_FORMAT_VERSION,
             git_info=git_info,
             environment=get_env(),
-            framework_navigator_config=config,
+            export_config=config,
             model_status=model_status,
         )
 

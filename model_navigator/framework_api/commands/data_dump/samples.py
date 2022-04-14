@@ -314,7 +314,7 @@ class DumpOutputModelData(Command):
         elif framework == Framework.ONNX:
             from model_navigator.framework_api.runners.onnx import OnnxrtRunner
 
-            runner = OnnxrtRunner(SessionFromOnnx(model.as_posix(), providers=format2runtimes(format=Format.ONNX)[0]))
+            runner = OnnxrtRunner(SessionFromOnnx(model.as_posix(), providers=format2runtimes(Format.ONNX)[0]))
         else:
             raise UserError(f"Unknown framework: {framework.value}")
         for samples, dirname in [

@@ -26,4 +26,6 @@ nav.torch.export(
     model=model,
     dataloader=dataloader,
     override_workdir=True,
+    atol=0.0001,
+    rtol=0.0001
 )

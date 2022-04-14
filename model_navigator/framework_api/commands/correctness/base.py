@@ -13,15 +13,16 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy
 from polygraphy.backend.base import BaseRunner
+from polygraphy.comparator import util as comp_util
 
 from model_navigator.framework_api.commands.core import Command, CommandType
-from model_navigator.framework_api.common import Sample
+from model_navigator.framework_api.common import Sample, TensorMetadata
 from model_navigator.framework_api.exceptions import UserErrorContext
-from model_navigator.framework_api.utils import DataObject, Framework, format2runtimes, sample_to_tuple
+from model_navigator.framework_api.utils import DataObject, Framework, Status, format2runtimes, sample_to_tuple
 from model_navigator.model import Format
 
 
@@ -29,6 +30,9 @@ from model_navigator.model import Format
 class Tolerance(DataObject):
     atol: float
     rtol: float
+
+
+TolerancePerOutputName = Dict[str, Tolerance]
 
 
 def get_assert_message(atol: float, rtol: float):
@@ -47,16 +51,22 @@ class CorrectnessBase(Command):
         self,
         correctness_samples: List[Sample],
         framework: Framework,
+        output_metadata: TensorMetadata,
         rtol: Optional[float] = None,
         atol: Optional[float] = None,
         **kwargs,
-    ) -> Tolerance:
+    ) -> TolerancePerOutputName:
 
         base_runner, comp_runner = self._get_runners(
-            correctness_samples=correctness_samples, framework=framework, atol=atol, rtol=rtol, **kwargs
+            correctness_samples=correctness_samples,
+            framework=framework,
+            output_metadata=output_metadata,
+            **kwargs,
         )
-        atols = []
-        rtols = []
+
+        output_names = [v.name for v in output_metadata.values()]
+        per_output_tolerance = {name: Tolerance(0.0, 0.0) for name in output_names}
+
         with base_runner, comp_runner:
             for sample in correctness_samples:
                 with UserErrorContext():
@@ -64,24 +74,31 @@ class CorrectnessBase(Command):
                     comp_output = comp_runner.infer(sample)
                 original_output, comp_output = sample_to_tuple(original_output), sample_to_tuple(comp_output)
 
-                if atol and rtol:
-                    assert len(original_output) == len(comp_output), get_assert_message(atol, rtol)
-                    all_close_checks = [
-                        numpy.allclose(tensor_A, tensor_B, atol=atol, rtol=rtol)
-                        for tensor_A, tensor_B in zip(original_output, comp_output)
-                    ]
+                is_len_valid = len(original_output) == len(comp_output)
+                assert is_len_valid, "Original model output length is different from exported model output"
 
-                    assert all(all_close_checks), get_assert_message(atol, rtol)
-                else:
-                    per_output_atol = []
-                    per_output_rtol = []
-                    for o_out, c_out in zip(original_output, comp_output):
-                        outputs_diff = numpy.fabs(o_out - c_out)
-                        per_output_atol.append(numpy.max(outputs_diff))
-                        per_output_rtol.append(numpy.mean(outputs_diff ** 2))
-                    atols.append(numpy.max(per_output_atol))
-                    rtols.append(numpy.mean(per_output_rtol))
-        if not atol or not rtol:
-            return Tolerance(atol=numpy.max(atols).item(), rtol=numpy.max(rtols).item())
-        else:
-            return Tolerance(atol, rtol)
+                for out0, out1, name in zip(original_output, comp_output, output_names):
+                    absdiff = numpy.abs(out0 - out1)
+                    absout1 = numpy.abs(out1)
+
+                    reldiff = absdiff / absout1
+                    max_reldiff = comp_util.compute_max(reldiff)
+                    max_absdiff = comp_util.compute_max(absdiff)
+
+                    if max_absdiff > per_output_tolerance[name].atol:
+                        per_output_tolerance[name].atol = float(max_absdiff)
+                    if max_reldiff > per_output_tolerance[name].rtol:
+                        per_output_tolerance[name].rtol = float(max_reldiff)
+
+                    def is_diff_within_tol(diff, tol):
+                        return not numpy.isnan(diff) and diff <= tol
+
+                    if is_len_valid and atol is not None:
+                        if not is_diff_within_tol(max_absdiff, atol):
+                            self.status = Status.FAIL
+                            self.err_msg = get_assert_message(atol, rtol)
+                    if is_len_valid and rtol is not None:
+                        if not is_diff_within_tol(max_reldiff, rtol):
+                            self.status = Status.FAIL
+                            self.err_msg = get_assert_message(atol, rtol)
+        return per_output_tolerance

@@ -53,7 +53,7 @@ class CorrectnessONNX2TRT(CorrectnessBase):
         **kwargs,
     ) -> Tuple[BaseRunner, BaseRunner]:
         # pytype: disable=attribute-error
-        onnx_runner = OnnxrtRunner(SessionFromOnnx(model.as_posix(), providers=format2runtimes(format=Format.ONNX)[0]))
+        onnx_runner = OnnxrtRunner(SessionFromOnnx(model.as_posix(), providers=format2runtimes(Format.ONNX)[0]))
         # pytype: enable=attribute-error
 
         converted_model_path = (

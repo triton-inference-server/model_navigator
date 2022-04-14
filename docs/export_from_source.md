@@ -97,15 +97,14 @@ Supported conversions for PyTorch:
 - ONNX to TensorRT
 
 ### Correctness test
-Comparison between outputs from exported model and source model.
-Implementation is based on numpy.allclose:
-https://numpy.org/doc/stable/reference/generated/numpy.allclose.html
+Step uses outputs from exported model and source model for output correctness comparison with absolute tolerance and
+relative tolerance provided by the user. Additionally, it calculates true absolute and relative tolerance for all model outputs,
+for each format and runtime.
 
-If absolute tolerance (atol) and relative tolerance (rtol) are not provided by the user, tolerance values will be calculated
-based on models outputs.
 
 - Absolute tolerance is calculated as element-wise maximal difference between values in source and exported model outputs.
-- Relative tolerance is calculated as Mean Squared Error between source and exported model outputs.
+- Relative tolerance is calculated as element-wise maximal difference between values in source and exported model outputs,
+divided by absolute value of exported model output.
 
 ### Performance evaluation
 After conversions Model Navigator performs a set of performance tests in different configurations to

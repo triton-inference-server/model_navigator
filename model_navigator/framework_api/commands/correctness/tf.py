@@ -35,10 +35,6 @@ from model_navigator.framework_api.utils import RuntimeProvider, format_to_relat
 from model_navigator.model import Format
 
 
-def get_assert_message(atol: float, rtol: float):
-    return f"Current atol = {atol}, rtol = {rtol}, try to adjust tolerance values"
-
-
 class CorrectnessTensorFlow2ONNX(CorrectnessBase):
     def __init__(
         self,

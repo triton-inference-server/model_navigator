@@ -65,14 +65,14 @@ class RuntimeProvider(str, Parameter):
     PYT = "PyTorchExecutionProvider"
 
 
-def format2runtimes(format: Format) -> Optional[Tuple]:
-    if format == format.ONNX:
+def format2runtimes(model_format: Format) -> Optional[Tuple]:
+    if model_format == Format.ONNX:
         return parse_enum(get_available_onnx_providers(), RuntimeProvider)
-    elif format == format.TORCHSCRIPT or format == format.TORCH_TRT:
+    elif model_format in (Format.TORCHSCRIPT, Format.TORCH_TRT):
         return (RuntimeProvider.PYT,)
-    elif format == format.TF_SAVEDMODEL or format == format.TF_TRT:
+    elif model_format in (Format.TF_SAVEDMODEL, Format.TF_TRT):
         return (RuntimeProvider.TF,)
-    elif format == format.TENSORRT:
+    elif model_format == Format.TENSORRT:
         return (RuntimeProvider.TRT,)
     else:
         return None

@@ -40,10 +40,6 @@ from model_navigator.framework_api.utils import (
 from model_navigator.model import Format
 
 
-def get_assert_message(atol: float, rtol: float):
-    return f"Current atol = {atol}, rtol = {rtol}, try to adjust tolerance values"
-
-
 class CorrectnessPYT2TorchScript(CorrectnessBase):
     def __init__(self, target_format: Format, target_jit_type: JitType, requires: Tuple[Command, ...] = ()):
         super().__init__(
