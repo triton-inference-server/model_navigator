@@ -48,3 +48,5 @@ class Pipeline:
                     output_names, outputs = (output_names,), (outputs,)
                 for output_name, output in zip(output_names, outputs):
                     additional_params[output_name] = output
+                    if output_name in config.__dataclass_fields__:
+                        setattr(config, output_name, output)

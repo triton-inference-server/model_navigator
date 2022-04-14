@@ -37,7 +37,7 @@ def test_tf2_tensor_dataloader():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav"
+        package_dir = workdir / f"{model_name}.nav.workspace"
         status_file = package_dir / "status.yaml"
         model_input_dir = package_dir / "model_input"
         model_output_dir = package_dir / "model_output"
@@ -84,7 +84,7 @@ def test_tf2_sequence_dataloader():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav"
+        package_dir = workdir / f"{model_name}.nav.workspace"
         status_file = package_dir / "status.yaml"
         model_input_dir = package_dir / "model_input"
         model_output_dir = package_dir / "model_output"
@@ -134,7 +134,7 @@ def test_tf2_dict_dataloader():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav"
+        package_dir = workdir / f"{model_name}.nav.workspace"
         status_file = package_dir / "status.yaml"
         model_input_dir = package_dir / "model_input"
         model_output_dir = package_dir / "model_output"

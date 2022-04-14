@@ -50,7 +50,7 @@ def test_tf2_package_descriptor():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav"
+        package_dir = workdir / f"{model_name}.nav.workspace"
         model_dir = package_dir / "tf-savedmodel"
         model_dir.mkdir(parents=True, exist_ok=True)
         model_path = model_dir / "model.savedmodel"
@@ -63,10 +63,8 @@ def test_tf2_package_descriptor():
             dataloader=dataloader,
             workdir=workdir,
             override_workdir=True,
-            keep_workdir=True,
             target_formats=(Format.TF_SAVEDMODEL,),
             sample_count=1,
-            save_data=False,
             disable_git_info=False,
         )
 
@@ -93,7 +91,7 @@ def test_tf2_package_descriptor():
             )
         ]
 
-        package_desc = PackageDescriptor(pipelines, config)
+        package_desc = PackageDescriptor.from_pipelines(pipelines, config)
 
         # Check model status and load model
         assert package_desc.get_status(format=Format.TF_SAVEDMODEL)

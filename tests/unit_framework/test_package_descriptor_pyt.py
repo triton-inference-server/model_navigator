@@ -47,7 +47,7 @@ def test_pyt_package_descriptor():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav"
+        package_dir = workdir / f"{model_name}.nav.workspace"
         model_dir = package_dir / "torchscript-script"
         model_dir.mkdir(parents=True, exist_ok=True)
         model_path = model_dir / "model.pt"
@@ -61,11 +61,9 @@ def test_pyt_package_descriptor():
             dataloader=dataloader,
             workdir=workdir,
             override_workdir=True,
-            keep_workdir=True,
             target_formats=(Format.TORCHSCRIPT,),
             target_jit_type=(JitType.SCRIPT,),
             sample_count=1,
-            save_data=False,
             disable_git_info=False,
         )
 
@@ -96,7 +94,7 @@ def test_pyt_package_descriptor():
             )
         ]
 
-        package_desc = PackageDescriptor(pipelines, config)
+        package_desc = PackageDescriptor.from_pipelines(pipelines, config)
 
         # Check model status and load model
         assert package_desc.get_status(format=Format.TORCHSCRIPT, jit_type=JitType.SCRIPT)

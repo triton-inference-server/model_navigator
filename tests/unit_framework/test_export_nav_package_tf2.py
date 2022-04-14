@@ -59,7 +59,7 @@ def test_tf2_export_savedmodel():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav"
+        package_dir = workdir / f"{model_name}.nav.workspace"
         status_file = package_dir / "status.yaml"
         model_input_dir = package_dir / "model_input"
         model_output_dir = package_dir / "model_output"
@@ -98,7 +98,7 @@ def test_tf2_export_tf_trt():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav"
+        package_dir = workdir / f"{model_name}.nav.workspace"
         status_file = package_dir / "status.yaml"
         model_input_dir = package_dir / "model_input"
         model_output_dir = package_dir / "model_output"
@@ -137,7 +137,7 @@ def test_tf2_export_tf_onnx():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav"
+        package_dir = workdir / f"{model_name}.nav.workspace"
         status_file = package_dir / "status.yaml"
         model_input_dir = package_dir / "model_input"
         model_output_dir = package_dir / "model_output"
@@ -176,7 +176,7 @@ def test_tf2_export_tf_onnx():
 #         model_name = "navigator_model"
 #
 #         workdir = Path(tmp_dir) / "navigator_workdir"
-#         package_dir = workdir / f"{model_name}.nav"
+#         package_dir = workdir / f"{model_name}.nav.workspace"
 #         status_file = package_dir / "status.yaml"
 #         model_input_dir = package_dir / "model_input"
 #         model_output_dir = package_dir / "model_output"
@@ -216,7 +216,7 @@ def test_tf2_export_string_format():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav"
+        package_dir = workdir / f"{model_name}.nav.workspace"
         status_file = package_dir / "status.yaml"
         model_input_dir = package_dir / "model_input"
         model_output_dir = package_dir / "model_output"

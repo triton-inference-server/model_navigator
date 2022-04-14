@@ -14,7 +14,7 @@
 
 
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Tuple
 
 import torch  # pytype: disable=import-error
 from polygraphy.backend.base import BaseRunner
@@ -50,27 +50,17 @@ class CorrectnessPYT2TorchScript(CorrectnessBase):
         )
         self.target_jit_type = target_jit_type
 
-    def _get_runners(
+    def _get_runner(
         self,
-        model: torch.nn.Module,
         workdir: Path,
         input_metadata: TensorMetadata,
         output_metadata: TensorMetadata,
         model_name: str,
         target_device: str,
-        forward_kw_names: Optional[Tuple[str, ...]] = None,
         **kwargs,
-    ) -> Tuple[BaseRunner, BaseRunner]:
+    ) -> BaseRunner:
 
         output_names = list(output_metadata.keys())
-
-        pyt_runner = PytRunner(
-            model,
-            input_metadata=input_metadata,
-            output_names=output_names,
-            target_device=target_device,
-            forward_kw_names=forward_kw_names,
-        )
 
         exported_model_path = get_package_path(workdir, model_name) / format_to_relative_model_path(
             format=self.target_format, jit_type=self.target_jit_type
@@ -82,7 +72,7 @@ class CorrectnessPYT2TorchScript(CorrectnessBase):
             target_device=target_device,
         )
 
-        return pyt_runner, ts_runner
+        return ts_runner
 
 
 class CorrectnessPYT2ONNX(CorrectnessBase):
@@ -95,32 +85,19 @@ class CorrectnessPYT2ONNX(CorrectnessBase):
         )
         self.runtime_provider = runtime_provider
 
-    def _get_runners(
+    def _get_runner(
         self,
-        model: torch.nn.Module,
         workdir: Path,
-        input_metadata: TensorMetadata,
-        output_metadata: TensorMetadata,
         model_name: str,
-        target_device: str,
-        forward_kw_names: Optional[Tuple[str, ...]] = None,
         **kwargs,
-    ) -> Tuple[BaseRunner, BaseRunner]:
-
-        pyt_runner = PytRunner(
-            model,
-            input_metadata=input_metadata,
-            output_names=list(output_metadata.keys()),
-            target_device=target_device,
-            forward_kw_names=forward_kw_names,
-        )
+    ) -> BaseRunner:
 
         exported_model_path = get_package_path(workdir, model_name) / ExportPYT2ONNX().get_output_relative_path()
         onnx_runner = OnnxrtRunner(
             SessionFromOnnx(exported_model_path.as_posix(), providers=[self.runtime_provider.value])
         )
 
-        return pyt_runner, onnx_runner
+        return onnx_runner
 
 
 class CorrectnessPYT2TRT(CorrectnessBase):
@@ -133,25 +110,12 @@ class CorrectnessPYT2TRT(CorrectnessBase):
         )
         self.target_precision = target_precision
 
-    def _get_runners(
+    def _get_runner(
         self,
-        model: torch.nn.Module,
         workdir: Path,
-        input_metadata: TensorMetadata,
-        output_metadata: TensorMetadata,
         model_name: str,
-        target_device: str,
-        forward_kw_names: Optional[Tuple[str, ...]] = None,
         **kwargs,
-    ) -> Tuple[BaseRunner, BaseRunner]:
-
-        pyt_runner = PytRunner(
-            model,
-            input_metadata=input_metadata,
-            output_names=list(output_metadata.keys()),
-            forward_kw_names=forward_kw_names,
-            target_device=target_device,
-        )
+    ) -> BaseRunner:
 
         converted_model_path = (
             get_package_path(workdir, model_name)
@@ -159,4 +123,4 @@ class CorrectnessPYT2TRT(CorrectnessBase):
         )
         trt_runner = TrtRunner(EngineFromBytes(BytesFromPath(converted_model_path.as_posix())))
 
-        return pyt_runner, trt_runner
+        return trt_runner

@@ -41,8 +41,10 @@ def get_module_from_config(config: PretrainedConfig) -> str:
     return module_name
 
 
-def get_pretrained_model_from_config(config: PretrainedConfig, torchscript: bool = False) -> PreTrainedModel:
+def get_pretrained_model_from_config(
+    model_name: str, config: PretrainedConfig, torchscript: bool = False
+) -> PreTrainedModel:
     module_name = get_module_from_config(config)
     arch = config.architectures[0]
     model_cls = getattr(importlib.import_module(f"transformers.models.{module_name.replace('-', '_')}"), arch)
-    return model_cls.from_pretrained(config.name_or_path, torchscript=torchscript)
+    return model_cls.from_pretrained(model_name, torchscript=torchscript)

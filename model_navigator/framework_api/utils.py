@@ -11,16 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import pathlib
 from enum import Enum
 from pathlib import Path
-from typing import Any, List, Mapping, Optional, Tuple
+from typing import Any, List, Mapping, Optional, Tuple, Type, TypeVar
 
 import numpy
 
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.common import Sample
 from model_navigator.model import Format
+
+T = TypeVar("T")
 
 
 def get_available_onnx_providers() -> List:
@@ -121,6 +122,10 @@ def get_default_model_name():
     return "navigator_model"
 
 
+def get_default_status_filename():
+    return "status.yaml"
+
+
 def get_default_workdir():
     return Path.cwd() / "navigator_workdir"
 
@@ -145,13 +150,13 @@ def to_numpy(tensor, from_framework: Framework):
 
 
 def get_package_path(workdir: Path, model_name: str):
-    return workdir / f"{model_name}.nav"
+    return workdir / f"{model_name}.nav.workspace"
 
 
 # pytype: disable=wrong-arg-types
 def format_to_relative_model_path(
     format: Format, jit_type: JitType = JitType.SCRIPT, precision: TensorRTPrecision = TensorRTPrecision.FP32
-):
+) -> Path:
     if format == Format.ONNX:
         return Path(f"{format.value}") / "model.onnx"
     if format == Format.TORCHSCRIPT:
@@ -171,55 +176,6 @@ def format_to_relative_model_path(
 # pytype: enable=wrong-arg-types
 
 
-class DataObject:
-    def to_dict(self, filter_fields: Optional[List[str]] = None, parse: bool = False):
-        data = {}
-
-        if filter_fields:
-            filtered_data = {key: value for key, value in self.__dict__.items() if key not in filter_fields}
-        else:
-            filtered_data = self.__dict__
-
-        if parse:
-            for key, value in filtered_data.items():
-                if value is None:
-                    continue
-                data[key] = self._parse_value(value)
-        else:
-            data = filtered_data
-
-        return data
-
-    def _parse_value(self, value):
-        if isinstance(value, DataObject):
-            value = value.to_dict(parse=True)
-        elif isinstance(value, Mapping):
-            value = self._from_dict(value)
-        elif isinstance(value, list) or isinstance(value, tuple):
-            value = self._from_list(value)
-        elif isinstance(value, Enum):
-            value = value.value
-        elif isinstance(value, pathlib.Path):
-            value = str(value)
-
-        return value
-
-    def _from_dict(self, values):
-        data = {}
-        for key, value in values.items():
-            data[key] = self._parse_value(value)
-
-        return data
-
-    def _from_list(self, values):
-        items = []
-        for value in values:
-            item = self._parse_value(value)
-            items.append(item)
-
-        return items
-
-
 def sample_to_tuple(input: Any) -> Tuple[Any, ...]:
     if isinstance(input, tuple):
         return input
@@ -236,8 +192,34 @@ def extract_bs1(sample: Sample, batch_dim: Optional[int]) -> Sample:
     return sample
 
 
-def parse_enum(value, enum_type):
+def parse_enum(value: Any, enum_type: Type[T]) -> Tuple[T, ...]:
     if value is not None:
         value = tuple(value) if isinstance(value, (tuple, list)) else (value,)
         value = tuple(enum_type(v) for v in value)
-    return value
+        return value
+    return ()
+
+
+def get_framework_export_formats(framework: Framework):
+    return {
+        Framework.PYT: {Format.TORCHSCRIPT, Format.ONNX},
+        Framework.TF2: {
+            Format.TF_SAVEDMODEL,
+        },
+        Framework.ONNX: {Format.ONNX},
+    }[framework]
+
+
+def get_base_format(format: Format, framework: Framework):
+    return {
+        Framework.PYT: {
+            Format.TENSORRT: Format.ONNX,
+            Format.TORCH_TRT: Format.TORCHSCRIPT,
+        },
+        Framework.TF2: {
+            Format.ONNX: Format.TF_SAVEDMODEL,
+            Format.TENSORRT: Format.TF_SAVEDMODEL,
+            Format.TF_TRT: Format.TF_SAVEDMODEL,
+        },
+        Framework.ONNX: {Format.TENSORRT: Format.ONNX},
+    }[framework].get(format)

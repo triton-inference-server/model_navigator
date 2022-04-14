@@ -56,7 +56,6 @@ class ConvertONNX2TRT(Command):
         model_name: str,
         input_metadata: TensorMetadata,
         target_device: str,
-        model: Optional[Path] = None,
         max_workspace_size: Optional[int] = None,
         dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None,
         trt_dynamic_axes: Optional[Dict[str, Dict[int, Tuple[int, int, int]]]] = None,
@@ -76,9 +75,11 @@ class ConvertONNX2TRT(Command):
                 get_package_path(workdir, model_name) / ConvertSavedModel2ONNX().get_output_relative_path()
             ).as_posix()
         elif framework == Framework.ONNX:  # ONNX
-            # pytype: disable=attribute-error
-            input_model_path = model.as_posix()
-            # pytype: enable=attribute-error
+            from model_navigator.framework_api.commands.copy.onnx import CopyONNX
+
+            input_model_path = (
+                get_package_path(workdir, model_name) / CopyONNX().get_output_relative_path()
+            ).as_posix()
         else:
             raise UserError(f"Unknown framework: {framework.value}")
         converted_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()

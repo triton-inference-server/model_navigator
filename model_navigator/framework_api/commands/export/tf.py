@@ -37,11 +37,14 @@ class ExportTF2SavedModel(Command):
     ) -> Path:
         return format_to_relative_model_path(self.target_format)
 
-    def __call__(self, model, model_name: str, workdir: Path, **kwargs) -> Optional[Path]:
+    def __call__(
+        self, model_name: str, workdir: Path, model: Optional[tf.keras.Model] = None, **kwargs
+    ) -> Optional[Path]:
 
         exported_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
         if exported_model_path.is_file() or exported_model_path.is_dir():
             return None
+        assert model is not None
         exported_model_path.parent.mkdir(parents=True, exist_ok=True)
         with UserErrorContext():
             tf.keras.models.save_model(model=model, filepath=exported_model_path, overwrite=True)

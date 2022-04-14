@@ -14,15 +14,15 @@
 
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
+from typing import List, Mapping, Optional, Tuple
 
 import numpy
 from polygraphy.backend.base import BaseRunner
 
 from model_navigator.framework_api.commands.core import Command, CommandType
-from model_navigator.framework_api.common import Sample
+from model_navigator.framework_api.common import DataObject, Sample
 from model_navigator.framework_api.exceptions import UserErrorContext
-from model_navigator.framework_api.utils import DataObject, format2runtimes
+from model_navigator.framework_api.utils import format2runtimes
 from model_navigator.model import Format
 
 
@@ -31,6 +31,14 @@ class Performance(DataObject):
     batch_size: int
     latency: float  # ms
     throughput: float  # infer / sec
+
+    @classmethod
+    def from_dict(cls, dict: Mapping):
+        return cls(
+            batch_size=dict["batch_size"],
+            latency=dict["latency"],
+            throughput=dict["throughput"],
+        )
 
 
 def expand_sample(sample: Sample, axis: int, n: int):

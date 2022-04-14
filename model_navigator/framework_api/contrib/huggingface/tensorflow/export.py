@@ -66,7 +66,6 @@ def export(
     target_formats: Optional[Union[Union[str, Format], Tuple[Union[str, Format], ...]]] = None,
     workdir: Optional[Path] = None,
     override_workdir: bool = False,
-    keep_workdir: bool = True,
     sample_count: Optional[int] = None,
     atol: Optional[float] = None,
     rtol: Optional[float] = None,
@@ -83,7 +82,7 @@ def export(
 ) -> PackageDescriptor:
 
     config = AutoConfig.from_pretrained(model_name)
-    model = get_pretrained_model_from_config(config)
+    model = get_pretrained_model_from_config(model_name, config)
     model.config.return_dict = True
 
     if max_sequence_len is None:
@@ -170,13 +169,11 @@ def export(
         minimum_segment_size=minimum_segment_size,
         workdir=workdir,
         override_workdir=override_workdir,
-        keep_workdir=keep_workdir,
         target_formats=target_formats,
         sample_count=sample_count,
         opset=opset,
         atol=atol,
         rtol=rtol,
-        save_data=True,
         disable_git_info=disable_git_info,
         batch_dim=batch_dim,
         _input_names=input_names,

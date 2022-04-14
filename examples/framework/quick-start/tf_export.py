@@ -30,7 +30,6 @@ model = tf.keras.Model(inp, model_output)
 nav.tensorflow.export(
     model=model,
     dataloader=dataloader,
-    zip_package=True,
     override_workdir=True,
     input_names=("input_1",),
     target_formats=(nav.Format.ONNX,),

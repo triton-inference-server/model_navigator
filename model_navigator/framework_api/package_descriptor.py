@@ -13,26 +13,40 @@
 # limitations under the License.
 
 
+import itertools
+import os
 import shutil
 import uuid
+import zipfile
 from dataclasses import dataclass
+from itertools import chain
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Mapping, Optional, Sequence, Tuple, Union
+
+import yaml
 
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.correctness.base import TolerancePerOutputName
+from model_navigator.framework_api.commands.performance.base import Performance
+from model_navigator.framework_api.common import DataObject, TensorMetadata
 from model_navigator.framework_api.config import Config
 from model_navigator.framework_api.environment_info import get_env, get_git_info
+from model_navigator.framework_api.exceptions import UserError
 from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.pipelines.pipeline import Pipeline
 from model_navigator.framework_api.utils import (
-    DataObject,
+    Extension,
+    Framework,
     JitType,
     RuntimeProvider,
     Status,
     format2runtimes,
     format_to_relative_model_path,
+    get_base_format,
+    get_default_status_filename,
+    get_default_workdir,
+    get_framework_export_formats,
     get_package_path,
 )
 from model_navigator.model import Format
@@ -45,9 +59,20 @@ class RuntimeResults(DataObject):
     runtime: RuntimeProvider
     status: Status
     tolerance: Optional[TolerancePerOutputName] = None
-    performance: Optional[dict] = None
+    performance: Optional[List[Performance]] = None
     err_msg: Optional[dict] = None
     verified: bool = False
+
+    @classmethod
+    def from_dict(cls, dict: Mapping):
+        return cls(
+            runtime=RuntimeProvider(dict["runtime"]),
+            status=Status(dict["status"]),
+            tolerance=dict.get("tolerance"),
+            performance=[Performance.from_dict(perf) for perf in dict.get("performance", [])],
+            err_msg=dict.get("err_msg"),
+            verified=dict["verified"],
+        )
 
 
 @dataclass
@@ -58,6 +83,16 @@ class ModelStatus(DataObject):
     torch_jit: Optional[JitType] = None
     precision: Optional[TensorRTPrecision] = None
 
+    @classmethod
+    def from_dict(cls, dict: Mapping):
+        return cls(
+            format=Format(dict["format"]),
+            path=Path(dict["path"]),
+            runtime_results=[RuntimeResults.from_dict(runtime_results) for runtime_results in dict["runtime_results"]],
+            torch_jit=JitType(dict["torch_jit"]) if "torch_jit" in dict else None,
+            precision=TensorRTPrecision(dict["precision"]) if "precision" in dict else None,
+        )
+
 
 @dataclass
 class NavigatorStatus(DataObject):
@@ -67,27 +102,46 @@ class NavigatorStatus(DataObject):
     environment: Dict
     export_config: Dict
     model_status: List[ModelStatus]
+    input_metadata: TensorMetadata
+    output_metadata: TensorMetadata
+
+    @classmethod
+    def from_dict(cls, dict: Mapping):
+        return cls(
+            format_version=dict["format_version"],
+            uuid=dict["uuid"],
+            git_info=dict["git_info"],
+            environment=dict["environment"],
+            export_config=dict["export_config"],
+            model_status=[ModelStatus.from_dict(model_status) for model_status in dict["model_status"]],
+            input_metadata=TensorMetadata.from_json(dict["input_metadata"]),
+            output_metadata=TensorMetadata.from_json(dict["output_metadata"]),
+        )
 
 
 class PackageDescriptor:
-    def __init__(self, pipelines: List[Pipeline], config: Config):
-        self.pipelines = pipelines
-        self.config = config
+    status_filename = get_default_status_filename()
+
+    def __init__(self, navigator_status: NavigatorStatus, workdir: Path):
+        self.navigator_status = navigator_status
+        self.workdir = workdir
+
+    @classmethod
+    def from_pipelines(cls, pipelines: List[Pipeline], config: Config):
         model_status = []
-        max_batch_size = None
-        for pipeline in self.pipelines:
+        for pipeline in pipelines:
             for command in pipeline.commands:
                 if command.command_type in (CommandType.EXPORT, CommandType.CONVERT, CommandType.COPY):
                     runtime_results = []
                     for runtime_provider in format2runtimes(command.target_format):
-                        correctness_results = self._get_correctness_command_for_model(
+                        correctness_results = cls._get_correctness_command_for_model(
                             commands=pipeline.commands,
                             format=command.target_format,
                             jit_type=command.target_jit_type,
                             precision=command.target_precision,
                             runtime_provider=runtime_provider,
                         )
-                        performance_results = self._get_performance_command_for_model(
+                        performance_results = cls._get_performance_command_for_model(
                             commands=pipeline.commands,
                             format=command.target_format,
                             jit_type=command.target_jit_type,
@@ -104,7 +158,7 @@ class PackageDescriptor:
                                 per_output_tolerance = correctness_results.output
 
                             status = correctness_results.status
-                            err_msg = self.get_err_msg(command, correctness_results, performance_results)
+                            err_msg = cls.get_err_msg(command, correctness_results, performance_results)
 
                         if (
                             performance_results
@@ -134,47 +188,45 @@ class PackageDescriptor:
                             runtime_results=runtime_results,
                         )
                     )
-                elif command.command_type == CommandType.FETCH_MODEL_INPUT:
-                    if command.status == Status.OK:
-                        max_batch_size = dict(zip(command.get_output_name(), command.output))["max_batch_size"]
 
         if not config.disable_git_info:
             git_info = get_git_info()
         else:
             git_info = None
-        config = self.config.to_dict(
+        filtered_config = config.to_dict(
             filter_fields=[
                 "model",
                 "dataloader",
                 "workdir",
-                "keep_workdir",
                 "override_workdir",
-                "input_metadata",
-                "output_metadata",
                 "forward_kw_names",
                 "disable_git_info",
-                "zip_package",
+                "input_metadata",
+                "output_metadata",
             ],
             parse=True,
         )
-        config["dataloader_batch_size"] = max_batch_size
-        self.navigator_status = NavigatorStatus(
+        navigator_status = NavigatorStatus(
             uuid=str(uuid.uuid1()),
             format_version=NAV_PACKAGE_FORMAT_VERSION,
             git_info=git_info,
             environment=get_env(),
-            export_config=config,
+            export_config=filtered_config,
             model_status=model_status,
+            input_metadata=config.input_metadata,
+            output_metadata=config.output_metadata,
         )
 
-        self._create_status_file()
-        if self.config.zip_package:
-            self._zip_package()
+        pkg_desc = cls(navigator_status, config.workdir)
+        pkg_desc.delete_status_file()
+        pkg_desc.create_status_file()
 
         LOGGER.warning(
             "Initially models are not verified. Validate exported models and use "
             "PackageDescriptor.set_verified(format, runtime, jit_type, precision) method to set models as verified."
         )
+
+        return pkg_desc
 
     @staticmethod
     def get_err_msg(command, correctness_results, performance_results):
@@ -228,24 +280,27 @@ class PackageDescriptor:
                 return command
         return None
 
-    def _zip_package(self):
-        archive_path = self.config.workdir / f"{self.config.model_name}.nav"
-        nav_package_path = self.config.workdir / f"{self.config.model_name}.nav"
-        LOGGER.info(f"Creating zip archive from {self.config.model_name}.nav")
-        shutil.make_archive(archive_path.as_posix(), "zip", nav_package_path)
+    @property
+    def model_name(self):
+        return self.navigator_status.export_config["model_name"]
 
-    def _create_status_file(self):
-        import yaml
+    @property
+    def framework(self):
+        return Framework(self.navigator_status.export_config["framework"])
 
-        with open(get_package_path(self.config.workdir, self.config.model_name) / "status.yaml", "w") as f:
+    def create_status_file(self):
+        path = get_package_path(self.workdir, self.model_name) / self.status_filename
+        with open(path, "w") as f:
             yaml.safe_dump(self.navigator_status.to_dict(parse=True), f, sort_keys=False)
 
-    def _delete_status_file(self):
-        status_file_path = get_package_path(self.config.workdir, self.config.model_name) / "status.yaml"
-        status_file_path.unlink()
+    def delete_status_file(self):
+        path = get_package_path(self.workdir, self.model_name) / self.status_filename
+        if path.exists():
+            path.unlink()
 
     @staticmethod
-    def _load_model(model_path, format: Format, runtime: Optional[RuntimeProvider] = None):
+    def _load_model(model_path: Path, format: Format, runtime: Optional[RuntimeProvider] = None):
+        model_path = model_path.as_posix()
         LOGGER.info(f"Loading model from path: {model_path}")
 
         if runtime is None:
@@ -256,14 +311,16 @@ class PackageDescriptor:
 
             from model_navigator.framework_api.runners.onnx import OnnxrtRunner
 
-            return OnnxrtRunner(SessionFromOnnx(model_path, providers=[runtime]))
+            if not isinstance(runtime, (tuple, list)):
+                runtime = [runtime]
+            return OnnxrtRunner(SessionFromOnnx(model_path, providers=runtime))
         elif format == Format.TENSORRT:
             from polygraphy.backend.common import BytesFromPath
             from polygraphy.backend.trt import EngineFromBytes
 
             from model_navigator.framework_api.runners.trt import TrtRunner
 
-            return TrtRunner(EngineFromBytes(BytesFromPath(model_path.as_posix())))
+            return TrtRunner(EngineFromBytes(BytesFromPath(model_path)))
         elif format in (Format.TORCHSCRIPT, Format.TORCH_TRT):
             import torch  # pytype: disable=import-error
 
@@ -272,6 +329,27 @@ class PackageDescriptor:
             import tensorflow  # pytype: disable=import-error
 
             return tensorflow.keras.models.load_model(model_path)
+
+    def _cleanup(self):
+        if self.workdir.exists():
+            shutil.rmtree(self.workdir, ignore_errors=True)
+
+    def get_verified_status(
+        self,
+        format: Format,
+        runtime: RuntimeProvider,
+        jit_type: Optional[JitType] = None,
+        precision: Optional[TensorRTPrecision] = None,
+    ):
+        for model_status in self.navigator_status.model_status:
+            for runtime_results in model_status.runtime_results:
+                if (
+                    model_status.format == format
+                    and model_status.torch_jit == jit_type
+                    and model_status.precision == precision
+                    and runtime_results.runtime == runtime
+                ):
+                    return runtime_results.verified
 
     def set_verified(
         self,
@@ -290,9 +368,10 @@ class PackageDescriptor:
                     and runtime_results.runtime == runtime
                 ):
                     runtime_results.verified = True
-                    self._delete_status_file()
-                    self._create_status_file()
+                    self.delete_status_file()
+                    self.create_status_file()
                     return
+        raise UserError("Runtime not found.")
 
     def get_status(
         self,
@@ -360,10 +439,160 @@ class PackageDescriptor:
             model object for TensorFlow and PyTorch
             Runner (Polygraphy) for ONNX and TRT
         """
-        model_path = get_package_path(
-            workdir=self.config.workdir, model_name=self.config.model_name
-        ) / format_to_relative_model_path(format=format, jit_type=jit_type, precision=precision)
+        model_path = get_package_path(workdir=self.workdir, model_name=self.model_name) / format_to_relative_model_path(
+            format=format, jit_type=jit_type, precision=precision
+        )
         if model_path.exists():
             return self._load_model(model_path=model_path, format=format, runtime=runtime)
         else:
             return None
+
+    @property
+    def _target_formats(self):
+        return tuple(Format(target_format) for target_format in self.navigator_status.export_config["target_formats"])
+
+    @property
+    def _target_jit_type(self):
+        return tuple(JitType(jit_type) for jit_type in self.navigator_status.export_config.get("target_jit_type", []))
+
+    @property
+    def _target_precisions(self):
+        return tuple(
+            TensorRTPrecision(prec) for prec in self.navigator_status.export_config.get("target_precisions", [])
+        )
+
+    def _get_base_formats(self, target_formats: Sequence[Format]) -> Tuple[Format]:
+        base_formats = set()
+        for target_format in target_formats:
+            base_format = get_base_format(target_format, self.framework)
+            if base_format is not None:
+                base_formats.add(base_format)
+        return tuple(base_formats)
+
+    def _get_model_status(
+        self,
+        format: Format,
+        jit_type: Optional[JitType] = None,
+        precision: Optional[TensorRTPrecision] = None,
+    ):
+        for model_status in self.navigator_status.model_status:
+            if (
+                model_status.format == format
+                and (model_status.torch_jit in (None, jit_type))
+                and (model_status.precision in (None, precision))
+            ):
+                return model_status
+        raise RuntimeError(f"Model status not found for {format=}, {jit_type=}, {precision=}.")
+
+    def _make_zip(self, zip_path, package_path, dirs_to_save, base_models_paths) -> None:
+
+        checkpoint_extensions = {ext.value for ext in Extension}
+        with zipfile.ZipFile(zip_path.as_posix(), "w") as zf:
+            for dirname, _, files in os.walk(package_path.as_posix()):
+                if dirname != package_path.as_posix() and not dirname.startswith(dirs_to_save):
+                    continue
+                for filename in files:
+                    filepath = os.path.join(dirname, filename)
+                    _, ext = os.path.splitext(filepath)
+                    if ext.lstrip(".") in checkpoint_extensions and filepath not in [
+                        mp.as_posix() for mp in base_models_paths
+                    ]:
+                        continue
+                    zf.write(filepath, filepath[len(package_path.as_posix()) :])
+
+    def _get_models_paths_to_save(
+        self,
+        package_path: Path,
+    ) -> Tuple[Sequence[Path], Sequence[Path]]:
+        base_formats = self._get_base_formats(self._target_formats)
+        base_models_paths, converted_models_paths = set(), set()
+        for format in chain(self._target_formats, base_formats):
+            jit_iter = [None] if format not in (Format.TORCHSCRIPT, Format.TORCH_TRT) else self._target_jit_type
+            prec_iter = [None] if format not in (Format.TENSORRT, Format.TF_TRT) else self._target_precisions
+            for jit_type, prec in itertools.product(jit_iter, prec_iter):
+                model_path = package_path / format_to_relative_model_path(format, jit_type, prec)
+                if not model_path.exists():
+                    LOGGER.warning(f"Model not found for {model_path.parent.name}.")
+                    continue
+                model_status = self._get_model_status(format, jit_type, prec)
+                if format in self._target_formats:
+                    for runtime_status in model_status.runtime_results:
+                        runtime = runtime_status.runtime
+                        verified_status = self.get_verified_status(
+                            format=format, runtime=runtime, jit_type=jit_type, precision=prec
+                        )
+                        if not verified_status:
+                            LOGGER.warning(f"Unverified runtime: {runtime} for the {model_path.parent.name} model.")
+                        if format in get_framework_export_formats(self.framework):
+                            base_models_paths.add(model_path)
+                        else:
+                            converted_models_paths.add(model_path)
+                if format in base_formats:
+                    base_models_paths.add(model_path)
+        return tuple(base_models_paths), tuple(converted_models_paths)
+
+    def save(
+        self,
+        path: Union[str, Path],
+        keep_workdir: bool = True,
+        override: bool = False,
+        save_data: bool = True,
+    ) -> None:
+        """Save export results into the .nav package at given path.
+        If `keep_workdir = False` remove the working directory.
+        If `override = True` override `path`.
+        If `save_data = False` discard samples from the dataloader.
+        That won't allow for correctness check later on in the deployment process.
+        """
+        path = Path(path)
+        if path.exists():
+            if override:
+                path.unlink()
+            else:
+                raise FileExistsError(path)
+
+        package_path = get_package_path(workdir=self.workdir, model_name=self.model_name)
+
+        if not package_path.exists():
+            raise FileNotFoundError("Workdir has been removed. Save() no longer available.")
+
+        base_models_paths, converted_models_paths = self._get_models_paths_to_save(
+            package_path,
+        )
+
+        dirs_to_save = [model_path.parent for model_path in chain(base_models_paths, converted_models_paths)]
+        if save_data:
+            dirs_to_save.extend([package_path / "model_output", package_path / "model_input"])
+        dirs_to_save = tuple(dirname.as_posix() for dirname in dirs_to_save)
+
+        self._make_zip(path, package_path, dirs_to_save, base_models_paths)
+
+        if not keep_workdir:
+            self._cleanup()
+
+    @classmethod
+    def load(
+        cls,
+        path: Union[str, Path],
+        workdir: Optional[Union[str, Path]] = None,
+        override_workdir: bool = False,
+    ):
+        path = Path(path)
+        if workdir is None:
+            workdir = get_default_workdir()
+        workdir = Path(workdir)
+
+        with zipfile.ZipFile(path, "r") as zf:
+            with zf.open(cls.status_filename) as status_file:
+                status_dict = yaml.safe_load(status_file)
+            navigator_status = NavigatorStatus.from_dict(status_dict)
+
+            package_path = get_package_path(workdir=workdir, model_name=navigator_status.export_config["model_name"])
+            if package_path.exists():
+                if override_workdir:
+                    shutil.rmtree(package_path)
+                else:
+                    raise FileExistsError(package_path)
+            zf.extractall(package_path)
+
+        return cls(navigator_status, workdir)

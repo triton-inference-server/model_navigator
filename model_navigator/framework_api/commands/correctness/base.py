@@ -20,9 +20,9 @@ from polygraphy.backend.base import BaseRunner
 from polygraphy.comparator import util as comp_util
 
 from model_navigator.framework_api.commands.core import Command, CommandType
-from model_navigator.framework_api.common import Sample, TensorMetadata
+from model_navigator.framework_api.common import DataObject, Sample, TensorMetadata
 from model_navigator.framework_api.exceptions import UserErrorContext
-from model_navigator.framework_api.utils import DataObject, Framework, Status, format2runtimes, sample_to_tuple
+from model_navigator.framework_api.utils import Framework, Status, format2runtimes, sample_to_tuple
 from model_navigator.model import Format
 
 
@@ -31,8 +31,24 @@ class Tolerance(DataObject):
     atol: float
     rtol: float
 
+    @classmethod
+    def from_dict(cls, dict: Dict):
+        return cls(
+            atol=dict["atol"],
+            rtol=dict["rtol"],
+        )
 
-TolerancePerOutputName = Dict[str, Tolerance]
+
+class TolerancePerOutputName(Dict[str, Tolerance]):
+    def to_json(self):
+        return [{"output_name": name, **tol.to_dict(parse=True)} for name, tol in self.items()]
+
+    @classmethod
+    def from_json(cls, data: List):
+        tol_per_out = cls()
+        for tol in data:
+            tol_per_out[tol["output_name"]] = Tolerance.from_dict(tol)
+        return tol_per_out
 
 
 def get_assert_message(atol: float, rtol: float):
@@ -44,12 +60,13 @@ class CorrectnessBase(Command):
         super().__init__(name=name, command_type=command_type, target_format=target_format, requires=requires)
         self.runtime_provider = format2runtimes(target_format)[0]
 
-    def _get_runners(self, **kwargs) -> Tuple[BaseRunner, BaseRunner]:
+    def _get_runner(self, **kwargs) -> BaseRunner:
         raise NotImplementedError
 
     def __call__(
         self,
         correctness_samples: List[Sample],
+        correctness_samples_output: List[Sample],
         framework: Framework,
         output_metadata: TensorMetadata,
         rtol: Optional[float] = None,
@@ -57,21 +74,15 @@ class CorrectnessBase(Command):
         **kwargs,
     ) -> TolerancePerOutputName:
 
-        base_runner, comp_runner = self._get_runners(
-            correctness_samples=correctness_samples,
-            framework=framework,
-            output_metadata=output_metadata,
-            **kwargs,
+        runner = self._get_runner(
+            correctness_samples=correctness_samples, framework=framework, output_metadata=output_metadata, **kwargs
         )
-
         output_names = [v.name for v in output_metadata.values()]
-        per_output_tolerance = {name: Tolerance(0.0, 0.0) for name in output_names}
-
-        with base_runner, comp_runner:
-            for sample in correctness_samples:
+        per_output_tolerance = TolerancePerOutputName({name: Tolerance(0.0, 0.0) for name in output_names})
+        with runner:
+            for sample, original_output in zip(correctness_samples, correctness_samples_output):
                 with UserErrorContext():
-                    original_output = base_runner.infer(sample)
-                    comp_output = comp_runner.infer(sample)
+                    comp_output = runner.infer(sample)
                 original_output, comp_output = sample_to_tuple(original_output), sample_to_tuple(comp_output)
 
                 is_len_valid = len(original_output) == len(comp_output)

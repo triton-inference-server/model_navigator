@@ -58,7 +58,8 @@ $ python
 > device = "cuda" if torch.cuda.is_available() else "cpu"
 > dataloader = [torch.full((3, 5), 1.0, device=device) for _ in range(10)]
 > model = torch.nn.Linear(5, 7).to(device).eval()
-> nav.torch.export(model=model, dataloader=dataloader, model_name="my_model")
+> pkg_desc = nav.torch.export(model=model, dataloader=dataloader, model_name="my_model")
+> pkg_desc.save("my_model.nav")
 
 $ copy my_model.nav deployment-environment
 

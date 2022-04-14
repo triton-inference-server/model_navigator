@@ -18,7 +18,6 @@ from typing import Dict, Optional, Tuple
 from model_navigator.cli.convert_model import ConversionSetConfig
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.core import Command, CommandType
-from model_navigator.framework_api.common import SizedDataLoader
 from model_navigator.framework_api.utils import (
     Extension,
     Framework,
@@ -80,10 +79,8 @@ class ConfigCli(Command):
 
     def __call__(
         self,
-        model,
         workdir: Path,
         framework: Framework,
-        dataloader: SizedDataLoader,
         model_name: str,
         opset: int,
         input_metadata: Dict[str, TensorSpec],

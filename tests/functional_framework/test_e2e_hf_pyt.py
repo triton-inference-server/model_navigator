@@ -14,7 +14,6 @@
 # limitations under the License.
 
 import argparse
-import shutil
 from pathlib import Path
 
 import model_navigator as nav
@@ -36,7 +35,7 @@ EXPORT_CONFIGS = [
         "max_sequence_len": 384,
         "max_bs": 2,
         "sample_count": 10,
-        "expected_formats": ("onnx",),
+        "expected_formats": ("onnx", "trt-fp32", "trt-fp16"),
     },
     {
         "model_name": "bert-base-uncased",
@@ -54,7 +53,7 @@ EXPORT_CONFIGS = [
         "max_sequence_len": 384,
         "max_bs": 2,
         "sample_count": 10,
-        "expected_formats": ("onnx",),
+        "expected_formats": ("onnx", "trt-fp32", "trt-fp16"),
     },
     {
         "model_name": "sentence-transformers/multi-qa-MiniLM-L6-cos-v1",
@@ -99,9 +98,6 @@ if __name__ == "__main__":
                 assert (status == nav.Status.OK) == (
                     format in expected_formats
                 ), f"{format} {runtime} status is {status}, but expected formats are {expected_formats}."
-        shutil.move(
-            (Path(args.workdir) / f"{export_config['model_name']}.nav").as_posix(),
-            (Path(args.workdir) / f"{export_config['model_name']}_pyt.nav").as_posix(),
-        )
+        pkg_desc.save(Path(args.workdir) / f"{export_config['model_name']}_pyt.nav")
         nav.LOGGER.info(f"{export_config['model_name']} passed.")
     nav.LOGGER.info("All models passed.")

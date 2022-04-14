@@ -27,7 +27,7 @@ from model_navigator.framework_api.utils import Format, Framework, format2runtim
 
 class InferInputMetadata(Command):
     def __init__(self, requires: Tuple[Command, ...] = ()):
-        super().__init__(name="Infer input metadata.", command_type=CommandType.CUSTOM, requires=requires)
+        super().__init__(name="Infer input metadata.", command_type=CommandType.INFER_MODEL_INPUT, requires=requires)
 
     @staticmethod
     def get_output_name():
@@ -50,12 +50,10 @@ class InferInputMetadata(Command):
         if input_names is None:
             if framework == Framework.ONNX:
                 # pytype: disable=attribute-error
-                onnx_runner = OnnxrtRunner(
-                    SessionFromOnnx(model.as_posix(), providers=format2runtimes(Format.ONNX)[0])
-                )
+                onnx_runner = OnnxrtRunner(SessionFromOnnx(model.as_posix(), providers=format2runtimes(Format.ONNX)[0]))
                 # pytype: enable=attribute-error
                 with onnx_runner:
-                    return onnx_runner.get_input_metadata()
+                    return TensorMetadata.from_polygraphy_tensor_metadata(onnx_runner.get_input_metadata())
             elif isinstance(sample, Mapping):
                 input_names = tuple(sample.keys())
             else:
@@ -79,7 +77,7 @@ class InferOutputMetadata(Command):
     def __init__(self, requires: Tuple[Command, ...] = ()):
         super().__init__(
             name="Infer output metadata.",
-            command_type=CommandType.CUSTOM,
+            command_type=CommandType.INFER_MODEL_OUTPUT,
             requires=requires,
         )
 

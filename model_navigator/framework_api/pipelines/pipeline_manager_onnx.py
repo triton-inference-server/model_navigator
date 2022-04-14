@@ -22,6 +22,7 @@ from model_navigator.framework_api.commands.data_dump.samples import (
     FetchInputModelData,
 )
 from model_navigator.framework_api.commands.infer_metadata import InferInputMetadata, InferOutputMetadata
+from model_navigator.framework_api.commands.load import LoadMetadata, LoadSamples
 from model_navigator.framework_api.commands.performance.onnx import PerformanceONNX
 from model_navigator.framework_api.commands.performance.trt import PerformanceTRT
 from model_navigator.framework_api.pipelines.pipeline import Pipeline
@@ -32,20 +33,33 @@ from model_navigator.model import Format
 
 class ONNXPipelineManager(PipelineManager):
     def _get_pipeline(self, config) -> Pipeline:
-        infer_input = InferInputMetadata()
-        fetch_input = FetchInputModelData(requires=(infer_input,))
-        infer_output = InferOutputMetadata(requires=(infer_input, fetch_input))
+        commands, preprocess_req = [], ()
+        if config.from_source:
+            infer_input = InferInputMetadata()
+            fetch_input = FetchInputModelData(requires=(infer_input,))
+            infer_output = InferOutputMetadata(requires=(infer_input, fetch_input))
 
-        commands = [
-            infer_input,
-            fetch_input,
-            infer_output,
-        ]
-        copy_onnx = CopyONNX()
-        commands.append(copy_onnx)
-        commands.append(ConfigCli(target_format=Format.ONNX, requires=(copy_onnx,)))
+            commands.extend(
+                [
+                    infer_input,
+                    fetch_input,
+                    infer_output,
+                    DumpInputModelData(requires=(infer_input, fetch_input)),
+                    DumpOutputModelData(requires=(fetch_input, infer_output)),
+                ]
+            )
+            copy_onnx = CopyONNX()
+            commands.append(copy_onnx)
+            commands.append(ConfigCli(target_format=Format.ONNX, requires=(copy_onnx,)))
+            preprocess_req = (copy_onnx,)
+        else:
+            load_metadata = LoadMetadata()
+            load_samples = LoadSamples(requires=(load_metadata,))
+            commands.extend([load_metadata, load_samples])
+            preprocess_req = (load_metadata, load_samples)
+
         for provider in format2runtimes(Format.ONNX):
-            commands.append(PerformanceONNX(runtime_provider=provider, requires=(copy_onnx,)))
+            commands.append(PerformanceONNX(runtime_provider=provider, requires=preprocess_req))
 
         if Format.TENSORRT in config.target_formats:
             for target_precision in config.target_precisions:
@@ -56,7 +70,4 @@ class ONNXPipelineManager(PipelineManager):
                 commands.append(
                     ConfigCli(target_format=Format.TENSORRT, target_precision=target_precision, requires=(trt_convert,))
                 )
-        if config.save_data:
-            commands.append(DumpInputModelData(requires=(infer_input, fetch_input)))
-            commands.append(DumpOutputModelData(requires=(fetch_input, infer_output)))
         return Pipeline(name="ONNX pipeline", framework=Framework.ONNX, commands=commands)

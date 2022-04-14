@@ -280,6 +280,14 @@ class DumpOutputModelData(Command):
     def get_output_relative_path() -> Path:
         return Path("model_output")
 
+    @staticmethod
+    def get_output_name():
+        return (
+            "profiling_sample_output",
+            "correctness_samples_output",
+            "conversion_samples_output",
+        )
+
     def __call__(
         self,
         framework: Framework,
@@ -317,6 +325,8 @@ class DumpOutputModelData(Command):
             runner = OnnxrtRunner(SessionFromOnnx(model.as_posix(), providers=format2runtimes(Format.ONNX)[0]))
         else:
             raise UserError(f"Unknown framework: {framework.value}")
+
+        ret = []
         for samples, dirname in [
             ([profiling_sample], "profiling"),
             (correctness_samples, "correctness"),
@@ -325,5 +335,6 @@ class DumpOutputModelData(Command):
             with runner:
                 outputs = [runner.infer(sample) for sample in samples]
             samples_to_npz(outputs, output_data_path / dirname, batch_dim)
+            ret.append(outputs)
 
-        return self.get_output_relative_path()
+        return tuple(ret)

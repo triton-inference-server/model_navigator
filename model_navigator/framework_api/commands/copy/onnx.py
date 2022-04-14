@@ -44,9 +44,7 @@ class CopyONNX(Command):
         model_name: str,
         **kwargs,
     ) -> Optional[Path]:
-        destination_dir = get_package_path(workdir=workdir, model_name=model_name) / "onnx"
-        destination_dir.mkdir(parents=True, exist_ok=True)
-
-        destination_model_path = destination_dir / "model.onnx"
+        destination_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
+        destination_model_path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy(src=model, dst=destination_model_path)
         return self.get_output_relative_path()

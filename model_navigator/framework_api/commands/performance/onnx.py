@@ -35,11 +35,9 @@ class PerformanceONNX(PerformanceBase):
 
     def _get_runner(
         self,
-        model: Path,
         workdir: Path,
         framework: Framework,
         model_name: str,
-        target_device: str,
         **kwargs,
     ) -> BaseRunner:
         if framework == Framework.PYT:
@@ -55,9 +53,9 @@ class PerformanceONNX(PerformanceBase):
                 get_package_path(workdir, model_name) / ConvertSavedModel2ONNX().get_output_relative_path()
             ).as_posix()
         elif framework == Framework.ONNX:
-            # pytype: disable=attribute-error
-            onnx_model_path = model.as_posix()
-            # pytype: enable=attribute-error
+            from model_navigator.framework_api.commands.copy.onnx import CopyONNX
+
+            onnx_model_path = (get_package_path(workdir, model_name) / CopyONNX().get_output_relative_path()).as_posix()
         else:
             raise UserError(f"Unknown framework: {framework.value}")
 

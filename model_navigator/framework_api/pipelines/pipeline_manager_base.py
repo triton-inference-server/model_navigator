@@ -23,9 +23,6 @@ from model_navigator.framework_api.utils import Indent, Status, get_package_path
 
 
 class PipelineManager:
-    def __init__(self):
-        pass
-
     def _get_pipeline(self, config) -> Pipeline:
         raise NotImplementedError
 
@@ -40,9 +37,9 @@ class PipelineManager:
             pipeline(config=config)
 
         self._log_results(pipelines)
-        self._cleanup(config)
+
         # pytype: disable=bad-return-type
-        return PackageDescriptor(pipelines, config)
+        return PackageDescriptor.from_pipelines(pipelines, config)
         # pytype: enable=bad-return-type
 
     @staticmethod
@@ -57,20 +54,11 @@ class PipelineManager:
         add_log_file_handler(log_dir=get_package_path(config.workdir, config.model_name))
 
     @staticmethod
-    def _cleanup(config: Config):
-        # pytype: disable=attribute-error
-        if config.workdir.exists() and not config.keep_workdir:
-            shutil.rmtree(config.workdir, ignore_errors=True)
-        # pytype: enable=attribute-error
-
-    @staticmethod
     def _validate(config: Config):
         if config.workdir is None:
             raise Exception("config.workdir cannot be None")
         if config.override_workdir is None:
             raise Exception("config.override_workdir cannot be None")
-        if config.keep_workdir is None:
-            raise Exception("config.keep_workdir cannot be None")
 
     @staticmethod
     def _get_formatted_missing_paramter(param_name: str, param_desc: str):

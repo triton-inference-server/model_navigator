@@ -42,7 +42,6 @@ def export(
     jit_options: Optional[Union[Union[str, JitType], Tuple[Union[str, JitType], ...]]] = None,
     workdir: Optional[Path] = None,
     override_workdir: bool = False,
-    keep_workdir: bool = True,
     sample_count: Optional[int] = None,
     atol: Optional[float] = None,
     rtol: Optional[float] = None,
@@ -55,7 +54,6 @@ def export(
     target_device: Optional[str] = None,
     disable_git_info: bool = False,
     batch_dim: Optional[int] = 0,
-    zip_package: Optional[bool] = False,
 ) -> PackageDescriptor:
     """Function exports PyTorch model to all supported formats."""
 
@@ -110,13 +108,11 @@ def export(
         opset=opset,
         workdir=workdir,
         override_workdir=override_workdir,
-        keep_workdir=keep_workdir,
         sample_count=sample_count,
         atol=atol,
         rtol=rtol,
         dynamic_axes=dynamic_axes,
         target_precisions=target_precisions,
-        save_data=True,
         _input_names=input_names,
         _output_names=output_names,
         forward_kw_names=forward_kw_names,
@@ -125,7 +121,6 @@ def export(
         target_device=target_device,
         disable_git_info=disable_git_info,
         batch_dim=batch_dim,
-        zip_package=zip_package,
     )
 
     pipeline_manager = TorchPipelineManager()

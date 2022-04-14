@@ -49,20 +49,14 @@ class CorrectnessTensorFlow2ONNX(CorrectnessBase):
         )
         self.runtime_provider = runtime_provider
 
-    def _get_runners(
+    def _get_runner(
         self,
-        model,
         model_name: str,
         workdir: Path,
-        input_metadata: TensorMetadata,
-        output_metadata: TensorMetadata,
         **kwargs,
     ):
 
-        output_names = list(output_metadata.keys())
-
         with UserErrorContext():
-            tf_runner = TFRunner(model, input_metadata=input_metadata, output_names=output_names)
 
             exported_model_path = (
                 get_package_path(workdir, model_name) / ConvertSavedModel2ONNX().get_output_relative_path()
@@ -71,7 +65,7 @@ class CorrectnessTensorFlow2ONNX(CorrectnessBase):
                 SessionFromOnnx(exported_model_path.as_posix(), providers=[self.runtime_provider.value])
             )
 
-        return tf_runner, onnx_runner
+        return onnx_runner
 
 
 class CorrectnessTensorFlow2TRT(CorrectnessBase):
@@ -88,20 +82,14 @@ class CorrectnessTensorFlow2TRT(CorrectnessBase):
         )
         self.target_precision = target_precision
 
-    def _get_runners(
+    def _get_runner(
         self,
-        model,
         model_name: str,
         workdir: Path,
-        input_metadata: TensorMetadata,
-        output_metadata: TensorMetadata,
         **kwargs,
     ):
 
-        output_names = list(output_metadata.keys())
-
         with UserErrorContext():
-            tf_runner = TFRunner(model, input_metadata=input_metadata, output_names=output_names)
 
             converted_model_path = (
                 get_package_path(workdir, model_name)
@@ -109,7 +97,7 @@ class CorrectnessTensorFlow2TRT(CorrectnessBase):
             )
             trt_runner = TrtRunner(EngineFromBytes(BytesFromPath(converted_model_path.as_posix())))
 
-        return tf_runner, trt_runner
+        return trt_runner
 
 
 class CorrectnessSavedModel(CorrectnessBase):
@@ -127,9 +115,8 @@ class CorrectnessSavedModel(CorrectnessBase):
         )
         self.target_precision = target_precision
 
-    def _get_runners(
+    def _get_runner(
         self,
-        model,
         model_name: str,
         workdir: Path,
         input_metadata: TensorMetadata,
@@ -138,7 +125,6 @@ class CorrectnessSavedModel(CorrectnessBase):
     ):
 
         output_names = list(output_metadata.keys())
-        tf_runner = TFRunner(model, input_metadata=input_metadata, output_names=output_names)
 
         exported_model_path = get_package_path(workdir, model_name) / format_to_relative_model_path(
             format=self.target_format,
@@ -159,4 +145,4 @@ class CorrectnessSavedModel(CorrectnessBase):
                     output_names=output_names,
                 )
 
-        return tf_runner, savedmodel_runner
+        return savedmodel_runner

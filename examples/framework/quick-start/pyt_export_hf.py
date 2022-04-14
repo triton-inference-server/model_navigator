@@ -49,9 +49,7 @@ if __name__ == "__main__":
             max_bs=args.max_batch_size,
             sample_count=10,
             override_workdir=True,
-            keep_workdir=True,
             workdir=nav_workdir,
-            save_data=False,
         )
 
         data = artifacts_library.get_formats_status()

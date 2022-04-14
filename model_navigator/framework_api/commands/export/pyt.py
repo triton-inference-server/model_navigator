@@ -15,18 +15,12 @@
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
-import numpy as np
 import torch  # pytype: disable=import-error
 
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.common import Sample, TensorMetadata
 from model_navigator.framework_api.exceptions import UserErrorContext
-from model_navigator.framework_api.utils import (
-    JitType,
-    format_to_relative_model_path,
-    get_package_path,
-    numpy_to_torch_dtype,
-)
+from model_navigator.framework_api.utils import JitType, format_to_relative_model_path, get_package_path
 from model_navigator.model import Format
 
 
@@ -46,20 +40,25 @@ class ExportPYT2TorchScript(Command):
     def __call__(
         self,
         workdir: Path,
-        model,
         model_name: str,
         profiling_sample: Sample,
         target_device: str,
         input_metadata: TensorMetadata,
+        model: Optional[torch.nn.Module] = None,
         **kwargs,
     ) -> Optional[Path]:
 
         exported_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
         if exported_model_path.is_file() or exported_model_path.is_dir():
             return None
+
         exported_model_path.parent.mkdir(parents=True, exist_ok=True)
 
+        if model is None:
+            raise RuntimeError("Expected model of type torch.nn.Module. Got None instead.")
+
         model.to(target_device)
+
         if self.target_jit_type == JitType.SCRIPT:
             with UserErrorContext():
                 script_module = torch.jit.script(model)
@@ -89,7 +88,6 @@ class ExportPYT2ONNX(Command):
     def __call__(
         self,
         workdir: Path,
-        model,
         model_name: str,
         opset: int,
         profiling_sample: Sample,
@@ -98,12 +96,17 @@ class ExportPYT2ONNX(Command):
         target_device: str,
         dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None,
         forward_kw_names: Optional[Tuple[str, ...]] = None,
+        model: Optional[torch.nn.Module] = None,
         **kwargs,
     ) -> Optional[Path]:
         exported_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
         if exported_model_path.is_file() or exported_model_path.is_dir():
             return None
+
         exported_model_path.parent.mkdir(parents=True, exist_ok=True)
+
+        if model is None:
+            raise RuntimeError("Expected model of type torch.nn.Module. Got None instead.")
 
         dummy_input = tuple(
             torch.from_numpy(val.astype(spec.dtype)).to(target_device)
@@ -125,78 +128,5 @@ class ExportPYT2ONNX(Command):
                 output_names=list(output_metadata.keys()),
                 dynamic_axes=dynamic_axes,
             )
-
-        return self.get_output_relative_path()
-
-
-class ExportPYT2TorchTensorRT(Command):
-    def __init__(self, target_jit_type: JitType, requires: Tuple[Command, ...] = ()):
-        super().__init__(
-            name="Export PyTorch to TorchTensorRT",
-            command_type=CommandType.EXPORT,
-            target_format=Format.TORCH_TRT,
-            requires=requires,
-        )
-        self.target_jit_type = target_jit_type
-
-    def get_output_relative_path(self):
-        return format_to_relative_model_path(self.target_format, jit_type=self.target_jit_type)
-
-    def __call__(
-        self,
-        workdir: Path,
-        model,
-        model_name: str,
-        target_device: str,
-        profiling_sample: Sample,
-        input_metadata: TensorMetadata,
-        trt_dynamic_axes: Optional[Dict[str, Dict[int, Tuple[int, int, int]]]] = None,
-        **kwargs,
-    ) -> Optional[Path]:
-        import torch_tensorrt  # pytype: disable=import-error
-
-        exported_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
-        if exported_model_path.is_file() or exported_model_path.is_dir():
-            return None
-        exported_model_path.parent.mkdir(parents=True, exist_ok=True)
-
-        dummy_input = tuple(
-            torch.from_numpy(val.astype(spec.dtype)).to(target_device)
-            for (val, spec) in zip(profiling_sample.values(), input_metadata.values())
-        )
-
-        trt_casts = {np.dtype(np.int64): np.int32}
-        input_dtypes = [
-            numpy_to_torch_dtype(trt_casts.get(input_spec.dtype, input_spec.dtype))
-            for input_spec in input_metadata.values()
-        ]
-
-        all_shapes = {}
-        for input_name, spec in input_metadata.items():
-            shapes = {}
-            for i, shape_type in enumerate(("min", "opt", "max")):
-                tensor_shape = list(spec.shape)
-                for ax, val in trt_dynamic_axes[input_name].items():
-                    tensor_shape[ax] = val[i]
-                shapes[shape_type] = tensor_shape
-            all_shapes[input_name] = shapes
-
-        model_input_shapes = []
-        for input_shapes, input_dtype in zip(all_shapes.values(), input_dtypes):
-            model_input_shapes.append(
-                torch_tensorrt.Input(
-                    min_shape=input_shapes["min"],
-                    opt_shape=input_shapes["opt"],
-                    max_shape=input_shapes["max"],
-                    dtype=input_dtype,
-                )
-            )
-
-        with UserErrorContext():
-            if self.target_jit_type == JitType.TRACE:
-                model = torch.jit.trace(model, dummy_input)
-            tr_model_compiled = torch_tensorrt.compile(model, inputs=model_input_shapes)
-
-            tr_model_compiled.save(exported_model_path.as_posix())
 
         return self.get_output_relative_path()

@@ -29,3 +29,4 @@ if is_tf_available():
 
 from model_navigator.framework_api import contrib  # noqa: F401 pylint: disable=wrong-import-position
 from model_navigator.framework_api import onnx  # noqa: F401
+from model_navigator.framework_api.load import load  # noqa: F401

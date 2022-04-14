@@ -34,6 +34,8 @@ class CommandType(Parameter):
     DUMP_MODEL_INPUT = "dump-model-input"
     DUMP_MODEL_OUTPUT = "dump-model-output"
     FETCH_MODEL_INPUT = "fetch-model-input"
+    INFER_MODEL_INPUT = "infer-model-input"
+    INFER_MODEL_OUTPUT = "infer-model-output"
     CUSTOM = "custom"
     PERFORMANCE = "performance"
     COPY = "copy"

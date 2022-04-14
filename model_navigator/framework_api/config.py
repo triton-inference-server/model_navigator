@@ -18,36 +18,37 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union, get_args, get_origin
 
 from model_navigator.converter.config import TensorRTPrecision
-from model_navigator.framework_api.common import SizedDataLoader
+from model_navigator.framework_api.common import DataObject, SizedDataLoader, TensorMetadata
 from model_navigator.framework_api.logger import LOGGER
-from model_navigator.framework_api.utils import DataObject, Framework, JitType, pad_string
+from model_navigator.framework_api.utils import Framework, JitType, pad_string
 from model_navigator.model import Format
 
 
-@dataclass(frozen=True)
+@dataclass
 class Config(DataObject):
     # common params
     framework: Framework
     model_name: str
     model: object
     dataloader: SizedDataLoader
-    workdir: Union[Path, str]
+    workdir: Path
     override_workdir: bool
-    keep_workdir: bool
     target_formats: Tuple[Format, ...]
     sample_count: int
-    save_data: bool
     disable_git_info: bool
     batch_dim: Optional[int] = 0
     seed: int = 0
     timestamp: Optional[str] = None
     _input_names: Optional[Tuple[str, ...]] = None
     _output_names: Optional[Tuple[str, ...]] = None
-    zip_package: bool = False
+    from_source: bool = True
+    max_batch_size: Optional[int] = None
+    input_metadata: Optional[TensorMetadata] = None
+    output_metadata: Optional[TensorMetadata] = None
 
     # TRT params
     max_workspace_size: Optional[int] = None
-    target_precisions: Optional[Tuple[TensorRTPrecision]] = None
+    target_precisions: Optional[Tuple[TensorRTPrecision, ...]] = None
     trt_dynamic_axes: Optional[Dict[str, Dict[int, Tuple[int, int, int]]]] = None
 
     # TF-TRT params

@@ -34,10 +34,11 @@ nav.torch.export(
 )
 
 dataloader = [numpy.random.rand(3, 5).astype("float32") for _ in range(10)]
-onnx_path = nav_workdir / "onnx_src.nav" / "onnx" / "model.onnx"
+onnx_path = nav_workdir / "onnx_src.nav.workspace" / "onnx" / "model.onnx"
 nav.onnx.export(
     model=onnx_path,
     workdir=nav_workdir,
     dataloader=dataloader,
+    override_workdir=True,
     opset=13,
 )

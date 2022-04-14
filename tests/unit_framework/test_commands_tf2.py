@@ -29,6 +29,11 @@ from model_navigator.tensor import TensorSpec
 
 # pytype: enable=import-error
 
+
+gpus = tensorflow.config.experimental.list_physical_devices("GPU")
+for gpu in gpus:
+    tensorflow.config.experimental.set_memory_growth(gpu, True)
+
 VALUE_IN_TENSOR = 9.0
 
 dataloader = [tensorflow.fill(dims=[1, 224, 224, 3], value=VALUE_IN_TENSOR) for _ in range(10)]
@@ -61,7 +66,7 @@ def test_tf2_dump_model_input():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav"
+        package_dir = workdir / f"{model_name}.nav.workspace"
         model_input_dir = package_dir / "model_input"
         dump_cmd = DumpInputModelData()
 
@@ -94,7 +99,7 @@ def test_tf2_dump_model_output():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav"
+        package_dir = workdir / f"{model_name}.nav.workspace"
         model_dir = package_dir / "tf-savedmodel"
         model_dir.mkdir(parents=True, exist_ok=True)
         model_input_dir = package_dir / "model_input"
@@ -135,7 +140,7 @@ def test_tf2_correctness():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav"
+        package_dir = workdir / f"{model_name}.nav.workspace"
         model_dir = package_dir / "tf-savedmodel"
         model_dir.mkdir(parents=True, exist_ok=True)
         model_path = model_dir / "model.savedmodel"
@@ -154,6 +159,7 @@ def test_tf2_correctness():
             rtol=0.0,
             atol=0.0,
             correctness_samples=[{"input__1": np_input}],
+            correctness_samples_output=[{"output__1": np_output}],
             input_metadata={"input__1": TensorSpec("input__1", np_input.shape, np_input.dtype)},
             output_metadata={"output__1": TensorSpec("output__1", np_output.shape, np_output.dtype)},
             batch_dim=None,
@@ -165,7 +171,7 @@ def test_tf2_export_savedmodel():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav"
+        package_dir = workdir / f"{model_name}.nav.workspace"
         model_dir = package_dir / "tf-savedmodel"
         model_dir.mkdir(parents=True, exist_ok=True)
 
@@ -180,7 +186,7 @@ def test_tf2_convert_tf_trt():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav"
+        package_dir = workdir / f"{model_name}.nav.workspace"
         model_dir = package_dir / "tf-savedmodel"
         model_dir.mkdir(parents=True, exist_ok=True)
         input_model_path = model_dir / "model.savedmodel"

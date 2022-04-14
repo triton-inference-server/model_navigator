@@ -60,7 +60,7 @@ def test_pyt_dump_model_input():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav"
+        package_dir = workdir / f"{model_name}.nav.workspace"
         model_input_dir = package_dir / "model_input"
 
         input_data = next(iter(dataloader))
@@ -95,7 +95,7 @@ def test_pyt_dump_model_output():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav"
+        package_dir = workdir / f"{model_name}.nav.workspace"
         model_dir = package_dir / "torchscript-script"
         model_dir.mkdir(parents=True, exist_ok=True)
         model_input_dir = package_dir / "model_input"
@@ -138,7 +138,7 @@ def test_pyt_correctness():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav"
+        package_dir = workdir / f"{model_name}.nav.workspace"
         model_dir = package_dir / "torchscript-script"
         model_dir.mkdir(parents=True, exist_ok=True)
         model_path = model_dir / "model.pt"
@@ -148,6 +148,7 @@ def test_pyt_correctness():
 
         input_data = next(iter(dataloader))
         numpy_data = input_data.cpu().numpy()
+        numpy_output = model(input_data).detach().cpu().numpy()
 
         correctness_cmd = CorrectnessPYT2TorchScript(target_format=Format.TORCHSCRIPT, target_jit_type=JitType.SCRIPT)
 
@@ -159,8 +160,9 @@ def test_pyt_correctness():
             rtol=0.0,
             atol=0.0,
             correctness_samples=[{"input__1": numpy_data}],
+            correctness_samples_output=[{"output__1": numpy_output}],
             input_metadata={"input__1": TensorSpec("input__1", numpy_data.shape, numpy_data.dtype)},
-            output_metadata={"output__1": TensorSpec("output__1", numpy_data.shape, numpy_data.dtype)},
+            output_metadata={"output__1": TensorSpec("output__1", numpy_output.shape, numpy_output.dtype)},
             target_device="cpu",
         )
 
@@ -170,7 +172,7 @@ def test_pyt_export_torchscript():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav"
+        package_dir = workdir / f"{model_name}.nav.workspace"
 
         export_cmd = ExportPYT2TorchScript(target_jit_type=JitType.SCRIPT)
         input_data = next(iter(dataloader))
@@ -193,7 +195,7 @@ def test_pyt_export_onnx():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav"
+        package_dir = workdir / f"{model_name}.nav.workspace"
 
         device = "cuda" if torch.cuda.is_available() else "cpu"
 

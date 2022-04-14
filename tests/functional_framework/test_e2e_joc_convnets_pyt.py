@@ -77,6 +77,7 @@ if __name__ == "__main__":
                 assert (status == nav.Status.OK) == (
                     format in expected_formats
                 ), f"{format} {runtime} status is {status}, but expected formats are {expected_formats}."
+        pkg_desc.save(nav_workdir / f"{model_name}_pyt.nav")
 
         nav.LOGGER.info(f"{model_name} passed.")
     nav.LOGGER.info("All models passed.")

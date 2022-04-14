@@ -82,5 +82,6 @@ if __name__ == "__main__":
             assert (status == nav.Status.OK) == (
                 format in expected_formats
             ), f"{format} {runtime} status is {status}, but expected formats are {expected_formats}."
+    pkg_desc.save(nav_workdir / f"{model_name}_tf2.nav")
 
     nav.LOGGER.info(f"{model_name} passed.")

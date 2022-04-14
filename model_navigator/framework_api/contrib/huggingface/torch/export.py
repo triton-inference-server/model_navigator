@@ -74,7 +74,6 @@ def export(
     jit_options: Optional[Union[Union[str, JitType], Tuple[Union[str, JitType], ...]]] = None,
     workdir: Optional[Path] = None,
     override_workdir: bool = False,
-    keep_workdir: bool = True,
     sample_count: Optional[int] = None,
     atol: Optional[float] = None,
     rtol: Optional[float] = None,
@@ -88,7 +87,6 @@ def export(
     batch_dim: Optional[int] = 0,
     padding: Union[bool, str] = True,
     max_sequence_len: Optional[int] = None,
-    zip_package: Optional[bool] = False,
 ) -> PackageDescriptor:
     """Function exports PyTorch model to all supported formats."""
     if workdir is None:
@@ -119,7 +117,7 @@ def export(
         target_device = "cuda" if torch.cuda.is_available() else "cpu"
 
     config = AutoConfig.from_pretrained(model_name)
-    model = get_pretrained_model_from_config(config, torchscript=True)
+    model = get_pretrained_model_from_config(model_name, config, torchscript=True)
     model.config.return_dict = True
 
     task = get_task_from_model(model)
@@ -189,13 +187,11 @@ def export(
         opset=opset,
         workdir=workdir,
         override_workdir=override_workdir,
-        keep_workdir=keep_workdir,
         sample_count=sample_count,
         atol=atol,
         rtol=rtol,
         dynamic_axes=dynamic_axes,
         target_precisions=target_precisions,
-        save_data=True,
         _input_names=input_names,
         _output_names=output_names,
         forward_kw_names=forward_kw_names,
@@ -204,7 +200,6 @@ def export(
         target_device=target_device,
         disable_git_info=disable_git_info,
         batch_dim=batch_dim,
-        zip_package=zip_package,
     )
 
     pipeline_manager = TorchPipelineManager()

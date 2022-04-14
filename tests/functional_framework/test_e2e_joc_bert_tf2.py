@@ -171,5 +171,6 @@ if __name__ == "__main__":
                 assert (status == nav.Status.OK) == (
                     format in expected_formats
                 ), f"{format} {runtime} status is {status}, but expected formats are {expected_formats}."
+        pkg_desc.save(navigator_workdir / "bert_tf2.nav")
 
     nav.LOGGER.info("All models passed.")

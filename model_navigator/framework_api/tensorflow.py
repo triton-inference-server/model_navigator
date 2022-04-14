@@ -40,7 +40,6 @@ def export(
     target_formats: Optional[Union[Union[str, Format], Tuple[Union[str, Format], ...]]] = None,
     workdir: Optional[Path] = None,
     override_workdir: bool = False,
-    keep_workdir: bool = True,
     sample_count: Optional[int] = None,
     opset: Optional[int] = None,
     atol: Optional[float] = None,
@@ -49,7 +48,6 @@ def export(
     output_names: Optional[Tuple[str, ...]] = None,
     disable_git_info: bool = False,
     batch_dim: Optional[int] = 0,
-    zip_package: Optional[bool] = False,
 ) -> PackageDescriptor:
     """Function exports TensorFlow 2 model to all supported formats."""
     if model_name is None:
@@ -85,18 +83,15 @@ def export(
         minimum_segment_size=minimum_segment_size,
         workdir=workdir,
         override_workdir=override_workdir,
-        keep_workdir=keep_workdir,
         target_formats=target_formats,
         sample_count=sample_count,
         opset=opset,
         atol=atol,
         rtol=rtol,
-        save_data=True,
         _input_names=input_names,
         _output_names=output_names,
         disable_git_info=disable_git_info,
         batch_dim=batch_dim,
-        zip_package=zip_package,
     )
 
     pipeline_manager = TFPipelineManager()
