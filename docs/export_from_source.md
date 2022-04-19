@@ -31,6 +31,7 @@ limitations under the License.
 - [Results](#results)
   - [Navigator package](#navigator-package)
   - [Package descriptor](#package-descriptor)
+  - [Saved samples](#saved-samples)
 - [Saving and loading .nav package](#saving-and-loading-nav-package)
 - [Examples](#examples)
   - [PyTorch export](#pytorch-export)
@@ -187,6 +188,17 @@ Additionally, model verification tests (e.g. accuracy, business metrics) cannot 
 verify converted models after exporting them, by setting the verified state for particular formats after executing custom
 test scenarios.
 After veryfing the models user have to save the package to the ```.nav``` package format.
+
+
+### Saved samples
+
+Model Navigator saves samples and corresponding outputs to perform conversions, profiling and verify correctness later on in the deployment process. Samples are separated into following directories:
+
+* ```conversion/``` - samples that span the dimension variability in the dataloader (e.g. the longest and the shortest sequence, the smallest and the largest picture),
+* ```correctness/``` - ```sample_count``` (defaults to 100) random samples,
+* ```performance/``` - one random sample.
+
+Model Navigator does not save the full batches but rather extracts single samples from the dataloader. Batches are reconstruced from the samples by repeating the samples along the batch dimension.
 
 ## Saving and loading .nav package
 
