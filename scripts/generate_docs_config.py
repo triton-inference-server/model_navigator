@@ -26,6 +26,7 @@ from model_navigator.cli.convert_model import convert_cmd
 from model_navigator.cli.helm_chart_create import helm_chart_create_cmd
 from model_navigator.cli.profile import profile_cmd
 from model_navigator.cli.run import run_cmd
+from model_navigator.cli.select import select_cmd
 from model_navigator.cli.triton_config_model import config_model_on_triton_cmd
 from model_navigator.utils.cli import OptionNargs
 
@@ -45,6 +46,7 @@ CATALOG = [
     DocCmdsEntry(pathlib.Path("docs/advanced/helm_charts.md"), [helm_chart_create_cmd]),
     DocCmdsEntry(pathlib.Path("docs/advanced/profiling.md"), [profile_cmd]),
     DocCmdsEntry(pathlib.Path("docs/advanced/analysis.md"), [analyze_cmd]),
+    DocCmdsEntry(pathlib.Path("docs/select.md"), [select_cmd]),
 ]
 
 TYPE_MAPPING = {
@@ -117,7 +119,7 @@ def _check_if_there_are_duplicated_options(options_with_cmds):
     duplicated_options_names = [(name, count) for name, count in counter.items() if count > 1]
 
     if duplicated_options_names:
-        print("Suspected options found\n")
+        print("Duplicate options found\n")
         for name, count in duplicated_options_names:
             print("\t", name, count)
             for key, options_and_cmds_list in options.items():
@@ -163,8 +165,9 @@ def options(params):
 
 
 def main():
-    options_with_cmds = [(option, cmd) for entry in CATALOG for cmd in entry.cmds for option in options(cmd.params)]
-    _generate_config_description_lines(options_with_cmds)
+    options_with_cmds = [[(option, cmd) for cmd in entry.cmds for option in options(cmd.params)] for entry in CATALOG]
+    for entry_options_with_cmds in options_with_cmds:
+        _generate_config_description_lines(entry_options_with_cmds)
 
     for entry in CATALOG:
         options_with_cmds = [(option, cmd) for cmd in entry.cmds for option in options(cmd.params)]

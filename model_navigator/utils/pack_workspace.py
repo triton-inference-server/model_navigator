@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 import pathlib
 import zipfile
 
@@ -98,26 +99,33 @@ def pack_workspace(
     LOGGER.debug("Compressing package to single file.")
     with zipfile.ZipFile(package_path, "w", compression=zipfile.ZIP_STORED) as package:
         results_path = pathlib.Path(workspace.path / "analyzer" / "results")
-        results_parent_dir = results_path.parent
         for result in results_path.iterdir():
-            package.write(result, arcname=pathlib.Path("results") / result.relative_to(results_parent_dir))
+            package.write(result, arcname=pathlib.Path("results") / result.relative_to(results_path))
 
         checkpoints_path = pathlib.Path(workspace.path / "analyzer" / "checkpoints")
-        checkpoints_parent_dir = checkpoints_path.parent
         for checkpoint in checkpoints_path.iterdir():
-            package.write(
-                checkpoint, arcname=pathlib.Path("checkpoints") / checkpoint.relative_to(checkpoints_parent_dir)
-            )
+            package.write(checkpoint, arcname=pathlib.Path("checkpoints") / checkpoint.name)
 
+        # zipfile does not support symlinks, so we store symlink info in a yaml file
+        symlinks = {}
         models_path = pathlib.Path(workspace.path / "analyzer" / "model-store")
-        for model in models_path.iterdir():
-            package.write(model, arcname=pathlib.Path("model-store") / model.relative_to(model.parent))
+        for model in models_path.glob("**/*"):
+            relname = model.relative_to(models_path)
+            outname = pathlib.Path("model-store") / relname
+            if model.is_symlink():
+                symlinks[relname.as_posix()] = (
+                    pathlib.Path(os.path.realpath(model.as_posix())).relative_to(models_path).as_posix()
+                )
+                package.writestr(outname.as_posix(), "")
+                continue
+            package.write(model, arcname=outname)
+        package.writestr("model-store/symlinks.yaml", yaml.dump(symlinks, width=240, sort_keys=False))
 
         for log_file in conversion_logs:
-            package.write(log_file, arcname=pathlib.Path(conversion_log_path) / log_file.relative_to(log_file.parent))
+            package.write(log_file, arcname=pathlib.Path(conversion_log_path) / log_file.name)
 
         for log_file in configurator_logs:
-            package.write(log_file, arcname=pathlib.Path(configurator_log_path) / log_file.relative_to(log_file.parent))
+            package.write(log_file, arcname=pathlib.Path(configurator_log_path) / log_file.name)
 
         package.writestr("status.yaml", yaml.dump(status, width=240, sort_keys=False))
 

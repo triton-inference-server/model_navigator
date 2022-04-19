@@ -34,6 +34,7 @@ LOGGER = logging.getLogger(__name__)
 class CliSpec:
     help: str = ""
     count: bool = False
+    multiple: bool = False
     param_decls: Optional[List[str]] = None
     parse_and_verify_callback: Optional[Callable] = None
     serialize_default_callback: Optional[Callable] = None
@@ -258,7 +259,11 @@ def options_from_config(config_dataclass, cli_specs=None):  # noqa: C901
 
         # default option kwargs
         cls = click.Option
-        parse_and_verify_callback = _parse_and_verify_callback_wrapper(cli_spec.parse_and_verify_callback)
+        if not cli_spec.multiple:
+            parse_and_verify_callback = _parse_and_verify_callback_wrapper(cli_spec.parse_and_verify_callback)
+        else:
+            # don't do any magic, if the argument is explicitly specified as multiple
+            parse_and_verify_callback = cli_spec.parse_and_verify_callback
         nargs = None
         flag_value = None
 
@@ -343,7 +348,7 @@ def options_from_config(config_dataclass, cli_specs=None):  # noqa: C901
             "is_flag": is_bool_flag,
             "flag_value": flag_value,
             "count": cli_spec.count,
-            "multiple": is_list,
+            "multiple": is_list or cli_spec.multiple,
             "help": cli_spec.help,
             "type": type_,
             "required": is_required,
@@ -386,7 +391,8 @@ def common_options(f):
             return
 
         package_path = Path(value)
-        with open(package_path / "status.yaml") as f:
+        package = nav_package.NavPackage(package_path)
+        with package.open("status.yaml") as f:
             status = yaml.load(f, Loader=yaml.SafeLoader)
 
         ctx.default_map = ctx.default_map or {}
@@ -401,7 +407,7 @@ def common_options(f):
             # we need to fix the relative path
             ctx.default_map.update({"model_path": model_path.as_posix()})
 
-        return nav_package.NavPackage(package_path)
+        return package
 
     arguments = [
         # package and config-path should be read before all the options,

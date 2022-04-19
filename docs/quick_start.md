@@ -91,7 +91,29 @@ section.
 ## Optimize model
 This step uses previously generated `.nav` package and use it for further conversion and applies optimizations for
 Triton Inference Server. In results it produces package that can used directly for deployment on Triton Inference Server.
+
+First, run the model configuration and profiling process.
 ```shell
 $ model-navigator run my_model.nav # conversion + analyzer
-$ model-navigator deploy my_model.triton.nav --backend trt
+```
+This produces a new "my_model.triton.nav" package. This can then be used as an input to the
+`model-navigator select` command, which builds a Triton model repository containing the input model in
+its best configuration.
+
+```
+$ model-navigator select my_model.triton.nav
+```
+
+By default, the configuration is selected only for best throughput.
+However other optimization objectives can be specified and combined using weighted ranking.
+Additional constraints can be passed to the `select` command,
+including bounds on latency, throughput and desired model formats:
+
+```
+$ model-navigator select my_model.triton.nav \
+                        --objective perf_throughput=10 perf_latency_avg=5  # objectives with weights
+                        --max-latency-ms 1  \
+                        --min-throughput 100  \
+                        --max-gpu-usage-mb 8000  \
+                        --target-format trt onnx
 ```

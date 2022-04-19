@@ -572,6 +572,33 @@ class ModelAnalyzerAnalysisConfigCli:
     )
 
 
+class SelectConfigCli:
+    max_latency_ms = CliSpec(help="Maximum latency in ms that the analyzed models should match.")
+    min_throughput = CliSpec(help="Minimal throughput that the analyzed models should match.")
+    max_gpu_usage_mb = CliSpec(help="Maximal GPU memory usage in MB that analyzed model should match.")
+    objective = CliSpec(
+        help="Objective used to rank those configurations of the model that fulfill other constraints, with an optional weight value."
+        "\nCan be passed multiple times to specify multiple objectives. Available objectives: 'perf_throughput', 'perf_latency_p99'.",
+        multiple=True,
+        parse_and_verify_callback=_parse_objectives,
+        serialize_default_callback=_serialize_objectives,
+    )
+    target_format = CliSpec(
+        help="Select only from among models in the given format(s). Multiple formats can be provided as a space-separated list, or by passing the option multiple times.",
+        multiple=True,
+        parse_and_verify_callback=_parse_target_formats,
+        serialize_default_callback=_serialize_target_formats,
+    )
+    backend_accelerator = CliSpec(help="Select only from among model configurations using given backend accelerator.")
+    tensorrt_precision = CliSpec(
+        help="Select only from among model configurations using given precision for TensorRT acceleration."
+    )
+    tensorrt_capture_cuda_graph = CliSpec(
+        help="Select only from among model configurations using the CUDA capture "
+        "graph feature on the TensorRT backend."
+    )
+
+
 class PerfMeasurementConfigCli:
     perf_analyzer_timeout = CliSpec(help="Perf Analyzer measurement timeout in seconds.")
     perf_measurement_mode = CliSpec(help="Perf Analyzer measurement mode. Available: count_windows, time_windows.")
