@@ -76,7 +76,7 @@ def export(
             JitType.TRACE,
         )
     if opset is None:
-        opset = torch.onnx.constant_folding_opset_versions[-1]
+        opset = 14
 
     if sample_count is None:
         sample_count = 100
