@@ -24,8 +24,8 @@ import click
 from model_navigator.cli.analyze import analyze_cmd
 from model_navigator.cli.convert_model import convert_cmd
 from model_navigator.cli.helm_chart_create import helm_chart_create_cmd
+from model_navigator.cli.optimize import optimize_cmd
 from model_navigator.cli.profile import profile_cmd
-from model_navigator.cli.run import run_cmd
 from model_navigator.cli.select import select_cmd
 from model_navigator.cli.triton_config_model import config_model_on_triton_cmd
 from model_navigator.utils.cli import OptionNargs
@@ -40,7 +40,7 @@ class DocCmdsEntry(typing.NamedTuple):
 
 
 CATALOG = [
-    DocCmdsEntry(pathlib.Path("docs/optimize_for_triton.md"), [run_cmd]),
+    DocCmdsEntry(pathlib.Path("docs/optimize_for_triton.md"), [optimize_cmd]),
     DocCmdsEntry(pathlib.Path("docs/advanced/conversion.md"), [convert_cmd]),
     DocCmdsEntry(pathlib.Path("docs/advanced/triton_model_configurator.md"), [config_model_on_triton_cmd]),
     DocCmdsEntry(pathlib.Path("docs/advanced/helm_charts.md"), [helm_chart_create_cmd]),

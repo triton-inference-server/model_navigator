@@ -22,6 +22,7 @@ from model_navigator.cli.convert_model import convert_cmd
 from model_navigator.cli.create_profiling_data import create_profiling_data_cmd
 from model_navigator.cli.download_file import download_cmd
 from model_navigator.cli.helm_chart_create import helm_chart_create_cmd
+from model_navigator.cli.optimize import optimize_cmd
 from model_navigator.cli.profile import profile_cmd
 from model_navigator.cli.run import run_cmd
 from model_navigator.cli.select import select_cmd
@@ -45,6 +46,7 @@ def main():
     cli.add_command(cmd=config_model_on_triton_cmd)
     cli.add_command(cmd=helm_chart_create_cmd)
     cli.add_command(cmd=run_cmd)
+    cli.add_command(cmd=optimize_cmd)
     cli.add_command(cmd=download_cmd)
     cli.add_command(cmd=triton_evaluate_model_cmd)
     cli.add_command(cmd=select_cmd)
