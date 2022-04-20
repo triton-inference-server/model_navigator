@@ -190,7 +190,7 @@ model_path: path
 # NVIDIA framework and Triton container version to use. For details refer to
 # https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html and
 # https://docs.nvidia.com/deeplearning/triton-inference-server/release-notes/index.html for details).
-[ container_version: str | default: 22.02 ]
+[ container_version: str | default: 22.03 ]
 
 # Custom framework docker image to use. If not provided
 # nvcr.io/nvidia/<framework>:<container_version>-<framework_and_python_version> will be used
@@ -317,10 +317,15 @@ model_path: path
 # [Deprecated] Maximum preferred batch size allowed for inference used for automatic config search in analysis.
 [ config_search_max_preferred_batch_size: integer | default: 32 ]
 
-# List of concurrency values used for manual config search in analysis.
+# List of client side concurrency values used for manual config search in analysis.
 # Forces manual config search.
 # Format: --config-search-concurrency 1 2 4 ...
 [ config_search_concurrency: list[integer] ]
+
+# List of client side batch size values used for manual config search in analysis.
+# Forces manual config search.
+# Format: --config-search-batch-sizes 1 2 4 ...
+[ config_search_batch_sizes: list[integer] ]
 
 # List of model instance count values used for manual config search in analysis.
 # Forces manual config search.
@@ -367,6 +372,15 @@ model_path: path
 
 # Perf Analyzer time windows time in [ms] used for stabilization.
 [ perf_measurement_interval: integer | default: 5000 ]
+
+# Define usage of shared memory to pass tensors:
+# none - no shared memory used
+# system - use RAM memory.
+# cuda - use GPU memory.
+[ perf_measurement_shared_memory: str | default: none ]
+
+# Define size of shared memory for model outputs.
+[ perf_measurement_output_shared_memory_size: integer | default: 102400 ]
 
 # The method by which to launch conversion. 'local' assume conversion will be run locally. 'docker' build conversion
 # Docker and perform operations inside it.

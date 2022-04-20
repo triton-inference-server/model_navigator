@@ -51,6 +51,7 @@ from model_navigator.utils.cli import clean_workspace_if_needed, common_options,
 from model_navigator.utils.config import BaseConfig, YamlConfigFile
 from model_navigator.utils.device import get_gpus
 from model_navigator.utils.docker import DockerBuilder, DockerImage
+from model_navigator.utils.environment import EnvironmentStore, get_env
 from model_navigator.utils.nav_package import NavPackage
 from model_navigator.utils.source import navigator_install_url, navigator_is_editable
 from model_navigator.validators import run_command_validators
@@ -386,6 +387,11 @@ def convert(
             package=package,
             random_seed=kwargs.get("random_seed"),
         )
+
+    environment_info = get_env()
+
+    environment_store = EnvironmentStore(workspace)
+    environment_store.dump("convert_model", environment_info)
 
     results_store = ResultsStore(workspace)
     results_store.dump("convert_model", conversion_results)

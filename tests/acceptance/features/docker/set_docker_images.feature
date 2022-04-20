@@ -13,7 +13,7 @@ Feature: Set base docker images
 
     Scenario: User set just container_version parameter therefore nvcr.io docker images are used
         Given the container_version config parameter is set to 21.05
-        When I execute run command
+        When I execute optimize command
         Then the command should succeeded
         And the convert-model subcommand results have succeeded state and parameters matching:
             framework_docker_image=nvcr.io/nvidia/pytorch:21.05-py3
@@ -29,7 +29,7 @@ Feature: Set base docker images
         Given the container_version config parameter is set to 21.05
         And the framework_docker_image config parameter is set to nvcr.io/nvidia/pytorch:21.02-py3
         And the triton_docker_image config parameter is set to nvcr.io/nvidia/tritonserver:21.02-py3
-        When I execute run command
+        When I execute optimize command
         Then the command should succeeded
         And the convert-model subcommand results have succeeded state and parameters matching:
             framework_docker_image=nvcr.io/nvidia/pytorch:21.02-py3
@@ -44,7 +44,7 @@ Feature: Set base docker images
     Scenario: User set triton_docker_image and config_version parameter
         Given the container_version config parameter is set to 21.05
         And the triton_docker_image config parameter is set to nvcr.io/nvidia/tritonserver:21.02-py3
-        When I execute run command
+        When I execute optimize command
         Then the command should succeeded
         And the convert-model subcommand results have succeeded state and parameters matching:
             framework_docker_image=nvcr.io/nvidia/pytorch:21.05-py3
@@ -59,7 +59,7 @@ Feature: Set base docker images
     Scenario: User set framework_docker_image and config_version parameter
         Given the container_version config parameter is set to 21.05
         And the framework_docker_image config parameter is set to nvcr.io/nvidia/pytorch:21.02-py3
-        When I execute run command
+        When I execute optimize command
         Then the command should succeeded
         And the convert-model subcommand results have succeeded state and parameters matching:
             framework_docker_image=nvcr.io/nvidia/pytorch:21.02-py3

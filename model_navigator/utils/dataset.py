@@ -38,7 +38,7 @@ def get_value_ranges(model_signature, dataset_profile):
     if not dataset_profile or not dataset_profile.value_ranges:
 
         def _get_default_value_range(spec: TensorSpec):
-            return {"i": (0, 15), "f": (0.0, 1.0)}[spec.dtype.kind]
+            return {"i": (0, 1), "f": (0.0, 1.0)}[spec.dtype.kind]
 
         value_ranges = {name: _get_default_value_range(spec) for name, spec in model_signature.inputs.items()}
 

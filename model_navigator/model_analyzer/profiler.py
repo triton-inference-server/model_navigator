@@ -216,6 +216,11 @@ class ProfileConfigGenerator(BaseConfigGenerator):
         configuration["measurement-mode"] = self._perf_measurement_config.perf_measurement_mode
         configuration["measurement-request-count"] = self._perf_measurement_config.perf_measurement_request_count
 
+        configuration["shared-memory"] = self._perf_measurement_config.perf_measurement_shared_memory
+        configuration[
+            "output-shared-memory-size"
+        ] = self._perf_measurement_config.perf_measurement_output_shared_memory_size
+
         return configuration
 
     def _get_profile_config_for_model(self, model_dir_name):
@@ -257,8 +262,15 @@ class ProfileConfigGenerator(BaseConfigGenerator):
         configuration = {}
         if model_config:
             configuration["model_config_parameters"] = model_config
+
+        parameters = {}
         if self._profile_config.config_search_concurrency:
-            configuration["parameters"] = {"concurrency": self._profile_config.config_search_concurrency}
+            parameters["concurrency"] = self._profile_config.config_search_concurrency
+
+        if self._profile_config.config_search_batch_sizes:
+            parameters["batch_sizes"] = self._profile_config.config_search_batch_sizes
+
+        configuration["parameters"] = parameters
 
         engine_count_per_device = original_model_config.instances_config.engine_count_per_device
         if self._profile_config.config_search_max_instance_count and engine_count_per_device:

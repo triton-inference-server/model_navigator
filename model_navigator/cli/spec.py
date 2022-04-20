@@ -571,9 +571,14 @@ class ModelAnalyzerProfileConfigCli:
         help="[Deprecated] Maximum preferred batch size allowed for inference used for automatic config search in analysis."
     )
     config_search_concurrency = CliSpec(
-        help="List of concurrency values used for manual config search in analysis. "
+        help="List of client side concurrency values used for manual config search in analysis. "
         "\nForces manual config search. "
         "\nFormat: --config-search-concurrency 1 2 4 ...",
+    )
+    config_search_batch_sizes = CliSpec(
+        help="List of client side batch size values used for manual config search in analysis. "
+        "\nForces manual config search. "
+        "\nFormat: --config-search-batch-sizes 1 2 4 ...",
     )
     config_search_instance_counts = CliSpec(
         help="List of model instance count values used for manual config search in analysis. "
@@ -645,6 +650,13 @@ class PerfMeasurementConfigCli:
         help="Perf Analyzer count windows number of samples to used for stabilization."
     )
     perf_measurement_interval = CliSpec(help="Perf Analyzer time windows time in [ms] used for stabilization.")
+    perf_measurement_shared_memory = CliSpec(
+        help="Define usage of shared memory to pass tensors:"
+        "\nnone - no shared memory used"
+        "\nsystem - use RAM memory."
+        "\ncuda - use GPU memory."
+    )
+    perf_measurement_output_shared_memory_size = CliSpec(help="Define size of shared memory for model outputs.")
 
 
 class RunTritonConfigCli:

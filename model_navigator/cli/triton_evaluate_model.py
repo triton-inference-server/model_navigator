@@ -18,7 +18,7 @@ import traceback
 from dataclasses import dataclass
 from enum import Enum
 from subprocess import TimeoutExpired
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional
 
 import click as click
 
@@ -39,6 +39,7 @@ from model_navigator.perf_analyzer import (
     PerfAnalyzerConfig,
     PerfMeasurementConfig,
 )
+from model_navigator.perf_analyzer.config import SharedMemoryMode
 from model_navigator.results import State, Status
 from model_navigator.triton import TritonClientConfig, parse_server_url
 from model_navigator.triton.utils import get_shape_params
@@ -68,20 +69,6 @@ class BatchingMode(Enum):
 
     STATIC = "static"
     DYNAMIC = "dynamic"
-
-
-class EvaluationMode(Enum):
-    """
-    Available evaluation modes
-    """
-
-    OFFLINE = "offline"
-    ONLINE = "online"
-
-
-class OfflineMode(Enum):
-    SYSTEM = "system"
-    CUDA = "cuda"
 
 
 @dataclass
@@ -148,8 +135,8 @@ def _perf_analyzer_evaluation(
     measurement_request_count: int = 50,
     concurrency_steps: int = 1,
     batching_mode: BatchingMode = BatchingMode.STATIC,
-    evaluation_mode: EvaluationMode = EvaluationMode.ONLINE,
-    offline_mode: OfflineMode = OfflineMode.SYSTEM,
+    shared_memory: SharedMemoryMode = SharedMemoryMode.NONE,
+    output_shared_memory_size: int = 102400,
     latency_report_file: Optional[str] = None,
     verbose: bool = False,
     timeout: int = 600,
@@ -192,8 +179,8 @@ def _perf_analyzer_evaluation(
             if verbose:
                 params["verbose"] = True
 
-            if evaluation_mode == EvaluationMode.OFFLINE:
-                params["shared-memory"] = offline_mode.value
+            params["shared-memory"] = shared_memory.value
+            params["output-shared-memory-size"] = output_shared_memory_size
 
             if verbose:
                 log_dict(f"Perf Analyzer config for {batch_size}", params)
@@ -235,24 +222,6 @@ def _perf_analyzer_evaluation(
     default="1",
 )
 @click.option(
-    "--evaluation-mode",
-    type=click.Choice([item.value for item in EvaluationMode]),
-    default=EvaluationMode.ONLINE.value,
-    help="Select model evaluation mode "
-    "'offline' use system or GPU memory to pass tensors. "
-    "'online' use TCP to pass tensors.",
-    required=False,
-)
-@click.option(
-    "--offline-mode",
-    type=click.Choice([item.value for item in OfflineMode]),
-    default=OfflineMode.SYSTEM.value,
-    help="Select offline mode "
-    "'system' use system memory to pass tensors. "
-    "'cuda' use GPU memory to pass tensors. ",
-    required=False,
-)
-@click.option(
     "--batching-mode",
     type=click.Choice([item.value for item in BatchingMode]),
     default=BatchingMode.STATIC.value,
@@ -285,9 +254,7 @@ def triton_evaluate_model_cmd(
     model_name: str,
     model_version: str,
     batch_sizes: str,
-    evaluation_mode: Union[List, Tuple],
     batching_mode: str,
-    offline_mode: str,
     verbose: bool,
     latency_report_file: str,
     concurrency_steps: int,
@@ -312,7 +279,6 @@ def triton_evaluate_model_cmd(
                 **{
                     "model_name": model_name,
                     "model_version": model_version,
-                    "evaluation_mode": evaluation_mode,
                     "batch_sizes": batch_sizes,
                     "concurrency_steps": concurrency_steps,
                     "latency_report_file": latency_report_file,
@@ -350,14 +316,14 @@ def triton_evaluate_model_cmd(
             measurement_request_count=perf_measurement_config.perf_measurement_request_count,
             timeout=perf_measurement_config.perf_analyzer_timeout,
             verbose=verbose,
-            evaluation_mode=EvaluationMode(evaluation_mode),
             batching_mode=BatchingMode(batching_mode),
-            offline_mode=OfflineMode(offline_mode),
+            shared_memory=SharedMemoryMode(perf_measurement_config.perf_measurement_shared_memory),
+            output_shared_memory_size=perf_measurement_config.perf_measurement_output_shared_memory_size,
             concurrency_steps=concurrency_steps,
             latency_report_file=latency_report_file,
         )
 
-        message = f"Evaluated model {model_name} and batch size {batch_sizes} and modes: {','.join(evaluation_mode)}"
+        message = f"Evaluated model {model_name} and batch size {batch_sizes} and mode: {perf_measurement_config.perf_measurement_output_shared_memory_size}"
         result = TritonEvaluateModelResult(
             status=Status(state=State.SUCCEEDED, message=message),
             log=perf_analyzer_log,

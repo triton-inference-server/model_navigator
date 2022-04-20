@@ -30,7 +30,6 @@ from model_navigator.framework_api.commands.correctness.base import TolerancePer
 from model_navigator.framework_api.commands.performance.base import Performance
 from model_navigator.framework_api.common import DataObject, Format, TensorMetadata
 from model_navigator.framework_api.config import Config
-from model_navigator.framework_api.environment_info import get_env, get_git_info
 from model_navigator.framework_api.exceptions import UserError
 from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.pipelines.pipeline import Pipeline
@@ -47,6 +46,7 @@ from model_navigator.framework_api.utils import (
     get_framework_export_formats,
     get_package_path,
 )
+from model_navigator.utils.environment import get_env, get_git_info
 
 NAV_PACKAGE_FORMAT_VERSION = "0.1.0"
 

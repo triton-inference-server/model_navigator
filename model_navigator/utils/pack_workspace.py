@@ -13,15 +13,18 @@
 # limitations under the License.
 import os
 import pathlib
+import uuid
 import zipfile
 
 import yaml
 
 from model_navigator import LOGGER
+from model_navigator.__version__ import __version__ as navigator_version
 from model_navigator.exceptions import ModelNavigatorException
 from model_navigator.results import ResultsStore, State
-from model_navigator.utils import Workspace, device
+from model_navigator.utils import Workspace
 from model_navigator.utils.config import dataclass2dict
+from model_navigator.utils.environment import EnvironmentStore
 
 FORMAT_VERSION = "0.0.1"
 
@@ -34,12 +37,19 @@ def pack_workspace(
     LOGGER.info(f"Creating package from workspace {workspace.path} to {package_path}")
 
     results_store = ResultsStore(workspace)
+    environment_store = EnvironmentStore(workspace)
 
-    LOGGER.debug("Collecting conversion information.")
+    LOGGER.debug("Collecting conversion results.")
     conversion_results = results_store.load("convert_model")
+
+    LOGGER.debug("Collecting conversion environment.")
+    conversion_environment = environment_store.load("convert_model")
 
     LOGGER.debug("Collecting Triton configuration results.")
     configuration_results = results_store.load("configure_models_on_triton")
+
+    LOGGER.debug("Collecting Triton configuration  environment.")
+    configure_models_on_triton_environment = environment_store.load("configure_models_on_triton")
 
     conversion_log_path = "conversion-logs"
     conversion_logs = []
@@ -90,10 +100,15 @@ def pack_workspace(
         models.append(model_data)
 
     status = {
-        "format_version": FORMAT_VERSION,
+        "uuid": str(uuid.uuid1()),
+        "version": FORMAT_VERSION,
+        "navigator_version": navigator_version,
         "config": navigator_config,
         "models": models,
-        "environment": device.get_environment_info(),
+        "environment": {
+            "conversion": conversion_environment,
+            "triton": configure_models_on_triton_environment,
+        },
     }
 
     LOGGER.debug("Compressing package to single file.")
@@ -113,10 +128,9 @@ def pack_workspace(
             relname = model.relative_to(models_path)
             outname = pathlib.Path("model-store") / relname
             if model.is_symlink():
-                symlinks[relname.as_posix()] = (
-                    pathlib.Path(os.path.realpath(model.as_posix())).relative_to(models_path).as_posix()
-                )
-                package.writestr(outname.as_posix(), "")
+                location = pathlib.Path(os.path.realpath(model.as_posix())).relative_to(models_path).as_posix()
+                symlinks[relname.as_posix()] = location
+                package.writestr(outname.as_posix(), location)
                 continue
             package.write(model, arcname=outname)
         package.writestr("model-store/symlinks.yaml", yaml.dump(symlinks, width=240, sort_keys=False))

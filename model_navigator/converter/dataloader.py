@@ -224,7 +224,7 @@ class RandomDataloader(Dataloader):
         if self.dataset_profile.value_ranges is None:
 
             def _get_default_value_range(spec: TensorSpec):
-                return {"i": (0, 15), "f": (0.0, 1.0)}[spec.dtype.kind]
+                return {"i": (0, 1), "f": (0.0, 1.0)}[spec.dtype.kind]
 
             value_ranges = {name: _get_default_value_range(spec) for name, spec in model_signature.inputs.items()}
             self.dataset_profile.value_ranges = value_ranges

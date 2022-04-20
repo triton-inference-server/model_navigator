@@ -18,8 +18,22 @@ from model_navigator.utils.config import BaseConfig
 
 
 class MeasurementMode(Enum):
+    """
+    Measurement modes for
+    """
+
     COUNT_WINDOWS = "count_windows"
     TIME_WINDOWS = "time_windows"
+
+
+class SharedMemoryMode(Enum):
+    """
+    Available offline mode for memory
+    """
+
+    NONE = "none"
+    SYSTEM = "system"
+    CUDA = "cuda"
 
 
 @dataclass
@@ -28,3 +42,5 @@ class PerfMeasurementConfig(BaseConfig):
     perf_measurement_mode: str = MeasurementMode.COUNT_WINDOWS.value
     perf_measurement_request_count: int = 50
     perf_measurement_interval: int = 5000
+    perf_measurement_shared_memory: str = SharedMemoryMode.NONE.value
+    perf_measurement_output_shared_memory_size: int = 102400

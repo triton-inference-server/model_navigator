@@ -12,19 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import locale
+import logging
 import os
 import platform
 import re
+from pathlib import Path
 from subprocess import CalledProcessError
-from typing import List
+from typing import Dict, List
 
 import cpuinfo
 import psutil
+import yaml
 
-from model_navigator.framework_api.logger import LOGGER
+from model_navigator.utils import Workspace
+
+LOGGER = logging.getLogger(__name__)
 
 package_filter = [
-    "tensorflow" "torch",
+    "tensorflow",
+    "torch",
     "torch-tensorrt",
     "torchtext",
     "torchvision",
@@ -138,3 +144,30 @@ def get_env():
         "python_packages": {k: v for k, v in packages.items() if k in package_filter},
     }
     return env
+
+
+class EnvironmentStore:
+    def __init__(self, workspace: Workspace):
+        self._workspace = workspace
+
+    def dump(self, stage, environment: Dict) -> Path:
+        status_path: Path = self.get_path(stage)
+        LOGGER.debug(f"Saving environment info for {stage} stage into {status_path}")
+        status_path.parent.mkdir(parents=True, exist_ok=True)
+        with status_path.open("w") as results_file:
+            yaml.dump(environment, results_file)
+        return status_path
+
+    def load(self, stage):
+        status_path: Path = self.get_path(stage)
+        if not status_path.exists():
+            LOGGER.warning(f"No environment found for {stage}")
+            return {}
+
+        with status_path.open("r") as results_file:
+            environment = yaml.safe_load(results_file)
+
+        return environment
+
+    def get_path(self, stage: str) -> Path:
+        return self._workspace.path / f"{stage}_environment.yaml"

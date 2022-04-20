@@ -69,6 +69,7 @@ from model_navigator.triton.config import RunTritonConfig, TritonCustomBackendPa
 from model_navigator.utils import Workspace, cli
 from model_navigator.utils.config import dataclass2dict
 from model_navigator.utils.device import get_gpus
+from model_navigator.utils.environment import EnvironmentStore, get_env
 from model_navigator.utils.pack_workspace import pack_workspace
 from model_navigator.validators import run_command_validators
 
@@ -220,7 +221,6 @@ def optimize_cmd(
         triton_docker_image=triton_docker_image,
         gpus=gpus,
         workspace=workspace,
-        verbose=verbose,
     )
 
     # move when triton server for testing purposes is shutdown
@@ -323,7 +323,7 @@ def _obtain_conversion_config(
     return new_conversion_set_config
 
 
-def _get_triton_server(*, triton_docker_image, gpus, analyzer_config, verbose: bool = False):
+def _get_triton_server(*, triton_docker_image: str, gpus: List, analyzer_config: ModelAnalyzerTritonConfig):
     triton_config = TritonServerConfig()
     triton_config["model-repository"] = analyzer_config.model_repository.resolve().as_posix()
     triton_config["model-control-mode"] = "explicit"
@@ -348,6 +348,18 @@ def _get_triton_server(*, triton_docker_image, gpus, analyzer_config, verbose: b
     return triton_server
 
 
+def _collect_triton_environment(workspace: Workspace, triton_config: RunTritonConfig):
+    if triton_config.triton_launch_mode == TritonLaunchMode.LOCAL:
+        environment_info = get_env()
+
+        environment_store = EnvironmentStore(workspace)
+        environment_store.dump("configure_models_on_triton", environment_info)
+    elif triton_config.triton_launch_mode == TritonLaunchMode.DOCKER:
+        LOGGER.warning("Collecting environment details from Docker not implemented yet.")
+    else:
+        raise ModelNavigatorException(f"Unsupported triton_launch_mode: {triton_config.triton_launch_mode}")
+
+
 def _configure_models_on_triton(
     ctx,
     converted_models: List,
@@ -362,9 +374,9 @@ def _configure_models_on_triton(
     triton_docker_image: str,
     gpus: List,
     workspace: Workspace,
-    verbose: bool,
 ):
     gpus = get_gpus(gpus=gpus)
+    _collect_triton_environment(workspace=workspace, triton_config=triton_config)
 
     triton_server = _get_triton_server(
         triton_docker_image=triton_docker_image,
@@ -372,7 +384,6 @@ def _configure_models_on_triton(
         analyzer_config=ModelAnalyzerTritonConfig.from_dict(
             {**dataclass2dict(triton_config), **{"model_repository": output_model_store}}
         ),
-        verbose=verbose,
     )
 
     config_results = []
