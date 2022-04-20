@@ -119,7 +119,7 @@ class ExportPYT2ONNX(Command):
             torch.onnx.export(
                 model,
                 args=dummy_input,
-                f=exported_model_path,
+                f=exported_model_path.as_posix(),
                 verbose=False,
                 opset_version=opset,
                 input_names=list(input_metadata.keys()),
