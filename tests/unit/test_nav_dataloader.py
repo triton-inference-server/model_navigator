@@ -18,7 +18,7 @@ import numpy as np
 import pytest
 
 from model_navigator.converter.dataloader import NavPackageDataloader
-from model_navigator.utils.nav_package import NavPackage
+from model_navigator.utils.nav_package import NavPackageDirectory
 
 
 @pytest.fixture
@@ -33,7 +33,7 @@ def nav_package():
                     np.savez(
                         f, input__0=np.arange(i * 4, dtype=np.int32), input__1=np.random.random((2 * i + 1, 2 * i + 5))
                     )
-        yield NavPackage(path)
+        yield NavPackageDirectory(path)
 
 
 def test_batch_dim(nav_package):

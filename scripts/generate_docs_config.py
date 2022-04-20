@@ -49,15 +49,16 @@ CATALOG = [
     DocCmdsEntry(pathlib.Path("docs/select.md"), [select_cmd]),
 ]
 
-TYPE_MAPPING = {
-    "text": "str",
-}
+TYPE_MAPPING = {"text": "str", "Path": "path", "file": "path", "directory": "path"}
 
 
 def _get_type(option):
     is_list = isinstance(option, OptionNargs)
 
-    type_name = _get_type_name(option)
+    try:
+        type_name = _get_type_name(option.callback.__annotations__["return"].__name__)
+    except (AttributeError, KeyError):
+        type_name = _get_type_name(option.type.name)
 
     if hasattr(option.type, "func") and isinstance(option.type.func, (Enum, EnumMeta)):
         type_str = f"choice({', '.join([str(item.value) for item in option.type.func])})"
@@ -67,16 +68,10 @@ def _get_type(option):
 
     if is_list:
         type_str = f"list[{type_str}]"
-
     return type_str
 
 
-def _get_type_name(option):
-    try:
-        type_name = {"Path": "path", "file": "path", "directory": "path"}[option.type.name]
-    except KeyError:
-        type_name = option.type.name
-
+def _get_type_name(type_name):
     type_name = TYPE_MAPPING.get(type_name, type_name)
 
     return type_name

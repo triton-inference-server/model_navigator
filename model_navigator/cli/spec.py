@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import pathlib
+import shutil
 from typing import Dict, Tuple
 
 import click
@@ -21,11 +23,48 @@ from model_navigator.model import Format
 from model_navigator.tensor import TensorSpec
 from model_navigator.triton import DeviceKind
 from model_navigator.utils.cli import CliSpec
+from model_navigator.utils.workspace import Workspace
+
+
+def _parse_model_path(ctx, param, value) -> pathlib.Path:
+    try:
+        return pathlib.Path(value)
+    except Exception:
+        pass
+
+    package, relpath = value
+    try:
+        return package.vfs_path_to_member(relpath)
+    except NotImplementedError:
+        pass
+
+    # the package does not make the model accessible in the filesystem,
+    # so copy the model to the workspace.
+    # We need to do this, because the return value should be a path,
+    # otherwise we would get type errors due to Click and dataclass mechanics.
+    # The only directory that is available to docker subprocesses and
+    # can be assumed to have sufficient space is the workspace directory,
+    # so use it. We have to be careful to make sure that the workspace
+    # is not cleaned up elsewhere, before the actual processing starts
+    workspace = Workspace(ctx.params["workspace_path"])
+    dstpath = workspace.path / ".input_data" / "input_model" / relpath
+    if dstpath.exists():
+        # when launched inside docker by convert_model, the copy should be already there
+        return dstpath
+
+    dstpath.parent.mkdir(parents=True, exist_ok=True)
+    with dstpath.open("wb") as dst, package.open(relpath) as src:
+        shutil.copyfileobj(src, dst)
+    return dstpath
 
 
 class ModelConfigCli:
     model_name = CliSpec(help="Name of the model.", param_decls=["-n", "--model-name"])
-    model_path = CliSpec(help="Path to the model file.", param_decls=["-p", "--model-path"])
+    model_path = CliSpec(
+        help="Path to the model file.",
+        param_decls=["-p", "--model-path"],
+        parse_and_verify_callback=_parse_model_path,
+    )
     model_format = CliSpec(
         help="Format of the model. Should be provided in case it is not possible to obtain format from model filename."
     )

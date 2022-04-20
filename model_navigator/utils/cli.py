@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import dataclasses
+import functools
 import logging
 from dataclasses import MISSING, dataclass, fields
 from enum import Enum
@@ -195,6 +196,7 @@ def is_namedtuple(type_):
 
 
 def _parse_and_verify_callback_wrapper(parse_and_verify_callback: Optional[Callable] = None):
+    @functools.wraps(parse_and_verify_callback)
     def _wrapper(ctx, param, value):
         if value is not None and parse_and_verify_callback is not None:
             # if scalar parameter and callback is provided - just pass it to
@@ -217,6 +219,7 @@ def _parse_and_verify_callback_wrapper(parse_and_verify_callback: Optional[Calla
 def _serialize_default_callback_wrapper(
     serialize_default_callback: Optional[Callable] = None, param_multiple: bool = False
 ):
+    @functools.wraps(serialize_default_callback)
     def _wrapper(param_name, value):
         if value is not None and serialize_default_callback is not None:
             if not param_multiple:
@@ -391,7 +394,7 @@ def common_options(f):
             return
 
         package_path = Path(value)
-        package = nav_package.NavPackage(package_path)
+        package = nav_package.from_path(package_path)
         with package.open("status.yaml") as f:
             status = yaml.load(f, Loader=yaml.SafeLoader)
 
@@ -399,13 +402,14 @@ def common_options(f):
 
         model = nav_package.select_input_format(status["model_status"])
         LOGGER.info("Selected model %s as input", model)
-        config_path = package_path / Path(model["path"]).parent / "config.yaml"
+        config_path = Path(model["path"]).parent / "config.yaml"
 
-        with YamlConfigFile(config_path=config_path) as config_file:
-            model_path = package_path / config_file.config_dict["model_path"]
-            ctx.default_map.update(config_file.config_dict)
+        with package.open(config_path) as config_file:
+            config_dict = yaml.safe_load(config_file)
+            model_path = config_dict["model_path"]
+            ctx.default_map.update(config_dict)
             # we need to fix the relative path
-            ctx.default_map.update({"model_path": model_path.as_posix()})
+            ctx.default_map.update({"model_path": (package, model_path)})
 
         return package
 
@@ -414,7 +418,7 @@ def common_options(f):
         # as callbacks read config files into ctx.default_map
         click.argument(
             "package",
-            type=click.Path(dir_okay=True, file_okay=False, exists=True, resolve_path=True),
+            type=click.Path(dir_okay=True, file_okay=True, exists=True, resolve_path=True),
             required=False,
             callback=_load_config_from_nav_package,
         ),
