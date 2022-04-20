@@ -51,19 +51,23 @@ $ pip install --extra-index-url https://pypi.ngc.nvidia.com git+https://github.c
 ## Export model
 This step exports model to all available formats and creates `.nav` package with checkpoints and model meta data.
 
-```shell
-$ python
+```python
+import model_navigator as nav
+import torch
 
-> import model_navigator as nav
-> device = "cuda" if torch.cuda.is_available() else "cpu"
-> dataloader = [torch.full((3, 5), 1.0, device=device) for _ in range(10)]
-> model = torch.nn.Linear(5, 7).to(device).eval()
-> pkg_desc = nav.torch.export(model=model, dataloader=dataloader, model_name="my_model")
-> pkg_desc.save("my_model.nav")
+model = torch.nn.Linear(5, 7).eval()
+dataloader = [torch.full((3, 5), 1.0) for _ in range(10)]
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
-$ copy my_model.nav deployment-environment
-
+pkg_desc = nav.torch.export(
+    model=model,
+    dataloader=dataloader,
+    model_name="my_model",
+    target_device=device,
+)
+pkg_desc.save("my_model.nav")
 ```
+The `.nav` package can then be copied to the deployment environment.
 
 ## Install the Triton Model Navigator in deployment environment
 

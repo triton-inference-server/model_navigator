@@ -13,13 +13,14 @@
 # limitations under the License.
 
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Dict, Mapping, Optional, Tuple
 
 from model_navigator.cli.convert_model import ConversionSetConfig
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.common import Format
 from model_navigator.framework_api.utils import Extension, Framework, format_to_relative_model_path, get_package_path
+from model_navigator.model import Format as TritonFormat
 from model_navigator.model import ModelConfig, ModelSignatureConfig
 from model_navigator.tensor import TensorSpec
 from model_navigator.utils.config import YamlConfigFile
@@ -39,20 +40,29 @@ def extension2format(extension: str):
 
 
 TRITON_SUPPORTED_FORMATS_PYT = [
-    Format.ONNX,
-    Format.TENSORRT,
-    Format.TORCHSCRIPT_SCRIPT,
-    Format.TORCHSCRIPT_TRACE,
-    Format.TORCH_TRT_SCRIPT,
-    Format.TORCH_TRT_TRACE,
+    TritonFormat.ONNX,
+    TritonFormat.TENSORRT,
+    TritonFormat.TORCHSCRIPT,
+    TritonFormat.TORCH_TRT,
 ]
 
 TRITON_SUPPORTED_FORMATS_TF = [
-    Format.TF_TRT,
-    Format.TF_SAVEDMODEL,
-    Format.ONNX,
-    Format.TENSORRT,
+    TritonFormat.TF_TRT,
+    TritonFormat.TF_SAVEDMODEL,
+    TritonFormat.ONNX,
+    TritonFormat.TENSORRT,
 ]
+
+TRITON_FORMATS_MAPPING: Mapping[Format, TritonFormat] = {
+    Format.ONNX: TritonFormat.ONNX,
+    Format.TENSORRT: TritonFormat.TENSORRT,
+    Format.TORCHSCRIPT_SCRIPT: TritonFormat.TORCHSCRIPT,
+    Format.TORCHSCRIPT_TRACE: TritonFormat.TORCHSCRIPT,
+    Format.TORCH_TRT_SCRIPT: TritonFormat.TORCH_TRT,
+    Format.TORCH_TRT_TRACE: TritonFormat.TORCH_TRT,
+    Format.TF_TRT: TritonFormat.TF_TRT,
+    Format.TF_SAVEDMODEL: TritonFormat.TF_SAVEDMODEL,
+}
 
 
 class ConfigCli(Command):
@@ -91,7 +101,7 @@ class ConfigCli(Command):
             src_model_config = ModelConfig(
                 model_name=model_name,
                 model_path=model_path,
-                model_format=self.target_format,
+                model_format=TRITON_FORMATS_MAPPING[self.target_format],
             )
             model_signature_config = ModelSignatureConfig(
                 inputs=input_metadata,
