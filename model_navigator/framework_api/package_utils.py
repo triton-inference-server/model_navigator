@@ -30,7 +30,7 @@ try:
         _TF_AVAILABLE = False
     else:
         _TF_AVAILABLE = True
-except ModuleNotFoundError:
+except (ModuleNotFoundError, AttributeError):
     _TF_AVAILABLE = False
 
 try:
