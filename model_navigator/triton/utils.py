@@ -14,7 +14,7 @@
 import logging
 from typing import Tuple
 
-from model_navigator.exceptions import ModelNavigatorDeployerException
+from model_navigator.exceptions import BadParameterModelNavigatorDeployerException, ModelNavigatorDeployerException
 from model_navigator.model import ModelSignatureConfig
 
 LOGGER = logging.getLogger(__name__)
@@ -68,6 +68,9 @@ def rewrite_signature_to_model_config(model_config, signature: ModelSignatureCon
             "data_type": getattr(grpc_client.model_config_pb2, dtype),
         }
 
+        if spec_.optional:
+            item["optional"] = True
+
         if len(spec_.shape) <= 1:
             item["reshape"] = {"shape": []}
 
@@ -78,7 +81,13 @@ def rewrite_signature_to_model_config(model_config, signature: ModelSignatureCon
         model_config["input"] = inputs
 
     outputs = [_rewrite_io_spec(spec) for _, spec in signature.outputs.items()]
-    if inputs:
+    if outputs:
+        optional_outputs = [o for o in outputs if o.get("optional")]
+        if optional_outputs:
+            raise BadParameterModelNavigatorDeployerException(
+                f"Optional flag for outputs is not supported. "
+                f"Outputs marked as optional: {', '.join([o['name'] for o in optional_outputs])}."
+            )
         model_config["output"] = outputs
 
 

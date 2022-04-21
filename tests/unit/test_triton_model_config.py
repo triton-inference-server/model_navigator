@@ -36,7 +36,7 @@ CASE_TORCHSCRIPT_SIMPLE_IMAGE_MODEL_WITH_STATIC_AXES = (
     "model.pt",
     ModelSignatureConfig(
         inputs={"i__0": TensorSpec("i__0", shape=(-1, 3, 224, 224), dtype=np.dtype("float16"))},
-        outputs={"o__1": TensorSpec("o__1", shape=(-1, 1000), dtype=np.dtype("float16"))},
+        outputs={"o__1": TensorSpec("o__1", shape=(-1, 1000), dtype=np.dtype("int8"))},
     ),
 )
 
@@ -45,7 +45,7 @@ CASE_TORCHSCRIPT_SIMPLE_IMAGE_MODEL_WITH_DYNAMIC_AXES = (
     "model.pt",
     ModelSignatureConfig(
         inputs={"i__0": TensorSpec("i__0", shape=(-1, 3, -1, -1), dtype=np.dtype("float16"))},
-        outputs={"o__1": TensorSpec("o__1", shape=(-1, 1000), dtype=np.dtype("float16"))},
+        outputs={"o__1": TensorSpec("o__1", shape=(-1, 1000), dtype=np.dtype("float32"))},
     ),
 )
 
@@ -54,7 +54,7 @@ CASE_TENSORRT_PLAN_SIMPLE_IMAGE_MODEL_WITH_STATIC_AXES = (
     "model.plan",
     ModelSignatureConfig(
         inputs={"i__0": TensorSpec("i__0", shape=(-1, 3, 224, 224), dtype=np.dtype("float16"))},
-        outputs={"o__1": TensorSpec("o__1", shape=(-1, 1000), dtype=np.dtype("float16"))},
+        outputs={"o__1": TensorSpec("o__1", shape=(-1, 1000), dtype=np.dtype("int16"))},
     ),
 )
 
@@ -63,7 +63,25 @@ CASE_TENSORRT_PLAN_IMAGE_MODEL_WITH_DYNAMIC_AXES = (
     "model.plan",
     ModelSignatureConfig(
         inputs={"i__0": TensorSpec("i__0", shape=(-1, 3, -1, -1), dtype=np.dtype("float16"))},
+        outputs={"o__1": TensorSpec("o__1", shape=(-1, 1000), dtype=np.dtype("uint32"))},
+    ),
+)
+
+CASE_TENSORRT_PLAN_IMAGE_MODEL_WITH_DYNAMIC_AXES_AND_OPTIONAL_INPUT = (
+    128,
+    "model.plan",
+    ModelSignatureConfig(
+        inputs={"i__0": TensorSpec("i__0", shape=(-1, 3, -1, -1), dtype=np.dtype("bool"), optional=True)},
         outputs={"o__1": TensorSpec("o__1", shape=(-1, 1000), dtype=np.dtype("float16"))},
+    ),
+)
+
+CASE_TENSORRT_PLAN_IMAGE_MODEL_WITH_JUST_BATCH_AXIS = (
+    128,
+    "model.plan",
+    ModelSignatureConfig(
+        inputs={"i__0": TensorSpec("i__0", shape=(-1,), dtype=np.dtype("float64"))},
+        outputs={"o__1": TensorSpec("o__1", shape=(-1,), dtype=np.dtype("float16"))},
     ),
 )
 
@@ -103,6 +121,7 @@ def test_model_config_parsing_signature_for_torchscript(monkeypatch, max_batch_s
         initial_model_config_generator.save(config_path)
 
         parsed_model_config_generator = TritonModelConfigGenerator.parse_triton_config_pbtxt(config_path)
+        assert src_model.signature is not None
         assert parsed_model_config_generator.model.signature == src_model.signature
         assert parsed_model_config_generator.optimization_config == optimization_config
         assert parsed_model_config_generator.dynamic_batching_config == dynamic_batching_config
@@ -111,7 +130,12 @@ def test_model_config_parsing_signature_for_torchscript(monkeypatch, max_batch_s
 
 @pytest.mark.parametrize(
     "max_batch_size,model_filename,signature",
-    [CASE_TENSORRT_PLAN_SIMPLE_IMAGE_MODEL_WITH_STATIC_AXES, CASE_TENSORRT_PLAN_IMAGE_MODEL_WITH_DYNAMIC_AXES],
+    [
+        CASE_TENSORRT_PLAN_SIMPLE_IMAGE_MODEL_WITH_STATIC_AXES,
+        CASE_TENSORRT_PLAN_IMAGE_MODEL_WITH_DYNAMIC_AXES,
+        CASE_TENSORRT_PLAN_IMAGE_MODEL_WITH_DYNAMIC_AXES_AND_OPTIONAL_INPUT,
+        CASE_TENSORRT_PLAN_IMAGE_MODEL_WITH_JUST_BATCH_AXIS,
+    ],
 )
 def test_model_config_parsing_signature_for_tensorrt_plan(monkeypatch, max_batch_size, model_filename, signature):
     with TemporaryDirectory() as temp_dir:
@@ -144,6 +168,7 @@ def test_model_config_parsing_signature_for_tensorrt_plan(monkeypatch, max_batch
         initial_model_config_generator.save(config_path)
 
         parsed_model_config_generator = TritonModelConfigGenerator.parse_triton_config_pbtxt(config_path)
+        assert src_model.signature is not None
         assert parsed_model_config_generator.model.signature == src_model.signature
         assert parsed_model_config_generator.optimization_config == optimization_config
         assert parsed_model_config_generator.dynamic_batching_config == dynamic_batching_config
@@ -153,7 +178,12 @@ def test_model_config_parsing_signature_for_tensorrt_plan(monkeypatch, max_batch
 
 @pytest.mark.parametrize(
     "max_batch_size,model_filename,signature",
-    [CASE_TENSORRT_PLAN_SIMPLE_IMAGE_MODEL_WITH_STATIC_AXES, CASE_TENSORRT_PLAN_IMAGE_MODEL_WITH_DYNAMIC_AXES],
+    [
+        CASE_TENSORRT_PLAN_SIMPLE_IMAGE_MODEL_WITH_STATIC_AXES,
+        CASE_TENSORRT_PLAN_IMAGE_MODEL_WITH_DYNAMIC_AXES,
+        CASE_TENSORRT_PLAN_IMAGE_MODEL_WITH_DYNAMIC_AXES_AND_OPTIONAL_INPUT,
+        CASE_TENSORRT_PLAN_IMAGE_MODEL_WITH_JUST_BATCH_AXIS,
+    ],
 )
 def test_model_config_parsing_signature_with_static_batching(monkeypatch, max_batch_size, model_filename, signature):
     with TemporaryDirectory() as temp_dir:
@@ -187,6 +217,7 @@ def test_model_config_parsing_signature_with_static_batching(monkeypatch, max_ba
 
         parsed_model_config_generator = TritonModelConfigGenerator.parse_triton_config_pbtxt(config_path)
         assert parsed_model_config_generator.batching_config == batching_config
+        assert src_model.signature is not None
         assert parsed_model_config_generator.model.signature == src_model.signature
         assert parsed_model_config_generator.optimization_config == optimization_config
         assert parsed_model_config_generator.dynamic_batching_config == dynamic_batching_config
@@ -195,7 +226,12 @@ def test_model_config_parsing_signature_with_static_batching(monkeypatch, max_ba
 
 @pytest.mark.parametrize(
     "max_batch_size,model_filename,signature",
-    [CASE_TENSORRT_PLAN_SIMPLE_IMAGE_MODEL_WITH_STATIC_AXES, CASE_TENSORRT_PLAN_IMAGE_MODEL_WITH_DYNAMIC_AXES],
+    [
+        CASE_TENSORRT_PLAN_SIMPLE_IMAGE_MODEL_WITH_STATIC_AXES,
+        CASE_TENSORRT_PLAN_IMAGE_MODEL_WITH_DYNAMIC_AXES,
+        CASE_TENSORRT_PLAN_IMAGE_MODEL_WITH_DYNAMIC_AXES_AND_OPTIONAL_INPUT,
+        CASE_TENSORRT_PLAN_IMAGE_MODEL_WITH_JUST_BATCH_AXIS,
+    ],
 )
 def test_model_config_parsing_signature_with_disabled_batching(monkeypatch, max_batch_size, model_filename, signature):
     with TemporaryDirectory() as temp_dir:
@@ -232,6 +268,7 @@ def test_model_config_parsing_signature_with_disabled_batching(monkeypatch, max_
         batching_config.max_batch_size = 0
 
         assert parsed_model_config_generator.batching_config == batching_config
+        assert src_model.signature is not None
         assert parsed_model_config_generator.model.signature == src_model.signature
         assert parsed_model_config_generator.optimization_config == optimization_config
         assert parsed_model_config_generator.dynamic_batching_config == dynamic_batching_config
@@ -240,7 +277,12 @@ def test_model_config_parsing_signature_with_disabled_batching(monkeypatch, max_
 
 @pytest.mark.parametrize(
     "max_batch_size,model_filename,signature",
-    [CASE_TENSORRT_PLAN_SIMPLE_IMAGE_MODEL_WITH_STATIC_AXES, CASE_TENSORRT_PLAN_IMAGE_MODEL_WITH_DYNAMIC_AXES],
+    [
+        CASE_TENSORRT_PLAN_SIMPLE_IMAGE_MODEL_WITH_STATIC_AXES,
+        CASE_TENSORRT_PLAN_IMAGE_MODEL_WITH_DYNAMIC_AXES,
+        CASE_TENSORRT_PLAN_IMAGE_MODEL_WITH_DYNAMIC_AXES_AND_OPTIONAL_INPUT,
+        CASE_TENSORRT_PLAN_IMAGE_MODEL_WITH_JUST_BATCH_AXIS,
+    ],
 )
 def test_model_config_parsing_signature_with_dynamic_batching(monkeypatch, max_batch_size, model_filename, signature):
     with TemporaryDirectory() as temp_dir:
@@ -274,6 +316,7 @@ def test_model_config_parsing_signature_with_dynamic_batching(monkeypatch, max_b
         parsed_model_config_generator = TritonModelConfigGenerator.parse_triton_config_pbtxt(config_path)
 
         assert parsed_model_config_generator.batching_config == batching_config
+        assert src_model.signature is not None
         assert parsed_model_config_generator.model.signature == src_model.signature
         assert parsed_model_config_generator.optimization_config == optimization_config
         assert parsed_model_config_generator.dynamic_batching_config == dynamic_batching_config
@@ -282,7 +325,12 @@ def test_model_config_parsing_signature_with_dynamic_batching(monkeypatch, max_b
 
 @pytest.mark.parametrize(
     "max_batch_size,model_filename,signature",
-    [CASE_TENSORRT_PLAN_SIMPLE_IMAGE_MODEL_WITH_STATIC_AXES, CASE_TENSORRT_PLAN_IMAGE_MODEL_WITH_DYNAMIC_AXES],
+    [
+        CASE_TENSORRT_PLAN_SIMPLE_IMAGE_MODEL_WITH_STATIC_AXES,
+        CASE_TENSORRT_PLAN_IMAGE_MODEL_WITH_DYNAMIC_AXES,
+        CASE_TENSORRT_PLAN_IMAGE_MODEL_WITH_DYNAMIC_AXES_AND_OPTIONAL_INPUT,
+        CASE_TENSORRT_PLAN_IMAGE_MODEL_WITH_JUST_BATCH_AXIS,
+    ],
 )
 def test_model_config_parsing_signature_with_dynamic_batching_configured(
     monkeypatch, max_batch_size, model_filename, signature
@@ -319,6 +367,7 @@ def test_model_config_parsing_signature_with_dynamic_batching_configured(
         parsed_model_config_generator = TritonModelConfigGenerator.parse_triton_config_pbtxt(config_path)
 
         assert parsed_model_config_generator.batching_config == batching_config
+        assert src_model.signature is not None
         assert parsed_model_config_generator.model.signature == src_model.signature
         assert parsed_model_config_generator.optimization_config == optimization_config
         assert parsed_model_config_generator.dynamic_batching_config == dynamic_batching_config

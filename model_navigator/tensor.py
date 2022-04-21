@@ -51,6 +51,7 @@ class TensorSpec:
     name: str
     shape: Tuple
     dtype: Optional[np.dtype] = dataclasses.field(default=None)
+    optional: Optional[bool] = False
 
     def __post_init__(self):
         def _expect_type(name, value, expected_types, optional=False):
@@ -64,6 +65,7 @@ class TensorSpec:
         _expect_type("name", self.name, str)
         _expect_type("shape", self.shape, tuple)
         _expect_type("dtype", self.dtype, np.dtype, optional=True)
+        _expect_type("optional", self.optional, bool, optional=True)
         if not all([_is_dim_correct(dim) for dim in self.shape]):
             raise TypeError(f"Shape items should be integers equal to -1 or positive numbers. Got {self.shape}")
 
@@ -87,6 +89,7 @@ class TensorSpec:
             name=tensor_metadata["name"],
             shape=tuple(int(s) for s in tensor_metadata["shape"]),
             dtype=np.dtype(client_utils.triton_to_np_dtype(tensor_metadata["datatype"])),
+            optional=bool(tensor_metadata.get("optional", False)),
         )
 
     @classmethod
@@ -104,6 +107,7 @@ class TensorSpec:
             name=name,
             shape=tuple(dim if isinstance(dim, int) else -1 for dim in metadata.shape),
             dtype=metadata.dtype,
+            optional=False,
         )
 
 

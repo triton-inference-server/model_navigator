@@ -78,8 +78,7 @@ class Model(BaseConfig):
     def _get_signature(self, adapter, signature_if_missing):
         signature = adapter.get_signature(self.path)
         if (
-            signature is not None
-            and signature.is_missing()
+            (signature is None or signature.is_missing())
             and signature_if_missing
             and not signature_if_missing.is_missing()
         ):

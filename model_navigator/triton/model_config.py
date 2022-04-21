@@ -16,6 +16,7 @@ import logging
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
+import numpy as np
 from google.protobuf import json_format, text_format  # pytype: disable=pyi-error
 
 from model_navigator.common.config import TensorRTCommonConfig
@@ -134,26 +135,26 @@ class ModelConfigParser:
         )
 
         explicit_format = None
-        model = Model(model_name, model_path, explicit_format=explicit_format)
-        # if there is no possibility to obtain signature (also from annotation file)
-        # try to load it from triton config file
-        if model.signature is not None and model.signature.is_missing():
 
-            def _rewrite_io_spec(item):
-                data_type = item["data_type"].split("_")[1]
-                np_class = client_utils.triton_to_np_dtype(data_type)
-                dummy_instance = np_class()
-                dtype = dummy_instance.dtype
-                if len(item["dims"]) == 0:
-                    shape = (-1,)
-                else:
-                    shape = (-1,) + tuple(map(lambda s: int(s), item["dims"]))
-                return TensorSpec(name=item["name"], shape=shape, dtype=dtype)
+        def _rewrite_io_spec(item):
+            data_type = item["data_type"].split("_")[1]
+            np_class = client_utils.triton_to_np_dtype(data_type)
+            dummy_instance = np_class()
+            dtype = dummy_instance.dtype if not isinstance(dummy_instance, bool) else np.dtype("bool")
+            if len(item["dims"]) == 0:
+                shape = (-1,)
+            elif "reshape" in item:
+                shape = (-1,) + tuple(map(lambda s: int(s), item["reshape"].get("shape", [])))
+            else:
+                shape = (-1,) + tuple(map(lambda s: int(s), item["dims"]))
 
-            inputs = {item["name"]: _rewrite_io_spec(item) for item in model_config_dict["input"]}
-            outputs = {item["name"]: _rewrite_io_spec(item) for item in model_config_dict["output"]}
-            signature = ModelSignatureConfig(inputs=inputs, outputs=outputs)
-            model = Model(model_name, model_path, signature_if_missing=signature, explicit_format=explicit_format)
+            optional = item.get("optional", False)
+            return TensorSpec(name=item["name"], shape=shape, dtype=dtype, optional=optional)
+
+        inputs = {item["name"]: _rewrite_io_spec(item) for item in model_config_dict.get("input", [])} or None
+        outputs = {item["name"]: _rewrite_io_spec(item) for item in model_config_dict.get("output", [])} or None
+        signature = ModelSignatureConfig(inputs=inputs, outputs=outputs)
+        model = Model(model_name, model_path, signature_if_missing=signature, explicit_format=explicit_format)
 
         return config_cls(
             model=model,

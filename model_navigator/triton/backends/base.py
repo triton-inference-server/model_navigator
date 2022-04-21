@@ -25,6 +25,7 @@ from model_navigator.triton import (
 )
 from model_navigator.triton.client import grpc_client
 from model_navigator.triton.config import Batching, TritonBatchingConfig, TritonCustomBackendParametersConfig
+from model_navigator.triton.utils import rewrite_signature_to_model_config
 from model_navigator.utils.formats import FORMAT2SUFFIX
 
 LOGGER = logging.getLogger(__name__)
@@ -81,7 +82,8 @@ class BaseBackendConfigurator:
     # pytype: enable=invalid-annotation
 
     def _extract_signature(self, model_config, model: Model):
-        pass
+        if model.signature and not model.signature.is_missing():
+            rewrite_signature_to_model_config(model_config, model.signature)
 
     def _set_backend_acceleration(
         self,
