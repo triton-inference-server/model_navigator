@@ -121,6 +121,15 @@ class ZippedNavPackage(NavPackage):
     def vfs_path_to_member(self, member_path: Union[str, pathlib.Path]):
         raise NotImplementedError()
 
+    def __getstate__(self):
+        dct = dict(self.__dict__)
+        del dct["arc"]
+        return dct
+
+    def __setstate__(self, state):
+        self.__dict__ = state
+        self.arc = zipfile.ZipFile(self.path, "r")
+
 
 def from_path(path: Union[str, pathlib.Path]):
     for cls in [ZippedNavPackage, NavPackageDirectory]:
