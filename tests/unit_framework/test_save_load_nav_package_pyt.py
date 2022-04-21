@@ -85,18 +85,16 @@ def test_pyt_save_load_no_retest():
 
         # Exported formats
         assert check_model_dir(model_dir=loaded_package_dir / "onnx", format=nav.Format.ONNX)
-        assert check_model_dir(
-            model_dir=loaded_package_dir / "torchscript-script", format=nav.Format.TORCHSCRIPT_SCRIPT
-        )
-        assert check_model_dir(model_dir=loaded_package_dir / "torchscript-trace", format=nav.Format.TORCHSCRIPT_TRACE)
+        assert check_model_dir(model_dir=loaded_package_dir / "torchscript-script", format=nav.Format.TORCHSCRIPT)
+        assert check_model_dir(model_dir=loaded_package_dir / "torchscript-trace", format=nav.Format.TORCHSCRIPT)
 
         # Converted formats
         assert check_model_dir(model_dir=loaded_package_dir / "trt-fp32", format=nav.Format.TENSORRT, only_config=True)
         assert check_model_dir(
-            model_dir=loaded_package_dir / "torch-trt-script", format=nav.Format.TORCH_TRT_SCRIPT, only_config=True
+            model_dir=loaded_package_dir / "torch-trt-script", format=nav.Format.TORCHSCRIPT, only_config=True
         )
         assert check_model_dir(
-            model_dir=loaded_package_dir / "torch-trt-trace", format=nav.Format.TORCH_TRT_TRACE, only_config=True
+            model_dir=loaded_package_dir / "torch-trt-trace", format=nav.Format.TORCHSCRIPT, only_config=True
         )
         assert check_model_dir(model_dir=loaded_package_dir / "trt-fp16", format=nav.Format.TENSORRT, only_config=True)
 
@@ -139,12 +137,10 @@ def test_pyt_save_load_retest():
 
         # Output formats
         assert check_model_dir(model_dir=loaded_package_dir / "onnx", format=nav.Format.ONNX)
-        assert check_model_dir(
-            model_dir=loaded_package_dir / "torchscript-script", format=nav.Format.TORCHSCRIPT_SCRIPT
-        )
-        assert check_model_dir(model_dir=loaded_package_dir / "torchscript-trace", format=nav.Format.TORCHSCRIPT_TRACE)
-        assert check_model_dir(model_dir=loaded_package_dir / "torch-trt-script", format=nav.Format.TORCH_TRT_SCRIPT)
-        assert check_model_dir(model_dir=loaded_package_dir / "torch-trt-trace", format=nav.Format.TORCH_TRT_TRACE)
+        assert check_model_dir(model_dir=loaded_package_dir / "torchscript-script", format=nav.Format.TORCHSCRIPT)
+        assert check_model_dir(model_dir=loaded_package_dir / "torchscript-trace", format=nav.Format.TORCHSCRIPT)
+        assert check_model_dir(model_dir=loaded_package_dir / "torch-trt-script", format=nav.Format.TORCHSCRIPT)
+        assert check_model_dir(model_dir=loaded_package_dir / "torch-trt-trace", format=nav.Format.TORCHSCRIPT)
         assert check_model_dir(model_dir=loaded_package_dir / "trt-fp16", format=nav.Format.TENSORRT)
         assert check_model_dir(model_dir=loaded_package_dir / "trt-fp32", format=nav.Format.TENSORRT)
 

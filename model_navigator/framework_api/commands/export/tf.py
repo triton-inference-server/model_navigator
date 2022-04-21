@@ -18,9 +18,9 @@ from typing import Optional, Tuple
 import tensorflow as tf  # pytype: disable=import-error
 
 from model_navigator.framework_api.commands.core import Command, CommandType
-from model_navigator.framework_api.common import Format
 from model_navigator.framework_api.exceptions import UserErrorContext
 from model_navigator.framework_api.utils import format_to_relative_model_path, get_package_path
+from model_navigator.model import Format
 
 
 class ExportTF2SavedModel(Command):

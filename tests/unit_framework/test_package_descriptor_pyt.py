@@ -26,7 +26,7 @@ from model_navigator.framework_api.commands.performance.pyt import PerformanceTo
 from model_navigator.framework_api.config import Config
 from model_navigator.framework_api.package_descriptor import PackageDescriptor
 from model_navigator.framework_api.pipelines.pipeline import Pipeline
-from model_navigator.framework_api.utils import Format, Framework, Status
+from model_navigator.framework_api.utils import Format, Framework, JitType, Status
 
 # pytype: enable=import-error
 
@@ -61,22 +61,27 @@ def test_pyt_package_descriptor():
             dataloader=dataloader,
             workdir=workdir,
             override_workdir=True,
-            target_formats=(Format.TORCHSCRIPT_SCRIPT,),
+            target_formats=(Format.TORCHSCRIPT,),
+            target_jit_type=(JitType.SCRIPT,),
             sample_count=1,
             disable_git_info=False,
         )
 
-        cmd_export = ExportPYT2TorchScript(target_format=Format.TORCHSCRIPT_SCRIPT)
+        cmd_export = ExportPYT2TorchScript(
+            target_jit_type=JitType.SCRIPT,
+        )
         cmd_export.status = Status.OK
 
         cmd_correctness = CorrectnessPYT2TorchScript(
-            target_format=Format.TORCHSCRIPT_SCRIPT,
+            target_format=Format.TORCHSCRIPT,
+            target_jit_type=JitType.SCRIPT,
         )
         cmd_correctness.status = Status.OK
         cmd_correctness.output = Tolerance(0, 0)
 
         cmd_performance = PerformanceTorchScript(
-            target_format=Format.TORCHSCRIPT_SCRIPT,
+            target_format=Format.TORCHSCRIPT,
+            target_jit_type=JitType.SCRIPT,
         )
         cmd_performance.status = Status.OK
         cmd_performance.output = Performance(0, 0, 0)
@@ -92,17 +97,17 @@ def test_pyt_package_descriptor():
         package_desc = PackageDescriptor.from_pipelines(pipelines, config)
 
         # Check model status and load model
-        assert package_desc.get_status(format=Format.TORCHSCRIPT_SCRIPT)
-        assert package_desc.get_model(format=Format.TORCHSCRIPT_SCRIPT) is not None
+        assert package_desc.get_status(format=Format.TORCHSCRIPT, jit_type=JitType.SCRIPT)
+        assert package_desc.get_model(format=Format.TORCHSCRIPT, jit_type=JitType.SCRIPT) is not None
 
         # These models should be not available:
-        assert package_desc.get_status(format=Format.TORCHSCRIPT_TRACE) is False
-        assert package_desc.get_model(format=Format.TORCHSCRIPT_TRACE) is None
+        assert package_desc.get_status(format=Format.TORCHSCRIPT, jit_type=JitType.TRACE) is False
+        assert package_desc.get_model(format=Format.TORCHSCRIPT, jit_type=JitType.TRACE) is None
 
-        for torch_trt_format in (Format.TORCH_TRT_SCRIPT, Format.TORCH_TRT_TRACE):
+        for jit_type in (JitType.SCRIPT, JitType.TRACE):
             for precision in (TensorRTPrecision.FP16, TensorRTPrecision.FP32):
-                assert package_desc.get_status(format=torch_trt_format, precision=precision) is False
-                assert package_desc.get_model(format=torch_trt_format, precision=precision) is None
+                assert package_desc.get_status(format=Format.TORCH_TRT, jit_type=jit_type, precision=precision) is False
+                assert package_desc.get_model(format=Format.TORCH_TRT, jit_type=jit_type, precision=precision) is None
 
         assert package_desc.get_status(format=Format.ONNX) is False
         assert package_desc.get_model(format=Format.ONNX) is None

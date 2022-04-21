@@ -67,7 +67,9 @@ pkg_desc = nav.torch.export(
 )
 pkg_desc.save("my_model.nav")
 ```
+
 The `.nav` package can then be copied to the deployment environment.
+
 
 ## Install the Triton Model Navigator in deployment environment
 

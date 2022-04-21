@@ -31,11 +31,11 @@ from model_navigator.framework_api.commands.load import LoadMetadata, LoadSample
 from model_navigator.framework_api.commands.performance.onnx import PerformanceONNX
 from model_navigator.framework_api.commands.performance.pyt import PerformanceTorchScript
 from model_navigator.framework_api.commands.performance.trt import PerformanceTRT
-from model_navigator.framework_api.common import Format
 from model_navigator.framework_api.config import Config
 from model_navigator.framework_api.pipelines.pipeline import Pipeline
 from model_navigator.framework_api.pipelines.pipeline_manager_base import PipelineManager
 from model_navigator.framework_api.utils import Framework, format2runtimes
+from model_navigator.model import Format
 
 
 class TorchPipelineManager(PipelineManager):
@@ -58,17 +58,24 @@ class TorchPipelineManager(PipelineManager):
             commands.extend([load_metadata, load_samples])
             preprocess_req = (load_metadata, load_samples)
 
-        for ts_format, torch_trt_format in (
-            (Format.TORCHSCRIPT_SCRIPT, Format.TORCH_TRT_SCRIPT),
-            (Format.TORCHSCRIPT_TRACE, Format.TORCH_TRT_TRACE),
-        ):
-            if ts_format in config.target_formats or torch_trt_format in config.target_formats:
-                export = ExportPYT2TorchScript(target_format=ts_format, requires=preprocess_req)
+        if Format.TORCHSCRIPT in config.target_formats or Format.TORCH_TRT in config.target_formats:
+            for target_jit_type in config.target_jit_type:
+                export = ExportPYT2TorchScript(target_jit_type=target_jit_type, requires=preprocess_req)
                 commands.append(export)
-                commands.append(CorrectnessPYT2TorchScript(target_format=ts_format, requires=(export,)))
-                commands.append(PerformanceTorchScript(target_format=ts_format, requires=(export,)))
-                commands.append(ConfigCli(target_format=ts_format, requires=(export,)))
-                ts_exports[torch_trt_format] = export
+                commands.append(
+                    CorrectnessPYT2TorchScript(
+                        target_format=Format.TORCHSCRIPT, target_jit_type=target_jit_type, requires=(export,)
+                    )
+                )
+                commands.append(
+                    PerformanceTorchScript(
+                        target_format=Format.TORCHSCRIPT, target_jit_type=target_jit_type, requires=(export,)
+                    )
+                )
+                commands.append(
+                    ConfigCli(target_format=Format.TORCHSCRIPT, target_jit_type=target_jit_type, requires=(export,))
+                )
+                ts_exports[target_jit_type] = export
         if Format.ONNX in config.target_formats or Format.TENSORRT in config.target_formats:
             onnx_export = ExportPYT2ONNX(requires=preprocess_req)
             commands.append(onnx_export)
@@ -76,15 +83,25 @@ class TorchPipelineManager(PipelineManager):
                 commands.append(CorrectnessPYT2ONNX(runtime_provider=provider, requires=(onnx_export,)))
                 commands.append(PerformanceONNX(runtime_provider=provider, requires=(onnx_export,)))
             commands.append(ConfigCli(target_format=Format.ONNX, requires=(onnx_export,)))
-        for torch_trt_format in (Format.TORCH_TRT_SCRIPT, Format.TORCH_TRT_TRACE):
-            if torch_trt_format in config.target_formats:
+        if Format.TORCH_TRT in config.target_formats:
+            for target_jit_type in config.target_jit_type:
                 convert = ConvertTorchScript2TorchTensorRT(
-                    target_format=torch_trt_format, requires=(ts_exports[torch_trt_format],)
+                    target_jit_type=target_jit_type, requires=(ts_exports[target_jit_type],)
                 )
                 commands.append(convert)
-                commands.append(CorrectnessPYT2TorchScript(target_format=torch_trt_format, requires=(convert,)))
-                commands.append(PerformanceTorchScript(target_format=torch_trt_format, requires=(convert,)))
-                commands.append(ConfigCli(target_format=torch_trt_format, requires=(convert,)))
+                commands.append(
+                    CorrectnessPYT2TorchScript(
+                        target_format=Format.TORCH_TRT, target_jit_type=target_jit_type, requires=(convert,)
+                    )
+                )
+                commands.append(
+                    PerformanceTorchScript(
+                        target_format=Format.TORCH_TRT, target_jit_type=target_jit_type, requires=(convert,)
+                    )
+                )
+                commands.append(
+                    ConfigCli(target_format=Format.TORCH_TRT, target_jit_type=target_jit_type, requires=(convert,))
+                )
         if Format.TENSORRT in config.target_formats:
             for target_precision in config.target_precisions:
                 convert = ConvertONNX2TRT(target_precision=target_precision, requires=(onnx_export,))

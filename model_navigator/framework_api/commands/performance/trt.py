@@ -24,9 +24,9 @@ from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.convert.onnx import ConvertONNX2TRT
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.performance.base import PerformanceBase
-from model_navigator.framework_api.common import Format
 from model_navigator.framework_api.runners.trt import TrtRunner
 from model_navigator.framework_api.utils import get_package_path
+from model_navigator.model import Format
 
 
 class PerformanceTRT(PerformanceBase):

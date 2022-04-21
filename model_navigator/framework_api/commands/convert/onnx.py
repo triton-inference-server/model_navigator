@@ -20,10 +20,11 @@ from polygraphy.backend.onnxrt import SessionFromOnnx
 
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.core import Command, CommandType
-from model_navigator.framework_api.common import Format, TensorMetadata
+from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.exceptions import UserError, UserErrorContext
 from model_navigator.framework_api.runners.onnx import OnnxrtRunner
 from model_navigator.framework_api.utils import Framework, format_to_relative_model_path, get_package_path
+from model_navigator.model import Format
 
 
 class ConvertONNX2TRT(Command):

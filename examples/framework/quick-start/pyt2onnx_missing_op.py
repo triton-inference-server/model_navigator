@@ -27,6 +27,6 @@ package = nav.torch.export(
     override_workdir=True,
 )
 
-exported_model = package.get_model(format=nav.Format.TORCHSCRIPT_TRACE)
+exported_model = package.get_model(format=nav.Format.TORCHSCRIPT, jit_type=nav.JitType.TRACE)
 
 results = exported_model(next(dataloader()))

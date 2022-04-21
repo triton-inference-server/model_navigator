@@ -21,9 +21,10 @@ import tensorflow  # pytype: disable=import-error
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.performance.base import PerformanceBase
-from model_navigator.framework_api.common import Format, TensorMetadata
+from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.runners.tf import TFRunner, TFTRTRunner
 from model_navigator.framework_api.utils import format_to_relative_model_path, get_package_path
+from model_navigator.model import Format
 
 
 class PerformanceSavedModel(PerformanceBase):

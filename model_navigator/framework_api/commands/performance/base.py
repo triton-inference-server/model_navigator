@@ -20,9 +20,10 @@ import numpy
 from polygraphy.backend.base import BaseRunner
 
 from model_navigator.framework_api.commands.core import Command, CommandType
-from model_navigator.framework_api.common import DataObject, Format, Sample
+from model_navigator.framework_api.common import DataObject, Sample
 from model_navigator.framework_api.exceptions import UserErrorContext
 from model_navigator.framework_api.utils import format2runtimes
+from model_navigator.model import Format
 
 
 @dataclass

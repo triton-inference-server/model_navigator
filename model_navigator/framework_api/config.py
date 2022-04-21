@@ -18,9 +18,10 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union, get_args, get_origin
 
 from model_navigator.converter.config import TensorRTPrecision
-from model_navigator.framework_api.common import DataObject, Format, SizedDataLoader, TensorMetadata
+from model_navigator.framework_api.common import DataObject, SizedDataLoader, TensorMetadata
 from model_navigator.framework_api.logger import LOGGER
-from model_navigator.framework_api.utils import Framework, pad_string
+from model_navigator.framework_api.utils import Framework, JitType, pad_string
+from model_navigator.model import Format
 
 
 @dataclass
@@ -54,6 +55,7 @@ class Config(DataObject):
     minimum_segment_size: Optional[int] = None
 
     # PyTorch
+    target_jit_type: Optional[Tuple[JitType, ...]] = None
     forward_kw_names: Optional[Tuple[str, ...]] = None
     target_device: str = "cpu"
 

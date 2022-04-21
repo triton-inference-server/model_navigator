@@ -21,7 +21,7 @@ from tensorflow.python.compiler.tensorrt import trt_convert as trtc  # pytype: d
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.export.tf import ExportTF2SavedModel
-from model_navigator.framework_api.common import Format, Sample, TensorMetadata
+from model_navigator.framework_api.common import Sample, TensorMetadata
 from model_navigator.framework_api.exceptions import UserErrorContext
 from model_navigator.framework_api.utils import (
     ArtifactType,
@@ -29,6 +29,7 @@ from model_navigator.framework_api.utils import (
     get_package_path,
     sample_to_tuple,
 )
+from model_navigator.model import Format
 
 
 class ConvertSavedModel2ONNX(Command):

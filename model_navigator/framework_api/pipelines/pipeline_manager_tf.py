@@ -31,10 +31,10 @@ from model_navigator.framework_api.commands.load import LoadMetadata, LoadSample
 from model_navigator.framework_api.commands.performance.onnx import PerformanceONNX
 from model_navigator.framework_api.commands.performance.tf import PerformanceSavedModel
 from model_navigator.framework_api.commands.performance.trt import PerformanceTRT
-from model_navigator.framework_api.common import Format
 from model_navigator.framework_api.pipelines.pipeline import Pipeline
 from model_navigator.framework_api.pipelines.pipeline_manager_base import PipelineManager
 from model_navigator.framework_api.utils import Framework, format2runtimes
+from model_navigator.model import Format
 
 
 class TFPipelineManager(PipelineManager):

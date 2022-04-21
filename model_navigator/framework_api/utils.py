@@ -18,7 +18,8 @@ from typing import Any, List, Mapping, Optional, Tuple, Type, TypeVar
 import numpy
 
 from model_navigator.converter.config import TensorRTPrecision
-from model_navigator.framework_api.common import Format, Sample
+from model_navigator.framework_api.common import Sample
+from model_navigator.model import Format
 
 T = TypeVar("T")
 
@@ -68,12 +69,7 @@ class RuntimeProvider(str, Parameter):
 def format2runtimes(model_format: Format) -> Optional[Tuple]:
     if model_format == Format.ONNX:
         return parse_enum(get_available_onnx_providers(), RuntimeProvider)
-    elif model_format in (
-        Format.TORCHSCRIPT_SCRIPT,
-        Format.TORCHSCRIPT_TRACE,
-        Format.TORCH_TRT_SCRIPT,
-        Format.TORCH_TRT_TRACE,
-    ):
+    elif model_format in (Format.TORCHSCRIPT, Format.TORCH_TRT):
         return (RuntimeProvider.PYT,)
     elif model_format in (Format.TF_SAVEDMODEL, Format.TF_TRT):
         return (RuntimeProvider.TF,)
@@ -108,6 +104,11 @@ class Extension(Parameter):
     PT = "pt"
     SAVEDMODEL = "savedmodel"
     TRT = "plan"
+
+
+class JitType(Parameter):
+    SCRIPT = "script"
+    TRACE = "trace"
 
 
 class ArtifactType(Parameter):
@@ -153,11 +154,15 @@ def get_package_path(workdir: Path, model_name: str):
 
 
 # pytype: disable=wrong-arg-types
-def format_to_relative_model_path(format: Format, precision: TensorRTPrecision = TensorRTPrecision.FP32) -> Path:
+def format_to_relative_model_path(
+    format: Format, jit_type: JitType = JitType.SCRIPT, precision: TensorRTPrecision = TensorRTPrecision.FP32
+) -> Path:
     if format == Format.ONNX:
         return Path(f"{format.value}") / "model.onnx"
-    if format in (Format.TORCHSCRIPT_SCRIPT, Format.TORCHSCRIPT_TRACE, Format.TORCH_TRT_SCRIPT, Format.TORCH_TRT_TRACE):
-        return Path(f"{format.value}") / "model.pt"
+    if format == Format.TORCHSCRIPT:
+        return Path(f"{format.value}-{jit_type.value}") / "model.pt"
+    if format == Format.TORCH_TRT:
+        return Path(f"{format.value}-{jit_type.value}") / "model.pt"
     if format == Format.TF_SAVEDMODEL:
         return Path(format.value) / "model.savedmodel"
     if format == Format.TF_TRT:
@@ -197,7 +202,7 @@ def parse_enum(value: Any, enum_type: Type[T]) -> Tuple[T, ...]:
 
 def get_framework_export_formats(framework: Framework):
     return {
-        Framework.PYT: {Format.TORCHSCRIPT_SCRIPT, Format.TORCHSCRIPT_TRACE, Format.ONNX},
+        Framework.PYT: {Format.TORCHSCRIPT, Format.ONNX},
         Framework.TF2: {
             Format.TF_SAVEDMODEL,
         },
@@ -209,8 +214,7 @@ def get_base_format(format: Format, framework: Framework):
     return {
         Framework.PYT: {
             Format.TENSORRT: Format.ONNX,
-            Format.TORCH_TRT_SCRIPT: Format.TORCHSCRIPT_SCRIPT,
-            Format.TORCH_TRT_TRACE: Format.TORCHSCRIPT_TRACE,
+            Format.TORCH_TRT: Format.TORCHSCRIPT,
         },
         Framework.TF2: {
             Format.ONNX: Format.TF_SAVEDMODEL,

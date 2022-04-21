@@ -13,6 +13,7 @@
 # limitations under the License.
 
 
+import itertools
 import os
 import shutil
 import uuid
@@ -28,7 +29,7 @@ from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.correctness.base import TolerancePerOutputName
 from model_navigator.framework_api.commands.performance.base import Performance
-from model_navigator.framework_api.common import DataObject, Format, TensorMetadata
+from model_navigator.framework_api.common import DataObject, TensorMetadata
 from model_navigator.framework_api.config import Config
 from model_navigator.framework_api.exceptions import UserError
 from model_navigator.framework_api.logger import LOGGER
@@ -36,6 +37,7 @@ from model_navigator.framework_api.pipelines.pipeline import Pipeline
 from model_navigator.framework_api.utils import (
     Extension,
     Framework,
+    JitType,
     RuntimeProvider,
     Status,
     format2runtimes,
@@ -46,6 +48,7 @@ from model_navigator.framework_api.utils import (
     get_framework_export_formats,
     get_package_path,
 )
+from model_navigator.model import Format
 from model_navigator.utils.environment import get_env, get_git_info
 
 NAV_PACKAGE_FORMAT_VERSION = "0.1.0"
@@ -77,6 +80,7 @@ class ModelStatus(DataObject):
     format: Format
     path: Path
     runtime_results: List[RuntimeResults]
+    torch_jit: Optional[JitType] = None
     precision: Optional[TensorRTPrecision] = None
 
     @classmethod
@@ -85,6 +89,7 @@ class ModelStatus(DataObject):
             format=Format(dict["format"]),
             path=Path(dict["path"]),
             runtime_results=[RuntimeResults.from_dict(runtime_results) for runtime_results in dict["runtime_results"]],
+            torch_jit=JitType(dict["torch_jit"]) if "torch_jit" in dict else None,
             precision=TensorRTPrecision(dict["precision"]) if "precision" in dict else None,
         )
 
@@ -132,12 +137,14 @@ class PackageDescriptor:
                         correctness_results = cls._get_correctness_command_for_model(
                             commands=pipeline.commands,
                             format=command.target_format,
+                            jit_type=command.target_jit_type,
                             precision=command.target_precision,
                             runtime_provider=runtime_provider,
                         )
                         performance_results = cls._get_performance_command_for_model(
                             commands=pipeline.commands,
                             format=command.target_format,
+                            jit_type=command.target_jit_type,
                             precision=command.target_precision,
                             runtime_provider=runtime_provider,
                         )
@@ -176,6 +183,7 @@ class PackageDescriptor:
                         ModelStatus(
                             format=command.target_format,
                             path=command.output,
+                            torch_jit=command.target_jit_type,
                             precision=command.target_precision,
                             runtime_results=runtime_results,
                         )
@@ -215,7 +223,7 @@ class PackageDescriptor:
 
         LOGGER.warning(
             "Initially models are not verified. Validate exported models and use "
-            "PackageDescriptor.set_verified(format, runtime, precision) method to set models as verified."
+            "PackageDescriptor.set_verified(format, runtime, jit_type, precision) method to set models as verified."
         )
 
         return pkg_desc
@@ -238,6 +246,7 @@ class PackageDescriptor:
     def _get_correctness_command_for_model(
         commands: List[Command],
         format: Format,
+        jit_type: Optional[JitType] = None,
         precision: Optional[TensorRTPrecision] = None,
         runtime_provider: Optional[RuntimeProvider] = None,
     ):
@@ -245,6 +254,7 @@ class PackageDescriptor:
             if (
                 command.command_type == CommandType.CORRECTNESS
                 and command.target_format == format
+                and command.target_jit_type == jit_type
                 and command.target_precision == precision
                 and command.runtime_provider == runtime_provider
             ):
@@ -255,6 +265,7 @@ class PackageDescriptor:
     def _get_performance_command_for_model(
         commands: List[Command],
         format: Format,
+        jit_type: Optional[JitType] = None,
         precision: Optional[TensorRTPrecision] = None,
         runtime_provider: Optional[RuntimeProvider] = None,
     ):
@@ -262,6 +273,7 @@ class PackageDescriptor:
             if (
                 command.command_type == CommandType.PERFORMANCE
                 and command.target_format == format
+                and command.target_jit_type == jit_type
                 and command.target_precision == precision
                 and command.runtime_provider == runtime_provider
             ):
@@ -309,12 +321,7 @@ class PackageDescriptor:
             from model_navigator.framework_api.runners.trt import TrtRunner
 
             return TrtRunner(EngineFromBytes(BytesFromPath(model_path)))
-        elif format in (
-            Format.TORCHSCRIPT_SCRIPT,
-            Format.TORCHSCRIPT_TRACE,
-            Format.TORCH_TRT_SCRIPT,
-            Format.TORCH_TRT_TRACE,
-        ):
+        elif format in (Format.TORCHSCRIPT, Format.TORCH_TRT):
             import torch  # pytype: disable=import-error
 
             return torch.jit.load(model_path)
@@ -331,12 +338,14 @@ class PackageDescriptor:
         self,
         format: Format,
         runtime: RuntimeProvider,
+        jit_type: Optional[JitType] = None,
         precision: Optional[TensorRTPrecision] = None,
     ):
         for model_status in self.navigator_status.model_status:
             for runtime_results in model_status.runtime_results:
                 if (
                     model_status.format == format
+                    and model_status.torch_jit == jit_type
                     and model_status.precision == precision
                     and runtime_results.runtime == runtime
                 ):
@@ -346,13 +355,15 @@ class PackageDescriptor:
         self,
         format: Format,
         runtime: RuntimeProvider,
+        jit_type: Optional[JitType] = None,
         precision: Optional[TensorRTPrecision] = None,
     ):
-        """Set exported model verified for given format and precision"""
+        """Set exported model verified for given format, jit_type and precision"""
         for model_status in self.navigator_status.model_status:
             for runtime_results in model_status.runtime_results:
                 if (
                     model_status.format == format
+                    and model_status.torch_jit == jit_type
                     and model_status.precision == precision
                     and runtime_results.runtime == runtime
                 ):
@@ -366,16 +377,21 @@ class PackageDescriptor:
         self,
         format: Format,
         runtime_provider: Optional[RuntimeProvider] = None,
+        jit_type: Optional[JitType] = None,
         precision: Optional[TensorRTPrecision] = None,
     ) -> bool:
-        """Return status (True or False) of export operation for particular format,
+        """Return status (True or False) of export operation for particular format, jit_type,
         precision and runtime_provider."""
         if runtime_provider is None:
             runtime_provider = format2runtimes(format)[0]
 
         status = False
         for model_status in self.navigator_status.model_status:
-            if model_status.format == format and model_status.precision == precision:
+            if (
+                model_status.format == format
+                and model_status.torch_jit == jit_type
+                and model_status.precision == precision
+            ):
                 for runtime_results in model_status.runtime_results:
                     if runtime_provider == runtime_results.runtime and runtime_results.status == Status.OK:
                         status = True
@@ -386,6 +402,8 @@ class PackageDescriptor:
         results = {}
         for model_status in self.navigator_status.model_status:
             key = model_status.format.value
+            if model_status.torch_jit:
+                key += f"-{model_status.torch_jit.value}"
             if model_status.precision:
                 key += f"-{model_status.precision.value}"
             results[key] = {}
@@ -399,6 +417,8 @@ class PackageDescriptor:
         for model_status in self.navigator_status.model_status:
             for runtime_results in model_status.runtime_results:
                 key = model_status.format.value
+                if model_status.torch_jit:
+                    key += f"-{model_status.torch_jit.value}"
                 if model_status.precision:
                     key += f"-{model_status.precision.value}"
                 key += f"-{runtime_results.runtime.value}"
@@ -408,18 +428,19 @@ class PackageDescriptor:
     def get_model(
         self,
         format: Format,
+        jit_type: Optional[JitType] = None,
         precision: Optional[TensorRTPrecision] = None,
         runtime: Optional[RuntimeProvider] = None,
     ):
         """
-        Load exported model for given format and precision and return model object
+        Load exported model for given format, jit_type and precision and return model object
 
         :return
             model object for TensorFlow and PyTorch
             Runner (Polygraphy) for ONNX and TRT
         """
         model_path = get_package_path(workdir=self.workdir, model_name=self.model_name) / format_to_relative_model_path(
-            format=format, precision=precision
+            format=format, jit_type=jit_type, precision=precision
         )
         if model_path.exists():
             return self._load_model(model_path=model_path, format=format, runtime=runtime)
@@ -429,6 +450,10 @@ class PackageDescriptor:
     @property
     def _target_formats(self):
         return tuple(Format(target_format) for target_format in self.navigator_status.export_config["target_formats"])
+
+    @property
+    def _target_jit_type(self):
+        return tuple(JitType(jit_type) for jit_type in self.navigator_status.export_config.get("target_jit_type", []))
 
     @property
     def _target_precisions(self):
@@ -447,12 +472,17 @@ class PackageDescriptor:
     def _get_model_status(
         self,
         format: Format,
+        jit_type: Optional[JitType] = None,
         precision: Optional[TensorRTPrecision] = None,
     ):
         for model_status in self.navigator_status.model_status:
-            if model_status.format == format and (model_status.precision in (None, precision)):
+            if (
+                model_status.format == format
+                and (model_status.torch_jit in (None, jit_type))
+                and (model_status.precision in (None, precision))
+            ):
                 return model_status
-        raise RuntimeError(f"Model status not found for {format=}, {precision=}.")
+        raise RuntimeError(f"Model status not found for {format=}, {jit_type=}, {precision=}.")
 
     def _make_zip(self, zip_path, package_path, dirs_to_save, base_models_paths) -> None:
 
@@ -477,17 +507,20 @@ class PackageDescriptor:
         base_formats = self._get_base_formats(self._target_formats)
         base_models_paths, converted_models_paths = set(), set()
         for format in chain(self._target_formats, base_formats):
+            jit_iter = [None] if format not in (Format.TORCHSCRIPT, Format.TORCH_TRT) else self._target_jit_type
             prec_iter = [None] if format not in (Format.TENSORRT, Format.TF_TRT) else self._target_precisions
-            for prec in prec_iter:
-                model_path = package_path / format_to_relative_model_path(format, prec)
+            for jit_type, prec in itertools.product(jit_iter, prec_iter):
+                model_path = package_path / format_to_relative_model_path(format, jit_type, prec)
                 if not model_path.exists():
                     LOGGER.warning(f"Model not found for {model_path.parent.name}.")
                     continue
-                model_status = self._get_model_status(format, prec)
+                model_status = self._get_model_status(format, jit_type, prec)
                 if format in self._target_formats:
                     for runtime_status in model_status.runtime_results:
                         runtime = runtime_status.runtime
-                        verified_status = self.get_verified_status(format=format, runtime=runtime, precision=prec)
+                        verified_status = self.get_verified_status(
+                            format=format, runtime=runtime, jit_type=jit_type, precision=prec
+                        )
                         if not verified_status:
                             LOGGER.warning(f"Unverified runtime: {runtime} for the {model_path.parent.name} model.")
                         if format in get_framework_export_formats(self.framework):

@@ -16,10 +16,10 @@ from pathlib import Path
 from typing import Optional, Union
 
 from model_navigator.converter.config import TensorRTPrecision
-from model_navigator.framework_api.common import Format
 from model_navigator.framework_api.config import Config
 from model_navigator.framework_api.package_descriptor import PackageDescriptor
-from model_navigator.framework_api.utils import Framework, parse_enum
+from model_navigator.framework_api.utils import Framework, JitType, parse_enum
+from model_navigator.model import Format
 
 
 def _copy_verified_staus(pkg_desc_1: PackageDescriptor, pkg_desc_2: PackageDescriptor):
@@ -60,6 +60,7 @@ def load(
         seed=saved_config["seed"],
         from_source=False,
         target_precisions=parse_enum(saved_config["target_precisions"], TensorRTPrecision),
+        target_jit_type=parse_enum(saved_config.get("target_jit_type"), JitType),
         target_device=saved_config["target_device"],
         opset=saved_config["opset"],
         max_batch_size=saved_config["max_batch_size"],

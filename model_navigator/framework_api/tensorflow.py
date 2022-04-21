@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Optional, Tuple, Union
 
 from model_navigator.converter.config import TensorRTPrecision
-from model_navigator.framework_api.common import Format, SizedDataLoader
+from model_navigator.framework_api.common import SizedDataLoader
 from model_navigator.framework_api.config import Config
 from model_navigator.framework_api.package_descriptor import PackageDescriptor
 from model_navigator.framework_api.pipelines import TFPipelineManager
@@ -27,6 +27,7 @@ from model_navigator.framework_api.utils import (
     get_default_workdir,
     parse_enum,
 )
+from model_navigator.model import Format
 
 
 def export(
