@@ -202,7 +202,7 @@ def _run_in_docker(
         dockerfile_path = MODEL_NAVIGATOR_DIR / "model_navigator/converter/Dockerfile.local"
     else:
         dockerfile_path = MODEL_NAVIGATOR_DIR / "model_navigator/converter/Dockerfile.remote"
-        install_url = navigator_install_url(framework)
+        install_url = navigator_install_url(framework, extras=["cli"])
         build_args["INSTALL_URL"] = install_url
 
     LOGGER.debug(f"Base converter image: {framework_docker_image}")
