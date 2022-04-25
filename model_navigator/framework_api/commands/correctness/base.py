@@ -22,7 +22,7 @@ from polygraphy.comparator import util as comp_util
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.common import DataObject, Sample, TensorMetadata
 from model_navigator.framework_api.exceptions import UserErrorContext
-from model_navigator.framework_api.utils import Framework, Status, format2runtimes, sample_to_tuple
+from model_navigator.framework_api.utils import Framework, Status, format2runtimes
 from model_navigator.model import Format
 
 
@@ -83,12 +83,12 @@ class CorrectnessBase(Command):
             for sample, original_output in zip(correctness_samples, correctness_samples_output):
                 with UserErrorContext():
                     comp_output = runner.infer(sample)
-                original_output, comp_output = sample_to_tuple(original_output), sample_to_tuple(comp_output)
 
                 is_len_valid = len(original_output) == len(comp_output)
                 assert is_len_valid, "Original model output length is different from exported model output"
 
-                for out0, out1, name in zip(original_output, comp_output, output_names):
+                for name in output_names:
+                    out0, out1 = original_output[name], comp_output[name]
                     absdiff = numpy.abs(out0 - out1)
                     absout1 = numpy.abs(out1)
 

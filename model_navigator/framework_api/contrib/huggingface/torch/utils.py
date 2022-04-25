@@ -13,25 +13,21 @@
 # limitations under the License.
 
 import importlib
-from typing import Optional
+from typing import Optional, Sequence
 
 # pytype: disable=import-error
-from transformers import PretrainedConfig, PreTrainedModel
+from transformers import AutoModel, PretrainedConfig, PreTrainedModel, PreTrainedTokenizer
 from transformers.models.auto.configuration_auto import CONFIG_MAPPING_NAMES
+
+from model_navigator.framework_api.logger import LOGGER
 
 # pytype: enable=import-error
 
 _CONFIG_MODULE_MAPPING = {v: k for k, v in CONFIG_MAPPING_NAMES.items()}
 
 
-def get_max_sequence_length(config: PretrainedConfig) -> Optional[int]:
-    max_seq_len = getattr(config, "max_position_embeddings", None)
-    if max_seq_len is not None:
-        return max_seq_len
-    max_seq_len = getattr(config, "n_positions", None)
-    if max_seq_len is not None:
-        return max_seq_len
-    return None
+def get_max_sequence_length(tokenizer: PreTrainedTokenizer) -> Optional[int]:
+    return getattr(tokenizer, "model_max_length", None)
 
 
 def get_module_from_config(config: PretrainedConfig) -> str:
@@ -44,7 +40,11 @@ def get_module_from_config(config: PretrainedConfig) -> str:
 def get_pretrained_model_from_config(
     model_name: str, config: PretrainedConfig, torchscript: bool = False
 ) -> PreTrainedModel:
+    arch = getattr(config, "architectures", None)
+    if arch is None or not isinstance(arch, Sequence):
+        LOGGER.warning("Architecture not available in config. Using AutoModel.")
+        return AutoModel.from_pretrained(model_name, torchscript=True)
+    arch = arch[0]
     module_name = get_module_from_config(config)
-    arch = config.architectures[0]
     model_cls = getattr(importlib.import_module(f"transformers.models.{module_name.replace('-', '_')}"), arch)
     return model_cls.from_pretrained(model_name, torchscript=torchscript)

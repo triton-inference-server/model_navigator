@@ -22,7 +22,14 @@ from model_navigator.framework_api.commands.correctness.base import Tolerance
 from model_navigator.framework_api.common import Sample, SizedDataLoader, TensorMetadata
 from model_navigator.framework_api.exceptions import UserError, UserErrorContext
 from model_navigator.framework_api.runners.onnx import OnnxrtRunner
-from model_navigator.framework_api.utils import Format, Framework, format2runtimes, sample_to_tuple, to_numpy
+from model_navigator.framework_api.utils import (
+    Format,
+    Framework,
+    format2runtimes,
+    sample_to_tuple,
+    to_numpy,
+    validate_sample_input,
+)
 
 
 class InferInputMetadata(Command):
@@ -45,6 +52,7 @@ class InferInputMetadata(Command):
     ) -> Tolerance:
 
         sample = next(iter(dataloader))
+        validate_sample_input(sample, framework)
         input_tuple = sample_to_tuple(sample)
         input_names = _input_names
         if input_names is None:

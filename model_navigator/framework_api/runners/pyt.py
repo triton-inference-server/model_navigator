@@ -19,6 +19,8 @@ import torch  # pytype: disable=import-error
 from polygraphy.backend.base import BaseRunner
 from polygraphy.common import TensorMetadata
 
+from model_navigator.framework_api.utils import Framework, validate_sample_output
+
 
 class PytRunner(BaseRunner):
     """
@@ -69,6 +71,7 @@ class PytRunner(BaseRunner):
                 inputs_dict = dict(zip(self._forward_kw_names, inputs))
                 outputs = self.model(**inputs_dict)
 
+        validate_sample_output(outputs, Framework.PYT)
         if torch.is_tensor(outputs):
             outputs = (outputs,)
 

@@ -20,6 +20,8 @@ import numpy
 from polygraphy.backend.base import BaseRunner
 from polygraphy.common import TensorMetadata
 
+from model_navigator.framework_api.utils import Framework, validate_sample_output
+
 
 class TFRunner(BaseRunner):
     """
@@ -60,6 +62,7 @@ class TFRunner(BaseRunner):
             outputs = self.model.predict(list(feed_dict.values()))
         end = time.time()
 
+        validate_sample_output(outputs, Framework.TF2)
         if self.output_names is None:
             if isinstance(outputs, Mapping):
                 self.output_names = outputs.keys()

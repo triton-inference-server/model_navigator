@@ -13,12 +13,13 @@
 # limitations under the License.
 from enum import Enum
 from pathlib import Path
-from typing import Any, List, Mapping, Optional, Tuple, Type, TypeVar
+from typing import Any, List, Mapping, Optional, Sequence, Tuple, Type, TypeVar
 
 import numpy
 
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.common import Sample
+from model_navigator.framework_api.exceptions import UserError
 from model_navigator.model import Format
 
 T = TypeVar("T")
@@ -177,9 +178,7 @@ def format_to_relative_model_path(
 
 
 def sample_to_tuple(input: Any) -> Tuple[Any, ...]:
-    if isinstance(input, tuple):
-        return input
-    if isinstance(input, list):
+    if isinstance(input, Sequence):
         return tuple(input)
     if isinstance(input, Mapping):
         return tuple(input.values())
@@ -223,3 +222,67 @@ def get_base_format(format: Format, framework: Framework):
         },
         Framework.ONNX: {Format.TENSORRT: Format.ONNX},
     }[framework].get(format)
+
+
+def is_tensor(tensor, framework: Framework):
+    if framework == Framework.PYT:
+        import torch  # pytype: disable=import-error
+
+        return torch.is_tensor(tensor) or isinstance(tensor, numpy.ndarray)
+    elif framework == Framework.TF2:
+        import tensorflow  # pytype: disable=import-error
+
+        return tensorflow.is_tensor(tensor) or isinstance(tensor, numpy.ndarray)
+    else:
+        return isinstance(tensor, numpy.ndarray)
+
+
+def get_tensor_type_name(framework: Framework):
+    if framework == Framework.PYT:
+        return "Union[torch.Tensor, numpy.ndarray]"
+    elif framework == Framework.TF2:
+        return "Union[tensorflow.Tensor, numpy.ndarray]"
+    else:
+        return "numpy.ndarray"
+
+
+def validate_sample_input(sample, framework: Framework):
+    def is_valid(sample):
+        if isinstance(sample, Sequence):
+            for tensor in sample:
+                if not is_tensor(tensor, framework):
+                    return False
+        elif isinstance(sample, Mapping):
+            for tensor in sample.values():
+                if not is_tensor(tensor, framework):
+                    return False
+        else:
+            tensor = sample
+            if not is_tensor(tensor, framework):
+                return False
+        return True
+
+    if not is_valid(sample):
+        tensor_type = get_tensor_type_name(framework)
+        raise UserError(
+            f"Invalid sample type. Sample must be of type Union[{tensor_type}, Sequence[{tensor_type}], Mapping[str, {tensor_type}]]. Dataloader returned {sample}."
+        )
+
+
+def validate_sample_output(sample, framework: Framework):
+    def is_valid(sample):
+        if isinstance(sample, Sequence):
+            for tensor in sample:
+                if not is_tensor(tensor, framework):
+                    return False
+        else:
+            tensor = sample
+            if not is_tensor(tensor, framework):
+                return False
+        return True
+
+    if not is_valid(sample):
+        tensor_type = get_tensor_type_name(framework)
+        raise UserError(
+            f"Invalid model output type. Output must be of type Union[{tensor_type}, Sequence[{tensor_type}]]. Model returned {sample}."
+        )

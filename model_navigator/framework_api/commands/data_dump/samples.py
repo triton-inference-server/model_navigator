@@ -15,14 +15,14 @@
 import json
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, List, Mapping, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy
 from polygraphy.backend.onnxrt import SessionFromOnnx
 
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.common import Sample, SizedDataLoader, TensorMetadata
-from model_navigator.framework_api.exceptions import TensorTypeError, UserError
+from model_navigator.framework_api.exceptions import UserError
 from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.utils import (
     Format,
@@ -32,44 +32,11 @@ from model_navigator.framework_api.utils import (
     get_package_path,
     sample_to_tuple,
     to_numpy,
+    validate_sample_input,
 )
 
 
-# TODO: Add support for: Numpy Arrays, Dict??, tf.data??, keras.utils.Sequence??
-def is_tensor(sample, framework: Framework):
-    if framework == Framework.PYT:
-        import torch  # pytype: disable=import-error
-
-        tensor_check = torch.is_tensor
-        expected_type = type(torch.Tensor)
-    elif framework == Framework.TF2:
-        import tensorflow  # pytype: disable=import-error
-
-        tensor_check = tensorflow.is_tensor
-        expected_type = type(tensorflow.Tensor)
-    else:
-
-        def t_check(t):
-            return isinstance(t, numpy.ndarray)
-
-        tensor_check = t_check
-        expected_type = numpy.ndarray
-
-    if isinstance(sample, (list, tuple)):
-        for tensor in sample:
-            if not tensor_check(tensor):
-                raise TensorTypeError(f"Expected type: {expected_type}, found: {type(tensor)}")
-    elif isinstance(sample, Mapping):
-        for tensor in sample.values():
-            if not tensor_check(tensor):
-                raise TensorTypeError(f"Expected type: {expected_type}, found: {type(tensor)}")
-    else:
-        if not tensor_check(sample):
-            raise TensorTypeError(f"Expected type: {expected_type}, found: {type(sample)}")
-
-
 def extract_sample(sample, input_metadata, framework):
-    is_tensor(sample, framework)
     sample = sample_to_tuple(sample)
     sample = {n: to_numpy(t, framework) for n, t in zip(input_metadata, sample)}
     return sample
@@ -211,6 +178,7 @@ class FetchInputModelData(Command):
             if i >= num_samples:
                 LOGGER.warning(f"{len(dataloader)=}, but more samples found.")
                 break
+            validate_sample_input(sample, framework)
             sample = extract_sample(sample, input_metadata, framework)
             for name, tensor in sample.items():
                 for k, dim in enumerate(tensor.shape):

@@ -85,8 +85,9 @@ def export(
     model = get_pretrained_model_from_config(model_name, config)
     model.config.return_dict = True
 
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
     if max_sequence_len is None:
-        max_sequence_len = get_max_sequence_length(config)
+        max_sequence_len = get_max_sequence_length(tokenizer)
 
     if onnx_config is None:
         onnx_config = get_onnx_config(model.config)
@@ -99,7 +100,6 @@ def export(
     output_names = tuple(outputs.keys())
 
     if dataloader is None:
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
         if isinstance(tokenizer, (GPT2Tokenizer, GPT2TokenizerFast)):
             tokenizer.pad_token = tokenizer.eos_token
         if dataset_name is None:
