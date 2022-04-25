@@ -372,3 +372,46 @@ def test_model_config_parsing_signature_with_dynamic_batching_configured(
         assert parsed_model_config_generator.optimization_config == optimization_config
         assert parsed_model_config_generator.dynamic_batching_config == dynamic_batching_config
         assert parsed_model_config_generator.instances_config == instances_config
+
+
+@pytest.mark.parametrize(
+    "max_batch_size,model_filename,signature",
+    [
+        CASE_TENSORRT_PLAN_SIMPLE_IMAGE_MODEL_WITH_STATIC_AXES,
+        CASE_TENSORRT_PLAN_IMAGE_MODEL_WITH_DYNAMIC_AXES,
+        CASE_TENSORRT_PLAN_IMAGE_MODEL_WITH_JUST_BATCH_AXIS,
+    ],
+)
+def test_model_config_with_implicit_optional_flags(monkeypatch, max_batch_size, model_filename, signature):
+    with TemporaryDirectory() as temp_dir:
+        temp_dir = Path(temp_dir)
+
+        # create dummy triton model repo structure
+        model_path = temp_dir / "1" / model_filename
+        model_path.parent.mkdir(parents=True, exist_ok=True)
+        with model_path.open("w"):
+            pass
+
+        config_path = temp_dir / "config.pbtxt"
+
+        src_model = Model("dummy", model_path, signature_if_missing=signature)
+        batching_config = TritonBatchingConfig(max_batch_size=max_batch_size, batching=Batching.DYNAMIC)
+        optimization_config = TritonModelOptimizationConfig()
+        tensorrt_common_config = TensorRTCommonConfig()
+        dynamic_batching_config = TritonDynamicBatchingConfig(preferred_batch_sizes=[1, 2], max_queue_delay_us=100)
+        instances_config = TritonModelInstancesConfig({DeviceKind.GPU: 1})
+        backend_parameters_config = TritonCustomBackendParametersConfig()
+        initial_model_config_generator = TritonModelConfigGenerator(
+            src_model,
+            batching_config=batching_config,
+            optimization_config=optimization_config,
+            tensorrt_common_config=tensorrt_common_config,
+            dynamic_batching_config=dynamic_batching_config,
+            instances_config=instances_config,
+            backend_parameters_config=backend_parameters_config,
+        )
+        initial_model_config_generator.save(config_path)
+
+        config_payload = config_path.read_text()
+
+        assert "optional" not in config_payload, f"{config_payload} contains optional"

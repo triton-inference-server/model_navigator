@@ -181,9 +181,23 @@ class YamlConfigFile(ConfigFile):
 
     def save_config(self, config):
         new_config_dict = dataclass2dict(config)
+
+        mismatched_same_config_values = False
+        mismatched_other_config = False
+        try:
+            old_config = dict2dataclass(type(config), self._config_dict)
+        except dacite.exceptions.MissingValueError:
+            mismatched_other_config = True
+        else:
+            mismatched_same_config_values = old_config != config
+
         for name, value in new_config_dict.items():
             old_value = self._config_dict.get(name, _MISSING)
-            if old_value != _MISSING and value != old_value:
+            if (
+                old_value != _MISSING
+                and value != old_value
+                and (mismatched_other_config or mismatched_same_config_values)
+            ):
                 raise ValueError(
                     f"There is already {name}={value} conflicts with {name}={old_value} "
                     f"already present in {self._config_path} config file"
