@@ -25,10 +25,9 @@ from model_navigator.framework_api.common import Sample, SizedDataLoader, Tensor
 from model_navigator.framework_api.exceptions import UserError
 from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.utils import (
-    Format,
     Framework,
+    RuntimeProvider,
     extract_bs1,
-    format2runtimes,
     get_package_path,
     sample_to_tuple,
     to_numpy,
@@ -268,6 +267,7 @@ class DumpOutputModelData(Command):
         input_metadata: TensorMetadata,
         output_metadata: TensorMetadata,
         batch_dim: Optional[int],
+        onnx_runtimes: Tuple[RuntimeProvider, ...] = (),
         target_device: Optional[str] = None,
         forward_kw_names: Optional[Tuple[str, ...]] = None,
         **kwargs,
@@ -290,7 +290,7 @@ class DumpOutputModelData(Command):
         elif framework == Framework.ONNX:
             from model_navigator.framework_api.runners.onnx import OnnxrtRunner
 
-            runner = OnnxrtRunner(SessionFromOnnx(model.as_posix(), providers=format2runtimes(Format.ONNX)[0]))
+            runner = OnnxrtRunner(SessionFromOnnx(model.as_posix(), providers=onnx_runtimes))
         else:
             raise UserError(f"Unknown framework: {framework.value}")
 

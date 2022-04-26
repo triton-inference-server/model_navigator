@@ -34,7 +34,7 @@ from model_navigator.framework_api.commands.performance.trt import PerformanceTR
 from model_navigator.framework_api.config import Config
 from model_navigator.framework_api.pipelines.pipeline import Pipeline
 from model_navigator.framework_api.pipelines.pipeline_manager_base import PipelineManager
-from model_navigator.framework_api.utils import Framework, format2runtimes
+from model_navigator.framework_api.utils import Framework
 from model_navigator.model import Format
 
 
@@ -79,7 +79,7 @@ class TorchPipelineManager(PipelineManager):
         if Format.ONNX in config.target_formats or Format.TENSORRT in config.target_formats:
             onnx_export = ExportPYT2ONNX(requires=preprocess_req)
             commands.append(onnx_export)
-            for provider in format2runtimes(Format.ONNX):
+            for provider in config.onnx_runtimes:
                 commands.append(CorrectnessPYT2ONNX(runtime_provider=provider, requires=(onnx_export,)))
                 commands.append(PerformanceONNX(runtime_provider=provider, requires=(onnx_export,)))
             commands.append(ConfigCli(target_format=Format.ONNX, requires=(onnx_export,)))

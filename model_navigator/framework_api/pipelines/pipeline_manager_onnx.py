@@ -27,7 +27,7 @@ from model_navigator.framework_api.commands.performance.onnx import PerformanceO
 from model_navigator.framework_api.commands.performance.trt import PerformanceTRT
 from model_navigator.framework_api.pipelines.pipeline import Pipeline
 from model_navigator.framework_api.pipelines.pipeline_manager_base import PipelineManager
-from model_navigator.framework_api.utils import Framework, format2runtimes
+from model_navigator.framework_api.utils import Framework
 from model_navigator.model import Format
 
 
@@ -58,7 +58,7 @@ class ONNXPipelineManager(PipelineManager):
             commands.extend([load_metadata, load_samples])
             preprocess_req = (load_metadata, load_samples)
 
-        for provider in format2runtimes(Format.ONNX):
+        for provider in config.onnx_runtimes:
             commands.append(PerformanceONNX(runtime_provider=provider, requires=preprocess_req))
 
         if Format.TENSORRT in config.target_formats:

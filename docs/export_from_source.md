@@ -290,7 +290,6 @@ def export(
     jit_options: Optional[Union[Union[str, JitType], Tuple[Union[str, JitType], ...]]] = None,
     workdir: Optional[Path] = None, # default workdir is navigator_workdir in current working directory
     override_workdir: bool = False,
-    keep_workdir: bool = True,
     sample_count: Optional[int] = None, # number of samples that will be saved from dataloader
     atol: Optional[float] = None, # absolute tolerance used for correctness tests. If None, value will be calculated during run
     rtol: Optional[float] = None, # relative tolerance used for correctness tests. If None, value will be calculated during run
@@ -303,7 +302,7 @@ def export(
     target_device: Optional[str] = None, # target device for exporting the model
     disable_git_info: bool = False,
     batch_dim: Optional[int] = 0,
-    zip_package: Optional[bool] = False,
+    onnx_runtimes: Optional[Union[Union[str, RuntimeProvider], Tuple[Union[str, RuntimeProvider], ...]]] = None, # defaults to all available runtimes
 ) -> PackageDescriptor:
     """Function exports PyTorch model to all supported formats."""
 ```
@@ -320,7 +319,6 @@ def export(
     target_formats: Optional[Union[Union[str, Format], Tuple[Union[str, Format], ...]]] = None,
     workdir: Optional[Path] = None, # default workdir is navigator_workdir in current working directory
     override_workdir: bool = False,
-    keep_workdir: bool = True,
     sample_count: Optional[int] = None, # number of samples that will be saved from dataloader
     opset: Optional[int] = None,
     atol: Optional[float] = None, # absolute tolerance used for correctness tests. If None, value will be calculated during run
@@ -329,7 +327,7 @@ def export(
     output_names: Optional[Tuple[str, ...]] = None,
     disable_git_info: bool = False,
     batch_dim: Optional[int] = 0,
-    zip_package: Optional[bool] = False,
+    onnx_runtimes: Optional[Union[Union[str, RuntimeProvider], Tuple[Union[str, RuntimeProvider], ...]]] = None, # defaults to all available runtimes
 ) -> PackageDescriptor:
     """Exports TensorFlow 2 model to all supported formats."""
 ```
