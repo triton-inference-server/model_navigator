@@ -38,6 +38,8 @@ from model_navigator.framework_api.package_descriptor import PackageDescriptor
 from model_navigator.framework_api.pipelines import TFPipelineManager
 from model_navigator.framework_api.utils import (
     Framework,
+    RuntimeProvider,
+    format2runtimes,
     get_default_max_workspace_size,
     get_default_workdir,
     parse_enum,
@@ -79,6 +81,7 @@ def export(
     batch_dim: Optional[int] = 0,
     padding: Union[bool, str] = True,
     max_sequence_len: Optional[int] = None,
+    onnx_runtimes: Optional[Union[Union[str, RuntimeProvider], Tuple[Union[str, RuntimeProvider], ...]]] = None,
 ) -> PackageDescriptor:
 
     config = AutoConfig.from_pretrained(model_name)
@@ -156,8 +159,13 @@ def export(
     if hasattr(model.config, "use_cache"):
         model.config.use_cache = False
 
-    target_formats, target_precisions = parse_enum(target_formats, Format), parse_enum(
-        target_precisions, TensorRTPrecision
+    if onnx_runtimes is None:
+        onnx_runtimes = format2runtimes(Format.ONNX)
+
+    target_formats, target_precisions, onnx_runtimes = (
+        parse_enum(target_formats, Format),
+        parse_enum(target_precisions, TensorRTPrecision),
+        parse_enum(onnx_runtimes, RuntimeProvider),
     )
     config = Config(
         Framework.TF2,
@@ -178,6 +186,7 @@ def export(
         batch_dim=batch_dim,
         _input_names=input_names,
         _output_names=output_names,
+        onnx_runtimes=onnx_runtimes,
     )
 
     pipeline_manager = TFPipelineManager()

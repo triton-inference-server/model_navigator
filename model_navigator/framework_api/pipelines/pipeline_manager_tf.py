@@ -33,7 +33,7 @@ from model_navigator.framework_api.commands.performance.tf import PerformanceSav
 from model_navigator.framework_api.commands.performance.trt import PerformanceTRT
 from model_navigator.framework_api.pipelines.pipeline import Pipeline
 from model_navigator.framework_api.pipelines.pipeline_manager_base import PipelineManager
-from model_navigator.framework_api.utils import Framework, format2runtimes
+from model_navigator.framework_api.utils import Framework
 from model_navigator.model import Format
 
 
@@ -69,7 +69,7 @@ class TFPipelineManager(PipelineManager):
         if Format.ONNX in config.target_formats:
             onnx_convert = ConvertSavedModel2ONNX(requires=preprocess_req)
             commands.append(onnx_convert)
-            for provider in format2runtimes(Format.ONNX):
+            for provider in config.onnx_runtimes:
                 commands.append(CorrectnessTensorFlow2ONNX(runtime_provider=provider, requires=(onnx_convert,)))
                 commands.append(PerformanceONNX(runtime_provider=provider, requires=(onnx_convert,)))
             commands.append(ConfigCli(target_format=Format.ONNX, requires=(onnx_convert,)))
@@ -77,7 +77,7 @@ class TFPipelineManager(PipelineManager):
             if Format.ONNX not in config.target_formats:
                 onnx_convert = ConvertSavedModel2ONNX(requires=preprocess_req)
                 commands.append(onnx_convert)
-                for provider in format2runtimes(Format.ONNX):
+                for provider in config.onnx_runtimes:
                     commands.append(CorrectnessTensorFlow2ONNX(runtime_provider=provider, requires=(onnx_convert,)))
                     commands.append(PerformanceONNX(runtime_provider=provider, requires=(onnx_convert,)))
                 commands.append(ConfigCli(target_format=Format.ONNX, requires=(onnx_convert,)))

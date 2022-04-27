@@ -133,7 +133,12 @@ class PackageDescriptor:
             for command in pipeline.commands:
                 if command.command_type in (CommandType.EXPORT, CommandType.CONVERT, CommandType.COPY):
                     runtime_results = []
-                    for runtime_provider in format2runtimes(command.target_format):
+                    runtimes = (
+                        config.onnx_runtimes
+                        if command.target_format == Format.ONNX
+                        else format2runtimes(command.target_format)
+                    )
+                    for runtime_provider in runtimes:
                         correctness_results = cls._get_correctness_command_for_model(
                             commands=pipeline.commands,
                             format=command.target_format,

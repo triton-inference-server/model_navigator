@@ -20,7 +20,7 @@ from typing import Dict, List, Optional, Tuple, Union, get_args, get_origin
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.common import DataObject, SizedDataLoader, TensorMetadata
 from model_navigator.framework_api.logger import LOGGER
-from model_navigator.framework_api.utils import Framework, JitType, pad_string
+from model_navigator.framework_api.utils import Framework, JitType, RuntimeProvider, pad_string
 from model_navigator.model import Format
 
 
@@ -62,6 +62,7 @@ class Config(DataObject):
     # ONNX
     opset: Optional[int] = None
     dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None
+    onnx_runtimes: Tuple[RuntimeProvider, ...] = ()
 
     # Correctness is computed using allclose function for all tensors
     # for output from converted model and source model

@@ -23,9 +23,8 @@ from model_navigator.framework_api.common import Sample, SizedDataLoader, Tensor
 from model_navigator.framework_api.exceptions import UserError, UserErrorContext
 from model_navigator.framework_api.runners.onnx import OnnxrtRunner
 from model_navigator.framework_api.utils import (
-    Format,
     Framework,
-    format2runtimes,
+    RuntimeProvider,
     sample_to_tuple,
     to_numpy,
     validate_sample_input,
@@ -45,6 +44,7 @@ class InferInputMetadata(Command):
         model: Union[object, Path],
         framework: Framework,
         dataloader: SizedDataLoader,
+        onnx_runtimes: Tuple[RuntimeProvider, ...],
         _input_names: Optional[Tuple[str, ...]] = None,
         dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None,
         batch_dim: Optional[int] = None,
@@ -58,7 +58,7 @@ class InferInputMetadata(Command):
         if input_names is None:
             if framework == Framework.ONNX:
                 # pytype: disable=attribute-error
-                onnx_runner = OnnxrtRunner(SessionFromOnnx(model.as_posix(), providers=format2runtimes(Format.ONNX)[0]))
+                onnx_runner = OnnxrtRunner(SessionFromOnnx(model.as_posix(), providers=onnx_runtimes))
                 # pytype: enable=attribute-error
                 with onnx_runner:
                     return TensorMetadata.from_polygraphy_tensor_metadata(onnx_runner.get_input_metadata())
@@ -99,6 +99,7 @@ class InferOutputMetadata(Command):
         profiling_sample: Sample,
         model: Union[object, Path],
         input_metadata: TensorMetadata,
+        onnx_runtimes: Tuple[RuntimeProvider, ...],
         target_device: Optional[str] = None,
         _output_names: Optional[Tuple[str, ...]] = None,
         dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None,
@@ -118,7 +119,7 @@ class InferOutputMetadata(Command):
             runner = TFRunner(model, input_metadata, _output_names)
         elif framework == Framework.ONNX:
             # pytype: disable=attribute-error
-            runner = OnnxrtRunner(SessionFromOnnx(model.as_posix(), providers=format2runtimes(Format.ONNX)[0]))
+            runner = OnnxrtRunner(SessionFromOnnx(model.as_posix(), providers=onnx_runtimes))
             # pytype: enable=attribute-error
         else:
             raise UserError(f"Unknown framework: {framework.value}")

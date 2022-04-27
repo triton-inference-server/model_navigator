@@ -43,6 +43,8 @@ from model_navigator.framework_api.pipelines import TorchPipelineManager
 from model_navigator.framework_api.utils import (
     Framework,
     JitType,
+    RuntimeProvider,
+    format2runtimes,
     get_default_max_workspace_size,
     get_default_workdir,
     parse_enum,
@@ -87,13 +89,13 @@ def export(
     batch_dim: Optional[int] = 0,
     padding: Union[bool, str] = True,
     max_sequence_len: Optional[int] = None,
+    onnx_runtimes: Optional[Union[Union[str, RuntimeProvider], Tuple[Union[str, RuntimeProvider], ...]]] = None,
 ) -> PackageDescriptor:
     """Function exports PyTorch model to all supported formats."""
     if workdir is None:
         workdir = get_default_workdir()
     if max_workspace_size is None:
         max_workspace_size = get_default_max_workspace_size()
-
     if target_formats is None:
         target_formats = (
             Format.TORCHSCRIPT,
@@ -106,13 +108,10 @@ def export(
             JitType.SCRIPT,
             JitType.TRACE,
         )
-
     if sample_count is None:
         sample_count = 100
-
     if target_precisions is None:
         target_precisions = (TensorRTPrecision.FP32, TensorRTPrecision.FP16)
-
     if target_device is None:
         target_device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -121,14 +120,11 @@ def export(
     model.config.return_dict = True
 
     task = get_task_from_model(model)
-
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     if max_sequence_len is None:
         max_sequence_len = get_max_sequence_length(tokenizer)
-
     if onnx_config is None:
         onnx_config = get_onnx_config(model.config)
-
     if opset is None:
         opset = onnx_config.default_onnx_opset
 
@@ -171,11 +167,13 @@ def export(
         forward_kw_names = tuple(sample.keys())
     else:
         forward_kw_names = None
+    onnx_runtimes = onnx_runtimes or format2runtimes(Format.ONNX)
 
-    target_formats, jit_options, target_precisions = (
+    target_formats, jit_options, target_precisions, onnx_runtimes = (
         parse_enum(target_formats, Format),
         parse_enum(jit_options, JitType),
         parse_enum(target_precisions, TensorRTPrecision),
+        parse_enum(onnx_runtimes, RuntimeProvider),
     )
     config = Config(
         framework=Framework.PYT,
@@ -200,6 +198,7 @@ def export(
         target_device=target_device,
         disable_git_info=disable_git_info,
         batch_dim=batch_dim,
+        onnx_runtimes=onnx_runtimes,
     )
 
     pipeline_manager = TorchPipelineManager()

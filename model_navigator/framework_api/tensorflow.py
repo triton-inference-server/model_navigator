@@ -22,6 +22,8 @@ from model_navigator.framework_api.package_descriptor import PackageDescriptor
 from model_navigator.framework_api.pipelines import TFPipelineManager
 from model_navigator.framework_api.utils import (
     Framework,
+    RuntimeProvider,
+    format2runtimes,
     get_default_max_workspace_size,
     get_default_model_name,
     get_default_workdir,
@@ -48,6 +50,7 @@ def export(
     output_names: Optional[Tuple[str, ...]] = None,
     disable_git_info: bool = False,
     batch_dim: Optional[int] = 0,
+    onnx_runtimes: Optional[Union[Union[str, RuntimeProvider], Tuple[Union[str, RuntimeProvider], ...]]] = None,
 ) -> PackageDescriptor:
     """Function exports TensorFlow 2 model to all supported formats."""
     if model_name is None:
@@ -70,8 +73,13 @@ def export(
     if sample_count is None:
         sample_count = 100
 
-    target_formats, target_precisions = parse_enum(target_formats, Format), parse_enum(
-        target_precisions, TensorRTPrecision
+    if onnx_runtimes is None:
+        onnx_runtimes = format2runtimes(Format.ONNX)
+
+    target_formats, target_precisions, onnx_runtimes = (
+        parse_enum(target_formats, Format),
+        parse_enum(target_precisions, TensorRTPrecision),
+        parse_enum(onnx_runtimes, RuntimeProvider),
     )
     config = Config(
         Framework.TF2,
@@ -92,6 +100,7 @@ def export(
         _output_names=output_names,
         disable_git_info=disable_git_info,
         batch_dim=batch_dim,
+        onnx_runtimes=onnx_runtimes,
     )
 
     pipeline_manager = TFPipelineManager()
