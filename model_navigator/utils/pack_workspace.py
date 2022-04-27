@@ -11,10 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import datetime
 import os
 import pathlib
 import uuid
 import zipfile
+from typing import Dict
 
 import yaml
 
@@ -32,7 +34,7 @@ FORMAT_VERSION = "0.0.1"
 def pack_workspace(
     workspace: Workspace,
     package_path: pathlib.Path,
-    navigator_config,
+    navigator_config: Dict,
 ):
     LOGGER.info(f"Creating package from workspace {workspace.path} to {package_path}")
 
@@ -103,6 +105,7 @@ def pack_workspace(
         "uuid": str(uuid.uuid1()),
         "version": FORMAT_VERSION,
         "navigator_version": navigator_version,
+        "timestamp": f"{datetime.datetime.utcnow():%Y-%m-%dT%H:%M:%S.%f}",
         "config": navigator_config,
         "models": models,
         "environment": {

@@ -110,5 +110,5 @@ class Config(DataObject):
 
     def __post_init__(self):
         self._check_types()
-        object.__setattr__(self, "timestamp", f"{datetime.datetime.now():%Y-%m-%dT%H:%M:%S.%f}")
+        object.__setattr__(self, "timestamp", f"{datetime.datetime.utcnow():%Y-%m-%dT%H:%M:%S.%f}")
         self._log()

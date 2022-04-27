@@ -194,6 +194,9 @@ class ProfileConfigGenerator(BaseConfigGenerator):
             "triton_output_path": self.triton_log_path.as_posix(),
         }
 
+        if self._perf_measurement_config.perf_analyzer_path:
+            config["perf_analyzer_path"] = self._perf_measurement_config.perf_analyzer_path
+
         return config
 
     def _get_perf_analyzer_flags(self):
