@@ -13,6 +13,7 @@
 # limitations under the License.
 import dataclasses
 import logging
+import shutil
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Dict, List
@@ -37,7 +38,7 @@ class CommandValidator(BaseValidator):
 
 
 class ModelNavigatorBatchingConfiguration(CommandValidator):
-    commands_names = ["run", "triton-config-model"]
+    commands_names = ["optimize", "run", "triton-config-model"]
 
     def validate(self, environment_state: EnvironmentState, configuration: Dict[str, Any]):
         max_batch_size = configuration["max_batch_size"]
@@ -83,6 +84,19 @@ class ModelNavigatorDockerContainerShouldHaveMountedWorkspaceDir(CommandValidato
                 "If running Triton Model Navigator in docker container "
                 f"and have selected {ConversionLaunchMode.DOCKER} conversion launch_mode, "
                 f"this container should have mounted volume containing workspace dir: {workspace_path}"
+            )
+
+
+class PerfAnalyzerPathConfiguration(CommandValidator):
+    commands_names = ["optimize", "run", "triton-model-evaluate", "profile"]
+
+    def validate(self, environment_state: EnvironmentState, configuration: Dict[str, Any]):
+        perf_analyzer_path = configuration["perf_analyzer_path"]
+
+        LOGGER.debug("PerfAnalyzerPathConfiguration " f"\nperf_analyzer_path={perf_analyzer_path} ")
+        if not shutil.which(perf_analyzer_path):
+            raise ModelNavigatorException(
+                f"PerfAnalyzer not found in {perf_analyzer_path}. " f"\nPlease verify the binary exists."
             )
 
 

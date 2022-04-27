@@ -140,6 +140,7 @@ def _perf_analyzer_evaluation(
     latency_report_file: Optional[str] = None,
     verbose: bool = False,
     timeout: int = 600,
+    bin_path: Optional[str] = None,
 ):
     protocol, host, port = parse_server_url(server_url)
 
@@ -192,11 +193,7 @@ def _perf_analyzer_evaluation(
             for shape in input_shapes:
                 perf_config["shape"] = shape
 
-            perf_analyzer = PerfAnalyzer(
-                perf_config,
-                timeout=timeout,
-                stream_output=verbose,
-            )
+            perf_analyzer = PerfAnalyzer(perf_config, timeout=timeout, stream_output=verbose, bin_path=bin_path)
             perf_analyzer.run()
             output += perf_analyzer.output()
 
@@ -321,6 +318,7 @@ def triton_evaluate_model_cmd(
             output_shared_memory_size=perf_measurement_config.perf_measurement_output_shared_memory_size,
             concurrency_steps=concurrency_steps,
             latency_report_file=latency_report_file,
+            bin_path=perf_measurement_config.perf_analyzer_path,
         )
 
         message = f"Evaluated model {model_name} and batch size {batch_sizes} and mode: {perf_measurement_config.perf_measurement_output_shared_memory_size}"

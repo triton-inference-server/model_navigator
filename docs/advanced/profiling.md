@@ -174,6 +174,9 @@ model_repository: path
 # Perf Analyzer measurement timeout in seconds.
 [ perf_analyzer_timeout: integer | default: 600 ]
 
+# Path to perf_analyzer binary.
+[ perf_analyzer_path: str | default: perf_analyzer ]
+
 # Perf Analyzer measurement mode. Available: count_windows, time_windows.
 [ perf_measurement_mode: str | default: count_windows ]
 

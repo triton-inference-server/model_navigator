@@ -39,6 +39,7 @@ class SharedMemoryMode(Enum):
 @dataclass
 class PerfMeasurementConfig(BaseConfig):
     perf_analyzer_timeout: int = 600
+    perf_analyzer_path: str = "perf_analyzer"
     perf_measurement_mode: str = MeasurementMode.COUNT_WINDOWS.value
     perf_measurement_request_count: int = 50
     perf_measurement_interval: int = 5000

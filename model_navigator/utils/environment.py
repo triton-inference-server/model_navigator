@@ -28,7 +28,7 @@ from model_navigator.utils import Workspace
 
 LOGGER = logging.getLogger(__name__)
 
-package_filter = [
+PACKAGES = [
     "tensorflow",
     "torch",
     "torch-tensorrt",
@@ -48,6 +48,38 @@ package_filter = [
     "numpy",
     "tf2onnx",
 ]
+
+LIBRARIES = {
+    "NPP_VERSION",
+    "DALI_BUILD",
+    "CUSOLVER_VERSION",
+    "CUBLAS_VERSION",
+    "CUFFT_VERSION",
+    "NCCL_VERSION",
+    "CUSPARSE_VERSION",
+    "OPENUCX_VERSION",
+    "DRIVER_VERSION",
+    "NSIGHT_SYSTEMS_VERSION",
+    "TRT_VERSION",
+    "CUDA_VERSION",
+    "CURAND_VERSION",
+    "DLPROF_VERSION",
+    "OPENMPI_VERSION",
+    "NVJPEG_VERSION",
+    "CUDNN_VERSION",
+    "NSIGHT_COMPUTE_VERSION",
+    "DALI_VERSION",
+    "NVIDIA_BUILD_ID",
+    "CUDA_DRIVER_VERSION",
+    "TRTOSS_VERSION",
+    "NVIDIA_TENSORFLOW_VERSION",
+    "TENSORFLOW_VERSION",
+    "NVIDIA_PYTORCH_VERSION",
+    "PYTORCH_VERSION",
+    "TRITON_SERVER_VERSION",
+    "NVIDIA_TRITON_SERVER_VERSION",
+    "CONTAINER_VERSION",
+}
 
 
 def _command_runner(command):
@@ -141,7 +173,8 @@ def get_env():
         "gpu": gpu_details,
         "os": os_details,
         "python_version": platform.python_version(),
-        "python_packages": {k: v for k, v in packages.items() if k in package_filter},
+        "python_packages": {k: v for k, v in packages.items() if k in PACKAGES},
+        "libraries": {k: v for k, v in os.environ.items() if k in LIBRARIES},
     }
     return env
 

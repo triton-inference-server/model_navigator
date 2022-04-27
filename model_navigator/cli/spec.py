@@ -645,6 +645,7 @@ class SelectConfigCli:
 
 class PerfMeasurementConfigCli:
     perf_analyzer_timeout = CliSpec(help="Perf Analyzer measurement timeout in seconds.")
+    perf_analyzer_path = CliSpec(help="Path to perf_analyzer binary.")
     perf_measurement_mode = CliSpec(help="Perf Analyzer measurement mode. Available: count_windows, time_windows.")
     perf_measurement_request_count = CliSpec(
         help="Perf Analyzer count windows number of samples to used for stabilization."

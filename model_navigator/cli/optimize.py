@@ -166,30 +166,31 @@ def optimize_cmd(
     framework_docker_image = framework_docker_image or framework.container_image(container_version)
     triton_docker_image = triton_docker_image or TritonServer.container_image(container_version)
 
+    arguments = {
+        **dataclass2dict(src_model_config),
+        **dataclass2dict(conversion_set_config),
+        **dataclass2dict(tensorrt_common_config),
+        **dataclass2dict(comparator_config),
+        **dataclass2dict(src_model_signature_config),
+        **dataclass2dict(dataset_profile_config),
+        **dataclass2dict(batching_config),
+        **dataclass2dict(instance_config),
+        **dataclass2dict(backend_config),
+        **dataclass2dict(triton_config),
+        **dataclass2dict(profile_config),
+        **dataclass2dict(analysis_config),
+        **dataclass2dict(perf_measurement_config),
+        "workspace_path": workspace_path,
+        "override_workspace": override_workspace,
+        "override_conversion_container": override_conversion_container,
+        "framework_docker_image": framework_docker_image,
+        "triton_docker_image": triton_docker_image,
+        "gpus": gpus,
+        "verbose": verbose,
+    }
     log_dict(
         "optimize args:",
-        {
-            **dataclass2dict(src_model_config),
-            **dataclass2dict(conversion_set_config),
-            **dataclass2dict(tensorrt_common_config),
-            **dataclass2dict(comparator_config),
-            **dataclass2dict(src_model_signature_config),
-            **dataclass2dict(dataset_profile_config),
-            **dataclass2dict(batching_config),
-            **dataclass2dict(instance_config),
-            **dataclass2dict(backend_config),
-            **dataclass2dict(triton_config),
-            **dataclass2dict(profile_config),
-            **dataclass2dict(analysis_config),
-            **dataclass2dict(perf_measurement_config),
-            "workspace_path": workspace_path,
-            "override_workspace": override_workspace,
-            "override_conversion_container": override_conversion_container,
-            "framework_docker_image": framework_docker_image,
-            "triton_docker_image": triton_docker_image,
-            "gpus": gpus,
-            "verbose": verbose,
-        },
+        arguments,
     )
 
     convert_results = ctx.forward(convert_cmd)
@@ -293,7 +294,7 @@ def optimize_cmd(
     results_store = ResultsStore(workspace)
     results_store.dump("helm_chart_create", create_helm_chart_results)
     output_package_path = _get_output_package_path(src_model_config, output_package)
-    pack_workspace(workspace, output_package_path, configuration)
+    pack_workspace(workspace, output_package_path, arguments)
 
 
 def _get_output_package_path(model_config, output_package):
