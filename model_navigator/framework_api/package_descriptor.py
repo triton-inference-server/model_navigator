@@ -304,9 +304,28 @@ class PackageDescriptor:
             path.unlink()
 
     @staticmethod
-    def _load_model(model_path: Path, format: Format, runtime: Optional[RuntimeProvider] = None):
+    def _load_model(model_path: Path, format: Format):
         model_path = model_path.as_posix()
         LOGGER.info(f"Loading model from path: {model_path}")
+
+        if format == Format.ONNX:
+            import onnx
+
+            return onnx.load_model(model_path)
+        elif format == Format.TENSORRT:
+            return model_path
+        elif format in (Format.TORCHSCRIPT, Format.TORCH_TRT):
+            import torch  # pytype: disable=import-error
+
+            return torch.jit.load(model_path)
+        else:
+            import tensorflow  # pytype: disable=import-error
+
+            return tensorflow.keras.models.load_model(model_path)
+
+    def _load_runner(self, model_path: Path, format: Format, runtime: Optional[RuntimeProvider] = None):
+        model_path = model_path.as_posix()
+        LOGGER.info(f"Loading runner from path: {model_path}")
 
         if runtime is None:
             runtime = format2runtimes(format)
@@ -329,11 +348,36 @@ class PackageDescriptor:
         elif format in (Format.TORCHSCRIPT, Format.TORCH_TRT):
             import torch  # pytype: disable=import-error
 
-            return torch.jit.load(model_path)
-        else:
+            from model_navigator.framework_api.runners.pyt import PytRunner
+
+            return PytRunner(
+                torch.jit.load(model_path),
+                input_metadata=self.navigator_status.input_metadata,
+                output_names=list(self.navigator_status.output_metadata.keys()),
+                target_device=self.navigator_status.export_config["target_device"],
+            )
+        elif format == Format.TF_SAVEDMODEL:
             import tensorflow  # pytype: disable=import-error
 
-            return tensorflow.keras.models.load_model(model_path)
+            from model_navigator.framework_api.runners.tf import TFRunner
+
+            return TFRunner(
+                tensorflow.keras.models.load_model(model_path),
+                input_metadata=self.navigator_status.input_metadata,
+                output_names=list(self.navigator_status.output_metadata.keys()),
+            )
+        elif format == Format.TF_TRT:
+            import tensorflow  # pytype: disable=import-error
+
+            from model_navigator.framework_api.runners.tf import TFTRTRunner
+
+            return TFTRTRunner(
+                tensorflow.keras.models.load_model(model_path),
+                input_metadata=self.navigator_status.input_metadata,
+                output_names=list(self.navigator_status.output_metadata.keys()),
+            )
+        else:
+            raise ValueError(f"Unknown format: {format}")
 
     def _cleanup(self):
         if self.workdir.exists():
@@ -431,6 +475,24 @@ class PackageDescriptor:
         return results
 
     def get_model(
+        self, format: Format, jit_type: Optional[JitType] = None, precision: Optional[TensorRTPrecision] = None
+    ):
+        """
+        Load exported model for given format, jit_type and precision and return model object
+
+        :return
+            model object for TensorFlow, PyTorch and ONNX
+            model path for TensorRT
+        """
+        model_path = get_package_path(workdir=self.workdir, model_name=self.model_name) / format_to_relative_model_path(
+            format=format, jit_type=jit_type, precision=precision
+        )
+        if model_path.exists():
+            return self._load_model(model_path=model_path, format=format)
+        else:
+            return None
+
+    def get_runner(
         self,
         format: Format,
         jit_type: Optional[JitType] = None,
@@ -438,17 +500,16 @@ class PackageDescriptor:
         runtime: Optional[RuntimeProvider] = None,
     ):
         """
-        Load exported model for given format, jit_type and precision and return model object
+        Load exported model for given format, jit_type and precision and return Polygraphy runner for given runtime.
 
         :return
-            model object for TensorFlow and PyTorch
-            Runner (Polygraphy) for ONNX and TRT
+            Polygraphy BaseRunner object: https://github.com/NVIDIA/TensorRT/blob/main/tools/Polygraphy/polygraphy/backend/base/runner.py
         """
         model_path = get_package_path(workdir=self.workdir, model_name=self.model_name) / format_to_relative_model_path(
             format=format, jit_type=jit_type, precision=precision
         )
         if model_path.exists():
-            return self._load_model(model_path=model_path, format=format, runtime=runtime)
+            return self._load_runner(model_path=model_path, format=format, runtime=runtime)
         else:
             return None
 

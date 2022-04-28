@@ -230,7 +230,7 @@ package_desc = nav.torch.export(
 
 onnx_status = package_desc.get_status(format=nav.Format.ONNX)
 if onnx_status:
-    onnx_runner = package_desc.get_model(format=nav.Format.ONNX, runtime=nav.RuntimeProvider.CPU)
+    onnx_runner = package_desc.get_runner(format=nav.Format.ONNX, runtime=nav.RuntimeProvider.CPU)
 
 # Additional model verification ...
 model_is_valid = True # code for model verification
@@ -265,7 +265,7 @@ package_desc = nav.tensorflow.export(
 
 onnx_status = package_desc.get_status(format=nav.Format.ONNX)
 if onnx_status:
-    onnx_runner = package_desc.get_model(format=nav.Format.ONNX, runtime=nav.RuntimeProvider.CPU)
+    onnx_runner = package_desc.get_runner(format=nav.Format.ONNX, runtime=nav.RuntimeProvider.CPU)
 
 # Additional model verification ...
 model_is_valid = True # code for model verification
@@ -361,10 +361,30 @@ def get_model(
     self,
     format: Format,
     jit_type: Optional[JitType] = None,
-    precision: Optional[Precision] = None,
+    precision: Optional[TensorRTPrecision] = None
+):
+    """
+    Load exported model for given format, jit_type and precision and return model object
+
+    :return
+        model object for TensorFlow, PyTorch and ONNX
+        model path for TensorRT
+    """
+```
+```python
+def get_runner(
+    self,
+    format: Format,
+    jit_type: Optional[JitType] = None,
+    precision: Optional[TensorRTPrecision] = None,
     runtime: Optional[RuntimeProvider] = None,
 ):
-    """Load exported model for given format, jit_type and precision and return model object"""
+    """
+    Load exported model for given format, jit_type and precision and return Polygraphy runner for given runtime.
+
+    :return
+        Polygraphy BaseRunner object: https://github.com/NVIDIA/TensorRT/blob/main/tools/Polygraphy/polygraphy/backend/base/runner.py
+    """
 ```
 ```python
 def set_verified(
