@@ -15,6 +15,7 @@
 import tempfile
 from pathlib import Path
 
+import numpy
 import torch
 
 from model_navigator.converter.config import TensorRTPrecision
@@ -23,10 +24,12 @@ from model_navigator.framework_api.commands.correctness.pyt import CorrectnessPY
 from model_navigator.framework_api.commands.export.pyt import ExportPYT2TorchScript
 from model_navigator.framework_api.commands.performance.base import Performance
 from model_navigator.framework_api.commands.performance.pyt import PerformanceTorchScript
+from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.config import Config
 from model_navigator.framework_api.package_descriptor import PackageDescriptor
 from model_navigator.framework_api.pipelines.pipeline import Pipeline
 from model_navigator.framework_api.utils import Format, Framework, JitType, Status
+from model_navigator.tensor import TensorSpec
 
 # pytype: enable=import-error
 
@@ -65,6 +68,8 @@ def test_pyt_package_descriptor():
             target_jit_type=(JitType.SCRIPT,),
             sample_count=1,
             disable_git_info=False,
+            input_metadata=TensorMetadata({"input__0": TensorSpec("input__0", (1,), dtype=numpy.dtype("float32"))}),
+            output_metadata=TensorMetadata({"output__0": TensorSpec("output__0", (1,), dtype=numpy.dtype("float32"))}),
         )
 
         cmd_export = ExportPYT2TorchScript(
@@ -99,15 +104,19 @@ def test_pyt_package_descriptor():
         # Check model status and load model
         assert package_desc.get_status(format=Format.TORCHSCRIPT, jit_type=JitType.SCRIPT)
         assert package_desc.get_model(format=Format.TORCHSCRIPT, jit_type=JitType.SCRIPT) is not None
+        assert package_desc.get_runner(format=Format.TORCHSCRIPT, jit_type=JitType.SCRIPT) is not None
 
         # These models should be not available:
         assert package_desc.get_status(format=Format.TORCHSCRIPT, jit_type=JitType.TRACE) is False
         assert package_desc.get_model(format=Format.TORCHSCRIPT, jit_type=JitType.TRACE) is None
+        assert package_desc.get_runner(format=Format.TORCHSCRIPT, jit_type=JitType.TRACE) is None
 
         for jit_type in (JitType.SCRIPT, JitType.TRACE):
             for precision in (TensorRTPrecision.FP16, TensorRTPrecision.FP32):
                 assert package_desc.get_status(format=Format.TORCH_TRT, jit_type=jit_type, precision=precision) is False
                 assert package_desc.get_model(format=Format.TORCH_TRT, jit_type=jit_type, precision=precision) is None
+                assert package_desc.get_runner(format=Format.TORCH_TRT, jit_type=jit_type, precision=precision) is None
 
         assert package_desc.get_status(format=Format.ONNX) is False
         assert package_desc.get_model(format=Format.ONNX) is None
+        assert package_desc.get_runner(format=Format.ONNX) is None

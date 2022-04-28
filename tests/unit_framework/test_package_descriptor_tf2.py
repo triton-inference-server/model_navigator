@@ -15,6 +15,7 @@
 import tempfile
 from pathlib import Path
 
+import numpy
 import tensorflow
 
 from model_navigator.converter.config import TensorRTPrecision
@@ -23,10 +24,12 @@ from model_navigator.framework_api.commands.correctness.tf import CorrectnessSav
 from model_navigator.framework_api.commands.export.tf import ExportTF2SavedModel
 from model_navigator.framework_api.commands.performance.base import Performance
 from model_navigator.framework_api.commands.performance.tf import PerformanceSavedModel
+from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.config import Config
 from model_navigator.framework_api.package_descriptor import PackageDescriptor
 from model_navigator.framework_api.pipelines.pipeline import Pipeline
 from model_navigator.framework_api.utils import Format, Framework, Status
+from model_navigator.tensor import TensorSpec
 
 # pytype: enable=import-error
 
@@ -66,6 +69,12 @@ def test_tf2_package_descriptor():
             target_formats=(Format.TF_SAVEDMODEL,),
             sample_count=1,
             disable_git_info=False,
+            input_metadata=TensorMetadata(
+                {"input__0": TensorSpec("input__0", (-1, 224, 224, 3), dtype=numpy.dtype("float32"))}
+            ),
+            output_metadata=TensorMetadata(
+                {"output__0": TensorSpec("output__0", (-1, 224, 224, 3), dtype=numpy.dtype("float32"))}
+            ),
         )
 
         cmd_export = ExportTF2SavedModel()
@@ -96,13 +105,17 @@ def test_tf2_package_descriptor():
         # Check model status and load model
         assert package_desc.get_status(format=Format.TF_SAVEDMODEL)
         assert package_desc.get_model(format=Format.TF_SAVEDMODEL) is not None
+        assert package_desc.get_runner(format=Format.TF_SAVEDMODEL) is not None
 
         # These models should be not available:
         assert package_desc.get_status(format=Format.TF_TRT, precision=TensorRTPrecision.FP16) is False
         assert package_desc.get_model(format=Format.TF_TRT, precision=TensorRTPrecision.FP16) is None
+        assert package_desc.get_runner(format=Format.TF_TRT, precision=TensorRTPrecision.FP16) is None
 
         assert package_desc.get_status(format=Format.TF_TRT, precision=TensorRTPrecision.FP32) is False
         assert package_desc.get_model(format=Format.TF_TRT, precision=TensorRTPrecision.FP32) is None
+        assert package_desc.get_runner(format=Format.TF_TRT, precision=TensorRTPrecision.FP32) is None
 
         assert package_desc.get_status(format=Format.ONNX) is False
         assert package_desc.get_model(format=Format.ONNX) is None
+        assert package_desc.get_runner(format=Format.ONNX) is None
