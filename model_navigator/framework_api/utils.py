@@ -275,6 +275,10 @@ def validate_sample_output(sample, framework: Framework):
             for tensor in sample:
                 if not is_tensor(tensor, framework):
                     return False
+        elif isinstance(sample, Mapping):
+            for tensor in sample.values():
+                if not is_tensor(tensor, framework):
+                    return False
         else:
             tensor = sample
             if not is_tensor(tensor, framework):
@@ -284,5 +288,5 @@ def validate_sample_output(sample, framework: Framework):
     if not is_valid(sample):
         tensor_type = get_tensor_type_name(framework)
         raise UserError(
-            f"Invalid model output type. Output must be of type Union[{tensor_type}, Sequence[{tensor_type}]]. Model returned {sample}."
+            f"Invalid model output type. Output must be of type Union[{tensor_type}, Sequence[{tensor_type}]], Mapping[str, {tensor_type}]]. Model returned {sample}."
         )

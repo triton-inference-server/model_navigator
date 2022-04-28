@@ -14,6 +14,7 @@
 
 import time
 from collections import OrderedDict
+from typing import Mapping
 
 import torch  # pytype: disable=import-error
 from polygraphy.backend.base import BaseRunner
@@ -74,6 +75,8 @@ class PytRunner(BaseRunner):
         validate_sample_output(outputs, Framework.PYT)
         if torch.is_tensor(outputs):
             outputs = (outputs,)
+        if isinstance(outputs, Mapping):
+            outputs = outputs.values()
 
         out_dict = OrderedDict()
         if self.output_names is None:
