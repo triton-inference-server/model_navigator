@@ -16,7 +16,7 @@ import os
 import pathlib
 import uuid
 import zipfile
-from typing import Dict
+from typing import Dict, Optional
 
 import yaml
 
@@ -35,6 +35,7 @@ def pack_workspace(
     workspace: Workspace,
     package_path: pathlib.Path,
     navigator_config: Dict,
+    duration: Optional[float] = None,
 ):
     LOGGER.info(f"Creating package from workspace {workspace.path} to {package_path}")
 
@@ -106,6 +107,7 @@ def pack_workspace(
         "version": FORMAT_VERSION,
         "navigator_version": navigator_version,
         "timestamp": f"{datetime.datetime.utcnow():%Y-%m-%dT%H:%M:%S.%f}",
+        "duration": duration,
         "config": navigator_config,
         "models": models,
         "environment": {

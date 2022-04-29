@@ -71,6 +71,7 @@ from model_navigator.utils.config import dataclass2dict
 from model_navigator.utils.device import get_gpus
 from model_navigator.utils.environment import EnvironmentStore, get_env
 from model_navigator.utils.pack_workspace import pack_workspace
+from model_navigator.utils.timer import Timer
 from model_navigator.validators import run_command_validators
 
 LOGGER = logging.getLogger("optimize")
@@ -117,6 +118,9 @@ def optimize_cmd(
     override_conversion_container: bool,
     **kwargs,
 ):
+    timer = Timer()
+    timer.start()
+
     init_logger(verbose=verbose)
     if config_path:
         LOGGER.debug(f"Running '{ctx.command_path}' with config_path: {config_path}")
@@ -294,7 +298,9 @@ def optimize_cmd(
     results_store = ResultsStore(workspace)
     results_store.dump("helm_chart_create", create_helm_chart_results)
     output_package_path = _get_output_package_path(src_model_config, output_package)
-    pack_workspace(workspace, output_package_path, arguments)
+
+    timer.stop()
+    pack_workspace(workspace, output_package_path, arguments, duration=timer.duration())
 
 
 def _get_output_package_path(model_config, output_package):
