@@ -22,6 +22,10 @@ limitations under the License.
   - Support for export models from TensorFlow2 and PyTorch source code to supported target formats
   - Conversion, Correctness and performance tests for exported models
   - Definition of package structure for storing all exported models and additional metadata
+- `run` command has been deprecated and may be removed in a future release. Two new commands are introduced to replace it:
+  - `optimize` which does the same conversion, configuration, profiling and analysis steps as `run` and produces an output .triton.nav package.
+  - `select`, which, given the result of `optimize` and a set of constraints,
+    selects the best-performing configuration and deploys it as a Triton Inference Server model repository.
 - Profiling related:
   - Added support for using shared memory option for Perf Analyzer
 - Remove wkhtmltopdf package dependency

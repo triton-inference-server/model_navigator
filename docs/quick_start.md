@@ -100,7 +100,7 @@ Triton Inference Server. In results it produces package that can used directly f
 
 First, run the model configuration and profiling process.
 ```shell
-$ model-navigator run my_model.nav # conversion + analyzer
+$ model-navigator optimize my_model.nav # conversion + analyzer
 ```
 This produces a new "my_model.triton.nav" package. This can then be used as an input to the
 `model-navigator select` command, which builds a Triton model repository containing the input model in

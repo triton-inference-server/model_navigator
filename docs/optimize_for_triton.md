@@ -34,7 +34,7 @@ limitations under the License.
 
 The Triton Model Navigator supports a single command to run through the process and step-by-step execution going through each stage.
 
-The `model-navigator run` command replaces the old default behavior where all the steps are being performed one by one. Review the other commands to learn more about the process:
+The `model-navigator optimize` command replaces the old default behavior where all the steps are being performed one by one. Review the other commands to learn more about the process:
 - [Model Conversion](advanced/conversion.md)
 - [Triton Model Configurator](advanced/triton_model_configurator.md)
 - [Profiling](advanced/profiling.md)
@@ -44,19 +44,19 @@ The `model-navigator run` command replaces the old default behavior where all th
 ## Synopsis
 
 ```shell
-$ model-navigator run [<options>] [-o _outpackage_] [ _package_ ]
+$ model-navigator optimize [<options>] [-o _outpackage_] [ _package_ ]
 ```
 
 ## Description
 
-The `model-navigator run` command performs step-by-step execution of model optimization and profiling.
-The `run` operations start the model conversion to optimized formats like the TensorRT plan, verify
+The `model-navigator optimize` command performs step-by-step execution of model optimization and profiling.
+The `optimize` operations start the model conversion to optimized formats like the TensorRT plan, verify
 the conversion correctness, evaluate optimized model versions on Triton, and profile them using
-the Triton Model Analyzer. In the final stage, the `run` command analyzes the obtained results
+the Triton Model Analyzer. In the final stage, the `optimize` command analyzes the obtained results
 based on provided constraints and objectives, and prepares the Helm Charts deployment for
 top N configurations on the Triton Inference Server.
 
-The preferred way to use `model-navigator run` is to supply a Navigator package.
+The preferred way to use `model-navigator optimize` is to supply a Navigator package.
 For advanced users, it is also possible to use raw TorchScript/SavedModel models as inputs.
 The output of the procedure is a `triton.nav` package.
 
@@ -65,13 +65,13 @@ The output of the procedure is a `triton.nav` package.
 ### Using a package
 
 ```shell
-$ model-navigator run model_navigator/examples/quick-start/model.nav
+$ model-navigator optimize model_navigator/examples/quick-start/model.nav
 ```
 
 ### Using CLI arguments to override default package settings
 
 ```shell
-$ model-navigator run --tensorrt_max_workspace_size 8589934592 \
+$ model-navigator optimize --tensorrt_max_workspace_size 8589934592 \
     --config-search-max-concurrency 256 \
     --max-latency-ms 50 \
     --verbose \
@@ -112,10 +112,10 @@ max_latency_ms: 50
 verbose: true
 ```
 
-Running the Triton Model Navigator run command:
+Running the Triton Model Navigator optimize command:
 
 ```shell
-$ model-navigator run --config-path model_navigator.yaml model_navigator/examples/quick-start/model.nav
+$ model-navigator optimize --config-path model_navigator.yaml model_navigator/examples/quick-start/model.nav
 ```
 
 
@@ -130,7 +130,7 @@ Since TorchScript files do not contain signatures of inputs (i.e. their sizes an
 those have to be supplied as options.
 
 ```shell
-$ model-navigator run --model-name add_sub \
+$ model-navigator optimize --model-name add_sub \
     --model-path model_navigator/examples/quick-start/model.pt \
     --inputs INPUT__0:-1,16:float32 INPUT__1:-1,16:float32 \
     --outputs OUTPUT__0:-1,16:float32 OUTPUT__1:-1,16:float32 \
@@ -141,7 +141,7 @@ $ model-navigator run --model-name add_sub \
 ### Example using a TensorFlow SavedModel
 
 ```shell
-$ model-navigator run --model-name add-sub \
+$ model-navigator optimize --model-name add-sub \
     --model-path model_navigator/examples/quick-start/model.pt
 ```
 
