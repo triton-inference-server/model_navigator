@@ -66,11 +66,11 @@ def _cast_down(dtype):
     return dtype
 
 
-def _trtorch_inputs(io_spec: ModelSignatureConfig, dataloader):
+def _trtorch_inputs(dataloader):
     ret = []
 
-    for name, input_ in io_spec.inputs.items():
-        dtype = _cast_down(numpy_to_torch_type(input_.dtype.type))
+    for name, dtype in dataloader.dtypes.items():
+        dtype = _cast_down(numpy_to_torch_type(dtype))
         shapes = {
             "min_shape": dataloader.min_shapes[name],
             "opt_shape": dataloader.opt_shapes[name],
@@ -148,7 +148,7 @@ def convert_to_trt_engine(
     out = trtorch.ts.convert_method_to_trt_engine(
         model,
         "forward",
-        inputs=_trtorch_inputs(signature_config, dataloader),
+        inputs=_trtorch_inputs(dataloader),
         strict_types=tensorrt_config.strict_types,
         sparse_weights=tensorrt_config.sparse_weights,
         workspace_size=tensorrt_config.max_workspace_size,
@@ -172,7 +172,7 @@ def compile(
     model = load_model(input_model)
     out = trtorch.ts.compile(
         model,
-        inputs=_trtorch_inputs(signature_config, dataloader),
+        inputs=_trtorch_inputs(dataloader),
         strict_types=tensorrt_config.strict_types,
         sparse_weights=tensorrt_config.sparse_weights,
         workspace_size=tensorrt_config.max_workspace_size,

@@ -15,6 +15,8 @@ import sys
 
 from click import Context
 
+from model_navigator.converter.config import DatasetProfileConfig
+from model_navigator.converter.dataloader import NavPackageDataloader, RandomDataloader
 from model_navigator.log import LOGGER
 from model_navigator.results import State, Status
 
@@ -43,3 +45,19 @@ def exit_cli_command(status: Status) -> None:
     if result_status != 0:
         LOGGER.error(status.message)
     sys.exit(result_status)
+
+
+def get_dataloader(**kwargs):
+    package = kwargs.get("package")
+    if package:
+        dataloader = NavPackageDataloader(package, "profiling", max_batch_size=1)
+    else:
+        dataset_profile_config = DatasetProfileConfig.from_dict(kwargs)
+        dataloader = RandomDataloader(
+            model_config=None,
+            model_signature_config=None,
+            dataset_profile=dataset_profile_config,
+            max_batch_size=1,
+            enforce_max_batch_size=True,
+        )
+    return dataloader

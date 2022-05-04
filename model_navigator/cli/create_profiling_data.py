@@ -18,8 +18,8 @@ from pathlib import Path
 import click
 
 from model_navigator.cli.spec import DatasetProfileConfigCli
+from model_navigator.cli.utils import get_dataloader
 from model_navigator.converter.config import DatasetProfileConfig
-from model_navigator.converter.dataloader import NavPackageDataloader, RandomDataloader
 from model_navigator.log import init_logger
 from model_navigator.perf_analyzer.profiling_data import create_profiling_data
 from model_navigator.utils.cli import common_options, options_from_config
@@ -47,18 +47,7 @@ def create_profiling_data_cmd(ctx, verbose: bool, data_output_path: str, **kwarg
         },
     )
 
-    package = kwargs.get("package")
-    if package:
-        dataloader = NavPackageDataloader(package, "profiling", max_batch_size=1)
-    else:
-        dataset_profile_config = DatasetProfileConfig.from_dict(kwargs)
-        dataloader = RandomDataloader(
-            model_config=None,
-            model_signature_config=None,
-            dataset_profile=dataset_profile_config,
-            max_batch_size=1,
-            enforce_max_batch_size=True,
-        )
+    dataloader = get_dataloader(**kwargs)
 
     create_profiling_data(
         dataloader=dataloader,

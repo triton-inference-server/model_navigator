@@ -53,6 +53,11 @@ class Dataloader(ABC):
     def max_shapes(self) -> Dict[str, List[int]]:
         ...
 
+    @property
+    @abstractmethod
+    def dtypes(self) -> Dict[str, List[np.dtype]]:
+        ...
+
 
 def _generate_random(dtype, shapes, value_range, rng) -> Iterable[Tuple]:
     if dtype.kind == "i":
@@ -269,6 +274,10 @@ class RandomDataloader(Dataloader):
             self.dataset_profile.opt_shapes = self.dataset_profile.max_shapes
         return self.dataset_profile.opt_shapes
 
+    @property
+    def dtypes(self) -> Dict[str, List[np.dtype]]:
+        return {k: t.type for k, t in self.dataset_profile.dtypes.items()}
+
     def __iter__(self) -> Iterator[Dict[str, np.ndarray]]:
         yield from (
             {
@@ -285,6 +294,7 @@ class NavPackageDataloader(Dataloader):
     """
 
     def __init__(self, package: NavPackage, dataset: str, max_batch_size: int = 0):
+        LOGGER.debug("Creating dataloader from package %s", package.path)
         if max_batch_size == 0:
             raise ModelNavigatorException("Please provide the --max-batch-size option")
         if max_batch_size < 0:
@@ -360,3 +370,13 @@ class NavPackageDataloader(Dataloader):
     @property
     def opt_shapes(self) -> Dict[str, List[int]]:
         return self.max_shapes
+
+    @property
+    def dtypes(self) -> Dict[str, List[np.dtype]]:
+        dtypes = {}
+        for sample in self:
+            for inp, val in sample.items():
+                dtypes[inp] = val.dtype.type
+            break
+
+        return dtypes
