@@ -122,9 +122,10 @@ class NavigatorStatus(DataObject):
 class PackageDescriptor:
     status_filename = get_default_status_filename()
 
-    def __init__(self, navigator_status: NavigatorStatus, workdir: Path):
+    def __init__(self, navigator_status: NavigatorStatus, workdir: Path, model: Optional[object] = None):
         self.navigator_status = navigator_status
         self.workdir = workdir
+        self.model = model
 
     @classmethod
     def from_pipelines(cls, pipelines: List[Pipeline], config: Config):
@@ -222,7 +223,7 @@ class PackageDescriptor:
             output_metadata=config.output_metadata,
         )
 
-        pkg_desc = cls(navigator_status, config.workdir)
+        pkg_desc = cls(navigator_status, config.workdir, model=config.model)
         pkg_desc.delete_status_file()
         pkg_desc.create_status_file()
 
@@ -512,6 +513,44 @@ class PackageDescriptor:
             return self._load_runner(model_path=model_path, format=format, runtime=runtime)
         else:
             return None
+
+    def get_source_runner(
+        self,
+    ):
+        """
+        Load Polygraphy runner for source model.
+
+        :return
+            Polygraphy BaseRunner object: https://github.com/NVIDIA/TensorRT/blob/main/tools/Polygraphy/polygraphy/backend/base/runner.py
+        """
+        if self.model is None:
+            LOGGER.warning("Source model not available.")
+            return None
+        if self.framework == Framework.PYT:
+            from model_navigator.framework_api.runners.pyt import PytRunner
+
+            return PytRunner(
+                self.model,
+                input_metadata=self.navigator_status.input_metadata,
+                output_names=list(self.navigator_status.output_metadata.keys()),
+                target_device=self.navigator_status.export_config["target_device"],
+            )
+        elif self.framework == Framework.TF2:
+            from model_navigator.framework_api.runners.tf import TFRunner
+
+            return TFRunner(
+                self.model,
+                input_metadata=self.navigator_status.input_metadata,
+                output_names=list(self.navigator_status.output_metadata.keys()),
+            )
+        elif self.framework == Framework.ONNX:
+            from polygraphy.backend.onnxrt import SessionFromOnnx
+
+            from model_navigator.framework_api.runners.onnx import OnnxrtRunner
+
+            return OnnxrtRunner(SessionFromOnnx(self.model, providers=format2runtimes(Format.ONNX)))
+        else:
+            raise RuntimeError(f"Unknown framework: {self.framework}.")
 
     @property
     def _target_formats(self):
