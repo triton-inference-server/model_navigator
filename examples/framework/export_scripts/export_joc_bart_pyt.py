@@ -46,6 +46,11 @@ def setup_env(workdir):
     return bart_path
 
 
+def get_verification_status_dummy(runner):
+    """Dummy verification function."""
+    return False
+
+
 def parse_args():
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group(required=True)
@@ -152,6 +157,31 @@ def main():
             target_device=device,
             atol=1e-3,
         )
+
+        for model_status in pkg_desc.navigator_status.model_status:
+            for runtime_results in model_status.runtime_results:
+                if runtime_results.status == nav.Status.OK:
+                    runner = pkg_desc.get_runner(
+                        format=model_status.format,
+                        jit_type=model_status.torch_jit,
+                        precision=model_status.precision,
+                        runtime=runtime_results.runtime,
+                    )
+                    verified = get_verification_status_dummy(runner)
+                    if verified:
+                        pkg_desc.set_verified(
+                            format=model_status.format,
+                            jit_type=model_status.torch_jit,
+                            precision=model_status.precision,
+                            runtime=runtime_results.runtime,
+                        )
+                        nav.LOGGER.info(
+                            f"{model_status.format=}, {model_status.torch_jit=}, {model_status.precision=}, {runtime_results.runtime=} verified."
+                        )
+                    else:
+                        nav.LOGGER.warning(
+                            f"{model_status.format=}, {model_status.torch_jit=}, {model_status.precision=}, {runtime_results.runtime=} not verified."
+                        )
 
         output_path = args.output_path or f"{args.model_name}_pyt.nav"
         pkg_desc.save(output_path, keep_workdir=args.keep_workdir, override=True)
