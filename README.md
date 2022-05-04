@@ -43,6 +43,7 @@ to find the best Triton Model configuration, matches the provided constraints, a
 * [Export from Source](docs/export_from_source.md)
 * [Optimize for Triton Inference Server](docs/optimize_for_triton.md)
 * [Quick Start](docs/quick_start.md)
+* [Installation](docs/installation.md)
 * [Advanced]()
   * [Model Conversions](docs/advanced/conversion.md)
   * [Triton Model Configurator](docs/advanced/triton_model_configurator.md)
