@@ -50,12 +50,15 @@ def convert(input_model_path, output_path, opset, dataloader: Dataloader, verbos
         **{spec.name: _extract_dyn_axes(spec) for name, spec in outputs.items()},
     }
 
-    # FIXME: argument handling here is really awful, unintuitive and can break easily.
-    # Ideally, Triton could support kwargs in the model's forward method,
-    # which has been recently implemented in libtorch.
     input_names = [name for name, spec in inputs.items()]
+    schema_input_names = [arg.name for arg in model.forward.schema.arguments[1:]]
+    if sorted(input_names) == sorted(schema_input_names):
+        # if input names are the same as in schema and the order is swapped, then restore it.
+        # If they are not the same, then ignore the schema for backwards compatibility
+        input_names = schema_input_names
     output_names = [name for name, spec in outputs.items()]
-    model_args = tuple(torch.from_numpy(i).to(device=device) for _, i in next(iter(dataloader)).items())
+    sample = next(iter(dataloader))
+    model_args = tuple(torch.from_numpy(sample[name]).to(device=device) for name in input_names)
 
     torch.onnx.export(
         model=model,

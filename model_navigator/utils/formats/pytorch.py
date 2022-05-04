@@ -14,11 +14,8 @@
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict
 
-from model_navigator.exceptions import ModelNavigatorException
 from model_navigator.model import ModelSignatureConfig
-from model_navigator.tensor import TensorSpec
 from model_navigator.utils.config import YamlConfigFile
 from model_navigator.utils.formats.base import BaseFormatUtils
 
@@ -45,36 +42,7 @@ class TorchScriptUtils(BaseFormatUtils):
 
     @classmethod
     def validate_signature(cls, signature: ModelSignatureConfig):
-        # based on
-        # -  https://github.com/triton-inference-server/server/blob/89b7f8b30bf84d20f96825a6c476e7f71eca6dd6/docs/model_configuration.md#inputs-and-outputs
-
-        SEP = "__"
-
-        def _validate_io(io: Dict[str, TensorSpec], type_name: str):
-            for name, spec in io.items():
-                if name != spec.name:
-                    raise ModelNavigatorException(f"{type_name} name differs '{name}' != '{spec.name}'")
-                if SEP not in name:
-                    raise ModelNavigatorException(
-                        f"{type_name} '{name}' does not follow naming convention i.e. <name>__<index>."
-                    )
-                index_str = name.split(SEP)[1]
-                try:
-                    index = int(index_str)
-                    if index < 0:
-                        raise ValueError()
-                except ValueError:
-                    raise ModelNavigatorException(f"{type_name} '{name}' have invalid index value {index_str}.")
-            io_indexes = [int(name.split(SEP)[1]) for name in io]
-            if len(io) != len(set(io_indexes)):
-                raise ModelNavigatorException(f"{type_name}s have duplicated indexes: {io_indexes}.")
-            if io_indexes and max(io_indexes) - min(io_indexes) >= len(io):
-                raise ModelNavigatorException(f"{type_name}s indexes are not subsequent: {io_indexes}.")
-
-        inputs = signature.inputs or {}
-        outputs = signature.outputs or {}
-        _validate_io(inputs, "Input")
-        _validate_io(outputs, "Output")
+        pass
 
     @classmethod
     def get_properties(cls, path: Path):

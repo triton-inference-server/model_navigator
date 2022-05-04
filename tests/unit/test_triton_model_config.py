@@ -124,7 +124,8 @@ def test_model_config_parsing_signature_for_torchscript(monkeypatch, max_batch_s
 
         parsed_model_config_generator = TritonModelConfigGenerator.parse_triton_config_pbtxt(config_path)
         assert src_model.signature is not None
-        assert parsed_model_config_generator.model.signature == src_model.signature
+        assert len(parsed_model_config_generator.model.signature.outputs) == len(src_model.signature.outputs)
+        assert parsed_model_config_generator.model.signature.inputs == src_model.signature.inputs
         assert parsed_model_config_generator.optimization_config == optimization_config
         assert parsed_model_config_generator.dynamic_batching_config == dynamic_batching_config
         assert parsed_model_config_generator.instances_config == instances_config

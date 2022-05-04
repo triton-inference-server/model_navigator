@@ -29,7 +29,7 @@ from model_navigator.cli.spec import (
     PerfMeasurementConfigCli,
     TritonClientConfigCli,
 )
-from model_navigator.cli.utils import exit_cli_command, is_cli_command
+from model_navigator.cli.utils import exit_cli_command, get_dataloader, is_cli_command
 from model_navigator.converter import DatasetProfileConfig
 from model_navigator.exceptions import ModelNavigatorException
 from model_navigator.log import log_dict, set_logger
@@ -293,7 +293,8 @@ def triton_evaluate_model_cmd(
     shapes = []
 
     try:
-        shapes_params = get_shape_params(dataset_profile_config)
+        dataloader = get_dataloader(**kwargs)
+        shapes_params = get_shape_params(dataloader.max_shapes)
         if dataset_profile_config.value_ranges and dataset_profile_config.dtypes:
             profiling_data_path = workspace.path / DEFAULT_RANDOM_DATA_FILENAME
             ctx.forward(create_profiling_data_cmd, data_output_path=profiling_data_path)

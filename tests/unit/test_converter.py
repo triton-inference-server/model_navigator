@@ -25,13 +25,20 @@ class MockDataloader(Dataloader):
     def __iter__(self):
         pass
 
+    @property
     def max_shapes(self):
         return None
 
+    @property
     def min_shapes(self):
         return None
 
+    @property
     def opt_shapes(self):
+        return None
+
+    @property
+    def dtypes(self):
         return None
 
 

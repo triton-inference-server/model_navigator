@@ -132,11 +132,14 @@ those have to be supplied as options.
 ```shell
 $ model-navigator optimize --model-name add_sub \
     --model-path model_navigator/examples/quick-start/model.pt \
-    --inputs INPUT__0:-1,16:float32 INPUT__1:-1,16:float32 \
+    --inputs input0:-1,16:float32 input1:-1,16:float32 \
     --outputs OUTPUT__0:-1,16:float32 OUTPUT__1:-1,16:float32 \
     --config-search-max-concurrency 256 \
     --max-latency-ms 50
 ```
+
+The input names are the same as argument names to the forward function.
+Output names should follow the convention described in the [Triton Inference Server documentation](https://github.com/triton-inference-server/server/blob/89b7f8b30bf84d20f96825a6c476e7f71eca6dd6/docs/model_configuration.md#inputs-and-outputs).
 
 ### Example using a TensorFlow SavedModel
 
