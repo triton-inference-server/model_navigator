@@ -65,6 +65,39 @@ pkg_desc = nav.torch.export(
     model_name="my_model",
     target_device=device,
 )
+
+```
+Next user should verify exported format. User can use custom metrics, measure accuracy, listen to the output etc.
+```python
+import numpy
+import torch
+
+sample_count = 100
+valid_outputs = 0
+for _ in range(sample_count):
+    random_sample = torch.full((3, 5), 1.0)
+
+    # Use source model to generate dummy ground truth
+    gt = [model(random_sample).detach().cpu().numpy()]
+
+    feed_dict = {"input__0": random_sample.detach().cpu().numpy()}
+    onnx_runner = pkg_desc.get_runner(format=nav.Format.ONNX, runtime=nav.RuntimeProvider.CUDA)
+    with onnx_runner:
+        output = onnx_runner.infer(feed_dict)
+
+    # Compare output and gt
+    for a, b in zip(gt, output.values()):
+        if numpy.allclose(a, b, atol=0, rtol=0):
+            valid_outputs += 1
+
+accuracy = float(valid_outputs) / float(sample_count)
+
+if accuracy > 0.8:
+    pkg_desc.set_verified(format=nav.Format.ONNX, runtime=nav.RuntimeProvider.CUDA)
+```
+After verification user have to save final Navigator package. This package will contain base format and all information
+that allows for recreation of all other formats and rerunning all tests.
+```python
 pkg_desc.save("my_model.nav")
 ```
 
