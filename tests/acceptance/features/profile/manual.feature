@@ -22,7 +22,10 @@ Feature: Model Manual Profiling
         When I execute profile command
         Then the command should succeeded
         And the 'run_config_search_disable': True pattern is present on command output
-        And the my_model model configs in latest profile checkpoint are
+        Given removed the config_search_preferred_batch_sizes config parameter
+        When I execute analyze command
+        Then the command should succeeded
+        And the my_model model configs in latest profiling are
             {"maxBatchSize": 4, "cpu_only": false}
             {"maxBatchSize": 4, "dynamicBatching": {"preferredBatchSize": [2, 4]}, "cpu_only": false}
             {"maxBatchSize": 4, "dynamicBatching": {"preferredBatchSize": [4]}, "cpu_only": false}
@@ -40,11 +43,15 @@ Feature: Model Manual Profiling
         And removed the model_name config parameter
         When I execute profile command
         Then the command should succeeded
-        And the my_model model configs in latest profile checkpoint are
+        Given removed the config_search_concurrency config parameter
+        And removed the config_search_max_instance_count config parameter
+        And removed the config_search_preferred_batch_sizes config parameter
+        When I execute analyze command
+        Then the command should succeeded
+        And the my_model model configs in latest profiling are
             {"maxBatchSize": 4, "cpu_only": false}
             {"maxBatchSize": 4, "dynamicBatching": {"preferredBatchSize": [2, 4]}, "cpu_only": false}
             {"maxBatchSize": 4, "dynamicBatching": {"preferredBatchSize": [4]}, "cpu_only": false}
-
         And the my_model model was profiled with 1 2 concurrency levels
 
     Scenario: User uses Model Analyzer Manual Configuration Search with search over all possible axes
@@ -61,18 +68,29 @@ Feature: Model Manual Profiling
         When I execute profile command
         Then the command should succeeded
         And the 'run_config_search_disable': True pattern is present on command output
-        And the my_model model configs in latest profile checkpoint are
+        Given removed the config_search_instance_counts config parameter
+        And removed the config_search_max_batch_sizes config parameter
+        And removed the config_search_preferred_batch_sizes config parameter
+        And removed the config_search_backend_parameters config parameter
+        When I execute analyze command
+        Then the command should succeeded
+        And the my_model model configs in latest profiling are
             {"maxBatchSize": 4, "cpu_only": false}
-            {"maxBatchSize": 4, "instanceGroup": [{"count": 1, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [2, 4]}, "parameters": {"param2": {"stringValue": "value2.1"}, "param1": {"stringValue": "value1.1"}}, "cpu_only": false}
-            {"maxBatchSize": 4, "instanceGroup": [{"count": 1, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [2, 4]}, "parameters": {"param1": {"stringValue": "value1.2"}, "param2": {"stringValue": "value2.1"}}, "cpu_only": false}
-            {"maxBatchSize": 4, "instanceGroup": [{"count": 3, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [2, 4]}, "parameters": {"param1": {"stringValue": "value1.1"}, "param2": {"stringValue": "value2.1"}}, "cpu_only": false}
-            {"maxBatchSize": 4, "instanceGroup": [{"count": 3, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [2, 4]}, "parameters": {"param1": {"stringValue": "value1.2"}, "param2": {"stringValue": "value2.1"}}, "cpu_only": false}
+            {"maxBatchSize": 4, "instanceGroup": [{"count": 1, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [2, 4]}, "parameters": {"param1": {"stringValue": "value1.1"}, "param2": {"stringValue": "value2.1"}}, "cpu_only": false}
+            {"maxBatchSize": 4, "instanceGroup": [{"count": 1, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [2, 4]}, "parameters": {"param2": {"stringValue": "value2.1"}, "param1": {"stringValue": "value1.2"}}, "cpu_only": false}
+            {"maxBatchSize": 4, "instanceGroup": [{"count": 3, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [2, 4]}, "parameters": {"param2": {"stringValue": "value2.1"}, "param1": {"stringValue": "value1.1"}}, "cpu_only": false}
+            {"maxBatchSize": 4, "instanceGroup": [{"count": 3, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [2, 4]}, "parameters": {"param2": {"stringValue": "value2.1"}, "param1": {"stringValue": "value1.2"}}, "cpu_only": false}
+            {"maxBatchSize": 4, "instanceGroup": [{"count": 3, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [8]}, "parameters": {"param2": {"stringValue": "value2.1"}, "param1": {"stringValue": "value1.1"}}, "cpu_only": false}
+            {"maxBatchSize": 4, "instanceGroup": [{"count": 3, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [8]}, "parameters": {"param2": {"stringValue": "value2.1"}, "param1": {"stringValue": "value1.2"}}, "cpu_only": false}
+            {"maxBatchSize": 4, "instanceGroup": [{"count": 1, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [8]}, "parameters": {"param1": {"stringValue": "value1.1"}, "param2": {"stringValue": "value2.1"}}, "cpu_only": false}
+            {"maxBatchSize": 4, "instanceGroup": [{"count": 1, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [8]}, "parameters": {"param1": {"stringValue": "value1.2"}, "param2": {"stringValue": "value2.1"}}, "cpu_only": false}
+            {"maxBatchSize": 32, "instanceGroup": [{"count": 3, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [2, 4]}, "parameters": {"param2": {"stringValue": "value2.1"}, "param1": {"stringValue": "value1.1"}}, "cpu_only": false}
+            {"maxBatchSize": 32, "instanceGroup": [{"count": 3, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [2, 4]}, "parameters": {"param2": {"stringValue": "value2.1"}, "param1": {"stringValue": "value1.2"}}, "cpu_only": false}
             {"maxBatchSize": 32, "instanceGroup": [{"count": 1, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [2, 4]}, "parameters": {"param1": {"stringValue": "value1.1"}, "param2": {"stringValue": "value2.1"}}, "cpu_only": false}
             {"maxBatchSize": 32, "instanceGroup": [{"count": 1, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [2, 4]}, "parameters": {"param1": {"stringValue": "value1.2"}, "param2": {"stringValue": "value2.1"}}, "cpu_only": false}
-            {"maxBatchSize": 32, "instanceGroup": [{"count": 3, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [2, 4]}, "parameters": {"param1": {"stringValue": "value1.1"}, "param2": {"stringValue": "value2.1"}}, "cpu_only": false}
-            {"maxBatchSize": 32, "instanceGroup": [{"count": 3, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [2, 4]}, "parameters": {"param1": {"stringValue": "value1.2"}, "param2": {"stringValue": "value2.1"}}, "cpu_only": false}
-            {"maxBatchSize": 32, "instanceGroup": [{"count": 1, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [8]}, "parameters": {"param2": {"stringValue": "value2.1"}, "param1": {"stringValue": "value1.1"}}, "cpu_only": false}
-            {"maxBatchSize": 32, "instanceGroup": [{"count": 1, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [8]}, "parameters": {"param2": {"stringValue": "value2.1"}, "param1": {"stringValue": "value1.2"}}, "cpu_only": false}
+            {"maxBatchSize": 32, "instanceGroup": [{"count": 1, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [8]}, "parameters": {"param1": {"stringValue": "value1.1"}, "param2": {"stringValue": "value2.1"}}, "cpu_only": false}
+            {"maxBatchSize": 32, "instanceGroup": [{"count": 1, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [8]}, "parameters": {"param1": {"stringValue": "value1.2"}, "param2": {"stringValue": "value2.1"}}, "cpu_only": false}
             {"maxBatchSize": 32, "instanceGroup": [{"count": 3, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [8]}, "parameters": {"param1": {"stringValue": "value1.1"}, "param2": {"stringValue": "value2.1"}}, "cpu_only": false}
             {"maxBatchSize": 32, "instanceGroup": [{"count": 3, "kind": "KIND_GPU"}, {"count": 3, "kind": "KIND_CPU"}], "dynamicBatching": {"preferredBatchSize": [8]}, "parameters": {"param2": {"stringValue": "value2.1"}, "param1": {"stringValue": "value1.2"}}, "cpu_only": false}
         And the my_model model was profiled with 1 concurrency levels
+

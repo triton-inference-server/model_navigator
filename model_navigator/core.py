@@ -30,5 +30,5 @@ class Container(NamedTuple):
         return f"{cls.image}:{version}-{cls.tag}"
 
 
-DEFAULT_CONTAINER_VERSION = "22.03"
+DEFAULT_CONTAINER_VERSION = "22.04"
 DEFAULT_TENSORRT_MAX_WORKSPACE_SIZE = 4 * 2 ** 30  # 4GB

@@ -68,13 +68,13 @@ Refer to the [changelog](../CHANGELOG.md) for any related issues on these models
 ## Third-Party Packages
 
 A set of component versions are imposed by the used `container_version` parameter value.
-By default, we're using the 22.03 container version that contains:
+By default, we're using the 22.04 container version that contains:
 
 - PyTorch 1.12.0a0+2c916ef
 - TensorFlow 2.8.0 / 1.15.5
-- TensorRT TensorRT 8.2.3
-- [Triton Inference Server 2.20.0](https://github.com/triton-inference-server/server/releases/tag/v2.20.0)
-- [ONNX Runtime 1.9.0](https://github.com/microsoft/onnxruntime/releases/tag/v1.9.0)
+- TensorRT TensorRT 8.2.4.2
+- [Triton Inference Server 2.21.0](https://github.com/triton-inference-server/server/releases/tag/v2.21.0)
+- [ONNX Runtime 1.10.0](https://github.com/microsoft/onnxruntime/releases/tag/v1.10.0)
 
 Refer to [the containers support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
 for a detailed summary for each version.

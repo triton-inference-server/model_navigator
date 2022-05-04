@@ -24,6 +24,7 @@ import click
 from click import UsageError
 
 from model_navigator.cli.spec import (
+    BatchingConfigCli,
     ModelConfigCli,
     ModelSignatureConfigCli,
     TensorRTCommonConfigCli,
@@ -35,7 +36,7 @@ from model_navigator.cli.spec import (
     TritonModelOptimizationConfigCli,
 )
 from model_navigator.cli.utils import exit_cli_command, is_cli_command
-from model_navigator.common.config import TensorRTCommonConfig
+from model_navigator.common.config import BatchingConfig, TensorRTCommonConfig
 from model_navigator.exceptions import BadParameterModelNavigatorDeployerException, ModelNavigatorDeployerException
 from model_navigator.log import init_logger, log_dict
 from model_navigator.model import Model, ModelConfig, ModelSignatureConfig
@@ -62,7 +63,8 @@ class ConfigModelResult:
     status: Status
     model_config: ModelConfig
     model_version: str
-    batching_config: TritonBatchingConfig
+    batching_config: BatchingConfig
+    triton_batching_config: TritonBatchingConfig
     optimization_config: TritonModelOptimizationConfig
     dynamic_batching_config: TritonDynamicBatchingConfig
     instances_config: TritonModelInstancesConfig
@@ -131,6 +133,7 @@ CMD_NAME = "triton-config-model"
 )
 @options_from_config(ModelSignatureConfig, ModelSignatureConfigCli)
 @options_from_config(TritonModelOptimizationConfig, TritonModelOptimizationConfigCli)
+@options_from_config(BatchingConfig, BatchingConfigCli)
 @options_from_config(TritonBatchingConfig, TritonBatchingConfigCli)
 @options_from_config(TritonDynamicBatchingConfig, TritonDynamicBatchingConfigCli)
 @options_from_config(TritonModelInstancesConfig, TritonModelInstancesConfigCli)
@@ -168,7 +171,8 @@ def config_model_on_triton_cmd(
 
     model_config = ModelConfig.from_dict(kwargs)
     signature_config = ModelSignatureConfig.from_dict(kwargs)
-    batching_config = TritonBatchingConfig.from_dict(kwargs)
+    batching_config = BatchingConfig.from_dict(kwargs)
+    triton_batching_config = TritonBatchingConfig.from_dict(kwargs)
     optimization_config = TritonModelOptimizationConfig.from_dict(kwargs)
     tensorrt_common_config = TensorRTCommonConfig.from_dict(kwargs)
     dynamic_batching_config = TritonDynamicBatchingConfig.from_dict(kwargs)
@@ -191,6 +195,7 @@ def config_model_on_triton_cmd(
                 },
                 **dataclasses.asdict(signature_config),
                 **dataclasses.asdict(batching_config),
+                **dataclasses.asdict(triton_batching_config),
                 **dataclasses.asdict(optimization_config),
                 **dataclasses.asdict(tensorrt_common_config),
                 **dataclasses.asdict(dynamic_batching_config),
@@ -216,6 +221,7 @@ def config_model_on_triton_cmd(
             model=model,
             model_version=model_version,
             batching_config=batching_config,
+            triton_batching_config=triton_batching_config,
             optimization_config=optimization_config,
             tensorrt_common_config=tensorrt_common_config,
             dynamic_batching_config=dynamic_batching_config,
@@ -249,6 +255,7 @@ def config_model_on_triton_cmd(
         model_config=model_config,
         model_version=model_version,
         batching_config=batching_config,
+        triton_batching_config=triton_batching_config,
         optimization_config=optimization_config,
         tensorrt_common_config=tensorrt_common_config,
         dynamic_batching_config=dynamic_batching_config,

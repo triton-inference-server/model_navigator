@@ -154,7 +154,7 @@ class ProfileConfigGenerator(BaseConfigGenerator):
 
     def generate_config(self):
         model_repository = self._triton_config.model_repository
-        models_list = [model_dir.name for model_dir in model_repository.glob("*") if model_dir.is_dir()]
+        models_list = sorted(model_dir.name for model_dir in model_repository.glob("*") if model_dir.is_dir())
         LOGGER.info(f"Prepare profiling for {len(models_list)} models from {model_repository}:")
         for model_name in models_list:
             LOGGER.info(f"\t- {model_name}")
@@ -181,6 +181,7 @@ class ProfileConfigGenerator(BaseConfigGenerator):
             "output_model_repository_path": self.output_model_repository_path.as_posix(),
             "export_path": self._analyzer_path.resolve().as_posix(),
             "triton_server_flags": {"strict-model-config": False},
+            "run_config_search_max_model_batch_size": self._profile_config.config_search_max_batch_size,
             "run_config_search_max_concurrency": self._profile_config.config_search_max_concurrency,
             "run_config_search_max_instance_count": self._profile_config.config_search_max_instance_count,
             "perf_analyzer_timeout": self._perf_measurement_config.perf_analyzer_timeout,

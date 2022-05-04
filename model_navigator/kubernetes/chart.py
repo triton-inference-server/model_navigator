@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import List, Optional, Type, Union
 
 from model_navigator.cli.convert_model import ConversionSetConfig
-from model_navigator.common.config import TensorRTCommonConfig
+from model_navigator.common.config import BatchingConfig, TensorRTCommonConfig
 from model_navigator.converter.config import (
     ComparatorConfig,
     ConversionConfig,
@@ -58,7 +58,8 @@ class ChartGenerator:
         tensorrt_common_config: TensorRTCommonConfig,
         comparator_config: ComparatorConfig,
         dataset_profile_config: DatasetProfileConfig,
-        batching_config: TritonBatchingConfig,
+        batching_config: BatchingConfig,
+        triton_batching_config: TritonBatchingConfig,
         optimization_config: TritonModelOptimizationConfig,
         dynamic_batching_config: TritonDynamicBatchingConfig,
         instances_config: TritonModelInstancesConfig,
@@ -90,6 +91,7 @@ class ChartGenerator:
             config_file.save_config(comparator_config)
             config_file.save_config(dataset_profile_config)
             config_file.save_config(batching_config)
+            config_file.save_config(triton_batching_config)
             config_file.save_config(optimization_config)
             config_file.save_config(dynamic_batching_config)
             config_file.save_config(instances_config)
@@ -111,6 +113,7 @@ class ChartGenerator:
             comparator_config=comparator_config,
             dataset_profile_config=dataset_profile_config,
             batching_config=batching_config,
+            triton_batching_config=triton_batching_config,
             optimization_config=optimization_config,
             dynamic_batching_config=dynamic_batching_config,
             instances_config=instances_config,
@@ -156,14 +159,13 @@ class ChartGenerator:
 
         return commands
 
-    def _evaluator_commands(self, src_model: ModelConfig, batching_config: TritonBatchingConfig) -> List[str]:
+    def _evaluator_commands(self, src_model: ModelConfig, batching_config: BatchingConfig) -> List[str]:
         server_url = f"http://{src_model.model_name.lower().replace('_', '-')}-{InferenceChartCreator.NAME}:8000"
         commands = [
             rf"""
             model-navigator triton-evaluate-model \
                 --config-path {Paths.CONFIG_PATH} \
                 --server-url  {server_url} \
-                --evaluation-mode static \
                 --evaluation-mode dynamic \
                 --max-batch-size {batching_config.max_batch_size} \
                 --model-version {src_model.model_version} \

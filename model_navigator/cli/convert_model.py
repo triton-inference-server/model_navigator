@@ -23,12 +23,14 @@ from typing import List, Optional, Sequence
 import click
 
 from model_navigator.cli.spec import (
+    BatchingConfigCli,
     ComparatorConfigCli,
     ConversionSetConfigCli,
     DatasetProfileConfigCli,
     ModelConfigCli,
     ModelSignatureConfigCli,
 )
+from model_navigator.common.config import BatchingConfig
 from model_navigator.constants import MODEL_NAVIGATOR_DIR
 from model_navigator.converter import (
     ComparatorConfig,
@@ -125,6 +127,7 @@ def _run_locally(
     src_model_config: ModelConfig,
     model_signature_config: ModelSignatureConfig,
     conversion_set_config: ConversionSetConfig,
+    batching_config: BatchingConfig,
     comparator_config: ComparatorConfig,
     dataset_profile_config: DatasetProfileConfig,
     package: Optional[NavPackage],
@@ -138,13 +141,13 @@ def _run_locally(
     conversion_results = []
     for conversion_config in conversion_set_config:
         if package:
-            dataloader = NavPackageDataloader(package, "conversion", max_batch_size=comparator_config.max_batch_size)
+            dataloader = NavPackageDataloader(package, "conversion", max_batch_size=batching_config.max_batch_size)
         else:
             dataloader = RandomDataloader(
                 src_model_config,
                 model_signature_config,
                 dataset_profile_config,
-                max_batch_size=comparator_config.max_batch_size,
+                max_batch_size=batching_config.max_batch_size,
                 random_seed=random_seed,
             )
         results = converter.convert(
@@ -168,6 +171,7 @@ def _run_in_docker(
     src_model_config: ModelConfig,
     model_signature_config: Optional[ModelSignatureConfig] = None,
     conversion_set_config: ConversionSetConfig,
+    batching_config: Optional[BatchingConfig] = None,
     comparator_config: Optional[ComparatorConfig] = None,
     dataset_profile_config: Optional[DatasetProfileConfig] = None,
     framework_docker_image: str,
@@ -185,6 +189,7 @@ def _run_in_docker(
         config_file.save_config(src_model_config)
         config_file.save_config(model_signature_config)
         config_file.save_config(conversion_set_config)
+        config_file.save_config(batching_config)
         config_file.save_config(comparator_config)
         config_file.save_config(dataset_profile_config)
 
@@ -320,6 +325,7 @@ def convert(
     src_model_config = ModelConfig.from_dict(kwargs)
     src_model_signature_config = ModelSignatureConfig.from_dict(kwargs)
     conversion_set_config = ConversionSetConfig.from_dict(kwargs)
+    batching_config = BatchingConfig.from_dict(kwargs)
     comparator_config = ComparatorConfig.from_dict(kwargs)
     dataset_profile_config = DatasetProfileConfig.from_dict(kwargs)
 
@@ -346,6 +352,7 @@ def convert(
             src_model_config=src_model_config,
             model_signature_config=src_model_signature_config,
             conversion_set_config=conversion_set_config,
+            batching_config=batching_config,
             comparator_config=comparator_config,
             dataset_profile_config=dataset_profile_config,
             framework_docker_image=framework_docker_image,
@@ -363,6 +370,7 @@ def convert(
                 {
                     **dataclasses.asdict(src_model_config),
                     **dataclasses.asdict(conversion_set_config),
+                    **dataclasses.asdict(batching_config),
                     **dataclasses.asdict(comparator_config),
                     **dataclasses.asdict(src_model_signature_config),
                     **dataclasses.asdict(dataset_profile_config),
@@ -381,6 +389,7 @@ def convert(
             src_model_config=src_model_config,
             model_signature_config=src_model_signature_config,
             conversion_set_config=conversion_set_config,
+            batching_config=batching_config,
             comparator_config=comparator_config,
             dataset_profile_config=dataset_profile_config,
             verbose=verbose,
@@ -423,6 +432,7 @@ def convert(
 @options_from_config(ModelSignatureConfig, ModelSignatureConfigCli)
 @options_from_config(ConversionSetConfig, ConversionSetConfigCli)
 @options_from_config(ComparatorConfig, ComparatorConfigCli)
+@options_from_config(BatchingConfig, BatchingConfigCli)
 @options_from_config(DatasetProfileConfig, DatasetProfileConfigCli)
 @click.pass_context
 def convert_cmd(

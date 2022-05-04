@@ -19,7 +19,7 @@ from typing import Dict, List, Optional, Union
 import numpy as np
 from google.protobuf import json_format, text_format  # pytype: disable=pyi-error
 
-from model_navigator.common.config import TensorRTCommonConfig
+from model_navigator.common.config import BatchingConfig, TensorRTCommonConfig
 from model_navigator.model import Model, ModelSignatureConfig
 from model_navigator.tensor import TensorSpec
 from model_navigator.triton.backends.base import BackendConfiguratorSelector
@@ -96,8 +96,11 @@ class ModelConfigParser:
         else:
             batching = Batching.DISABLED
 
-        batching_config = TritonBatchingConfig(
+        batching_config = BatchingConfig(
             max_batch_size=model_config_dict.get("max_batch_size", 0),
+        )
+
+        triton_batching_config = TritonBatchingConfig(
             batching=batching,
         )
 
@@ -159,6 +162,7 @@ class ModelConfigParser:
         return config_cls(
             model=model,
             batching_config=batching_config,
+            triton_batching_config=triton_batching_config,
             optimization_config=optimization_config,
             dynamic_batching_config=dynamic_batching_config,
             tensorrt_common_config=tensorrt_common_config,
@@ -202,7 +206,8 @@ class TritonModelConfigGenerator:
         self,
         model: Model,
         *,
-        batching_config: TritonBatchingConfig,
+        batching_config: BatchingConfig,
+        triton_batching_config: TritonBatchingConfig,
         optimization_config: TritonModelOptimizationConfig,
         tensorrt_common_config: TensorRTCommonConfig,
         dynamic_batching_config: TritonDynamicBatchingConfig,
@@ -212,6 +217,7 @@ class TritonModelConfigGenerator:
     ):
         self._model = model
         self._batching_config = batching_config
+        self._triton_batching_config = triton_batching_config
         self._optimization_config = optimization_config
         self._tensorrt_common_config = tensorrt_common_config
         self._dynamic_batching_config = dynamic_batching_config
@@ -234,6 +240,10 @@ class TritonModelConfigGenerator:
     @property
     def tensorrt_common_config(self):
         return self._tensorrt_common_config
+
+    @property
+    def triton_batching_config(self):
+        return self._triton_batching_config
 
     @property
     def dynamic_batching_config(self):
@@ -261,6 +271,7 @@ class TritonModelConfigGenerator:
             model_config,
             self._model,
             batching_config=self._batching_config,
+            triton_batching_config=self._triton_batching_config,
             optimization_config=self._optimization_config,
             tensorrt_common_config=self._tensorrt_common_config,
             dynamic_batching_config=self._dynamic_batching_config,

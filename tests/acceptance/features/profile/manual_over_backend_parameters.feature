@@ -17,7 +17,7 @@ Feature: Model Profiling over backend parameters
         Then the command should succeeded
         Given the config_search_max_concurrency config parameter is set to 1
         And the config_search_max_instance_count config parameter is set to 1
-        And the config_search_max_preferred_batch_size config parameter is set to 1
+        And the config_search_max_batch_size config parameter is set to 1
         And the config_search_backend_parameters config parameter is set to param1=a,b,c param3=0.1,0.9
         And removed the max_batch_size config parameter
         And removed the model_name config parameter
@@ -25,7 +25,13 @@ Feature: Model Profiling over backend parameters
         When I execute profile command
         Then the command should succeeded
         And the 'run_config_search_disable': True pattern is present on command output
-        And the my_model model configs in latest profile checkpoint are
+        Given removed the config_search_max_concurrency config parameter
+        And removed the config_search_max_instance_count config parameter
+        And removed the config_search_max_batch_size config parameter
+        And removed the config_search_backend_parameters config parameter
+        When I execute analyze command
+        Then the command should succeeded
+        And the my_model model configs in latest profiling are
             {"maxBatchSize": 2, "parameters": {"param2": {"stringValue": "2"}, "param1": {"stringValue": "a"}}, "cpu_only": false}
             {"maxBatchSize": 2, "parameters": {"param1": {"stringValue": "a"}, "param2": {"stringValue": "2"}, "param3": {"stringValue": "0.1"}}, "cpu_only": false}
             {"maxBatchSize": 2, "parameters": {"param1": {"stringValue": "a"}, "param2": {"stringValue": "2"}, "param3": {"stringValue": "0.9"}}, "cpu_only": false}

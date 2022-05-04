@@ -339,6 +339,10 @@ class ConversionSetHelmChartConfigCli:
     )
 
 
+class BatchingConfigCli:
+    max_batch_size = CliSpec(help="Maximum batch size allowed for inference.")
+
+
 class TensorRTCommonConfigCli:
     tensorrt_max_workspace_size = CliSpec(
         help="The maximum GPU memory in bytes the model can use temporarily during execution for TensorRT acceleration.",
@@ -351,7 +355,6 @@ class TritonClientConfigCli:
 
 
 class TritonBatchingConfigCli:
-    max_batch_size = CliSpec(help="Maximum batch size allowed for inference.")
     batching = CliSpec(
         help="Triton batching used for model. Supported: "
         "\n disabled: model does not support batching, "
@@ -472,7 +475,6 @@ class ComparatorConfigCli:
         parse_and_verify_callback=_parse_tolerance_parameters,
         serialize_default_callback=_serialize_tolerance_parameters,
     )
-    max_batch_size = CliSpec(help=TritonBatchingConfigCli.max_batch_size.help)
 
 
 def _serialize_objectives(param, value: Dict[str, int]):
@@ -563,41 +565,43 @@ class ModelAnalyzerTritonConfigCli:
 
 
 class ModelAnalyzerProfileConfigCli:
-    config_search_max_concurrency = CliSpec(help="Max concurrency used for automatic config search in analysis.")
-    config_search_max_instance_count = CliSpec(
-        help="Max number of model instances used for automatic config search in analysis."
+    config_search_max_batch_size = CliSpec(
+        help="Model max batch size used for automatic config search in profiling.",
     )
-    config_search_max_preferred_batch_size = CliSpec(
-        help="[Deprecated] Maximum preferred batch size allowed for inference used for automatic config search in analysis."
+    config_search_max_concurrency = CliSpec(
+        help="Max client side request concurrency used for automatic config search in profiling.",
+    )
+    config_search_max_instance_count = CliSpec(
+        help="Max number of model instances count used for automatic config search in profiling."
     )
     config_search_concurrency = CliSpec(
-        help="List of client side concurrency values used for manual config search in analysis. "
+        help="List of client side request concurrency used for manual config search in profiling. "
         "\nForces manual config search. "
         "\nFormat: --config-search-concurrency 1 2 4 ...",
     )
     config_search_batch_sizes = CliSpec(
-        help="List of client side batch size values used for manual config search in analysis. "
+        help="List of client side request batch size used for manual config search in profiling. "
         "\nForces manual config search. "
         "\nFormat: --config-search-batch-sizes 1 2 4 ...",
     )
     config_search_instance_counts = CliSpec(
-        help="List of model instance count values used for manual config search in analysis. "
+        help="List of model instance count used for manual config search in profiling. "
         "\nForces manual config search. "
         "\nFormat: --config-search-instance-counts <DeviceKind>=<count>,<count> <DeviceKind>=<count> ...",
         parse_and_verify_callback=parse_instance_counts,
     )
     config_search_max_batch_sizes = CliSpec(
-        help="List of max batch sizes used for manual config search in analysis. Forces manual config search. "
+        help="List of model max batch sizes used for manual config search in profiling. Forces manual config search. "
         "\nFormat: --config-search-max-batch-sizes 1 2 4 ...",
     )
     config_search_preferred_batch_sizes = CliSpec(
-        help="List of preferred batch sizes used for manual config search in analysis. "
+        help="List of preferred batch sizes used for manual config search in profiling. "
         "\nForces manual config search. "
         "\nFormat: --config-search-preferred-batch-sizes 4,8,16 8,16 16 ...",
         parse_and_verify_callback=parse_config_search_preferred_batch_sizes,
     )
     config_search_backend_parameters = CliSpec(
-        help="List of custom backend parameters used for manual config search in analysis. "
+        help="List of custom backend parameters used for manual config search in profiling. "
         "\nForces manual config search. "
         "\nFormat: --config-search-backend-parameters <param_name1>=<value1>,<value2> <param_name2>=<value3> ...",
         parse_and_verify_callback=parse_backend_parameters,

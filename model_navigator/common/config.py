@@ -19,5 +19,10 @@ from model_navigator.utils.config import BaseConfig
 
 
 @dataclass
+class BatchingConfig(BaseConfig):
+    max_batch_size: int = 128
+
+
+@dataclass
 class TensorRTCommonConfig(BaseConfig):
     tensorrt_max_workspace_size: int = DEFAULT_TENSORRT_MAX_WORKSPACE_SIZE

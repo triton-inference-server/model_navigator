@@ -15,6 +15,7 @@ import abc
 import logging
 from typing import Iterator, List, Optional, Sequence
 
+from model_navigator.common.config import BatchingConfig
 from model_navigator.converter.config import ComparatorConfig, ConversionConfig
 from model_navigator.converter.dataloader import Dataloader
 from model_navigator.converter.transformers import (
@@ -50,6 +51,7 @@ class SavedModelPipeline(BaseModelPipeline):
         *,
         conversion_config: ConversionConfig,
         signature_config: Optional[ModelSignatureConfig] = None,
+        batching_config: Optional[BatchingConfig] = None,
         comparator_config: Optional[ComparatorConfig] = None,
         dataloader: Optional[Dataloader] = None,
     ) -> Sequence[CompositeConvertCommand]:
@@ -101,6 +103,7 @@ class TorchScriptPipeline(BaseModelPipeline):
         *,
         conversion_config: ConversionConfig,
         signature_config: Optional[ModelSignatureConfig] = None,
+        batching_config: Optional[BatchingConfig] = None,
         comparator_config: Optional[ComparatorConfig] = None,
         dataloader: Optional[Dataloader] = None,
     ) -> Sequence[CompositeConvertCommand]:

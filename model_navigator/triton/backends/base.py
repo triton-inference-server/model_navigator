@@ -14,7 +14,7 @@
 import logging
 from typing import Dict, Optional
 
-from model_navigator.common.config import TensorRTCommonConfig
+from model_navigator.common.config import BatchingConfig, TensorRTCommonConfig
 from model_navigator.exceptions import ModelNavigatorDeployerException
 from model_navigator.model import Model
 from model_navigator.triton import (
@@ -49,7 +49,8 @@ class BaseBackendConfigurator:
         self,
         model_config: Dict,
         model: Model,
-        batching_config: TritonBatchingConfig,
+        batching_config: BatchingConfig,
+        triton_batching_config: TritonBatchingConfig,
         *,
         optimization_config: Optional[TritonModelOptimizationConfig] = None,
         dynamic_batching_config: Optional[TritonDynamicBatchingConfig] = None,
@@ -66,6 +67,7 @@ class BaseBackendConfigurator:
         self._set_batching(
             model_config,
             batching_config=batching_config,
+            triton_batching_config=triton_batching_config,
             dynamic_batching_config=dynamic_batching_config or TritonDynamicBatchingConfig(),
         )
         self._set_backend_acceleration(
@@ -94,15 +96,19 @@ class BaseBackendConfigurator:
         pass
 
     def _set_batching(
-        self, model_config, batching_config: TritonBatchingConfig, dynamic_batching_config: TritonDynamicBatchingConfig
+        self,
+        model_config,
+        batching_config: BatchingConfig,
+        triton_batching_config: TritonBatchingConfig,
+        dynamic_batching_config: TritonDynamicBatchingConfig,
     ):
-        if batching_config.batching == Batching.DISABLED:
+        if triton_batching_config.batching == Batching.DISABLED:
             model_config["max_batch_size"] = 0
             LOGGER.debug("Batching for model is disabled. Supported request batch size=1.")
             return
 
         model_config["max_batch_size"] = batching_config.max_batch_size
-        if batching_config.batching == Batching.DYNAMIC:
+        if triton_batching_config.batching == Batching.DYNAMIC:
             dynamic_batching = {}
             if dynamic_batching_config.max_queue_delay_us > 0:
                 dynamic_batching["maxQueueDelayMicroseconds"] = int(dynamic_batching_config.max_queue_delay_us)

@@ -53,7 +53,6 @@ class BackendAccelerator(Enum):
 
 @dataclass
 class TritonBatchingConfig(BaseConfig):
-    max_batch_size: int = 1
     batching: Batching = Batching.STATIC
 
 
