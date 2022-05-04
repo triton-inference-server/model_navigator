@@ -10,41 +10,34 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitations under the License.2
+# limitations under the License.
 import numpy
-import tensorflow as tf
+import torch
 
 import model_navigator as nav
 
-dataloader = [tf.random.uniform(shape=[1, 224, 224, 3], minval=0, maxval=1, dtype=tf.dtypes.float32) for _ in range(10)]
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
-inp = tf.keras.layers.Input((224, 224, 3))
-layer_output = tf.keras.layers.Lambda(lambda x: x)(inp)
-layer_output = tf.keras.layers.Lambda(lambda x: x)(layer_output)
-layer_output = tf.keras.layers.Lambda(lambda x: x)(layer_output)
-layer_output = tf.keras.layers.Lambda(lambda x: x)(layer_output)
-layer_output = tf.keras.layers.Lambda(lambda x: x)(layer_output)
-model_output = tf.keras.layers.Lambda(lambda x: x)(layer_output)
-model = tf.keras.Model(inp, model_output)
+dataloader = [torch.full((3, 5), 1.0, device=device) for _ in range(10)]
 
+model = torch.nn.Linear(5, 7).to(device).eval()
 
-pkg_desc = nav.tensorflow.export(
+pkg_desc = nav.torch.export(
     model=model,
     dataloader=dataloader,
     override_workdir=True,
-    target_formats=(nav.Format.ONNX,),
 )
 
 # Verify ONNX format against model in framework
 sample_count = 100
 valid_outputs = 0
 for _ in range(sample_count):
-    random_sample = tf.random.uniform(shape=[1, 224, 224, 3], minval=0, maxval=1, dtype=tf.dtypes.float32)
+    random_sample = torch.full((3, 5), 1.0, device="cuda")
 
     # Use source model to generate dummy ground truth
-    gt = [model.predict(random_sample)]
+    gt = [model(random_sample).detach().cpu().numpy()]
 
-    feed_dict = {"input__0": random_sample.numpy()}
+    feed_dict = {"input__0": random_sample.detach().cpu().numpy()}
     onnx_runner = pkg_desc.get_runner(format=nav.Format.ONNX, runtime=nav.RuntimeProvider.CUDA)
     with onnx_runner:
         output = onnx_runner.infer(feed_dict)
