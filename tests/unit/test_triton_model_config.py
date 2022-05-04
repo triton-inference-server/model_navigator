@@ -17,7 +17,7 @@ from tempfile import TemporaryDirectory
 import numpy as np
 import pytest
 
-from model_navigator.common.config import TensorRTCommonConfig
+from model_navigator.common.config import BatchingConfig, TensorRTCommonConfig
 from model_navigator.model import Model, ModelSignatureConfig
 from model_navigator.tensor import TensorSpec
 from model_navigator.triton.config import (
@@ -103,7 +103,8 @@ def test_model_config_parsing_signature_for_torchscript(monkeypatch, max_batch_s
         config_path = temp_dir / "config.pbtxt"
 
         src_model = Model("dummy", model_path, signature_if_missing=signature)
-        batching_config = TritonBatchingConfig(max_batch_size=max_batch_size)
+        batching_config = BatchingConfig(max_batch_size=max_batch_size)
+        triton_batching_config = TritonBatchingConfig()
         optimization_config = TritonModelOptimizationConfig()
         tensorrt_common_config = TensorRTCommonConfig()
         dynamic_batching_config = TritonDynamicBatchingConfig()
@@ -112,6 +113,7 @@ def test_model_config_parsing_signature_for_torchscript(monkeypatch, max_batch_s
         initial_model_config_generator = TritonModelConfigGenerator(
             src_model,
             batching_config=batching_config,
+            triton_batching_config=triton_batching_config,
             optimization_config=optimization_config,
             tensorrt_common_config=tensorrt_common_config,
             dynamic_batching_config=dynamic_batching_config,
@@ -150,7 +152,8 @@ def test_model_config_parsing_signature_for_tensorrt_plan(monkeypatch, max_batch
         config_path = temp_dir / "config.pbtxt"
 
         src_model = Model("dummy", model_path, signature_if_missing=signature)
-        batching_config = TritonBatchingConfig(max_batch_size=max_batch_size)
+        batching_config = BatchingConfig(max_batch_size=max_batch_size)
+        triton_batching_config = TritonBatchingConfig()
         optimization_config = TritonModelOptimizationConfig()
         tensorrt_common_config = TensorRTCommonConfig()
         dynamic_batching_config = TritonDynamicBatchingConfig()
@@ -159,6 +162,7 @@ def test_model_config_parsing_signature_for_tensorrt_plan(monkeypatch, max_batch
         initial_model_config_generator = TritonModelConfigGenerator(
             src_model,
             batching_config=batching_config,
+            triton_batching_config=triton_batching_config,
             optimization_config=optimization_config,
             tensorrt_common_config=tensorrt_common_config,
             dynamic_batching_config=dynamic_batching_config,
@@ -198,7 +202,8 @@ def test_model_config_parsing_signature_with_static_batching(monkeypatch, max_ba
         config_path = temp_dir / "config.pbtxt"
 
         src_model = Model("dummy", model_path, signature_if_missing=signature)
-        batching_config = TritonBatchingConfig(max_batch_size=max_batch_size, batching=Batching.STATIC)
+        batching_config = BatchingConfig(max_batch_size=max_batch_size)
+        triton_batching_config = TritonBatchingConfig(batching=Batching.STATIC)
         optimization_config = TritonModelOptimizationConfig()
         tensorrt_common_config = TensorRTCommonConfig()
         dynamic_batching_config = TritonDynamicBatchingConfig()
@@ -207,6 +212,7 @@ def test_model_config_parsing_signature_with_static_batching(monkeypatch, max_ba
         initial_model_config_generator = TritonModelConfigGenerator(
             src_model,
             batching_config=batching_config,
+            triton_batching_config=triton_batching_config,
             optimization_config=optimization_config,
             tensorrt_common_config=tensorrt_common_config,
             dynamic_batching_config=dynamic_batching_config,
@@ -246,7 +252,8 @@ def test_model_config_parsing_signature_with_disabled_batching(monkeypatch, max_
         config_path = temp_dir / "config.pbtxt"
 
         src_model = Model("dummy", model_path, signature_if_missing=signature)
-        batching_config = TritonBatchingConfig(max_batch_size=max_batch_size, batching=Batching.DISABLED)
+        batching_config = BatchingConfig(max_batch_size=max_batch_size)
+        triton_batching_config = TritonBatchingConfig(batching=Batching.DISABLED)
         optimization_config = TritonModelOptimizationConfig()
         tensorrt_common_config = TensorRTCommonConfig()
         dynamic_batching_config = TritonDynamicBatchingConfig()
@@ -255,6 +262,7 @@ def test_model_config_parsing_signature_with_disabled_batching(monkeypatch, max_
         initial_model_config_generator = TritonModelConfigGenerator(
             src_model,
             batching_config=batching_config,
+            triton_batching_config=triton_batching_config,
             optimization_config=optimization_config,
             tensorrt_common_config=tensorrt_common_config,
             dynamic_batching_config=dynamic_batching_config,
@@ -297,7 +305,8 @@ def test_model_config_parsing_signature_with_dynamic_batching(monkeypatch, max_b
         config_path = temp_dir / "config.pbtxt"
 
         src_model = Model("dummy", model_path, signature_if_missing=signature)
-        batching_config = TritonBatchingConfig(max_batch_size=max_batch_size, batching=Batching.DYNAMIC)
+        batching_config = BatchingConfig(max_batch_size=max_batch_size)
+        triton_batching_config = TritonBatchingConfig(batching=Batching.DYNAMIC)
         optimization_config = TritonModelOptimizationConfig()
         tensorrt_common_config = TensorRTCommonConfig()
         dynamic_batching_config = TritonDynamicBatchingConfig()
@@ -306,6 +315,7 @@ def test_model_config_parsing_signature_with_dynamic_batching(monkeypatch, max_b
         initial_model_config_generator = TritonModelConfigGenerator(
             src_model,
             batching_config=batching_config,
+            triton_batching_config=triton_batching_config,
             optimization_config=optimization_config,
             tensorrt_common_config=tensorrt_common_config,
             dynamic_batching_config=dynamic_batching_config,
@@ -347,7 +357,8 @@ def test_model_config_parsing_signature_with_dynamic_batching_configured(
         config_path = temp_dir / "config.pbtxt"
 
         src_model = Model("dummy", model_path, signature_if_missing=signature)
-        batching_config = TritonBatchingConfig(max_batch_size=max_batch_size, batching=Batching.DYNAMIC)
+        batching_config = BatchingConfig(max_batch_size=max_batch_size)
+        triton_batching_config = TritonBatchingConfig(batching=Batching.DYNAMIC)
         optimization_config = TritonModelOptimizationConfig()
         tensorrt_common_config = TensorRTCommonConfig()
         dynamic_batching_config = TritonDynamicBatchingConfig(preferred_batch_sizes=[1, 2], max_queue_delay_us=100)
@@ -356,6 +367,7 @@ def test_model_config_parsing_signature_with_dynamic_batching_configured(
         initial_model_config_generator = TritonModelConfigGenerator(
             src_model,
             batching_config=batching_config,
+            triton_batching_config=triton_batching_config,
             optimization_config=optimization_config,
             tensorrt_common_config=tensorrt_common_config,
             dynamic_batching_config=dynamic_batching_config,
@@ -395,7 +407,8 @@ def test_model_config_with_implicit_optional_flags(monkeypatch, max_batch_size, 
         config_path = temp_dir / "config.pbtxt"
 
         src_model = Model("dummy", model_path, signature_if_missing=signature)
-        batching_config = TritonBatchingConfig(max_batch_size=max_batch_size, batching=Batching.DYNAMIC)
+        batching_config = BatchingConfig(max_batch_size=max_batch_size)
+        triton_batching_config = TritonBatchingConfig(batching=Batching.DYNAMIC)
         optimization_config = TritonModelOptimizationConfig()
         tensorrt_common_config = TensorRTCommonConfig()
         dynamic_batching_config = TritonDynamicBatchingConfig(preferred_batch_sizes=[1, 2], max_queue_delay_us=100)
@@ -404,6 +417,7 @@ def test_model_config_with_implicit_optional_flags(monkeypatch, max_batch_size, 
         initial_model_config_generator = TritonModelConfigGenerator(
             src_model,
             batching_config=batching_config,
+            triton_batching_config=triton_batching_config,
             optimization_config=optimization_config,
             tensorrt_common_config=tensorrt_common_config,
             dynamic_batching_config=dynamic_batching_config,

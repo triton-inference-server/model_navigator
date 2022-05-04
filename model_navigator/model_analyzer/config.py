@@ -57,9 +57,9 @@ class ModelAnalyzerTritonConfig(BaseConfig):
 
 @dataclass
 class ModelAnalyzerProfileConfig(BaseConfig):
+    config_search_max_batch_size: int = 128
     config_search_max_concurrency: int = 1024
     config_search_max_instance_count: int = 5
-    config_search_max_preferred_batch_size: int = 32
     config_search_concurrency: List[int] = field(default_factory=lambda: [])
     config_search_batch_sizes: List[int] = field(default_factory=lambda: [])
     config_search_instance_counts: Dict[DeviceKind, List] = field(default_factory=lambda: {})

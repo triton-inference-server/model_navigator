@@ -107,7 +107,7 @@ model_repository: path
 # NVIDIA framework and Triton container version to use. For details refer to
 # https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html and
 # https://docs.nvidia.com/deeplearning/triton-inference-server/release-notes/index.html for details).
-[ container_version: str | default: 22.03 ]
+[ container_version: str | default: 22.04 ]
 
 # Custom framework docker image to use. If not provided
 # nvcr.io/nvidia/<framework>:<container_version>-<framework_and_python_version> will be used
@@ -159,7 +159,7 @@ model_repository: path
 [ tensorrt_capture_cuda_graph: boolean ]
 
 # Maximum batch size allowed for inference.
-[ max_batch_size: integer | default: 1 ]
+[ max_batch_size: integer | default: 128 ]
 
 # Triton batching used for model. Supported:
 # disabled: model does not support batching,

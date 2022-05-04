@@ -150,7 +150,7 @@ model_repository: path
 # NVIDIA framework and Triton container version to use. For details refer to
 # https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html and
 # https://docs.nvidia.com/deeplearning/triton-inference-server/release-notes/index.html for details).
-[ container_version: str | default: 22.03 ]
+[ container_version: str | default: 22.04 ]
 
 # Custom framework docker image to use. If not provided
 # nvcr.io/nvidia/<framework>:<container_version>-<framework_and_python_version> will be used
@@ -203,40 +203,40 @@ model_repository: path
 # Path to the Triton Server binary when the local mode is enabled.
 [ triton_server_path: str | default: tritonserver ]
 
-# Max concurrency used for automatic config search in analysis.
+# Model max batch size used for automatic config search in profiling.
+[ config_search_max_batch_size: integer | default: 128 ]
+
+# Max client side request concurrency used for automatic config search in profiling.
 [ config_search_max_concurrency: integer | default: 1024 ]
 
-# Max number of model instances used for automatic config search in analysis.
+# Max number of model instances count used for automatic config search in profiling.
 [ config_search_max_instance_count: integer | default: 5 ]
 
-# [Deprecated] Maximum preferred batch size allowed for inference used for automatic config search in analysis.
-[ config_search_max_preferred_batch_size: integer | default: 32 ]
-
-# List of client side concurrency values used for manual config search in analysis.
+# List of client side request concurrency used for manual config search in profiling.
 # Forces manual config search.
 # Format: --config-search-concurrency 1 2 4 ...
 [ config_search_concurrency: list[integer] ]
 
-# List of client side batch size values used for manual config search in analysis.
+# List of client side request batch size used for manual config search in profiling.
 # Forces manual config search.
 # Format: --config-search-batch-sizes 1 2 4 ...
 [ config_search_batch_sizes: list[integer] ]
 
-# List of model instance count values used for manual config search in analysis.
+# List of model instance count used for manual config search in profiling.
 # Forces manual config search.
 # Format: --config-search-instance-counts <DeviceKind>=<count>,<count> <DeviceKind>=<count> ...
 [ config_search_instance_counts: list[str] ]
 
-# List of max batch sizes used for manual config search in analysis. Forces manual config search.
+# List of model max batch sizes used for manual config search in profiling. Forces manual config search.
 # Format: --config-search-max-batch-sizes 1 2 4 ...
 [ config_search_max_batch_sizes: list[integer] ]
 
-# List of preferred batch sizes used for manual config search in analysis.
+# List of preferred batch sizes used for manual config search in profiling.
 # Forces manual config search.
 # Format: --config-search-preferred-batch-sizes 4,8,16 8,16 16 ...
 [ config_search_preferred_batch_sizes: list[str] ]
 
-# List of custom backend parameters used for manual config search in analysis.
+# List of custom backend parameters used for manual config search in profiling.
 # Forces manual config search.
 # Format: --config-search-backend-parameters <param_name1>=<value1>,<value2> <param_name2>=<value3> ...
 [ config_search_backend_parameters: list[str] ]

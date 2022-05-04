@@ -16,7 +16,7 @@ import shutil
 from pathlib import Path
 from typing import Optional, Union
 
-from model_navigator.common.config import TensorRTCommonConfig
+from model_navigator.common.config import BatchingConfig, TensorRTCommonConfig
 from model_navigator.exceptions import ModelNavigatorDeployerException
 from model_navigator.model import Model
 from model_navigator.triton.backends.base import BackendConfiguratorSelector
@@ -46,7 +46,8 @@ class TritonModelStore:
         *,
         model: Model,
         model_version: str,
-        batching_config: TritonBatchingConfig,
+        batching_config: BatchingConfig,
+        triton_batching_config: TritonBatchingConfig,
         optimization_config: TritonModelOptimizationConfig,
         tensorrt_common_config: TensorRTCommonConfig,
         dynamic_batching_config: TritonDynamicBatchingConfig,
@@ -57,6 +58,7 @@ class TritonModelStore:
         triton_model_config_generator = TritonModelConfigGenerator(
             model=model,
             batching_config=batching_config,
+            triton_batching_config=triton_batching_config,
             optimization_config=optimization_config,
             tensorrt_common_config=tensorrt_common_config,
             dynamic_batching_config=dynamic_batching_config,

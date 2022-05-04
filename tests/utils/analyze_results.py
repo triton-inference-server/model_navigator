@@ -11,20 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-import json
-
-from model_analyzer.state.analyzer_state import AnalyzerState
+import csv
 
 from model_navigator.results import ResultsStore
 
 
-def get_profile_results(workspace):
+def get_analyze_results(workspace):
     results_store = ResultsStore(workspace)
-    command_results = results_store.load("profile")
+    command_results = results_store.load("analyze")
     # for profile there is single result object
-    checkpoint_path = command_results[0].profiling_results_path
-    with checkpoint_path.open("r") as checkpoint_file:
-        state = AnalyzerState.from_dict(json.load(checkpoint_file))
-    profiling_results = state.get("ResultManager.results")
-    return profiling_results
+    results_path = command_results[0].results_path
+    with results_path.open("r") as file:
+        reader = csv.DictReader(file)
+        results = list(reader)
+
+    return results

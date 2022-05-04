@@ -116,6 +116,7 @@ class Analyzer:
                 model_name=result["Model"],
                 optimization_config=triton_model_config_generator.optimization_config,
                 batching_config=triton_model_config_generator.batching_config,
+                triton_batching_config=triton_model_config_generator.triton_batching_config,
                 dynamic_batching_config=triton_model_config_generator.dynamic_batching_config,
                 instances_config=triton_model_config_generator.instances_config,
                 results_path=self._config_generator.results_path,

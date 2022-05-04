@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import datetime
+import logging
 import os
 import pathlib
 import uuid
@@ -20,7 +21,6 @@ from typing import Dict, Optional
 
 import yaml
 
-from model_navigator import LOGGER
 from model_navigator.__version__ import __version__ as navigator_version
 from model_navigator.exceptions import ModelNavigatorException
 from model_navigator.results import ResultsStore, State
@@ -29,6 +29,8 @@ from model_navigator.utils.config import dataclass2dict
 from model_navigator.utils.environment import EnvironmentStore
 
 FORMAT_VERSION = "0.0.1"
+
+LOGGER = logging.getLogger("pack_workspace")
 
 
 def pack_workspace(

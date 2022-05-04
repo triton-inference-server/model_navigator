@@ -18,13 +18,21 @@ Feature: Model Automatic Profiling
         Then the command should succeeded
         Given the config_search_max_concurrency config parameter is set to 2
         And the config_search_max_instance_count config parameter is set to 2
+        And the config_search_max_batch_size config parameter is set to 2
         And removed the max_batch_size config parameter
         And removed the model_name config parameter
         When I execute profile command
         Then the command should succeeded
         And the 'run_config_search_disable': False pattern is present on command output
-        And the my_model model configs in latest profile checkpoint are
+        Given removed the config_search_max_concurrency config parameter
+        And removed the config_search_max_instance_count config parameter
+        And removed the config_search_max_batch_size config parameter
+        When I execute analyze command
+        Then the command should succeeded
+        And the my_model model configs in latest profiling are
             {"maxBatchSize": 2, "cpu_only": false}
+            {"maxBatchSize": 1, "instanceGroup": [{"count": 1, "kind": "KIND_GPU"}], "dynamicBatching": {}, "cpu_only": false}
+            {"maxBatchSize": 1, "instanceGroup": [{"count": 2, "kind": "KIND_GPU"}], "dynamicBatching": {}, "cpu_only": false}
             {"maxBatchSize": 2, "instanceGroup": [{"count": 1, "kind": "KIND_GPU"}], "dynamicBatching": {}, "cpu_only": false}
             {"maxBatchSize": 2, "instanceGroup": [{"count": 2, "kind": "KIND_GPU"}], "dynamicBatching": {}, "cpu_only": false}
         And the my_model model was profiled with 1 2 concurrency levels
@@ -37,15 +45,23 @@ Feature: Model Automatic Profiling
         Then the command should succeeded
         Given the config_search_max_concurrency config parameter is set to 2
         And the config_search_max_instance_count config parameter is set to 2
+        And the config_search_max_batch_size config parameter is set to 2
         And removed the max_batch_size config parameter
         And removed the model_name config parameter
         And removed the engine_count_per_device config parameter
         When I execute profile command
         Then the command should succeeded
         And the 'run_config_search_disable': False pattern is present on command output
-        And the my_model model configs in latest profile checkpoint are
+        Given removed the config_search_max_concurrency config parameter
+        And removed the config_search_max_instance_count config parameter
+        And removed the config_search_max_batch_size config parameter
+        When I execute analyze command
+        Then the command should succeeded
+        And the my_model model configs in latest profiling are
             {"maxBatchSize": 2, "instanceGroup": [{"count": 1, "kind": "KIND_CPU"}], "cpu_only": true}
+            {"maxBatchSize": 1, "instanceGroup": [{"count": 1, "kind": "KIND_CPU"}], "dynamicBatching": {}, "cpu_only": true}
             {"maxBatchSize": 2, "instanceGroup": [{"count": 1, "kind": "KIND_CPU"}], "dynamicBatching": {}, "cpu_only": true}
+            {"maxBatchSize": 1, "instanceGroup": [{"count": 2, "kind": "KIND_CPU"}], "dynamicBatching": {}, "cpu_only": true}
             {"maxBatchSize": 2, "instanceGroup": [{"count": 2, "kind": "KIND_CPU"}], "dynamicBatching": {}, "cpu_only": true}
         And the my_model model was profiled with 1 2 concurrency levels
 
@@ -57,6 +73,7 @@ Feature: Model Automatic Profiling
         Then the command should succeeded
         Given the config_search_max_concurrency config parameter is set to 2
         And the config_search_max_instance_count config parameter is set to 2
+        And the config_search_max_batch_size config parameter is set to 2
         And removed the max_batch_size config parameter
         And removed the model_name config parameter
         And removed the engine_count_per_device config parameter
@@ -79,7 +96,7 @@ Feature: Model Automatic Profiling
 #        When I execute profile command
 #        Then the command should succeeded
 #        And the 'run_config_search_disable': True pattern is present on command output
-#        And the my_model model configs in latest profile checkpoint are
+#        And the my_model model configs in latest profiling are
 #            {"maxBatchSize": 4, "instanceGroup": [{"count": 1, "kind": "KIND_CPU"}, {"count": 1, "kind": "KIND_GPU"}], "cpu_only": false}
 #            {"maxBatchSize": 4, "instanceGroup": [{"count": 1, "kind": "KIND_CPU"}, {"count": 1, "kind": "KIND_GPU"}], "dynamicBatching": {}, "cpu_only": false}
 #            {"maxBatchSize": 4, "instanceGroup": [{"count": 1, "kind": "KIND_CPU"}, {"count": 1, "kind": "KIND_GPU"}], "dynamicBatching": {"preferredBatchSize": [1]}, "cpu_only": false}

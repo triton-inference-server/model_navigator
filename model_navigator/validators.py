@@ -38,7 +38,7 @@ class CommandValidator(BaseValidator):
 
 
 class ModelNavigatorBatchingConfiguration(CommandValidator):
-    commands_names = ["optimize", "run", "triton-config-model"]
+    commands_names = ["triton-config-model"]
 
     def validate(self, environment_state: EnvironmentState, configuration: Dict[str, Any]):
         max_batch_size = configuration["max_batch_size"]

@@ -34,13 +34,12 @@ from model_navigator.cli.spec import (
     PerfMeasurementConfigCli,
     RunTritonConfigCli,
     TensorRTCommonConfigCli,
-    TritonBatchingConfigCli,
     TritonCustomBackendParametersConfigCli,
     TritonModelInstancesConfigCli,
 )
 from model_navigator.cli.triton_config_model import config_model_on_triton_cmd
 from model_navigator.cli.triton_evaluate_model import triton_evaluate_model_cmd
-from model_navigator.common.config import TensorRTCommonConfig
+from model_navigator.common.config import BatchingConfig, TensorRTCommonConfig
 from model_navigator.configurator import Configurator, TritonConfiguratorResult, log_configuration_error
 from model_navigator.converter import ComparatorConfig, ConversionLaunchMode, ConversionResult, DatasetProfileConfig
 from model_navigator.converter.utils import FORMAT2FRAMEWORK
@@ -59,7 +58,6 @@ from model_navigator.model_analyzer import (
 from model_navigator.perf_analyzer import PerfMeasurementConfig
 from model_navigator.results import ResultsStore, State, Status
 from model_navigator.triton import (
-    TritonBatchingConfig,
     TritonClientConfig,
     TritonModelInstancesConfig,
     TritonServerConfig,
@@ -81,7 +79,6 @@ LOGGER = logging.getLogger("optimize")
 @cli.common_options
 @cli.options_from_config(ModelConfig, ModelConfigCli)
 @cli.options_from_config(ModelSignatureConfig, ModelSignatureConfigCli)
-@cli.options_from_config(TritonBatchingConfig, TritonBatchingConfigCli)
 @cli.options_from_config(ConversionSetConfig, ConversionSetConfigCli)
 @cli.options_from_config(ComparatorConfig, ComparatorConfigCli)
 @cli.options_from_config(DatasetProfileConfig, DatasetProfileConfigCli)
@@ -149,7 +146,6 @@ def optimize_cmd(
     comparator_config = ComparatorConfig.from_dict(kwargs)
     dataset_profile_config = DatasetProfileConfig.from_dict(kwargs)
     instance_config = TritonModelInstancesConfig.from_dict(kwargs)
-    batching_config = TritonBatchingConfig.from_dict(kwargs)
     backend_config = TritonCustomBackendParametersConfig.from_dict(kwargs)
     triton_config = RunTritonConfig.from_dict(kwargs)
     profile_config = ModelAnalyzerProfileConfig.from_dict(kwargs)
@@ -177,7 +173,6 @@ def optimize_cmd(
         **dataclass2dict(comparator_config),
         **dataclass2dict(src_model_signature_config),
         **dataclass2dict(dataset_profile_config),
-        **dataclass2dict(batching_config),
         **dataclass2dict(instance_config),
         **dataclass2dict(backend_config),
         **dataclass2dict(triton_config),
@@ -197,7 +192,15 @@ def optimize_cmd(
         arguments,
     )
 
-    convert_results = ctx.forward(convert_cmd)
+    if profile_config.config_search_max_batch_sizes:
+        max_batch_size = max(profile_config.config_search_max_batch_sizes)
+    else:
+        max_batch_size = profile_config.config_search_max_batch_size
+
+    convert_results = ctx.forward(
+        convert_cmd,
+        **dataclass2dict(BatchingConfig(max_batch_size=max_batch_size)),
+    )
     succeeded_convert_results = [
         convert_result for convert_result in convert_results if convert_result.status.state == State.SUCCEEDED
     ]
@@ -216,9 +219,9 @@ def optimize_cmd(
         ctx=ctx,
         output_model_store=interim_model_repository,
         converted_models=succeeded_models,
-        batching_config=batching_config,
         instance_config=instance_config,
         backend_config=backend_config,
+        batching_config=BatchingConfig(max_batch_size=1),
         tensorrt_common_config=tensorrt_common_config,
         dataset_profile_config=dataset_profile_config,
         perf_measurement_config=perf_measurement_config,
@@ -230,7 +233,7 @@ def optimize_cmd(
 
     # move when triton server for testing purposes is shutdown
     results_to_analyze = []
-    for config_result in config_results:
+    for config_result in sorted(config_results, key=lambda item: item.model_config_name):
         if config_result.status.state == State.FAILED:
             LOGGER.warning(config_result.status.message)
             continue
@@ -371,7 +374,7 @@ def _configure_models_on_triton(
     ctx,
     converted_models: List,
     output_model_store: pathlib.Path,
-    batching_config: TritonBatchingConfig,
+    batching_config: BatchingConfig,
     instance_config: TritonModelInstancesConfig,
     backend_config: TritonCustomBackendParametersConfig,
     tensorrt_common_config: TensorRTCommonConfig,

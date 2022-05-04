@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
-from model_navigator.common.config import TensorRTCommonConfig
+from model_navigator.common.config import BatchingConfig, TensorRTCommonConfig
 from model_navigator.converter import ComparatorConfig, ConversionConfig, DatasetProfileConfig
 from model_navigator.model import ModelConfig, ModelSignatureConfig
 from model_navigator.results import Status
@@ -38,7 +38,8 @@ class HelmChartGenerationResult:
     tensorrt_common_config: TensorRTCommonConfig
     comparator_config: ComparatorConfig
     dataset_profile_config: DatasetProfileConfig
-    batching_config: TritonBatchingConfig
+    batching_config: BatchingConfig
+    triton_batching_config: TritonBatchingConfig
     optimization_config: TritonModelOptimizationConfig
     dynamic_batching_config: TritonDynamicBatchingConfig
     instances_config: TritonModelInstancesConfig

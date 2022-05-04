@@ -15,7 +15,7 @@ import dataclasses
 import pathlib
 from typing import Optional
 
-from model_navigator.common.config import TensorRTCommonConfig
+from model_navigator.common.config import BatchingConfig, TensorRTCommonConfig
 from model_navigator.converter.config import DatasetProfileConfig
 from model_navigator.model import Model
 from model_navigator.perf_analyzer import PerfMeasurementConfig
@@ -35,7 +35,8 @@ class TritonConfiguratorResult:
     model: Model
     model_config_name: str
     model_config_path: Optional[pathlib.Path] = None
-    batching_config: Optional[TritonBatchingConfig] = None
+    batching_config: Optional[BatchingConfig] = None
+    triton_batching_config: Optional[TritonBatchingConfig] = None
     backend_config: Optional[TritonCustomBackendParametersConfig] = None
     instance_config: Optional[TritonModelInstancesConfig] = None
     tensorrt_common_config: Optional[TensorRTCommonConfig] = None
