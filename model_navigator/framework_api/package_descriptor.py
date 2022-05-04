@@ -597,6 +597,14 @@ class PackageDescriptor:
                     base_models_paths.add(model_path)
         return tuple(base_models_paths), tuple(converted_models_paths)
 
+    @property
+    def _is_empty(self):
+        for model_status in self.navigator_status.model_status:
+            for runtime_results in model_status.runtime_results:
+                if runtime_results.status == Status.OK:
+                    return False
+        return True
+
     def save(
         self,
         path: Union[str, Path],
@@ -621,6 +629,9 @@ class PackageDescriptor:
 
         if not package_path.exists():
             raise FileNotFoundError("Workdir has been removed. Save() no longer available.")
+
+        if self._is_empty:
+            raise RuntimeError("No successful exports, .nav package cannot be created.")
 
         base_models_paths, converted_models_paths = self._get_models_paths_to_save(
             package_path,
