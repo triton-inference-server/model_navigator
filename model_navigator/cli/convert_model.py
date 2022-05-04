@@ -237,7 +237,11 @@ def _run_in_docker(
     gpus = get_gpus(gpus)
     from docker.types import DeviceRequest
 
-    devices = [DeviceRequest(device_ids=[gpus[0]], capabilities=[["gpu"]])]
+    if gpus:
+        devices = [DeviceRequest(device_ids=[gpus[0]], capabilities=[["gpu"]])]
+    else:
+        devices = []
+
     cwd = Path.cwd()
 
     required_paths = [workspace.path, src_model_config.model_path.parent, cwd]

@@ -128,15 +128,16 @@ def get_git_info():
     return git_info
 
 
-def get_env():
-    packages = _get_packages()
-
+def get_os_info():
     os_details = {
         "name": os.name,
         "platform": platform.system(),
         "release": platform.release(),
     }
+    return os_details
 
+
+def get_cpu_info():
     cpu_details = {
         "name": cpuinfo.get_cpu_info()["brand_raw"],
         "physical_cores": psutil.cpu_count(logical=False),
@@ -144,28 +145,52 @@ def get_env():
         "min_frequency": psutil.cpu_freq().min,
         "max_frequency": psutil.cpu_freq().max,
     }
+    return cpu_details
 
-    data = _command_runner(
-        command=["nvidia-smi", "--query-gpu=name,driver_version,memory.total,power.max_limit", "--format=csv"]
-    )
-    lines = data.split(sep="\n")
-    device_details = lines[1].split(",")
 
-    cuda_version = None
-    data = _command_runner(command=["nvidia-smi", "--query"])
-    lines = data.split(sep="\n")
-    for line in lines:
-        if line.startswith("CUDA Version"):
-            cuda_version = line.split(":")[1].strip()
-            break
+def get_gpu_info():
 
-    gpu_details = {
-        "name": device_details[0].strip(),
-        "driver_version": device_details[1].strip(),
-        "memory": device_details[2].strip(),
-        "tdp": device_details[3].strip(),
-        "cuda_version": cuda_version,
-    }
+    try:
+        data = _command_runner(
+            command=["nvidia-smi", "--query-gpu=name,driver_version,memory.total,power.max_limit", "--format=csv"]
+        )
+        lines = data.split(sep="\n")
+        device_details = lines[1].split(",")
+
+        cuda_version = None
+        data = _command_runner(command=["nvidia-smi", "--query"])
+        lines = data.split(sep="\n")
+        for line in lines:
+            if line.startswith("CUDA Version"):
+                cuda_version = line.split(":")[1].strip()
+                break
+
+        gpu_details = {
+            "name": device_details[0].strip(),
+            "driver_version": device_details[1].strip(),
+            "memory": device_details[2].strip(),
+            "tdp": device_details[3].strip(),
+            "cuda_version": cuda_version,
+        }
+    except FileNotFoundError as e:
+        LOGGER.debug(str(e))
+        gpu_details = {
+            "name": "n/a",
+            "driver_version": "n/a",
+            "memory": "n/a",
+            "tdp": "n/a",
+            "cuda_version": "n/a",
+        }
+
+    return gpu_details
+
+
+def get_env():
+    packages = _get_packages()
+
+    os_details = get_os_info()
+    cpu_details = get_cpu_info()
+    gpu_details = get_gpu_info()
 
     env = {
         "cpu": cpu_details,
