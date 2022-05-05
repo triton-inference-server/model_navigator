@@ -29,13 +29,14 @@ LOGGER = logging.getLogger("ts2onnx")
 
 
 def convert(input_model_path, output_path, opset, dataloader: Dataloader, verbose):
-    model = torch.jit.load(input_model_path.as_posix())
+    # TODO: on which device (which cuda idx) we should run conversion
+    device_type = "cuda" if torch.cuda.is_available() else "cpu"
+    device = torch.device(device_type)
+
+    model = torch.jit.load(input_model_path.as_posix(), map_location=device)
     model.eval()
 
-    # TODO: on which device (which cuda idx) we should run conversion
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    model.to(device)
-    LOGGER.debug(f"Model is on {device} device")
+    LOGGER.debug(f"Model is on {device_type} device")
 
     io_spec: ModelSignatureConfig = load_annotation(input_model_path)
 
