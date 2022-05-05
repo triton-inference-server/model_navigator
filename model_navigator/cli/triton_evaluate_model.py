@@ -207,6 +207,15 @@ def _perf_analyzer_evaluation(
     return output
 
 
+def _get_max_shapes(kwargs):
+    try:
+        dataloader = get_dataloader(**kwargs)
+    except ModelNavigatorException:
+        return None
+    else:
+        return dataloader.max_shapes
+
+
 @cli.common_options
 @click.command(name="triton-evaluate-model", help="Evaluate model on Triton using Perf Analyzer")
 @click.option("--model-name", required=True, help=ModelConfigCli.model_name.help)
@@ -292,9 +301,9 @@ def triton_evaluate_model_cmd(
     profiling_data = "random"
     shapes = []
 
+    max_shapes = _get_max_shapes(kwargs)
     try:
-        dataloader = get_dataloader(**kwargs)
-        shapes_params = get_shape_params(dataloader.max_shapes)
+        shapes_params = get_shape_params(max_shapes)
         if dataset_profile_config.value_ranges and dataset_profile_config.dtypes:
             profiling_data_path = workspace.path / DEFAULT_RANDOM_DATA_FILENAME
             ctx.forward(create_profiling_data_cmd, data_output_path=profiling_data_path)
