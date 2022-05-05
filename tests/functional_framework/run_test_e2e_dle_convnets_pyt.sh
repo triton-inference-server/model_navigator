@@ -25,7 +25,7 @@ function cleanup {
 trap cleanup EXIT
 
 git clone https://github.com/NVIDIA/DeepLearningExamples ${TEMPDIR}/DeepLearningExamples
-export PYTHONPATH="${PYTHONPATH}:${TEMPDIR}/DeepLearningExamples/TensorFlow2/Classification/ConvNets/"
+export PYTHONPATH="${PYTHONPATH}:${TEMPDIR}/DeepLearningExamples/PyTorch/Classification/ConvNets/"
 
 if [ -z "$1" ]
 then
@@ -34,7 +34,4 @@ else
     WORKDIR=${1}
 fi
 
-
-./tests/functional_framework/test_e2e_joc_convnets_tf2.py --model-name EfficientNet-v1-B0 --workdir ${WORKDIR}
-./tests/functional_framework/test_e2e_joc_convnets_tf2.py --model-name EfficientNet-v1-B4 --workdir ${WORKDIR}
-./tests/functional_framework/test_e2e_joc_convnets_tf2.py --model-name EfficientNet-v2-S --workdir ${WORKDIR}
+./tests/functional_framework/test_e2e_dle_convnets_pyt.py --workdir ${WORKDIR}

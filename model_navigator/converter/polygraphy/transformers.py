@@ -187,7 +187,7 @@ def onnx2trt(
                     trt_precision_flags,
                     verbose,
                 )
-        LOGGER.info("ts2onnx command succeed.")
+        LOGGER.info("onnx2trt command succeed.")
     except Exception as e:
         LOGGER.warning(f"Polygraphy onnx2trt conversion failed. Details can be found in logfile: {log_path}")
         raise ModelNavigatorConverterCommandException(message=str(e), log_path=log_path)
