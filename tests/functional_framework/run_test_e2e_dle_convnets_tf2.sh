@@ -25,15 +25,7 @@ function cleanup {
 trap cleanup EXIT
 
 git clone https://github.com/NVIDIA/DeepLearningExamples ${TEMPDIR}/DeepLearningExamples
-BERT_PATH="${TEMPDIR}/DeepLearningExamples/PyTorch/LanguageModeling/BERT/"
-
-export BERT_PREP_WORKING_DIR="${BERT_PATH}/bert_prep"
-mkdir -p ${BERT_PREP_WORKING_DIR}
-
-export PYTHONPATH="${PYTHONPATH}:${BERT_PATH}"
-pip install $(grep -v '^ *#\|^onnxruntime' ${BERT_PATH}/requirements.txt | grep .)
-
-python3 ${BERT_PATH}/data/bertPrep.py --action download --dataset squad
+export PYTHONPATH="${PYTHONPATH}:${TEMPDIR}/DeepLearningExamples/TensorFlow2/Classification/ConvNets/"
 
 if [ -z "$1" ]
 then
@@ -42,8 +34,7 @@ else
     WORKDIR=${1}
 fi
 
-./tests/functional_framework/test_e2e_joc_bert_pyt.py \
-  --config_file ${BERT_PATH}/bert_configs/base.json \
-  --predict_file ${BERT_PREP_WORKING_DIR}/download/squad/v1.1/dev-v1.1.json \
-  --vocab_file ${BERT_PATH}/vocab/vocab \
-  --workdir ${WORKDIR}
+
+./tests/functional_framework/test_e2e_dle_convnets_tf2.py --model-name EfficientNet-v1-B0 --workdir ${WORKDIR}
+./tests/functional_framework/test_e2e_dle_convnets_tf2.py --model-name EfficientNet-v1-B4 --workdir ${WORKDIR}
+./tests/functional_framework/test_e2e_dle_convnets_tf2.py --model-name EfficientNet-v2-S --workdir ${WORKDIR}

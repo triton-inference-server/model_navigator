@@ -18,10 +18,10 @@ limitations under the License.
 
 ### List available models
 ```bash
-./examples/framework/export_scripts/export_joc_convnets_pyt.py --list-models
+./examples/framework/export_scripts/export_dle_convnets_pyt.py --list-models
 ```
 
 ### Export model
 ```bash
-./examples/framework/export_scripts/export_joc_convnets_pyt.py --model-name resnet50 --output-path resnet50_pyt.nav
+./examples/framework/export_scripts/export_dle_convnets_pyt.py --model-name resnet50 --output-path resnet50_pyt.nav
 ```

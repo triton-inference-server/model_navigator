@@ -55,7 +55,7 @@ else
     WORKDIR=${1}
 fi
 
-./tests/functional_framework/test_e2e_joc_bert_tf2.py \
+./tests/functional_framework/test_e2e_dle_bert_tf2.py \
   --config_file ${BERT_PREP_WORKING_DIR}/download/google_pretrained_weights/uncased_L-12_H-768_A-12/bert_config.json \
   --predict_file ${BERT_PREP_WORKING_DIR}/download/squad/v1.1/dev-v1.1.json \
   --vocab_file ${BERT_PREP_WORKING_DIR}/download/google_pretrained_weights/uncased_L-12_H-768_A-12/vocab.txt \
