@@ -60,7 +60,7 @@ class ConvertTorchScript2TorchTensorRT(Command):
         )
         converted_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
         if converted_model_path.is_file() or converted_model_path.is_dir():
-            return None
+            return self.get_output_relative_path()
         converted_model_path.parent.mkdir(parents=True, exist_ok=True)
 
         trt_casts = {np.dtype(np.int64): np.int32}

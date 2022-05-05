@@ -50,7 +50,7 @@ class ExportPYT2TorchScript(Command):
 
         exported_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
         if exported_model_path.is_file() or exported_model_path.is_dir():
-            return None
+            return self.get_output_relative_path()
 
         exported_model_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -101,7 +101,7 @@ class ExportPYT2ONNX(Command):
     ) -> Optional[Path]:
         exported_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
         if exported_model_path.is_file() or exported_model_path.is_dir():
-            return None
+            return self.get_output_relative_path()
 
         exported_model_path.parent.mkdir(parents=True, exist_ok=True)
 
