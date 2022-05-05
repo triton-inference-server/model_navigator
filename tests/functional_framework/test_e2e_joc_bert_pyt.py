@@ -125,6 +125,9 @@ if __name__ == "__main__":
                 assert (status == nav.Status.OK) == (
                     format in expected_formats
                 ), f"{format} {runtime} status is {status}, but expected formats are {expected_formats}."
-        pkg_desc.save(navigator_workdir / "bert_pyt.nav")
+        try:
+            pkg_desc.save(navigator_workdir / "bert_pyt.nav")
+        except RuntimeError:
+            nav.LOGGER.info("Cannot save empty package.")
 
     nav.LOGGER.info("All models passed.")
