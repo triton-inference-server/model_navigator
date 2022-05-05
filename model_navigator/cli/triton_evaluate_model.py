@@ -207,11 +207,11 @@ def _perf_analyzer_evaluation(
     return output
 
 
-def _get_max_shapes(kwargs):
+def _get_max_shapes(kwargs, dataset_profile_config):
     try:
         dataloader = get_dataloader(**kwargs)
     except ModelNavigatorException:
-        return None
+        return dataset_profile_config.max_shapes
     else:
         return dataloader.max_shapes
 
@@ -301,7 +301,7 @@ def triton_evaluate_model_cmd(
     profiling_data = "random"
     shapes = []
 
-    max_shapes = _get_max_shapes(kwargs)
+    max_shapes = _get_max_shapes(kwargs, dataset_profile_config)
     try:
         shapes_params = get_shape_params(max_shapes)
         if dataset_profile_config.value_ranges and dataset_profile_config.dtypes:

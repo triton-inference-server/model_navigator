@@ -209,7 +209,7 @@ class ProfileConfigGenerator(BaseConfigGenerator):
                 configuration["input-data"] = self._profiling_data_path.as_posix()
         elif self._dataset_profile_config and self._dataset_profile_config.max_shapes:
 
-            shapes = get_shape_params(self._dataset_profile_config)
+            shapes = get_shape_params(self._dataset_profile_config.max_shapes)
 
             if TRITON_MODEL_ANALYZER_VERSION >= LooseVersion("1.8.0"):
                 configuration["shape"] = shapes
