@@ -16,7 +16,7 @@ limitations under the License.
 
 # Changelog
 
-## unreleased
+## 0.3.0
 - Updated NVIDIA containers defaults to 22.04
 - Model Navigator Export API
   - Support for exporting models from TensorFlow2 and PyTorch source code to supported target formats

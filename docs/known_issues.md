@@ -22,3 +22,4 @@ limitations under the License.
 - Triton Inference Server stays in the background when the profile
   process is interrupted by the user
 - when using advanced mode, pytorch model outputs have to be specified in their positional order
+- Optimize for Triton Inference Server fails when model name contains slash sign '/'
