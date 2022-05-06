@@ -18,6 +18,7 @@ from tests.acceptance.library import *  # noqa
 
 scenarios(
     "features/docker",
+    "features/package",
     "features/profile",
     "features/triton_config_model",
 )

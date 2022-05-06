@@ -18,6 +18,7 @@ from pathlib import Path
 import click
 
 from model_navigator.cli.spec import DatasetProfileConfigCli
+from model_navigator.cli.utils import get_dataloader
 from model_navigator.converter.config import DatasetProfileConfig
 from model_navigator.log import init_logger
 from model_navigator.perf_analyzer.profiling_data import create_profiling_data
@@ -33,7 +34,7 @@ LOGGER = logging.getLogger("profiling_data")
 @click.option("-i", "--iterations", help="Number of samples", type=click.INT, default=128, show_default=True)
 @options_from_config(DatasetProfileConfig, DatasetProfileConfigCli)
 @click.pass_context
-def create_profiling_data_cmd(ctx, verbose: bool, data_output_path: str, iterations: int, **kwargs):
+def create_profiling_data_cmd(ctx, verbose: bool, data_output_path: str, **kwargs):
     init_logger(verbose=verbose)
     LOGGER.debug(f"Running '{ctx.command_path}' with config_path: {kwargs.get('config_path')}")
 
@@ -42,33 +43,13 @@ def create_profiling_data_cmd(ctx, verbose: bool, data_output_path: str, iterati
         configuration={
             "verbose": verbose,
             "data_output_path": data_output_path,
-            "iterations": iterations,
             **kwargs,
         },
     )
 
-    dataset_profile_config = DatasetProfileConfig.from_dict(kwargs)
-
-    # obtain first defined profile in given preferences
-    shapes = [
-        s
-        for s in [
-            dataset_profile_config.opt_shapes,
-            dataset_profile_config.max_shapes,
-            dataset_profile_config.min_shapes,
-        ]
-        if s
-    ]
-
-    if not shapes:
-        raise click.BadParameter("Missing defined at least single dataset profile shape")
-
-    shapes = shapes[0]
+    dataloader = get_dataloader(**kwargs)
 
     create_profiling_data(
-        shapes=shapes,
-        value_ranges=dataset_profile_config.value_ranges,
-        dtypes=dataset_profile_config.dtypes,
-        iterations=iterations,
+        dataloader=dataloader,
         output_path=Path(data_output_path),
     )

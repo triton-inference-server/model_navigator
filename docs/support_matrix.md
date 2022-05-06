@@ -15,12 +15,41 @@ limitations under the License.
 -->
 # Support Matrix
 
-Below is a list of tested models and third-party dependencies that are supported in the current version.
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- [Verified Models](#verified-models)
+  - [Export from Source](#export-from-source)
+  - [Optimize for Triton Inference Server](#optimize-for-triton-inference-server)
+- [Third-Party Packages](#third-party-packages)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 ## Verified Models
 
+Below is a list of tested models and third-party dependencies that are supported in the current version.
+
+### Export from Source
+
+We have verified that the Model Navigator export function works correctly for the following models. We're publishing
+[scripts](../../tests/functional_framework) that run these exports.
+
+| Source                                 | Model                                                                      |
+|----------------------------------------|----------------------------------------------------------------------------|
+| [NVIDIA DeepLearningExamples](https://github.com/NVIDIA/DeepLearningExamples) | [ResNet50 PyT](https://github.com/NVIDIA/DeepLearningExamples/tree/master/PyTorch/Classification/ConvNets) |
+| [NVIDIA DeepLearningExamples](https://github.com/NVIDIA/DeepLearningExamples) | [EfficientNet PyT](https://github.com/NVIDIA/DeepLearningExamples/tree/master/PyTorch/Classification/ConvNets) |
+| [NVIDIA DeepLearningExamples](https://github.com/NVIDIA/DeepLearningExamples) | [EfficientNet TF2](https://github.com/NVIDIA/DeepLearningExamples/tree/master/TensorFlow2/Classification/ConvNets) |
+| [NVIDIA DeepLearningExamples](https://github.com/NVIDIA/DeepLearningExamples) |[BERT TF2](https://github.com/NVIDIA/DeepLearningExamples/tree/master/TensorFlow2/LanguageModeling/BERT) |
+| [HuggingFace](https://huggingface.co/) |[BERT PyT](https://huggingface.co/docs/transformers/model_doc/bert) |
+| [HuggingFace](https://huggingface.co/) |[GPT2 PyT](https://huggingface.co/docs/transformers/model_doc/gpt2) |
+| [HuggingFace](https://huggingface.co/) |[GPT2 TF2](https://huggingface.co/docs/transformers/model_doc/gpt2) |
+| [HuggingFace](https://huggingface.co/) |[DistilBERT PyT](https://huggingface.co/docs/transformers/model_doc/distilbert) |
+| [HuggingFace](https://huggingface.co/) |[DistilBERT TF2](https://huggingface.co/docs/transformers/model_doc/distilbert) |
+
+### Optimize for Triton Inference Server
+
 We have verified that the Model Navigator run command works correctly for the following models. We're publishing a subset of
-[scripts](../tests/functional) with [instructions](../tests/README.md#running-functional-tests) on testing.
+[scripts](../../tests/functional) with [instructions](../tests/README.md#running-functional-tests) on testing.
 
 Refer to the [changelog](../CHANGELOG.md) for any related issues on these models.
 
@@ -39,13 +68,13 @@ Refer to the [changelog](../CHANGELOG.md) for any related issues on these models
 ## Third-Party Packages
 
 A set of component versions are imposed by the used `container_version` parameter value.
-By default, we're using the 22.02 container version that contains:
+By default, we're using the 22.04 container version that contains:
 
-- PyTorch 1.11.0a0+17540c5c
-- TensorFlow 2.7.0 / 1.15.5
-- TensorRT TensorRT 8.2.3
-- [Triton Inference Server 2.19.0](https://github.com/triton-inference-server/server/releases/tag/v2.19.0)
-- [ONNX Runtime 1.9.0](https://github.com/microsoft/onnxruntime/releases/tag/v1.9.0)
+- PyTorch 1.12.0a0+2c916ef
+- TensorFlow 2.8.0 / 1.15.5
+- TensorRT TensorRT 8.2.4.2
+- [Triton Inference Server 2.21.0](https://github.com/triton-inference-server/server/releases/tag/v2.21.0)
+- [ONNX Runtime 1.10.0](https://github.com/microsoft/onnxruntime/releases/tag/v1.10.0)
 
 Refer to [the containers support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
 for a detailed summary for each version.

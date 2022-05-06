@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from model_navigator.converter import ConversionConfig
+from model_navigator.converter import ConversionConfig, TensorRTConversionConfig
 from model_navigator.converter.config import TargetFormatConfigSetIterator
 from model_navigator.model import Format
 
@@ -20,4 +20,13 @@ from model_navigator.model import Format
 class TFTRTConfigSetIterator(TargetFormatConfigSetIterator):
     def __iter__(self):
         for tensorrt_precision in self._conversion_set_config.tensorrt_precisions:
-            yield ConversionConfig(target_format=Format.TF_TRT, tensorrt_precision=tensorrt_precision)
+            yield ConversionConfig(
+                target_format=Format.TF_TRT,
+                tensorrt_config=TensorRTConversionConfig(
+                    precision=tensorrt_precision,
+                    explicit_precision=self._conversion_set_config.tensorrt_explicit_precision,
+                    sparse_weights=self._conversion_set_config.tensorrt_sparse_weights,
+                    strict_types=self._conversion_set_config.tensorrt_strict_types,
+                    max_workspace_size=self._conversion_set_config.tensorrt_max_workspace_size,
+                ),
+            )

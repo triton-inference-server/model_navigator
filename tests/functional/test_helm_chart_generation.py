@@ -16,8 +16,6 @@ import logging
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-import sh
-
 from model_navigator.log import init_logger
 from tests.functional.utils import resolve_config_paths, run_test
 from tests.utils.common import load_config
@@ -55,6 +53,8 @@ def main():
     args = parser.parse_args()
 
     init_logger(verbose=args.verbose)
+
+    import sh
 
     for config_path in resolve_config_paths(args.config_paths):
         LOGGER.info(f"======== Running config: {config_path} =======")

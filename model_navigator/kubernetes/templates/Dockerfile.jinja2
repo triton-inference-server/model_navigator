@@ -8,7 +8,7 @@ RUN apt-get update && \
 WORKDIR /opt/workspace
 
 RUN pip install --no-cache-dir --upgrade --upgrade-strategy only-if-needed \
-    {{INSTALL_URL}}
+    {{INSTALL_URL}} -e .[cli]
 
 COPY {{DEPLOYER_LOCAL}} {{DEPLOYER_DOCKER}}
 COPY {{EVALUATOR_LOCAL}} {{EVALUATOR_DOCKER}}

@@ -18,14 +18,14 @@ import sys
 from io import TextIOWrapper
 from pathlib import Path
 
-from model_analyzer.triton.model.model_config import ModelConfig
 from pytest_bdd import then  # pytype: disable=import-error
 from pytest_bdd.parsers import parse  # pytype: disable=import-error
 
 from model_navigator.results import ResultsStore, State
 from model_navigator.utils import Workspace
 from model_navigator.utils.workspace import DEFAULT_WORKSPACE_PATH
-from tests.utils.profile_results import get_profile_results
+from tests.utils.analyze_results import get_analyze_results
+from tests.utils.profile_configs import ModelConfig, get_profiling_configs
 from tests.utils.triton_model_config import equal_model_configs_sets
 
 
@@ -94,7 +94,7 @@ def the_command_should_have_given_state(run_context, state: str):
         assert run_context.return_code != 0, f"the {run_context.cmd} should {state}"
 
 
-@then(parse("the {model_name} model configs in latest profile checkpoint are\n{expected_configs_jsonlines}"))
+@then(parse("the {model_name} model configs in latest profiling are\n{expected_configs_jsonlines}"))
 def the_model_configs_in_latest_profile_checkpoint_are(run_context, model_name: str, expected_configs_jsonlines: str):
     def _filter_out_not_swappable_parameters(config):
         for name in ["name", "platform", "backend", "version_policy", "input", "output"]:
@@ -105,10 +105,9 @@ def the_model_configs_in_latest_profile_checkpoint_are(run_context, model_name: 
     expected_configs = [json.loads(line) for line in expected_configs_jsonlines.splitlines()]
 
     workspace = Workspace(Path(run_context.cwd) / DEFAULT_WORKSPACE_PATH)
-    profiling_results = get_profile_results(workspace)
-    profiled_configs = [config.to_dict() for config, cmd_and_results in profiling_results[model_name].values()]
+    profiled_configs = get_profiling_configs(workspace)
+    profiled_configs = [config for name, config in profiled_configs.items() if name.startswith(model_name)]
     profiled_configs = [_filter_out_not_swappable_parameters(config) for config in profiled_configs]
-
     if not equal_model_configs_sets(profiled_configs, expected_configs):
         print("Profiled configs")
         for profiled_config in profiled_configs:
@@ -125,7 +124,7 @@ def the_model_configs_in_latest_profile_checkpoint_are(run_context, model_name: 
 def the_model_configs_is_equal_to(run_context, model_name: str, model_repository: str, expected_config_jsonline: str):
     model_dir_path = Path(run_context.cwd) / model_repository / model_name
     expected_config = json.loads(expected_config_jsonline)
-    created_config = ModelConfig.create_from_file(model_dir_path.as_posix()).to_dict()
+    created_config = ModelConfig.create_from_file(model_dir_path).to_dict()
 
     if expected_config != created_config:
         print("Created config")
@@ -138,19 +137,20 @@ def the_model_configs_is_equal_to(run_context, model_name: str, model_repository
 
 
 @then(parse("the {model_name} model was profiled with {concurrency_levels} concurrency levels"))
-def the_concurrency_in_latest_profile_checkpoint_are(run_context, model_name: str, concurrency_levels: str):
+def the_concurrency_in_latest_profile_are(run_context, model_name: str, concurrency_levels: str):
     expected_concurrency = set(map(int, concurrency_levels.split(" ")))
 
     workspace = Workspace(Path(run_context.cwd) / DEFAULT_WORKSPACE_PATH)
-    profiling_results = get_profile_results(workspace)
+    analyze_results = get_analyze_results(workspace)
 
-    profiling_cmd_and_results = [cmd_and_results for config, cmd_and_results in profiling_results[model_name].values()]
-    perf_analyzers_args = [
-        measurement.perf_config()
-        for cmd_and_result_map in profiling_cmd_and_results
-        for cmd, measurement in cmd_and_result_map.items()
-    ]
-    used_concurrency = {args["concurrency-range"] for args in perf_analyzers_args}
+    used_concurrency = {int(result["Concurrency"]) for result in analyze_results if result["Model"] == model_name}
+    if used_concurrency != expected_concurrency:
+        print("Used concurrency")
+        print(used_concurrency)
+
+        print("Expected concurrency")
+        print(expected_concurrency)
+
     assert used_concurrency == expected_concurrency
 
 
@@ -163,3 +163,10 @@ def substring_is_present_on_stderr(run_context, pattern: str):
         for line in run_context.output.splitlines():
             print(line)
     assert fragments_found
+
+
+@then(parse("the {file_or_dir} exists"))
+def the_file_exists(run_context, file_or_dir: str):
+    """the {file} exists"""
+    dst_path = Path(run_context.cwd) / file_or_dir
+    assert dst_path.is_file() or dst_path.is_dir()

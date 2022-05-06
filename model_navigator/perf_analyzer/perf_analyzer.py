@@ -30,7 +30,7 @@ class PerfAnalyzer:
     with perf_analyzer.
     """
 
-    def __init__(self, config, timeout: int, stream_output: bool = False):
+    def __init__(self, config, timeout: int, stream_output: bool = False, bin_path: str = "perf_analyzer"):
         """
         Parameters
         ----------
@@ -40,7 +40,7 @@ class PerfAnalyzer:
             keys are names of arguments to perf_analyzer,
             values are their values.
         """
-        self.bin_path = "perf_analyzer"
+        self._bin_path = bin_path
         self._config = config
         self._output = None
         self._stream_output = stream_output
@@ -66,7 +66,7 @@ class PerfAnalyzer:
             self._output = ""
 
         for _ in range(MAX_INTERVAL_CHANGES):
-            command = [self.bin_path]
+            command = [self._bin_path]
             command += self._config.to_cli_string().replace("=", " ").split()
 
             LOGGER.debug(f"Perf Analyze command: {command}")

@@ -14,7 +14,6 @@
 import dataclasses
 from typing import Optional
 
-from model_navigator.common.config import TensorRTCommonConfig
 from model_navigator.converter.config import ComparatorConfig, ConversionConfig, DatasetProfileConfig
 from model_navigator.model import Model, ModelConfig, ModelSignatureConfig
 from model_navigator.results import Status
@@ -24,8 +23,7 @@ from model_navigator.results import Status
 class ConversionResult:
     status: Status
     source_model_config: ModelConfig
-    conversion_config: Optional[ConversionConfig] = None
-    tensorrt_common_config: Optional[TensorRTCommonConfig] = None
+    conversion_config: ConversionConfig
     model_signature_config: Optional[ModelSignatureConfig] = None
     comparator_config: Optional[ComparatorConfig] = None
     dataset_profile: Optional[DatasetProfileConfig] = None

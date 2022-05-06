@@ -15,10 +15,11 @@ limitations under the License.
 -->
 # Known Issues and Limitations
 
-- missing support for stateful models (ex. time-series one)
+- missing support for stateful models (e.g. time-series)
 - no verification of conversion results for conversions: TF -> ONNX, TF->TF-TRT, TorchScript -> ONNX
-- possible to define a single profile for TensorRT
+- only possible to define a single profile for TensorRT
 - no custom ops support
 - Triton Inference Server stays in the background when the profile
   process is interrupted by the user
-- TF-TRT conversion lost outputs shapes info
+- when using advanced mode, pytorch model outputs have to be specified in their positional order
+- Optimize for Triton Inference Server fails when model name contains slash sign '/'

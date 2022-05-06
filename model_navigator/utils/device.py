@@ -21,6 +21,7 @@ from model_navigator.exceptions import ModelNavigatorException
 
 LOGGER = logging.getLogger(__name__)
 UUID_SIZE = 16
+MAX_NAME_SIZE = 256
 CUDA_SUCCESS = 0
 
 try:
@@ -50,10 +51,16 @@ def _get_all_gpus():
     _check_ret(cuda.cuInit(0))
     device_count = _get_device_count()
     dev_uuid = bytearray(UUID_SIZE)
+    name_buf = bytearray(MAX_NAME_SIZE)
     devices = []
     for device in range(device_count):
         _check_ret(cuda.cuDeviceGetUuid((c_uint8 * UUID_SIZE).from_buffer(dev_uuid), device))
-        devices.append(f"GPU-{str(uuid.UUID(bytes=bytes(dev_uuid)))}")
+        _check_ret(cuda.cuDeviceGetName((c_uint8 * MAX_NAME_SIZE).from_buffer(name_buf), MAX_NAME_SIZE, device))
+        entry = {
+            "name": name_buf.decode().rstrip("\x00"),
+            "uuid": f"GPU-{str(uuid.UUID(bytes=bytes(dev_uuid)))}",
+        }
+        devices.append(entry)
     return devices
 
 
@@ -64,7 +71,7 @@ def get_gpus(gpus: Optional[Sequence[str]] = None):
       "GPU-11111111-1111-1111-1111-111111111111"
     """
 
-    devices = _get_all_gpus()
+    devices = [dev["uuid"] for dev in _get_all_gpus()]
 
     requested_gpus = gpus or ("all",)
     if len(requested_gpus) == 1 and requested_gpus[0] == "all":
@@ -80,3 +87,30 @@ def get_gpus(gpus: Optional[Sequence[str]] = None):
                 raise ModelNavigatorException(f"GPU {gpu} was not found.")
             navigator_gpus.append(gpu)
     return navigator_gpus
+
+
+def _get_cuda_driver_version():
+    if cuda is None:
+        return "N/A"
+    version = ctypes.c_int()
+    _check_ret(cuda.cuDriverGetVersion(ctypes.byref(version)))
+    return f"{version.value // 1000}.{version.value % 100}"
+
+
+def _get_nvidia_driver_version():
+    try:
+        with open("/proc/driver/nvidia/version") as f:
+            return f.readline().split(":")[1].strip()
+    except Exception:
+        return "N/A"
+
+
+def get_environment_info(gpus: Optional[Sequence[str]] = None):
+    info = {
+        "driver": _get_nvidia_driver_version(),
+        "cuda_driver": _get_cuda_driver_version(),
+        "gpus": _get_all_gpus(),
+        "gpus_used": get_gpus(gpus),
+    }
+    # TODO: "container_tag"
+    return info

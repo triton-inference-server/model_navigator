@@ -26,8 +26,21 @@ class MockCuda:
 
     def __init__(self, count):
         self.devices = [uuid.UUID(int=i + 10) for i in range(count)]
+        self.device_names = [f"device_{i}".encode() for i in range(count)]
 
     def cuInit(self, _):
+        return 0
+
+    def cuDeviceGetName(self, buf, size, i):
+        try:
+            i = i.value
+        except AttributeError:
+            pass
+        if not 0 <= i < len(self.devices):
+            return 1  # random error
+        name = self.device_names[i]
+        to_copy = min(size, len(name))
+        buf[0:to_copy] = name[0:to_copy]
         return 0
 
     def cuDeviceGetCount(self, count):

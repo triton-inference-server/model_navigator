@@ -15,8 +15,18 @@ limitations under the License.
 -->
 # Quick Start
 
-The following steps below will guide you through using the Triton Model Navigator to analyze a simple PyTorch model.
-The instructions assume a directory structure like the following:
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- [Install the Triton Model Navigator in training environment](#install-the-triton-model-navigator-in-training-environment)
+- [Export model](#export-model)
+- [Install the Triton Model Navigator in deployment environment](#install-the-triton-model-navigator-in-deployment-environment)
+- [Optimize model](#optimize-model)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+The following steps below will guide you through  two-step process of using the Triton Model Navigator to export and
+analyze a simple PyTorch model. The instructions assume a directory structure like the following:
 
 ```
 $HOME
@@ -30,7 +40,71 @@ $HOME
       .
 ```
 
-## Install the Triton Model Navigator and Run Container
+## Install the Triton Model Navigator in training environment
+
+To install latest version of Model Navigator use command:
+
+```shell
+$ pip install --extra-index-url https://pypi.ngc.nvidia.com git+https://github.com/triton-inference-server/model_navigator.git [pyt] --upgrade
+```
+
+## Export model
+This step exports model to all available formats and creates `.nav` package with checkpoints and model meta data.
+
+```python
+import model_navigator as nav
+import torch
+
+model = torch.nn.Linear(5, 7).eval()
+dataloader = [torch.full((3, 5), 1.0) for _ in range(10)]
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
+pkg_desc = nav.torch.export(
+    model=model,
+    dataloader=dataloader,
+    model_name="my_model",
+    target_device=device,
+)
+
+```
+Next user should verify exported format. User can use custom metrics, measure accuracy, listen to the output etc.
+```python
+import numpy
+import torch
+
+sample_count = 100
+valid_outputs = 0
+for _ in range(sample_count):
+    random_sample = torch.full((3, 5), 1.0)
+
+    # Use source model to generate dummy ground truth
+    gt = [model(random_sample).detach().cpu().numpy()]
+
+    feed_dict = {"input__0": random_sample.detach().cpu().numpy()}
+    onnx_runner = pkg_desc.get_runner(format=nav.Format.ONNX, runtime=nav.RuntimeProvider.CUDA)
+    with onnx_runner:
+        output = onnx_runner.infer(feed_dict)
+
+    # Compare output and gt
+    for a, b in zip(gt, output.values()):
+        if numpy.allclose(a, b, atol=0, rtol=0):
+            valid_outputs += 1
+
+accuracy = float(valid_outputs) / float(sample_count)
+
+if accuracy > 0.8:
+    pkg_desc.set_verified(format=nav.Format.ONNX, runtime=nav.RuntimeProvider.CUDA)
+```
+After verification user have to save final Navigator package. This package will contain base format and all information
+that allows for recreation of all other formats and rerunning all tests.
+```python
+pkg_desc.save("my_model.nav")
+```
+
+The `.nav` package can then be copied to the deployment environment.
+
+
+## Install the Triton Model Navigator in deployment environment
 
 The recommended way of using the Triton Model Navigator is to build a Docker container with all necessary dependencies:
 
@@ -53,112 +127,32 @@ docker run -it --rm \
 Learn more about installing the Triton Model Navigator using the instructions in the [Installation](installation.md)
 section.
 
-## Run the add_sub Example
+## Optimize model
+This step uses previously generated `.nav` package and use it for further conversion and applies optimizations for
+Triton Inference Server. In results it produces package that can used directly for deployment on Triton Inference Server.
 
-The [examples/quick-start](../examples/quick-start) directory contains a simple libtorch model that calculates the sum and difference of two inputs.
-
-Run the Triton Model Navigator inside the container from the source directory:
+First, run the model configuration and profiling process.
 ```shell
-$ model-navigator run --model-name add_sub \
-    --model-path examples/quick-start/model.pt \
-    --inputs INPUT__0:-1,16:float32 INPUT__1:-1,16:float32 \
-    --outputs OUTPUT__0:-1,16:float32 OUTPUT__1:-1,16:float32
+$ model-navigator optimize my_model.nav # conversion + analyzer
+```
+This produces a new "my_model.triton.nav" package. This can then be used as an input to the
+`model-navigator select` command, which builds a Triton model repository containing the input model in
+its best configuration.
+
+```
+$ model-navigator select my_model.triton.nav
 ```
 
-Or using configuration stored in YAML file:
+By default, the configuration is selected only for best throughput.
+However other optimization objectives can be specified and combined using weighted ranking.
+Additional constraints can be passed to the `select` command,
+including bounds on latency, throughput and desired model formats:
 
-```shell
-$ model-navigator run --config-path examples/quick-start/model_navigator.yaml
 ```
-
-***Note:*** Input and output definitions are required for PyTorch models. Read more about that in the [model conversions](conversion.md) section.
-
-You should see an output similar to the output below:
-```
-2021-12-06 13:23:01 - INFO - model_navigator.log: run args:
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	model_name = add_sub
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	model_path = examples/quick-start/model.pt
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	model_format = None
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	model_version = 1
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	target_formats = ['tf-trt', 'tf-savedmodel', 'onnx', 'trt', 'torchscript']
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	onnx_opsets = [13]
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	tensorrt_precisions = ['fp16', 'tf32']
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	tensorrt_precisions_mode = hierarchy
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	tensorrt_explicit_precision = False
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	tensorrt_strict_types = False
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	tensorrt_sparse_weights = False
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	tensorrt_max_workspace_size = None
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	atol = {'': 1e-05}
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	rtol = {'': 1e-05}
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	max_batch_size = 1
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	inputs = {'INPUT__0': {'name': 'INPUT__0', 'shape': [-1, 16], 'dtype': 'float32'}, 'INPUT__1': {'name': 'INPUT__1', 'shape': [-1, 16], 'dtype': 'float32'}}
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	outputs = {'OUTPUT__0': {'name': 'OUTPUT__0', 'shape': [-1, 16], 'dtype': 'float32'}, 'OUTPUT__1': {'name': 'OUTPUT__1', 'shape': [-1, 16], 'dtype': 'float32'}}
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	min_shapes = None
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	opt_shapes = None
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	max_shapes = None
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	value_ranges = None
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	dtypes = None
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	batching = static
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	engine_count_per_device = {}
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	triton_backend_parameters = {}
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	triton_launch_mode = local
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	triton_server_path = tritonserver
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	config_search_max_concurrency = 1024
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	config_search_max_instance_count = 5
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	config_search_max_preferred_batch_size = 32
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	config_search_concurrency = []
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	config_search_instance_counts = {}
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	config_search_max_batch_sizes = []
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	config_search_preferred_batch_sizes = []
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	config_search_backend_parameters = {}
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	top_n_configs = 3
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	objectives = {'perf_throughput': 10}
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	max_latency_ms = None
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	min_throughput = 1
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	max_gpu_usage_mb = None
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	perf_analyzer_timeout = 600
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	perf_measurement_mode = count_windows
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	perf_measurement_request_count = 50
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	perf_measurement_interval = 5000
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	workspace_path = navigator_workspace
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	override_workspace = False
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	override_conversion_container = False
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	framework_docker_image = nvcr.io/nvidia/pytorch:21.12-py3
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	triton_docker_image = nvcr.io/nvidia/tritonserver:21.12-py3
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	gpus = ('all',)
-2021-12-06 13:23:01 - INFO - model_navigator.log: 	verbose = False
-2021-12-06 13:23:03 - INFO - model_navigator.utils.docker: Run docker container with image model_navigator_converter:21.12-py3; using workdir: model_navigator
-2021-12-06 13:23:05 - INFO - model_navigator.converter.transformers: Running command copy on examples/quick-start/model.pt
-2021-12-06 13:23:05 - INFO - model_navigator.converter.transformers: Running command annotation on model_navigator/navigator_workspace/converted/model.pt
-2021-12-06 13:23:05 - INFO - model_navigator.converter.transformers: Saving annotations to model_navigator/navigator_workspace/converted/model.pt.yaml
-2021-12-06 13:23:05 - INFO - model_navigator.converter.transformers: Missing model input value ranges required during conversion. Use `value_ranges` config to define missing dataset profiles. Used default values_ranges: {'INPUT__0': (0.0, 1.0), 'INPUT__1': (0.0, 1.0)}
-2021-12-06 13:23:05 - INFO - pyt.transformers: ts2onnx command started.
-2021-12-06 13:23:08 - INFO - pyt.transformers: ts2onnx command succeed.
-2021-12-06 13:23:08 - INFO - polygraphy.transformers: Polygraphy onnx2trt started.
-2021-12-06 13:23:08 - WARNING - polygraphy.transformers: This conversion should be done on target GPU platform
-2021-12-06 13:23:08 - WARNING - polygraphy.transformers: --max-workspace-size config parameter is missing thus using 4294967296
-2021-12-06 13:23:12 - INFO - polygraphy.transformers: Polygraphy onnx2trt succeed.
-2021-12-06 13:23:12 - INFO - polygraphy.transformers: Polygraphy onnx2trt started.
-2021-12-06 13:23:12 - WARNING - polygraphy.transformers: This conversion should be done on target GPU platform
-2021-12-06 13:23:12 - WARNING - polygraphy.transformers: --max-workspace-size config parameter is missing thus using 4294967296
-2021-12-06 13:23:15 - INFO - polygraphy.transformers: Polygraphy onnx2trt succeed.
-2021-12-06 13:23:17 - INFO - run: Running triton model configuration variants generation for add_sub.ts2onnx_op13
-2021-12-06 13:23:17 - INFO - run: Verifying model variant: add_sub.ts2onnx_op13
-2021-12-06 13:23:17 - INFO - run: Running triton model configurator for add_sub.ts2onnx_op13
-
-.
-.
-.
-```
-
-The generated models, logs, and Helm Charts can be found in:
-```
-$PWD
-  |--- navigator_workspace
-      |--- analyzer
-      |--- charts
-      |--- converted
-      |--- model-store
-      |--- logs
-      |--- ...
+$ model-navigator select my_model.triton.nav \
+                        --objective perf_throughput=10 perf_latency_avg=5  # objectives with weights
+                        --max-latency-ms 1  \
+                        --min-throughput 100  \
+                        --max-gpu-usage-mb 8000  \
+                        --target-format trt onnx
 ```

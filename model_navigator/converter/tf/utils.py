@@ -16,8 +16,6 @@ import logging
 # pytype: disable=import-error
 import tensorflow as tf
 
-from model_navigator.exceptions import ModelNavigatorException
-
 # pytype: enable=import-error
 
 
@@ -41,77 +39,3 @@ def obtain_inputs(concrete_func):
     input_tensors = [tensor for tensor in concrete_func.inputs if tensor.dtype != tf.dtypes.resource]
     inputs = {name: tensor.name for name, tensor in zip(input_names, input_tensors)}
     return inputs
-
-
-def get_default_profile(concrete_func, max_batch_size: int):
-    shapes = {
-        "min": {},
-        "max": {},
-    }
-    if max_batch_size == 0:
-        return None
-    if max_batch_size < 0:
-        raise ModelNavigatorException("Cannot construct default dataset profile: max_batch_size negative")
-    tensor_name_to_input_name = {v: k for k, v in obtain_inputs(concrete_func).items()}
-    for inp in concrete_func.inputs:
-        min_shape = inp.shape.as_list()
-        min_shape[0] = 1
-        max_shape = inp.shape.as_list()
-        max_shape[0] = max_batch_size
-        for x in max_shape:
-            if not x:
-                raise ModelNavigatorException(
-                    "Cannot construct default dataset profile: "
-                    f"too many dynamic axes in the model input {inp.name}: {inp.shape.as_list()}. "
-                    "Please provide a full dataset profile instead of max_batch_size."
-                )
-        # Triton needs input names, not tensor names
-        name = tensor_name_to_input_name[inp.name]
-        shapes["min"][name] = min_shape
-        shapes["max"][name] = max_shape
-    LOGGER.info("Generated default dataset profile: %s.", shapes)
-    return shapes
-
-
-def generate_inputs(concrete_func, shapes, value_ranges=None):
-    """Generate random input data for `concrete_func`."""
-    func_inputs = {v: k for k, v in obtain_inputs(concrete_func).items()}
-    if not value_ranges:
-        value_ranges = {}
-        for inp in func_inputs.values():
-            value_ranges[inp] = (0.0, 1.0)
-        LOGGER.info(f"Value ranges not provided, using default: {value_ranges}.")
-
-    def generate_sample(shapes):
-        profile_inputs = sorted(shapes.keys())
-        if sorted(func_inputs.values()) != profile_inputs:
-            raise ModelNavigatorException(
-                "Dataset profile does not match model inputs. "
-                f"Model ConcreteFunction has following inputs: {list(func_inputs.values())}; "
-                f"while the profile given to model-navigator has inputs: {profile_inputs}."
-            )
-        sample = []
-        for inp in concrete_func.inputs:
-            sample_inp_shape = []
-            for x, px in zip(inp.shape, shapes[func_inputs[inp.name]]):
-                if x and x != px:
-                    raise ModelNavigatorException(
-                        "Dataset profile does not match model inputs. "
-                        f"For input {inp.name}, shape is {inp.shape} "
-                        f"but profile specifies: {shapes[func_inputs[inp.name]]}."
-                    )
-                if not x:
-                    sample_inp_shape.append(px)
-                else:
-                    sample_inp_shape.append(x)
-            ranges = value_ranges[func_inputs[inp.name]]
-            sample.append(tf.random.uniform(tuple(sample_inp_shape), minval=ranges[0], maxval=ranges[1]))
-        return sample
-
-    inputs = [generate_sample(shape) for shape in shapes.values()]
-
-    def _gen():
-        for inp in inputs:
-            yield tuple(inp)
-
-    return _gen

@@ -12,24 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
-import sys
 from functools import singledispatch
 from pathlib import Path
-from typing import Dict, Optional, Tuple, Union
-
-import click
+from typing import Optional
 
 # pytype: disable=import-error
 import torch
 import torch_tensorrt as trtorch
 
-from model_navigator.cli.spec import parse_shapes
-from model_navigator.converter.config import TensorRTPrecision, TensorRTPrecisionMode
+from model_navigator.converter.config import TensorRTConversionConfig, TensorRTPrecision, TensorRTPrecisionMode
+from model_navigator.converter.dataloader import Dataloader
 from model_navigator.converter.pyt.utils import numpy_to_torch_type
 from model_navigator.exceptions import ModelNavigatorConverterException
-from model_navigator.log import log_dict, set_logger, set_tf_verbosity
 from model_navigator.model import ModelSignatureConfig
-from model_navigator.utils.signature import load_annotation
 
 # pytype: enable=import-error
 
@@ -71,29 +66,30 @@ def _cast_down(dtype):
     return dtype
 
 
-def _trtorch_inputs(io_spec: ModelSignatureConfig, shapes, max_batch_size=0):
+def _trtorch_inputs(dataloader):
     ret = []
-    for name, input_ in io_spec.inputs.items():
-        dtype = _cast_down(numpy_to_torch_type(input_.dtype.type))
 
-        if shapes:
-            try:
-                ret.append(
-                    trtorch.Input(
-                        min_shape=shapes["min"][name],
-                        opt_shape=shapes["opt"][name],
-                        max_shape=shapes["max"][name],
-                        dtype=dtype,
-                    ),
-                )
-            except TypeError:
-                # we have a single shape
-                ret.append(trtorch.Input(shape=shapes["max"], dtype=dtype))
-        else:
-            assert max_batch_size > 0
-            shape = list(input_.shape)
-            shape[0] = max_batch_size
-            ret.append(trtorch.Input(shape=shape, dtype=dtype))
+    for name, dtype in dataloader.dtypes.items():
+        dtype = _cast_down(numpy_to_torch_type(dtype))
+        shapes = {
+            "min_shape": dataloader.min_shapes[name],
+            "opt_shape": dataloader.opt_shapes[name],
+            "max_shape": dataloader.max_shapes[name],
+        }
+
+        # Workaround for torch-trt issues with resnet50 (as of 22.02).
+        # If the shapes differ only on the batch dimension,
+        # then use a single static shape - this significantly increases
+        # the chances of success when compiling to TensorRT.
+        # Hopefully, this can be removed in the future
+        if all(x[1:] == y[1:] for x in shapes.values() for y in shapes.values()):
+            max_batch_size = max(x[0] for x in shapes.values())
+            sample_shape = next(iter(shapes.values()))[1:]
+            shapes = {"shape": (max_batch_size, *sample_shape)}
+
+        ret.append(
+            trtorch.Input(dtype=dtype, **shapes),
+        )
 
     return ret
 
@@ -110,6 +106,7 @@ def _load_model_from_path(input_model: Path):
     model = torch.jit.load(input_model.as_posix())
     model.to(device).eval()
     LOGGER.debug(f"Model is on {device} device")
+
     return model
 
 
@@ -142,13 +139,8 @@ def convert_to_trt_engine(
     output_path: Path,
     log_path: Path,
     signature_config: Optional[ModelSignatureConfig],
-    precision: TensorRTPrecision,
-    precision_mode: TensorRTPrecisionMode,
-    shapes: Union[Dict[str, Dict[str, Tuple]], Dict[str, Tuple]],
-    tensorrt_sparse_weights: bool,
-    tensorrt_strict_types: bool = False,
-    max_batch_size: int = 0,
-    max_workspace_size: int = 0,
+    tensorrt_config: TensorRTConversionConfig,
+    dataloader: Dataloader,
 ):
     """Convert TorchScript model from file at `input_path` to a TensorRT model
     and store it at `output_path`."""
@@ -156,11 +148,12 @@ def convert_to_trt_engine(
     out = trtorch.ts.convert_method_to_trt_engine(
         model,
         "forward",
-        inputs=_trtorch_inputs(signature_config, shapes, max_batch_size),
-        strict_types=tensorrt_strict_types,
-        sparse_weights=tensorrt_sparse_weights,
-        workspace_size=max_workspace_size,
-        **_get_precision(precision, precision_mode),
+        inputs=_trtorch_inputs(dataloader),
+        strict_types=tensorrt_config.strict_types,
+        sparse_weights=tensorrt_config.sparse_weights,
+        workspace_size=tensorrt_config.max_workspace_size,
+        truncate_long_and_double=True,
+        **_get_precision(tensorrt_config.precision, tensorrt_config.precision_mode),
     )
     save_model(out, output_path)
 
@@ -171,102 +164,19 @@ def compile(
     output_path: Path,
     log_path: Path,
     signature_config: Optional[ModelSignatureConfig],
-    precision: TensorRTPrecision,
-    precision_mode: TensorRTPrecisionMode,
-    shapes: Union[Dict[str, Dict[str, Tuple]], Dict[str, Tuple]],
-    tensorrt_sparse_weights: bool,
-    tensorrt_strict_types: bool = False,
-    max_batch_size: int = 0,
-    max_workspace_size: int = 0,
+    tensorrt_config: TensorRTConversionConfig,
+    dataloader: Dataloader,
 ):
     """Convert TorchScript model from file at `input_path` to a TensorRT model
     and store it at `output_path`."""
     model = load_model(input_model)
     out = trtorch.ts.compile(
         model,
-        inputs=_trtorch_inputs(signature_config, shapes, max_batch_size),
-        strict_types=tensorrt_strict_types,
-        sparse_weights=tensorrt_sparse_weights,
-        workspace_size=max_workspace_size,
+        inputs=_trtorch_inputs(dataloader),
+        strict_types=tensorrt_config.strict_types,
+        sparse_weights=tensorrt_config.sparse_weights,
+        workspace_size=tensorrt_config.max_workspace_size,
         truncate_long_and_double=True,
-        **_get_precision(precision, precision_mode),
+        **_get_precision(tensorrt_config.precision, tensorrt_config.precision_mode),
     )
     save_model(out, output_path)
-
-
-def _setup_logging(verbose=False, **kwargs):
-    set_logger(verbose=verbose)
-    set_tf_verbosity(verbose=verbose)
-    log_dict("args", {"verbose": verbose, **kwargs})
-
-
-@click.command()
-@click.option("--input-model", type=Path)
-@click.option("--output-path", type=Path)
-@click.option("--log-path", type=Path)
-@click.option("--precision", type=TensorRTPrecision)
-@click.option("--precision-mode", type=TensorRTPrecisionMode)
-@click.option("--trt-min-shapes", type=str, default=[], multiple=True)
-@click.option("--trt-max-shapes", type=str, default=[], multiple=True)
-@click.option("--trt-opt-shapes", type=str, default=[], multiple=True)
-@click.option("--tensorrt-sparse-weights", default=False, type=bool)
-@click.option("--tensorrt-strict-types", default=False, type=bool)
-@click.option("--max-batch-size", default=0, type=int)
-@click.option("--max-workspace-size", default=0, type=int)
-@click.option("--verbose", default=False, type=bool, is_flag=True)
-def main(
-    input_model: Path,
-    output_path: Path,
-    log_path: Path,
-    precision: TensorRTPrecision,
-    precision_mode: TensorRTPrecisionMode,
-    trt_min_shapes: Optional[str],
-    trt_max_shapes: Optional[str],
-    trt_opt_shapes: Optional[str],
-    tensorrt_sparse_weights: bool,
-    tensorrt_strict_types: bool,
-    max_batch_size: int,
-    max_workspace_size: int,
-    verbose: bool,
-):
-    _setup_logging(verbose)
-
-    if not torch.cuda.is_available():
-        LOGGER.error("CUDA device not available")
-        sys.exit(-1)
-
-    try:
-        shapes = {}
-        if trt_max_shapes:
-            shapes["max"] = parse_shapes(None, None, list(trt_max_shapes))
-        if trt_min_shapes:
-            shapes["min"] = parse_shapes(None, None, list(trt_min_shapes))
-        if trt_opt_shapes:
-            shapes["opt"] = parse_shapes(None, None, list(trt_opt_shapes))
-    except Exception as e:
-        LOGGER.debug(f"parsing shapes failed: {e}")
-        shapes = None
-
-    io_spec = load_annotation(input_model)
-
-    if not shapes and not max_batch_size:
-        LOGGER.error("Neither max_batch_size, nor a full dataset profile provided. Aborting.")
-        sys.exit(-1)
-
-    compile(
-        input_model=input_model,
-        output_path=output_path,
-        log_path=log_path,
-        signature_config=io_spec,
-        precision=precision,
-        precision_mode=precision_mode,
-        shapes=shapes,
-        tensorrt_sparse_weights=tensorrt_sparse_weights,
-        tensorrt_strict_types=tensorrt_strict_types,
-        max_batch_size=max_batch_size,
-        max_workspace_size=max_workspace_size,
-    )
-
-
-if __name__ == "__main__":
-    main()

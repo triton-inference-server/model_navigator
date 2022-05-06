@@ -111,8 +111,11 @@ dist: clean ## builds source and wheel package
 install: clean ## install the package to the active Python's site-packages
 	$(PIP_INSTALL) .
 
+install-with-cli: clean
+	$(PIP_INSTALL) -e .[cli]
+
 install-with-cloud-extras: clean
-	$(PIP_INSTALL) --upgrade --upgrade-strategy only-if-needed .[cloud]
+	$(PIP_INSTALL) --upgrade --upgrade-strategy only-if-needed .[cli,cloud]
 
 install-with-framework-extras: clean
 ifeq ($(origin TENSORFLOW_VERSION), undefined)
@@ -121,8 +124,15 @@ else
 	$(PIP_INSTALL) --upgrade --upgrade-strategy only-if-needed .[tf]
 endif
 
+install-with-framework-and-cli-extras: clean
+ifeq ($(origin TENSORFLOW_VERSION), undefined)
+	$(PIP_INSTALL) --upgrade --upgrade-strategy only-if-needed .[cli,pyt]
+else
+	$(PIP_INSTALL) --upgrade --upgrade-strategy only-if-needed .[cli,tf]
+endif
+
 install-dev: clean
-	$(PIP_INSTALL) -e .
+	$(PIP_INSTALL) -e .[cli]
 	$(PIP_INSTALL) -r dev_requirements.txt
 
 docker: clean

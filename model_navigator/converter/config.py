@@ -20,6 +20,7 @@ from typing import Dict, Optional, Tuple
 import numpy as np
 
 from model_navigator.constants import ALL_OTHER_INPUTS
+from model_navigator.core import DEFAULT_TENSORRT_MAX_WORKSPACE_SIZE
 from model_navigator.model import Format
 from model_navigator.utils.config import BaseConfig
 
@@ -52,7 +53,6 @@ class ComparatorConfig(BaseConfig):
 
     atol: Dict[str, float] = field(default_factory=lambda: {ALL_OTHER_INPUTS: DEFAULT_TOLERANCE_VALUE})
     rtol: Dict[str, float] = field(default_factory=lambda: {ALL_OTHER_INPUTS: DEFAULT_TOLERANCE_VALUE})
-    max_batch_size: int = 32
 
 
 @dataclass
@@ -65,6 +65,16 @@ class DatasetProfileConfig(BaseConfig):
 
 
 @dataclass
+class TensorRTConversionConfig(BaseConfig):
+    precision: TensorRTPrecision = TensorRTPrecision.FP16
+    precision_mode: TensorRTPrecisionMode = TensorRTPrecisionMode.HIERARCHY
+    explicit_precision: bool = False
+    strict_types: bool = False
+    sparse_weights: bool = False
+    max_workspace_size: int = DEFAULT_TENSORRT_MAX_WORKSPACE_SIZE
+
+
+@dataclass
 class ConversionConfig(BaseConfig):
     target_format: Format
 
@@ -72,11 +82,7 @@ class ConversionConfig(BaseConfig):
     onnx_opset: Optional[int] = None
 
     # TRT related
-    tensorrt_precision: Optional[TensorRTPrecision] = None
-    tensorrt_precision_mode: TensorRTPrecisionMode = TensorRTPrecisionMode.HIERARCHY
-    tensorrt_explicit_precision: bool = False
-    tensorrt_strict_types: bool = False
-    tensorrt_sparse_weights: bool = False
+    tensorrt_config: TensorRTConversionConfig = field(default_factory=TensorRTConversionConfig)
 
 
 class TargetFormatConfigSetIterator(ABC):

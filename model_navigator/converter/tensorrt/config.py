@@ -13,7 +13,7 @@
 # limitations under the License.
 from typing import Generator
 
-from model_navigator.converter import ConversionConfig
+from model_navigator.converter import ConversionConfig, TensorRTConversionConfig
 from model_navigator.converter.config import TargetFormatConfigSetIterator, TensorRTPrecisionMode
 from model_navigator.exceptions import ModelNavigatorException
 
@@ -25,11 +25,14 @@ class TensorRTConfigSetIterator(TargetFormatConfigSetIterator):
                 yield ConversionConfig(
                     target_format=self._target_format,
                     onnx_opset=onnx_opset,
-                    tensorrt_precision=tensorrt_precision,
-                    tensorrt_precision_mode=tensorrt_precision_mode,
-                    tensorrt_explicit_precision=self._conversion_set_config.tensorrt_explicit_precision,
-                    tensorrt_sparse_weights=self._conversion_set_config.tensorrt_sparse_weights,
-                    tensorrt_strict_types=self._conversion_set_config.tensorrt_strict_types,
+                    tensorrt_config=TensorRTConversionConfig(
+                        precision=tensorrt_precision,
+                        precision_mode=tensorrt_precision_mode,
+                        explicit_precision=self._conversion_set_config.tensorrt_explicit_precision,
+                        sparse_weights=self._conversion_set_config.tensorrt_sparse_weights,
+                        strict_types=self._conversion_set_config.tensorrt_strict_types,
+                        max_workspace_size=self._conversion_set_config.tensorrt_max_workspace_size,
+                    ),
                 )
 
     def _precision_modes(self) -> Generator:

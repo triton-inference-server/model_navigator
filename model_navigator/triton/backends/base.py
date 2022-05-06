@@ -14,7 +14,7 @@
 import logging
 from typing import Dict, Optional
 
-from model_navigator.common.config import TensorRTCommonConfig
+from model_navigator.common.config import BatchingConfig, TensorRTCommonConfig
 from model_navigator.exceptions import ModelNavigatorDeployerException
 from model_navigator.model import Model
 from model_navigator.triton import (
@@ -25,11 +25,15 @@ from model_navigator.triton import (
 )
 from model_navigator.triton.client import grpc_client
 from model_navigator.triton.config import Batching, TritonBatchingConfig, TritonCustomBackendParametersConfig
+from model_navigator.triton.utils import rewrite_signature_to_model_config
 from model_navigator.utils.formats import FORMAT2SUFFIX
 
 LOGGER = logging.getLogger(__name__)
 
-ModelConfigProtobufType = grpc_client.model_config_pb2.ModelConfig
+if grpc_client:
+    ModelConfigProtobufType = grpc_client.model_config_pb2.ModelConfig  # pytype: disable=attribute-error
+else:
+    ModelConfigProtobufType = object
 
 
 class BaseBackendConfigurator:
@@ -40,11 +44,13 @@ class BaseBackendConfigurator:
     def __init__(self):
         self._target_triton_version = None
 
+    # pytype: disable=invalid-annotation
     def update_config_for_model(
         self,
         model_config: Dict,
         model: Model,
-        batching_config: TritonBatchingConfig,
+        batching_config: BatchingConfig,
+        triton_batching_config: TritonBatchingConfig,
         *,
         optimization_config: Optional[TritonModelOptimizationConfig] = None,
         dynamic_batching_config: Optional[TritonDynamicBatchingConfig] = None,
@@ -61,6 +67,7 @@ class BaseBackendConfigurator:
         self._set_batching(
             model_config,
             batching_config=batching_config,
+            triton_batching_config=triton_batching_config,
             dynamic_batching_config=dynamic_batching_config or TritonDynamicBatchingConfig(),
         )
         self._set_backend_acceleration(
@@ -74,8 +81,11 @@ class BaseBackendConfigurator:
         )
         return model_config
 
+    # pytype: enable=invalid-annotation
+
     def _extract_signature(self, model_config, model: Model):
-        pass
+        if model.signature and not model.signature.is_missing():
+            rewrite_signature_to_model_config(model_config, model.signature)
 
     def _set_backend_acceleration(
         self,
@@ -86,15 +96,19 @@ class BaseBackendConfigurator:
         pass
 
     def _set_batching(
-        self, model_config, batching_config: TritonBatchingConfig, dynamic_batching_config: TritonDynamicBatchingConfig
+        self,
+        model_config,
+        batching_config: BatchingConfig,
+        triton_batching_config: TritonBatchingConfig,
+        dynamic_batching_config: TritonDynamicBatchingConfig,
     ):
-        if batching_config.batching == Batching.DISABLED:
+        if triton_batching_config.batching == Batching.DISABLED:
             model_config["max_batch_size"] = 0
             LOGGER.debug("Batching for model is disabled. Supported request batch size=1.")
             return
 
         model_config["max_batch_size"] = batching_config.max_batch_size
-        if batching_config.batching == Batching.DYNAMIC:
+        if triton_batching_config.batching == Batching.DYNAMIC:
             dynamic_batching = {}
             if dynamic_batching_config.max_queue_delay_us > 0:
                 dynamic_batching["maxQueueDelayMicroseconds"] = int(dynamic_batching_config.max_queue_delay_us)

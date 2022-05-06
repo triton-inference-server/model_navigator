@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import pathlib
+import shutil
 from typing import Dict, Tuple
 
 import click
@@ -21,11 +23,48 @@ from model_navigator.model import Format
 from model_navigator.tensor import TensorSpec
 from model_navigator.triton import DeviceKind
 from model_navigator.utils.cli import CliSpec
+from model_navigator.utils.workspace import Workspace
+
+
+def _parse_model_path(ctx, param, value) -> pathlib.Path:
+    try:
+        return pathlib.Path(value)
+    except Exception:
+        pass
+
+    package, relpath = value
+    try:
+        return package.vfs_path_to_member(relpath)
+    except NotImplementedError:
+        pass
+
+    # the package does not make the model accessible in the filesystem,
+    # so copy the model to the workspace.
+    # We need to do this, because the return value should be a path,
+    # otherwise we would get type errors due to Click and dataclass mechanics.
+    # The only directory that is available to docker subprocesses and
+    # can be assumed to have sufficient space is the workspace directory,
+    # so use it. We have to be careful to make sure that the workspace
+    # is not cleaned up elsewhere, before the actual processing starts
+    workspace = Workspace(ctx.params["workspace_path"])
+    dstpath = workspace.path / ".input_data" / "input_model" / relpath
+    if dstpath.exists():
+        # when launched inside docker by convert_model, the copy should be already there
+        return dstpath
+
+    dstpath.parent.mkdir(parents=True, exist_ok=True)
+    with dstpath.open("wb") as dst, package.open(relpath) as src:
+        shutil.copyfileobj(src, dst)
+    return dstpath
 
 
 class ModelConfigCli:
     model_name = CliSpec(help="Name of the model.", param_decls=["-n", "--model-name"])
-    model_path = CliSpec(help="Path to the model file.", param_decls=["-p", "--model-path"])
+    model_path = CliSpec(
+        help="Path to the model file.",
+        param_decls=["-p", "--model-path"],
+        parse_and_verify_callback=_parse_model_path,
+    )
     model_format = CliSpec(
         help="Format of the model. Should be provided in case it is not possible to obtain format from model filename."
     )
@@ -252,6 +291,10 @@ class ConversionSetConfigCli:
         help="Enable strict types in TensorRT, forcing it to choose tactics based on the layer precision set, even if another precision is faster."
     )
     tensorrt_sparse_weights = CliSpec(help="Enable optimizations for sparse weights in TensorRT.")
+    tensorrt_max_workspace_size = CliSpec(
+        help="The maximum GPU memory in bytes the model can use temporarily during execution for TensorRT acceleration.",
+        param_decls=["--tensorrt-max-workspace-size", "--max-workspace-size"],
+    )
 
 
 class ConversionSetHelmChartConfigCli:
@@ -290,6 +333,14 @@ class ConversionSetHelmChartConfigCli:
         help="Enable strict types in TensorRT, forcing it to choose tactics based on the layer precision set, even if another precision is faster."
     )
     tensorrt_sparse_weights = CliSpec(help="Enable optimizations for sparse weights in TensorRT.")
+    tensorrt_max_workspace_size = CliSpec(
+        help="The maximum GPU memory in bytes the model can use temporarily during execution for TensorRT acceleration.",
+        param_decls=["--tensorrt-max-workspace-size", "--max-workspace-size"],
+    )
+
+
+class BatchingConfigCli:
+    max_batch_size = CliSpec(help="Maximum batch size allowed for inference.")
 
 
 class TensorRTCommonConfigCli:
@@ -304,7 +355,6 @@ class TritonClientConfigCli:
 
 
 class TritonBatchingConfigCli:
-    max_batch_size = CliSpec(help="Maximum batch size allowed for inference.")
     batching = CliSpec(
         help="Triton batching used for model. Supported: "
         "\n disabled: model does not support batching, "
@@ -425,7 +475,6 @@ class ComparatorConfigCli:
         parse_and_verify_callback=_parse_tolerance_parameters,
         serialize_default_callback=_serialize_tolerance_parameters,
     )
-    max_batch_size = CliSpec(help=TritonBatchingConfigCli.max_batch_size.help)
 
 
 def _serialize_objectives(param, value: Dict[str, int]):
@@ -516,36 +565,43 @@ class ModelAnalyzerTritonConfigCli:
 
 
 class ModelAnalyzerProfileConfigCli:
-    config_search_max_concurrency = CliSpec(help="Max concurrency used for automatic config search in analysis.")
-    config_search_max_instance_count = CliSpec(
-        help="Max number of model instances used for automatic config search in analysis."
+    config_search_max_batch_size = CliSpec(
+        help="Model max batch size used for automatic config search in profiling.",
     )
-    config_search_max_preferred_batch_size = CliSpec(
-        help="[Deprecated] Maximum preferred batch size allowed for inference used for automatic config search in analysis."
+    config_search_max_concurrency = CliSpec(
+        help="Max client side request concurrency used for automatic config search in profiling.",
+    )
+    config_search_max_instance_count = CliSpec(
+        help="Max number of model instances count used for automatic config search in profiling."
     )
     config_search_concurrency = CliSpec(
-        help="List of concurrency values used for manual config search in analysis. "
+        help="List of client side request concurrency used for manual config search in profiling. "
         "\nForces manual config search. "
         "\nFormat: --config-search-concurrency 1 2 4 ...",
     )
+    config_search_batch_sizes = CliSpec(
+        help="List of client side request batch size used for manual config search in profiling. "
+        "\nForces manual config search. "
+        "\nFormat: --config-search-batch-sizes 1 2 4 ...",
+    )
     config_search_instance_counts = CliSpec(
-        help="List of model instance count values used for manual config search in analysis. "
+        help="List of model instance count used for manual config search in profiling. "
         "\nForces manual config search. "
         "\nFormat: --config-search-instance-counts <DeviceKind>=<count>,<count> <DeviceKind>=<count> ...",
         parse_and_verify_callback=parse_instance_counts,
     )
     config_search_max_batch_sizes = CliSpec(
-        help="List of max batch sizes used for manual config search in analysis. Forces manual config search. "
+        help="List of model max batch sizes used for manual config search in profiling. Forces manual config search. "
         "\nFormat: --config-search-max-batch-sizes 1 2 4 ...",
     )
     config_search_preferred_batch_sizes = CliSpec(
-        help="List of preferred batch sizes used for manual config search in analysis. "
+        help="List of preferred batch sizes used for manual config search in profiling. "
         "\nForces manual config search. "
         "\nFormat: --config-search-preferred-batch-sizes 4,8,16 8,16 16 ...",
         parse_and_verify_callback=parse_config_search_preferred_batch_sizes,
     )
     config_search_backend_parameters = CliSpec(
-        help="List of custom backend parameters used for manual config search in analysis. "
+        help="List of custom backend parameters used for manual config search in profiling. "
         "\nForces manual config search. "
         "\nFormat: --config-search-backend-parameters <param_name1>=<value1>,<value2> <param_name2>=<value3> ...",
         parse_and_verify_callback=parse_backend_parameters,
@@ -564,10 +620,50 @@ class ModelAnalyzerAnalysisConfigCli:
     )
 
 
+class SelectConfigCli:
+    max_latency_ms = CliSpec(help="Maximum latency in ms that the analyzed models should match.")
+    min_throughput = CliSpec(help="Minimal throughput that the analyzed models should match.")
+    max_gpu_usage_mb = CliSpec(help="Maximal GPU memory usage in MB that analyzed model should match.")
+    objective = CliSpec(
+        help="Objective used to rank those configurations of the model that fulfill other constraints, with an optional weight value."
+        "\nCan be passed multiple times to specify multiple objectives. Available objectives: 'perf_throughput', 'perf_latency_p99'.",
+        multiple=True,
+        parse_and_verify_callback=_parse_objectives,
+        serialize_default_callback=_serialize_objectives,
+    )
+    target_format = CliSpec(
+        help="Select only from among models in the given format(s). Multiple formats can be provided as a space-separated list, or by passing the option multiple times.",
+        multiple=True,
+        parse_and_verify_callback=_parse_target_formats,
+        serialize_default_callback=_serialize_target_formats,
+    )
+    backend_accelerator = CliSpec(help="Select only from among model configurations using given backend accelerator.")
+    tensorrt_precision = CliSpec(
+        help="Select only from among model configurations using given precision for TensorRT acceleration."
+    )
+    tensorrt_capture_cuda_graph = CliSpec(
+        help="Select only from among model configurations using the CUDA capture "
+        "graph feature on the TensorRT backend."
+    )
+
+
 class PerfMeasurementConfigCli:
     perf_analyzer_timeout = CliSpec(help="Perf Analyzer measurement timeout in seconds.")
+    perf_analyzer_path = CliSpec(help="Path to perf_analyzer binary.")
     perf_measurement_mode = CliSpec(help="Perf Analyzer measurement mode. Available: count_windows, time_windows.")
     perf_measurement_request_count = CliSpec(
         help="Perf Analyzer count windows number of samples to used for stabilization."
     )
     perf_measurement_interval = CliSpec(help="Perf Analyzer time windows time in [ms] used for stabilization.")
+    perf_measurement_shared_memory = CliSpec(
+        help="Define usage of shared memory to pass tensors:"
+        "\nnone - no shared memory used"
+        "\nsystem - use RAM memory."
+        "\ncuda - use GPU memory."
+    )
+    perf_measurement_output_shared_memory_size = CliSpec(help="Define size of shared memory for model outputs.")
+
+
+class RunTritonConfigCli:
+    triton_launch_mode = ModelAnalyzerTritonConfigCli.triton_launch_mode
+    triton_server_path = ModelAnalyzerTritonConfigCli.triton_server_path

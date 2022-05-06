@@ -18,6 +18,11 @@ from typing import Dict, List, Optional
 from model_navigator.utils.config import BaseConfig
 
 
+class TritonLaunchMode(Enum):
+    LOCAL = "local"
+    DOCKER = "docker"
+
+
 class Batching(Enum):
     DISABLED = "disabled"
     STATIC = "static"
@@ -48,7 +53,6 @@ class BackendAccelerator(Enum):
 
 @dataclass
 class TritonBatchingConfig(BaseConfig):
-    max_batch_size: int = 1
     batching: Batching = Batching.STATIC
 
 
@@ -78,3 +82,9 @@ class TritonModelInstancesConfig(BaseConfig):
 @dataclass
 class TritonCustomBackendParametersConfig(BaseConfig):
     triton_backend_parameters: Dict[str, str] = field(default_factory=lambda: {})
+
+
+@dataclass
+class RunTritonConfig(BaseConfig):
+    triton_launch_mode: TritonLaunchMode = TritonLaunchMode.LOCAL
+    triton_server_path: str = "tritonserver"

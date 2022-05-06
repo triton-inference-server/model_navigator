@@ -35,11 +35,22 @@ class Workspace:
         return self._workspace_path.exists()
 
     def empty(self):
-        return len(list(self.path.rglob("*"))) == 0
+        all_files = list(self.path.rglob("*"))
+        if len(all_files) == 0:
+            return True
+        for p in all_files:
+            rel_p = p.relative_to(self.path)
+            if rel_p.parts and not rel_p.parts[0].startswith("."):
+                return False
+        return True
 
     def clean(self):
         LOGGER.debug(f"Cleaning workspace dir {self.path}")
+
         for child in self.path.rglob("*"):
+            rel_p = child.relative_to(self.path)
+            if len(rel_p.parts) == 0 or rel_p.parts[0].startswith("."):
+                continue
             if child.is_dir():
                 shutil.rmtree(child, ignore_errors=True)
             else:

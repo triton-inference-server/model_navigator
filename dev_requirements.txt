@@ -21,11 +21,12 @@ isort>=5.8.0
 pdbpp>=0.10.2
 pip>=21.1.1
 pre-commit>=2.13.0
+Pyro4>=4.82
 pytest>=6.2.4
 pytest-bdd>=4.1.0
 pytest-datadir-mgr>=1.2.5
 pytest-mock>=3.6.1
-pytype>=2021.2.9,!=2021.11.18
+pytype>=2021.2.9,!=2021.11.18,!=2022.2.17
 recommonmark>=0.7.1
 Sphinx>=4.0.1
 sphinx-rtd-theme>=0.5.2

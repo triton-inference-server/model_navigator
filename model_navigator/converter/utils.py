@@ -11,10 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import contextlib
 import logging
+import os
+import secrets
+import subprocess
+import sys
+import threading
+import time
 from collections import deque
 
-import sh
+import Pyro4.util
+import Pyro4.utils.flame
 
 from model_navigator.framework import PyTorch, TensorFlow2
 from model_navigator.model import Format
@@ -42,7 +50,7 @@ def extend_model_name(model_name, transform_name):
     return f"{basename}{MODEL_COMMAND_SEP}{transform_spec}"
 
 
-def execute_sh_command(cmd: sh.Command, *, log_file, verbose: bool = False):
+def execute_sh_command(cmd, *, log_file, verbose: bool = False):
     tf_cpp_min_log_level = 0 if verbose else 2
     envs = {
         "TF_CPP_MIN_LOG_LEVEL": str(tf_cpp_min_log_level),
@@ -64,6 +72,55 @@ def execute_sh_command(cmd: sh.Command, *, log_file, verbose: bool = False):
             print("\t" + line, flush=True)
         else:
             log_buffer.append(line)
+
+
+def _handle_subprocess_output(p, log_file, verbose):
+    for line in p.stdout:
+        if log_file:
+            log_file.write(line)
+        line = line.rstrip()
+        if verbose:
+            print("\t" + line, flush=True)
+
+
+@contextlib.contextmanager
+def navigator_subprocess(*, log_file=None, verbose: bool = False):
+    tf_cpp_min_log_level = 0 if verbose else 2
+    envs = {
+        "TF_CPP_MIN_LOG_LEVEL": str(tf_cpp_min_log_level),
+        "TF_ENABLE_DEPRECATION_WARNINGS": "0",
+        "PYRO_FLAME_ENABLED": "1",
+    }
+
+    msg = None
+    Pyro4.config.SERIALIZER = "pickle"  # pytype: disable=module-attr
+    socket = f"/tmp/model-navigator-{secrets.token_urlsafe()}.socket"
+    with subprocess.Popen(
+        [sys.executable, "-m", "Pyro4.utils.flameserver", "-u", socket, "-q"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        env=envs,
+        encoding="utf-8",
+    ) as p:
+        t = threading.Thread(target=_handle_subprocess_output, args=(p, log_file, verbose))
+        t.start()
+        try:
+            while not os.path.exists(socket) and p.returncode is None:
+                p.poll()
+                time.sleep(0.01)
+            with Pyro4.utils.flame.connect(f"./u:{socket}") as flame:
+                yield flame
+        except Exception:
+            tb = "".join(Pyro4.util.getPyroTraceback())
+            msg = f"Uncaught exception:\n {tb}\n"
+            for line in msg.splitlines():
+                print("\t" + line, flush=True)
+            raise
+        finally:
+            p.terminate()
+            t.join()
+            if msg is not None and log_file is not None:
+                log_file.write(msg)
 
 
 def prepare_log_header(file_handler, src_format: Format, dst_format: Format):

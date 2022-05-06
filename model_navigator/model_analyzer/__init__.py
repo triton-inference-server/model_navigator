@@ -15,7 +15,6 @@ from model_navigator.model_analyzer.config import (  # noqa: F401
     ModelAnalyzerAnalysisConfig,
     ModelAnalyzerProfileConfig,
     ModelAnalyzerTritonConfig,
-    TritonLaunchMode,
 )
 from model_navigator.model_analyzer.model_analyzer import ModelAnalyzer  # noqa: F401
 from model_navigator.model_analyzer.profiler import Profiler  # noqa: F401

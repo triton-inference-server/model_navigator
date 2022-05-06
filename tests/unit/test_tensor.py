@@ -79,6 +79,11 @@ def test_tensorspec_without_dtype():
     assert spec.dtype is None
 
 
+def test_tensorspec_optional():
+    spec = TensorSpec("name", shape=(-1, 224, 224, 3))
+    assert not spec.optional
+
+
 def test_iospec():
     ModelSignatureConfig(
         {"tensor_in1": TensorSpec("tensor_in1", shape=(-1, 24, 24, 1), dtype=np.dtype("float32"))},

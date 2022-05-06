@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import dataclasses
+import functools
 import logging
 from dataclasses import MISSING, dataclass, fields
 from enum import Enum
@@ -19,9 +20,11 @@ from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
 
 import click
+import yaml
 from click.types import UNPROCESSED
 
 from model_navigator.core import DEFAULT_CONTAINER_VERSION
+from model_navigator.utils import nav_package
 from model_navigator.utils.config import YamlConfigFile
 from model_navigator.utils.workspace import DEFAULT_WORKSPACE_PATH, Workspace
 
@@ -32,6 +35,7 @@ LOGGER = logging.getLogger(__name__)
 class CliSpec:
     help: str = ""
     count: bool = False
+    multiple: bool = False
     param_decls: Optional[List[str]] = None
     parse_and_verify_callback: Optional[Callable] = None
     serialize_default_callback: Optional[Callable] = None
@@ -192,6 +196,7 @@ def is_namedtuple(type_):
 
 
 def _parse_and_verify_callback_wrapper(parse_and_verify_callback: Optional[Callable] = None):
+    @functools.wraps(parse_and_verify_callback)
     def _wrapper(ctx, param, value):
         if value is not None and parse_and_verify_callback is not None:
             # if scalar parameter and callback is provided - just pass it to
@@ -214,6 +219,7 @@ def _parse_and_verify_callback_wrapper(parse_and_verify_callback: Optional[Calla
 def _serialize_default_callback_wrapper(
     serialize_default_callback: Optional[Callable] = None, param_multiple: bool = False
 ):
+    @functools.wraps(serialize_default_callback)
     def _wrapper(param_name, value):
         if value is not None and serialize_default_callback is not None:
             if not param_multiple:
@@ -256,7 +262,11 @@ def options_from_config(config_dataclass, cli_specs=None):  # noqa: C901
 
         # default option kwargs
         cls = click.Option
-        parse_and_verify_callback = _parse_and_verify_callback_wrapper(cli_spec.parse_and_verify_callback)
+        if not cli_spec.multiple:
+            parse_and_verify_callback = _parse_and_verify_callback_wrapper(cli_spec.parse_and_verify_callback)
+        else:
+            # don't do any magic, if the argument is explicitly specified as multiple
+            parse_and_verify_callback = cli_spec.parse_and_verify_callback
         nargs = None
         flag_value = None
 
@@ -341,7 +351,7 @@ def options_from_config(config_dataclass, cli_specs=None):  # noqa: C901
             "is_flag": is_bool_flag,
             "flag_value": flag_value,
             "count": cli_spec.count,
-            "multiple": is_list,
+            "multiple": is_list or cli_spec.multiple,
             "help": cli_spec.help,
             "type": type_,
             "required": is_required,
@@ -378,9 +388,46 @@ def common_options(f):
 
         return config_path
 
-    # TODO: add versification if --config-path is first option wrapping command
+    def _load_config_from_nav_package(ctx, param, value):
+        """Set other CLI options defaults based on parameters from nav package"""
+        if not value:
+            return
+
+        package_path = Path(value)
+        package = nav_package.from_path(package_path)
+        with package.open("status.yaml") as f:
+            status = yaml.load(f, Loader=yaml.SafeLoader)
+
+        ctx.default_map = ctx.default_map or {}
+
+        model = nav_package.select_input_format(status["model_status"])
+        LOGGER.info("Selected model %s as input", model)
+        config_path = Path(model["path"]).parent / "config.yaml"
+
+        with package.open(config_path) as config_file:
+            config_dict = yaml.safe_load(config_file)
+            model_path = config_dict["model_path"]
+            ctx.default_map.update(config_dict)
+            # we need to fix the relative path
+            ctx.default_map.update({"model_path": (package, model_path)})
+
+        return package
+
+    arguments = [
+        # package and config-path should be read before all the options,
+        # as callbacks read config files into ctx.default_map
+        click.argument(
+            "package",
+            type=click.Path(dir_okay=True, file_okay=True, exists=True, resolve_path=True),
+            required=False,
+            callback=_load_config_from_nav_package,
+        ),
+    ]
+
+    # TODO: add verification if --config-path is first option wrapping command
     options = [
-        # should be first option, as callback reads config file into ctx.default_map
+        # package and config-path should be read before all other options,
+        # as callbacks read config files into ctx.default_map
         click.option(
             "--config-path",
             help=(
@@ -398,6 +445,15 @@ def common_options(f):
             help="Path to the output workspace directory.",
             type=click.Path(file_okay=False, writable=True),
             default=DEFAULT_WORKSPACE_PATH,
+            show_default=True,
+            required=False,
+        ),
+        click.option(
+            "-o",
+            "--output-package",
+            help="Path to the output package.",
+            type=click.Path(file_okay=True, dir_okay=False, writable=True),
+            default=None,
             show_default=True,
             required=False,
         ),
@@ -453,11 +509,20 @@ def common_options(f):
             type=bool,
             is_flag=True,
         ),
+        click.option(
+            "--random-seed",
+            help="Seed to use for random number generation.",
+            default=0,
+            type=int,
+        ),
     ]
 
     options.reverse()
     for option in options:
         f = option(f)
+
+    for argument in reversed(arguments):
+        f = argument(f)
 
     return f
 

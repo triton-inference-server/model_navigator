@@ -19,11 +19,14 @@ import typing
 from collections import Counter
 from enum import Enum, EnumMeta
 
+import click
+
 from model_navigator.cli.analyze import analyze_cmd
 from model_navigator.cli.convert_model import convert_cmd
 from model_navigator.cli.helm_chart_create import helm_chart_create_cmd
+from model_navigator.cli.optimize import optimize_cmd
 from model_navigator.cli.profile import profile_cmd
-from model_navigator.cli.run import run_cmd
+from model_navigator.cli.select import select_cmd
 from model_navigator.cli.triton_config_model import config_model_on_triton_cmd
 from model_navigator.utils.cli import OptionNargs
 
@@ -37,23 +40,25 @@ class DocCmdsEntry(typing.NamedTuple):
 
 
 CATALOG = [
-    DocCmdsEntry(pathlib.Path("docs/run.md"), [run_cmd]),
-    DocCmdsEntry(pathlib.Path("docs/conversion.md"), [convert_cmd]),
-    DocCmdsEntry(pathlib.Path("docs/triton_model_configurator.md"), [config_model_on_triton_cmd]),
-    DocCmdsEntry(pathlib.Path("docs/helm_charts.md"), [helm_chart_create_cmd]),
-    DocCmdsEntry(pathlib.Path("docs/profiling.md"), [profile_cmd]),
-    DocCmdsEntry(pathlib.Path("docs/analysis.md"), [analyze_cmd]),
+    DocCmdsEntry(pathlib.Path("docs/optimize_for_triton.md"), [optimize_cmd]),
+    DocCmdsEntry(pathlib.Path("docs/advanced/conversion.md"), [convert_cmd]),
+    DocCmdsEntry(pathlib.Path("docs/advanced/triton_model_configurator.md"), [config_model_on_triton_cmd]),
+    DocCmdsEntry(pathlib.Path("docs/advanced/helm_charts.md"), [helm_chart_create_cmd]),
+    DocCmdsEntry(pathlib.Path("docs/advanced/profiling.md"), [profile_cmd]),
+    DocCmdsEntry(pathlib.Path("docs/advanced/analysis.md"), [analyze_cmd]),
+    DocCmdsEntry(pathlib.Path("docs/select.md"), [select_cmd]),
 ]
 
-TYPE_MAPPING = {
-    "text": "str",
-}
+TYPE_MAPPING = {"text": "str", "Path": "path", "file": "path", "directory": "path"}
 
 
 def _get_type(option):
     is_list = isinstance(option, OptionNargs)
 
-    type_name = _get_type_name(option)
+    try:
+        type_name = _get_type_name(option.callback.__annotations__["return"].__name__)
+    except (AttributeError, KeyError):
+        type_name = _get_type_name(option.type.name)
 
     if hasattr(option.type, "func") and isinstance(option.type.func, (Enum, EnumMeta)):
         type_str = f"choice({', '.join([str(item.value) for item in option.type.func])})"
@@ -63,16 +68,10 @@ def _get_type(option):
 
     if is_list:
         type_str = f"list[{type_str}]"
-
     return type_str
 
 
-def _get_type_name(option):
-    try:
-        type_name = {"Path": "path", "file": "path", "directory": "path"}[option.type.name]
-    except KeyError:
-        type_name = option.type.name
-
+def _get_type_name(type_name):
     type_name = TYPE_MAPPING.get(type_name, type_name)
 
     return type_name
@@ -115,7 +114,7 @@ def _check_if_there_are_duplicated_options(options_with_cmds):
     duplicated_options_names = [(name, count) for name, count in counter.items() if count > 1]
 
     if duplicated_options_names:
-        print("Suspected options found\n")
+        print("Duplicate options found\n")
         for name, count in duplicated_options_names:
             print("\t", name, count)
             for key, options_and_cmds_list in options.items():
@@ -156,12 +155,17 @@ def _replace_config_list(tags, doc_path, config_description_lines):
         print(f"Could not find {tags}")
 
 
+def options(params):
+    return [opt for opt in params if not isinstance(opt, click.Argument)]
+
+
 def main():
-    options_with_cmds = [(option, cmd) for entry in CATALOG for cmd in entry.cmds for option in cmd.params]
-    _generate_config_description_lines(options_with_cmds)
+    options_with_cmds = [[(option, cmd) for cmd in entry.cmds for option in options(cmd.params)] for entry in CATALOG]
+    for entry_options_with_cmds in options_with_cmds:
+        _generate_config_description_lines(entry_options_with_cmds)
 
     for entry in CATALOG:
-        options_with_cmds = [(option, cmd) for cmd in entry.cmds for option in cmd.params]
+        options_with_cmds = [(option, cmd) for cmd in entry.cmds for option in options(cmd.params)]
         options_with_cmds = sorted(
             options_with_cmds, key=lambda option_and_cmd: option_and_cmd[0].required, reverse=True
         )

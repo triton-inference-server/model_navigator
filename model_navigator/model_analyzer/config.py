@@ -14,17 +14,12 @@
 import abc
 import pathlib
 from dataclasses import dataclass, field
-from enum import Enum
 from typing import Dict, List, Optional
 
 from model_navigator.triton import DeviceKind
+from model_navigator.triton.config import TritonLaunchMode
 from model_navigator.utils import Workspace
 from model_navigator.utils.config import BaseConfig
-
-
-class TritonLaunchMode(Enum):
-    LOCAL = "local"
-    DOCKER = "docker"
 
 
 class BaseConfigGenerator(abc.ABC):
@@ -62,10 +57,11 @@ class ModelAnalyzerTritonConfig(BaseConfig):
 
 @dataclass
 class ModelAnalyzerProfileConfig(BaseConfig):
+    config_search_max_batch_size: int = 128
     config_search_max_concurrency: int = 1024
     config_search_max_instance_count: int = 5
-    config_search_max_preferred_batch_size: int = 32
     config_search_concurrency: List[int] = field(default_factory=lambda: [])
+    config_search_batch_sizes: List[int] = field(default_factory=lambda: [])
     config_search_instance_counts: Dict[DeviceKind, List] = field(default_factory=lambda: {})
     config_search_max_batch_sizes: List[int] = field(default_factory=lambda: [])
     config_search_preferred_batch_sizes: List[List[int]] = field(default_factory=lambda: [])
@@ -77,5 +73,5 @@ class ModelAnalyzerAnalysisConfig(BaseConfig):
     top_n_configs: int = 3
     objectives: Dict[str, int] = field(default_factory=lambda: {"perf_throughput": 10})
     max_latency_ms: Optional[int] = None
-    min_throughput: int = 1
+    min_throughput: int = 0
     max_gpu_usage_mb: Optional[int] = None

@@ -27,8 +27,12 @@ try:
     import tritonclient.grpc as grpc_client
     from tritonclient import utils as client_utils  # noqa: F401
 except ImportError:
-    import tritonclientutils as client_utils  # noqa: F401
-    import tritongrpcclient as grpc_client
+    try:
+        import tritonclientutils as client_utils  # noqa: F401
+        import tritongrpcclient as grpc_client
+    except ImportError:
+        client_utils = None
+        grpc_client = None
 
 try:
     import tritonclient.http as http_client

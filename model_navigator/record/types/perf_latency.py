@@ -24,7 +24,7 @@ class PerfLatency(record.Record):
     metric 'p99 Latency'
     """
 
-    tag = "perf_latency"
+    tag = "perf_latency_p99"
 
     def __init__(self, value, timestamp=0):
         """

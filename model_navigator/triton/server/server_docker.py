@@ -16,8 +16,6 @@ import logging
 import pathlib
 import typing
 
-import docker
-
 from model_navigator.triton.client import TritonClient
 from model_navigator.triton.server.exceptions import TritonServerException
 from model_navigator.triton.server.server import TritonServer
@@ -68,6 +66,8 @@ class TritonServerDocker(TritonServer):
         ports = self.get_ports()
         ports = {port_number: port_number for port_number in ports.values()}
 
+        import docker
+
         try:
             self._docker_container: DockerContainer = self._docker_image.run_container(
                 devices=devices,
@@ -91,6 +91,8 @@ class TritonServerDocker(TritonServer):
         self._server_logs_gen = self._docker_container.run_cmd(cmd=cmd, detached=True)
 
     def _get_devices(self):
+        import docker
+
         if len(self._gpus) == 1 and self._gpus[0] == "all":
             devices = [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])]
         else:

@@ -15,9 +15,7 @@ import pathlib
 import shutil
 import typing
 
-from docker.utils import parse_repository_tag
 from jinja2 import Environment, FileSystemLoader
-from semver import VersionInfo
 
 from model_navigator.framework import Framework
 from model_navigator.kubernetes.evaluator import EvaluatorChartCreator
@@ -28,6 +26,8 @@ from model_navigator.utils.source import navigator_install_url
 
 
 def _chart_version_from_docker_tag(docker_tag):
+    from semver import VersionInfo
+
     return docker_tag if docker_tag and VersionInfo.isvalid(docker_tag) else None
 
 
@@ -50,6 +50,8 @@ class Generator:
         self._create_catalog()
 
         chart_basename = chart_name.lower().replace("_", "-")
+
+        from docker.utils import parse_repository_tag
 
         _, triton_docker_tag = parse_repository_tag(triton_docker_image)
         _, framework_docker_tag = parse_repository_tag(framework_docker_image)

@@ -22,6 +22,7 @@ import click
 
 from model_navigator.cli.convert_model import ConversionSetConfig
 from model_navigator.cli.spec import (
+    BatchingConfigCli,
     ComparatorConfigCli,
     ConversionSetHelmChartConfigCli,
     DatasetProfileConfigCli,
@@ -34,7 +35,7 @@ from model_navigator.cli.spec import (
     TritonModelOptimizationConfigCli,
 )
 from model_navigator.cli.utils import exit_cli_command, is_cli_command
-from model_navigator.common.config import TensorRTCommonConfig
+from model_navigator.common.config import BatchingConfig, TensorRTCommonConfig
 from model_navigator.converter.config import ComparatorConfig, DatasetProfileConfig
 from model_navigator.converter.utils import FORMAT2FRAMEWORK
 from model_navigator.exceptions import ModelNavigatorException
@@ -73,6 +74,7 @@ LOGGER = logging.getLogger("helm_chart_create")
 @options_from_config(TensorRTCommonConfig, TensorRTCommonConfigCli)
 @options_from_config(ComparatorConfig, ComparatorConfigCli)
 @options_from_config(DatasetProfileConfig, DatasetProfileConfigCli)
+@options_from_config(BatchingConfig, BatchingConfigCli)
 @options_from_config(TritonBatchingConfig, TritonBatchingConfigCli)
 @options_from_config(TritonModelOptimizationConfig, TritonModelOptimizationConfigCli)
 @options_from_config(TritonDynamicBatchingConfig, TritonDynamicBatchingConfigCli)
@@ -119,7 +121,8 @@ def helm_chart_create_cmd(
     tensorrt_common_config = TensorRTCommonConfig.from_dict(kwargs)
     comparator_config = ComparatorConfig.from_dict(kwargs)
     dataset_profile_config = DatasetProfileConfig.from_dict(kwargs)
-    batching_config = TritonBatchingConfig.from_dict(kwargs)
+    batching_config = BatchingConfig.from_dict(kwargs)
+    triton_batching_config = TritonBatchingConfig.from_dict(kwargs)
     optimization_config = TritonModelOptimizationConfig.from_dict(kwargs)
     dynamic_batching_config = TritonDynamicBatchingConfig.from_dict(kwargs)
     instances_config = TritonModelInstancesConfig.from_dict(kwargs)
@@ -181,6 +184,7 @@ def helm_chart_create_cmd(
             comparator_config=comparator_config,
             dataset_profile_config=dataset_profile_config,
             batching_config=batching_config,
+            triton_batching_config=triton_batching_config,
             optimization_config=optimization_config,
             dynamic_batching_config=dynamic_batching_config,
             instances_config=instances_config,
@@ -202,16 +206,17 @@ def helm_chart_create_cmd(
             comparator_config=comparator_config,
             dataset_profile_config=dataset_profile_config,
             batching_config=batching_config,
+            triton_batching_config=triton_batching_config,
             optimization_config=optimization_config,
             dynamic_batching_config=dynamic_batching_config,
             instances_config=instances_config,
             helm_chart_dir_path=None,
         )
 
-    results_store = ResultsStore(workspace)
-    results_store.dump(ctx.command.name.replace("-", "_"), [helm_chart_generation_result])
-
     if is_cli_command(ctx):
+        results_store = ResultsStore(workspace)
+        results_store.dump(ctx.command.name.replace("-", "_"), [helm_chart_generation_result])
+
         exit_cli_command(helm_chart_generation_result.status)
 
     return helm_chart_generation_result

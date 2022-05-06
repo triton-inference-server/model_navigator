@@ -14,7 +14,7 @@
 import logging
 from typing import Tuple
 
-from model_navigator.exceptions import ModelNavigatorDeployerException
+from model_navigator.exceptions import BadParameterModelNavigatorDeployerException, ModelNavigatorDeployerException
 from model_navigator.model import ModelSignatureConfig
 
 LOGGER = logging.getLogger(__name__)
@@ -68,6 +68,9 @@ def rewrite_signature_to_model_config(model_config, signature: ModelSignatureCon
             "data_type": getattr(grpc_client.model_config_pb2, dtype),
         }
 
+        if spec_.optional:
+            item["optional"] = True
+
         if len(spec_.shape) <= 1:
             item["reshape"] = {"shape": []}
 
@@ -78,17 +81,23 @@ def rewrite_signature_to_model_config(model_config, signature: ModelSignatureCon
         model_config["input"] = inputs
 
     outputs = [_rewrite_io_spec(spec) for _, spec in signature.outputs.items()]
-    if inputs:
+    if outputs:
+        optional_outputs = [o for o in outputs if o.get("optional")]
+        if optional_outputs:
+            raise BadParameterModelNavigatorDeployerException(
+                f"Optional flag for outputs is not supported. "
+                f"Outputs marked as optional: {', '.join([o['name'] for o in optional_outputs])}."
+            )
         model_config["output"] = outputs
 
 
-def get_shape_params(dataset_profile_config):
-    if not dataset_profile_config.max_shapes:
+def get_shape_params(max_shapes):
+    if not max_shapes:
         return None
 
     def _shape_param_format(name, shape_):
         return f"{name}:{','.join(map(str, shape_[1:]))}"
 
-    shapes_param = [_shape_param_format(name, shape_) for name, shape_ in dataset_profile_config.max_shapes.items()]
+    shapes_param = [_shape_param_format(name, shape_) for name, shape_ in max_shapes.items()]
 
     return shapes_param

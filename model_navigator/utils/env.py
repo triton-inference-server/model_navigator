@@ -14,8 +14,6 @@
 from dataclasses import dataclass
 from typing import List, Optional
 
-from docker.errors import DockerException
-
 from model_navigator.utils.docker import (
     ContainerIdType,
     ContainerIpAddress,
@@ -37,6 +35,8 @@ def get_environment_state() -> EnvironmentState:
     docker_container_id = get_docker_container_id()
 
     if docker_container_id:
+        from docker.errors import DockerException
+
         try:
             container = DockerContainer(docker_container_id)
             mounts = container.mounts

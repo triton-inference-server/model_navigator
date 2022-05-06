@@ -21,19 +21,16 @@ from pathlib import Path
 from typing import List, Optional, Sequence
 
 import click
-from docker.errors import DockerException
-from docker.types import DeviceRequest
-from docker.utils import parse_repository_tag
 
 from model_navigator.cli.spec import (
+    BatchingConfigCli,
     ComparatorConfigCli,
     ConversionSetConfigCli,
     DatasetProfileConfigCli,
     ModelConfigCli,
     ModelSignatureConfigCli,
-    TensorRTCommonConfigCli,
 )
-from model_navigator.common.config import TensorRTCommonConfig
+from model_navigator.common.config import BatchingConfig
 from model_navigator.constants import MODEL_NAVIGATOR_DIR
 from model_navigator.converter import (
     ComparatorConfig,
@@ -44,7 +41,9 @@ from model_navigator.converter import (
     DatasetProfileConfig,
 )
 from model_navigator.converter.config import TargetFormatConfigSetIterator, TensorRTPrecision, TensorRTPrecisionMode
+from model_navigator.converter.dataloader import NavPackageDataloader, RandomDataloader
 from model_navigator.converter.utils import FORMAT2FRAMEWORK
+from model_navigator.core import DEFAULT_TENSORRT_MAX_WORKSPACE_SIZE
 from model_navigator.exceptions import ModelNavigatorCliException, ModelNavigatorException
 from model_navigator.log import init_logger, log_dict
 from model_navigator.model import Format, Model, ModelConfig, ModelSignatureConfig
@@ -54,6 +53,8 @@ from model_navigator.utils.cli import clean_workspace_if_needed, common_options,
 from model_navigator.utils.config import BaseConfig, YamlConfigFile
 from model_navigator.utils.device import get_gpus
 from model_navigator.utils.docker import DockerBuilder, DockerImage
+from model_navigator.utils.environment import EnvironmentStore, get_env
+from model_navigator.utils.nav_package import NavPackage
 from model_navigator.utils.source import navigator_install_url, navigator_is_editable
 from model_navigator.validators import run_command_validators
 
@@ -86,6 +87,7 @@ class ConversionSetConfig(BaseConfig):
     tensorrt_explicit_precision: bool = False
     tensorrt_strict_types: bool = False
     tensorrt_sparse_weights: bool = False
+    tensorrt_max_workspace_size: int = DEFAULT_TENSORRT_MAX_WORKSPACE_SIZE
 
     def __iter__(self):
         for target_format in self.target_formats:
@@ -99,20 +101,22 @@ class ConversionSetConfig(BaseConfig):
                 target_formats=[],
                 tensorrt_precisions=[],
                 onnx_opsets=[],
-                tensorrt_precisions_mode=config.tensorrt_precision_mode,
-                tensorrt_explicit_precision=config.tensorrt_explicit_precision,
-                tensorrt_sparse_weights=config.tensorrt_sparse_weights,
-                tensorrt_strict_types=config.tensorrt_strict_types,
+                tensorrt_precisions_mode=config.tensorrt_config.precision_mode,
+                tensorrt_explicit_precision=config.tensorrt_config.explicit_precision,
+                tensorrt_sparse_weights=config.tensorrt_config.sparse_weights,
+                tensorrt_strict_types=config.tensorrt_config.strict_types,
+                tensorrt_max_workspace_size=config.tensorrt_config.max_workspace_size,
             )
 
         return cls(
             target_formats=[config.target_format],
-            tensorrt_precisions=[config.tensorrt_precision] if config.tensorrt_precision else [],
             onnx_opsets=[config.onnx_opset] if config.onnx_opset else [],
-            tensorrt_precisions_mode=config.tensorrt_precision_mode,
-            tensorrt_explicit_precision=config.tensorrt_explicit_precision,
-            tensorrt_sparse_weights=config.tensorrt_sparse_weights,
-            tensorrt_strict_types=config.tensorrt_strict_types,
+            tensorrt_precisions=[config.tensorrt_config.precision] or [],
+            tensorrt_precisions_mode=config.tensorrt_config.precision_mode,
+            tensorrt_explicit_precision=config.tensorrt_config.explicit_precision,
+            tensorrt_sparse_weights=config.tensorrt_config.sparse_weights,
+            tensorrt_strict_types=config.tensorrt_config.strict_types,
+            tensorrt_max_workspace_size=config.tensorrt_config.max_workspace_size,
         )
 
 
@@ -121,11 +125,13 @@ def _run_locally(
     workspace: Workspace,
     override_workspace: bool = False,
     src_model_config: ModelConfig,
-    model_signature_config: Optional[ModelSignatureConfig] = None,
+    model_signature_config: ModelSignatureConfig,
     conversion_set_config: ConversionSetConfig,
-    tensorrt_common_config: TensorRTCommonConfig,
-    comparator_config: Optional[ComparatorConfig] = None,
-    dataset_profile_config: Optional[DatasetProfileConfig] = None,
+    batching_config: BatchingConfig,
+    comparator_config: ComparatorConfig,
+    dataset_profile_config: DatasetProfileConfig,
+    package: Optional[NavPackage],
+    random_seed: int,
     verbose: bool = False,
 ) -> Sequence[ConversionResult]:
     if not os.environ.get(_RUN_BY_MODEL_NAVIGATOR):
@@ -134,13 +140,22 @@ def _run_locally(
     converter = Converter(workspace=workspace, verbose=verbose)
     conversion_results = []
     for conversion_config in conversion_set_config:
+        if package:
+            dataloader = NavPackageDataloader(package, "conversion", max_batch_size=batching_config.max_batch_size)
+        else:
+            dataloader = RandomDataloader(
+                src_model_config,
+                model_signature_config,
+                dataset_profile_config,
+                max_batch_size=batching_config.max_batch_size,
+                random_seed=random_seed,
+            )
         results = converter.convert(
             src_model=src_model_config,
             conversion_config=conversion_config,
-            tensorrt_common_config=tensorrt_common_config,
             signature_config=model_signature_config,
             comparator_config=comparator_config,
-            dataset_profile_config=dataset_profile_config,
+            dataloader=dataloader,
         )
 
         results = list(results)
@@ -156,7 +171,7 @@ def _run_in_docker(
     src_model_config: ModelConfig,
     model_signature_config: Optional[ModelSignatureConfig] = None,
     conversion_set_config: ConversionSetConfig,
-    tensorrt_common_config: TensorRTCommonConfig,
+    batching_config: Optional[BatchingConfig] = None,
     comparator_config: Optional[ComparatorConfig] = None,
     dataset_profile_config: Optional[DatasetProfileConfig] = None,
     framework_docker_image: str,
@@ -164,6 +179,8 @@ def _run_in_docker(
     gpus: Optional[List[str]] = None,
     verbose: bool = False,
     override_conversion_container: bool = False,
+    package: Optional[NavPackage],
+    random_seed: int,
 ) -> Sequence[ConversionResult]:
     clean_workspace_if_needed(workspace, override_workspace)
 
@@ -172,10 +189,13 @@ def _run_in_docker(
         config_file.save_config(src_model_config)
         config_file.save_config(model_signature_config)
         config_file.save_config(conversion_set_config)
+        config_file.save_config(batching_config)
         config_file.save_config(comparator_config)
         config_file.save_config(dataset_profile_config)
 
     framework = FORMAT2FRAMEWORK[model_format]
+    from docker.utils import parse_repository_tag
+
     _, framework_docker_tag = parse_repository_tag(framework_docker_image)
     converter_docker_image = f"model_navigator_converter:{framework_docker_tag}"
 
@@ -187,7 +207,7 @@ def _run_in_docker(
         dockerfile_path = MODEL_NAVIGATOR_DIR / "model_navigator/converter/Dockerfile.local"
     else:
         dockerfile_path = MODEL_NAVIGATOR_DIR / "model_navigator/converter/Dockerfile.remote"
-        install_url = navigator_install_url(framework)
+        install_url = navigator_install_url(framework, extras=["cli"])
         build_args["INSTALL_URL"] = install_url
 
     LOGGER.debug(f"Base converter image: {framework_docker_image}")
@@ -208,22 +228,32 @@ def _run_in_docker(
     workspace_flags += " --override-workspace" if override_workspace else ""
     cmd = (
         "bash -c 'model-navigator convert "
-        f"--config-path {config_path} "
+        f"{package.path.as_posix() if package else '--config-path ' + config_path.as_posix()} "
         f"--launch-mode local "
         f"{verbose_flag} "
-        f"{workspace_flags}'"
+        f"{workspace_flags} "
+        "'"
     )
     gpus = get_gpus(gpus)
-    devices = [DeviceRequest(device_ids=[gpus[0]], capabilities=[["gpu"]])]
+    from docker.types import DeviceRequest
+
+    if gpus:
+        devices = [DeviceRequest(device_ids=[gpus[0]], capabilities=[["gpu"]])]
+    else:
+        devices = []
+
     cwd = Path.cwd()
 
     required_paths = [workspace.path, src_model_config.model_path.parent, cwd]
+    if package:
+        required_paths.append(package.path)
     required_paths = sorted({p.resolve() for p in required_paths})
 
     env = {"PYTHONPATH": cwd.resolve().as_posix(), _RUN_BY_MODEL_NAVIGATOR: 1}
     container = conversion_image.run_container(
         devices=devices, workdir_path=cwd, mount_as_volumes=required_paths, environment=env
     )
+    from docker.errors import DockerException
 
     try:
         LOGGER.debug(f"Running cmd: {cmd}")
@@ -293,12 +323,13 @@ def convert(
     gpus: Optional[List[str]],
     launch_mode: ConversionLaunchMode = ConversionLaunchMode.DOCKER,
     override_conversion_container: bool = False,
+    package: Optional[NavPackage],
     **kwargs,
 ):
     src_model_config = ModelConfig.from_dict(kwargs)
     src_model_signature_config = ModelSignatureConfig.from_dict(kwargs)
     conversion_set_config = ConversionSetConfig.from_dict(kwargs)
-    tensorrt_common_config = TensorRTCommonConfig.from_dict(kwargs)
+    batching_config = BatchingConfig.from_dict(kwargs)
     comparator_config = ComparatorConfig.from_dict(kwargs)
     dataset_profile_config = DatasetProfileConfig.from_dict(kwargs)
 
@@ -325,7 +356,7 @@ def convert(
             src_model_config=src_model_config,
             model_signature_config=src_model_signature_config,
             conversion_set_config=conversion_set_config,
-            tensorrt_common_config=tensorrt_common_config,
+            batching_config=batching_config,
             comparator_config=comparator_config,
             dataset_profile_config=dataset_profile_config,
             framework_docker_image=framework_docker_image,
@@ -333,6 +364,8 @@ def convert(
             gpus=gpus,
             verbose=verbose,
             override_conversion_container=override_conversion_container,
+            package=package,
+            random_seed=kwargs.get("random_seed"),
         )
     else:
         if verbose:
@@ -341,7 +374,7 @@ def convert(
                 {
                     **dataclasses.asdict(src_model_config),
                     **dataclasses.asdict(conversion_set_config),
-                    **dataclasses.asdict(tensorrt_common_config),
+                    **dataclasses.asdict(batching_config),
                     **dataclasses.asdict(comparator_config),
                     **dataclasses.asdict(src_model_signature_config),
                     **dataclasses.asdict(dataset_profile_config),
@@ -360,11 +393,18 @@ def convert(
             src_model_config=src_model_config,
             model_signature_config=src_model_signature_config,
             conversion_set_config=conversion_set_config,
-            tensorrt_common_config=tensorrt_common_config,
+            batching_config=batching_config,
             comparator_config=comparator_config,
             dataset_profile_config=dataset_profile_config,
             verbose=verbose,
+            package=package,
+            random_seed=kwargs.get("random_seed"),
         )
+
+    environment_info = get_env()
+
+    environment_store = EnvironmentStore(workspace)
+    environment_store.dump("convert_model", environment_info)
 
     results_store = ResultsStore(workspace)
     results_store.dump("convert_model", conversion_results)
@@ -394,9 +434,9 @@ def convert(
     "--override-conversion-container", is_flag=True, help="Override conversion container if it already exists."
 )
 @options_from_config(ModelSignatureConfig, ModelSignatureConfigCli)
-@options_from_config(TensorRTCommonConfig, TensorRTCommonConfigCli)
 @options_from_config(ConversionSetConfig, ConversionSetConfigCli)
 @options_from_config(ComparatorConfig, ComparatorConfigCli)
+@options_from_config(BatchingConfig, BatchingConfigCli)
 @options_from_config(DatasetProfileConfig, DatasetProfileConfigCli)
 @click.pass_context
 def convert_cmd(

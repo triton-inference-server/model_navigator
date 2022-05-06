@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
+from model_navigator.common.config import BatchingConfig
 from model_navigator.converter import DatasetProfileConfig
 from model_navigator.model_analyzer.config import (
     ModelAnalyzerAnalysisConfig,
@@ -49,7 +50,8 @@ class AnalyzeResult:
     model_name: Optional[str] = None
     model_config_path: Optional[str] = None
     optimization_config: Optional[TritonModelOptimizationConfig] = None
-    batching_config: Optional[TritonBatchingConfig] = None
+    batching_config: Optional[BatchingConfig] = None
+    triton_batching_config: Optional[TritonBatchingConfig] = None
     dynamic_batching_config: Optional[TritonDynamicBatchingConfig] = None
     instances_config: Optional[TritonModelInstancesConfig] = None
     results_path: Optional[Path] = None

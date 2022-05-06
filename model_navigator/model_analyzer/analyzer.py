@@ -73,19 +73,19 @@ class Analyzer:
 
         LOGGER.info("Analyzer analysis done.")
 
-        src_report = (
-            self._config_generator.analyzer_path
-            / "reports"
-            / "summaries"
-            / "Best Configs Across All Models"
-            / "result_summary.pdf"
-        )
-        if not src_report.is_file():
-            raise ModelNavigatorAnalyzeException("Model Analyzer summary report not found.")
-
-        dst_report = self._workspace.path / "analyze_report.pdf"
-        shutil.copy(src_report, dst_report)
-        LOGGER.info(f"Report for best config across all models: {dst_report.resolve()}")
+        report_dir = self._config_generator.analyzer_path / "reports" / "summaries" / "Best Configs Across All Models"
+        expected_report_paths = [report_dir / "result_summary.pdf", report_dir / "result_summary.html"]
+        existing_report_paths = [report_path for report_path in expected_report_paths if report_path.is_file()]
+        if not existing_report_paths:
+            raise ModelNavigatorAnalyzeException(
+                f"Model Analyzer summary report not found. "
+                f"Expected: {', '.join([report_path.as_posix() for report_path in expected_report_paths])}"
+            )
+        src_report_path = existing_report_paths[0]
+        report_suffix = "".join(src_report_path.suffixes)
+        dst_report_path = self._workspace.path / f"analyze_report{report_suffix}"
+        shutil.copy(src_report_path, dst_report_path)
+        LOGGER.info(f"Report for best config across all models: {dst_report_path.resolve()}")
 
         return self._wrap_into_analyze_results()
 
@@ -116,6 +116,7 @@ class Analyzer:
                 model_name=result["Model"],
                 optimization_config=triton_model_config_generator.optimization_config,
                 batching_config=triton_model_config_generator.batching_config,
+                triton_batching_config=triton_model_config_generator.triton_batching_config,
                 dynamic_batching_config=triton_model_config_generator.dynamic_batching_config,
                 instances_config=triton_model_config_generator.instances_config,
                 results_path=self._config_generator.results_path,
@@ -146,6 +147,26 @@ class AnalysisConfigGenerator(BaseConfigGenerator):
             LOGGER.info(f"\t- {model_name}")
 
         # https://github.com/triton-inference-server/model_analyzer/blob/r22.02/docs/config.md
+        inference_output_fields = [
+            "model_name",
+            "batch_size",
+            "concurrency",
+            "model_config_path",
+            "instance_group",
+            "satisfies_constraints",
+            "perf_throughput",
+            "perf_latency_avg",
+            "perf_latency_p90",
+            "perf_latency_p95",
+            "perf_latency_p99",
+            "perf_client_response_wait",
+            "perf_client_send_recv",
+            "perf_server_queue",
+            "perf_server_compute_input",
+            "perf_server_compute_infer",
+            "perf_server_compute_output",
+        ]
+
         config = {
             "analysis_models": model_names,
             "checkpoint_directory": self._analyzer_checkpoints_dir_path.as_posix(),
@@ -155,6 +176,7 @@ class AnalysisConfigGenerator(BaseConfigGenerator):
             "filename_model_gpu": self.metrics_path.name,
             "num_top_model_configs": self._analysis_config.top_n_configs,
             "objectives": self._analysis_config.objectives,
+            "inference_output_fields": inference_output_fields,
         }
 
         constraints = self._get_constraints()
@@ -166,7 +188,7 @@ class AnalysisConfigGenerator(BaseConfigGenerator):
     def _get_constraints(self):
         constraints = {}
         if self._analysis_config.max_latency_ms is not None:
-            constraints["perf_latency"] = {"max": self._analysis_config.max_latency_ms}
+            constraints["perf_latency_p99"] = {"max": self._analysis_config.max_latency_ms}
 
         if self._analysis_config.min_throughput is not None:
             constraints["perf_throughput"] = {"min": self._analysis_config.min_throughput}
