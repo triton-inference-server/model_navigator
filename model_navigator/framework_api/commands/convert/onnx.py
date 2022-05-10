@@ -25,6 +25,7 @@ from model_navigator.framework_api.exceptions import UserError, UserErrorContext
 from model_navigator.framework_api.runners.onnx import OnnxrtRunner
 from model_navigator.framework_api.utils import Framework, format_to_relative_model_path, get_package_path
 from model_navigator.model import Format
+from model_navigator.utils.device import get_gpus
 
 
 class ConvertONNX2TRT(Command):
@@ -61,6 +62,9 @@ class ConvertONNX2TRT(Command):
         trt_dynamic_axes: Optional[Dict[str, Dict[int, Tuple[int, int, int]]]] = None,
         **kwargs,
     ) -> Optional[Path]:
+
+        if not get_gpus():
+            raise RuntimeError("No GPUs available.")
 
         if framework == Framework.PYT:
             from model_navigator.framework_api.commands.export.pyt import ExportPYT2ONNX
