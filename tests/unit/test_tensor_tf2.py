@@ -30,10 +30,11 @@ def test_tf2_eq():
         b = tf.Variable(a)
         assert utils.eq(a, b)
 
-    with tf.device("GPU:0"):
-        # not equal due to different devices
-        c = tf.Variable(a)
-        assert not utils.eq(a, c)
+    if tf.config.list_physical_devices("GPU"):
+        with tf.device("GPU:0"):
+            # not equal due to different devices
+            c = tf.Variable(a)
+            assert not utils.eq(a, c)
 
     # simple change
     d = tf.constant([0, 1, 1], dtype=tf.float32)

@@ -26,8 +26,9 @@ def test_pyt_eq():
     assert utils.eq(a, b)
 
     # on different devices
-    c = a.clone().detach().to("cuda:0")
-    assert not utils.eq(a, c)
+    if torch.cuda.is_available():
+        c = a.clone().detach().to("cuda:0")
+        assert not utils.eq(a, c)
 
     # simple change
     d = a.clone().detach()
@@ -44,7 +45,8 @@ def test_pyt_eq():
 
 
 def test_pyt_to_numpy():
-    a = torch.ones((8, 64), dtype=torch.float32).to("cuda:0")
+    device = "cuda:0" if torch.cuda.is_available() else "cpu:0"
+    a = torch.ones((8, 64), dtype=torch.float32).to(device)
     utils = TensorUtils.for_data(a)
     b = utils.to_numpy(a)
     assert NPTensorUtils.eq(b, np.ones((8, 64), dtype=np.float32))

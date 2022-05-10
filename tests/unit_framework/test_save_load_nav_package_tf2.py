@@ -18,8 +18,11 @@ from pathlib import Path
 import tensorflow
 
 import model_navigator as nav
+from model_navigator.utils.device import get_gpus
 
 # pytype: enable=import-error
+
+CUDA_AVAILABLE = bool(get_gpus())
 
 
 def check_model_dir(model_dir: Path, format: nav.Format, only_config: bool = False) -> bool:
@@ -96,7 +99,10 @@ def test_tf2_save_load_no_retest():
         assert check_model_dir(model_dir=loaded_package_dir / "tf-savedmodel", format=nav.Format.TF_SAVEDMODEL)
 
         # Converted formats
-        assert check_model_dir(model_dir=loaded_package_dir / "trt-fp32", format=nav.Format.TENSORRT, only_config=True)
+        assert (
+            check_model_dir(model_dir=loaded_package_dir / "trt-fp32", format=nav.Format.TENSORRT, only_config=True)
+            is CUDA_AVAILABLE
+        )
         assert check_model_dir(model_dir=loaded_package_dir / "onnx", format=nav.Format.ONNX, only_config=True)
         assert check_model_dir(
             model_dir=loaded_package_dir / "tf-trt-fp32", format=nav.Format.TF_SAVEDMODEL, only_config=True
@@ -147,7 +153,7 @@ def test_tf2_save_load_retest():
         # Output formats
         assert check_model_dir(model_dir=loaded_package_dir / "tf-savedmodel", format=nav.Format.TF_SAVEDMODEL)
         assert check_model_dir(model_dir=loaded_package_dir / "onnx", format=nav.Format.ONNX)
-        assert check_model_dir(model_dir=loaded_package_dir / "trt-fp32", format=nav.Format.TENSORRT)
+        assert check_model_dir(model_dir=loaded_package_dir / "trt-fp32", format=nav.Format.TENSORRT) is CUDA_AVAILABLE
         assert check_model_dir(model_dir=loaded_package_dir / "tf-trt-fp32", format=nav.Format.TF_SAVEDMODEL)
 
         # Formats not exported

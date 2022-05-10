@@ -87,7 +87,7 @@ class ModelStatus(DataObject):
     def from_dict(cls, dict: Mapping):
         return cls(
             format=Format(dict["format"]),
-            path=Path(dict["path"]),
+            path=Path(dict["path"]) if "path" in dict else None,
             runtime_results=[RuntimeResults.from_dict(runtime_results) for runtime_results in dict["runtime_results"]],
             torch_jit=JitType(dict["torch_jit"]) if "torch_jit" in dict else None,
             precision=TensorRTPrecision(dict["precision"]) if "precision" in dict else None,

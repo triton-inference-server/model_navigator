@@ -18,8 +18,11 @@ from pathlib import Path
 import torch
 
 import model_navigator as nav
+from model_navigator.utils.device import get_gpus
 
 # pytype: enable=import-error
+
+CUDA_AVAILABLE = bool(get_gpus())
 
 
 def check_model_dir(model_dir: Path, format: nav.Format) -> bool:
@@ -82,12 +85,15 @@ def test_pyt_tensor_dataloader():
         assert check_model_dir(model_dir=package_dir / "torchscript-script", format=nav.Format.TORCHSCRIPT)
         assert check_model_dir(model_dir=package_dir / "torchscript-trace", format=nav.Format.TORCHSCRIPT)
         assert check_model_dir(model_dir=package_dir / "onnx", format=nav.Format.ONNX)
-        assert check_model_dir(model_dir=package_dir / "torch-trt-script", format=nav.Format.TORCHSCRIPT)
+
+        assert (
+            check_model_dir(model_dir=package_dir / "torch-trt-script", format=nav.Format.TORCHSCRIPT) is CUDA_AVAILABLE
+        )
         assert (
             check_model_dir(model_dir=package_dir / "torch-trt-trace", format=nav.Format.TORCHSCRIPT) is False
         )  # TODO why does it fail?
-        assert check_model_dir(model_dir=package_dir / "trt-fp16", format=nav.Format.TENSORRT)
-        assert check_model_dir(model_dir=package_dir / "trt-fp32", format=nav.Format.TENSORRT)
+        assert check_model_dir(model_dir=package_dir / "trt-fp16", format=nav.Format.TENSORRT) is CUDA_AVAILABLE
+        assert check_model_dir(model_dir=package_dir / "trt-fp32", format=nav.Format.TENSORRT) is CUDA_AVAILABLE
 
 
 def test_pyt_sequence_dataloader():
@@ -133,10 +139,14 @@ def test_pyt_sequence_dataloader():
         assert check_model_dir(model_dir=package_dir / "torchscript-script", format=nav.Format.TORCHSCRIPT)
         assert check_model_dir(model_dir=package_dir / "torchscript-trace", format=nav.Format.TORCHSCRIPT)
         assert check_model_dir(model_dir=package_dir / "onnx", format=nav.Format.ONNX)
-        assert check_model_dir(model_dir=package_dir / "torch-trt-script", format=nav.Format.TORCHSCRIPT)
-        assert check_model_dir(model_dir=package_dir / "torch-trt-trace", format=nav.Format.TORCHSCRIPT)
-        assert check_model_dir(model_dir=package_dir / "trt-fp16", format=nav.Format.TENSORRT)
-        assert check_model_dir(model_dir=package_dir / "trt-fp32", format=nav.Format.TENSORRT)
+        assert (
+            check_model_dir(model_dir=package_dir / "torch-trt-script", format=nav.Format.TORCHSCRIPT) is CUDA_AVAILABLE
+        )
+        assert (
+            check_model_dir(model_dir=package_dir / "torch-trt-trace", format=nav.Format.TORCHSCRIPT) is CUDA_AVAILABLE
+        )
+        assert check_model_dir(model_dir=package_dir / "trt-fp16", format=nav.Format.TENSORRT) is CUDA_AVAILABLE
+        assert check_model_dir(model_dir=package_dir / "trt-fp32", format=nav.Format.TENSORRT) is CUDA_AVAILABLE
 
 
 def test_pyt_dict_dataloader():
@@ -182,10 +192,14 @@ def test_pyt_dict_dataloader():
         assert check_model_dir(model_dir=package_dir / "torchscript-script", format=nav.Format.TORCHSCRIPT)
         assert check_model_dir(model_dir=package_dir / "torchscript-trace", format=nav.Format.TORCHSCRIPT)
         assert check_model_dir(model_dir=package_dir / "onnx", format=nav.Format.ONNX)
-        assert check_model_dir(model_dir=package_dir / "torch-trt-script", format=nav.Format.TORCHSCRIPT)
-        assert check_model_dir(model_dir=package_dir / "torch-trt-trace", format=nav.Format.TORCHSCRIPT)
-        assert check_model_dir(model_dir=package_dir / "trt-fp16", format=nav.Format.TENSORRT)
-        assert check_model_dir(model_dir=package_dir / "trt-fp32", format=nav.Format.TENSORRT)
+        assert (
+            check_model_dir(model_dir=package_dir / "torch-trt-script", format=nav.Format.TORCHSCRIPT) is CUDA_AVAILABLE
+        )
+        assert (
+            check_model_dir(model_dir=package_dir / "torch-trt-trace", format=nav.Format.TORCHSCRIPT) is CUDA_AVAILABLE
+        )
+        assert check_model_dir(model_dir=package_dir / "trt-fp16", format=nav.Format.TENSORRT) is CUDA_AVAILABLE
+        assert check_model_dir(model_dir=package_dir / "trt-fp32", format=nav.Format.TENSORRT) is CUDA_AVAILABLE
 
 
 def test_pyt_dict_dataloader_with_kwargs():
@@ -237,8 +251,8 @@ def test_pyt_dict_dataloader_with_kwargs():
         assert check_model_dir(model_dir=package_dir / "onnx", format=nav.Format.ONNX)
         assert check_model_dir(model_dir=package_dir / "torch-trt-script", format=nav.Format.TORCHSCRIPT) is False
         assert check_model_dir(model_dir=package_dir / "torch-trt-trace", format=nav.Format.TORCHSCRIPT) is False
-        assert check_model_dir(model_dir=package_dir / "trt-fp16", format=nav.Format.TENSORRT)
-        assert check_model_dir(model_dir=package_dir / "trt-fp32", format=nav.Format.TENSORRT)
+        assert check_model_dir(model_dir=package_dir / "trt-fp16", format=nav.Format.TENSORRT) is CUDA_AVAILABLE
+        assert check_model_dir(model_dir=package_dir / "trt-fp32", format=nav.Format.TENSORRT) is CUDA_AVAILABLE
 
 
 def test_onnx_sequence_dataloader():
@@ -294,8 +308,8 @@ def test_onnx_sequence_dataloader():
         assert check_model_dir(model_dir=package_dir / "onnx", format=nav.Format.ONNX)
 
         # Output formats
-        assert check_model_dir(model_dir=package_dir / "trt-fp16", format=nav.Format.TENSORRT)
-        assert check_model_dir(model_dir=package_dir / "trt-fp32", format=nav.Format.TENSORRT)
+        assert check_model_dir(model_dir=package_dir / "trt-fp16", format=nav.Format.TENSORRT) is CUDA_AVAILABLE
+        assert check_model_dir(model_dir=package_dir / "trt-fp32", format=nav.Format.TENSORRT) is CUDA_AVAILABLE
 
         # Formats not exported
         assert check_model_dir(model_dir=package_dir / "torchscript-script", format=nav.Format.TORCHSCRIPT) is False
@@ -356,8 +370,8 @@ def test_onnx_dict_dataloader():
         assert check_model_dir(model_dir=package_dir / "onnx", format=nav.Format.ONNX)
 
         # Output formats
-        assert check_model_dir(model_dir=package_dir / "trt-fp16", format=nav.Format.TENSORRT)
-        assert check_model_dir(model_dir=package_dir / "trt-fp32", format=nav.Format.TENSORRT)
+        assert check_model_dir(model_dir=package_dir / "trt-fp16", format=nav.Format.TENSORRT) is CUDA_AVAILABLE
+        assert check_model_dir(model_dir=package_dir / "trt-fp32", format=nav.Format.TENSORRT) is CUDA_AVAILABLE
 
         # Formats not exported
         assert check_model_dir(model_dir=package_dir / "torchscript-script", format=nav.Format.TORCHSCRIPT) is False
