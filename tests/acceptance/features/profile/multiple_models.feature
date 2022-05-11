@@ -32,10 +32,10 @@ Feature: Model Profiling of Model Repositories with Multiple Models
         Then the command should succeeded
         And the my_model1 model configs in latest profiling are
             {"maxBatchSize": 2, "cpu_only": false}
-            {"maxBatchSize": 1, "instanceGroup": [{"count": 1, "kind": "KIND_GPU"}], "dynamicBatching": {}, "cpu_only": false}
+            {"maxBatchSize": 1, "instanceGroup": [{"count": 1, "kind": "__KIND_HW_MARKER__"}], "dynamicBatching": {}, "cpu_only": __CPU_ONLY_MARKER__}
         And the my_model1 model was profiled with 1 concurrency levels
         And the my_model2 model configs in latest profiling are
             {"maxBatchSize": 2, "cpu_only": false}
-            {"maxBatchSize": 1, "instanceGroup": [{"count": 1, "kind": "KIND_GPU"}], "dynamicBatching": {}, "cpu_only": false}
+            {"maxBatchSize": 1, "instanceGroup": [{"count": 1, "kind": "__KIND_HW_MARKER__"}], "dynamicBatching": {}, "cpu_only": __CPU_ONLY_MARKER__}
         And the my_model2 model was profiled with 1 concurrency levels
 

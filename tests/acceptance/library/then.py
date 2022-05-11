@@ -25,7 +25,7 @@ from model_navigator.results import ResultsStore, State
 from model_navigator.utils import Workspace
 from model_navigator.utils.workspace import DEFAULT_WORKSPACE_PATH
 from tests.utils.analyze_results import get_analyze_results
-from tests.utils.profile_configs import ModelConfig, get_profiling_configs
+from tests.utils.profile_configs import ModelConfig, get_profiling_configs, parse_expected_configs_jsonlines
 from tests.utils.triton_model_config import equal_model_configs_sets
 
 
@@ -102,6 +102,7 @@ def the_model_configs_in_latest_profile_checkpoint_are(run_context, model_name: 
                 del config[name]
         return config
 
+    expected_configs_jsonlines = parse_expected_configs_jsonlines(expected_configs_jsonlines)
     expected_configs = [json.loads(line) for line in expected_configs_jsonlines.splitlines()]
 
     workspace = Workspace(Path(run_context.cwd) / DEFAULT_WORKSPACE_PATH)
