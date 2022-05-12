@@ -13,12 +13,15 @@
 # limitations under the License.
 import abc
 import logging
+import os
 import pathlib
+import shutil
 import zipfile
 from collections import defaultdict
 from typing import IO, Dict, Iterable, Union
 
 from model_navigator.exceptions import ModelNavigatorInvalidPackageException
+from model_navigator.utils.workspace import Workspace
 
 LOGGER = logging.getLogger(__name__)
 
@@ -65,7 +68,9 @@ class NavPackage(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def vfs_path_to_member(self, member_path: Union[str, pathlib.Path]) -> pathlib.Path:
+    def vfs_path_to_member(
+        self, member_path: Union[str, pathlib.Path], workspace_path: Union[str, pathlib.Path]
+    ) -> pathlib.Path:
         ...
 
 
@@ -84,7 +89,7 @@ class NavPackageDirectory(NavPackage):
     def all_files(self):
         return (p.relative_to(self.path).as_posix() for p in self.path.glob("**/*"))
 
-    def vfs_path_to_member(self, member_path: Union[str, pathlib.Path]):
+    def vfs_path_to_member(self, member_path: Union[str, pathlib.Path], workspace_path: Union[str, pathlib.Path]):
         return self.path / member_path
 
 
@@ -118,8 +123,22 @@ class ZippedNavPackage(NavPackage):
     def all_files(self):
         return self.arc.namelist()
 
-    def vfs_path_to_member(self, member_path: Union[str, pathlib.Path]):
-        raise NotImplementedError()
+    def vfs_path_to_member(self, member_path: Union[str, pathlib.Path], workspace: Workspace):
+        """Copy the model to workspace and return the path"""
+        member_path = pathlib.Path(member_path)
+        dstpath = workspace.path / ".input_data" / "input_model"
+        if os.getenv("MODEL_NAVIGATOR_RUN_BY") is not None:
+            # when launched inside docker by convert_model, the copy should be already there
+            assert dstpath.exists()
+            return dstpath
+        else:
+            shutil.rmtree(dstpath)
+
+        dstpath.parent.mkdir(parents=True, exist_ok=True)
+        prefix = member_path.as_posix()
+        to_extract = [m for m in self.arc.namelist() if m.startswith(prefix)]
+        self.arc.extractall(members=to_extract, path=dstpath)
+        return dstpath
 
     def __getstate__(self):
         dct = dict(self.__dict__)
