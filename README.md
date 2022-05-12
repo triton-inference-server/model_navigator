@@ -44,7 +44,7 @@ to find the best Triton Model configuration, matches the provided constraints, a
 * [Optimize for Triton Inference Server](docs/optimize_for_triton.md)
 * [Quick Start](docs/quick_start.md)
 * [Installation](docs/installation.md)
-* [Advanced]()
+* [Advanced](docs/advanced.md)
   * [Model Conversions](docs/advanced/conversion.md)
   * [Triton Model Configurator](docs/advanced/triton_model_configurator.md)
   * [Models Profiling](docs/advanced/profiling.md)

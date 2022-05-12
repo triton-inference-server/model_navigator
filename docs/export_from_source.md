@@ -59,7 +59,7 @@ NGC Containers are the recommended environments for Model Navigator, they have a
 To install Model Navigator use command:
 
 ```shell
-$ pip install --extra-index-url https://pypi.ngc.nvidia.com git+https://github.com/triton-inference-server/model_navigator.git@vx.x.x [<extras,>] --upgrade
+$ pip install --extra-index-url https://pypi.ngc.nvidia.com git+https://github.com/triton-inference-server/model_navigator.git@vx.x.x#egg=model-navigator[<extras,>] --upgrade
 ```
 
 Extras:
