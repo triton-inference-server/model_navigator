@@ -132,7 +132,10 @@ class ZippedNavPackage(NavPackage):
             assert dstpath.exists()
             return dstpath
         else:
-            shutil.rmtree(dstpath)
+            try:
+                shutil.rmtree(dstpath)
+            except FileNotFoundError:
+                pass
 
         dstpath.parent.mkdir(parents=True, exist_ok=True)
         prefix = member_path.as_posix()
