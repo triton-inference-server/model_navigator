@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import pathlib
-import shutil
 from typing import Dict, Tuple
 
 import click
@@ -32,12 +31,6 @@ def _parse_model_path(ctx, param, value) -> pathlib.Path:
     except Exception:
         pass
 
-    package, relpath = value
-    try:
-        return package.vfs_path_to_member(relpath)
-    except NotImplementedError:
-        pass
-
     # the package does not make the model accessible in the filesystem,
     # so copy the model to the workspace.
     # We need to do this, because the return value should be a path,
@@ -46,16 +39,9 @@ def _parse_model_path(ctx, param, value) -> pathlib.Path:
     # can be assumed to have sufficient space is the workspace directory,
     # so use it. We have to be careful to make sure that the workspace
     # is not cleaned up elsewhere, before the actual processing starts
+    package, relpath = value
     workspace = Workspace(ctx.params["workspace_path"])
-    dstpath = workspace.path / ".input_data" / "input_model" / relpath
-    if dstpath.exists():
-        # when launched inside docker by convert_model, the copy should be already there
-        return dstpath
-
-    dstpath.parent.mkdir(parents=True, exist_ok=True)
-    with dstpath.open("wb") as dst, package.open(relpath) as src:
-        shutil.copyfileobj(src, dst)
-    return dstpath
+    return package.vfs_path_to_member(relpath, workspace)
 
 
 class ModelConfigCli:
