@@ -45,7 +45,7 @@ $HOME
 To install latest version of Model Navigator use command:
 
 ```shell
-$ pip install --extra-index-url https://pypi.ngc.nvidia.com git+https://github.com/triton-inference-server/model_navigator.git [pyt] --upgrade
+$ pip install --extra-index-url https://pypi.ngc.nvidia.com git+https://github.com/triton-inference-server/model_navigator.git@v0.3.0#egg=model-navigator[pyt] --upgrade
 ```
 
 ## Export model
