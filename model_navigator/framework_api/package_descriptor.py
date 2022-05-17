@@ -18,22 +18,21 @@ import os
 import shutil
 import uuid
 import zipfile
-from dataclasses import dataclass
 from itertools import chain
 from pathlib import Path
-from typing import Dict, List, Mapping, Optional, Sequence, Tuple, Union
+from typing import Dict, Optional, Sequence, Tuple, Union
 
 import yaml
 
 from model_navigator.converter.config import TensorRTPrecision
-from model_navigator.framework_api.commands.core import Command, CommandType
-from model_navigator.framework_api.commands.correctness.base import TolerancePerOutputName
-from model_navigator.framework_api.commands.performance.base import Performance
-from model_navigator.framework_api.common import DataObject, TensorMetadata
+from model_navigator.framework_api.commands.performance import ProfilerConfig
+from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.config import Config
 from model_navigator.framework_api.exceptions import UserError
 from model_navigator.framework_api.logger import LOGGER
-from model_navigator.framework_api.pipelines.pipeline import Pipeline
+from model_navigator.framework_api.pipelines.builders.profiling import profiling_builder
+from model_navigator.framework_api.pipelines.pipeline_manager import PipelineManager
+from model_navigator.framework_api.status import ModelStatus, NavigatorStatus, RuntimeResults
 from model_navigator.framework_api.utils import (
     Extension,
     Framework,
@@ -54,71 +53,6 @@ from model_navigator.utils.environment import get_env, get_git_info
 NAV_PACKAGE_FORMAT_VERSION = "0.1.0"
 
 
-@dataclass
-class RuntimeResults(DataObject):
-    runtime: RuntimeProvider
-    status: Status
-    tolerance: Optional[TolerancePerOutputName] = None
-    performance: Optional[List[Performance]] = None
-    err_msg: Optional[dict] = None
-    verified: bool = False
-
-    @classmethod
-    def from_dict(cls, dict: Mapping):
-        return cls(
-            runtime=RuntimeProvider(dict["runtime"]),
-            status=Status(dict["status"]),
-            tolerance=dict.get("tolerance"),
-            performance=[Performance.from_dict(perf) for perf in dict.get("performance", [])],
-            err_msg=dict.get("err_msg"),
-            verified=dict["verified"],
-        )
-
-
-@dataclass
-class ModelStatus(DataObject):
-    format: Format
-    path: Path
-    runtime_results: List[RuntimeResults]
-    torch_jit: Optional[JitType] = None
-    precision: Optional[TensorRTPrecision] = None
-
-    @classmethod
-    def from_dict(cls, dict: Mapping):
-        return cls(
-            format=Format(dict["format"]),
-            path=Path(dict["path"]) if "path" in dict else None,
-            runtime_results=[RuntimeResults.from_dict(runtime_results) for runtime_results in dict["runtime_results"]],
-            torch_jit=JitType(dict["torch_jit"]) if "torch_jit" in dict else None,
-            precision=TensorRTPrecision(dict["precision"]) if "precision" in dict else None,
-        )
-
-
-@dataclass
-class NavigatorStatus(DataObject):
-    format_version: str
-    uuid: str
-    git_info: Dict
-    environment: Dict
-    export_config: Dict
-    model_status: List[ModelStatus]
-    input_metadata: TensorMetadata
-    output_metadata: TensorMetadata
-
-    @classmethod
-    def from_dict(cls, dict: Mapping):
-        return cls(
-            format_version=dict["format_version"],
-            uuid=dict["uuid"],
-            git_info=dict["git_info"],
-            environment=dict["environment"],
-            export_config=dict["export_config"],
-            model_status=[ModelStatus.from_dict(model_status) for model_status in dict["model_status"]],
-            input_metadata=TensorMetadata.from_json(dict["input_metadata"]),
-            output_metadata=TensorMetadata.from_json(dict["output_metadata"]),
-        )
-
-
 class PackageDescriptor:
     status_filename = get_default_status_filename()
 
@@ -128,104 +62,43 @@ class PackageDescriptor:
         self.model = model
 
     @classmethod
-    def from_pipelines(cls, pipelines: List[Pipeline], config: Config):
-        model_status = []
-        for pipeline in pipelines:
-            for command in pipeline.commands:
-                if command.command_type in (CommandType.EXPORT, CommandType.CONVERT, CommandType.COPY):
-                    runtime_results = []
-                    runtimes = (
-                        config.onnx_runtimes
-                        if command.target_format == Format.ONNX
-                        else format2runtimes(command.target_format)
-                    )
-                    for runtime_provider in runtimes:
-                        correctness_results = cls._get_correctness_command_for_model(
-                            commands=pipeline.commands,
-                            format=command.target_format,
-                            jit_type=command.target_jit_type,
-                            precision=command.target_precision,
-                            runtime_provider=runtime_provider,
-                        )
-                        performance_results = cls._get_performance_command_for_model(
-                            commands=pipeline.commands,
-                            format=command.target_format,
-                            jit_type=command.target_jit_type,
-                            precision=command.target_precision,
-                            runtime_provider=runtime_provider,
-                        )
-
-                        per_output_tolerance = None
-                        # Status.OK because for ONNX input because there is no Correctness.
-                        status = Status.OK
-                        err_msg = None
-                        if correctness_results:
-                            if correctness_results.output:
-                                per_output_tolerance = correctness_results.output
-
-                            status = correctness_results.status
-                            err_msg = cls.get_err_msg(command, correctness_results, performance_results)
-
-                        if (
-                            performance_results
-                            and performance_results.output
-                            and performance_results.status == Status.OK
-                        ):
-                            perf = performance_results.output
-                        else:
-                            perf = None
-
-                        runtime_results.append(
-                            RuntimeResults(
-                                runtime=runtime_provider,
-                                status=status,
-                                tolerance=per_output_tolerance,
-                                performance=perf,
-                                err_msg=err_msg,
-                            )
-                        )
-
-                    model_status.append(
-                        ModelStatus(
-                            format=command.target_format,
-                            path=command.output,
-                            torch_jit=command.target_jit_type,
-                            precision=command.target_precision,
-                            runtime_results=runtime_results,
-                        )
-                    )
-
+    def build(cls, pipeline_manager: PipelineManager, config: Config):
         if not config.disable_git_info:
             git_info = get_git_info()
         else:
             git_info = None
-        filtered_config = config.to_dict(
-            filter_fields=[
-                "model",
-                "dataloader",
-                "workdir",
-                "override_workdir",
-                "forward_kw_names",
-                "disable_git_info",
-                "input_metadata",
-                "output_metadata",
-            ],
-            parse=True,
-        )
+
+        config_filter_fields = [
+            "model",
+            "dataloader",
+            "workdir",
+            "override_workdir",
+            "forward_kw_names",
+            "disable_git_info",
+            "input_metadata",
+            "output_metadata",
+        ]
         navigator_status = NavigatorStatus(
             uuid=str(uuid.uuid1()),
             format_version=NAV_PACKAGE_FORMAT_VERSION,
             git_info=git_info,
             environment=get_env(),
-            export_config=filtered_config,
-            model_status=model_status,
-            input_metadata=config.input_metadata,
-            output_metadata=config.output_metadata,
+            export_config=config.to_dict(
+                config_filter_fields,
+                parse=True,
+            ),
+            model_status=[],
+            input_metadata=TensorMetadata(),
+            output_metadata=TensorMetadata(),
         )
 
         pkg_desc = cls(navigator_status, config.workdir, model=config.model)
-        pkg_desc.delete_status_file()
-        pkg_desc.create_status_file()
+        pipeline_manager.run(config=config, package_descriptor=pkg_desc)
+        pkg_desc.navigator_status.export_config = config.to_dict(
+            config_filter_fields,
+            parse=True,
+        )
+        pkg_desc.save_status_file()
 
         LOGGER.warning(
             "Initially models are not verified. Validate exported models and use "
@@ -233,58 +106,6 @@ class PackageDescriptor:
         )
 
         return pkg_desc
-
-    @staticmethod
-    def get_err_msg(command, correctness_results, performance_results):
-        err_msg = {}
-        if command:
-            if command.err_msg:
-                err_msg[command.command_type.value] = command.err_msg
-        if correctness_results:
-            if correctness_results.err_msg:
-                err_msg[correctness_results.command_type.value] = correctness_results.err_msg
-        if performance_results is not None:
-            if performance_results.err_msg:
-                err_msg[performance_results.command_type.value] = performance_results.err_msg
-        return err_msg
-
-    @staticmethod
-    def _get_correctness_command_for_model(
-        commands: List[Command],
-        format: Format,
-        jit_type: Optional[JitType] = None,
-        precision: Optional[TensorRTPrecision] = None,
-        runtime_provider: Optional[RuntimeProvider] = None,
-    ):
-        for command in commands:
-            if (
-                command.command_type == CommandType.CORRECTNESS
-                and command.target_format == format
-                and command.target_jit_type == jit_type
-                and command.target_precision == precision
-                and command.runtime_provider == runtime_provider
-            ):
-                return command
-        return None
-
-    @staticmethod
-    def _get_performance_command_for_model(
-        commands: List[Command],
-        format: Format,
-        jit_type: Optional[JitType] = None,
-        precision: Optional[TensorRTPrecision] = None,
-        runtime_provider: Optional[RuntimeProvider] = None,
-    ):
-        for command in commands:
-            if (
-                command.command_type == CommandType.PERFORMANCE
-                and command.target_format == format
-                and command.target_jit_type == jit_type
-                and command.target_precision == precision
-                and command.runtime_provider == runtime_provider
-            ):
-                return command
-        return None
 
     @property
     def model_name(self):
@@ -303,6 +124,10 @@ class PackageDescriptor:
         path = get_package_path(self.workdir, self.model_name) / self.status_filename
         if path.exists():
             path.unlink()
+
+    def save_status_file(self):
+        self.delete_status_file()
+        self.create_status_file()
 
     @staticmethod
     def _load_model(model_path: Path, format: Format):
@@ -326,7 +151,7 @@ class PackageDescriptor:
 
     def _load_runner(self, model_path: Path, format: Format, runtime: Optional[RuntimeProvider] = None):
         model_path = model_path.as_posix()
-        LOGGER.info(f"Loading runner from path: {model_path}")
+        LOGGER.debug(f"Loading runner from path: {model_path}")
 
         if runtime is None:
             runtime = format2runtimes(format)
@@ -447,15 +272,19 @@ class PackageDescriptor:
                         status = True
         return status
 
+    def _get_model_status_name(self, model_status: ModelStatus) -> str:
+        name = model_status.format.value
+        if model_status.torch_jit:
+            name += f"-{model_status.torch_jit.value}"
+        if model_status.precision:
+            name += f"-{model_status.precision.value}"
+        return name
+
     def get_formats_status(self) -> Dict:
         """Return dictionary of pairs Format : Bool. True for successful exports, False for failed exports."""
         results = {}
         for model_status in self.navigator_status.model_status:
-            key = model_status.format.value
-            if model_status.torch_jit:
-                key += f"-{model_status.torch_jit.value}"
-            if model_status.precision:
-                key += f"-{model_status.precision.value}"
+            key = self._get_model_status_name(model_status)
             results[key] = {}
             for runtime_results in model_status.runtime_results:
                 results[key][runtime_results.runtime.value] = runtime_results.status
@@ -579,7 +408,7 @@ class PackageDescriptor:
         format: Format,
         jit_type: Optional[JitType] = None,
         precision: Optional[TensorRTPrecision] = None,
-    ):
+    ) -> ModelStatus:
         for model_status in self.navigator_status.model_status:
             if (
                 model_status.format == format
@@ -588,6 +417,21 @@ class PackageDescriptor:
             ):
                 return model_status
         raise RuntimeError(f"Model status not found for {format=}, {jit_type=}, {precision=}.")
+
+    def get_runtime_results(
+        self,
+        format: Format,
+        jit_type: Optional[JitType] = None,
+        precision: Optional[TensorRTPrecision] = None,
+        runtime_provider: Optional[RuntimeProvider] = None,
+    ) -> RuntimeResults:
+        model_status = self._get_model_status(format, jit_type, precision)
+        if not runtime_provider and len(model_status.runtime_results) == 1:
+            return model_status.runtime_results[0]
+        for runtime_results in model_status.runtime_results:
+            if runtime_results.runtime == runtime_provider:
+                return runtime_results
+        raise RuntimeError(f"Model status not found for {format=}, {jit_type=}, {precision=}, {runtime_provider=}.")
 
     def _make_zip(self, zip_path, package_path, dirs_to_save, base_models_paths) -> None:
 
@@ -692,7 +536,7 @@ class PackageDescriptor:
         path: Union[str, Path],
         workdir: Optional[Union[str, Path]] = None,
         override_workdir: bool = False,
-    ):
+    ) -> "PackageDescriptor":
         path = Path(path)
         if workdir is None:
             workdir = get_default_workdir()
@@ -712,3 +556,62 @@ class PackageDescriptor:
             zf.extractall(package_path)
 
         return cls(navigator_status, workdir)
+
+    @property
+    def config(self):
+        config_dict = {**self.navigator_status.export_config}
+        config_dict["framework"] = self.framework
+        config_dict["target_formats"] = self._target_formats
+        config_dict["target_jit_type"] = self._target_jit_type
+        config_dict["target_precisions"] = self._target_precisions
+        config_dict["onnx_runtimes"] = tuple(RuntimeProvider(prov) for prov in config_dict["onnx_runtimes"])
+        config_dict["profiler_config"] = ProfilerConfig.from_dict(config_dict.get("profiler_config", {}))
+        if "batch_dim" not in config_dict:
+            config_dict["batch_dim"] = None
+        return Config(
+            model=None,
+            workdir=self.workdir,
+            dataloader=[],
+            override_workdir=False,
+            disable_git_info=True,
+            **config_dict,
+        )
+
+    def profile(self, profiler_config: Optional[ProfilerConfig] = None) -> None:
+        """
+        Run profiling on the package for each batch size from the `batch_sizes`.
+        """
+        config = self.config
+        config.profiler_config = profiler_config
+
+        pipeline_manager = PipelineManager([profiling_builder])
+        pipeline_manager.run(config=config, package_descriptor=self)
+        self.save_status_file()
+
+
+def save(
+    package_descriptor: PackageDescriptor,
+    path: Union[str, Path],
+    keep_workdir: bool = True,
+    override: bool = False,
+    save_data: bool = True,
+) -> None:
+    """Save export results into the .nav package at given path.
+    If `keep_workdir = False` remove the working directory.
+    If `override = True` override `path`.
+    If `save_data = False` discard samples from the dataloader.
+    That won't allow for correctness check later on in the deployment process.
+    """
+    package_descriptor.save(
+        path=path,
+        keep_workdir=keep_workdir,
+        override=override,
+        save_data=save_data,
+    )
+
+
+def profile(package_descriptor: PackageDescriptor, profiler_config: Optional[ProfilerConfig] = None) -> None:
+    """
+    Run profiling on the package for each batch size from the `profiler_config.batch_sizes`.
+    """
+    package_descriptor.profile(profiler_config=profiler_config)

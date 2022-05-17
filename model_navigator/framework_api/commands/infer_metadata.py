@@ -13,12 +13,12 @@
 # limitations under the License.
 
 from pathlib import Path
-from typing import Dict, List, Mapping, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Dict, List, Mapping, Optional, Tuple, Union
 
 from polygraphy.backend.onnxrt import SessionFromOnnx
 
 from model_navigator.framework_api.commands.core import Command, CommandType
-from model_navigator.framework_api.commands.correctness.base import Tolerance
+from model_navigator.framework_api.commands.correctness import Tolerance
 from model_navigator.framework_api.common import Sample, SizedDataLoader, TensorMetadata
 from model_navigator.framework_api.exceptions import UserError, UserErrorContext
 from model_navigator.framework_api.runners.onnx import OnnxrtRunner
@@ -30,6 +30,9 @@ from model_navigator.framework_api.utils import (
     validate_sample_input,
 )
 
+if TYPE_CHECKING:
+    from model_navigator.framework_api.package_descriptor import PackageDescriptor
+
 
 class InferInputMetadata(Command):
     def __init__(self, requires: Tuple[Command, ...] = ()):
@@ -38,6 +41,9 @@ class InferInputMetadata(Command):
     @staticmethod
     def get_output_name():
         return "input_metadata"
+
+    def _update_package_descriptor(self, package_descriptor: "PackageDescriptor", **kwargs) -> None:
+        package_descriptor.navigator_status.input_metadata = self.output
 
     def __call__(
         self,
@@ -92,6 +98,9 @@ class InferOutputMetadata(Command):
     @staticmethod
     def get_output_name():
         return "output_metadata"
+
+    def _update_package_descriptor(self, package_descriptor: "PackageDescriptor", **kwargs) -> None:
+        package_descriptor.navigator_status.output_metadata = self.output
 
     def __call__(
         self,

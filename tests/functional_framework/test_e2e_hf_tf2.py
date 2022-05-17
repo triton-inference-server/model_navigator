@@ -73,5 +73,5 @@ if __name__ == "__main__":
                 format in expected_formats
             ), f"{format} {runtime} status is {status}, but expected formats are {expected_formats}."
 
-    pkg_desc.save(Path(args.workdir) / f"{export_config['model_name']}_tf2.nav")
+    nav.save(pkg_desc, Path(args.workdir) / f"{export_config['model_name']}_tf2.nav")
     nav.LOGGER.info(f"{export_config['model_name']} passed.")

@@ -18,6 +18,7 @@ from typing import Dict, Optional, Tuple
 import numpy as np
 import torch  # pytype: disable=import-error
 
+from model_navigator.framework_api.commands.convert.base import ConvertBase
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.export.pyt import ExportPYT2TorchScript
 from model_navigator.framework_api.common import TensorMetadata
@@ -31,7 +32,7 @@ from model_navigator.framework_api.utils import (
 from model_navigator.model import Format
 
 
-class ConvertTorchScript2TorchTensorRT(Command):
+class ConvertTorchScript2TorchTensorRT(ConvertBase):
     def __init__(self, target_jit_type: JitType, requires: Tuple[Command, ...] = ()):
         super().__init__(
             name="Convert TorschScript to TorchTensorRT",

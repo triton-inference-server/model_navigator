@@ -261,7 +261,7 @@ def main():
                         )
 
         output_path = args.output_path or f"{args.model_name}_tf2.nav"
-        pkg_desc.save(output_path, keep_workdir=args.keep_workdir, override=True)
+        nav.save(pkg_desc, output_path, keep_workdir=args.keep_workdir, override=True)
 
 
 if __name__ == "__main__":

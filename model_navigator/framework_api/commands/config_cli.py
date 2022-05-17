@@ -63,17 +63,13 @@ class ConfigCli(Command):
 
     def __init__(
         self,
+        name: str,
         target_format: Format,
+        requires: Tuple[Command, ...] = (),
         target_jit_type: Optional[JitType] = None,
         target_precision: Optional[TensorRTPrecision] = None,
-        requires: Tuple[Command, ...] = (),
     ):
-        super().__init__(
-            name="Generate configurations for Navigator CLI",
-            command_type=CommandType.GEN_CONFIG,
-            target_format=target_format,
-            requires=requires,
-        )
+        super().__init__(name=name, command_type=CommandType.GEN_CONFIG, requires=requires, target_format=target_format)
         self.target_jit_type = target_jit_type
         self.target_precision = target_precision
 

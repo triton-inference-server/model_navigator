@@ -16,10 +16,18 @@ from pathlib import Path
 from typing import Optional, Tuple, Union
 
 from model_navigator.converter.config import TensorRTPrecision
+from model_navigator.framework_api.commands.performance import ProfilerConfig
 from model_navigator.framework_api.common import SizedDataLoader
 from model_navigator.framework_api.config import Config
 from model_navigator.framework_api.package_descriptor import PackageDescriptor
-from model_navigator.framework_api.pipelines import ONNXPipelineManager
+from model_navigator.framework_api.pipelines import PipelineManager
+from model_navigator.framework_api.pipelines.builders import (
+    config_generation_builder,
+    correctness_builder,
+    onnx_export_builder,
+    preprocessing_builder,
+    profiling_builder,
+)
 from model_navigator.framework_api.utils import (
     Framework,
     RuntimeProvider,
@@ -49,8 +57,10 @@ def export(
     disable_git_info: bool = False,
     batch_dim: Optional[int] = 0,
     onnx_runtimes: Optional[Union[Union[str, RuntimeProvider], Tuple[Union[str, RuntimeProvider], ...]]] = None,
+    run_profiling: bool = True,
+    profiler_config: Optional[ProfilerConfig] = None,
 ) -> PackageDescriptor:
-    """Function exports TensorFlow 2 model to all supported formats."""
+    """Function exports ONNX model to all supported formats."""
     if isinstance(model, str):
         model = Path(model)
     if model_name is None:
@@ -73,6 +83,9 @@ def export(
 
     if onnx_runtimes is None:
         onnx_runtimes = format2runtimes(Format.ONNX)
+
+    if profiler_config is None:
+        profiler_config = ProfilerConfig()
 
     target_formats, target_precisions, onnx_runtimes = (
         parse_enum(target_formats, Format),
@@ -97,7 +110,11 @@ def export(
         disable_git_info=disable_git_info,
         batch_dim=batch_dim,
         onnx_runtimes=onnx_runtimes,
+        profiler_config=profiler_config,
     )
 
-    pipeline_manager = ONNXPipelineManager()
-    return pipeline_manager.build(config)
+    builders = [preprocessing_builder, onnx_export_builder, correctness_builder, config_generation_builder]
+    if run_profiling:
+        builders.append(profiling_builder)
+    pipeline_manager = PipelineManager(builders)
+    return PackageDescriptor.build(pipeline_manager, config)

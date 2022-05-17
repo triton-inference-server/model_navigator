@@ -56,8 +56,9 @@ for _ in range(sample_count):
     with onnx_runner:
         gt = onnx_runner.infer(feed_dict)
 
-    trt_runner = pkg_desc.get_runner(format=nav.Format.TENSORRT, runtime=nav.RuntimeProvider.TRT,
-                                     precision=nav.TensorRTPrecision.FP32)
+    trt_runner = pkg_desc.get_runner(
+        format=nav.Format.TENSORRT, runtime=nav.RuntimeProvider.TRT, precision=nav.TensorRTPrecision.FP32
+    )
     with trt_runner:
         output = trt_runner.infer(feed_dict)
 
@@ -74,4 +75,4 @@ if accuracy > 0.8:
     pkg_desc.set_verified(format=nav.Format.ONNX, runtime=nav.RuntimeProvider.CUDA)
 
 # Save nav package
-pkg_desc.save("my_model.nav")
+nav.save(pkg_desc, "my_model.nav")

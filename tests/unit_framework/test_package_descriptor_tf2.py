@@ -19,15 +19,15 @@ import numpy
 import tensorflow
 
 from model_navigator.converter.config import TensorRTPrecision
-from model_navigator.framework_api.commands.correctness.base import Tolerance
-from model_navigator.framework_api.commands.correctness.tf import CorrectnessSavedModel
+from model_navigator.framework_api.commands.correctness import Correctness, Tolerance
 from model_navigator.framework_api.commands.export.tf import ExportTF2SavedModel
-from model_navigator.framework_api.commands.performance.base import Performance
-from model_navigator.framework_api.commands.performance.tf import PerformanceSavedModel
 from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.config import Config
 from model_navigator.framework_api.package_descriptor import PackageDescriptor
+from model_navigator.framework_api.pipelines.builders import preprocessing_builder
 from model_navigator.framework_api.pipelines.pipeline import Pipeline
+from model_navigator.framework_api.pipelines.pipeline_manager import PipelineManager
+from model_navigator.framework_api.runners.tf import TFRunner
 from model_navigator.framework_api.utils import Format, Framework, Status
 from model_navigator.tensor import TensorSpec
 
@@ -59,6 +59,12 @@ def test_tf2_package_descriptor():
         model_path = model_dir / "model.savedmodel"
         tensorflow.keras.models.save_model(model=model, filepath=model_path, overwrite=True)
 
+        input_metadata = TensorMetadata(
+            {"input__0": TensorSpec("input__0", (-1, 224, 224, 3), dtype=numpy.dtype("float32"))}
+        )
+        output_metadata = TensorMetadata(
+            {"output__0": TensorSpec("output__0", (-1, 224, 224, 3), dtype=numpy.dtype("float32"))}
+        )
         config = Config(
             framework=Framework.TF2,
             model_name=model_name,
@@ -69,38 +75,40 @@ def test_tf2_package_descriptor():
             target_formats=(Format.TF_SAVEDMODEL,),
             sample_count=1,
             disable_git_info=False,
-            input_metadata=TensorMetadata(
-                {"input__0": TensorSpec("input__0", (-1, 224, 224, 3), dtype=numpy.dtype("float32"))}
-            ),
-            output_metadata=TensorMetadata(
-                {"output__0": TensorSpec("output__0", (-1, 224, 224, 3), dtype=numpy.dtype("float32"))}
-            ),
+            input_metadata=input_metadata,
+            output_metadata=output_metadata,
         )
 
-        cmd_export = ExportTF2SavedModel()
-        cmd_export.status = Status.OK
+        def export_builder(config, package_descriptor):
+            cmd_export = ExportTF2SavedModel()
+            cmd_export.status = Status.OK
 
-        cmd_correctness = CorrectnessSavedModel(
-            target_format=Format.TF_SAVEDMODEL,
-        )
-        cmd_correctness.status = Status.OK
-        cmd_correctness.output = Tolerance(0, 0)
-
-        cmd_performance = PerformanceSavedModel(
-            target_format=Format.TF_SAVEDMODEL,
-        )
-        cmd_performance.status = Status.OK
-        cmd_performance.output = Performance(0, 0, 0)
-
-        pipelines = [
-            Pipeline(
-                name="Mock pipeline",
-                framework=Framework.TF2,
-                commands=[cmd_export, cmd_correctness, cmd_performance],
+            return Pipeline(
+                name="Export pipeline",
+                framework=Framework.PYT,
+                commands=[cmd_export],
             )
-        ]
 
-        package_desc = PackageDescriptor.from_pipelines(pipelines, config)
+        def correctness_builder(config, package_descriptor):
+            cmd_correctness = Correctness(
+                name="test correctness",
+                target_format=Format.TF_SAVEDMODEL,
+                runner=TFRunner(
+                    tensorflow.keras.models.load_model(model_path), input_metadata, list(output_metadata.keys())
+                ),
+            )
+            cmd_correctness.status = Status.OK
+            cmd_correctness.output = Tolerance(0, 0)
+
+            return Pipeline(
+                name="Export pipeline",
+                framework=Framework.TF2,
+                commands=[cmd_correctness],
+            )
+
+        package_desc = PackageDescriptor.build(
+            PipelineManager([preprocessing_builder, export_builder, correctness_builder]), config
+        )
 
         # Check model status and load model
         assert package_desc.get_status(format=Format.TF_SAVEDMODEL)

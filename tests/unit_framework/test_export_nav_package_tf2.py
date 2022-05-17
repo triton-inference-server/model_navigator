@@ -18,6 +18,7 @@ from pathlib import Path
 import tensorflow
 
 import model_navigator as nav
+from model_navigator.framework_api.commands.performance import ProfilerConfig
 
 # pytype: enable=import-error
 
@@ -72,6 +73,7 @@ def test_tf2_export_savedmodel():
             model_name=model_name,
             override_workdir=True,
             target_formats=(nav.Format.TF_SAVEDMODEL,),
+            profiler_config=ProfilerConfig(measurement_interval=100),
         )
 
         assert status_file.is_file()
@@ -111,6 +113,7 @@ def test_tf2_export_tf_trt():
             model_name=model_name,
             override_workdir=True,
             target_formats=(nav.Format.TF_TRT,),
+            profiler_config=ProfilerConfig(measurement_interval=100),
         )
 
         assert status_file.is_file()
@@ -150,6 +153,7 @@ def test_tf2_export_tf_onnx():
             model_name=model_name,
             override_workdir=True,
             target_formats=(nav.Format.ONNX,),
+            profiler_config=ProfilerConfig(measurement_interval=100),
         )
 
         assert status_file.is_file()
@@ -230,6 +234,7 @@ def test_tf2_export_string_format():
             override_workdir=True,
             target_formats="tf-trt",
             target_precisions="fp32",
+            profiler_config=ProfilerConfig(measurement_interval=100),
         )
 
         assert status_file.is_file()

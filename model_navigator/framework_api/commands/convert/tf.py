@@ -19,6 +19,7 @@ from typing import List, Optional, Tuple
 from tensorflow.python.compiler.tensorrt import trt_convert as trtc  # pytype: disable=import-error
 
 from model_navigator.converter.config import TensorRTPrecision
+from model_navigator.framework_api.commands.convert.base import ConvertBase
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.export.tf import ExportTF2SavedModel
 from model_navigator.framework_api.common import Sample, TensorMetadata
@@ -32,7 +33,7 @@ from model_navigator.framework_api.utils import (
 from model_navigator.model import Format
 
 
-class ConvertSavedModel2ONNX(Command):
+class ConvertSavedModel2ONNX(ConvertBase):
     def __init__(self, requires: Tuple[Command, ...] = ()):
         # pytype: disable=wrong-arg-types
         super().__init__(
@@ -79,7 +80,7 @@ class ConvertSavedModel2ONNX(Command):
         return self.get_output_relative_path()
 
 
-class ConvertSavedModel2TFTRT(Command):
+class ConvertSavedModel2TFTRT(ConvertBase):
     def __init__(self, target_precision: TensorRTPrecision, requires: Tuple[Command, ...] = ()):
         # pytype: disable=wrong-arg-types
         super().__init__(

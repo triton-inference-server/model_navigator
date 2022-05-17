@@ -18,6 +18,7 @@ from pathlib import Path
 import tensorflow
 
 import model_navigator as nav
+from model_navigator.framework_api.commands.performance import ProfilerConfig
 from model_navigator.utils.device import get_gpus
 
 # pytype: enable=import-error
@@ -78,11 +79,17 @@ def test_tf2_save_load_no_retest():
             workdir=workdir,
             model_name=model_name,
             target_precisions="fp32",
+            profiler_config=ProfilerConfig(measurement_interval=100),
         )
 
         pkg_desc.set_verified(nav.Format.TENSORRT, nav.RuntimeProvider.TRT, precision=nav.TensorRTPrecision.FP32)
-        pkg_desc.save(nav_package_path)
-        nav.load(nav_package_path, workdir=load_workdir, retest_conversions=False)
+        nav.save(pkg_desc, nav_package_path)
+        nav.load(
+            nav_package_path,
+            workdir=load_workdir,
+            retest_conversions=False,
+            profiler_config=ProfilerConfig(measurement_interval=100),
+        )
 
         assert status_file.is_file()
         assert model_input_dir.is_dir()
@@ -133,11 +140,16 @@ def test_tf2_save_load_retest():
             workdir=workdir,
             model_name=model_name,
             target_precisions="fp32",
+            profiler_config=ProfilerConfig(measurement_interval=100),
         )
 
         pkg_desc.set_verified(nav.Format.TENSORRT, nav.RuntimeProvider.TRT, precision=nav.TensorRTPrecision.FP32)
-        pkg_desc.save(nav_package_path)
-        nav.load(nav_package_path, workdir=load_workdir)
+        nav.save(pkg_desc, nav_package_path)
+        nav.load(
+            nav_package_path,
+            workdir=load_workdir,
+            profiler_config=ProfilerConfig(measurement_interval=100),
+        )
 
         assert status_file.is_file()
         assert model_input_dir.is_dir()

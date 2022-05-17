@@ -20,9 +20,10 @@ import numpy
 import onnx
 import torch
 
-from model_navigator.framework_api.commands.correctness.pyt import CorrectnessPYT2TorchScript
+from model_navigator.framework_api.commands.correctness import Correctness
 from model_navigator.framework_api.commands.data_dump.samples import DumpInputModelData, DumpOutputModelData
 from model_navigator.framework_api.commands.export.pyt import ExportPYT2ONNX, ExportPYT2TorchScript
+from model_navigator.framework_api.runners.pyt import PytRunner
 from model_navigator.framework_api.utils import Framework, JitType
 from model_navigator.model import Format
 from model_navigator.tensor import TensorSpec
@@ -150,7 +151,15 @@ def test_pyt_correctness():
         numpy_data = input_data.cpu().numpy()
         numpy_output = model(input_data).detach().cpu().numpy()
 
-        correctness_cmd = CorrectnessPYT2TorchScript(target_format=Format.TORCHSCRIPT, target_jit_type=JitType.SCRIPT)
+        input_metadata = {"input__1": TensorSpec("input__1", numpy_data.shape, numpy_data.dtype)}
+        output_metadata = {"output__1": TensorSpec("output__1", numpy_output.shape, numpy_output.dtype)}
+
+        correctness_cmd = Correctness(
+            name="test correctness",
+            target_format=Format.TORCHSCRIPT,
+            runner=PytRunner(script_module, input_metadata, list(output_metadata.keys())),
+            target_jit_type=JitType.SCRIPT,
+        )
 
         correctness_cmd(
             framework=Framework.PYT,
@@ -161,8 +170,8 @@ def test_pyt_correctness():
             atol=0.0,
             correctness_samples=[{"input__1": numpy_data}],
             correctness_samples_output=[{"output__1": numpy_output}],
-            input_metadata={"input__1": TensorSpec("input__1", numpy_data.shape, numpy_data.dtype)},
-            output_metadata={"output__1": TensorSpec("output__1", numpy_output.shape, numpy_output.dtype)},
+            input_metadata=input_metadata,
+            output_metadata=output_metadata,
             target_device="cpu",
         )
 

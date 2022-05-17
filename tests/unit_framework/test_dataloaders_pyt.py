@@ -18,6 +18,7 @@ from pathlib import Path
 import torch
 
 import model_navigator as nav
+from model_navigator.framework_api.commands.performance import ProfilerConfig
 from model_navigator.utils.device import get_gpus
 
 # pytype: enable=import-error
@@ -68,6 +69,7 @@ def test_pyt_tensor_dataloader():
             workdir=workdir,
             model_name=model_name,
             input_names=("input_0",),
+            profiler_config=ProfilerConfig(measurement_interval=100),
         )
 
         assert status_file.is_file()
@@ -122,6 +124,7 @@ def test_pyt_sequence_dataloader():
             workdir=workdir,
             model_name=model_name,
             input_names=("input_0", "input_1"),
+            profiler_config=ProfilerConfig(measurement_interval=100),
         )
 
         assert status_file.is_file()
@@ -175,6 +178,7 @@ def test_pyt_dict_dataloader():
             workdir=workdir,
             model_name=model_name,
             input_names=("input_x", "input_z"),
+            profiler_config=ProfilerConfig(measurement_interval=100),
         )
 
         assert status_file.is_file()
@@ -232,6 +236,7 @@ def test_pyt_dict_dataloader_with_kwargs():
             input_names=("input_x", "input_z"),
             jit_options=(nav.JitType.SCRIPT,),
             target_formats=(nav.Format.ONNX, nav.Format.TENSORRT),
+            profiler_config=ProfilerConfig(measurement_interval=100),
         )
 
         assert status_file.is_file()
@@ -291,6 +296,7 @@ def test_onnx_sequence_dataloader():
             dataloader=_numpy_dataloader,
             opset=13,
             workdir=workdir,
+            profiler_config=ProfilerConfig(measurement_interval=100),
         )
 
         assert status_file.is_file()
@@ -353,6 +359,7 @@ def test_onnx_dict_dataloader():
             dataloader=_numpy_dataloader,
             opset=13,
             workdir=workdir,
+            profiler_config=ProfilerConfig(measurement_interval=100),
         )
 
         assert status_file.is_file()
