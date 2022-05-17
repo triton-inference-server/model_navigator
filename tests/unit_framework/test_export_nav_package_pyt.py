@@ -18,6 +18,7 @@ from pathlib import Path
 import torch
 
 import model_navigator as nav
+from model_navigator.framework_api.commands.performance import ProfilerConfig
 from model_navigator.utils.device import get_gpus
 
 # pytype: enable=import-error
@@ -71,6 +72,7 @@ def test_pyt_export_torchscript():
             override_workdir=True,
             workdir=workdir,
             model_name=model_name,
+            profiler_config=ProfilerConfig(measurement_interval=100),
         )
 
         assert status_file.is_file()
@@ -114,6 +116,7 @@ def test_pyt_export_onnx():
             override_workdir=True,
             workdir=workdir,
             model_name=model_name,
+            profiler_config=ProfilerConfig(measurement_interval=100),
         )
 
         assert status_file.is_file()
@@ -158,6 +161,7 @@ def test_pyt_export_torch_trt_script():
             override_workdir=True,
             workdir=workdir,
             model_name=model_name,
+            profiler_config=ProfilerConfig(measurement_interval=100),
         )
 
         assert status_file.is_file()
@@ -209,6 +213,7 @@ def test_pyt_export_trt():
             override_workdir=True,
             workdir=workdir,
             model_name=model_name,
+            profiler_config=ProfilerConfig(measurement_interval=100),
         )
 
         assert status_file.is_file()
@@ -260,6 +265,7 @@ def test_pyt_export_multi_input():
             override_workdir=True,
             workdir=workdir,
             model_name=model_name,
+            profiler_config=ProfilerConfig(measurement_interval=100),
         )
 
         assert status_file.is_file()
@@ -305,6 +311,7 @@ def test_pyt_export_string_format():
             override_workdir=True,
             workdir=workdir,
             model_name=model_name,
+            profiler_config=ProfilerConfig(measurement_interval=100),
         )
 
         assert status_file.is_file()
@@ -359,6 +366,7 @@ def test_pyt_export_onnx2trt():
             dataloader=_numpy_dataloader,
             opset=13,
             workdir=workdir,
+            profiler_config=ProfilerConfig(measurement_interval=100),
         )
 
         assert status_file.is_file()
@@ -416,6 +424,7 @@ def test_pyt_export_onnx_large():
             override_workdir=True,
             workdir=workdir,
             model_name=model_name,
+            profiler_config=ProfilerConfig(measurement_interval=100),
         )
 
         assert status_file.is_file()

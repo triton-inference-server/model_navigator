@@ -19,15 +19,15 @@ import numpy
 import torch
 
 from model_navigator.converter.config import TensorRTPrecision
-from model_navigator.framework_api.commands.correctness.base import Tolerance
-from model_navigator.framework_api.commands.correctness.pyt import CorrectnessPYT2TorchScript
+from model_navigator.framework_api.commands.correctness import Correctness, Tolerance
 from model_navigator.framework_api.commands.export.pyt import ExportPYT2TorchScript
-from model_navigator.framework_api.commands.performance.base import Performance
-from model_navigator.framework_api.commands.performance.pyt import PerformanceTorchScript
 from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.config import Config
 from model_navigator.framework_api.package_descriptor import PackageDescriptor
+from model_navigator.framework_api.pipelines.builders import preprocessing_builder
 from model_navigator.framework_api.pipelines.pipeline import Pipeline
+from model_navigator.framework_api.pipelines.pipeline_manager import PipelineManager
+from model_navigator.framework_api.runners.pyt import PytRunner
 from model_navigator.framework_api.utils import Format, Framework, JitType, Status
 from model_navigator.tensor import TensorSpec
 
@@ -57,6 +57,9 @@ def test_pyt_package_descriptor():
         script_module = torch.jit.script(model)
         torch.jit.save(script_module, model_path.as_posix())
 
+        input_metadata = TensorMetadata({"input__0": TensorSpec("input__0", (1,), dtype=numpy.dtype("float32"))})
+        output_metadata = TensorMetadata({"output__0": TensorSpec("output__0", (1,), dtype=numpy.dtype("float32"))})
+
         config = Config(
             framework=Framework.PYT,
             model_name=model_name,
@@ -68,38 +71,41 @@ def test_pyt_package_descriptor():
             target_jit_type=(JitType.SCRIPT,),
             sample_count=1,
             disable_git_info=False,
-            input_metadata=TensorMetadata({"input__0": TensorSpec("input__0", (1,), dtype=numpy.dtype("float32"))}),
-            output_metadata=TensorMetadata({"output__0": TensorSpec("output__0", (1,), dtype=numpy.dtype("float32"))}),
+            input_metadata=input_metadata,
+            output_metadata=output_metadata,
         )
 
-        cmd_export = ExportPYT2TorchScript(
-            target_jit_type=JitType.SCRIPT,
-        )
-        cmd_export.status = Status.OK
-
-        cmd_correctness = CorrectnessPYT2TorchScript(
-            target_format=Format.TORCHSCRIPT,
-            target_jit_type=JitType.SCRIPT,
-        )
-        cmd_correctness.status = Status.OK
-        cmd_correctness.output = Tolerance(0, 0)
-
-        cmd_performance = PerformanceTorchScript(
-            target_format=Format.TORCHSCRIPT,
-            target_jit_type=JitType.SCRIPT,
-        )
-        cmd_performance.status = Status.OK
-        cmd_performance.output = Performance(0, 0, 0)
-
-        pipelines = [
-            Pipeline(
-                name="Mock pipeline",
-                framework=Framework.PYT,
-                commands=[cmd_export, cmd_correctness, cmd_performance],
+        def export_builder(config, package_descriptor):
+            cmd_export = ExportPYT2TorchScript(
+                target_jit_type=JitType.SCRIPT,
             )
-        ]
+            cmd_export.status = Status.OK
 
-        package_desc = PackageDescriptor.from_pipelines(pipelines, config)
+            return Pipeline(
+                name="Export pipeline",
+                framework=Framework.PYT,
+                commands=[cmd_export],
+            )
+
+        def correctness_builder(config, package_descriptor):
+            cmd_correctness = Correctness(
+                name="test correctness",
+                target_format=Format.TORCHSCRIPT,
+                runner=PytRunner(torch.jit.load(model_path.as_posix()), input_metadata, list(output_metadata.keys())),
+                target_jit_type=JitType.SCRIPT,
+            )
+            cmd_correctness.status = Status.OK
+            cmd_correctness.output = Tolerance(0, 0)
+
+            return Pipeline(
+                name="Export pipeline",
+                framework=Framework.PYT,
+                commands=[cmd_correctness],
+            )
+
+        package_desc = PackageDescriptor.build(
+            PipelineManager([preprocessing_builder, export_builder, correctness_builder]), config
+        )
 
         # Check model status and load model
         assert package_desc.get_status(format=Format.TORCHSCRIPT, jit_type=JitType.SCRIPT)

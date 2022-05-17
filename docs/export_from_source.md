@@ -40,7 +40,9 @@ limitations under the License.
   - [Export PyTorch](#export-pytorch)
   - [Export TensorFlow 2](#export-tensorflow-2)
   - [Package Descriptor](#package-descriptor)
+  - [Package Save](#package-save)
   - [Package Load](#package-load)
+  - [Package Profile](#package-profile)
 - [Contrib](#contrib)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -305,6 +307,8 @@ def export(
     disable_git_info: bool = False,
     batch_dim: Optional[int] = 0,
     onnx_runtimes: Optional[Union[Union[str, RuntimeProvider], Tuple[Union[str, RuntimeProvider], ...]]] = None, # defaults to all available runtimes
+    run_profiling: bool = True,
+    profiler_config: Optional[ProfilerConfig] = None,
 ) -> PackageDescriptor:
     """Function exports PyTorch model to all supported formats."""
 ```
@@ -330,6 +334,8 @@ def export(
     disable_git_info: bool = False,
     batch_dim: Optional[int] = 0,
     onnx_runtimes: Optional[Union[Union[str, RuntimeProvider], Tuple[Union[str, RuntimeProvider], ...]]] = None, # defaults to all available runtimes
+    run_profiling: bool = True,
+    profiler_config: Optional[ProfilerConfig] = None,
 ) -> PackageDescriptor:
     """Exports TensorFlow 2 model to all supported formats."""
 ```
@@ -399,9 +405,13 @@ def set_verified(
     """Set exported model verified for given format, jit_type and precision"""
 ```
 
+### Package Save
+
+```.nav``` packages are created with ```nav.save()``` function.
+
 ```python
 def save(
-    self,
+    package_descriptor: PackageDescriptor,
     path: Union[str, Path],
     keep_workdir: bool = True,
     override: bool = False,
@@ -425,10 +435,33 @@ def load(
     workdir: Optional[Union[str, Path]] = None,
     override_workdir: bool = False,
     retest_conversions: bool = True,
+    run_profiling: Optional[bool] = None,
+    profiler_config: Optional[ProfilerConfig] = None,
 ) -> PackageDescriptor:
     """Load .nav package from the path.
-        If `retest_conversions = True` rerun conversion tests (including correctness and performance).
+        If `retest_conversions = True` rerun conversion tests.
     """
+```
+
+### Package Profile
+
+```python
+def profile(package_descriptor: PackageDescriptor, profiler_config: Optional[ProfilerConfig] = None) -> None:
+    """
+    Run profiling on the package for each batch size from the `profiler_config.batch_sizes`.
+    """
+```
+
+Profiling is configured by `ProfilerConfig`. Profiler is based on [Triton Performance Analyzer](https://github.com/triton-inference-server/server/blob/main/docs/perf_analyzer.md), please refer to [Triton Performance Analyzer](https://github.com/triton-inference-server/server/blob/main/docs/perf_analyzer.md) documentation for more info.
+
+```python
+class ProfilerConfig(DataObject):
+    batch_sizes: Optional[Sequence[int]] = None # list of batch sizes to profile, defaults to (1, <dataloader_batch_size>)
+    measurement_mode: MeasurementMode = MeasurementMode.TIME_WINDOWS # MeasurementMode.TIME_WINDOWS - Fixed duriation of a window, MeasurementMode.COUNT_WINDOWS - fixed number of requests in a window
+    measurement_interval: Optional[float] = 5000  # ms, length of measurment windows (MeasurementMode.TIME_WINDOWS)
+    measurement_request_count: Optional[int] = None # number of requests in a window (MeasurementMode.COUNT_WINDOWS)
+    stability_percentage: float = 10.0 # How much average latency can vary between windows to accept the results as stable
+    max_trials: int = 10 # Maximum number of measurement windows to get 3 stable windows
 ```
 
 ## Contrib

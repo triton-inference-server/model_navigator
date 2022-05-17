@@ -16,7 +16,7 @@ import traceback
 import typing
 from abc import ABCMeta, abstractmethod
 from inspect import getfullargspec
-from typing import Any, Iterable, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Iterable, Optional, Tuple, Union
 
 import typing_inspect
 
@@ -24,6 +24,9 @@ from model_navigator.framework_api.exceptions import UserError
 from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.utils import Parameter, Status
 from model_navigator.model import Format
+
+if TYPE_CHECKING:
+    from model_navigator.framework_api.package_descriptor import PackageDescriptor
 
 
 class CommandType(Parameter):
@@ -58,6 +61,9 @@ class Command(metaclass=ABCMeta):
         self.status = Status.INITIALIZED
         self._requires = requires
 
+    def _update_package_descriptor(self, package_descriptor: "PackageDescriptor", **kwargs) -> None:
+        pass
+
     def __getattr__(self, item):
         return None
 
@@ -73,7 +79,7 @@ class Command(metaclass=ABCMeta):
             cmd_name_and_details += f" {self.runtime_provider}"
         return cmd_name_and_details
 
-    def transform(self, **kwargs):
+    def transform(self, package_descriptor: "PackageDescriptor", **kwargs):
         self.status = self._validate(**kwargs)
         if self._check_requires():
             try:
@@ -101,6 +107,7 @@ class Command(metaclass=ABCMeta):
 
         else:
             self.status = Status.SKIPPED
+        self._update_package_descriptor(package_descriptor, **kwargs)
 
     def _check_requires(self):
         for req in self._requires:

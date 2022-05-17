@@ -61,4 +61,4 @@ if accuracy > 0.8:
     pkg_desc.set_verified(format=nav.Format.ONNX, runtime=nav.RuntimeProvider.CUDA)
 
 # Save nav package
-pkg_desc.save("my_model.nav")
+nav.save(pkg_desc, "my_model.nav")

@@ -17,12 +17,13 @@ import shutil
 from pathlib import Path
 from typing import Optional, Tuple
 
+from model_navigator.framework_api.commands.copy.base import CopyBase
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.utils import format_to_relative_model_path, get_package_path
 from model_navigator.model import Format
 
 
-class CopyONNX(Command):
+class CopyONNX(CopyBase):
     def __init__(
         self,
         requires: Tuple[Command, ...] = (),
@@ -39,12 +40,15 @@ class CopyONNX(Command):
 
     def __call__(
         self,
-        model: Path,
         workdir: Path,
         model_name: str,
+        model: Optional[Path] = None,
         **kwargs,
     ) -> Optional[Path]:
         destination_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
+        if destination_model_path.is_file() or destination_model_path.is_dir():
+            return self.get_output_relative_path()
+        assert model is not None
         destination_model_path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy(src=model, dst=destination_model_path)
         return self.get_output_relative_path()

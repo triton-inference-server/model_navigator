@@ -16,8 +16,16 @@ from pathlib import Path
 from typing import Optional, Union
 
 from model_navigator.converter.config import TensorRTPrecision
+from model_navigator.framework_api.commands.performance import ProfilerConfig
 from model_navigator.framework_api.config import Config
 from model_navigator.framework_api.package_descriptor import PackageDescriptor
+from model_navigator.framework_api.pipelines.builders import (
+    config_generation_builder,
+    correctness_builder,
+    preprocessing_builder,
+    profiling_builder,
+)
+from model_navigator.framework_api.pipelines.pipeline_manager import PipelineManager
 from model_navigator.framework_api.utils import Framework, JitType, parse_enum
 from model_navigator.model import Format
 
@@ -28,8 +36,7 @@ def _copy_verified_staus(pkg_desc_1: PackageDescriptor, pkg_desc_2: PackageDescr
     ):
         for runtime_status_1, runtime_status_2 in zip(model_status_1.runtime_results, model_status_2.runtime_results):
             runtime_status_2.verified = runtime_status_1.verified
-    pkg_desc_2.delete_status_file()
-    pkg_desc_2.create_status_file()
+    pkg_desc_2.save_status_file()
 
 
 def load(
@@ -37,15 +44,25 @@ def load(
     workdir: Optional[Union[str, Path]] = None,
     override_workdir: bool = False,
     retest_conversions: bool = True,
+    run_profiling: Optional[bool] = None,
+    profiler_config: Optional[ProfilerConfig] = None,
 ) -> PackageDescriptor:
     """Load .nav package from the path.
     If `retest_conversions = True` rerun conversion tests (including correctness and performance).
     """
+    if run_profiling is None:
+        run_profiling = retest_conversions
+    if not retest_conversions and run_profiling:
+        raise ValueError("Cannot run profiling without retesting conversions.")
+
     pkg_desc = PackageDescriptor.load(path=path, workdir=workdir, override_workdir=override_workdir)
     if not retest_conversions:
         return pkg_desc
 
     saved_config = pkg_desc.navigator_status.export_config
+
+    if profiler_config is None:
+        profiler_config = ProfilerConfig()
 
     config = Config(
         framework=pkg_desc.framework,
@@ -69,21 +86,19 @@ def load(
         max_workspace_size=saved_config.get("max_workspace_size"),
         minimum_segment_size=saved_config.get("minimum_segment_size"),
         disable_git_info=True,
+        profiler_config=profiler_config,
     )
     if pkg_desc.framework == Framework.PYT:
-        from model_navigator.framework_api.pipelines.pipeline_manager_pyt import TorchPipelineManager
-
-        pipeline_manager = TorchPipelineManager()
+        from model_navigator.framework_api.pipelines.builders import torch_export_builder as export_builder
     elif pkg_desc.framework == Framework.TF2:
-        from model_navigator.framework_api.pipelines.pipeline_manager_tf import TFPipelineManager
-
-        pipeline_manager = TFPipelineManager()
+        from model_navigator.framework_api.pipelines.builders import tensorflow_export_builder as export_builder
     else:  # ONNX
-        from model_navigator.framework_api.pipelines.pipeline_manager_onnx import ONNXPipelineManager
+        from model_navigator.framework_api.pipelines.builders import onnx_export_builder as export_builder
 
-        pipeline_manager = ONNXPipelineManager()
-
-    new_pkg_desc = pipeline_manager.build(config)
-    new_pkg_desc.navigator_status.git_info = pkg_desc.navigator_status.git_info
+    builders = [preprocessing_builder, export_builder, correctness_builder, config_generation_builder]
+    if run_profiling:
+        builders.append(profiling_builder)
+    pipeline_manager = PipelineManager(builders)
+    new_pkg_desc = PackageDescriptor.build(pipeline_manager, config)
     _copy_verified_staus(pkg_desc, new_pkg_desc)
     return new_pkg_desc

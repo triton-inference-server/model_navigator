@@ -19,6 +19,7 @@ from typing import Dict, List, Optional, Tuple, Union
 from polygraphy.backend.onnxrt import SessionFromOnnx
 
 from model_navigator.converter.config import TensorRTPrecision
+from model_navigator.framework_api.commands.convert.base import ConvertBase
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.exceptions import UserError, UserErrorContext
@@ -28,7 +29,7 @@ from model_navigator.model import Format
 from model_navigator.utils.device import get_gpus
 
 
-class ConvertONNX2TRT(Command):
+class ConvertONNX2TRT(ConvertBase):
     trt_precision_to_arg = {
         TensorRTPrecision.FP32: "",
         TensorRTPrecision.TF32: "--tf32",

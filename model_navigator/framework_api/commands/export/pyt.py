@@ -18,13 +18,14 @@ from typing import Dict, List, Optional, Tuple, Union
 import torch  # pytype: disable=import-error
 
 from model_navigator.framework_api.commands.core import Command, CommandType
+from model_navigator.framework_api.commands.export.base import ExportBase
 from model_navigator.framework_api.common import Sample, TensorMetadata
 from model_navigator.framework_api.exceptions import UserErrorContext
 from model_navigator.framework_api.utils import JitType, format_to_relative_model_path, get_package_path
 from model_navigator.model import Format
 
 
-class ExportPYT2TorchScript(Command):
+class ExportPYT2TorchScript(ExportBase):
     def __init__(self, target_jit_type: JitType, requires: Tuple[Command, ...] = ()):
         super().__init__(
             name="Export PyTorch to TorchScript",
@@ -76,7 +77,7 @@ class ExportPYT2TorchScript(Command):
         return self.get_output_relative_path()
 
 
-class ExportPYT2ONNX(Command):
+class ExportPYT2ONNX(ExportBase):
     def __init__(self, requires: Tuple[Command, ...] = ()):
         super().__init__(
             name="Export PyTorch to ONNX", command_type=CommandType.EXPORT, target_format=Format.ONNX, requires=requires

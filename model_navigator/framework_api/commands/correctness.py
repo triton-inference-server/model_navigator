@@ -13,17 +13,21 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
 import numpy
 from polygraphy.backend.base import BaseRunner
 from polygraphy.comparator import util as comp_util
 
+from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.common import DataObject, Sample, TensorMetadata
 from model_navigator.framework_api.exceptions import UserErrorContext
-from model_navigator.framework_api.utils import Framework, Status, format2runtimes
+from model_navigator.framework_api.utils import JitType, RuntimeProvider, Status
 from model_navigator.model import Format
+
+if TYPE_CHECKING:
+    from model_navigator.framework_api.package_descriptor import PackageDescriptor
 
 
 @dataclass
@@ -55,31 +59,51 @@ def get_assert_message(atol: float, rtol: float):
     return f"Current atol = {atol}, rtol = {rtol}, try to adjust tolerance values"
 
 
-class CorrectnessBase(Command):
-    def __init__(self, name: str, command_type: CommandType, target_format: Format, requires: Tuple[Command, ...] = ()):
-        super().__init__(name=name, command_type=command_type, target_format=target_format, requires=requires)
-        self.runtime_provider = format2runtimes(target_format)[0]
+class Correctness(Command):
+    def __init__(
+        self,
+        name: str,
+        runner: BaseRunner,
+        target_format: Format,
+        requires: Tuple[Command, ...] = (),
+        target_jit_type: Optional[JitType] = None,
+        target_precision: Optional[TensorRTPrecision] = None,
+        runtime_provider: Optional[RuntimeProvider] = None,
+    ):
+        super().__init__(
+            name=name, command_type=CommandType.CORRECTNESS, target_format=target_format, requires=requires
+        )
+        self._runner = runner
+        self.target_jit_type = target_jit_type
+        self.target_precision = target_precision
+        self.runtime_provider = runtime_provider
 
-    def _get_runner(self, **kwargs) -> BaseRunner:
-        raise NotImplementedError
+    def _update_package_descriptor(self, package_descriptor: "PackageDescriptor", **kwargs) -> None:
+        runtime_results = package_descriptor.get_runtime_results(
+            format=self.target_format,
+            jit_type=self.target_jit_type,
+            precision=self.target_precision,
+            runtime_provider=self.runtime_provider,
+        )
+        if runtime_results.status == Status.OK:
+            if self.status == Status.OK:
+                runtime_results.tolerance = self.output
+            else:
+                runtime_results.status = self.status
+                runtime_results.err_msg[self.command_type.value] = self.err_msg
 
     def __call__(
         self,
         correctness_samples: List[Sample],
         correctness_samples_output: List[Sample],
-        framework: Framework,
         output_metadata: TensorMetadata,
         rtol: Optional[float] = None,
         atol: Optional[float] = None,
         **kwargs,
     ) -> TolerancePerOutputName:
-
-        runner = self._get_runner(
-            correctness_samples=correctness_samples, framework=framework, output_metadata=output_metadata, **kwargs
-        )
         output_names = [v.name for v in output_metadata.values()]
         per_output_tolerance = TolerancePerOutputName({name: Tolerance(0.0, 0.0) for name in output_names})
-        with runner:
+        with self._runner as runner:
             for sample, original_output in zip(correctness_samples, correctness_samples_output):
                 with UserErrorContext():
                     comp_output = runner.infer(sample)

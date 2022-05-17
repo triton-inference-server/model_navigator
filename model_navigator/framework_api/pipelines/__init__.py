@@ -12,14 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from model_navigator.framework_api.package_utils import is_tf_available, is_torch_available
 from model_navigator.framework_api.pipelines.pipeline import Pipeline  # noqa: F401
-from model_navigator.framework_api.pipelines.pipeline_manager_base import PipelineManager  # noqa: F401
-
-if is_torch_available():
-    from model_navigator.framework_api.pipelines.pipeline_manager_pyt import TorchPipelineManager  # noqa: F401
-
-if is_tf_available():
-    from model_navigator.framework_api.pipelines.pipeline_manager_tf import TFPipelineManager  # noqa: F401
-
-from model_navigator.framework_api.pipelines.pipeline_manager_onnx import ONNXPipelineManager  # noqa: F401
+from model_navigator.framework_api.pipelines.pipeline_manager import PipelineManager  # noqa: F401

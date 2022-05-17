@@ -98,7 +98,7 @@ if accuracy > 0.8:
 After verification user have to save final Navigator package. This package will contain base format and all information
 that allows for recreation of all other formats and rerunning all tests.
 ```python
-pkg_desc.save("my_model.nav")
+nav.save(pkg_desc, "my_model.nav")
 ```
 
 The `.nav` package can then be copied to the deployment environment.
