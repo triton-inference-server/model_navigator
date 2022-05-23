@@ -224,7 +224,7 @@ class RandomDataloader(Dataloader):
             for name, inp in model_signature.inputs.items():
                 dtypes[name] = inp.dtype
             self.dataset_profile.dtypes = dtypes
-            LOGGER.info("Generated default dataset profile: dtypes=%s.", dtypes)
+            LOGGER.debug("Generated default dataset profile. dtypes=%s.", dtypes)
 
         if self.dataset_profile.value_ranges is None:
 
@@ -233,7 +233,7 @@ class RandomDataloader(Dataloader):
 
             value_ranges = {name: _get_default_value_range(spec) for name, spec in model_signature.inputs.items()}
             self.dataset_profile.value_ranges = value_ranges
-            LOGGER.info(
+            LOGGER.debug(
                 "Missing model input value ranges required during conversion. "
                 "Use `value_ranges` config to define missing dataset profiles. "
                 f"Used default values_ranges: {value_ranges}"
@@ -249,7 +249,7 @@ class RandomDataloader(Dataloader):
 
         if self.dataset_profile.min_shapes is None:
             self.dataset_profile.min_shapes = sig_min_shapes
-            LOGGER.info("Generated default dataset profile: min_shapes=%s.", sig_min_shapes)
+            LOGGER.debug("Generated default dataset profile: min_shapes=%s.", sig_min_shapes)
         if self.dataset_profile.max_shapes is None:
             if not max_batch_size:
                 raise ModelNavigatorException("Cannot construct default dataset profile: max_batch_size not provided")
@@ -257,7 +257,7 @@ class RandomDataloader(Dataloader):
                 raise ModelNavigatorException("Cannot construct default dataset profile: max_batch_size negative")
 
             self.dataset_profile.max_shapes = sig_max_shapes
-            LOGGER.info("Generated default dataset profile: max_shapes=%s.", sig_max_shapes)
+            LOGGER.debug("Generated default dataset profile: max_shapes=%s.", sig_max_shapes)
 
     @property
     def min_shapes(self) -> Dict[str, List[int]]:

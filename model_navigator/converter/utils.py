@@ -113,8 +113,9 @@ def navigator_subprocess(*, log_file=None, verbose: bool = False):
         except Exception:
             tb = "".join(Pyro4.util.getPyroTraceback())
             msg = f"Uncaught exception:\n {tb}\n"
-            for line in msg.splitlines():
-                print("\t" + line, flush=True)
+            if verbose:
+                for line in msg.splitlines():
+                    print("\t" + line, flush=True)
             raise
         finally:
             p.terminate()
