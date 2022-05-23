@@ -157,9 +157,7 @@ def test_tf2_correctness():
         correctness_cmd = Correctness(
             name="test correctness",
             target_format=Format.TF_SAVEDMODEL,
-            runner=TFRunner(
-                tensorflow.keras.models.load_model(model_path), input_metadata, list(output_metadata.keys())
-            ),
+            runner=TFRunner(model_path, input_metadata, list(output_metadata.keys())),
         )
         correctness_cmd(
             framework=Framework.TF2,

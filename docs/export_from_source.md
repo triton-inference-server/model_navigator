@@ -457,9 +457,9 @@ Profiling is configured by `ProfilerConfig`. Profiler is based on [Triton Perfor
 ```python
 class ProfilerConfig(DataObject):
     batch_sizes: Optional[Sequence[int]] = None # list of batch sizes to profile, defaults to (1, <dataloader_batch_size>)
-    measurement_mode: MeasurementMode = MeasurementMode.TIME_WINDOWS # MeasurementMode.TIME_WINDOWS - Fixed duriation of a window, MeasurementMode.COUNT_WINDOWS - fixed number of requests in a window
+    measurement_mode: MeasurementMode = MeasurementMode.COUNT_WINDOWS # MeasurementMode.TIME_WINDOWS - Fixed duriation of a window, MeasurementMode.COUNT_WINDOWS - fixed number of requests in a window
     measurement_interval: Optional[float] = 5000  # ms, length of measurment windows (MeasurementMode.TIME_WINDOWS)
-    measurement_request_count: Optional[int] = None # number of requests in a window (MeasurementMode.COUNT_WINDOWS)
+    measurement_request_count: Optional[int] = 50 # number of requests in a window (MeasurementMode.COUNT_WINDOWS)
     stability_percentage: float = 10.0 # How much average latency can vary between windows to accept the results as stable
     max_trials: int = 10 # Maximum number of measurement windows to get 3 stable windows
 ```
