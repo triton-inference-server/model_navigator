@@ -17,6 +17,7 @@ import os
 import pathlib
 import uuid
 import zipfile
+from enum import Enum
 from typing import Dict, Optional
 
 import yaml
@@ -31,6 +32,21 @@ from model_navigator.utils.environment import EnvironmentStore
 FORMAT_VERSION = "0.0.1"
 
 LOGGER = logging.getLogger("pack_workspace")
+
+
+def parse_config(config):
+    parsed_config = {}
+    for key, value in config.items():
+        if isinstance(value, Enum):
+            parsed_config[key] = value.value
+        elif isinstance(value, pathlib.Path):
+            parsed_config[key] = value.as_posix()
+        elif isinstance(value, tuple):
+            parsed_config[key] = list(value)
+        else:
+            parsed_config[key] = value
+
+    return parsed_config
 
 
 def pack_workspace(
@@ -76,7 +92,8 @@ def pack_workspace(
             log_path = conversion_result.status.log_path
             if log_path:
                 log_path = pathlib.Path(log_path)
-                model_data["log_file"] = pathlib.Path(conversion_log_path) / log_path.name
+                log_file = pathlib.Path(configurator_log_path) / log_path.name
+                model_data["log_file"] = log_file.as_posix()
                 conversion_logs.append(log_path)
 
             model_data["model_stores"] = []
@@ -95,7 +112,8 @@ def pack_workspace(
                     log_path = config_result.status.log_path
                     if log_path:
                         log_path = pathlib.Path(log_path)
-                        model_store_data["log_file"] = pathlib.Path(configurator_log_path) / log_path.name
+                        log_file = pathlib.Path(configurator_log_path) / log_path.name
+                        model_store_data["log_file"] = log_file.as_posix()
                         configurator_logs.append(log_path)
 
                 model_stores.append(model_store_data)
@@ -110,7 +128,7 @@ def pack_workspace(
         "navigator_version": navigator_version,
         "timestamp": f"{datetime.datetime.utcnow():%Y-%m-%dT%H:%M:%S.%f}",
         "duration": duration,
-        "config": navigator_config,
+        "config": parse_config(navigator_config),
         "models": models,
         "environment": {
             "conversion": conversion_environment,
@@ -140,7 +158,7 @@ def pack_workspace(
                 package.writestr(outname.as_posix(), location)
                 continue
             package.write(model, arcname=outname)
-        package.writestr("model-store/symlinks.yaml", yaml.dump(symlinks, width=240, sort_keys=False))
+        package.writestr("model-store/symlinks.yaml", yaml.safe_dump(symlinks, width=240, sort_keys=False))
 
         for log_file in conversion_logs:
             package.write(log_file, arcname=pathlib.Path(conversion_log_path) / log_file.name)
@@ -148,7 +166,7 @@ def pack_workspace(
         for log_file in configurator_logs:
             package.write(log_file, arcname=pathlib.Path(configurator_log_path) / log_file.name)
 
-        package.writestr("status.yaml", yaml.dump(status, width=240, sort_keys=False))
+        package.writestr("status.yaml", yaml.safe_dump(status, width=240, sort_keys=False))
 
     if not package_path.is_file():
         raise ModelNavigatorException(f"Package not found in {package_path}.")
