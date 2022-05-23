@@ -14,6 +14,7 @@
 
 import time
 from collections import OrderedDict
+from pathlib import Path
 from typing import Mapping
 
 import torch  # pytype: disable=import-error
@@ -31,8 +32,8 @@ class PytRunner(BaseRunner):
     def __init__(self, model, input_metadata, output_names=None, target_device="cpu", name=None, forward_kw_names=None):
         """
         Args:
-            model (Union[torch.nn.Module, Callable() -> torch.nn.Module]):
-                    A torch.nn.Module or subclass or a callable that returns one.
+            model (Union[torch.nn.Module, str, pathlib.Path]):
+                    A torch.nn.Module or model path.
             input_metadata (TensorMetadata): Mapping of input names to their data types and shapes.
             output_names (List[str]):
                     A list of output names of the model. This information is used by the
@@ -44,7 +45,8 @@ class PytRunner(BaseRunner):
                     A runner count and timestamp will be appended to this prefix.
         """
         super().__init__(name=name, prefix="pytorch-runner")
-        self.model = model
+        self._model = model
+        self.model = None
         self._target_device = target_device
 
         self.input_metadata = TensorMetadata()
@@ -54,7 +56,14 @@ class PytRunner(BaseRunner):
         self._forward_kw_names = forward_kw_names
 
     def activate_impl(self):
+        if isinstance(self._model, (str, Path)):
+            self.model = torch.jit.load(str(self._model))
+        else:
+            self.model = self._model
         self.model.to(self._target_device).eval()
+
+    def deactivate_impl(self):
+        self.model = None
 
     def get_input_metadata_impl(self):
         return self.input_metadata

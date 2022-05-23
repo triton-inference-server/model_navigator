@@ -70,8 +70,8 @@ class MeasurementMode(Parameter):
 class ProfilerConfig(DataObject):
     batch_sizes: Optional[Sequence[int]] = None
     measurement_interval: Optional[float] = 5000  # ms
-    measurement_mode: MeasurementMode = MeasurementMode.TIME_WINDOWS
-    measurement_request_count: Optional[int] = None
+    measurement_mode: MeasurementMode = MeasurementMode.COUNT_WINDOWS
+    measurement_request_count: Optional[int] = 50
     stability_percentage: float = 10.0
     max_trials: int = 10
 

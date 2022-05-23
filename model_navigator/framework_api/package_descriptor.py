@@ -172,33 +172,27 @@ class PackageDescriptor:
 
             return TrtRunner(EngineFromBytes(BytesFromPath(model_path)))
         elif format in (Format.TORCHSCRIPT, Format.TORCH_TRT):
-            import torch  # pytype: disable=import-error
-
             from model_navigator.framework_api.runners.pyt import PytRunner
 
             return PytRunner(
-                torch.jit.load(model_path),
+                model_path,
                 input_metadata=self.navigator_status.input_metadata,
                 output_names=list(self.navigator_status.output_metadata.keys()),
                 target_device=self.navigator_status.export_config["target_device"],
             )
         elif format == Format.TF_SAVEDMODEL:
-            import tensorflow  # pytype: disable=import-error
-
             from model_navigator.framework_api.runners.tf import TFRunner
 
             return TFRunner(
-                tensorflow.keras.models.load_model(model_path),
+                model_path,
                 input_metadata=self.navigator_status.input_metadata,
                 output_names=list(self.navigator_status.output_metadata.keys()),
             )
         elif format == Format.TF_TRT:
-            import tensorflow  # pytype: disable=import-error
-
             from model_navigator.framework_api.runners.tf import TFTRTRunner
 
             return TFTRTRunner(
-                tensorflow.keras.models.load_model(model_path),
+                model_path,
                 input_metadata=self.navigator_status.input_metadata,
                 output_names=list(self.navigator_status.output_metadata.keys()),
             )

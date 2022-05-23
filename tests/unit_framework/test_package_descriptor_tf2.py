@@ -93,9 +93,7 @@ def test_tf2_package_descriptor():
             cmd_correctness = Correctness(
                 name="test correctness",
                 target_format=Format.TF_SAVEDMODEL,
-                runner=TFRunner(
-                    tensorflow.keras.models.load_model(model_path), input_metadata, list(output_metadata.keys())
-                ),
+                runner=TFRunner(model_path, input_metadata, list(output_metadata.keys())),
             )
             cmd_correctness.status = Status.OK
             cmd_correctness.output = Tolerance(0, 0)
