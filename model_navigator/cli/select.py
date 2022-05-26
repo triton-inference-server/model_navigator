@@ -114,6 +114,15 @@ def _filter_analyzer_results(in_file, out_file, filtered_models):
             writer.writerow(row)
 
 
+def _find_model_config(model_config_name, input_triton_package):
+    with input_triton_package.open(input_triton_package.model_metrics_path) as in_file:
+        reader = csv.DictReader(io.TextIOWrapper(in_file))
+        for row in reader:
+            config_path = row["Model Config Path"]
+            if config_path == model_config_name:
+                return row
+
+
 def _get_top_result(select_config: SelectConfig, input_triton_package: TritonPackage):
     analysis_config = ModelAnalyzerAnalysisConfig.from_dict(
         {"objectives": select_config.objective, **dataclass2dict(select_config)}
@@ -143,7 +152,7 @@ def _get_top_result(select_config: SelectConfig, input_triton_package: TritonPac
 
     LOGGER.debug("Filtering results finished")
     if not results:
-        sys.exit("No Model Analyzer results fulfilling given constraints found in this package.")
+        return None
     return results[0]
 
 
@@ -176,6 +185,13 @@ def _get_top_result(select_config: SelectConfig, input_triton_package: TritonPac
     type=bool,
     is_flag=True,
 )
+@click.option(
+    "--model-config-name",
+    type=str,
+    required=False,
+    default=None,
+    help="Pick a particular model configuration. If specified, other selection options are ignored.",
+)
 @cli.options_from_config(SelectConfig, SelectConfigCli)
 @click.pass_context
 def select_cmd(
@@ -184,6 +200,7 @@ def select_cmd(
     output_path: pathlib.Path,
     override: bool,
     verbose: bool,
+    model_config_name: Optional[str],
     **kwargs,
 ):
     init_logger(verbose=verbose)
@@ -199,13 +216,21 @@ def select_cmd(
             "input_triton_package": input_triton_package,
             "output_path": output_path,
             "verbose": verbose,
+            "model_config_name": model_config_name,
         },
     )
 
-    top_result = _get_top_result(select_config, input_triton_package)
+    if model_config_name is not None:
+        to_extract = _find_model_config(model_config_name, input_triton_package)
+    else:
+        to_extract = _get_top_result(select_config, input_triton_package)
+
+    if to_extract is None:
+        sys.exit("No Model Analyzer results fulfilling given constraints found in this package.")
+
     input_triton_package.copy_model_to_repository(
-        top_result["Model Config Path"],
+        to_extract["Model Config Path"],
         pathlib.Path(output_path),
-        output_name=top_result["Model"],
+        output_name=to_extract["Model"],
         overwrite=override,
     )
