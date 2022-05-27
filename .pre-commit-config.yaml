@@ -13,16 +13,16 @@
 # limitations under the License.
 repos:
   - repo: https://github.com/ambv/black
-    rev: 21.6b0
+    rev: 22.3.0
     hooks:
       - id: black
   - repo: https://github.com/pycqa/isort
-    rev: 5.9.1
+    rev: 5.10.1
     hooks:
       - id: isort
         name: isort (python)
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.0.1
+    rev: v4.2.0
     hooks:
       - id: check-docstring-first
       - id: check-executables-have-shebangs
@@ -40,12 +40,12 @@ repos:
       - id: requirements-txt-fixer
       - id: trailing-whitespace
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.19.4
+    rev: v2.32.1
     hooks:
       - id: pyupgrade
         args: [--py36-plus]
   - repo: https://github.com/jendrikseipp/vulture
-    rev: 'v2.3'
+    rev: 'v2.4'
     hooks:
       - id: vulture
         name: Check dead code
@@ -57,12 +57,12 @@ repos:
             - flake8-comprehensions==3.5.0
             - flake8-bugbear==21.4.3
   - repo: https://github.com/hadolint/hadolint
-    rev: v2.5.0
+    rev: v2.10.0
     hooks:
       - id: hadolint-docker
         args: [--ignore, DL3006, --ignore, DL3008, --ignore, DL4001, --ignore, DL4006, --ignore, DL3013, --ignore, SC1091, --ignore, SC1083]
   - repo: https://github.com/thlorenz/doctoc
-    rev: v2.1.0
+    rev: v2.2.0
     hooks:
       - id: doctoc
         args: [ --github, --update-only ]
