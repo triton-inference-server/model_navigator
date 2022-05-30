@@ -36,3 +36,10 @@ Feature: Config ONNX models on Triton Inference Server
         When I execute triton-config-model command
         Then the command should failed
         And the --tensorrt-precision is required pattern is present on command output
+
+    Scenario: User successfully config ONNX model with OpenVino acceleration
+        Given the backend_accelerator config parameter is set to openvino
+        When I execute triton-config-model command
+        Then the command should succeeded
+        And the my-model model config in model-store is equal to
+            {"name": "my-model", "backend": "onnxruntime", "maxBatchSize": 1, "optimization": {"executionAccelerators": {"cpuExecutionAccelerator": [{"name": "openvino"}]}}, "cpu_only": false}

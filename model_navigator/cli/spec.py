@@ -592,6 +592,10 @@ class ModelAnalyzerProfileConfigCli:
         "\nFormat: --config-search-backend-parameters <param_name1>=<value1>,<value2> <param_name2>=<value3> ...",
         parse_and_verify_callback=parse_backend_parameters,
     )
+    config_search_early_exit_enable = CliSpec(
+        help="Enable early exit on profiling when configuration not bring performance improvement. "
+        "\n  When automatic config search is used, the early exit is enabled by default.",
+    )
 
 
 class ModelAnalyzerAnalysisConfigCli:

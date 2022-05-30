@@ -90,10 +90,8 @@ class TritonServerLocal(TritonServer):
         self._tritonserver_logs += line
 
     def _get_env(self):
-        env = None
-        if self._gpus:
-            env = os.environ.copy()
-            env["CUDA_VISIBLE_DEVICES"] = ",".join(self._gpus)
+        env = os.environ.copy()
+        env["CUDA_VISIBLE_DEVICES"] = ",".join(self._gpus) if self._gpus else ""
 
         return env
 

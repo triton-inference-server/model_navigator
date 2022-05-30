@@ -13,7 +13,7 @@
 # limitations under the License.
 import logging
 import traceback
-from typing import Iterable, Optional
+from typing import Iterable, List, Optional
 
 from model_navigator.converter.config import ComparatorConfig, ConversionConfig
 from model_navigator.converter.dataloader import Dataloader
@@ -24,6 +24,7 @@ from model_navigator.converter.utils import COMMAND_SPEC_SEP
 from model_navigator.exceptions import ModelNavigatorConverterCommandException, ModelNavigatorConverterException
 from model_navigator.model import ModelConfig, ModelSignatureConfig
 from model_navigator.results import State, Status
+from model_navigator.triton import DeviceKind
 from model_navigator.utils.workspace import Workspace
 
 LOGGER = logging.getLogger(__name__)
@@ -80,6 +81,7 @@ class Converter:
         conversion_config: ConversionConfig,
         signature_config: Optional[ModelSignatureConfig] = None,
         comparator_config: Optional[ComparatorConfig] = None,
+        device_kinds: List[DeviceKind],
         dataloader: Dataloader,
     ) -> Iterable[ConversionResult]:
         # if not passed - used default comparator values
@@ -94,6 +96,7 @@ class Converter:
                 signature_config=signature_config,
                 comparator_config=comparator_config,
                 dataloader=dataloader,
+                device_kinds=device_kinds,
             ):
                 for composite_command in composite_commands:
                     yield from self._executor(src_model, composite_command)

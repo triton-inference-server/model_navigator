@@ -23,7 +23,7 @@ from model_navigator.utils.device import get_gpus
 
 # pytype: enable=import-error
 
-CUDA_AVAILABLE = bool(get_gpus())
+CUDA_AVAILABLE = bool(get_gpus(["all"]))
 
 
 def check_model_dir(model_dir: Path, format: nav.Format, only_config: bool = False) -> bool:

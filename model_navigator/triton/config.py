@@ -49,6 +49,7 @@ class BackendAccelerator(Enum):
     NONE = "none"  # backward compatibility for CLI
     AMP = "amp"
     TRT = "trt"
+    OPENVINO = "openvino"
 
 
 @dataclass

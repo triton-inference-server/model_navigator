@@ -21,7 +21,7 @@ from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.common import Sample
 from model_navigator.framework_api.exceptions import UserError
 from model_navigator.model import Format
-from model_navigator.utils.device import get_gpus
+from model_navigator.utils.device import get_available_gpus
 
 T = TypeVar("T")
 
@@ -30,7 +30,7 @@ def get_available_onnx_providers() -> List:
     import onnxruntime as onnxrt  # pytype: disable=import-error
 
     onnx_providers = onnxrt.get_available_providers()
-    if not get_gpus():  # filter out providers that require GPU
+    if not get_available_gpus():  # filter out providers that require GPU
         gpu_providers = [RuntimeProvider.CUDA, RuntimeProvider.TRT]
         onnx_providers = [prov for prov in onnx_providers if prov not in gpu_providers]
     return onnx_providers
