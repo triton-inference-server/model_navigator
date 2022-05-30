@@ -91,7 +91,7 @@ $ model-navigator select my_model.triton.nav \
 [ target_format: list[str] | default: ['tf-trt', 'tf-savedmodel', 'onnx', 'trt', 'torchscript', 'torch-trt'] ]
 
 # Select only from among model configurations using given backend accelerator.
-[ backend_accelerator: list[choice(none, amp, trt)] ]
+[ backend_accelerator: list[choice(none, amp, trt, openvino)] ]
 
 # Select only from among model configurations using given precision for TensorRT acceleration.
 [ tensorrt_precision: list[choice(int8, fp16, fp32, tf32)] ]

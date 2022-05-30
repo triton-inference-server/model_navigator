@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Generator
+from typing import Generator, List
 
 from model_navigator.configurator.model_configurator import (
     ONNXConfigurator,
@@ -22,6 +22,7 @@ from model_navigator.configurator.model_configurator import (
 from model_navigator.configurator.variant import Variant
 from model_navigator.exceptions import ModelNavigatorException
 from model_navigator.model import Format, Model
+from model_navigator.triton import DeviceKind
 
 _CONFIGURATORS = {
     Format.TF_SAVEDMODEL: TFConfigurator,
@@ -32,12 +33,12 @@ _CONFIGURATORS = {
 
 
 class Configurator:
-    def get_models_variants(self, model: Model) -> Generator[Variant, None, None]:
+    def get_models_variants(self, model: Model, device_kinds: List[DeviceKind]) -> Generator[Variant, None, None]:
         if not model.path.is_file() and not model.path.is_dir():
             raise ModelNavigatorException(f"Model file not found in provided path: {model.path}")
         configurator_cls = self._get_type_configurator(model.format)
         configurator = configurator_cls()
-        yield from configurator.variants(model)
+        yield from configurator.variants(model, device_kinds)
 
     def _get_type_configurator(self, model_format: Format):
         return _CONFIGURATORS[model_format]

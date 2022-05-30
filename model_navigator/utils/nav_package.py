@@ -21,6 +21,7 @@ from collections import defaultdict
 from typing import IO, Dict, Iterable, Union
 
 from model_navigator.exceptions import ModelNavigatorInvalidPackageException
+from model_navigator.model import Format, JitType
 from model_navigator.utils.workspace import Workspace
 
 LOGGER = logging.getLogger(__name__)
@@ -30,10 +31,10 @@ def select_input_format(models):
     """Automatically select which input model from the .nav package to use as input"""
     # sorted from most to least preferred
     PREFERRENCE_ORDER = [
-        {"format": "torchscript", "torch_jit": "script"},
-        {"format": "torchscript", "torch_jit": "trace"},
-        {"format": "tf-savedmodel"},
-        {"format": "onnx"},
+        {"format": Format.TORCHSCRIPT.value, "torch_jit": JitType.SCRIPT.value},
+        {"format": Format.TORCHSCRIPT.value, "torch_jit": JitType.TRACE.value},
+        {"format": Format.TF_SAVEDMODEL.value},
+        {"format": Format.ONNX.value},
     ]
     for fmt in PREFERRENCE_ORDER:
         for mod in models:

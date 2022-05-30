@@ -71,3 +71,12 @@ class OnnxBackendConfigurator(BaseBackendConfigurator):
                     "gpu_execution_accelerator": [gpu_execution_accelerator],
                 },
             }
+        elif optimization_config.backend_accelerator == BackendAccelerator.OPENVINO:
+            cpu_execution_accelerator = {
+                "name": "openvino",
+            }
+            model_config["optimization"] = {
+                "execution_accelerators": {
+                    "cpu_execution_accelerator": [cpu_execution_accelerator],
+                },
+            }

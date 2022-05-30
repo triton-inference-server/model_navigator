@@ -38,7 +38,7 @@ class TritonConfiguratorResult:
     batching_config: Optional[BatchingConfig] = None
     triton_batching_config: Optional[TritonBatchingConfig] = None
     backend_config: Optional[TritonCustomBackendParametersConfig] = None
-    instance_config: Optional[TritonModelInstancesConfig] = None
+    instances_config: Optional[TritonModelInstancesConfig] = None
     tensorrt_common_config: Optional[TensorRTCommonConfig] = None
     dataset_profile_config: Optional[DatasetProfileConfig] = None
     perf_measurement_config: Optional[PerfMeasurementConfig] = None

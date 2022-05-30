@@ -93,6 +93,9 @@ class TritonServerDocker(TritonServer):
     def _get_devices(self):
         import docker
 
+        if not self._gpus:
+            return []
+
         if len(self._gpus) == 1 and self._gpus[0] == "all":
             devices = [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])]
         else:

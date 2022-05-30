@@ -25,6 +25,7 @@ class Resource:
     TENSORRT = "TensorRT"
     TRITON_SERVER = "Triton Inference Server"
     AMP_ACCELERATOR = "Automatic FP16 Optimization"
+    OPENVINO = "OpenVino"
 
 
 class ResourceItem(NamedTuple):
@@ -38,6 +39,7 @@ FORMAT_RESOURCES = {
     Resource.TENSORFLOW: ResourceItem(name=Resource.TENSORFLOW, link="https://github.com/tensorflow/tensorflow"),
     Resource.TENSORRT: ResourceItem(name=Resource.TENSORRT, link="https://github.com/NVIDIA/TensorRT"),
     Resource.TENSORFLOW_TRT: ResourceItem(name=Resource.TENSORFLOW_TRT, link="https://github.com/tensorflow/tensorrt"),
+    Resource.OPENVINO: ResourceItem(name=Resource.OPENVINO, link="https://openvino.ai"),
 }
 
 TRITON_RESOURCES = {
@@ -67,6 +69,7 @@ FORMAT2RESOURCE = {
 ACCELERATOR2RESOURCE = {
     BackendAccelerator.TRT: Resource.TENSORRT,
     BackendAccelerator.AMP: Resource.AMP_ACCELERATOR,
+    BackendAccelerator.OPENVINO: Resource.OPENVINO,
 }
 
 FORMAT_RESOURCE = {key: FORMAT_RESOURCES[value] for key, value in FORMAT2RESOURCE.items()}

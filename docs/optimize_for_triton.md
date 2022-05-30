@@ -340,6 +340,10 @@ model_path: path
 # Format: --config-search-backend-parameters <param_name1>=<value1>,<value2> <param_name2>=<value3> ...
 [ config_search_backend_parameters: list[str] ]
 
+# Enable early exit on profiling when configuration not bring performance improvement.
+# When automatic config search is used, the early exit is enabled by default.
+[ config_search_early_exit_enable: boolean ]
+
 # Number of top final configurations selected from the analysis.
 [ top_n_configs: integer | default: 3 ]
 

@@ -66,7 +66,7 @@ from model_navigator.triton import (
 from model_navigator.triton.config import RunTritonConfig, TritonCustomBackendParametersConfig, TritonLaunchMode
 from model_navigator.utils import Workspace, cli
 from model_navigator.utils.config import dataclass2dict
-from model_navigator.utils.device import get_gpus
+from model_navigator.utils.device import get_available_device_kinds, get_gpus
 from model_navigator.utils.environment import EnvironmentStore, get_env
 from model_navigator.utils.pack_workspace import pack_workspace
 from model_navigator.utils.timer import Timer
@@ -145,7 +145,7 @@ def optimize_cmd(
     tensorrt_common_config = TensorRTCommonConfig.from_dict(kwargs)
     comparator_config = ComparatorConfig.from_dict(kwargs)
     dataset_profile_config = DatasetProfileConfig.from_dict(kwargs)
-    instance_config = TritonModelInstancesConfig.from_dict(kwargs)
+    instances_config = TritonModelInstancesConfig.from_dict(kwargs)
     backend_config = TritonCustomBackendParametersConfig.from_dict(kwargs)
     triton_config = RunTritonConfig.from_dict(kwargs)
     profile_config = ModelAnalyzerProfileConfig.from_dict(kwargs)
@@ -173,7 +173,7 @@ def optimize_cmd(
         **dataclass2dict(comparator_config),
         **dataclass2dict(src_model_signature_config),
         **dataclass2dict(dataset_profile_config),
-        **dataclass2dict(instance_config),
+        **dataclass2dict(instances_config),
         **dataclass2dict(backend_config),
         **dataclass2dict(triton_config),
         **dataclass2dict(profile_config),
@@ -192,10 +192,9 @@ def optimize_cmd(
         arguments,
     )
 
-    if profile_config.config_search_max_batch_sizes:
-        max_batch_size = max(profile_config.config_search_max_batch_sizes)
-    else:
-        max_batch_size = profile_config.config_search_max_batch_size
+    gpus = get_gpus(gpus)
+    device_kinds = get_available_device_kinds(gpus=gpus, instances_config=instances_config)
+    max_batch_size = _get_max_batch_size(profile_config)
 
     convert_results = ctx.forward(
         convert_cmd,
@@ -219,7 +218,7 @@ def optimize_cmd(
         ctx=ctx,
         output_model_store=interim_model_repository,
         converted_models=succeeded_models,
-        instance_config=instance_config,
+        instances_config=instances_config,
         backend_config=backend_config,
         batching_config=BatchingConfig(max_batch_size=1),
         tensorrt_common_config=tensorrt_common_config,
@@ -227,6 +226,7 @@ def optimize_cmd(
         perf_measurement_config=perf_measurement_config,
         triton_config=triton_config,
         triton_docker_image=triton_docker_image,
+        device_kinds=device_kinds,
         gpus=gpus,
         workspace=workspace,
     )
@@ -375,13 +375,14 @@ def _configure_models_on_triton(
     converted_models: List,
     output_model_store: pathlib.Path,
     batching_config: BatchingConfig,
-    instance_config: TritonModelInstancesConfig,
+    instances_config: TritonModelInstancesConfig,
     backend_config: TritonCustomBackendParametersConfig,
     tensorrt_common_config: TensorRTCommonConfig,
     dataset_profile_config: DatasetProfileConfig,
     perf_measurement_config: PerfMeasurementConfig,
     triton_config: RunTritonConfig,
     triton_docker_image: str,
+    device_kinds: List,
     gpus: List,
     workspace: Workspace,
 ):
@@ -406,7 +407,7 @@ def _configure_models_on_triton(
 
     for model_to_deploy in converted_models:
         LOGGER.info(f"Running triton model configuration variants generation for {model_to_deploy.name}")
-        for variant in configurator.get_models_variants(model_to_deploy):
+        for variant in configurator.get_models_variants(model_to_deploy, device_kinds=device_kinds):
             LOGGER.info(f"Generated model variant {variant.name} for Triton evaluation.")
             model_to_deploy_config = ModelConfig(variant.name, model_to_deploy.path)
             model_config_path = None
@@ -428,7 +429,7 @@ def _configure_models_on_triton(
                 config_result = ctx.forward(
                     config_model_on_triton_cmd,
                     **dataclass2dict(batching_config),
-                    **dataclass2dict(instance_config),
+                    **dataclass2dict(instances_config),
                     **dataclass2dict(model_to_deploy_config),
                     **dataclass2dict(variant.optimization_config),
                     **dataclass2dict(triton_client_config),
@@ -487,7 +488,7 @@ def _configure_models_on_triton(
                     model_config_path=model_config_path,
                     batching_config=batching_config,
                     backend_config=backend_config,
-                    instance_config=instance_config,
+                    instances_config=instances_config,
                     tensorrt_common_config=tensorrt_common_config,
                     dataset_profile_config=dataset_profile_config,
                     perf_measurement_config=perf_measurement_config,
@@ -501,3 +502,13 @@ def _configure_models_on_triton(
     results_store.dump("configure_models_on_triton", config_results)
 
     return config_results
+
+
+def _get_max_batch_size(profile_config: ModelAnalyzerProfileConfig):
+    """Select the max batch size used for conversion and datasets based on profiling configuration"""
+    if profile_config.config_search_max_batch_sizes:
+        max_batch_size = max(profile_config.config_search_max_batch_sizes)
+    else:
+        max_batch_size = profile_config.config_search_max_batch_size
+
+    return max_batch_size

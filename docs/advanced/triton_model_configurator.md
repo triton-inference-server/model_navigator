@@ -150,7 +150,7 @@ model_repository: path
 [ outputs: list[str] ]
 
 # Select Backend Accelerator used to serve the model.
-[ backend_accelerator: choice(none, amp, trt) ]
+[ backend_accelerator: choice(none, amp, trt, openvino) ]
 
 # Target model precision for TensorRT acceleration.
 [ tensorrt_precision: choice(int8, fp16, fp32) ]
