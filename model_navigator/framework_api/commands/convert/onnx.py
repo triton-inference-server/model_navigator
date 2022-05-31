@@ -23,6 +23,7 @@ from model_navigator.framework_api.commands.convert.base import ConvertBase
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.exceptions import UserError, UserErrorContext
+from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.runners.onnx import OnnxrtRunner
 from model_navigator.framework_api.utils import Framework, format_to_relative_model_path, get_package_path
 from model_navigator.model import Format
@@ -63,7 +64,7 @@ class ConvertONNX2TRT(ConvertBase):
         trt_dynamic_axes: Optional[Dict[str, Dict[int, Tuple[int, int, int]]]] = None,
         **kwargs,
     ) -> Optional[Path]:
-
+        LOGGER.info("ONNX to TRT conversion started")
         if not get_available_gpus():
             raise RuntimeError("No GPUs available.")
 
@@ -123,6 +124,7 @@ class ConvertONNX2TRT(ConvertBase):
             convert_cmd.append(f"--workspace={max_workspace_size}")
 
         with UserErrorContext():
-            subprocess.run(convert_cmd, check=True)
+            output = subprocess.run(convert_cmd, check=True, capture_output=True)
+            output = self._log_subprocess_output(output=output)
 
         return self.get_output_relative_path()

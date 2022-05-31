@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
 import traceback
 import typing
 from abc import ABCMeta, abstractmethod
 from inspect import getfullargspec
-from typing import TYPE_CHECKING, Any, Iterable, Optional, Tuple, Union
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Tuple, Union
 
 import typing_inspect
 
@@ -80,6 +82,9 @@ class Command(metaclass=ABCMeta):
         return cmd_name_and_details
 
     def transform(self, package_descriptor: "PackageDescriptor", **kwargs):
+        workdir = kwargs.get("workdir")
+        model_name = kwargs.get("model_name")
+        self._attach_logger_to_command_log_file(loggers=self._get_loggers(), workdir=workdir, model_name=model_name)
         self.status = self._validate(**kwargs)
         if self._check_requires():
             try:
@@ -108,6 +113,7 @@ class Command(metaclass=ABCMeta):
         else:
             self.status = Status.SKIPPED
         self._update_package_descriptor(package_descriptor, **kwargs)
+        self._detach_logger_from_command_log_file(self._get_loggers())
 
     def _check_requires(self):
         for req in self._requires:
@@ -116,6 +122,9 @@ class Command(metaclass=ABCMeta):
                 return False
         return True
 
+    def get_output_relative_path(self):
+        return None
+
     @staticmethod
     def get_output_name() -> Optional[Union[Iterable[str], str]]:
         return None
@@ -123,6 +132,17 @@ class Command(metaclass=ABCMeta):
     @abstractmethod
     def __call__(self, **kwargs):
         pass
+
+    def _get_loggers(self) -> list:
+        return []
+
+    @staticmethod
+    def _log_subprocess_output(output):
+        LOGGER.info(output.args)
+        LOGGER.info(output.stdout.decode("utf-8"))
+        if output.returncode != 0:
+            LOGGER.error(f"return code: {output.returncode}")
+            LOGGER.error(output.stderr.decode("utf-8"))
 
     @staticmethod
     def _is_param_optional(param_annotation):
@@ -152,3 +172,34 @@ class Command(metaclass=ABCMeta):
                     param
                 ] = f"{getfullargspec(self.__call__).annotations[param]} = {provided_params.get(param)}"
         return missing_params
+
+    def _attach_logger_to_command_log_file(
+        self, loggers: List[Union[str, logging.Logger]], workdir: Path, model_name: str
+    ):
+        output_relative_path = self.get_output_relative_path()
+        if output_relative_path is not None:
+            log_format = "%(asctime)s %(levelname)-8s %(name)s: %(message)s"
+
+            log_dir = workdir / f"{model_name}.nav.workspace" / output_relative_path.parent
+            log_dir.mkdir(parents=True, exist_ok=True)
+            log_file = log_dir / "format.log"
+
+            self.log_file_handler = logging.FileHandler(log_file)
+            self.log_file_handler.setLevel(logging.DEBUG)
+            formatter = logging.Formatter(log_format)
+            self.log_file_handler.setFormatter(formatter)
+            LOGGER.addHandler(self.log_file_handler)
+
+        for logger in loggers:
+            if isinstance(logger, str):
+                logger = logging.getLogger(logger)
+            if self.log_file_handler:
+                logger.addHandler(self.log_file_handler)
+
+    def _detach_logger_from_command_log_file(self, loggers: list):
+        for logger in loggers:
+            if isinstance(logger, str):
+                logger = logging.getLogger(logger)
+            logger.handlers = [h for h in logger.handlers if h != self.log_file_handler]
+        LOGGER.removeHandler(self.log_file_handler)
+        self.log_file_handler = None

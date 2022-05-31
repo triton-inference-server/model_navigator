@@ -20,6 +20,7 @@ import tensorflow as tf  # pytype: disable=import-error
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.export.base import ExportBase
 from model_navigator.framework_api.exceptions import UserErrorContext
+from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.utils import format_to_relative_model_path, get_package_path
 from model_navigator.model import Format
 
@@ -38,9 +39,13 @@ class ExportTF2SavedModel(ExportBase):
     ) -> Path:
         return format_to_relative_model_path(self.target_format)
 
+    def _get_loggers(self) -> list:
+        return [tf.get_logger()]
+
     def __call__(
         self, model_name: str, workdir: Path, model: Optional[tf.keras.Model] = None, **kwargs
     ) -> Optional[Path]:
+        LOGGER.info("TensorFlow2 to SavedModel export started")
 
         exported_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
         if exported_model_path.is_file() or exported_model_path.is_dir():
