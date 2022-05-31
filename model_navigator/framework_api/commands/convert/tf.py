@@ -24,12 +24,8 @@ from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.export.tf import ExportTF2SavedModel
 from model_navigator.framework_api.common import Sample, TensorMetadata
 from model_navigator.framework_api.exceptions import UserErrorContext
-from model_navigator.framework_api.utils import (
-    ArtifactType,
-    format_to_relative_model_path,
-    get_package_path,
-    sample_to_tuple,
-)
+from model_navigator.framework_api.logger import LOGGER
+from model_navigator.framework_api.utils import format_to_relative_model_path, get_package_path, sample_to_tuple
 from model_navigator.model import Format
 
 
@@ -56,6 +52,7 @@ class ConvertSavedModel2ONNX(ConvertBase):
         output_metadata: TensorMetadata,
         **kwargs,
     ):
+        LOGGER.info("SavedModel to ONNX conversion started")
         exported_model_path = get_package_path(workdir, model_name) / ExportTF2SavedModel().get_output_relative_path()
         converted_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
 
@@ -75,7 +72,8 @@ class ConvertSavedModel2ONNX(ConvertBase):
         ]
 
         with UserErrorContext():
-            subprocess.run(convert_cmd, check=True)
+            output = subprocess.run(convert_cmd, check=True, capture_output=True)
+            self._log_subprocess_output(output=output)
 
         return self.get_output_relative_path()
 
@@ -104,7 +102,6 @@ class ConvertSavedModel2TFTRT(ConvertBase):
         conversion_samples: List[Sample],
         **kwargs,
     ) -> Optional[Path]:
-        results = {}
         # for precision in target_precisions:
 
         # generate samples as tuples for TF-TRT converter
@@ -129,7 +126,5 @@ class ConvertSavedModel2TFTRT(ConvertBase):
             converter.convert()
             converter.build(_dataloader)
             converter.save(converted_model_path.as_posix())
-
-        results[f"{ArtifactType.CONVERTED_MODEL_PATH.value}_{self.target_precision.value}"] = converted_model_path
 
         return self.get_output_relative_path()

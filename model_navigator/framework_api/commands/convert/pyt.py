@@ -23,6 +23,7 @@ from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.export.pyt import ExportPYT2TorchScript
 from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.exceptions import UserErrorContext
+from model_navigator.framework_api.logger import LOGGER, get_pytorch_loggers_names
 from model_navigator.framework_api.utils import (
     JitType,
     format_to_relative_model_path,
@@ -45,6 +46,9 @@ class ConvertTorchScript2TorchTensorRT(ConvertBase):
     def get_output_relative_path(self) -> Path:
         return format_to_relative_model_path(self.target_format, jit_type=self.target_jit_type)
 
+    def _get_loggers(self) -> list:
+        return get_pytorch_loggers_names()
+
     def __call__(
         self,
         workdir: Path,
@@ -53,6 +57,7 @@ class ConvertTorchScript2TorchTensorRT(ConvertBase):
         trt_dynamic_axes: Optional[Dict[str, Dict[int, Tuple[int, int, int]]]] = None,
         **kwargs,
     ) -> Optional[Path]:
+        LOGGER.info("Conversion TorchScript to TorchTensorRT started")
         import torch_tensorrt  # pytype: disable=import-error
 
         exported_model_path = (

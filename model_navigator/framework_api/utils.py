@@ -117,13 +117,6 @@ class JitType(Parameter):
     TRACE = "trace"
 
 
-class ArtifactType(Parameter):
-    EXPORTED_MODEL_PATH = "exported_model_path"
-    CONVERTED_MODEL_PATH = "converted_model_path"
-    NAVIGATOR_CLI_CONFIG_PATH = "navigator_cli_config_path"
-    NAVIGATOR_CONFIG_PATH = "navigator_config_path"
-
-
 def get_default_model_name():
     return "navigator_model"
 

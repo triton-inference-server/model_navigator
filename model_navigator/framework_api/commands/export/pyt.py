@@ -21,6 +21,7 @@ from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.export.base import ExportBase
 from model_navigator.framework_api.common import Sample, TensorMetadata
 from model_navigator.framework_api.exceptions import UserErrorContext
+from model_navigator.framework_api.logger import LOGGER, get_pytorch_loggers_names
 from model_navigator.framework_api.utils import JitType, format_to_relative_model_path, get_package_path
 from model_navigator.model import Format
 
@@ -38,6 +39,9 @@ class ExportPYT2TorchScript(ExportBase):
     def get_output_relative_path(self) -> Path:
         return format_to_relative_model_path(self.target_format, jit_type=self.target_jit_type)
 
+    def _get_loggers(self) -> list:
+        return get_pytorch_loggers_names()
+
     def __call__(
         self,
         workdir: Path,
@@ -48,7 +52,7 @@ class ExportPYT2TorchScript(ExportBase):
         model: Optional[torch.nn.Module] = None,
         **kwargs,
     ) -> Optional[Path]:
-
+        LOGGER.info("TorchScrip export started")
         exported_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
         if exported_model_path.is_file() or exported_model_path.is_dir():
             return self.get_output_relative_path()
@@ -86,6 +90,9 @@ class ExportPYT2ONNX(ExportBase):
     def get_output_relative_path(self) -> Path:
         return format_to_relative_model_path(self.target_format)
 
+    def _get_loggers(self) -> list:
+        return get_pytorch_loggers_names()
+
     def __call__(
         self,
         workdir: Path,
@@ -100,6 +107,7 @@ class ExportPYT2ONNX(ExportBase):
         model: Optional[torch.nn.Module] = None,
         **kwargs,
     ) -> Optional[Path]:
+        LOGGER.info("PyTorch to ONNX export started")
         exported_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
         if exported_model_path.is_file() or exported_model_path.is_dir():
             return self.get_output_relative_path()

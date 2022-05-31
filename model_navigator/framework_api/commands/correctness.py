@@ -23,6 +23,7 @@ from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.common import DataObject, Sample, TensorMetadata
 from model_navigator.framework_api.exceptions import UserErrorContext
+from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.utils import JitType, RuntimeProvider, Status
 from model_navigator.model import Format
 
@@ -101,6 +102,7 @@ class Correctness(Command):
         atol: Optional[float] = None,
         **kwargs,
     ) -> TolerancePerOutputName:
+        LOGGER.info(f"Correctness test for: {self.target_format} {self.runtime_provider} started")
         output_names = [v.name for v in output_metadata.values()]
         per_output_tolerance = TolerancePerOutputName({name: Tolerance(0.0, 0.0) for name in output_names})
         with self._runner as runner:
