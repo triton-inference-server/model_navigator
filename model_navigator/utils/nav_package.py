@@ -91,7 +91,12 @@ class NavPackageDirectory(NavPackage):
         return (p.relative_to(self.path).as_posix() for p in self.path.glob("**/*"))
 
     def vfs_path_to_member(self, member_path: Union[str, pathlib.Path], workspace_path: Union[str, pathlib.Path]):
-        return self.path / member_path
+        path = self.path / member_path
+        if not path.exists():
+            raise ModelNavigatorInvalidPackageException(
+                f"Package member {pathlib.Path(member_path).as_posix()} not found"
+            )
+        return path
 
 
 class ZippedNavPackage(NavPackage):
@@ -131,7 +136,7 @@ class ZippedNavPackage(NavPackage):
         if os.getenv("MODEL_NAVIGATOR_RUN_BY") is not None:
             # when launched inside docker by convert_model, the copy should be already there
             assert dstpath.exists()
-            return dstpath
+            return dstpath / member_path
         else:
             try:
                 shutil.rmtree(dstpath)
@@ -141,8 +146,10 @@ class ZippedNavPackage(NavPackage):
         dstpath.parent.mkdir(parents=True, exist_ok=True)
         prefix = member_path.as_posix()
         to_extract = [m for m in self.arc.namelist() if m.startswith(prefix)]
+        if not to_extract:
+            raise ModelNavigatorInvalidPackageException(f"Package member {prefix} not found")
         self.arc.extractall(members=to_extract, path=dstpath)
-        return dstpath
+        return dstpath / member_path
 
     def __getstate__(self):
         dct = dict(self.__dict__)
