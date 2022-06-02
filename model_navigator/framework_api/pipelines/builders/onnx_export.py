@@ -35,4 +35,4 @@ def onnx_export_builder(config: Config, package_descriptor: "PackageDescriptor")
         for target_precision in config.target_precisions:
             commands.append(ConvertONNX2TRT(target_precision=target_precision, requires=(copy_onnx,)))
 
-    return Pipeline(name="PyTorch Export", framework=Framework.PYT, commands=commands)
+    return Pipeline(name="ONNX Export", framework=Framework.ONNX, commands=commands)
