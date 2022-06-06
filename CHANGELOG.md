@@ -29,6 +29,8 @@ limitations under the License.
 - Bugfixes
   - Empty list of gpus cause the process run on CPU only
   - When no GPU or target device set to CPU `optimize` avoid running unsupported conversions in CLI
+- Model Navigator Export API:
+  - Added dynamic shapes support and trt dynamic shapes support for TensorFlow2 export
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 - Version of external components used during testing:

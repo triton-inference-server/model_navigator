@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from pathlib import Path
-from typing import Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.performance import ProfilerConfig
@@ -56,6 +56,8 @@ def export(
     rtol: Optional[float] = None,
     input_names: Optional[Tuple[str, ...]] = None,
     output_names: Optional[Tuple[str, ...]] = None,
+    dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None,
+    trt_dynamic_axes: Optional[Dict[str, Dict[int, Tuple[int, int, int]]]] = None,
     disable_git_info: bool = False,
     batch_dim: Optional[int] = 0,
     onnx_runtimes: Optional[Union[Union[str, RuntimeProvider], Tuple[Union[str, RuntimeProvider], ...]]] = None,
@@ -111,6 +113,8 @@ def export(
         rtol=rtol,
         _input_names=input_names,
         _output_names=output_names,
+        dynamic_axes=dynamic_axes,
+        trt_dynamic_axes=trt_dynamic_axes,
         disable_git_info=disable_git_info,
         batch_dim=batch_dim,
         onnx_runtimes=onnx_runtimes,
