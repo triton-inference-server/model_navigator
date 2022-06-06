@@ -331,6 +331,8 @@ def export(
     rtol: Optional[float] = None, # relative tolerance used for correctness tests. If None, value will be calculated during run
     input_names: Optional[Tuple[str, ...]] = None, # model input name in the same order as in samples returned from dataloader
     output_names: Optional[Tuple[str, ...]] = None,
+    dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None,
+    trt_dynamic_axes: Optional[Dict[str, Dict[int, Tuple[int, int, int]]]] = None,
     disable_git_info: bool = False,
     batch_dim: Optional[int] = 0,
     onnx_runtimes: Optional[Union[Union[str, RuntimeProvider], Tuple[Union[str, RuntimeProvider], ...]]] = None, # defaults to all available runtimes
