@@ -451,7 +451,9 @@ class PackageDescriptor:
         base_models_paths, converted_models_paths = set(), set()
         for format in chain(self._target_formats, base_formats):
             jit_iter = [None] if format not in (Format.TORCHSCRIPT, Format.TORCH_TRT) else self._target_jit_type
-            prec_iter = [None] if format not in (Format.TENSORRT, Format.TF_TRT) else self._target_precisions
+            prec_iter = (
+                [None] if format not in (Format.TENSORRT, Format.TF_TRT, Format.TORCH_TRT) else self._target_precisions
+            )
             for jit_type, prec in itertools.product(jit_iter, prec_iter):
                 model_path = package_path / format_to_relative_model_path(format, jit_type, prec)
                 if not model_path.exists():

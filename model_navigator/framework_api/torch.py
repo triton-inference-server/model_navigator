@@ -17,7 +17,7 @@ from typing import Dict, List, Mapping, Optional, Tuple, Union
 
 import torch  # pytype: disable=import-error
 
-from model_navigator.converter.config import TensorRTPrecision
+from model_navigator.converter.config import TensorRTPrecision, TensorRTPrecisionMode
 from model_navigator.framework_api.commands.performance import ProfilerConfig
 from model_navigator.framework_api.common import SizedDataLoader
 from model_navigator.framework_api.config import Config
@@ -60,6 +60,7 @@ def export(
     dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None,
     trt_dynamic_axes: Optional[Dict[str, Dict[int, Tuple[int, int, int]]]] = None,
     target_precisions: Optional[Union[Union[str, TensorRTPrecision], Tuple[Union[str, TensorRTPrecision], ...]]] = None,
+    precison_mode: Optional[Union[str, TensorRTPrecisionMode]] = None,
     max_workspace_size: Optional[int] = None,
     target_device: Optional[str] = None,
     disable_git_info: bool = False,
@@ -97,6 +98,9 @@ def export(
     if target_precisions is None:
         target_precisions = (TensorRTPrecision.FP32, TensorRTPrecision.FP16)
 
+    if precison_mode is None:
+        precison_mode = TensorRTPrecisionMode.SINGLE
+
     sample = next(iter(dataloader))
     if isinstance(sample, Mapping):
         forward_kw_names = tuple(sample.keys())
@@ -112,12 +116,14 @@ def export(
     if profiler_config is None:
         profiler_config = ProfilerConfig()
 
-    target_formats, jit_options, target_precisions, onnx_runtimes = (
+    target_formats, jit_options, target_precisions, onnx_runtimes, precison_mode = (
         parse_enum(target_formats, Format),
         parse_enum(jit_options, JitType),
         parse_enum(target_precisions, TensorRTPrecision),
         parse_enum(onnx_runtimes, RuntimeProvider),
+        *parse_enum(precison_mode, TensorRTPrecisionMode),
     )
+
     config = Config(
         framework=Framework.PYT,
         model=model,
@@ -133,6 +139,7 @@ def export(
         rtol=rtol,
         dynamic_axes=dynamic_axes,
         target_precisions=target_precisions,
+        precision_mode=precison_mode,
         _input_names=input_names,
         _output_names=output_names,
         forward_kw_names=forward_kw_names,

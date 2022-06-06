@@ -15,7 +15,7 @@
 from pathlib import Path
 from typing import Optional, Union
 
-from model_navigator.converter.config import TensorRTPrecision
+from model_navigator.converter.config import TensorRTPrecision, TensorRTPrecisionMode
 from model_navigator.framework_api.commands.performance import ProfilerConfig
 from model_navigator.framework_api.config import Config
 from model_navigator.framework_api.package_descriptor import PackageDescriptor
@@ -77,6 +77,9 @@ def load(
         seed=saved_config["seed"],
         from_source=False,
         target_precisions=parse_enum(saved_config["target_precisions"], TensorRTPrecision),
+        precision_mode=parse_enum(
+            saved_config.get("precision_mode", TensorRTPrecisionMode.SINGLE), TensorRTPrecisionMode
+        )[0],
         target_jit_type=parse_enum(saved_config.get("target_jit_type"), JitType),
         target_device=saved_config["target_device"],
         opset=saved_config["opset"],

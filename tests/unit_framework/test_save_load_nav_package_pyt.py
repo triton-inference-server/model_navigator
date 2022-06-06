@@ -105,13 +105,25 @@ def test_pyt_save_load_no_retest():
         )
         assert (
             check_model_dir(
-                model_dir=loaded_package_dir / "torch-trt-script", format=nav.Format.TORCHSCRIPT, only_config=True
+                model_dir=loaded_package_dir / "torch-trt-script-fp16", format=nav.Format.TORCHSCRIPT, only_config=True
             )
             is CUDA_AVAILABLE
         )
         assert (
             check_model_dir(
-                model_dir=loaded_package_dir / "torch-trt-trace", format=nav.Format.TORCHSCRIPT, only_config=True
+                model_dir=loaded_package_dir / "torch-trt-script-fp32", format=nav.Format.TORCHSCRIPT, only_config=True
+            )
+            is CUDA_AVAILABLE
+        )
+        assert (
+            check_model_dir(
+                model_dir=loaded_package_dir / "torch-trt-trace-fp16", format=nav.Format.TORCHSCRIPT, only_config=True
+            )
+            is CUDA_AVAILABLE
+        )
+        assert (
+            check_model_dir(
+                model_dir=loaded_package_dir / "torch-trt-trace-fp32", format=nav.Format.TORCHSCRIPT, only_config=True
             )
             is CUDA_AVAILABLE
         )
@@ -167,11 +179,19 @@ def test_pyt_save_load_retest():
         assert check_model_dir(model_dir=loaded_package_dir / "torchscript-script", format=nav.Format.TORCHSCRIPT)
         assert check_model_dir(model_dir=loaded_package_dir / "torchscript-trace", format=nav.Format.TORCHSCRIPT)
         assert (
-            check_model_dir(model_dir=loaded_package_dir / "torch-trt-script", format=nav.Format.TORCHSCRIPT)
+            check_model_dir(model_dir=loaded_package_dir / "torch-trt-script-fp16", format=nav.Format.TORCHSCRIPT)
             is CUDA_AVAILABLE
         )
         assert (
-            check_model_dir(model_dir=loaded_package_dir / "torch-trt-trace", format=nav.Format.TORCHSCRIPT)
+            check_model_dir(model_dir=loaded_package_dir / "torch-trt-script-fp32", format=nav.Format.TORCHSCRIPT)
+            is CUDA_AVAILABLE
+        )
+        assert (
+            check_model_dir(model_dir=loaded_package_dir / "torch-trt-trace-fp16", format=nav.Format.TORCHSCRIPT)
+            is CUDA_AVAILABLE
+        )
+        assert (
+            check_model_dir(model_dir=loaded_package_dir / "torch-trt-trace-fp32", format=nav.Format.TORCHSCRIPT)
             is CUDA_AVAILABLE
         )
         assert check_model_dir(model_dir=loaded_package_dir / "trt-fp16", format=nav.Format.TENSORRT) is CUDA_AVAILABLE

@@ -161,7 +161,7 @@ def format_to_relative_model_path(
     if format == Format.TORCHSCRIPT:
         return Path(f"{format.value}-{jit_type.value}") / "model.pt"
     if format == Format.TORCH_TRT:
-        return Path(f"{format.value}-{jit_type.value}") / "model.pt"
+        return Path(f"{format.value}-{jit_type.value}-{precision.value}") / "model.pt"
     if format == Format.TF_SAVEDMODEL:
         return Path(format.value) / "model.savedmodel"
     if format == Format.TF_TRT:

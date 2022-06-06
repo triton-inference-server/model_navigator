@@ -302,6 +302,7 @@ def export(
     dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None, # for ONNX export, see https://pytorch.org/docs/1.9.1/onnx.html#functions
     trt_dynamic_axes: Optional[Dict[str, Dict[int, Tuple[int, int, int]]]] = None,
     target_precisions: Optional[Union[Union[str, TensorRTPrecision], Tuple[Union[str, TensorRTPrecision], ...]]] = None,
+    precison_mode: Optional[Union[str, TensorRTPrecisionMode]] = None,  # use single or hierarchy precision for TorchTRT conversion
     max_workspace_size: Optional[int] = None,
     target_device: Optional[str] = None, # target device for exporting the model
     disable_git_info: bool = False,
