@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union, get_args, get_origin
 
-from model_navigator.converter.config import TensorRTPrecision
+from model_navigator.converter.config import TensorRTPrecision, TensorRTPrecisionMode
 from model_navigator.framework_api.commands.performance import ProfilerConfig
 from model_navigator.framework_api.common import DataObject, SizedDataLoader, TensorMetadata
 from model_navigator.framework_api.logger import LOGGER
@@ -51,6 +51,7 @@ class Config(DataObject):
     # TRT params
     max_workspace_size: Optional[int] = None
     target_precisions: Optional[Tuple[TensorRTPrecision, ...]] = None
+    precision_mode: Optional[TensorRTPrecisionMode] = None
     trt_dynamic_axes: Optional[Dict[str, Dict[int, Tuple[int, int, int]]]] = None
 
     # TF-TRT params

@@ -41,11 +41,14 @@ def torch_export_builder(config: Config, package_descriptor: "PackageDescriptor"
         commands.append(onnx_export)
     if Format.TORCH_TRT in config.target_formats:
         for target_jit_type in config.target_jit_type:
-            commands.append(
-                ConvertTorchScript2TorchTensorRT(
-                    target_jit_type=target_jit_type, requires=(ts_exports[target_jit_type],)
+            for precision in config.target_precisions:
+                commands.append(
+                    ConvertTorchScript2TorchTensorRT(
+                        target_jit_type=target_jit_type,
+                        target_precision=precision,
+                        requires=(ts_exports[target_jit_type],),
+                    )
                 )
-            )
     if Format.TENSORRT in config.target_formats:
         for target_precision in config.target_precisions:
             commands.append(ConvertONNX2TRT(target_precision=target_precision, requires=(onnx_export,)))
