@@ -142,7 +142,7 @@ class Command(metaclass=ABCMeta):
         LOGGER.info(output.stdout.decode("utf-8"))
         if output.returncode != 0:
             LOGGER.error(f"return code: {output.returncode}")
-            LOGGER.error(output.stderr.decode("utf-8"))
+            raise RuntimeError(output.stderr.decode("utf-8"))
 
     @staticmethod
     def _is_param_optional(param_annotation):

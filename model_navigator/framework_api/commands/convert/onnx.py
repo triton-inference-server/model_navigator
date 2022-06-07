@@ -124,7 +124,7 @@ class ConvertONNX2TRT(ConvertBase):
             convert_cmd.append(f"--workspace={max_workspace_size}")
 
         with UserErrorContext():
-            output = subprocess.run(convert_cmd, check=True, capture_output=True)
+            output = subprocess.run(convert_cmd, capture_output=True)
             output = self._log_subprocess_output(output=output)
 
         return self.get_output_relative_path()
