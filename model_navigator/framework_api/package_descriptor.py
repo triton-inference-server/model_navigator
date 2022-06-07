@@ -63,11 +63,6 @@ class PackageDescriptor:
 
     @classmethod
     def build(cls, pipeline_manager: PipelineManager, config: Config):
-        if not config.disable_git_info:
-            git_info = get_git_info()
-        else:
-            git_info = None
-
         config_filter_fields = [
             "model",
             "dataloader",
@@ -81,7 +76,7 @@ class PackageDescriptor:
         navigator_status = NavigatorStatus(
             uuid=str(uuid.uuid1()),
             format_version=NAV_PACKAGE_FORMAT_VERSION,
-            git_info=git_info,
+            git_info=get_git_info(config.disable_git_info),
             environment=get_env(),
             export_config=config.to_dict(
                 config_filter_fields,

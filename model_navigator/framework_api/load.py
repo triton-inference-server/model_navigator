@@ -77,9 +77,9 @@ def load(
         seed=saved_config["seed"],
         from_source=False,
         target_precisions=parse_enum(saved_config["target_precisions"], TensorRTPrecision),
-        precision_mode=parse_enum(
-            saved_config.get("precision_mode", TensorRTPrecisionMode.SINGLE), TensorRTPrecisionMode
-        )[0],
+        precision_mode=TensorRTPrecisionMode(saved_config["precision_mode"])
+        if saved_config["precision_mode"] is not None
+        else None,
         target_jit_type=parse_enum(saved_config.get("target_jit_type"), JitType),
         target_device=saved_config["target_device"],
         opset=saved_config["opset"],
