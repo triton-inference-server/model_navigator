@@ -114,17 +114,25 @@ def _remove(input: str, regex: str):
     return re.sub(regex, "", input).strip()
 
 
-def get_git_info():
+def get_git_info(disable_git_info: bool):
+    git_info = {
+        "repository": None,
+        "commit": None,
+        "author": None,
+        "email": None,
+    }
+    if disable_git_info:
+        return git_info
     try:
         git_info = {
             "repository": _command_runner(command=["git", "config", "--get", "remote.origin.url"]),
-            "commit": _command_runner(command=["git", "log", "--pretty=format:%H", "HEAD^..HEAD"]),
-            "author": _command_runner(command=["git", "log", "--pretty=format:%an", "HEAD^..HEAD"]),
-            "email": _command_runner(command=["git", "log", "--pretty=format:%ae", "HEAD^..HEAD"]),
+            "commit": _command_runner(command=["git", "log", "-1", "--pretty=format:%H"]),
+            "author": _command_runner(command=["git", "log", "-1", "--pretty=format:%an"]),
+            "email": _command_runner(command=["git", "log", "-1", "--pretty=format:%ae"]),
         }
     except CalledProcessError as e:
         LOGGER.warning(f"Unable to get git info: {e}")
-        git_info = {}
+
     return git_info
 
 

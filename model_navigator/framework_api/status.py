@@ -39,7 +39,9 @@ class RuntimeResults(DataObject):
             runtime=RuntimeProvider(dict["runtime"]),
             status=Status(dict["status"]),
             tolerance=dict.get("tolerance"),
-            performance=[ProfilingResults.from_dict(perf) for perf in dict.get("performance", [])],
+            performance=[ProfilingResults.from_dict(perf) for perf in dict.get("performance", [])]
+            if dict["performance"] is not None
+            else None,
             err_msg=dict.get("err_msg"),
             verified=dict["verified"],
         )
@@ -57,10 +59,10 @@ class ModelStatus(DataObject):
     def from_dict(cls, dict: Mapping):
         return cls(
             format=Format(dict["format"]),
-            path=Path(dict["path"]) if "path" in dict else None,
+            path=Path(dict["path"]) if dict.get("path") is not None in dict else None,
             runtime_results=[RuntimeResults.from_dict(runtime_results) for runtime_results in dict["runtime_results"]],
-            torch_jit=JitType(dict["torch_jit"]) if "torch_jit" in dict else None,
-            precision=TensorRTPrecision(dict["precision"]) if "precision" in dict else None,
+            torch_jit=JitType(dict["torch_jit"]) if dict.get("torch_jit") is not None else None,
+            precision=TensorRTPrecision(dict["precision"]) if dict.get("precision") is not None else None,
         )
 
 
