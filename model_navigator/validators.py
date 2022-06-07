@@ -21,7 +21,8 @@ from typing import Any, Dict, List
 from model_navigator.converter import ConversionLaunchMode
 from model_navigator.exceptions import ModelNavigatorException
 from model_navigator.log import log_dict
-from model_navigator.triton.config import Batching
+from model_navigator.triton.config import Batching, DeviceKind
+from model_navigator.utils.device import get_gpus
 from model_navigator.utils.env import EnvironmentState, get_environment_state
 
 LOGGER = logging.getLogger(__name__)
@@ -35,6 +36,67 @@ class BaseValidator(ABC):
 
 class CommandValidator(BaseValidator):
     commands_names: List[str]
+
+
+class ModelNavigatorProfilingDeviceConfiguration(CommandValidator):
+    commands_names = ["optimize"]
+
+    def validate(self, environment_state: EnvironmentState, configuration: Dict[str, Any]):
+        engine_count_per_device = configuration["engine_count_per_device"]
+        config_search_instance_counts = configuration["config_search_instance_counts"]
+        gpus = configuration["gpus"]
+
+        LOGGER.debug(
+            "ModelNavigatorDeviceConfiguration "
+            f"\nengine_count_per_device={engine_count_per_device} "
+            f"\nconfig_search_instance_counts={config_search_instance_counts} "
+            f"\ngpus={gpus} "
+        )
+        gpus = get_gpus(gpus)
+        if (DeviceKind.GPU in engine_count_per_device or DeviceKind.GPU in config_search_instance_counts) and not gpus:
+            raise ModelNavigatorException("The model engine set to GPU but there is not available GPUs.")
+
+
+class ModelNavigatorInstanceCountConfiguration(CommandValidator):
+    commands_names = ["optimize"]
+
+    def validate(self, environment_state: EnvironmentState, configuration: Dict[str, Any]):
+        engine_count_per_device = configuration["engine_count_per_device"]
+        config_search_instance_counts = configuration["config_search_instance_counts"]
+
+        LOGGER.debug(
+            "ModelNavigatorInstanceCountConfiguration "
+            f"\nengine_count_per_device={engine_count_per_device} "
+            f"\nconfig_search_instance_counts={config_search_instance_counts} "
+        )
+
+        if not engine_count_per_device:
+            return
+
+        matched_devices = [
+            device for device in config_search_instance_counts.keys() if device in engine_count_per_device
+        ]
+        if config_search_instance_counts and not matched_devices:
+            raise ModelNavigatorException(
+                "config_search_instance_counts configuration should match the engine_count_per_device. "
+            )
+
+
+class ModelNavigatorDeviceConfiguration(CommandValidator):
+    commands_names = ["convert"]
+
+    def validate(self, environment_state: EnvironmentState, configuration: Dict[str, Any]):
+        engine_count_per_device = configuration["engine_count_per_device"]
+        gpus = configuration["gpus"]
+
+        LOGGER.debug(
+            "ModelNavigatorDeviceConfiguration "
+            f"\nengine_count_per_device={engine_count_per_device} "
+            f"\ngpus={gpus} "
+        )
+        gpus = get_gpus(gpus)
+        if DeviceKind.GPU in engine_count_per_device and not gpus:
+            raise ModelNavigatorException("The conversion platform set to GPU but there is not available GPUs.")
 
 
 class ModelNavigatorBatchingConfiguration(CommandValidator):

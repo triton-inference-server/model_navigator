@@ -193,7 +193,7 @@ model_path: path
 # NVIDIA framework and Triton container version to use. For details refer to
 # https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html and
 # https://docs.nvidia.com/deeplearning/triton-inference-server/release-notes/index.html for details).
-[ container_version: str | default: 22.04 ]
+[ container_version: str | default: 22.05 ]
 
 # Custom framework docker image to use. If not provided
 # nvcr.io/nvidia/<framework>:<container_version>-<framework_and_python_version> will be used
@@ -230,7 +230,7 @@ model_path: path
 [ target_formats: list[str] | default: ['tf-trt', 'tf-savedmodel', 'onnx', 'trt', 'torchscript', 'torch-trt'] ]
 
 # Generate an ONNX graph that uses only ops available in a given opset.
-[ onnx_opsets: list[integer] | default: [13] ]
+[ onnx_opsets: list[integer] | default: [14] ]
 
 # Configure TensorRT builder for precision layer selection.
 [ tensorrt_precisions: list[choice(int8, fp16, fp32, tf32)] | default: ['fp16', 'tf32'] ]

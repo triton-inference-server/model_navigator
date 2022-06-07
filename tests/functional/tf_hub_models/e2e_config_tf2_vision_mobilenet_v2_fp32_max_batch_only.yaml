@@ -20,7 +20,7 @@ triton_launch_mode: local
 # converter set config
 target_formats: [ onnx, trt, tf-trt ]
 target_precisions: [ fp16, tf32 ]
-onnx_opsets: [ 13 ]
+onnx_opsets: [ 14 ]
 max_workspace_size: 8589934592
 # comparator config
 atol:

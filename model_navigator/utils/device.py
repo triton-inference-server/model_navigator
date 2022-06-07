@@ -131,7 +131,11 @@ def get_available_device_kinds(gpus: List, instances_config: TritonModelInstance
     if not gpus or DeviceKind.CPU in instances_config.engine_count_per_device:
         device_kinds.append(DeviceKind.CPU)
 
-    if gpus or DeviceKind.GPU in instances_config.engine_count_per_device:
+    if (
+        gpus and not instances_config.engine_count_per_device
+    ) or DeviceKind.GPU in instances_config.engine_count_per_device:
         device_kinds.append(DeviceKind.GPU)
+
+    LOGGER.debug(f"Selected devices: {device_kinds}")
 
     return device_kinds
