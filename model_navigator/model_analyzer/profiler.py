@@ -177,7 +177,6 @@ class ProfileConfigGenerator(BaseConfigGenerator):
             early_exit_flag = True
             LOGGER.info("Automatic config search for profiling with early exit enabled.")
 
-        # https://github.com/triton-inference-server/model_analyzer/blob/r22.02/docs/config.md
         config = {
             "run_config_search_disable": manual_config_search,
             "profile_models": models_list,

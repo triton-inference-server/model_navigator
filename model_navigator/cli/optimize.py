@@ -192,12 +192,15 @@ def optimize_cmd(
         arguments,
     )
 
+    _update_engine_count_per_device(instances_config, profile_config)
+
     gpus = get_gpus(gpus)
-    device_kinds = get_available_device_kinds(gpus=gpus, instances_config=instances_config)
+    device_kinds = get_available_device_kinds(gpus, instances_config)
     max_batch_size = _get_max_batch_size(profile_config)
 
     convert_results = ctx.forward(
         convert_cmd,
+        **dataclass2dict(instances_config),
         **dataclass2dict(BatchingConfig(max_batch_size=max_batch_size)),
     )
     succeeded_convert_results = [
@@ -512,3 +515,19 @@ def _get_max_batch_size(profile_config: ModelAnalyzerProfileConfig):
         max_batch_size = profile_config.config_search_max_batch_size
 
     return max_batch_size
+
+
+def _update_engine_count_per_device(
+    instances_config: TritonModelInstancesConfig, profile_config: ModelAnalyzerProfileConfig
+):
+    """Update the instance config based on passed data in config search"""
+    if instances_config.engine_count_per_device:
+        return
+
+    if not profile_config.config_search_instance_counts:
+        return
+
+    for device, values in profile_config.config_search_instance_counts.items():
+        instances_config.engine_count_per_device[device] = min(values)
+
+    LOGGER.debug(f"Update engine_count_per_devices to {instances_config.engine_count_per_device}")

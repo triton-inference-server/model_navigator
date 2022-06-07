@@ -79,7 +79,7 @@ class ConversionSetConfig(BaseConfig):
     target_formats: List[Format] = dataclasses.field(default_factory=lambda: TRITON_SUPPORTED_FORMATS)
 
     # ONNX related
-    onnx_opsets: List[int] = dataclasses.field(default_factory=lambda: [13])
+    onnx_opsets: List[int] = dataclasses.field(default_factory=lambda: [14])
 
     # TRT related
     tensorrt_precisions: List[TensorRTPrecision] = dataclasses.field(
@@ -351,8 +351,7 @@ def convert(
     workspace = Workspace(workspace_path)
 
     gpus = get_gpus(gpus)
-    device_kinds = get_available_device_kinds(gpus=gpus, instances_config=instances_config)
-
+    device_kinds = get_available_device_kinds(gpus, instances_config)
     if launch_mode == ConversionLaunchMode.DOCKER:
         if DeviceKind.GPU in device_kinds:
             from docker.types import DeviceRequest

@@ -500,11 +500,12 @@ def _parse_objectives(ctx, param, value):
 def parse_instance_counts(ctx, param, value):
     if value:
         if isinstance(value, dict):  # from config file
-            value = {name: list(count) for name, count in value.items()}
+            value = {DeviceKind(name): list(count) for name, count in value.items()}
         elif isinstance(value, list):  # from cli
             parsed_value = {}
             for item in value:
                 input_name, count = item.split("=")
+                input_name = DeviceKind(input_name)
 
                 count = list(map(int, count.split(",")))
                 parsed_value[input_name] = count
