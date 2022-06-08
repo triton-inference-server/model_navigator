@@ -16,6 +16,7 @@ import subprocess
 from pathlib import Path
 from typing import List, Optional, Tuple
 
+import tensorflow as tf  # pytype: disable=import-error
 from tensorflow.python.compiler.tensorrt import trt_convert as trtc  # pytype: disable=import-error
 
 from model_navigator.converter.config import TensorRTPrecision
@@ -89,6 +90,9 @@ class ConvertSavedModel2TFTRT(ConvertBase):
         )
         self.target_precision = target_precision
         # pytype: enable=wrong-arg-types
+
+    def _get_loggers(self) -> list:
+        return [tf.get_logger()]
 
     def get_output_relative_path(self) -> Path:
         return format_to_relative_model_path(self.target_format, precision=self.target_precision)
