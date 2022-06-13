@@ -273,9 +273,6 @@ class ConversionSetConfigCli:
     tensorrt_explicit_precision = CliSpec(
         help="Enable explicit precision for TensorRT builder when model already contain quantized layers."
     )
-    tensorrt_strict_types = CliSpec(
-        help="Enable strict types in TensorRT, forcing it to choose tactics based on the layer precision set, even if another precision is faster."
-    )
     tensorrt_sparse_weights = CliSpec(help="Enable optimizations for sparse weights in TensorRT.")
     tensorrt_max_workspace_size = CliSpec(
         help="The maximum GPU memory in bytes the model can use temporarily during execution for TensorRT acceleration.",
@@ -314,9 +311,6 @@ class ConversionSetHelmChartConfigCli:
     )
     tensorrt_explicit_precision = CliSpec(
         help="Enable explicit precision for TensorRT builder when model already contain quantized layers."
-    )
-    tensorrt_strict_types = CliSpec(
-        help="Enable strict types in TensorRT, forcing it to choose tactics based on the layer precision set, even if another precision is faster."
     )
     tensorrt_sparse_weights = CliSpec(help="Enable optimizations for sparse weights in TensorRT.")
     tensorrt_max_workspace_size = CliSpec(

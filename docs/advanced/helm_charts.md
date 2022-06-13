@@ -162,10 +162,6 @@ chart_name: str
 # Enable explicit precision for TensorRT builder when model already contain quantized layers.
 [ tensorrt_explicit_precision: boolean ]
 
-# Enable strict types in TensorRT, forcing it to choose tactics based on the layer precision set, even if another
-# precision is faster.
-[ tensorrt_strict_types: boolean ]
-
 # Enable optimizations for sparse weights in TensorRT.
 [ tensorrt_sparse_weights: boolean ]
 
