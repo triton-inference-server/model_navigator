@@ -69,7 +69,6 @@ class TensorRTConversionConfig(BaseConfig):
     precision: TensorRTPrecision = TensorRTPrecision.FP16
     precision_mode: TensorRTPrecisionMode = TensorRTPrecisionMode.HIERARCHY
     explicit_precision: bool = False
-    strict_types: bool = False
     sparse_weights: bool = False
     max_workspace_size: int = DEFAULT_TENSORRT_MAX_WORKSPACE_SIZE
 

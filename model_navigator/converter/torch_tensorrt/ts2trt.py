@@ -149,7 +149,6 @@ def convert_to_trt_engine(
         model,
         "forward",
         inputs=_trtorch_inputs(dataloader),
-        strict_types=tensorrt_config.strict_types,
         sparse_weights=tensorrt_config.sparse_weights,
         workspace_size=tensorrt_config.max_workspace_size,
         truncate_long_and_double=True,
@@ -173,7 +172,6 @@ def compile(
     out = trtorch.ts.compile(
         model,
         inputs=_trtorch_inputs(dataloader),
-        strict_types=tensorrt_config.strict_types,
         sparse_weights=tensorrt_config.sparse_weights,
         workspace_size=tensorrt_config.max_workspace_size,
         truncate_long_and_double=True,

@@ -87,7 +87,6 @@ class ConversionSetConfig(BaseConfig):
     )
     tensorrt_precisions_mode: TensorRTPrecisionMode = TensorRTPrecisionMode.HIERARCHY
     tensorrt_explicit_precision: bool = False
-    tensorrt_strict_types: bool = False
     tensorrt_sparse_weights: bool = False
     tensorrt_max_workspace_size: int = DEFAULT_TENSORRT_MAX_WORKSPACE_SIZE
 
@@ -106,7 +105,6 @@ class ConversionSetConfig(BaseConfig):
                 tensorrt_precisions_mode=config.tensorrt_config.precision_mode,
                 tensorrt_explicit_precision=config.tensorrt_config.explicit_precision,
                 tensorrt_sparse_weights=config.tensorrt_config.sparse_weights,
-                tensorrt_strict_types=config.tensorrt_config.strict_types,
                 tensorrt_max_workspace_size=config.tensorrt_config.max_workspace_size,
             )
 
@@ -117,7 +115,6 @@ class ConversionSetConfig(BaseConfig):
             tensorrt_precisions_mode=config.tensorrt_config.precision_mode,
             tensorrt_explicit_precision=config.tensorrt_config.explicit_precision,
             tensorrt_sparse_weights=config.tensorrt_config.sparse_weights,
-            tensorrt_strict_types=config.tensorrt_config.strict_types,
             tensorrt_max_workspace_size=config.tensorrt_config.max_workspace_size,
         )
 
