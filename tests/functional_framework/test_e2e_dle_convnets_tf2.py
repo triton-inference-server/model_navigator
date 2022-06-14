@@ -76,7 +76,7 @@ if __name__ == "__main__":
         opset=13,
         override_workdir=True,
     )
-    expected_formats = ("tf-savedmodel", "onnx", "trt-fp32")
+    expected_formats = ("tf-savedmodel", "onnx", "trt-fp32", "tf-trt-fp32")
     for format, runtimes_status in pkg_desc.get_formats_status().items():
         for runtime, status in runtimes_status.items():
             assert (status == nav.Status.OK) == (

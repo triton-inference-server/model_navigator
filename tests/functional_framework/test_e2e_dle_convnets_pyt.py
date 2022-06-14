@@ -61,14 +61,19 @@ if __name__ == "__main__":
             expected_formats = (
                 "torchscript-script",
                 "torchscript-trace",
+                "trt-fp32",
+                "trt-fp16",
+                "onnx",
             )
         else:
             expected_formats = (
                 "torchscript-script",
                 "torchscript-trace",
                 "onnx",
-                "torch-trt-script",
-                "torch-trt-trace",
+                "torch-trt-trace-fp16",
+                "torch-trt-trace-fp32",
+                "torch-trt-script-fp16",
+                "torch-trt-script-fp32",
                 "trt-fp32",
                 "trt-fp16",
             )
