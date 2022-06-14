@@ -86,6 +86,6 @@ class NavigatorStatus(DataObject):
             environment=dict["environment"],
             export_config=dict["export_config"],
             model_status=[ModelStatus.from_dict(model_status) for model_status in dict["model_status"]],
-            input_metadata=TensorMetadata.from_json(dict["input_metadata"]),
-            output_metadata=TensorMetadata.from_json(dict["output_metadata"]),
+            input_metadata=TensorMetadata.from_json(dict["input_metadata"]) if dict.get("input_metadata") else None,
+            output_metadata=TensorMetadata.from_json(dict["output_metadata"]) if dict.get("output_metadata") else None,
         )
