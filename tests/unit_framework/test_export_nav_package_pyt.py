@@ -18,8 +18,12 @@ from pathlib import Path
 import torch
 
 import model_navigator as nav
+from model_navigator.framework_api.commands.performance import ProfilerConfig
+from model_navigator.utils.device import get_gpus
 
 # pytype: enable=import-error
+
+CUDA_AVAILABLE = bool(get_gpus(["all"]))
 
 
 def check_model_dir(model_dir: Path, format: nav.Format) -> bool:
@@ -68,6 +72,7 @@ def test_pyt_export_torchscript():
             override_workdir=True,
             workdir=workdir,
             model_name=model_name,
+            profiler_config=ProfilerConfig(measurement_interval=100),
         )
 
         assert status_file.is_file()
@@ -111,6 +116,7 @@ def test_pyt_export_onnx():
             override_workdir=True,
             workdir=workdir,
             model_name=model_name,
+            profiler_config=ProfilerConfig(measurement_interval=100),
         )
 
         assert status_file.is_file()
@@ -155,6 +161,7 @@ def test_pyt_export_torch_trt_script():
             override_workdir=True,
             workdir=workdir,
             model_name=model_name,
+            profiler_config=ProfilerConfig(measurement_interval=100),
         )
 
         assert status_file.is_file()
@@ -172,7 +179,15 @@ def test_pyt_export_torch_trt_script():
         from packaging import version
 
         if version.parse(torch.__version__) >= version.parse("1.10"):
-            assert check_model_dir(model_dir=package_dir / "torch-trt-script", format=nav.Format.TORCHSCRIPT)
+            assert (
+                check_model_dir(model_dir=package_dir / "torch-trt-script-fp16", format=nav.Format.TORCHSCRIPT)
+                is CUDA_AVAILABLE
+            )
+
+            assert (
+                check_model_dir(model_dir=package_dir / "torch-trt-script-fp32", format=nav.Format.TORCHSCRIPT)
+                is CUDA_AVAILABLE
+            )
 
         # Intermediate formats
         assert check_model_dir(model_dir=package_dir / "torchscript-script", format=nav.Format.TORCHSCRIPT)
@@ -180,7 +195,8 @@ def test_pyt_export_torch_trt_script():
         # Formats not exported
         assert check_model_dir(model_dir=package_dir / "torchscript-trace", format=nav.Format.TORCHSCRIPT) is False
         assert check_model_dir(model_dir=package_dir / "onnx", format=nav.Format.ONNX) is False
-        assert check_model_dir(model_dir=package_dir / "torch-trt-trace", format=nav.Format.TORCHSCRIPT) is False
+        assert check_model_dir(model_dir=package_dir / "torch-trt-trace-fp16", format=nav.Format.TORCHSCRIPT) is False
+        assert check_model_dir(model_dir=package_dir / "torch-trt-trace-fp32", format=nav.Format.TORCHSCRIPT) is False
         assert check_model_dir(model_dir=package_dir / "trt-fp16", format=nav.Format.TENSORRT) is False
         assert check_model_dir(model_dir=package_dir / "trt-fp32", format=nav.Format.TENSORRT) is False
 
@@ -203,6 +219,7 @@ def test_pyt_export_trt():
             override_workdir=True,
             workdir=workdir,
             model_name=model_name,
+            profiler_config=ProfilerConfig(measurement_interval=100),
         )
 
         assert status_file.is_file()
@@ -217,8 +234,8 @@ def test_pyt_export_trt():
         assert navigator_log_file.is_file()
 
         # Output formats
-        assert check_model_dir(model_dir=package_dir / "trt-fp16", format=nav.Format.TENSORRT)
-        assert check_model_dir(model_dir=package_dir / "trt-fp32", format=nav.Format.TENSORRT)
+        assert check_model_dir(model_dir=package_dir / "trt-fp16", format=nav.Format.TENSORRT) is CUDA_AVAILABLE
+        assert check_model_dir(model_dir=package_dir / "trt-fp32", format=nav.Format.TENSORRT) is CUDA_AVAILABLE
 
         # Intermediate formats
         assert check_model_dir(model_dir=package_dir / "onnx", format=nav.Format.ONNX)
@@ -254,6 +271,7 @@ def test_pyt_export_multi_input():
             override_workdir=True,
             workdir=workdir,
             model_name=model_name,
+            profiler_config=ProfilerConfig(measurement_interval=100),
         )
 
         assert status_file.is_file()
@@ -270,13 +288,21 @@ def test_pyt_export_multi_input():
         # Output formats
         assert check_model_dir(model_dir=package_dir / "torchscript-script", format=nav.Format.TORCHSCRIPT)
         assert check_model_dir(model_dir=package_dir / "torchscript-trace", format=nav.Format.TORCHSCRIPT)
-        assert check_model_dir(model_dir=package_dir / "torch-trt-script", format=nav.Format.TORCHSCRIPT)
+        assert (
+            check_model_dir(model_dir=package_dir / "torch-trt-script-fp16", format=nav.Format.TORCHSCRIPT)
+            is CUDA_AVAILABLE
+        )
+        assert (
+            check_model_dir(model_dir=package_dir / "torch-trt-script-fp32", format=nav.Format.TORCHSCRIPT)
+            is CUDA_AVAILABLE
+        )
         assert check_model_dir(model_dir=package_dir / "onnx", format=nav.Format.ONNX)
-        assert check_model_dir(model_dir=package_dir / "trt-fp16", format=nav.Format.TENSORRT)
-        assert check_model_dir(model_dir=package_dir / "trt-fp32", format=nav.Format.TENSORRT)
+        assert check_model_dir(model_dir=package_dir / "trt-fp16", format=nav.Format.TENSORRT) is CUDA_AVAILABLE
+        assert check_model_dir(model_dir=package_dir / "trt-fp32", format=nav.Format.TENSORRT) is CUDA_AVAILABLE
 
         # Formats not exported
-        assert check_model_dir(model_dir=package_dir / "torch-trt-trace", format=nav.Format.TORCHSCRIPT) is False
+        assert check_model_dir(model_dir=package_dir / "torch-trt-trace-fp16", format=nav.Format.TORCHSCRIPT) is False
+        assert check_model_dir(model_dir=package_dir / "torch-trt-trace-fp32", format=nav.Format.TORCHSCRIPT) is False
 
 
 def test_pyt_export_string_format():
@@ -297,6 +323,7 @@ def test_pyt_export_string_format():
             override_workdir=True,
             workdir=workdir,
             model_name=model_name,
+            profiler_config=ProfilerConfig(measurement_interval=100),
         )
 
         assert status_file.is_file()
@@ -351,6 +378,7 @@ def test_pyt_export_onnx2trt():
             dataloader=_numpy_dataloader,
             opset=13,
             workdir=workdir,
+            profiler_config=ProfilerConfig(measurement_interval=100),
         )
 
         assert status_file.is_file()
@@ -368,8 +396,8 @@ def test_pyt_export_onnx2trt():
         assert check_model_dir(model_dir=package_dir / "onnx", format=nav.Format.ONNX)
 
         # Output formats
-        assert check_model_dir(model_dir=package_dir / "trt-fp16", format=nav.Format.TENSORRT)
-        assert check_model_dir(model_dir=package_dir / "trt-fp32", format=nav.Format.TENSORRT)
+        assert check_model_dir(model_dir=package_dir / "trt-fp16", format=nav.Format.TENSORRT) is CUDA_AVAILABLE
+        assert check_model_dir(model_dir=package_dir / "trt-fp32", format=nav.Format.TENSORRT) is CUDA_AVAILABLE
 
         # Formats not exported
         assert check_model_dir(model_dir=package_dir / "torchscript-script", format=nav.Format.TORCHSCRIPT) is False
@@ -408,6 +436,7 @@ def test_pyt_export_onnx_large():
             override_workdir=True,
             workdir=workdir,
             model_name=model_name,
+            profiler_config=ProfilerConfig(measurement_interval=100),
         )
 
         assert status_file.is_file()

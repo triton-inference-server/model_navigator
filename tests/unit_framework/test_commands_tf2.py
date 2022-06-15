@@ -21,10 +21,12 @@ import tensorflow
 
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.convert.tf import ConvertSavedModel2TFTRT
-from model_navigator.framework_api.commands.correctness.tf import CorrectnessSavedModel
+from model_navigator.framework_api.commands.correctness import Correctness
 from model_navigator.framework_api.commands.data_dump.samples import DumpInputModelData, DumpOutputModelData
 from model_navigator.framework_api.commands.export.tf import ExportTF2SavedModel
-from model_navigator.framework_api.utils import Format, Framework, get_default_max_workspace_size
+from model_navigator.framework_api.runners.tf import TFRunner
+from model_navigator.framework_api.utils import Framework, get_default_max_workspace_size
+from model_navigator.model import Format
 from model_navigator.tensor import TensorSpec
 
 # pytype: enable=import-error
@@ -150,7 +152,13 @@ def test_tf2_correctness():
         np_output = model.predict(input_data)
         np_input = input_data.numpy()
 
-        correctness_cmd = CorrectnessSavedModel(target_format=Format.TF_SAVEDMODEL)
+        input_metadata = {"input__1": TensorSpec("input__1", np_input.shape, np_input.dtype)}
+        output_metadata = {"output__1": TensorSpec("output__1", np_output.shape, np_output.dtype)}
+        correctness_cmd = Correctness(
+            name="test correctness",
+            target_format=Format.TF_SAVEDMODEL,
+            runner=TFRunner(model_path, input_metadata, list(output_metadata.keys())),
+        )
         correctness_cmd(
             framework=Framework.TF2,
             model=model,
@@ -160,8 +168,8 @@ def test_tf2_correctness():
             atol=0.0,
             correctness_samples=[{"input__1": np_input}],
             correctness_samples_output=[{"output__1": np_output}],
-            input_metadata={"input__1": TensorSpec("input__1", np_input.shape, np_input.dtype)},
-            output_metadata={"output__1": TensorSpec("output__1", np_output.shape, np_output.dtype)},
+            input_metadata=input_metadata,
+            output_metadata=output_metadata,
             batch_dim=None,
         )
 

@@ -18,6 +18,7 @@ from pathlib import Path
 import tensorflow
 
 import model_navigator as nav
+from model_navigator.framework_api.commands.performance import ProfilerConfig
 
 # pytype: enable=import-error
 
@@ -60,6 +61,7 @@ def test_tf2_tensor_dataloader():
             model_name=model_name,
             override_workdir=True,
             input_names=("input_x",),
+            profiler_config=ProfilerConfig(measurement_interval=100),
         )
 
         assert status_file.is_file()
@@ -110,6 +112,7 @@ def test_tf2_sequence_dataloader():
             model_name=model_name,
             override_workdir=True,
             input_names=("input_x", "input_y"),
+            profiler_config=ProfilerConfig(measurement_interval=100),
         )
 
         assert status_file.is_file()
@@ -164,6 +167,7 @@ def test_tf2_dict_dataloader():
             model_name=model_name,
             override_workdir=True,
             input_names=("input_x", "input_y"),
+            profiler_config=ProfilerConfig(measurement_interval=100),
         )
 
         assert status_file.is_file()

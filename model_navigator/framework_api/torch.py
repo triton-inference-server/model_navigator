@@ -17,11 +17,19 @@ from typing import Dict, List, Mapping, Optional, Tuple, Union
 
 import torch  # pytype: disable=import-error
 
-from model_navigator.converter.config import TensorRTPrecision
+from model_navigator.converter.config import TensorRTPrecision, TensorRTPrecisionMode
+from model_navigator.framework_api.commands.performance import ProfilerConfig
 from model_navigator.framework_api.common import SizedDataLoader
 from model_navigator.framework_api.config import Config
 from model_navigator.framework_api.package_descriptor import PackageDescriptor
-from model_navigator.framework_api.pipelines import TorchPipelineManager
+from model_navigator.framework_api.pipelines.builders import (
+    config_generation_builder,
+    correctness_builder,
+    preprocessing_builder,
+    profiling_builder,
+    torch_export_builder,
+)
+from model_navigator.framework_api.pipelines.pipeline_manager import PipelineManager
 from model_navigator.framework_api.utils import (
     Framework,
     JitType,
@@ -52,11 +60,14 @@ def export(
     dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None,
     trt_dynamic_axes: Optional[Dict[str, Dict[int, Tuple[int, int, int]]]] = None,
     target_precisions: Optional[Union[Union[str, TensorRTPrecision], Tuple[Union[str, TensorRTPrecision], ...]]] = None,
+    precison_mode: Optional[Union[str, TensorRTPrecisionMode]] = None,
     max_workspace_size: Optional[int] = None,
     target_device: Optional[str] = None,
     disable_git_info: bool = False,
     batch_dim: Optional[int] = 0,
     onnx_runtimes: Optional[Union[Union[str, RuntimeProvider], Tuple[Union[str, RuntimeProvider], ...]]] = None,
+    run_profiling: bool = True,
+    profiler_config: Optional[ProfilerConfig] = None,
 ) -> PackageDescriptor:
     """Function exports PyTorch model to all supported formats."""
 
@@ -87,6 +98,9 @@ def export(
     if target_precisions is None:
         target_precisions = (TensorRTPrecision.FP32, TensorRTPrecision.FP16)
 
+    if precison_mode is None:
+        precison_mode = TensorRTPrecisionMode.SINGLE
+
     sample = next(iter(dataloader))
     if isinstance(sample, Mapping):
         forward_kw_names = tuple(sample.keys())
@@ -99,12 +113,17 @@ def export(
     if onnx_runtimes is None:
         onnx_runtimes = format2runtimes(Format.ONNX)
 
-    target_formats, jit_options, target_precisions, onnx_runtimes = (
+    if profiler_config is None:
+        profiler_config = ProfilerConfig()
+
+    target_formats, jit_options, target_precisions, onnx_runtimes, precison_mode = (
         parse_enum(target_formats, Format),
         parse_enum(jit_options, JitType),
         parse_enum(target_precisions, TensorRTPrecision),
         parse_enum(onnx_runtimes, RuntimeProvider),
+        *parse_enum(precison_mode, TensorRTPrecisionMode),
     )
+
     config = Config(
         framework=Framework.PYT,
         model=model,
@@ -120,6 +139,7 @@ def export(
         rtol=rtol,
         dynamic_axes=dynamic_axes,
         target_precisions=target_precisions,
+        precision_mode=precison_mode,
         _input_names=input_names,
         _output_names=output_names,
         forward_kw_names=forward_kw_names,
@@ -129,7 +149,11 @@ def export(
         disable_git_info=disable_git_info,
         batch_dim=batch_dim,
         onnx_runtimes=onnx_runtimes,
+        profiler_config=profiler_config,
     )
 
-    pipeline_manager = TorchPipelineManager()
-    return pipeline_manager.build(config)
+    builders = [preprocessing_builder, torch_export_builder, correctness_builder, config_generation_builder]
+    if run_profiling:
+        builders.append(profiling_builder)
+    pipeline_manager = PipelineManager(builders)
+    return PackageDescriptor.build(pipeline_manager, config)

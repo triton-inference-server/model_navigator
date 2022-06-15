@@ -151,6 +151,7 @@ class AnalysisConfigGenerator(BaseConfigGenerator):
             "model_name",
             "batch_size",
             "concurrency",
+            "max_batch_size",
             "model_config_path",
             "instance_group",
             "satisfies_constraints",

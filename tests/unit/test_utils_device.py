@@ -62,8 +62,14 @@ class MockCuda:
         return 0
 
 
+def test_no_gpus():
+    for v in [[], None]:
+        gpus = device.get_gpus(v)
+        assert len(gpus) == 0
+
+
 def test_all_1():
-    for v in [[], None, ["all"]]:
+    for v in [["all"]]:
         with patch("model_navigator.utils.device.cuda", new=MockCuda(1)) as mock_cuda:
             gpus = device.get_gpus(v)
             assert len(gpus) == 1
@@ -96,7 +102,7 @@ def test_some_uuid_8():
 
 
 def test_all_8():
-    for v in [[], None, ["all"]]:
+    for v in [["all"]]:
         with patch("model_navigator.utils.device.cuda", new=MockCuda(8)) as mock_cuda:
             gpus = device.get_gpus(v)
             assert len(gpus) == 8
@@ -118,10 +124,10 @@ def test_invalid_uuid_8():
 
 def test_twice():
     with patch("model_navigator.utils.device.cuda", new=MockCuda(1)) as mock_cuda:
-        gpus = device.get_gpus()
+        gpus = device.get_gpus(gpus=[0])
         assert len(gpus) == 1
         assert gpus[0] == f"GPU-{str(mock_cuda.devices[0])}"
 
-        gpus = device.get_gpus()
+        gpus = device.get_gpus(gpus=[0])
         assert len(gpus) == 1
         assert gpus[0] == f"GPU-{str(mock_cuda.devices[0])}"

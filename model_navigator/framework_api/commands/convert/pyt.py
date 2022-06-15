@@ -18,10 +18,13 @@ from typing import Dict, Optional, Tuple
 import numpy as np
 import torch  # pytype: disable=import-error
 
+from model_navigator.converter.config import TensorRTPrecision, TensorRTPrecisionMode
+from model_navigator.framework_api.commands.convert.base import ConvertBase
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.export.pyt import ExportPYT2TorchScript
 from model_navigator.framework_api.common import TensorMetadata
-from model_navigator.framework_api.exceptions import UserErrorContext
+from model_navigator.framework_api.exceptions import UserError, UserErrorContext
+from model_navigator.framework_api.logger import LOGGER, get_pytorch_loggers_names
 from model_navigator.framework_api.utils import (
     JitType,
     format_to_relative_model_path,
@@ -31,8 +34,10 @@ from model_navigator.framework_api.utils import (
 from model_navigator.model import Format
 
 
-class ConvertTorchScript2TorchTensorRT(Command):
-    def __init__(self, target_jit_type: JitType, requires: Tuple[Command, ...] = ()):
+class ConvertTorchScript2TorchTensorRT(ConvertBase):
+    def __init__(
+        self, target_jit_type: JitType, target_precision: TensorRTPrecision, requires: Tuple[Command, ...] = ()
+    ):
         super().__init__(
             name="Convert TorschScript to TorchTensorRT",
             command_type=CommandType.CONVERT,
@@ -40,18 +45,53 @@ class ConvertTorchScript2TorchTensorRT(Command):
             requires=requires,
         )
         self.target_jit_type = target_jit_type
+        self.target_precision = target_precision
+
+    @staticmethod
+    def _get_precision(precision, precision_mode):
+        if precision_mode == TensorRTPrecisionMode.HIERARCHY:
+            enabled_precisions = {
+                TensorRTPrecision.FP32: [torch.float],
+                TensorRTPrecision.TF32: [torch.float],
+                TensorRTPrecision.FP16: [torch.float, torch.half],
+                TensorRTPrecision.INT8: [torch.float, torch.half, torch.int8],
+            }[precision]
+        elif precision_mode == TensorRTPrecisionMode.SINGLE:
+            enabled_precisions = {
+                TensorRTPrecision.FP32: [torch.float],
+                TensorRTPrecision.TF32: [torch.float],
+                TensorRTPrecision.FP16: [torch.half],
+                TensorRTPrecision.INT8: [torch.int8],
+            }[precision]
+        else:
+            raise UserError(
+                f"Unsupported precision mode {precision_mode}. Only {TensorRTPrecisionMode.HIERARCHY} and "
+                "{TensorRTPrecisionMode.SINGLE} are allowed"
+            )
+        return {
+            "enabled_precisions": enabled_precisions,
+            "disable_tf32": precision == TensorRTPrecision.FP32,
+        }
 
     def get_output_relative_path(self) -> Path:
-        return format_to_relative_model_path(self.target_format, jit_type=self.target_jit_type)
+        return format_to_relative_model_path(
+            self.target_format, jit_type=self.target_jit_type, precision=self.target_precision
+        )
+
+    def _get_loggers(self) -> list:
+        return get_pytorch_loggers_names()
 
     def __call__(
         self,
         workdir: Path,
         model_name: str,
         input_metadata: TensorMetadata,
+        precision_mode: TensorRTPrecisionMode,
+        max_workspace_size: int,
         trt_dynamic_axes: Optional[Dict[str, Dict[int, Tuple[int, int, int]]]] = None,
         **kwargs,
     ) -> Optional[Path]:
+        LOGGER.info("Conversion TorchScript to TorchTensorRT started")
         import torch_tensorrt  # pytype: disable=import-error
 
         exported_model_path = (
@@ -92,7 +132,13 @@ class ConvertTorchScript2TorchTensorRT(Command):
 
         model = torch.jit.load(exported_model_path.as_posix())
         with UserErrorContext():
-            tr_model_compiled = torch_tensorrt.compile(model, inputs=model_input_shapes)
+            tr_model_compiled = torch_tensorrt.compile(
+                module=model,
+                inputs=model_input_shapes,
+                workspace_size=max_workspace_size,
+                truncate_long_and_double=True,
+                **self._get_precision(self.target_precision, precision_mode),
+            )
             tr_model_compiled.save(converted_model_path.as_posix())
 
         return self.get_output_relative_path()

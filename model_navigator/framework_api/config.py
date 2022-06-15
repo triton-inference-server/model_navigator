@@ -17,7 +17,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union, get_args, get_origin
 
-from model_navigator.converter.config import TensorRTPrecision
+from model_navigator.converter.config import TensorRTPrecision, TensorRTPrecisionMode
+from model_navigator.framework_api.commands.performance import ProfilerConfig
 from model_navigator.framework_api.common import DataObject, SizedDataLoader, TensorMetadata
 from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.utils import Framework, JitType, RuntimeProvider, pad_string
@@ -45,10 +46,12 @@ class Config(DataObject):
     max_batch_size: Optional[int] = None
     input_metadata: Optional[TensorMetadata] = None
     output_metadata: Optional[TensorMetadata] = None
+    profiler_config: Optional[ProfilerConfig] = None
 
     # TRT params
     max_workspace_size: Optional[int] = None
     target_precisions: Optional[Tuple[TensorRTPrecision, ...]] = None
+    precision_mode: Optional[TensorRTPrecisionMode] = None
     trt_dynamic_axes: Optional[Dict[str, Dict[int, Tuple[int, int, int]]]] = None
 
     # TF-TRT params
@@ -96,7 +99,7 @@ class Config(DataObject):
             object.__setattr__(self, "workdir", Path(self.workdir))
 
     def _log(self):
-        LOGGER.info(pad_string("Config parameters"))
+        LOGGER.debug(pad_string("Config parameters"))
         log_dict = self.to_dict(
             filter_fields=[
                 "model",
@@ -107,7 +110,7 @@ class Config(DataObject):
             ],
             parse=True,
         )
-        LOGGER.info(log_dict)
+        LOGGER.debug(log_dict)
 
     def __post_init__(self):
         self._check_types()

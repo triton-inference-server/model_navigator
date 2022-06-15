@@ -9,7 +9,7 @@ Feature: Model Profiling over backend parameters
         Given the TorchScript/simple model with simple config file
         And the model_repository config parameter is set to profile/my-model-store
 
-    Scenario: User uses Model Analyzer Configuration Search over Multiple Models
+    Scenario: User uses Model Analyzer Configuration Search over Backend Parameters
         Given the max_batch_size config parameter is set to 2
         And the model_name config parameter is set to my_model
         And the triton_backend_parameters config parameter is set to param1=a param2=2

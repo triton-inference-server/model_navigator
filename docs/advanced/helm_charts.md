@@ -108,7 +108,7 @@ chart_name: str
 # NVIDIA framework and Triton container version to use. For details refer to
 # https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html and
 # https://docs.nvidia.com/deeplearning/triton-inference-server/release-notes/index.html for details).
-[ container_version: str | default: 22.04 ]
+[ container_version: str | default: 22.05 ]
 
 # Custom framework docker image to use. If not provided
 # nvcr.io/nvidia/<framework>:<container_version>-<framework_and_python_version> will be used
@@ -162,10 +162,6 @@ chart_name: str
 # Enable explicit precision for TensorRT builder when model already contain quantized layers.
 [ tensorrt_explicit_precision: boolean ]
 
-# Enable strict types in TensorRT, forcing it to choose tactics based on the layer precision set, even if another
-# precision is faster.
-[ tensorrt_strict_types: boolean ]
-
 # Enable optimizations for sparse weights in TensorRT.
 [ tensorrt_sparse_weights: boolean ]
 
@@ -214,7 +210,7 @@ chart_name: str
 [ batching: choice(disabled, static, dynamic) | default: static ]
 
 # Select Backend Accelerator used to serve the model.
-[ backend_accelerator: choice(none, amp, trt) ]
+[ backend_accelerator: choice(none, amp, trt, openvino) ]
 
 # Target model precision for TensorRT acceleration.
 [ tensorrt_precision: choice(int8, fp16, fp32) ]

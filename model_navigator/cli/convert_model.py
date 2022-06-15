@@ -29,6 +29,7 @@ from model_navigator.cli.spec import (
     DatasetProfileConfigCli,
     ModelConfigCli,
     ModelSignatureConfigCli,
+    TritonModelInstancesConfigCli,
 )
 from model_navigator.common.config import BatchingConfig
 from model_navigator.constants import MODEL_NAVIGATOR_DIR
@@ -48,10 +49,11 @@ from model_navigator.exceptions import ModelNavigatorCliException, ModelNavigato
 from model_navigator.log import init_logger, log_dict
 from model_navigator.model import Format, Model, ModelConfig, ModelSignatureConfig
 from model_navigator.results import ResultsStore, State
+from model_navigator.triton import DeviceKind, TritonModelInstancesConfig
 from model_navigator.utils import Workspace
 from model_navigator.utils.cli import clean_workspace_if_needed, common_options, options_from_config
 from model_navigator.utils.config import BaseConfig, YamlConfigFile
-from model_navigator.utils.device import get_gpus
+from model_navigator.utils.device import get_available_device_kinds, get_gpus
 from model_navigator.utils.docker import DockerBuilder, DockerImage
 from model_navigator.utils.environment import EnvironmentStore, get_env
 from model_navigator.utils.nav_package import NavPackage
@@ -77,7 +79,7 @@ class ConversionSetConfig(BaseConfig):
     target_formats: List[Format] = dataclasses.field(default_factory=lambda: TRITON_SUPPORTED_FORMATS)
 
     # ONNX related
-    onnx_opsets: List[int] = dataclasses.field(default_factory=lambda: [13])
+    onnx_opsets: List[int] = dataclasses.field(default_factory=lambda: [14])
 
     # TRT related
     tensorrt_precisions: List[TensorRTPrecision] = dataclasses.field(
@@ -85,7 +87,6 @@ class ConversionSetConfig(BaseConfig):
     )
     tensorrt_precisions_mode: TensorRTPrecisionMode = TensorRTPrecisionMode.HIERARCHY
     tensorrt_explicit_precision: bool = False
-    tensorrt_strict_types: bool = False
     tensorrt_sparse_weights: bool = False
     tensorrt_max_workspace_size: int = DEFAULT_TENSORRT_MAX_WORKSPACE_SIZE
 
@@ -104,7 +105,6 @@ class ConversionSetConfig(BaseConfig):
                 tensorrt_precisions_mode=config.tensorrt_config.precision_mode,
                 tensorrt_explicit_precision=config.tensorrt_config.explicit_precision,
                 tensorrt_sparse_weights=config.tensorrt_config.sparse_weights,
-                tensorrt_strict_types=config.tensorrt_config.strict_types,
                 tensorrt_max_workspace_size=config.tensorrt_config.max_workspace_size,
             )
 
@@ -115,7 +115,6 @@ class ConversionSetConfig(BaseConfig):
             tensorrt_precisions_mode=config.tensorrt_config.precision_mode,
             tensorrt_explicit_precision=config.tensorrt_config.explicit_precision,
             tensorrt_sparse_weights=config.tensorrt_config.sparse_weights,
-            tensorrt_strict_types=config.tensorrt_config.strict_types,
             tensorrt_max_workspace_size=config.tensorrt_config.max_workspace_size,
         )
 
@@ -130,6 +129,7 @@ def _run_locally(
     batching_config: BatchingConfig,
     comparator_config: ComparatorConfig,
     dataset_profile_config: DatasetProfileConfig,
+    device_kinds: List[DeviceKind],
     package: Optional[NavPackage],
     random_seed: int,
     verbose: bool = False,
@@ -156,6 +156,7 @@ def _run_locally(
             signature_config=model_signature_config,
             comparator_config=comparator_config,
             dataloader=dataloader,
+            device_kinds=device_kinds,
         )
 
         results = list(results)
@@ -174,9 +175,10 @@ def _run_in_docker(
     batching_config: Optional[BatchingConfig] = None,
     comparator_config: Optional[ComparatorConfig] = None,
     dataset_profile_config: Optional[DatasetProfileConfig] = None,
+    instances_config: Optional[TritonModelInstancesConfig] = None,
     framework_docker_image: str,
     model_format: Format,
-    gpus: Optional[List[str]] = None,
+    devices: List[str],
     verbose: bool = False,
     override_conversion_container: bool = False,
     package: Optional[NavPackage],
@@ -192,6 +194,7 @@ def _run_in_docker(
         config_file.save_config(batching_config)
         config_file.save_config(comparator_config)
         config_file.save_config(dataset_profile_config)
+        config_file.save_config(instances_config)
 
     framework = FORMAT2FRAMEWORK[model_format]
     from docker.utils import parse_repository_tag
@@ -228,19 +231,13 @@ def _run_in_docker(
     workspace_flags += " --override-workspace" if override_workspace else ""
     cmd = (
         "bash -c 'model-navigator convert "
-        f"{package.path.as_posix() if package else '--config-path ' + config_path.as_posix()} "
+        f"{package.path.as_posix() if package else ''} "
+        f"--config-path {config_path.as_posix()} "
         f"--launch-mode local "
         f"{verbose_flag} "
         f"{workspace_flags} "
         "'"
     )
-    gpus = get_gpus(gpus)
-    from docker.types import DeviceRequest
-
-    if gpus:
-        devices = [DeviceRequest(device_ids=[gpus[0]], capabilities=[["gpu"]])]
-    else:
-        devices = []
 
     cwd = Path.cwd()
 
@@ -332,6 +329,7 @@ def convert(
     batching_config = BatchingConfig.from_dict(kwargs)
     comparator_config = ComparatorConfig.from_dict(kwargs)
     dataset_profile_config = DatasetProfileConfig.from_dict(kwargs)
+    instances_config = TritonModelInstancesConfig.from_dict(kwargs)
 
     src_model = Model(
         name=src_model_config.model_name,
@@ -349,7 +347,16 @@ def convert(
 
     workspace = Workspace(workspace_path)
 
+    gpus = get_gpus(gpus)
+    device_kinds = get_available_device_kinds(gpus, instances_config)
     if launch_mode == ConversionLaunchMode.DOCKER:
+        if DeviceKind.GPU in device_kinds:
+            from docker.types import DeviceRequest
+
+            devices = [DeviceRequest(device_ids=[gpus[0]], capabilities=[["gpu"]])]
+        else:
+            devices = []
+
         conversion_results = _run_in_docker(
             workspace=workspace,
             override_workspace=override_workspace,
@@ -359,9 +366,10 @@ def convert(
             batching_config=batching_config,
             comparator_config=comparator_config,
             dataset_profile_config=dataset_profile_config,
+            instances_config=instances_config,
             framework_docker_image=framework_docker_image,
             model_format=src_model.format,
-            gpus=gpus,
+            devices=devices,
             verbose=verbose,
             override_conversion_container=override_conversion_container,
             package=package,
@@ -396,6 +404,7 @@ def convert(
             batching_config=batching_config,
             comparator_config=comparator_config,
             dataset_profile_config=dataset_profile_config,
+            device_kinds=device_kinds,
             verbose=verbose,
             package=package,
             random_seed=kwargs.get("random_seed"),
@@ -438,6 +447,7 @@ def convert(
 @options_from_config(ComparatorConfig, ComparatorConfigCli)
 @options_from_config(BatchingConfig, BatchingConfigCli)
 @options_from_config(DatasetProfileConfig, DatasetProfileConfigCli)
+@options_from_config(TritonModelInstancesConfig, TritonModelInstancesConfigCli)
 @click.pass_context
 def convert_cmd(
     ctx,

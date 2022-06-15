@@ -14,9 +14,11 @@
 
 import time
 from collections import OrderedDict
+from pathlib import Path
 from typing import Mapping
 
 import numpy
+import tensorflow as tf  # pytype: disable=import-error
 from polygraphy.backend.base import BaseRunner
 from polygraphy.common import TensorMetadata
 
@@ -31,7 +33,7 @@ class TFRunner(BaseRunner):
     def __init__(self, model, input_metadata, output_names=None, name=None):
         """
         Args:
-            model (tensorflow.keras.Model):
+            model (tensorflow.keras.Model) or (str | pathlib.Path):
             input_metadata (TensorMetadata): Mapping of input names to their data types and shapes.
             output_names (List[str]):
                     A list of output names of the model. This information is used by the
@@ -43,7 +45,8 @@ class TFRunner(BaseRunner):
                     A runner count and timestamp will be appended to this prefix.
         """
         super().__init__(name=name, prefix="tensorflow-runner")
-        self.model = model
+        self._model = model
+        self.model = None
 
         self.input_metadata = TensorMetadata()
         for name, spec in input_metadata.items():
@@ -52,6 +55,15 @@ class TFRunner(BaseRunner):
 
     def get_input_metadata_impl(self):
         return self.input_metadata
+
+    def activate_impl(self):
+        if isinstance(self._model, (str, Path)):
+            self.model = tf.keras.models.load_model(str(self._model))
+        else:
+            self.model = self._model
+
+    def deactivate_impl(self):
+        self.model = None
 
     def infer_impl(self, feed_dict):
 
@@ -89,7 +101,7 @@ class TFTRTRunner(BaseRunner):
     def __init__(self, model, input_metadata, output_names, name=None):
         """
         Args:
-            model (tensorflow.keras.Model):
+            model (tensorflow.keras.Model) or (str | pathlib.Path):
             input_metadata (TensorMetadata): Mapping of input names to their data types and shapes.
             output_names (List[str]):
                     A list of output names of the model. This information is used by the
@@ -100,13 +112,23 @@ class TFTRTRunner(BaseRunner):
                     The human-readable name prefix to use for this runner.
                     A runner count and timestamp will be appended to this prefix.
         """
-        super().__init__(name=name, prefix="tensorflow-runner")
-        self.model = model
+        super().__init__(name=name, prefix="tensorflow-trt-runner")
+        self._model = model
+        self.model = None
 
         self.input_metadata = TensorMetadata()
         for name, spec in input_metadata.items():
             self.input_metadata.add(name, spec.dtype, spec.shape)
         self.output_names = output_names
+
+    def activate_impl(self):
+        if isinstance(self._model, (str, Path)):
+            self.model = tf.keras.models.load_model(str(self._model))
+        else:
+            self.model = self._model
+
+    def deactivate_impl(self):
+        self.model = None
 
     def get_input_metadata_impl(self):
         return self.input_metadata

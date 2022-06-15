@@ -346,7 +346,7 @@ model_path: path
 # NVIDIA framework and Triton container version to use. For details refer to
 # https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html and
 # https://docs.nvidia.com/deeplearning/triton-inference-server/release-notes/index.html for details).
-[ container_version: str | default: 22.04 ]
+[ container_version: str | default: 22.05 ]
 
 # Custom framework docker image to use. If not provided
 # nvcr.io/nvidia/<framework>:<container_version>-<framework_and_python_version> will be used
@@ -393,7 +393,7 @@ model_path: path
 [ target_formats: list[str] | default: ['tf-trt', 'tf-savedmodel', 'onnx', 'trt', 'torchscript', 'torch-trt'] ]
 
 # Generate an ONNX graph that uses only ops available in a given opset.
-[ onnx_opsets: list[integer] | default: [13] ]
+[ onnx_opsets: list[integer] | default: [14] ]
 
 # Configure TensorRT builder for precision layer selection.
 [ tensorrt_precisions: list[choice(int8, fp16, fp32, tf32)] | default: ['fp16', 'tf32'] ]
@@ -406,10 +406,6 @@ model_path: path
 
 # Enable explicit precision for TensorRT builder when model already contain quantized layers.
 [ tensorrt_explicit_precision: boolean ]
-
-# Enable strict types in TensorRT, forcing it to choose tactics based on the layer precision set, even if another
-# precision is faster.
-[ tensorrt_strict_types: boolean ]
 
 # Enable optimizations for sparse weights in TensorRT.
 [ tensorrt_sparse_weights: boolean ]
@@ -451,6 +447,10 @@ model_path: path
 # Map of features names and numpy dtypes visible in the dataset.
 # Format: --dtypes <input0>=<dtype> <input1>=<dtype> <default_dtype>
 [ dtypes: list[str] ]
+
+# Mapping of device kind to model instances count on a single device. Available devices: [cpu|gpu].
+# Format: --engine-count-per-device <kind>=<count>
+[ engine_count_per_device: list[str] ]
 
 ```
 [comment]: <> (END_CONFIG_LIST)

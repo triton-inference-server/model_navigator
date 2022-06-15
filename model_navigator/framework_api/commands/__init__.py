@@ -12,4 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from model_navigator.framework_api.commands import convert, export  # noqa: F401
+from model_navigator.framework_api.commands import (  # noqa: F401
+    config_cli,
+    convert,
+    correctness,
+    export,
+    infer_metadata,
+    load,
+    performance,
+)

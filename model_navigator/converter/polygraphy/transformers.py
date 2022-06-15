@@ -99,7 +99,6 @@ def _run_polygraphy(
     config = CreateConfig(
         max_workspace_size=tensorrt_config.max_workspace_size,
         profiles=profiles,
-        strict_types=tensorrt_config.strict_types,
         sparse_weights=tensorrt_config.sparse_weights,
         **{precision: True for precision in trt_precision_flags},
     )

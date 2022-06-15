@@ -13,34 +13,37 @@
 # limitations under the License.
 
 import shutil
-from typing import List
+from typing import TYPE_CHECKING, Callable, List, Sequence
 
 from model_navigator.framework_api.config import Config
 from model_navigator.framework_api.logger import LOGGER, add_log_file_handler
-from model_navigator.framework_api.package_descriptor import PackageDescriptor
 from model_navigator.framework_api.pipelines.pipeline import Pipeline
 from model_navigator.framework_api.utils import Indent, Status, get_package_path, pad_string
 
+if TYPE_CHECKING:
+    from model_navigator.framework_api.package_descriptor import PackageDescriptor
+
 
 class PipelineManager:
-    def _get_pipeline(self, config) -> Pipeline:
-        raise NotImplementedError
+    def __init__(self, pipeline_builders: Sequence[Callable[[Config, "PackageDescriptor"], Pipeline]]) -> None:
+        self._pipeline_builders = pipeline_builders
+        self._pipelines: List[Pipeline] = []
 
-    def build(self, config) -> PackageDescriptor:
+    def run(self, config: Config, package_descriptor: "PackageDescriptor") -> Sequence[Pipeline]:
         self._validate(config)
         self._prepare_package_dir(config)
         self._prepare_log_file(config)
 
-        pipelines = [self._get_pipeline(config)]
+        additional_params = {}
+        for pipeline_builder in self._pipeline_builders:
+            pipeline = pipeline_builder(config, package_descriptor)
+            additional_params = pipeline(config=config, package_descriptor=package_descriptor, **additional_params)
+            self._pipelines.append(pipeline)
+            package_descriptor.save_status_file()
 
-        for pipeline in pipelines:
-            pipeline(config=config)
+        self._log_results()
 
-        self._log_results(pipelines)
-
-        # pytype: disable=bad-return-type
-        return PackageDescriptor.from_pipelines(pipelines, config)
-        # pytype: enable=bad-return-type
+        return self._pipelines
 
     @staticmethod
     def _prepare_package_dir(config: Config):
@@ -64,10 +67,10 @@ class PipelineManager:
     def _get_formatted_missing_paramter(param_name: str, param_desc: str):
         return f"{Indent.SINGLE}Missing parameter: {param_name}: {param_desc}"
 
-    def _log_results(self, pipelines: List[Pipeline]):
+    def _log_results(self):
         LOGGER.info(pad_string("Framework Navigator summary"))
-        for pipeline in pipelines:
-            LOGGER.info(pad_string(f"Pipeline {pipeline.name} summary"))
+        for pipeline in self._pipelines:
+            LOGGER.info(pad_string(f"Pipeline '{pipeline.name}' summary"))
             for command in pipeline.commands:
                 command_name_and_details = f"[{command.status.value:^4}] {command.get_formatted_command_details()}"
                 if command.status == Status.OK:
@@ -77,4 +80,4 @@ class PipelineManager:
                 else:
                     LOGGER.warning(command_name_and_details)
                 for param_name, param_desc in command.missing_params.items():
-                    LOGGER.info(self._get_formatted_missing_paramter(param_name, param_desc))
+                    LOGGER.info(PipelineManager._get_formatted_missing_paramter(param_name, param_desc))

@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import pathlib
-import shutil
 from typing import Dict, Tuple
 
 import click
@@ -32,12 +31,6 @@ def _parse_model_path(ctx, param, value) -> pathlib.Path:
     except Exception:
         pass
 
-    package, relpath = value
-    try:
-        return package.vfs_path_to_member(relpath)
-    except NotImplementedError:
-        pass
-
     # the package does not make the model accessible in the filesystem,
     # so copy the model to the workspace.
     # We need to do this, because the return value should be a path,
@@ -46,16 +39,9 @@ def _parse_model_path(ctx, param, value) -> pathlib.Path:
     # can be assumed to have sufficient space is the workspace directory,
     # so use it. We have to be careful to make sure that the workspace
     # is not cleaned up elsewhere, before the actual processing starts
+    package, relpath = value
     workspace = Workspace(ctx.params["workspace_path"])
-    dstpath = workspace.path / ".input_data" / "input_model" / relpath
-    if dstpath.exists():
-        # when launched inside docker by convert_model, the copy should be already there
-        return dstpath
-
-    dstpath.parent.mkdir(parents=True, exist_ok=True)
-    with dstpath.open("wb") as dst, package.open(relpath) as src:
-        shutil.copyfileobj(src, dst)
-    return dstpath
+    return package.vfs_path_to_member(relpath, workspace)
 
 
 class ModelConfigCli:
@@ -287,9 +273,6 @@ class ConversionSetConfigCli:
     tensorrt_explicit_precision = CliSpec(
         help="Enable explicit precision for TensorRT builder when model already contain quantized layers."
     )
-    tensorrt_strict_types = CliSpec(
-        help="Enable strict types in TensorRT, forcing it to choose tactics based on the layer precision set, even if another precision is faster."
-    )
     tensorrt_sparse_weights = CliSpec(help="Enable optimizations for sparse weights in TensorRT.")
     tensorrt_max_workspace_size = CliSpec(
         help="The maximum GPU memory in bytes the model can use temporarily during execution for TensorRT acceleration.",
@@ -328,9 +311,6 @@ class ConversionSetHelmChartConfigCli:
     )
     tensorrt_explicit_precision = CliSpec(
         help="Enable explicit precision for TensorRT builder when model already contain quantized layers."
-    )
-    tensorrt_strict_types = CliSpec(
-        help="Enable strict types in TensorRT, forcing it to choose tactics based on the layer precision set, even if another precision is faster."
     )
     tensorrt_sparse_weights = CliSpec(help="Enable optimizations for sparse weights in TensorRT.")
     tensorrt_max_workspace_size = CliSpec(
@@ -514,11 +494,12 @@ def _parse_objectives(ctx, param, value):
 def parse_instance_counts(ctx, param, value):
     if value:
         if isinstance(value, dict):  # from config file
-            value = {name: list(count) for name, count in value.items()}
+            value = {DeviceKind(name): list(count) for name, count in value.items()}
         elif isinstance(value, list):  # from cli
             parsed_value = {}
             for item in value:
                 input_name, count = item.split("=")
+                input_name = DeviceKind(input_name)
 
                 count = list(map(int, count.split(",")))
                 parsed_value[input_name] = count
@@ -605,6 +586,10 @@ class ModelAnalyzerProfileConfigCli:
         "\nForces manual config search. "
         "\nFormat: --config-search-backend-parameters <param_name1>=<value1>,<value2> <param_name2>=<value3> ...",
         parse_and_verify_callback=parse_backend_parameters,
+    )
+    config_search_early_exit_enable = CliSpec(
+        help="Enable early exit on profiling when configuration not bring performance improvement. "
+        "\n  When automatic config search is used, the early exit is enabled by default.",
     )
 
 

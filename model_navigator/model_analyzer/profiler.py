@@ -169,8 +169,14 @@ class ProfileConfigGenerator(BaseConfigGenerator):
             isinstance(models_list, dict) and models_list[model_name].get("model_config_parameters")
             for model_name in models_list
         )
+        if manual_config_search:
+            early_exit_flag = self._profile_config.config_search_early_exit_enable
+            early_exit_status = "enabled" if early_exit_flag else "disabled"
+            LOGGER.info(f"Manual config search for profiling with early exit {early_exit_status}.")
+        else:
+            early_exit_flag = True
+            LOGGER.info("Automatic config search for profiling with early exit enabled.")
 
-        # https://github.com/triton-inference-server/model_analyzer/blob/r22.02/docs/config.md
         config = {
             "run_config_search_disable": manual_config_search,
             "profile_models": models_list,
@@ -193,6 +199,7 @@ class ProfileConfigGenerator(BaseConfigGenerator):
             "verbose": self._verbose,
             "perf_output": self._verbose,
             "triton_output_path": self.triton_log_path.as_posix(),
+            "early_exit_enable": early_exit_flag,
         }
 
         if self._perf_measurement_config.perf_analyzer_path:

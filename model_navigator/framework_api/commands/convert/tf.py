@@ -16,23 +16,21 @@ import subprocess
 from pathlib import Path
 from typing import List, Optional, Tuple
 
+import tensorflow as tf  # pytype: disable=import-error
 from tensorflow.python.compiler.tensorrt import trt_convert as trtc  # pytype: disable=import-error
 
 from model_navigator.converter.config import TensorRTPrecision
+from model_navigator.framework_api.commands.convert.base import ConvertBase
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.export.tf import ExportTF2SavedModel
 from model_navigator.framework_api.common import Sample, TensorMetadata
 from model_navigator.framework_api.exceptions import UserErrorContext
-from model_navigator.framework_api.utils import (
-    ArtifactType,
-    format_to_relative_model_path,
-    get_package_path,
-    sample_to_tuple,
-)
+from model_navigator.framework_api.logger import LOGGER
+from model_navigator.framework_api.utils import format_to_relative_model_path, get_package_path, sample_to_tuple
 from model_navigator.model import Format
 
 
-class ConvertSavedModel2ONNX(Command):
+class ConvertSavedModel2ONNX(ConvertBase):
     def __init__(self, requires: Tuple[Command, ...] = ()):
         # pytype: disable=wrong-arg-types
         super().__init__(
@@ -55,6 +53,7 @@ class ConvertSavedModel2ONNX(Command):
         output_metadata: TensorMetadata,
         **kwargs,
     ):
+        LOGGER.info("SavedModel to ONNX conversion started")
         exported_model_path = get_package_path(workdir, model_name) / ExportTF2SavedModel().get_output_relative_path()
         converted_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
 
@@ -74,12 +73,13 @@ class ConvertSavedModel2ONNX(Command):
         ]
 
         with UserErrorContext():
-            subprocess.run(convert_cmd, check=True)
+            output = subprocess.run(convert_cmd, check=True, capture_output=True)
+            self._log_subprocess_output(output=output)
 
         return self.get_output_relative_path()
 
 
-class ConvertSavedModel2TFTRT(Command):
+class ConvertSavedModel2TFTRT(ConvertBase):
     def __init__(self, target_precision: TensorRTPrecision, requires: Tuple[Command, ...] = ()):
         # pytype: disable=wrong-arg-types
         super().__init__(
@@ -90,6 +90,9 @@ class ConvertSavedModel2TFTRT(Command):
         )
         self.target_precision = target_precision
         # pytype: enable=wrong-arg-types
+
+    def _get_loggers(self) -> list:
+        return [tf.get_logger()]
 
     def get_output_relative_path(self) -> Path:
         return format_to_relative_model_path(self.target_format, precision=self.target_precision)
@@ -103,7 +106,6 @@ class ConvertSavedModel2TFTRT(Command):
         conversion_samples: List[Sample],
         **kwargs,
     ) -> Optional[Path]:
-        results = {}
         # for precision in target_precisions:
 
         # generate samples as tuples for TF-TRT converter
@@ -128,7 +130,5 @@ class ConvertSavedModel2TFTRT(Command):
             converter.convert()
             converter.build(_dataloader)
             converter.save(converted_model_path.as_posix())
-
-        results[f"{ArtifactType.CONVERTED_MODEL_PATH.value}_{self.target_precision.value}"] = converted_model_path
 
         return self.get_output_relative_path()

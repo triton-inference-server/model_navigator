@@ -20,6 +20,7 @@ limitations under the License.
 
 - [Overview](#overview)
 - [Model Config sweeping process](#model-config-sweeping-process)
+- [Early Exit Enable](#early-exit-enable)
 - [Profile Results](#profile-results)
 - [The `profile` Command](#the-profile-command)
 - [CLI and YAML Config Options](#cli-and-yaml-config-options)
@@ -76,6 +77,16 @@ and custom backend parameters of Model Config settings with defined parameter va
 defined level of [concurrent](https://github.com/triton-inference-server/server/blob/master/docs/perf_analyzer.md#request-concurrency) requests.
 
 Learn more about the Triton Model Analyzer [Model Config search here](https://github.com/triton-inference-server/model_analyzer/blob/main/docs/config_search.md).
+
+## Early Exit Enable
+
+The default behavior of using the Model Analyzer in profiling stage is to run the automatic mode. In that case the
+passing early exit flag is enabled by default.
+
+This option reduce also the profiling time significantly stopping when there is no more performance increase.
+
+In case of using manual search mode, the default behavior would swipe through all the possible configuration without the
+automatic stop. In order to enable early exit pass `--config-search-early-exit-enable` to `profile` or `optimize` commands.
 
 ## Profile Results
 
@@ -150,7 +161,7 @@ model_repository: path
 # NVIDIA framework and Triton container version to use. For details refer to
 # https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html and
 # https://docs.nvidia.com/deeplearning/triton-inference-server/release-notes/index.html for details).
-[ container_version: str | default: 22.04 ]
+[ container_version: str | default: 22.05 ]
 
 # Custom framework docker image to use. If not provided
 # nvcr.io/nvidia/<framework>:<container_version>-<framework_and_python_version> will be used
@@ -240,6 +251,10 @@ model_repository: path
 # Forces manual config search.
 # Format: --config-search-backend-parameters <param_name1>=<value1>,<value2> <param_name2>=<value3> ...
 [ config_search_backend_parameters: list[str] ]
+
+# Enable early exit on profiling when configuration not bring performance improvement.
+# When automatic config search is used, the early exit is enabled by default.
+[ config_search_early_exit_enable: boolean ]
 
 # Map of features names and minimum shapes visible in the dataset.
 # Format: --min-shapes <input0>=D0,D1,..,DN .. <inputN>=D0,D1,..,DN

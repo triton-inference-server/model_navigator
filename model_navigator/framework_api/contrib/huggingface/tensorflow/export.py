@@ -22,6 +22,7 @@ from transformers.models.gpt2 import GPT2Tokenizer, GPT2TokenizerFast
 from transformers.onnx.config import OnnxConfig
 
 from model_navigator.converter.config import TensorRTPrecision
+from model_navigator.framework_api.commands.performance import ProfilerConfig
 from model_navigator.framework_api.common import SizedDataLoader
 from model_navigator.framework_api.config import Config
 from model_navigator.framework_api.contrib.huggingface.datasets import (
@@ -35,7 +36,14 @@ from model_navigator.framework_api.contrib.huggingface.tensorflow.utils import (
     get_pretrained_model_from_config,
 )
 from model_navigator.framework_api.package_descriptor import PackageDescriptor
-from model_navigator.framework_api.pipelines import TFPipelineManager
+from model_navigator.framework_api.pipelines.builders import (
+    config_generation_builder,
+    correctness_builder,
+    preprocessing_builder,
+    profiling_builder,
+    tensorflow_export_builder,
+)
+from model_navigator.framework_api.pipelines.pipeline_manager import PipelineManager
 from model_navigator.framework_api.utils import (
     Framework,
     RuntimeProvider,
@@ -82,6 +90,8 @@ def export(
     padding: Union[bool, str] = True,
     max_sequence_len: Optional[int] = None,
     onnx_runtimes: Optional[Union[Union[str, RuntimeProvider], Tuple[Union[str, RuntimeProvider], ...]]] = None,
+    run_profiling: bool = True,
+    profiler_config: Optional[ProfilerConfig] = None,
 ) -> PackageDescriptor:
 
     config = AutoConfig.from_pretrained(model_name)
@@ -162,6 +172,9 @@ def export(
     if onnx_runtimes is None:
         onnx_runtimes = format2runtimes(Format.ONNX)
 
+    if profiler_config is None:
+        profiler_config = ProfilerConfig()
+
     target_formats, target_precisions, onnx_runtimes = (
         parse_enum(target_formats, Format),
         parse_enum(target_precisions, TensorRTPrecision),
@@ -187,7 +200,11 @@ def export(
         _input_names=input_names,
         _output_names=output_names,
         onnx_runtimes=onnx_runtimes,
+        profiler_config=profiler_config,
     )
 
-    pipeline_manager = TFPipelineManager()
-    return pipeline_manager.build(config)
+    builders = [preprocessing_builder, tensorflow_export_builder, correctness_builder, config_generation_builder]
+    if run_profiling:
+        builders.append(profiling_builder)
+    pipeline_manager = PipelineManager(builders)
+    return PackageDescriptor.build(pipeline_manager, config)

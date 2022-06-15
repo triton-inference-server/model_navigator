@@ -18,8 +18,12 @@ from pathlib import Path
 import torch
 
 import model_navigator as nav
+from model_navigator.framework_api.commands.performance import ProfilerConfig
+from model_navigator.utils.device import get_gpus
 
 # pytype: enable=import-error
+
+CUDA_AVAILABLE = bool(get_gpus(["all"]))
 
 
 def check_model_dir(model_dir: Path, format: nav.Format, only_config: bool = False) -> bool:
@@ -66,11 +70,17 @@ def test_pyt_save_load_no_retest():
             override_workdir=True,
             workdir=workdir,
             model_name=model_name,
+            profiler_config=ProfilerConfig(measurement_interval=100),
         )
 
         pkg_desc.set_verified(nav.Format.TENSORRT, nav.RuntimeProvider.TRT, precision=nav.TensorRTPrecision.FP32)
-        pkg_desc.save(nav_package_path)
-        nav.load(nav_package_path, workdir=load_workdir, retest_conversions=False)
+        nav.save(pkg_desc, nav_package_path)
+        nav.load(
+            nav_package_path,
+            workdir=load_workdir,
+            retest_conversions=False,
+            profiler_config=ProfilerConfig(measurement_interval=100),
+        )
 
         assert status_file.is_file()
         assert model_input_dir.is_dir()
@@ -89,14 +99,38 @@ def test_pyt_save_load_no_retest():
         assert check_model_dir(model_dir=loaded_package_dir / "torchscript-trace", format=nav.Format.TORCHSCRIPT)
 
         # Converted formats
-        assert check_model_dir(model_dir=loaded_package_dir / "trt-fp32", format=nav.Format.TENSORRT, only_config=True)
-        assert check_model_dir(
-            model_dir=loaded_package_dir / "torch-trt-script", format=nav.Format.TORCHSCRIPT, only_config=True
+        assert (
+            check_model_dir(model_dir=loaded_package_dir / "trt-fp32", format=nav.Format.TENSORRT, only_config=True)
+            is CUDA_AVAILABLE
         )
-        assert check_model_dir(
-            model_dir=loaded_package_dir / "torch-trt-trace", format=nav.Format.TORCHSCRIPT, only_config=True
+        assert (
+            check_model_dir(
+                model_dir=loaded_package_dir / "torch-trt-script-fp16", format=nav.Format.TORCHSCRIPT, only_config=True
+            )
+            is CUDA_AVAILABLE
         )
-        assert check_model_dir(model_dir=loaded_package_dir / "trt-fp16", format=nav.Format.TENSORRT, only_config=True)
+        assert (
+            check_model_dir(
+                model_dir=loaded_package_dir / "torch-trt-script-fp32", format=nav.Format.TORCHSCRIPT, only_config=True
+            )
+            is CUDA_AVAILABLE
+        )
+        assert (
+            check_model_dir(
+                model_dir=loaded_package_dir / "torch-trt-trace-fp16", format=nav.Format.TORCHSCRIPT, only_config=True
+            )
+            is CUDA_AVAILABLE
+        )
+        assert (
+            check_model_dir(
+                model_dir=loaded_package_dir / "torch-trt-trace-fp32", format=nav.Format.TORCHSCRIPT, only_config=True
+            )
+            is CUDA_AVAILABLE
+        )
+        assert (
+            check_model_dir(model_dir=loaded_package_dir / "trt-fp16", format=nav.Format.TENSORRT, only_config=True)
+            is CUDA_AVAILABLE
+        )
 
 
 def test_pyt_save_load_retest():
@@ -118,11 +152,16 @@ def test_pyt_save_load_retest():
             override_workdir=True,
             workdir=workdir,
             model_name=model_name,
+            profiler_config=ProfilerConfig(measurement_interval=100),
         )
 
         pkg_desc.set_verified(nav.Format.TENSORRT, nav.RuntimeProvider.TRT, precision=nav.TensorRTPrecision.FP32)
-        pkg_desc.save(nav_package_path)
-        nav.load(nav_package_path, workdir=load_workdir)
+        nav.save(pkg_desc, nav_package_path)
+        nav.load(
+            nav_package_path,
+            workdir=load_workdir,
+            profiler_config=ProfilerConfig(measurement_interval=100),
+        )
 
         assert status_file.is_file()
         assert model_input_dir.is_dir()
@@ -139,10 +178,24 @@ def test_pyt_save_load_retest():
         assert check_model_dir(model_dir=loaded_package_dir / "onnx", format=nav.Format.ONNX)
         assert check_model_dir(model_dir=loaded_package_dir / "torchscript-script", format=nav.Format.TORCHSCRIPT)
         assert check_model_dir(model_dir=loaded_package_dir / "torchscript-trace", format=nav.Format.TORCHSCRIPT)
-        assert check_model_dir(model_dir=loaded_package_dir / "torch-trt-script", format=nav.Format.TORCHSCRIPT)
-        assert check_model_dir(model_dir=loaded_package_dir / "torch-trt-trace", format=nav.Format.TORCHSCRIPT)
-        assert check_model_dir(model_dir=loaded_package_dir / "trt-fp16", format=nav.Format.TENSORRT)
-        assert check_model_dir(model_dir=loaded_package_dir / "trt-fp32", format=nav.Format.TENSORRT)
+        assert (
+            check_model_dir(model_dir=loaded_package_dir / "torch-trt-script-fp16", format=nav.Format.TORCHSCRIPT)
+            is CUDA_AVAILABLE
+        )
+        assert (
+            check_model_dir(model_dir=loaded_package_dir / "torch-trt-script-fp32", format=nav.Format.TORCHSCRIPT)
+            is CUDA_AVAILABLE
+        )
+        assert (
+            check_model_dir(model_dir=loaded_package_dir / "torch-trt-trace-fp16", format=nav.Format.TORCHSCRIPT)
+            is CUDA_AVAILABLE
+        )
+        assert (
+            check_model_dir(model_dir=loaded_package_dir / "torch-trt-trace-fp32", format=nav.Format.TORCHSCRIPT)
+            is CUDA_AVAILABLE
+        )
+        assert check_model_dir(model_dir=loaded_package_dir / "trt-fp16", format=nav.Format.TENSORRT) is CUDA_AVAILABLE
+        assert check_model_dir(model_dir=loaded_package_dir / "trt-fp32", format=nav.Format.TENSORRT) is CUDA_AVAILABLE
 
 
 def test_onnx_save_load_retest():
@@ -174,11 +227,16 @@ def test_onnx_save_load_retest():
             override_workdir=True,
             workdir=workdir,
             model_name=model_name,
+            profiler_config=ProfilerConfig(measurement_interval=100),
         )
 
         pkg_desc.set_verified(nav.Format.TENSORRT, nav.RuntimeProvider.TRT, precision=nav.TensorRTPrecision.FP32)
-        pkg_desc.save(nav_package_path)
-        nav.load(nav_package_path, workdir=load_workdir)
+        nav.save(pkg_desc, nav_package_path)
+        nav.load(
+            nav_package_path,
+            workdir=load_workdir,
+            profiler_config=ProfilerConfig(measurement_interval=100),
+        )
 
         assert status_file.is_file()
         assert model_input_dir.is_dir()
@@ -193,5 +251,5 @@ def test_onnx_save_load_retest():
 
         # Output formats
         assert check_model_dir(model_dir=loaded_package_dir / "onnx", format=nav.Format.ONNX)
-        assert check_model_dir(model_dir=loaded_package_dir / "trt-fp16", format=nav.Format.TENSORRT)
-        assert check_model_dir(model_dir=loaded_package_dir / "trt-fp32", format=nav.Format.TENSORRT)
+        assert check_model_dir(model_dir=loaded_package_dir / "trt-fp16", format=nav.Format.TENSORRT) is CUDA_AVAILABLE
+        assert check_model_dir(model_dir=loaded_package_dir / "trt-fp32", format=nav.Format.TENSORRT) is CUDA_AVAILABLE

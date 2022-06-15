@@ -61,14 +61,19 @@ if __name__ == "__main__":
             expected_formats = (
                 "torchscript-script",
                 "torchscript-trace",
+                "trt-fp32",
+                "trt-fp16",
+                "onnx",
             )
         else:
             expected_formats = (
                 "torchscript-script",
                 "torchscript-trace",
                 "onnx",
-                "torch-trt-script",
-                "torch-trt-trace",
+                "torch-trt-trace-fp16",
+                "torch-trt-trace-fp32",
+                "torch-trt-script-fp16",
+                "torch-trt-script-fp32",
                 "trt-fp32",
                 "trt-fp16",
             )
@@ -77,7 +82,7 @@ if __name__ == "__main__":
                 assert (status == nav.Status.OK) == (
                     format in expected_formats
                 ), f"{format} {runtime} status is {status}, but expected formats are {expected_formats}."
-        pkg_desc.save(nav_workdir / f"{model_name}_pyt.nav")
+        nav.save(pkg_desc, nav_workdir / f"{model_name}_pyt.nav")
 
         nav.LOGGER.info(f"{model_name} passed.")
     nav.LOGGER.info("All models passed.")

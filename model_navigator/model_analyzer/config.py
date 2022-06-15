@@ -66,6 +66,7 @@ class ModelAnalyzerProfileConfig(BaseConfig):
     config_search_max_batch_sizes: List[int] = field(default_factory=lambda: [])
     config_search_preferred_batch_sizes: List[List[int]] = field(default_factory=lambda: [])
     config_search_backend_parameters: Dict[str, List[str]] = field(default_factory=lambda: {})
+    config_search_early_exit_enable: bool = False
 
 
 @dataclass

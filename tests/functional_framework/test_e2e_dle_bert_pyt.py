@@ -126,7 +126,7 @@ if __name__ == "__main__":
                     format in expected_formats
                 ), f"{format} {runtime} status is {status}, but expected formats are {expected_formats}."
         try:
-            pkg_desc.save(navigator_workdir / "bert_pyt.nav")
+            nav.save(pkg_desc, navigator_workdir / "bert_pyt.nav")
         except RuntimeError:
             nav.LOGGER.info("Cannot save empty package.")
 

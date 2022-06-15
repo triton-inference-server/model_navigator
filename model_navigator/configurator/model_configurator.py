@@ -13,13 +13,13 @@
 # limitations under the License.
 import itertools
 from enum import Enum
-from typing import Generator
+from typing import Generator, List, Tuple
 
 from model_navigator.configurator.variant import Variant
 from model_navigator.converter import PARAMETERS_SEP
 from model_navigator.model import Model
 from model_navigator.triton import TritonModelOptimizationConfig
-from model_navigator.triton.config import BackendAccelerator, TensorRTOptPrecision
+from model_navigator.triton.config import BackendAccelerator, DeviceKind, TensorRTOptPrecision
 
 MODEL_CONFIG_SEP = "."
 
@@ -28,8 +28,9 @@ class ModelConfigurator:
     accelerators = (None,)
     capture_cuda_graph = (None,)
 
-    def variants(self, model: Model) -> Generator[Variant, None, None]:
-        parameters = [self.accelerators, self.capture_cuda_graph]
+    def variants(self, model: Model, device_kinds: List[DeviceKind]) -> Generator[Variant, None, None]:
+        accelerators = self.backend_accelerators(device_kinds=device_kinds)
+        parameters = [accelerators, self.capture_cuda_graph]
         combinations = itertools.product(*parameters)
         for combination in combinations:
             accelerator, capture_cuda_graph = combination
@@ -60,25 +61,58 @@ class ModelConfigurator:
         suffix = PARAMETERS_SEP.join(variant_names)
         return f"{model_name}{MODEL_CONFIG_SEP}{suffix}"
 
+    def backend_accelerators(self, device_kinds: List[DeviceKind]) -> Tuple:
+        """Implement backend accelerator support based on passed device kinds"""
+        return self.accelerators
+
 
 class TFConfigurator(ModelConfigurator):
-    accelerators = (
-        None,
-        BackendAccelerator.AMP,
+    device_kinds = (
+        DeviceKind.CPU,
+        DeviceKind.GPU,
     )
+
+    def backend_accelerators(self, device_kinds: List[DeviceKind]) -> Tuple:
+        accelerators = [
+            None,
+        ]
+
+        if DeviceKind.GPU in device_kinds:
+            accelerators.append(
+                BackendAccelerator.AMP,
+            )
+
+        return tuple(accelerators)
 
 
 class PyTorchConfigurator(ModelConfigurator):
+    device_kinds = (
+        DeviceKind.CPU,
+        DeviceKind.GPU,
+    )
     accelerators = (None,)
 
 
 class ONNXConfigurator(ModelConfigurator):
-    accelerators = (
-        None,
-        BackendAccelerator.TRT,
+    device_kinds = (
+        DeviceKind.CPU,
+        DeviceKind.GPU,
     )
+
+    def backend_accelerators(self, device_kinds: List[DeviceKind]) -> Tuple:
+        accelerators = [
+            None,
+        ]
+        if DeviceKind.CPU in device_kinds:
+            accelerators.append(BackendAccelerator.OPENVINO)
+
+        if DeviceKind.GPU in device_kinds:
+            accelerators.append(BackendAccelerator.TRT)
+
+        return tuple(accelerators)
 
 
 class TRTConfigurator(ModelConfigurator):
+    device_kinds = (DeviceKind.GPU,)
     capture_cuda_graph = (0, 1)
     accelerators = (None,)

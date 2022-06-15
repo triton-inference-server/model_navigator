@@ -21,6 +21,7 @@ from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.common import Sample
 from model_navigator.framework_api.exceptions import UserError
 from model_navigator.model import Format
+from model_navigator.utils.device import get_available_gpus
 
 T = TypeVar("T")
 
@@ -28,7 +29,11 @@ T = TypeVar("T")
 def get_available_onnx_providers() -> List:
     import onnxruntime as onnxrt  # pytype: disable=import-error
 
-    return onnxrt.get_available_providers()
+    onnx_providers = onnxrt.get_available_providers()
+    if not get_available_gpus():  # filter out providers that require GPU
+        gpu_providers = [RuntimeProvider.CUDA, RuntimeProvider.TRT]
+        onnx_providers = [prov for prov in onnx_providers if prov not in gpu_providers]
+    return onnx_providers
 
 
 def numpy_to_torch_dtype(np_dtype):
@@ -67,7 +72,7 @@ class RuntimeProvider(str, Parameter):
     PYT = "PyTorchExecutionProvider"
 
 
-def format2runtimes(model_format: Format) -> Optional[Tuple]:
+def format2runtimes(model_format: Format) -> Tuple:
     if model_format == Format.ONNX:
         return parse_enum(get_available_onnx_providers(), RuntimeProvider)
     elif model_format in (Format.TORCHSCRIPT, Format.TORCH_TRT):
@@ -77,7 +82,7 @@ def format2runtimes(model_format: Format) -> Optional[Tuple]:
     elif model_format == Format.TENSORRT:
         return (RuntimeProvider.TRT,)
     else:
-        return None
+        return ()
 
 
 class Status(str, Parameter):
@@ -110,13 +115,6 @@ class Extension(Parameter):
 class JitType(Parameter):
     SCRIPT = "script"
     TRACE = "trace"
-
-
-class ArtifactType(Parameter):
-    EXPORTED_MODEL_PATH = "exported_model_path"
-    CONVERTED_MODEL_PATH = "converted_model_path"
-    NAVIGATOR_CLI_CONFIG_PATH = "navigator_cli_config_path"
-    NAVIGATOR_CONFIG_PATH = "navigator_config_path"
 
 
 def get_default_model_name():
@@ -163,7 +161,7 @@ def format_to_relative_model_path(
     if format == Format.TORCHSCRIPT:
         return Path(f"{format.value}-{jit_type.value}") / "model.pt"
     if format == Format.TORCH_TRT:
-        return Path(f"{format.value}-{jit_type.value}") / "model.pt"
+        return Path(f"{format.value}-{jit_type.value}-{precision.value}") / "model.pt"
     if format == Format.TF_SAVEDMODEL:
         return Path(format.value) / "model.savedmodel"
     if format == Format.TF_TRT:

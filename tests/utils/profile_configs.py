@@ -17,6 +17,7 @@ from google.protobuf import json_format, text_format  # pytype: disable=pyi-erro
 from tritonclient.grpc import model_config_pb2  # pytype: disable=pyi-error
 
 from model_navigator.exceptions import ModelNavigatorException
+from model_navigator.utils.device import get_available_gpus
 
 
 class ModelConfig:
@@ -73,3 +74,16 @@ def get_profiling_configs(workspace):
         configs[model_config.name] = config_data
 
     return configs
+
+
+def parse_expected_configs_jsonlines(expected_configs_jsonlines: str):
+
+    gpu_available = bool(get_available_gpus())
+    markers_mapping = {
+        "__KIND_HW_MARKER__": "KIND_GPU" if gpu_available else "KIND_CPU",
+        "__CPU_ONLY_MARKER__": "false" if gpu_available else "true",
+    }
+
+    for marker, fill in markers_mapping.items():
+        expected_configs_jsonlines = expected_configs_jsonlines.replace(marker, fill)
+    return expected_configs_jsonlines

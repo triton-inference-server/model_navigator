@@ -26,7 +26,6 @@ class TFTRTConfigSetIterator(TargetFormatConfigSetIterator):
                     precision=tensorrt_precision,
                     explicit_precision=self._conversion_set_config.tensorrt_explicit_precision,
                     sparse_weights=self._conversion_set_config.tensorrt_sparse_weights,
-                    strict_types=self._conversion_set_config.tensorrt_strict_types,
                     max_workspace_size=self._conversion_set_config.tensorrt_max_workspace_size,
                 ),
             )

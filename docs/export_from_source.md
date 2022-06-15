@@ -40,7 +40,9 @@ limitations under the License.
   - [Export PyTorch](#export-pytorch)
   - [Export TensorFlow 2](#export-tensorflow-2)
   - [Package Descriptor](#package-descriptor)
+  - [Package Save](#package-save)
   - [Package Load](#package-load)
+  - [Package Profile](#package-profile)
 - [Contrib](#contrib)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -300,11 +302,14 @@ def export(
     dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None, # for ONNX export, see https://pytorch.org/docs/1.9.1/onnx.html#functions
     trt_dynamic_axes: Optional[Dict[str, Dict[int, Tuple[int, int, int]]]] = None,
     target_precisions: Optional[Union[Union[str, TensorRTPrecision], Tuple[Union[str, TensorRTPrecision], ...]]] = None,
+    precison_mode: Optional[Union[str, TensorRTPrecisionMode]] = None,  # use single or hierarchy precision for TorchTRT conversion
     max_workspace_size: Optional[int] = None,
     target_device: Optional[str] = None, # target device for exporting the model
     disable_git_info: bool = False,
     batch_dim: Optional[int] = 0,
     onnx_runtimes: Optional[Union[Union[str, RuntimeProvider], Tuple[Union[str, RuntimeProvider], ...]]] = None, # defaults to all available runtimes
+    run_profiling: bool = True,
+    profiler_config: Optional[ProfilerConfig] = None,
 ) -> PackageDescriptor:
     """Function exports PyTorch model to all supported formats."""
 ```
@@ -327,9 +332,13 @@ def export(
     rtol: Optional[float] = None, # relative tolerance used for correctness tests. If None, value will be calculated during run
     input_names: Optional[Tuple[str, ...]] = None, # model input name in the same order as in samples returned from dataloader
     output_names: Optional[Tuple[str, ...]] = None,
+    dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None,
+    trt_dynamic_axes: Optional[Dict[str, Dict[int, Tuple[int, int, int]]]] = None,
     disable_git_info: bool = False,
     batch_dim: Optional[int] = 0,
     onnx_runtimes: Optional[Union[Union[str, RuntimeProvider], Tuple[Union[str, RuntimeProvider], ...]]] = None, # defaults to all available runtimes
+    run_profiling: bool = True,
+    profiler_config: Optional[ProfilerConfig] = None,
 ) -> PackageDescriptor:
     """Exports TensorFlow 2 model to all supported formats."""
 ```
@@ -399,9 +408,13 @@ def set_verified(
     """Set exported model verified for given format, jit_type and precision"""
 ```
 
+### Package Save
+
+```.nav``` packages are created with ```nav.save()``` function.
+
 ```python
 def save(
-    self,
+    package_descriptor: PackageDescriptor,
     path: Union[str, Path],
     keep_workdir: bool = True,
     override: bool = False,
@@ -425,10 +438,33 @@ def load(
     workdir: Optional[Union[str, Path]] = None,
     override_workdir: bool = False,
     retest_conversions: bool = True,
+    run_profiling: Optional[bool] = None,
+    profiler_config: Optional[ProfilerConfig] = None,
 ) -> PackageDescriptor:
     """Load .nav package from the path.
-        If `retest_conversions = True` rerun conversion tests (including correctness and performance).
+        If `retest_conversions = True` rerun conversion tests.
     """
+```
+
+### Package Profile
+
+```python
+def profile(package_descriptor: PackageDescriptor, profiler_config: Optional[ProfilerConfig] = None) -> None:
+    """
+    Run profiling on the package for each batch size from the `profiler_config.batch_sizes`.
+    """
+```
+
+Profiling is configured by `ProfilerConfig`. Profiler is based on [Triton Performance Analyzer](https://github.com/triton-inference-server/server/blob/main/docs/perf_analyzer.md), please refer to [Triton Performance Analyzer](https://github.com/triton-inference-server/server/blob/main/docs/perf_analyzer.md) documentation for more info.
+
+```python
+class ProfilerConfig(DataObject):
+    batch_sizes: Optional[Sequence[int]] = None # list of batch sizes to profile, defaults to (1, <dataloader_batch_size>)
+    measurement_mode: MeasurementMode = MeasurementMode.COUNT_WINDOWS # MeasurementMode.TIME_WINDOWS - Fixed duriation of a window, MeasurementMode.COUNT_WINDOWS - fixed number of requests in a window
+    measurement_interval: Optional[float] = 5000  # ms, length of measurment windows (MeasurementMode.TIME_WINDOWS)
+    measurement_request_count: Optional[int] = 50 # number of requests in a window (MeasurementMode.COUNT_WINDOWS)
+    stability_percentage: float = 10.0 # How much average latency can vary between windows to accept the results as stable
+    max_trials: int = 10 # Maximum number of measurement windows to get 3 stable windows
 ```
 
 ## Contrib

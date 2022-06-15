@@ -34,6 +34,7 @@ def ts2torchtrt(
     verbose: bool = False,
 ):
     LOGGER.info("%s command started.", __name__)
+    LOGGER.warning("This conversion should be done on target GPU platform")
 
     with log_path.open("w") as log_file:
         prepare_log_header(log_file, Format.TORCHSCRIPT, Format.TORCH_TRT)

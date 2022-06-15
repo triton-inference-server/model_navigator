@@ -25,6 +25,7 @@ from model_navigator.converter.transformers import (
     TFSavedModel2TFTRTTransform,
 )
 from model_navigator.model import Format, Model, ModelConfig, ModelSignatureConfig
+from model_navigator.triton import DeviceKind
 
 LOGGER = logging.getLogger(__name__)
 
@@ -38,6 +39,7 @@ class BaseModelPipeline(metaclass=abc.ABCMeta):
         signature_config: Optional[ModelSignatureConfig] = None,
         comparator_config: Optional[ComparatorConfig] = None,
         dataloader: Optional[Dataloader] = None,
+        device_kinds: List[DeviceKind],
     ) -> Sequence[CompositeConvertCommand]:
         """Create new transform tree"""
         return []
@@ -54,6 +56,7 @@ class SavedModelPipeline(BaseModelPipeline):
         batching_config: Optional[BatchingConfig] = None,
         comparator_config: Optional[ComparatorConfig] = None,
         dataloader: Optional[Dataloader] = None,
+        device_kinds: List[DeviceKind],
     ) -> Sequence[CompositeConvertCommand]:
 
         from model_navigator.converter.transformers import ONNX2TRTCommand
@@ -71,7 +74,7 @@ class SavedModelPipeline(BaseModelPipeline):
             )
             commands.append(CompositeConvertCommand(cmds=[tf2onnx_converter]))
 
-        elif conversion_config.target_format == Format.TENSORRT:
+        elif conversion_config.target_format == Format.TENSORRT and DeviceKind.GPU in device_kinds:
             tf2onnx_converter = TFSavedModel2ONNXTransform(
                 conversion_config=conversion_config,
                 comparator_config=comparator_config,
@@ -84,7 +87,7 @@ class SavedModelPipeline(BaseModelPipeline):
                 dataloader=dataloader,
             )
             commands.append(CompositeConvertCommand(cmds=[tf2onnx_converter, onnx2trt_command]))
-        elif conversion_config.target_format == Format.TF_TRT:
+        elif conversion_config.target_format == Format.TF_TRT and DeviceKind.GPU in device_kinds:
             tf2trt_cmd = TFSavedModel2TFTRTTransform(
                 conversion_config=conversion_config,
                 comparator_config=comparator_config,
@@ -106,6 +109,7 @@ class TorchScriptPipeline(BaseModelPipeline):
         batching_config: Optional[BatchingConfig] = None,
         comparator_config: Optional[ComparatorConfig] = None,
         dataloader: Optional[Dataloader] = None,
+        device_kinds: List[DeviceKind],
     ) -> Sequence[CompositeConvertCommand]:
         from model_navigator.converter.transformers import (
             CopyModelFilesCommand,
@@ -131,7 +135,7 @@ class TorchScriptPipeline(BaseModelPipeline):
             )
             commands.append(CompositeConvertCommand(cmds=[copy_command, annotation_command, ts2onnx_converter]))
 
-        elif conversion_config.target_format == Format.TENSORRT:
+        elif conversion_config.target_format == Format.TENSORRT and DeviceKind.GPU in device_kinds:
             copy_command = CopyModelFilesCommand()
             annotation_command = TorchScriptAnnotationGenerator(copy_command, signature_config=signature_config)
             ts2onnx_converter = TorchScript2ONNXCommand(
@@ -150,7 +154,7 @@ class TorchScriptPipeline(BaseModelPipeline):
                 CompositeConvertCommand(cmds=[copy_command, annotation_command, ts2onnx_converter, onnx2trt_command])
             )
 
-        elif conversion_config.target_format == Format.TORCH_TRT:
+        elif conversion_config.target_format == Format.TORCH_TRT and DeviceKind.GPU in device_kinds:
             copy_command = CopyModelFilesCommand()
             # TODO: remove annotation step?
             annotation_command = TorchScriptAnnotationGenerator(copy_command, signature_config=signature_config)
@@ -176,6 +180,7 @@ class ONNXPipeline(BaseModelPipeline):
         signature_config: Optional[ModelSignatureConfig] = None,
         comparator_config: Optional[ComparatorConfig] = None,
         dataloader: Optional[Dataloader] = None,
+        device_kinds: List[DeviceKind],
     ) -> Sequence[CompositeConvertCommand]:
         from model_navigator.converter.transformers import ONNX2TRTCommand
 
@@ -183,7 +188,7 @@ class ONNXPipeline(BaseModelPipeline):
         if conversion_config.target_format == Format.ONNX:
             pass_transform = PassTransformer(conversion_config=conversion_config)
             commands.append(CompositeConvertCommand(cmds=[pass_transform]))
-        elif conversion_config.target_format == Format.TENSORRT:
+        elif conversion_config.target_format == Format.TENSORRT and DeviceKind.GPU in device_kinds:
             cmd = ONNX2TRTCommand(
                 conversion_config=conversion_config,
                 comparator_config=comparator_config,
@@ -203,9 +208,10 @@ class TRTPipeline(BaseModelPipeline):
         signature_config: Optional[ModelSignatureConfig] = None,
         comparator_config: Optional[ComparatorConfig] = None,
         dataloader: Optional[Dataloader] = None,
+        device_kinds: List[DeviceKind],
     ) -> Sequence[CompositeConvertCommand]:
         commands = []
-        if conversion_config.target_format == Format.TENSORRT:
+        if conversion_config.target_format == Format.TENSORRT and DeviceKind.GPU in device_kinds:
             pass_transform = PassTransformer(conversion_config=conversion_config)
             commands.append(CompositeConvertCommand(cmds=[pass_transform]))
 
@@ -221,6 +227,7 @@ class ConvertCommandsRegistry:
         signature_config: Optional[ModelSignatureConfig] = None,
         comparator_config: Optional[ComparatorConfig] = None,
         dataloader: Optional[Dataloader] = None,
+        device_kinds: List[DeviceKind],
     ) -> Iterator[Sequence[CompositeConvertCommand]]:
         model = Model(model_config.model_name, model_config.model_path, explicit_format=model_config.model_format)
 
@@ -230,6 +237,7 @@ class ConvertCommandsRegistry:
                 signature_config=signature_config,
                 comparator_config=comparator_config,
                 dataloader=dataloader,
+                device_kinds=device_kinds,
             )
 
     def _get_pipelines_for_model(self, model: Model):

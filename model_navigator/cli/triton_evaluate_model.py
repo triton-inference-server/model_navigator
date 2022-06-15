@@ -44,6 +44,7 @@ from model_navigator.results import State, Status
 from model_navigator.triton import TritonClientConfig, parse_server_url
 from model_navigator.triton.utils import get_shape_params
 from model_navigator.utils import Workspace, cli
+from model_navigator.utils.nav_package import NavPackage
 
 LOGGER = logging.getLogger("triton_evaluate_model")
 
@@ -264,6 +265,7 @@ def triton_evaluate_model_cmd(
     verbose: bool,
     latency_report_file: str,
     concurrency_steps: int,
+    package: Optional[NavPackage],
     **kwargs,
 ):
     """
@@ -283,11 +285,13 @@ def triton_evaluate_model_cmd(
             "triton-evaluate-model args:",
             {
                 **{
+                    "workspace_path": workspace_path,
                     "model_name": model_name,
                     "model_version": model_version,
                     "batch_sizes": batch_sizes,
                     "concurrency_steps": concurrency_steps,
                     "latency_report_file": latency_report_file,
+                    "package": package,
                     "verbose": verbose,
                 },
                 **dataclasses.asdict(perf_measurement_config),
@@ -301,15 +305,19 @@ def triton_evaluate_model_cmd(
     profiling_data = "random"
     shapes = []
 
-    max_shapes = _get_max_shapes(kwargs, dataset_profile_config)
     try:
-        shapes_params = get_shape_params(max_shapes)
-        if dataset_profile_config.value_ranges and dataset_profile_config.dtypes:
-            profiling_data_path = workspace.path / DEFAULT_RANDOM_DATA_FILENAME
-            ctx.forward(create_profiling_data_cmd, data_output_path=profiling_data_path)
-            profiling_data = profiling_data_path
-        elif shapes_params:
-            shapes = shapes_params
+        if package or (dataset_profile_config.value_ranges and dataset_profile_config.dtypes):
+            profiling_data = workspace.path / DEFAULT_RANDOM_DATA_FILENAME
+            ctx.forward(
+                create_profiling_data_cmd,
+                data_output_path=profiling_data,
+                **dataclasses.asdict(dataset_profile_config),
+            )
+        else:
+            max_shapes = _get_max_shapes(kwargs, dataset_profile_config)
+            shapes_params = get_shape_params(max_shapes)
+            if shapes_params:
+                shapes = shapes_params
 
         perf_analyzer_log = _perf_analyzer_evaluation(
             server_url=triton_client_config.server_url,

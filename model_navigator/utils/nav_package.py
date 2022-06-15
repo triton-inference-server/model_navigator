@@ -13,12 +13,16 @@
 # limitations under the License.
 import abc
 import logging
+import os
 import pathlib
+import shutil
 import zipfile
 from collections import defaultdict
 from typing import IO, Dict, Iterable, Union
 
 from model_navigator.exceptions import ModelNavigatorInvalidPackageException
+from model_navigator.model import Format, JitType
+from model_navigator.utils.workspace import Workspace
 
 LOGGER = logging.getLogger(__name__)
 
@@ -27,10 +31,10 @@ def select_input_format(models):
     """Automatically select which input model from the .nav package to use as input"""
     # sorted from most to least preferred
     PREFERRENCE_ORDER = [
-        {"format": "torchscript", "torch_jit": "script"},
-        {"format": "torchscript", "torch_jit": "trace"},
-        {"format": "tf-savedmodel"},
-        {"format": "onnx"},
+        {"format": Format.TORCHSCRIPT.value, "torch_jit": JitType.SCRIPT.value},
+        {"format": Format.TORCHSCRIPT.value, "torch_jit": JitType.TRACE.value},
+        {"format": Format.TF_SAVEDMODEL.value},
+        {"format": Format.ONNX.value},
     ]
     for fmt in PREFERRENCE_ORDER:
         for mod in models:
@@ -65,7 +69,9 @@ class NavPackage(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def vfs_path_to_member(self, member_path: Union[str, pathlib.Path]) -> pathlib.Path:
+    def vfs_path_to_member(
+        self, member_path: Union[str, pathlib.Path], workspace_path: Union[str, pathlib.Path]
+    ) -> pathlib.Path:
         ...
 
 
@@ -84,8 +90,13 @@ class NavPackageDirectory(NavPackage):
     def all_files(self):
         return (p.relative_to(self.path).as_posix() for p in self.path.glob("**/*"))
 
-    def vfs_path_to_member(self, member_path: Union[str, pathlib.Path]):
-        return self.path / member_path
+    def vfs_path_to_member(self, member_path: Union[str, pathlib.Path], workspace_path: Union[str, pathlib.Path]):
+        path = self.path / member_path
+        if not path.exists():
+            raise ModelNavigatorInvalidPackageException(
+                f"Package member {pathlib.Path(member_path).as_posix()} not found"
+            )
+        return path
 
 
 class ZippedNavPackage(NavPackage):
@@ -118,8 +129,27 @@ class ZippedNavPackage(NavPackage):
     def all_files(self):
         return self.arc.namelist()
 
-    def vfs_path_to_member(self, member_path: Union[str, pathlib.Path]):
-        raise NotImplementedError()
+    def vfs_path_to_member(self, member_path: Union[str, pathlib.Path], workspace: Workspace):
+        """Copy the model to workspace and return the path"""
+        member_path = pathlib.Path(member_path)
+        dstpath = workspace.path / ".input_data" / "input_model"
+        if os.getenv("MODEL_NAVIGATOR_RUN_BY") is not None:
+            # when launched inside docker by convert_model, the copy should be already there
+            assert dstpath.exists()
+            return dstpath / member_path
+        else:
+            try:
+                shutil.rmtree(dstpath)
+            except FileNotFoundError:
+                pass
+
+        dstpath.parent.mkdir(parents=True, exist_ok=True)
+        prefix = member_path.as_posix()
+        to_extract = [m for m in self.arc.namelist() if m.startswith(prefix)]
+        if not to_extract:
+            raise ModelNavigatorInvalidPackageException(f"Package member {prefix} not found")
+        self.arc.extractall(members=to_extract, path=dstpath)
+        return dstpath / member_path
 
     def __getstate__(self):
         dct = dict(self.__dict__)

@@ -69,6 +69,7 @@ class ModelConfigParser:
         optimization_config_kwargs = {}
         tensorrt_common_config_kwargs = {}
         gpu_execution_accelerator = cls._get_gpu_execution_accelerator(model_config_dict)
+        cpu_execution_accelerator = cls._get_cpu_execution_accelerator(model_config_dict)
         if gpu_execution_accelerator:
             assert len(gpu_execution_accelerator) == 1
             backend_accelerator = gpu_execution_accelerator[0]
@@ -87,6 +88,17 @@ class ModelConfigParser:
 
             tensorrt_common_config_kwargs = {
                 "tensorrt_max_workspace_size": max_workspace_size if max_workspace_size else None
+            }
+        elif cpu_execution_accelerator:
+            assert len(cpu_execution_accelerator) == 1
+            backend_accelerator = cpu_execution_accelerator[0]
+
+            BACKEND_ACCELERATOR_NAMES2ACCELERATORS = {
+                "openvino": BackendAccelerator.OPENVINO,
+            }
+
+            optimization_config_kwargs = {
+                "backend_accelerator": BACKEND_ACCELERATOR_NAMES2ACCELERATORS[backend_accelerator["name"]],
             }
 
         if "dynamic_batching" in model_config_dict:
@@ -184,6 +196,21 @@ class ModelConfigParser:
             return []
 
         return execution_accelerators["gpu_execution_accelerator"]
+
+    @classmethod
+    def _get_cpu_execution_accelerator(cls, model_config: Dict) -> List:
+        if "optimization" not in model_config:
+            return []
+
+        optimization = model_config["optimization"]
+        if "execution_accelerators" not in optimization:
+            return []
+
+        execution_accelerators = optimization["execution_accelerators"]
+        if "cpu_execution_accelerator" not in execution_accelerators:
+            return []
+
+        return execution_accelerators["cpu_execution_accelerator"]
 
     @classmethod
     def _get_tensorrt_capture_cuda_graphs(cls, model_config: Dict) -> bool:

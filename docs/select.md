@@ -69,6 +69,9 @@ $ model-navigator select my_model.triton.nav \
 # Provide verbose logs.
 [ verbose: boolean ]
 
+# Pick a particular model configuration. If specified, other selection options are ignored.
+[ model_config_name: str ]
+
 # Objective used to rank those configurations of the model that fulfill other constraints, with an optional weight value.
 # Can be passed multiple times to specify multiple objectives. Available objectives: 'perf_throughput',
 # 'perf_latency_p99'.
@@ -88,7 +91,7 @@ $ model-navigator select my_model.triton.nav \
 [ target_format: list[str] | default: ['tf-trt', 'tf-savedmodel', 'onnx', 'trt', 'torchscript', 'torch-trt'] ]
 
 # Select only from among model configurations using given backend accelerator.
-[ backend_accelerator: list[choice(none, amp, trt)] ]
+[ backend_accelerator: list[choice(none, amp, trt, openvino)] ]
 
 # Select only from among model configurations using given precision for TensorRT acceleration.
 [ tensorrt_precision: list[choice(int8, fp16, fp32, tf32)] ]

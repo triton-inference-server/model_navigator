@@ -36,8 +36,6 @@ class DataObject:
 
         if parse:
             for key, value in filtered_data.items():
-                if value is None:
-                    continue
                 data[key] = self._parse_value(value)
         else:
             data = filtered_data

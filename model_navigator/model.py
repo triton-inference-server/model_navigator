@@ -30,6 +30,11 @@ class Format(Enum):
     TENSORRT = "trt"
 
 
+class JitType(Enum):
+    SCRIPT = "script"
+    TRACE = "trace"
+
+
 @dataclass
 class ModelConfig(BaseConfig):
     model_name: str

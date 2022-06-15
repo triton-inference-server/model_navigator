@@ -32,6 +32,7 @@ def tf2tftrt(
     verbose: bool = False,
 ):
     LOGGER.info("tf2tftrt command started.")
+    LOGGER.warning("This conversion should be done on target GPU platform")
 
     try:
         log_path.parent.mkdir(parents=True, exist_ok=True)

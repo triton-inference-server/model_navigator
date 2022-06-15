@@ -15,9 +15,10 @@ import ctypes
 import logging
 import uuid
 from ctypes import c_uint8
-from typing import Optional, Sequence
+from typing import List, Optional, Sequence, Union
 
 from model_navigator.exceptions import ModelNavigatorException
+from model_navigator.triton import DeviceKind, TritonModelInstancesConfig
 
 LOGGER = logging.getLogger(__name__)
 UUID_SIZE = 16
@@ -44,7 +45,10 @@ def _get_device_count():
     return count.value
 
 
-def _get_all_gpus():
+def get_available_gpus():
+    """
+    Get all available GPUs in the system
+    """
     if cuda is None:
         return []
 
@@ -64,14 +68,17 @@ def _get_all_gpus():
     return devices
 
 
-def get_gpus(gpus: Optional[Sequence[str]] = None):
+def get_gpus(gpus: Optional[List[Union[int, str]]]):
     """
     Creates a list of GPU UUIDs corresponding to the GPUs visible to Model Navigator.
     GPU UUIDs are returned as hex-encoded strings prefixed with "GPU-", e.g.:
       "GPU-11111111-1111-1111-1111-111111111111"
     """
 
-    devices = [dev["uuid"] for dev in _get_all_gpus()]
+    if not gpus:
+        return []
+
+    devices = [dev["uuid"] for dev in get_available_gpus()]
 
     requested_gpus = gpus or ("all",)
     if len(requested_gpus) == 1 and requested_gpus[0] == "all":
@@ -109,8 +116,26 @@ def get_environment_info(gpus: Optional[Sequence[str]] = None):
     info = {
         "driver": _get_nvidia_driver_version(),
         "cuda_driver": _get_cuda_driver_version(),
-        "gpus": _get_all_gpus(),
+        "gpus": get_available_gpus(),
         "gpus_used": get_gpus(gpus),
     }
     # TODO: "container_tag"
     return info
+
+
+def get_available_device_kinds(gpus: List, instances_config: TritonModelInstancesConfig) -> List:
+    """
+    Provide list of possible device kinds based on configured GPUs and engine count per device parameter
+    """
+    device_kinds = []
+    if not gpus or DeviceKind.CPU in instances_config.engine_count_per_device:
+        device_kinds.append(DeviceKind.CPU)
+
+    if (
+        gpus and not instances_config.engine_count_per_device
+    ) or DeviceKind.GPU in instances_config.engine_count_per_device:
+        device_kinds.append(DeviceKind.GPU)
+
+    LOGGER.debug(f"Selected devices: {device_kinds}")
+
+    return device_kinds
