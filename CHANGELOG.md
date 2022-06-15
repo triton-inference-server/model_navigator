@@ -16,7 +16,7 @@ limitations under the License.
 
 # Changelog
 
-## Unreleased
+## 0.3.1
 - Updated NVIDIA containers defaults to 22.05
 - Model Navigator CLI:
   - fix: Saving paths inside the Triton package status file
