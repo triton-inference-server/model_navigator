@@ -184,9 +184,9 @@ class PackageDescriptor:
                 output_names=list(self.navigator_status.output_metadata.keys()),
             )
         elif format == Format.TF_TRT:
-            from model_navigator.framework_api.runners.tf import TFTRTRunner
+            from model_navigator.framework_api.runners.tf import TFRunner
 
-            return TFTRTRunner(
+            return TFRunner(
                 model_path,
                 input_metadata=self.navigator_status.input_metadata,
                 output_names=list(self.navigator_status.output_metadata.keys()),
