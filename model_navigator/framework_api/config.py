@@ -20,6 +20,7 @@ from typing import Dict, List, Optional, Tuple, Union, get_args, get_origin
 from model_navigator.converter.config import TensorRTPrecision, TensorRTPrecisionMode
 from model_navigator.framework_api.commands.performance import ProfilerConfig
 from model_navigator.framework_api.common import DataObject, SizedDataLoader, TensorMetadata
+from model_navigator.framework_api.exceptions import UserError
 from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.utils import Framework, JitType, RuntimeProvider, pad_string
 from model_navigator.model import Format
@@ -114,5 +115,7 @@ class Config(DataObject):
 
     def __post_init__(self):
         self._check_types()
+        if "/" in self.model_name:
+            raise UserError("Model name cannot contain '/' character.")  # '/' causes problems for OTIS
         object.__setattr__(self, "timestamp", f"{datetime.datetime.utcnow():%Y-%m-%dT%H:%M:%S.%f}")
         self._log()
