@@ -16,6 +16,10 @@ limitations under the License.
 
 # Changelog
 
+## unreleased
+- Updated navigator package format to 0.1.1
+   - Added Model Navigator version to status.yaml
+
 ## 0.3.1
 - Updated NVIDIA containers defaults to 22.05
 - Model Navigator CLI:
