@@ -13,11 +13,12 @@
 # limitations under the License.
 
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from model_navigator.cli.convert_model import ConversionSetConfig
-from model_navigator.converter.config import TensorRTPrecision
+from model_navigator.converter.config import ComparatorConfig, TensorRTPrecision
 from model_navigator.framework_api.commands.core import Command, CommandType
+from model_navigator.framework_api.status import RuntimeResults
 from model_navigator.framework_api.utils import (
     Extension,
     Framework,
@@ -65,6 +66,9 @@ class ConfigCli(Command):
         self,
         name: str,
         target_format: Format,
+        runtime_results: List[RuntimeResults],
+        atol: Dict[str, float],
+        rtol: Dict[str, float],
         requires: Tuple[Command, ...] = (),
         target_jit_type: Optional[JitType] = None,
         target_precision: Optional[TensorRTPrecision] = None,
@@ -72,6 +76,9 @@ class ConfigCli(Command):
         super().__init__(name=name, command_type=CommandType.GEN_CONFIG, requires=requires, target_format=target_format)
         self.target_jit_type = target_jit_type
         self.target_precision = target_precision
+        self.runtime_results = runtime_results
+        self.atol = atol
+        self.rtol = rtol
 
     def __call__(
         self,
@@ -109,13 +116,14 @@ class ConfigCli(Command):
                 if self.target_precision
                 else [TensorRTPrecision.FP16, TensorRTPrecision.TF32],
             )
-            # comparator_config = ComparatorConfig()
+
+            comparator_config = ComparatorConfig(atol=self.atol, rtol=self.rtol)
             # dataset_profile_config = DatasetProfileConfig()
 
             config_file.save_config(src_model_config)
             config_file.save_config(model_signature_config)
             config_file.save_config(conversion_set_config)
-            # config_file.save_config(comparator_config)
+            config_file.save_config(comparator_config)
             # config_file.save_config(dataset_profile_config)
 
         return config_relative_path

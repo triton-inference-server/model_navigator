@@ -11,10 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import base64
 import json
 import logging
 from pathlib import Path
 from sys import getsizeof
+
+import numpy as np
 
 LOGGER = logging.getLogger(__name__)
 
@@ -33,17 +36,33 @@ def _remove_batch_dim(data):
     return list(data.shape[1:])
 
 
+def _base64_content(data: np.ndarray):
+    """Convert the array of input values to base64 format"""
+    b64_content = base64.b64encode(data.flatten().tobytes()).decode("utf-8")
+    return {"b64": b64_content}
+
+
 def create_profiling_data(
     dataloader,
     output_path: Path,
 ):
-    # As perf_analyzer doesn't support passing value ranges we need to generate json files
+    """
+    Create profiling data based on dataloader and save it to JSON file.
+
+    The perf_analyzer doesn't support passing value ranges and support the real data passed in form of JSON files. The
+    real data provide better performance analysis and is mandatory for models with embeddings.
+
+    The data is stored in form of base64 format to preserve the input data type - ex. FP16.
+
+    More about real input data:
+    https://github.com/triton-inference-server/server/blob/main/docs/perf_analyzer.md#real-input-data
+    """
     LOGGER.debug("Generating profiling data for Perf Analyzer")
 
     data = {
         "data": [
             {
-                name: {"content": data.flatten().tolist(), "shape": _remove_batch_dim(data)}
+                name: {"content": _base64_content(data), "shape": _remove_batch_dim(data)}
                 for name, data in feed_dict.items()
             }
             for idx, feed_dict in enumerate(dataloader)

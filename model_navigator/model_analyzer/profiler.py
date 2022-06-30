@@ -195,8 +195,6 @@ class ProfileConfigGenerator(BaseConfigGenerator):
             "triton_server_path": self._triton_config.triton_server_path,
             "override_output_model_repository": True,
             "gpus": list(self._gpus),
-            "summarize": self._verbose,
-            "verbose": self._verbose,
             "perf_output": self._verbose,
             "triton_output_path": self.triton_log_path.as_posix(),
             "early_exit_enable": early_exit_flag,
