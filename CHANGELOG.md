@@ -17,8 +17,22 @@ limitations under the License.
 # Changelog
 
 ## unreleased
-- Updated navigator package format to 0.1.1
-   - Added Model Navigator version to status.yaml
+- Model Navigator CLI:
+  - new: Perf Analyzer profiling data use base64 format for content
+- Model Navigator Export API:
+  - new: Updated navigator package format to 0.1.1
+  - new: Added Model Navigator version to status file
+  - new: Add atol and rtol configuration to CLI config for model
+
+[//]: <> (put here on external component update with short summary what change or link to changelog)
+- Version of external components used during testing:
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.36.2
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.19
+    - [Triton Model Analyzer 1.17.0](https://github.com/triton-inference-server/model_analyzer)
+    - tf2onnx: [v1.10.1](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.10.1)
+    - Other component versions depend on the used framework and Triton Inference Server containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
 
 ## 0.3.1
 - Updated NVIDIA containers defaults to 22.05
