@@ -20,7 +20,7 @@ from polygraphy.backend.onnxrt import SessionFromOnnx
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.correctness import Tolerance
 from model_navigator.framework_api.common import Sample, SizedDataLoader, TensorMetadata
-from model_navigator.framework_api.exceptions import UserError, UserErrorContext
+from model_navigator.framework_api.exceptions import ExecutionContext, UserError
 from model_navigator.framework_api.runners.onnx import OnnxrtRunner
 from model_navigator.framework_api.utils import (
     Framework,
@@ -132,7 +132,7 @@ class InferOutputMetadata(Command):
             # pytype: enable=attribute-error
         else:
             raise UserError(f"Unknown framework: {framework.value}")
-        with runner, UserErrorContext():
+        with runner, ExecutionContext():
             output = runner.infer(profiling_sample)
 
         output_metadata = TensorMetadata()

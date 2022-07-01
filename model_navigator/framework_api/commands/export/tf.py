@@ -18,8 +18,9 @@ from typing import Optional, Tuple
 import tensorflow as tf  # pytype: disable=import-error
 
 from model_navigator.framework_api.commands.core import Command, CommandType
+from model_navigator.framework_api.commands.export import exporters
 from model_navigator.framework_api.commands.export.base import ExportBase
-from model_navigator.framework_api.exceptions import UserErrorContext
+from model_navigator.framework_api.exceptions import ExecutionContext
 from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.utils import format_to_relative_model_path, get_package_path
 from model_navigator.model import Format
@@ -52,7 +53,20 @@ class ExportTF2SavedModel(ExportBase):
             return self.get_output_relative_path()
         assert model is not None
         exported_model_path.parent.mkdir(parents=True, exist_ok=True)
-        with UserErrorContext():
-            tf.keras.models.save_model(model=model, filepath=exported_model_path, overwrite=True)
+
+        exporters.sm.get_model = lambda: model
+
+        with ExecutionContext(exported_model_path.parent / "reproduce.py") as context:
+
+            kwargs = {
+                "exported_model_path": exported_model_path.as_posix(),
+            }
+
+            args = []
+            for k, v in kwargs.items():
+                s = str(v).replace("'", '"')
+                args.extend([f"--{k}", s])
+
+            context.execute_local_runtime_script(exporters.sm.__file__, exporters.sm.export, args)
 
         return self.get_output_relative_path()

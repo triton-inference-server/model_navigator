@@ -288,3 +288,25 @@ def validate_sample_output(sample, framework: Framework):
         raise UserError(
             f"Invalid model output type. Output must be of type Union[{tensor_type}, Sequence[{tensor_type}]], Mapping[str, {tensor_type}]]. Model returned {sample}."
         )
+
+
+def load_samples(samples_name, package_path, batch_dim):
+    if isinstance(package_path, str):
+        package_path = Path(package_path)
+    samples_type = samples_name.split("_")[0]
+    samples_dirname = "model_output" if samples_name.split("_")[-1] == "output" else "model_input"
+    samples_dirpath = package_path / samples_dirname / samples_type
+    samples = []
+    for sample_filepath in samples_dirpath.iterdir():
+        sample = {}
+        with numpy.load(sample_filepath.as_posix()) as data:
+            for k, v in data.items():
+                if batch_dim is not None:
+                    v = numpy.expand_dims(v, batch_dim)
+                    # v = numpy.repeat(v, max_batch_size, batch_dim)
+                sample[k] = v
+        samples.append(sample)
+    if samples_type == "profiling":
+        samples = samples[0]
+
+    return samples
