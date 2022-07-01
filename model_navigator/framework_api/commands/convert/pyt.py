@@ -16,21 +16,16 @@ from pathlib import Path
 from typing import Dict, Optional, Tuple
 
 import numpy as np
-import torch  # pytype: disable=import-error
 
 from model_navigator.converter.config import TensorRTPrecision, TensorRTPrecisionMode
 from model_navigator.framework_api.commands.convert.base import ConvertBase
+from model_navigator.framework_api.commands.convert.converters import ts2torchtrt
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.export.pyt import ExportPYT2TorchScript
 from model_navigator.framework_api.common import TensorMetadata
-from model_navigator.framework_api.exceptions import UserError, UserErrorContext
+from model_navigator.framework_api.exceptions import ExecutionContext
 from model_navigator.framework_api.logger import LOGGER, get_pytorch_loggers_names
-from model_navigator.framework_api.utils import (
-    JitType,
-    format_to_relative_model_path,
-    get_package_path,
-    numpy_to_torch_dtype,
-)
+from model_navigator.framework_api.utils import JitType, format_to_relative_model_path, get_package_path
 from model_navigator.model import Format
 
 
@@ -46,32 +41,6 @@ class ConvertTorchScript2TorchTensorRT(ConvertBase):
         )
         self.target_jit_type = target_jit_type
         self.target_precision = target_precision
-
-    @staticmethod
-    def _get_precision(precision, precision_mode):
-        if precision_mode == TensorRTPrecisionMode.HIERARCHY:
-            enabled_precisions = {
-                TensorRTPrecision.FP32: [torch.float],
-                TensorRTPrecision.TF32: [torch.float],
-                TensorRTPrecision.FP16: [torch.float, torch.half],
-                TensorRTPrecision.INT8: [torch.float, torch.half, torch.int8],
-            }[precision]
-        elif precision_mode == TensorRTPrecisionMode.SINGLE:
-            enabled_precisions = {
-                TensorRTPrecision.FP32: [torch.float],
-                TensorRTPrecision.TF32: [torch.float],
-                TensorRTPrecision.FP16: [torch.half],
-                TensorRTPrecision.INT8: [torch.int8],
-            }[precision]
-        else:
-            raise UserError(
-                f"Unsupported precision mode {precision_mode}. Only {TensorRTPrecisionMode.HIERARCHY} and "
-                "{TensorRTPrecisionMode.SINGLE} are allowed"
-            )
-        return {
-            "enabled_precisions": enabled_precisions,
-            "disable_tf32": precision == TensorRTPrecision.FP32,
-        }
 
     def get_output_relative_path(self) -> Path:
         return format_to_relative_model_path(
@@ -92,7 +61,8 @@ class ConvertTorchScript2TorchTensorRT(ConvertBase):
         **kwargs,
     ) -> Optional[Path]:
         LOGGER.info("Conversion TorchScript to TorchTensorRT started")
-        import torch_tensorrt  # pytype: disable=import-error
+
+        import torch_tensorrt  # pytype: disable=import-error # noqa: F401
 
         exported_model_path = (
             get_package_path(workdir, model_name)
@@ -103,10 +73,9 @@ class ConvertTorchScript2TorchTensorRT(ConvertBase):
             return self.get_output_relative_path()
         converted_model_path.parent.mkdir(parents=True, exist_ok=True)
 
-        trt_casts = {np.dtype(np.int64): np.int32}
-        input_dtypes = [
-            numpy_to_torch_dtype(trt_casts.get(input_spec.dtype, input_spec.dtype))
-            for input_spec in input_metadata.values()
+        trt_casts = {np.dtype(np.int64): np.dtype(np.int32)}
+        input_dtypes_str = [
+            trt_casts.get(input_spec.dtype, input_spec.dtype).name for input_spec in input_metadata.values()
         ]
 
         all_shapes = {}
@@ -119,26 +88,22 @@ class ConvertTorchScript2TorchTensorRT(ConvertBase):
                 shapes[shape_type] = tensor_shape
             all_shapes[input_name] = shapes
 
-        model_input_shapes = []
-        for input_shapes, input_dtype in zip(all_shapes.values(), input_dtypes):
-            model_input_shapes.append(
-                torch_tensorrt.Input(
-                    min_shape=input_shapes["min"],
-                    opt_shape=input_shapes["opt"],
-                    max_shape=input_shapes["max"],
-                    dtype=input_dtype,
-                )
-            )
+        with ExecutionContext(converted_model_path.parent / "reproduce.py") as context:
+            kwargs = {
+                "exported_model_path": exported_model_path.as_posix(),
+                "converted_model_path": converted_model_path.as_posix(),
+                "shapes": all_shapes,
+                "input_dtypes": input_dtypes_str,
+                "max_workspace_size": max_workspace_size,
+                "precision": self.target_precision.value,
+                "precision_mode": precision_mode.value,
+            }
 
-        model = torch.jit.load(exported_model_path.as_posix())
-        with UserErrorContext():
-            tr_model_compiled = torch_tensorrt.compile(
-                module=model,
-                inputs=model_input_shapes,
-                workspace_size=max_workspace_size,
-                truncate_long_and_double=True,
-                **self._get_precision(self.target_precision, precision_mode),
-            )
-            tr_model_compiled.save(converted_model_path.as_posix())
+            args = []
+            for k, v in kwargs.items():
+                s = str(v).replace("'", '"')
+                args.extend([f"--{k}", s])
+
+            context.execute_external_runtime_script(ts2torchtrt.__file__, args)
 
         return self.get_output_relative_path()

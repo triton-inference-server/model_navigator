@@ -23,6 +23,7 @@ limitations under the License.
   - new: Updated navigator package format to 0.1.1
   - new: Added Model Navigator version to status file
   - new: Add atol and rtol configuration to CLI config for model
+  - new: In case of export or conversion failures prepere minimal scripts to reproduce errors
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 - Version of external components used during testing:

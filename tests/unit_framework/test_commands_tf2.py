@@ -190,6 +190,8 @@ def test_tf2_export_savedmodel():
 
 
 def test_tf2_convert_tf_trt():
+    from model_navigator.framework_api.commands.data_dump.samples import samples_to_npz
+
     with tempfile.TemporaryDirectory() as tmp_dir:
         model_name = "navigator_model"
 
@@ -201,6 +203,7 @@ def test_tf2_convert_tf_trt():
         tensorflow.keras.models.save_model(model=model, filepath=input_model_path, overwrite=True)
 
         input_data = next(iter(dataloader))
+        samples_to_npz([{"input__0": input_data.numpy()}], package_dir / "model_input" / "conversion", None)
 
         convert_cmd = ConvertSavedModel2TFTRT(target_precision=TensorRTPrecision.FP16)
 
@@ -209,7 +212,6 @@ def test_tf2_convert_tf_trt():
             minimum_segment_size=3,
             workdir=workdir,
             model_name=model_name,
-            conversion_samples=[input_data],
         )
 
         tensorflow.keras.models.load_model(converted_model_path)

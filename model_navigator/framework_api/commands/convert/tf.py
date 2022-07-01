@@ -12,21 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import subprocess
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Optional, Tuple
 
 import tensorflow as tf  # pytype: disable=import-error
-from tensorflow.python.compiler.tensorrt import trt_convert as trtc  # pytype: disable=import-error
 
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.convert.base import ConvertBase
+from model_navigator.framework_api.commands.convert.converters import sm2tftrt
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.export.tf import ExportTF2SavedModel
-from model_navigator.framework_api.common import Sample, TensorMetadata
-from model_navigator.framework_api.exceptions import UserErrorContext
+from model_navigator.framework_api.common import TensorMetadata
+from model_navigator.framework_api.exceptions import ExecutionContext
 from model_navigator.framework_api.logger import LOGGER
-from model_navigator.framework_api.utils import format_to_relative_model_path, get_package_path, sample_to_tuple
+from model_navigator.framework_api.utils import format_to_relative_model_path, get_package_path
 from model_navigator.model import Format
 
 
@@ -72,9 +71,8 @@ class ConvertSavedModel2ONNX(ConvertBase):
             ",".join(output_metadata.keys()),
         ]
 
-        with UserErrorContext():
-            output = subprocess.run(convert_cmd, capture_output=True)
-            self._log_subprocess_output(output=output)
+        with ExecutionContext() as context:
+            context.execute_cmd(convert_cmd)
 
         return self.get_output_relative_path()
 
@@ -103,32 +101,33 @@ class ConvertSavedModel2TFTRT(ConvertBase):
         minimum_segment_size: int,
         workdir: Path,
         model_name: str,
-        conversion_samples: List[Sample],
+        batch_dim: Optional[int] = None,
         **kwargs,
     ) -> Optional[Path]:
         # for precision in target_precisions:
 
         # generate samples as tuples for TF-TRT converter
-        def _dataloader():
-            for sample in conversion_samples:
-                yield sample_to_tuple(sample)
 
         exported_model_path = get_package_path(workdir, model_name) / ExportTF2SavedModel().get_output_relative_path()
         converted_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
+        converted_model_path.parent.mkdir(parents=True, exist_ok=True)
 
-        params = trtc.DEFAULT_TRT_CONVERSION_PARAMS._replace(
-            max_workspace_size_bytes=max_workspace_size,
-            precision_mode=self.target_precision.value,
-            minimum_segment_size=minimum_segment_size,
-        )
-        # TODO: allow setting dynamic_shape_profile_strategy
-        with UserErrorContext():
-            converter = trtc.TrtGraphConverterV2(
-                input_saved_model_dir=exported_model_path.as_posix(), use_dynamic_shape=True, conversion_params=params
-            )
+        with ExecutionContext(converted_model_path.parent / "reproduce.py") as context:
+            kwargs = {
+                "exported_model_path": exported_model_path.as_posix(),
+                "converted_model_path": converted_model_path.as_posix(),
+                "max_workspace_size": max_workspace_size,
+                "target_precision": self.target_precision.value,
+                "minimum_segment_size": minimum_segment_size,
+                "package_path": get_package_path(workdir, model_name).as_posix(),
+                "batch_dim": batch_dim,
+            }
 
-            converter.convert()
-            converter.build(_dataloader)
-            converter.save(converted_model_path.as_posix())
+            args = []
+            for k, v in kwargs.items():
+                s = str(v).replace("'", '"')
+                args.extend([f"--{k}", s])
+
+            context.execute_external_runtime_script(sm2tftrt.__file__, args)
 
         return self.get_output_relative_path()
