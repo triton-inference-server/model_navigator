@@ -12,17 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ARG BASE_IMAGE=nvcr.io/nvidia/tritonserver:22.05-py3
+ARG BASE_IMAGE=nvcr.io/nvidia/tritonserver:22.06-py3
 FROM $BASE_IMAGE
 
-# DCGM version to install for Model Analyzer
-ENV DCGM_VERSION=2.2.9
 ENV MODEL_NAVIGATOR_CONTAINER=1
 
 # Ensure apt-get won't prompt for selecting options
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install Docker, NVIDIA Docker and DCGM
+# Install Docker and NVIDIA Docker
 RUN wget --progress=dot:giga https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin && \
     mv cuda-ubuntu2004.pin /etc/apt/preferences.d/cuda-repository-pin-600 && \
     apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/3bf863cc.pub && \
@@ -37,7 +35,7 @@ RUN wget --progress=dot:giga https://developer.download.nvidia.com/compute/cuda/
     \
     apt-get update && \
     apt-get install --no-install-recommends -y software-properties-common curl python3-dev python3-pip python-is-python3 libb64-dev wget git  \
-    docker-ce docker-ce-cli containerd.io nvidia-docker2 datacenter-gpu-manager=1:${DCGM_VERSION} && \
+    docker-ce docker-ce-cli containerd.io nvidia-docker2 && \
     \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \

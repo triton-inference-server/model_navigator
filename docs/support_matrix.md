@@ -68,14 +68,13 @@ Refer to the [changelog](../CHANGELOG.md) for any related issues on these models
 ## Third-Party Packages
 
 A set of component versions are imposed by the used `container_version` parameter value.
-By default, we're using the `22.05` container version that contains:
+By default, we're using the `22.06` container version that contains:
 
-- [Triton Inference Server 2.22.0](https://github.com/triton-inference-server/server)
-- [PyTorch 1.12.0a0+8a1a93a](https://github.com/pytorch/pytorch/commit/8a1a93a)
-- TensorFlow [2.8.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.8.0) / [1.15.5](https://github.com/tensorflow/tensorflow/releases/tag/v1.15.5)
+- [Triton Inference Server 2.23.0](https://github.com/triton-inference-server/server/releases/tag/v2.22.0)
+- [PyTorch 1.13.0a0+340c412](https://github.com/pytorch/pytorch/commit/340c412)
+- TensorFlow [2.9.1](https://github.com/tensorflow/tensorflow/releases/tag/v2.9.1) / [1.15.5](https://github.com/tensorflow/tensorflow/releases/tag/v1.15.5)
 - [TensorRT TensorRT 8.2.5.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
 - [Intel OpenVINO 2021.4](https://github.com/openvinotoolkit/openvino/tree/2021.4)
-- [Triton Inference Server 2.22.0](https://github.com/triton-inference-server/server/releases/tag/v2.22.0)
 - [ONNX Runtime 1.11.0](https://github.com/microsoft/onnxruntime/releases/tag/v1.11.0)
 
 Refer to [the containers support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
