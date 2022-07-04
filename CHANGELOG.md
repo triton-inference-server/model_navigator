@@ -17,6 +17,7 @@ limitations under the License.
 # Changelog
 
 ## unreleased
+- Updated NVIDIA containers defaults to 22.06
 - Model Navigator CLI:
   - new: Perf Analyzer profiling data use base64 format for content
 - Model Navigator Export API:
