@@ -18,10 +18,9 @@ limitations under the License.
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
-- [Install the Triton Model Navigator in training environment](#install-the-triton-model-navigator-in-training-environment)
-- [Export model](#export-model)
-- [Install the Triton Model Navigator in deployment environment](#install-the-triton-model-navigator-in-deployment-environment)
-- [Optimize model](#optimize-model)
+- [Installation](#installation)
+- [Export Model from Source](#export-model-from-source)
+- [Optimize for Triton Inference Server](#optimize-for-triton-inference-server)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -40,15 +39,12 @@ $HOME
       .
 ```
 
-## Install the Triton Model Navigator in training environment
+## Installation
 
-To install latest version of Model Navigator use command:
+See the [installation](installation.md) guide to install Triton Model Navigator in training environment or use for optimization
+on Triton Inference Server.
 
-```shell
-$ pip install --extra-index-url https://pypi.ngc.nvidia.com git+https://github.com/triton-inference-server/model_navigator.git@v0.3.0#egg=model-navigator[pyt] --upgrade
-```
-
-## Export model
+## Export Model from Source
 This step exports model to all available formats and creates `.nav` package with checkpoints and model meta data.
 
 ```python
@@ -103,38 +99,16 @@ nav.save(pkg_desc, "my_model.nav")
 
 The `.nav` package can then be copied to the deployment environment.
 
+## Optimize for Triton Inference Server
 
-## Install the Triton Model Navigator in deployment environment
-
-The recommended way of using the Triton Model Navigator is to build a Docker container with all necessary dependencies:
-
-```shell
-$ make docker
-```
-
-Run the Triton Model Navigator container from source directory as shown below.
-```shell
-docker run -it --rm \
- --gpus 1 \
- -v /var/run/docker.sock:/var/run/docker.sock \
- -v ${PWD}:${PWD} \
- -w ${PWD} \
- --net host \
- --name model-navigator \
- model-navigator /bin/bash
-```
-
-Learn more about installing the Triton Model Navigator using the instructions in the [Installation](installation.md)
-section.
-
-## Optimize model
 This step uses previously generated `.nav` package and use it for further conversion and applies optimizations for
 Triton Inference Server. In results it produces package that can used directly for deployment on Triton Inference Server.
 
 First, run the model configuration and profiling process.
 ```shell
-$ model-navigator optimize my_model.nav # conversion + analyzer
+$ model-navigator optimize my_model.nav
 ```
+
 This produces a new "my_model.triton.nav" package. This can then be used as an input to the
 `model-navigator select` command, which builds a Triton model repository containing the input model in
 its best configuration.

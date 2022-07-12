@@ -20,11 +20,13 @@ limitations under the License.
 - Updated NVIDIA containers defaults to 22.06
 - Model Navigator CLI:
   - new: Perf Analyzer profiling data use base64 format for content
+  - fix: Signature for TensorRT model when has `uint64` or `int64` input and/or outputs defined
 - Model Navigator Export API:
   - new: Updated navigator package format to 0.1.1
   - new: Added Model Navigator version to status file
   - new: Add atol and rtol configuration to CLI config for model
-  - new: In case of export or conversion failures prepere minimal scripts to reproduce errors
+  - new: In case of export or conversion failures prepare minimal scripts to reproduce errors
+  - fix: conversion parameters are not stored in Navigator Package for CLI execution
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 - Version of external components used during testing:

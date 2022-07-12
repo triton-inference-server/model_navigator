@@ -47,7 +47,7 @@ from model_navigator.exceptions import ModelNavigatorException
 from model_navigator.framework import SUFFIX2FRAMEWORK
 from model_navigator.kubernetes.triton import TritonServer
 from model_navigator.log import init_logger, log_dict
-from model_navigator.model import ModelConfig, ModelSignatureConfig
+from model_navigator.model import Format, Model, ModelConfig, ModelSignatureConfig
 from model_navigator.model_analyzer import (
     AnalyzeResult,
     ModelAnalyzerAnalysisConfig,
@@ -65,6 +65,7 @@ from model_navigator.triton import (
 )
 from model_navigator.triton.config import RunTritonConfig, TritonCustomBackendParametersConfig, TritonLaunchMode
 from model_navigator.utils import Workspace, cli
+from model_navigator.utils import tensorrt as tensorrt_utils
 from model_navigator.utils.config import dataclass2dict
 from model_navigator.utils.device import get_available_device_kinds, get_gpus
 from model_navigator.utils.environment import EnvironmentStore, get_env
@@ -227,6 +228,7 @@ def optimize_cmd(
         tensorrt_common_config=tensorrt_common_config,
         dataset_profile_config=dataset_profile_config,
         perf_measurement_config=perf_measurement_config,
+        model_signature_config=src_model_signature_config,
         triton_config=triton_config,
         triton_docker_image=triton_docker_image,
         device_kinds=device_kinds,
@@ -383,6 +385,7 @@ def _configure_models_on_triton(
     tensorrt_common_config: TensorRTCommonConfig,
     dataset_profile_config: DatasetProfileConfig,
     perf_measurement_config: PerfMeasurementConfig,
+    model_signature_config: ModelSignatureConfig,
     triton_config: RunTritonConfig,
     triton_docker_image: str,
     device_kinds: List,
@@ -413,6 +416,7 @@ def _configure_models_on_triton(
         for variant in configurator.get_models_variants(model_to_deploy, device_kinds=device_kinds):
             LOGGER.info(f"Generated model variant {variant.name} for Triton evaluation.")
             model_to_deploy_config = ModelConfig(variant.name, model_to_deploy.path)
+            model_signature_config_updated = _get_model_signature_config(model_to_deploy, model_signature_config)
             model_config_path = None
             error_logs = []
             try:
@@ -453,6 +457,7 @@ def _configure_models_on_triton(
                     **dataclass2dict(triton_client_config),
                     **dataclass2dict(dataset_profile_config),
                     **dataclass2dict(perf_measurement_config),
+                    **dataclass2dict(model_signature_config_updated),
                     model_name=model_to_deploy_config.model_name,
                     model_version=model_to_deploy_config.model_version,
                 )
@@ -497,6 +502,7 @@ def _configure_models_on_triton(
                     perf_measurement_config=perf_measurement_config,
                     optimization_config=variant.optimization_config,
                     triton_config=triton_config,
+                    model_signature_config=model_signature_config_updated,
                 )
 
                 config_results.append(config_result)
@@ -531,3 +537,24 @@ def _update_engine_count_per_device(
         instances_config.engine_count_per_device[device] = min(values)
 
     LOGGER.debug(f"Update engine_count_per_devices to {instances_config.engine_count_per_device}")
+
+
+def _get_model_signature_config(
+    model_to_deploy: Model, model_signature_config: ModelSignatureConfig
+) -> ModelSignatureConfig:
+    """
+    Re-write the signature for TensorRT models.
+
+    The TensorRT does not support int64/uint64 data type and is casted to int32. For correct model processing the
+    input/output shapes in model signature must be re-writen to match the converted model.
+    """
+    signature = model_to_deploy.signature if model_to_deploy.has_signature() else model_signature_config
+    if not signature:
+        return ModelSignatureConfig()
+
+    if model_to_deploy.format != Format.TENSORRT or not signature or signature.is_missing():
+        LOGGER.debug(f"The format is {model_to_deploy.format} and signature {signature}. No re-write needed.")
+        return signature
+
+    LOGGER.debug(f"The format is {model_to_deploy.format}. Re-write signature.")
+    return tensorrt_utils.rewrite_signature_config(signature)

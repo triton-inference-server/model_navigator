@@ -17,7 +17,7 @@ from typing import Optional
 
 from model_navigator.common.config import BatchingConfig, TensorRTCommonConfig
 from model_navigator.converter.config import DatasetProfileConfig
-from model_navigator.model import Model
+from model_navigator.model import Model, ModelSignatureConfig
 from model_navigator.perf_analyzer import PerfMeasurementConfig
 from model_navigator.results import Status
 from model_navigator.triton import (
@@ -44,3 +44,4 @@ class TritonConfiguratorResult:
     perf_measurement_config: Optional[PerfMeasurementConfig] = None
     optimization_config: Optional[TritonModelOptimizationConfig] = None
     triton_config: Optional[RunTritonConfig] = None
+    model_signature_config: Optional[ModelSignatureConfig] = None

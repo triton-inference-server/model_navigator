@@ -30,14 +30,16 @@ from model_navigator.cli.utils import exit_cli_command, is_cli_command
 from model_navigator.converter.config import DatasetProfileConfig
 from model_navigator.kubernetes.triton import TritonServer
 from model_navigator.log import init_logger, log_dict
+from model_navigator.model import ModelSignatureConfig
 from model_navigator.model_analyzer import (
     ModelAnalyzerProfileConfig,
     ModelAnalyzerTritonConfig,
     Profiler,
     ProfileResult,
 )
-from model_navigator.perf_analyzer import DEFAULT_RANDOM_DATA_FILENAME, PerfMeasurementConfig
+from model_navigator.perf_analyzer import PerfMeasurementConfig
 from model_navigator.results import ResultsStore, State, Status
+from model_navigator.triton import TritonModelConfigGenerator
 from model_navigator.utils import Workspace
 from model_navigator.utils.cli import common_options, options_from_config
 from model_navigator.utils.nav_package import NavPackage
@@ -106,14 +108,7 @@ def profile_cmd(
             },
         )
 
-    profiling_data_path = None
-    if package or (dataset_profile_config.value_ranges and dataset_profile_config.dtypes):
-        profiling_data_path = workspace.path / DEFAULT_RANDOM_DATA_FILENAME
-        ctx.forward(
-            create_profiling_data_cmd,
-            data_output_path=profiling_data_path,
-            **dataclasses.asdict(dataset_profile_config),
-        )
+    profiling_data = _prepare_profiling_data(ctx, workspace, package, triton_config, dataset_profile_config)
 
     profiler = Profiler(
         workspace=workspace,
@@ -122,7 +117,7 @@ def profile_cmd(
         profile_config=profile_config,
         triton_config=triton_config,
         dataset_profile_config=dataset_profile_config,
-        profiling_data_path=profiling_data_path,
+        profiling_data=profiling_data,
         perf_measurement_config=perf_measurement_config,
         gpus=gpus,
     )
@@ -142,7 +137,7 @@ def profile_cmd(
         profile_config=profile_config,
         triton_config=triton_config,
         dataset_profile=dataset_profile_config,
-        profiling_data_path=profiling_data_path,
+        profiling_data=profiling_data,
         profiling_results_path=checkpoint_path,
     )
 
@@ -153,3 +148,33 @@ def profile_cmd(
         exit_cli_command(profile_result.status)
 
     return profile_result
+
+
+def _prepare_profiling_data(ctx, workspace, package, triton_config, dataset_profile_config):
+    profiling_data = {}
+
+    if not package and not (dataset_profile_config.value_ranges or dataset_profile_config.dtypes):
+        return profiling_data
+
+    model_repository = triton_config.model_repository
+    models_list = sorted(model_dir.name for model_dir in model_repository.glob("*") if model_dir.is_dir())
+    for model_name in models_list:
+        original_model_config_path = model_repository / model_name / "config.pbtxt"
+        original_model_config = TritonModelConfigGenerator.parse_triton_config_pbtxt(original_model_config_path)
+        signature = (
+            original_model_config.model.signature
+            if original_model_config.model.has_signature()
+            else ModelSignatureConfig()
+        )
+        filename = f"random_data_{model_name}.json"
+        profiling_data_path = workspace.path / filename
+        ctx.forward(
+            create_profiling_data_cmd,
+            data_output_path=profiling_data_path,
+            package=package,
+            **dataclasses.asdict(dataset_profile_config),
+            **dataclasses.asdict(signature),
+        )
+        profiling_data[model_name] = profiling_data_path
+
+    return profiling_data

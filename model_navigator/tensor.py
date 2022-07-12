@@ -73,6 +73,11 @@ class TensorSpec:
         """Check if tensor is dynamic - if any of dimension have -1 in shape. Except fist axis which is batch size."""
         return any([dim == -1 for dim in self.shape[1:]])
 
+    def astype(self, dtype) -> "TensorSpec":
+        """Change the TensorSpec dtype"""
+        tensor = TensorSpec(name=self.name, shape=self.shape, dtype=np.dtype(dtype), optional=self.optional)
+        return tensor
+
     @classmethod
     def from_triton_tensor_metadata(cls, tensor_metadata: Dict[str, Any]):
         """Wraps Triton TensorMetadata into TensorSpec

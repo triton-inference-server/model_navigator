@@ -70,6 +70,9 @@ class Model(BaseConfig):
     signature_if_missing: InitVar[Optional[ModelSignatureConfig]] = None
     explicit_format: InitVar[Optional[Format]] = None
 
+    def has_signature(self):
+        return self.signature is not None and not self.signature.is_missing()
+
     def __post_init__(self, signature_if_missing: Optional[ModelSignatureConfig], explicit_format: Optional[Format]):
         from model_navigator.utils.formats import FORMAT2ADAPTER
 

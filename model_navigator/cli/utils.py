@@ -18,6 +18,7 @@ from click import Context
 from model_navigator.converter.config import DatasetProfileConfig
 from model_navigator.converter.dataloader import NavPackageDataloader, RandomDataloader
 from model_navigator.log import LOGGER
+from model_navigator.model import ModelSignatureConfig
 from model_navigator.results import State, Status
 
 
@@ -50,13 +51,20 @@ def exit_cli_command(status: Status) -> None:
 def get_dataloader(**kwargs):
     package = kwargs.get("package")
     if package:
-        dataloader = NavPackageDataloader(package, "profiling", max_batch_size=1)
+        model_signature_config = ModelSignatureConfig.from_dict(kwargs)
+        dataloader = NavPackageDataloader(
+            package,
+            "profiling",
+            max_batch_size=1,
+            model_signature_config=model_signature_config,
+        )
     else:
         dataset_profile_config = DatasetProfileConfig.from_dict(kwargs)
+        model_signature_config = ModelSignatureConfig.from_dict(kwargs)
         dataloader = RandomDataloader(
             model_config=None,
-            model_signature_config=None,
-            dataset_profile=dataset_profile_config,
+            model_signature_config=model_signature_config,
+            dataset_profile_config=dataset_profile_config,
             max_batch_size=1,
             enforce_max_batch_size=True,
         )
