@@ -21,12 +21,6 @@ import numpy as np
 
 LOGGER = logging.getLogger(__name__)
 
-DEFAULT_RANDOM_DATA_FILENAME = "random_data.json"
-
-
-def get_profiling_data_path(workspace_path: Path):
-    return workspace_path / DEFAULT_RANDOM_DATA_FILENAME
-
 
 def _remove_batch_dim(data):
     """Skip batch dimensions.

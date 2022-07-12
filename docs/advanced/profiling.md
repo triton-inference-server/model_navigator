@@ -90,7 +90,7 @@ automatic stop. In order to enable early exit pass `--config-search-early-exit-e
 
 ## Profile Results
 
-The easiest method to analyze and generate reports of profiling process is to use Triton Model Navigator [analyze command](docs/analysis.md).
+The easiest method to analyze and generate reports of profiling process is to use Triton Model Navigator [analyze command](analysis.md).
 
 The Triton Model Analyzer writes the collected measurements to [checkpoint](https://github.com/triton-inference-server/model_analyzer/blob/main/docs/checkpoints.md) files when profiling.
 They are saved into the `<workspace_path>/analyzer/checkpoints` directory. To load them you can use:

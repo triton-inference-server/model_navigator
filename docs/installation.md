@@ -34,10 +34,11 @@ NGC Containers are the recommended environments for Model Navigator Export API, 
 - [PyTorch](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch)
 - [TensorFlow](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/tensorflow)
 
+The minimal required `Python` version for Triton Model Navigator is `3.8`.
 
 ## Export From Source
 
-Model Navigator Export API is installed with Model Navigator package.
+Triton Model Navigator Export API is installed with Model Navigator package.
 To install Model Navigator Export API without Model Navigator dependencies use commands:
 
 ```shell
@@ -52,8 +53,13 @@ Extras:
 
 ## Optimize for Triton Inference Server
 
+Triton Model Navigator Optimize step performs a search of optimal format and deployment configuration
+of model or package produced by Export API on Triton Inference Server. The `optimize` command performs
+a conversion to available formats, apply additional Triton backends optimizations and use `Triton Model Analyzer` for
+profiling looking for best deployment configuration.
+
 ## Using Docker Container
-The recommended way of using the Triton Model Navigator is to build a Docker container with all necessary dependencies:
+The recommended way of using the optimize step is to build a Docker container with all necessary dependencies:
 ```shell
 $ make docker
 ```
@@ -98,11 +104,4 @@ $ make install-with-cli
 or using Pip:
 ```shell
 pip install --extra-index-url https://pypi.ngc.nvidia.com .[cli]
-```
-
-If you are using this approach, you need to install DCGM. In order to install it on Ubuntu 20.04, run:
-```shell
-$ export DCGM_VERSION=2.0.13
-$ wget -q https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/datacenter-gpu-manager_${DCGM_VERSION}_amd64.deb && \
-dpkg -i datacenter-gpu-manager_${DCGM_VERSION}_amd64.deb
 ```

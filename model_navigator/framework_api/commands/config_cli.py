@@ -11,11 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-from model_navigator.cli.convert_model import ConversionSetConfig
 from model_navigator.converter.config import ComparatorConfig, TensorRTPrecision
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.status import RuntimeResults
@@ -42,21 +40,6 @@ def extension2format(extension: str):
         return Format.TENSORRT
     else:
         return None
-
-
-TRITON_SUPPORTED_FORMATS_PYT = [
-    Format.ONNX,
-    Format.TENSORRT,
-    Format.TORCHSCRIPT,
-    Format.TORCH_TRT,
-]
-
-TRITON_SUPPORTED_FORMATS_TF = [
-    Format.TF_TRT,
-    Format.TF_SAVEDMODEL,
-    Format.ONNX,
-    Format.TENSORRT,
-]
 
 
 class ConfigCli(Command):
@@ -107,23 +90,11 @@ class ConfigCli(Command):
                 inputs=input_metadata,
                 outputs=output_metadata,
             )
-            conversion_set_config = ConversionSetConfig(
-                onnx_opsets=[opset],
-                target_formats=TRITON_SUPPORTED_FORMATS_PYT
-                if framework == Framework.PYT
-                else TRITON_SUPPORTED_FORMATS_TF,
-                tensorrt_precisions=[self.target_precision]
-                if self.target_precision
-                else [TensorRTPrecision.FP16, TensorRTPrecision.TF32],
-            )
 
             comparator_config = ComparatorConfig(atol=self.atol, rtol=self.rtol)
-            # dataset_profile_config = DatasetProfileConfig()
 
             config_file.save_config(src_model_config)
             config_file.save_config(model_signature_config)
-            config_file.save_config(conversion_set_config)
             config_file.save_config(comparator_config)
-            # config_file.save_config(dataset_profile_config)
 
         return config_relative_path

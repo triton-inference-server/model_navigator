@@ -14,4 +14,3 @@
 from model_navigator.perf_analyzer.config import MeasurementMode, PerfMeasurementConfig  # noqa: F401
 from model_navigator.perf_analyzer.perf_analyzer import PerfAnalyzer  # noqa: F401
 from model_navigator.perf_analyzer.perf_config import PerfAnalyzerConfig  # noqa: F401
-from model_navigator.perf_analyzer.profiling_data import DEFAULT_RANDOM_DATA_FILENAME  # noqa: F401
