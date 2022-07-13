@@ -113,7 +113,8 @@ class ConvertONNX2TRT(ConvertBase):
                         tensor_shape[ax] = val[i]
                     shape = ",".join([str(d) for d in tensor_shape])
                     shapes.append(f"{input_name}:[{shape}]")
-                convert_cmd.extend([f"{arg}"] + shapes)
+                if shapes:
+                    convert_cmd.extend([f"{arg}"] + shapes)
 
         precision_arg = self.trt_precision_to_arg[self.target_precision]
         if precision_arg:
