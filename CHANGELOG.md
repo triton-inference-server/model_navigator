@@ -16,7 +16,7 @@ limitations under the License.
 
 # Changelog
 
-## unreleased
+## 0.3.2
 - Updated NVIDIA containers defaults to 22.06
 - Model Navigator CLI:
   - new: Perf Analyzer profiling data use base64 format for content
@@ -33,7 +33,7 @@ limitations under the License.
     - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.36.2
     - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.19
     - [Triton Model Analyzer 1.17.0](https://github.com/triton-inference-server/model_analyzer)
-    - tf2onnx: [v1.10.1](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.10.1)
+    - tf2onnx: [v1.11.1](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.11.1)
     - Other component versions depend on the used framework and Triton Inference Server containers versions.
       See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
       for a detailed summary.
