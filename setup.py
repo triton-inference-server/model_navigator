@@ -38,7 +38,7 @@ def _get_info():
             repo = Repo(navigator_dir.as_posix())
             version = repo.head.commit.hexsha[:8]
             repository_url = repo.remotes.origin.url
-        except (InvalidGitRepositoryError, TypeError):
+        except (InvalidGitRepositoryError, ValueError, TypeError):
             pass
     except ImportError:
         pass

@@ -28,9 +28,9 @@ class TensorRTBackendConfigurator(BaseBackendConfigurator):
     supported_formats = [Format.TENSORRT]
 
     def _extract_signature(self, model_config, model: Model):
-        signature = tensorrt_utils.rewrite_signature_config(model.signature)
-
-        rewrite_signature_to_model_config(model_config, signature)
+        if model.signature and not model.signature.is_missing():
+            signature = tensorrt_utils.rewrite_signature_config(model.signature)
+            rewrite_signature_to_model_config(model_config, signature)
 
     def _set_backend_acceleration(
         self,
