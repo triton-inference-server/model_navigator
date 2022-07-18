@@ -57,7 +57,7 @@ def tf2onnx(input_path, output_path, *, log_path, opset: int, verbose: bool = Fa
         "--opset",
         opset,
     ]
-    LARGE_MODEL_THRESHOLD = 2 * (2 ** 30)  # 2GB
+    LARGE_MODEL_THRESHOLD = 2 * (2**30)  # 2GB
     total_files_size = sum(p.stat().st_size for p in input_path.rglob("*") if p.is_file())
     is_large_file = total_files_size > LARGE_MODEL_THRESHOLD
     if is_large_file:

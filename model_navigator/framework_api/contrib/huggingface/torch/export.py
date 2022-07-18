@@ -212,7 +212,7 @@ def export(
     config = Config(
         framework=Framework.PYT,
         model=model,
-        model_name=model_name,
+        model_name=model_name.replace("/", "-"),
         dataloader=dataloader,
         target_formats=target_formats,
         target_jit_type=jit_options,

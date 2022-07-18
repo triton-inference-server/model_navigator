@@ -376,6 +376,11 @@ def options_from_config(config_dataclass, cli_specs=None):  # noqa: C901
 def common_options(f):
     from model_navigator.kubernetes.triton import TritonServer
 
+    # click will run the config file option callback before the package callback, so
+    # we need to track which params have been explicitly set by the config,
+    # to avoid overwriting them with package defaults
+    loaded_from_config_file = set()
+
     def _load_config_from_file(ctx, param, value):
         """Set other CLI options defaults based on parameters from config file"""
         if not value:
@@ -385,6 +390,7 @@ def common_options(f):
         ctx.default_map = ctx.default_map or {}
         with YamlConfigFile(config_path=config_path) as config_file:
             ctx.default_map.update(config_file.config_dict)
+            loaded_from_config_file.update(config_file.config_dict.keys())
 
         return config_path
 
@@ -407,9 +413,11 @@ def common_options(f):
         with package.open(config_path) as config_file:
             config_dict = yaml.safe_load(config_file)
             model_path = config_dict["model_path"]
-            ctx.default_map.update(config_dict)
-            # we need to fix the relative path
-            ctx.default_map.update({"model_path": (package, model_path)})
+            filtered_config = {k: v for k, v in config_dict.items() if k not in loaded_from_config_file}
+            # model_path will be processed later into an actual path, before the options are converted
+            # into dataclass fields. See _parse_model_path in cli/spec.py.
+            filtered_config["model_path"] = (package, model_path)
+            ctx.default_map.update(filtered_config)
 
         return package
 

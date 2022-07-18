@@ -18,9 +18,10 @@ from typing import Dict, List, Optional, Tuple, Union
 import torch  # pytype: disable=import-error
 
 from model_navigator.framework_api.commands.core import Command, CommandType
+from model_navigator.framework_api.commands.export import exporters
 from model_navigator.framework_api.commands.export.base import ExportBase
-from model_navigator.framework_api.common import Sample, TensorMetadata
-from model_navigator.framework_api.exceptions import UserErrorContext
+from model_navigator.framework_api.common import TensorMetadata
+from model_navigator.framework_api.exceptions import ExecutionContext
 from model_navigator.framework_api.logger import LOGGER, get_pytorch_loggers_names
 from model_navigator.framework_api.utils import JitType, format_to_relative_model_path, get_package_path
 from model_navigator.model import Format
@@ -46,10 +47,9 @@ class ExportPYT2TorchScript(ExportBase):
         self,
         workdir: Path,
         model_name: str,
-        profiling_sample: Sample,
         target_device: str,
-        input_metadata: TensorMetadata,
         model: Optional[torch.nn.Module] = None,
+        batch_dim: Optional[int] = None,
         **kwargs,
     ) -> Optional[Path]:
         LOGGER.info("TorchScrip export started")
@@ -64,19 +64,24 @@ class ExportPYT2TorchScript(ExportBase):
 
         model.to(target_device)
 
-        if self.target_jit_type == JitType.SCRIPT:
-            with UserErrorContext():
-                script_module = torch.jit.script(model)
-        else:
-            dummy_input = tuple(
-                torch.from_numpy(val.astype(spec.dtype)).to(target_device)
-                for (val, spec) in zip(profiling_sample.values(), input_metadata.values())
-            )
-            with UserErrorContext():
-                script_module = torch.jit.trace(model, dummy_input)
+        exporters.torchscript.get_model = lambda: model
 
-        with UserErrorContext():
-            torch.jit.save(script_module, exported_model_path.as_posix())
+        with ExecutionContext(exported_model_path.parent / "reproduce.py") as context:
+
+            kwargs = {
+                "exported_model_path": exported_model_path.as_posix(),
+                "target_jit_type": self.target_jit_type.value,
+                "package_path": get_package_path(workdir, model_name).as_posix(),
+                "batch_dim": batch_dim,
+                "target_device": target_device,
+            }
+
+            args = []
+            for k, v in kwargs.items():
+                s = str(v).replace("'", '"')
+                args.extend([f"--{k}", s])
+
+            context.execute_local_runtime_script(exporters.torchscript.__file__, exporters.torchscript.export, args)
 
         return self.get_output_relative_path()
 
@@ -98,13 +103,13 @@ class ExportPYT2ONNX(ExportBase):
         workdir: Path,
         model_name: str,
         opset: int,
-        profiling_sample: Sample,
         input_metadata: TensorMetadata,
         output_metadata: TensorMetadata,
         target_device: str,
         dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None,
         forward_kw_names: Optional[Tuple[str, ...]] = None,
         model: Optional[torch.nn.Module] = None,
+        batch_dim: Optional[int] = None,
         **kwargs,
     ) -> Optional[Path]:
         LOGGER.info("PyTorch to ONNX export started")
@@ -117,25 +122,29 @@ class ExportPYT2ONNX(ExportBase):
         if model is None:
             raise RuntimeError("Expected model of type torch.nn.Module. Got None instead.")
 
-        dummy_input = tuple(
-            torch.from_numpy(val.astype(spec.dtype)).to(target_device)
-            for (val, spec) in zip(profiling_sample.values(), input_metadata.values())
-        )
-        if forward_kw_names is not None:
-            dummy_input = ({key: val for key, val in zip(forward_kw_names, dummy_input)},)
-
         model.to(target_device)
 
-        with UserErrorContext():
-            torch.onnx.export(
-                model,
-                args=dummy_input,
-                f=exported_model_path.as_posix(),
-                verbose=False,
-                opset_version=opset,
-                input_names=list(input_metadata.keys()),
-                output_names=list(output_metadata.keys()),
-                dynamic_axes=dynamic_axes,
-            )
+        exporters.onnx.get_model = lambda: model
+
+        with ExecutionContext(exported_model_path.parent / "reproduce.py") as context:
+
+            kwargs = {
+                "exported_model_path": exported_model_path.as_posix(),
+                "opset": opset,
+                "input_names": list(input_metadata.keys()),
+                "output_names": list(output_metadata.keys()),
+                "dynamic_axes": dict(**dynamic_axes),
+                "package_path": get_package_path(workdir, model_name).as_posix(),
+                "batch_dim": batch_dim,
+                "forward_kw_names": forward_kw_names,
+                "target_device": target_device,
+            }
+
+            args = []
+            for k, v in kwargs.items():
+                s = str(v).replace("'", '"')
+                args.extend([f"--{k}", s])
+
+            context.execute_local_runtime_script(exporters.onnx.__file__, exporters.onnx.export, args)
 
         return self.get_output_relative_path()

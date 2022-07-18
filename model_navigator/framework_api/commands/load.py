@@ -15,13 +15,12 @@
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional, Tuple
 
-import numpy
 import yaml
 
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.status import NavigatorStatus
-from model_navigator.framework_api.utils import get_default_status_filename, get_package_path
+from model_navigator.framework_api.utils import get_default_status_filename, get_package_path, load_samples
 
 if TYPE_CHECKING:
     from model_navigator.framework_api.package_descriptor import PackageDescriptor
@@ -81,21 +80,7 @@ class LoadSamples(Command):
         package_path = get_package_path(workdir, model_name)
         ret = []
         for samples_name in self.get_output_name():
-            samples_type = samples_name.split("_")[0]
-            samples_dirname = "model_output" if samples_name.split("_")[-1] == "output" else "model_input"
-            samples_dirpath = package_path / samples_dirname / samples_type
-            samples = []
-            for sample_filepath in samples_dirpath.iterdir():
-                sample = {}
-                with numpy.load(sample_filepath.as_posix()) as data:
-                    for k, v in data.items():
-                        if batch_dim is not None:
-                            v = numpy.expand_dims(v, batch_dim)
-                            # v = numpy.repeat(v, max_batch_size, batch_dim)
-                        sample[k] = v
-                samples.append(sample)
-            if samples_type == "profiling":
-                samples = samples[0]
+            samples = load_samples(samples_name, package_path, batch_dim)
             ret.append(samples)
 
         return tuple(ret)

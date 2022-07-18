@@ -69,6 +69,7 @@ class ModelStatus(DataObject):
 @dataclass
 class NavigatorStatus(DataObject):
     format_version: str
+    model_navigator_version: str
     uuid: str
     git_info: Dict
     environment: Dict
@@ -81,6 +82,7 @@ class NavigatorStatus(DataObject):
     def from_dict(cls, dict: Mapping):
         return cls(
             format_version=dict["format_version"],
+            model_navigator_version=dict["model_navigator_version"],
             uuid=dict["uuid"],
             git_info=dict.get("git_info"),
             environment=dict["environment"],

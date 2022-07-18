@@ -16,7 +16,7 @@ import shutil
 import sys
 from distutils.version import LooseVersion
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 import yaml
 
@@ -55,9 +55,9 @@ class Profiler:
         verbose: bool = False,
         profile_config: ModelAnalyzerProfileConfig,
         triton_config: ModelAnalyzerTritonConfig,
+        profiling_data: Dict[Optional[str], Path],
         perf_measurement_config: PerfMeasurementConfig,
         dataset_profile_config: Optional[DatasetProfileConfig] = None,
-        profiling_data_path: Optional[Path] = None,
     ):
         self._workspace = workspace
 
@@ -65,7 +65,7 @@ class Profiler:
         self._triton_docker_image = triton_docker_image
         self._profile_config = profile_config
         self._dataset_profile_config = dataset_profile_config
-        self._profiling_data_path = profiling_data_path
+        self._profiling_data = profiling_data
         self._perf_measurement_config = perf_measurement_config
 
         self._config_generator: ProfileConfigGenerator = ProfileConfigGenerator(
@@ -75,7 +75,7 @@ class Profiler:
             triton_docker_image=triton_docker_image,
             verbose=verbose,
             dataset_profile_config=dataset_profile_config,
-            profiling_data_path=profiling_data_path,
+            profiling_data=profiling_data,
             perf_measurement_config=perf_measurement_config,
             gpus=gpus,
         )
@@ -131,10 +131,10 @@ class ProfileConfigGenerator(BaseConfigGenerator):
         triton_config: ModelAnalyzerTritonConfig,
         perf_measurement_config: PerfMeasurementConfig,
         gpus: List[str],
+        profiling_data: Dict[Optional[str], Path],
         triton_docker_image: Optional[str] = None,
-        verbose: int = 0,
         dataset_profile_config: Optional[DatasetProfileConfig] = None,
-        profiling_data_path: Optional[Path] = None,
+        verbose: int = 0,
     ):
         super().__init__(workspace=workspace, verbose=verbose)
         self._analyzer_triton_log_path = self._analyzer_path / "triton.log"
@@ -144,7 +144,7 @@ class ProfileConfigGenerator(BaseConfigGenerator):
         self._verbose = verbose
         self._profile_config = profile_config
         self._dataset_profile_config = dataset_profile_config
-        self._profiling_data_path = profiling_data_path
+        self._profiling_data = profiling_data
         self._perf_measurement_config = perf_measurement_config
         self._gpus = gpus
 
@@ -191,12 +191,9 @@ class ProfileConfigGenerator(BaseConfigGenerator):
             "run_config_search_max_concurrency": self._profile_config.config_search_max_concurrency,
             "run_config_search_max_instance_count": self._profile_config.config_search_max_instance_count,
             "perf_analyzer_timeout": self._perf_measurement_config.perf_analyzer_timeout,
-            "perf_analyzer_flags": self._get_perf_analyzer_flags(),
             "triton_server_path": self._triton_config.triton_server_path,
             "override_output_model_repository": True,
             "gpus": list(self._gpus),
-            "summarize": self._verbose,
-            "verbose": self._verbose,
             "perf_output": self._verbose,
             "triton_output_path": self.triton_log_path.as_posix(),
             "early_exit_enable": early_exit_flag,
@@ -207,13 +204,14 @@ class ProfileConfigGenerator(BaseConfigGenerator):
 
         return config
 
-    def _get_perf_analyzer_flags(self):
+    def _get_perf_analyzer_flags(self, model_name):
         configuration = {}
-        if self._profiling_data_path:
+        if self._profiling_data:
+            profiling_data_path = self._profiling_data.get(model_name) or self._profiling_data[None]
             if TRITON_MODEL_ANALYZER_VERSION >= LooseVersion("1.8.0"):
-                configuration["input-data"] = [self._profiling_data_path.as_posix()]
+                configuration["input-data"] = [profiling_data_path.as_posix()]
             else:
-                configuration["input-data"] = self._profiling_data_path.as_posix()
+                configuration["input-data"] = profiling_data_path.as_posix()
         elif self._dataset_profile_config and self._dataset_profile_config.max_shapes:
 
             shapes = get_shape_params(self._dataset_profile_config.max_shapes)
@@ -234,9 +232,9 @@ class ProfileConfigGenerator(BaseConfigGenerator):
 
         return configuration
 
-    def _get_profile_config_for_model(self, model_dir_name):
+    def _get_profile_config_for_model(self, model_name):
 
-        original_model_config_path = self._triton_config.model_repository / model_dir_name / "config.pbtxt"
+        original_model_config_path = self._triton_config.model_repository / model_name / "config.pbtxt"
         original_model_config = TritonModelConfigGenerator.parse_triton_config_pbtxt(original_model_config_path)
 
         model_config = {}
@@ -292,5 +290,7 @@ class ProfileConfigGenerator(BaseConfigGenerator):
                 )
             elif DeviceKind.CPU in engine_count_per_device:
                 configuration["cpu_only"] = True
+
+        configuration["perf_analyzer_flags"] = self._get_perf_analyzer_flags(model_name)
 
         return configuration

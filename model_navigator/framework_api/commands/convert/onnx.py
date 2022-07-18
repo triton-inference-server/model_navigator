@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import subprocess
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
@@ -22,7 +21,7 @@ from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.convert.base import ConvertBase
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.common import TensorMetadata
-from model_navigator.framework_api.exceptions import UserError, UserErrorContext
+from model_navigator.framework_api.exceptions import ExecutionContext, UserError
 from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.runners.onnx import OnnxrtRunner
 from model_navigator.framework_api.utils import Framework, format_to_relative_model_path, get_package_path
@@ -94,7 +93,7 @@ class ConvertONNX2TRT(ConvertBase):
             return self.get_output_relative_path()
         converted_model_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with UserErrorContext():
+        with ExecutionContext():
             onnx_runner = OnnxrtRunner(SessionFromOnnx(input_model_path, providers=[target_device]))
             with onnx_runner:
                 onnx_input_metadata = onnx_runner.get_input_metadata()
@@ -114,7 +113,8 @@ class ConvertONNX2TRT(ConvertBase):
                         tensor_shape[ax] = val[i]
                     shape = ",".join([str(d) for d in tensor_shape])
                     shapes.append(f"{input_name}:[{shape}]")
-                convert_cmd.extend([f"{arg}"] + shapes)
+                if shapes:
+                    convert_cmd.extend([f"{arg}"] + shapes)
 
         precision_arg = self.trt_precision_to_arg[self.target_precision]
         if precision_arg:
@@ -123,8 +123,7 @@ class ConvertONNX2TRT(ConvertBase):
         if max_workspace_size is not None:
             convert_cmd.append(f"--workspace={max_workspace_size}")
 
-        with UserErrorContext():
-            output = subprocess.run(convert_cmd, capture_output=True)
-            output = self._log_subprocess_output(output=output)
+        with ExecutionContext() as context:
+            context.execute_cmd(convert_cmd)
 
         return self.get_output_relative_path()

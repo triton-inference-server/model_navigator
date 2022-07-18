@@ -21,7 +21,11 @@ import onnx
 import torch
 
 from model_navigator.framework_api.commands.correctness import Correctness
-from model_navigator.framework_api.commands.data_dump.samples import DumpInputModelData, DumpOutputModelData
+from model_navigator.framework_api.commands.data_dump.samples import (
+    DumpInputModelData,
+    DumpOutputModelData,
+    samples_to_npz,
+)
 from model_navigator.framework_api.commands.export.pyt import ExportPYT2ONNX, ExportPYT2TorchScript
 from model_navigator.framework_api.runners.pyt import PytRunner
 from model_navigator.framework_api.utils import Framework, JitType
@@ -186,12 +190,12 @@ def test_pyt_export_torchscript():
         export_cmd = ExportPYT2TorchScript(target_jit_type=JitType.SCRIPT)
         input_data = next(iter(dataloader))
         numpy_data = input_data.cpu().numpy()
+        samples_to_npz([{"input__1": numpy_data}], package_dir / "model_input" / "profiling", None)
 
         exported_model_path = package_dir / export_cmd(
             model=model,
             model_name=model_name,
             workdir=workdir,
-            profiling_sample={"input__1": numpy_data},
             input_metadata={"input__1": TensorSpec("input__1", numpy_data.shape, numpy_data.dtype)},
             target_device="cpu",
         )
@@ -213,6 +217,7 @@ def test_pyt_export_onnx():
 
         input_data = next(iter(dataloader_))
         sample = {"input": input_data.detach().cpu().numpy()}
+        samples_to_npz([sample], package_dir / "model_input" / "profiling", None)
 
         export_cmd = ExportPYT2ONNX()
         exported_model_path = package_dir / export_cmd(
@@ -221,7 +226,6 @@ def test_pyt_export_onnx():
             workdir=workdir,
             opset=OPSET,
             dynamic_axes={"input": {0: "batch"}},
-            profiling_sample=sample,
             input_metadata={"input": TensorSpec("input", (-1, 5), numpy.dtype("float32"))},
             output_metadata={"output": TensorSpec("output", (-1, 7), numpy.dtype("float32"))},
             target_device=device,

@@ -18,6 +18,7 @@ import os
 import shutil
 import uuid
 import zipfile
+from importlib.metadata import version
 from itertools import chain
 from pathlib import Path
 from typing import Dict, Optional, Sequence, Tuple, Union
@@ -50,7 +51,7 @@ from model_navigator.framework_api.utils import (
 from model_navigator.model import Format
 from model_navigator.utils.environment import get_env, get_git_info
 
-NAV_PACKAGE_FORMAT_VERSION = "0.1.0"
+NAV_PACKAGE_FORMAT_VERSION = "0.1.2"
 
 
 class PackageDescriptor:
@@ -76,6 +77,7 @@ class PackageDescriptor:
         navigator_status = NavigatorStatus(
             uuid=str(uuid.uuid1()),
             format_version=NAV_PACKAGE_FORMAT_VERSION,
+            model_navigator_version=version("model_navigator"),
             git_info=get_git_info(config.disable_git_info),
             environment=get_env(),
             export_config=config.to_dict(
@@ -184,9 +186,9 @@ class PackageDescriptor:
                 output_names=list(self.navigator_status.output_metadata.keys()),
             )
         elif format == Format.TF_TRT:
-            from model_navigator.framework_api.runners.tf import TFTRTRunner
+            from model_navigator.framework_api.runners.tf import TFRunner
 
-            return TFTRTRunner(
+            return TFRunner(
                 model_path,
                 input_metadata=self.navigator_status.input_metadata,
                 output_names=list(self.navigator_status.output_metadata.keys()),

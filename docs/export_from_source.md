@@ -43,6 +43,9 @@ limitations under the License.
   - [Package Save](#package-save)
   - [Package Load](#package-load)
   - [Package Profile](#package-profile)
+- [Reproducibility](#reproducibility)
+  - [Export](#export)
+  - [Conversion](#conversion)
 - [Contrib](#contrib)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -465,6 +468,126 @@ class ProfilerConfig(DataObject):
     measurement_request_count: Optional[int] = 50 # number of requests in a window (MeasurementMode.COUNT_WINDOWS)
     stability_percentage: float = 10.0 # How much average latency can vary between windows to accept the results as stable
     max_trials: int = 10 # Maximum number of measurement windows to get 3 stable windows
+```
+
+## Reproducibility
+
+When a given export or conversion fails Model Navigator prepares script to reproduce and debug the error. In the log it will show a specific command that runs the script. For example:
+
+```bash
+model_navigator.framework_api.exceptions.UserError: Command to reproduce error:
+/opt/conda/bin/python3 /workspace/navigator_workdir/resnet50_pyt.nav.workspace/onnx/reproduce.py --exported_model_path /workspace navigator_workdir/resnet50_pyt.nav.workspace/onnx/model.onnx --opset 14 --input_names ["image"] --output_names ["logits"] --dynamic_axes {"image": [0]} --package_path /workspace/navigator_workdir/resnet50_pyt.nav.workspace --batch_dim 0 --forward_kw_names None --target_device cuda
+```
+
+This command can be run by the user from the command line and the script is as minimalistic as possible to allow for easy investigation.
+
+Some conversions directly use other tools (e.g. [Polygraphy](https://docs.nvidia.com/deeplearning/tensorrt/polygraphy/docs/index.html)). In this case the command to reproduce the error will also directly call the external tool without any overhead. Example:
+
+```bash
+model_navigator.framework_api.exceptions.UserError: Command to reproduce error:
+polygraphy convert /workspace/navigator_workdir/resnext101-32x4d_pyt.nav.workspace/onnx/model.onnx --convert-to trt -o /workspace/navigator_workdir/resnext101-32x4d_pyt.nav.workspace/trt-fp32/model.plan --trt-min-shapes mage:[1,3,224
+,224] --trt-opt-shapes image:[10,3,224,224] --trt-max-shapes image:[10,3,224,224] --workspace=8589934592
+```
+
+
+### Export
+
+Export needs the model object as an input and user must provide the `get_model()` function in the script to reproduce the error.
+
+Here is an example of reproducing script for ONNX export:
+```python
+from typing import Dict, List, Optional
+
+import fire
+import torch
+
+from model_navigator.framework_api.utils import load_samples
+
+
+def get_model():
+    raise NotImplementedError("Please implement the get_model() function to reproduce the export error.")
+
+
+def export(
+    exported_model_path: str,
+    opset: int,
+    input_names: List[str],
+    output_names: List[str],
+    dynamic_axes: Dict[str, Dict[int, str]],
+    package_path: str,
+    batch_dim: Optional[int],
+    forward_kw_names: Optional[List[str]],
+    target_device: str,
+):
+    model = get_model()
+    profiling_sample = load_samples("profiling_sample", package_path, batch_dim)
+
+    dummy_input = tuple(torch.from_numpy(val).to(target_device) for val in profiling_sample.values())
+    if forward_kw_names is not None:
+        dummy_input = ({key: val for key, val in zip(forward_kw_names, dummy_input)},)
+
+    torch.onnx.export(
+        model,
+        args=dummy_input,
+        f=exported_model_path,
+        verbose=False,
+        opset_version=opset,
+        input_names=input_names,
+        output_names=output_names,
+        dynamic_axes=dynamic_axes,
+    )
+
+
+if __name__ == "__main__":
+    fire.Fire(export)
+```
+
+### Conversion
+
+Conversion scirpts are fully stand-alone as they operate on checkpoints. They can be run without any modifications.
+
+Example for SavedModel to TF-TRT conversion:
+
+```python
+import fire
+from tensorflow.python.compiler.tensorrt import trt_convert as trtc
+
+from model_navigator.framework_api.utils import load_samples, sample_to_tuple
+
+
+def convert(
+    exported_model_path: str,
+    converted_model_path: str,
+    max_workspace_size: int,
+    target_precision: str,
+    minimum_segment_size: int,
+    package_path: str,
+    batch_dim: int,
+):
+
+    conversion_samples = load_samples("conversion_samples", package_path, batch_dim)
+
+    def _dataloader():
+        for sample in conversion_samples:
+            yield sample_to_tuple(sample)
+
+    params = trtc.DEFAULT_TRT_CONVERSION_PARAMS._replace(
+        max_workspace_size_bytes=max_workspace_size,
+        precision_mode=target_precision,
+        minimum_segment_size=minimum_segment_size,
+    )
+    converter = trtc.TrtGraphConverterV2(
+        input_saved_model_dir=exported_model_path, use_dynamic_shape=True, conversion_params=params
+    )
+
+    converter.convert()
+    converter.build(_dataloader)
+    converter.save(converted_model_path)
+
+
+if __name__ == "__main__":
+    fire.Fire(convert)
+
 ```
 
 ## Contrib

@@ -130,7 +130,7 @@ class ToleranceParameterHelper:
                         rtol_all_iterations.setdefault(name, []).append(rtol[name])
 
             def fractional_ceil(a, precision=0):
-                return np.true_divide(np.ceil(a * 10 ** precision), 10 ** precision)
+                return np.true_divide(np.ceil(a * 10**precision), 10**precision)
 
             # get max from calculated tolerance parameters
             atol = {name: fractional_ceil(np.amax(tols), 3) for name, tols in atol_all_iterations.items()}

@@ -177,62 +177,66 @@ class RandomDataloader(Dataloader):
         self,
         model_config: Optional[ModelConfig] = None,
         model_signature_config: Optional[ModelSignatureConfig] = None,
-        dataset_profile: Optional[DatasetProfileConfig] = None,
+        dataset_profile_config: Optional[DatasetProfileConfig] = None,
         max_batch_size: Optional[int] = None,
         enforce_max_batch_size: bool = False,
         random_seed: int = 0,
     ):
-        self.dataset_profile = dataset_profile or DatasetProfileConfig()
+        self.dataset_profile_config = dataset_profile_config or DatasetProfileConfig()
+        self.model_signature_config = model_signature_config or ModelSignatureConfig()
         self.rng = np.random.default_rng(random_seed)
         if not self._dataset_profile_complete():
             LOGGER.debug("Dataset profile incomplete, reconstructing from model signature.")
             self._generate_default_profile(model_config, model_signature_config, max_batch_size)
-        assert self.dataset_profile.max_shapes.keys() == self.dataset_profile.min_shapes.keys()
+        assert self.dataset_profile_config.max_shapes.keys() == self.dataset_profile_config.min_shapes.keys()
         if enforce_max_batch_size:
             assert max_batch_size is not None
             self._ensure_max_batch_size(max_batch_size)
 
     def _dataset_profile_complete(self):
         return None not in (
-            self.dataset_profile.min_shapes,
-            self.dataset_profile.max_shapes,
-            self.dataset_profile.dtypes,
-            self.dataset_profile.value_ranges,
+            self.dataset_profile_config.min_shapes,
+            self.dataset_profile_config.max_shapes,
+            self.dataset_profile_config.dtypes,
+            self.dataset_profile_config.value_ranges,
         )
 
     def _ensure_max_batch_size(self, max_batch_size):
         if not max_batch_size:
             return
-        for inp in self.dataset_profile.max_shapes:
-            self.dataset_profile.max_shapes[inp] = (max_batch_size, *self.dataset_profile.max_shapes[inp][1:])
-            self.dataset_profile.opt_shapes[inp] = (
-                min(self.dataset_profile.opt_shapes[inp][0], max_batch_size),
-                *self.dataset_profile.opt_shapes[inp][1:],
+        for inp in self.dataset_profile_config.max_shapes:
+            self.dataset_profile_config.max_shapes[inp] = (
+                max_batch_size,
+                *self.dataset_profile_config.max_shapes[inp][1:],
             )
-            self.dataset_profile.min_shapes[inp] = (1, *self.dataset_profile.min_shapes[inp][1:])
+            self.dataset_profile_config.opt_shapes[inp] = (
+                min(self.dataset_profile_config.opt_shapes[inp][0], max_batch_size),
+                *self.dataset_profile_config.opt_shapes[inp][1:],
+            )
+            self.dataset_profile_config.min_shapes[inp] = (1, *self.dataset_profile_config.min_shapes[inp][1:])
 
     def _generate_default_profile(self, model_config, model_signature, max_batch_size):
-        if model_config is None and model_signature is None:
+        if model_config is None and (model_signature is None or model_signature.is_missing()):
             raise ModelNavigatorException("Cannot reconstruct input signatures")
 
-        if model_signature is None or model_signature.inputs is None or model_signature.outputs is None:
+        if model_signature is None or model_signature.is_missing():
             model_signature = extract_model_signature(model_config.model_path)
 
         # dtypes are almost always missing, so do those first
-        if self.dataset_profile.dtypes is None:
+        if self.dataset_profile_config.dtypes is None:
             dtypes = {}
             for name, inp in model_signature.inputs.items():
                 dtypes[name] = inp.dtype
-            self.dataset_profile.dtypes = dtypes
+            self.dataset_profile_config.dtypes = dtypes
             LOGGER.debug("Generated default dataset profile. dtypes=%s.", dtypes)
 
-        if self.dataset_profile.value_ranges is None:
+        if self.dataset_profile_config.value_ranges is None:
 
             def _get_default_value_range(spec: TensorSpec):
                 return {"i": (0, 1), "f": (0.0, 1.0)}[spec.dtype.kind]
 
             value_ranges = {name: _get_default_value_range(spec) for name, spec in model_signature.inputs.items()}
-            self.dataset_profile.value_ranges = value_ranges
+            self.dataset_profile_config.value_ranges = value_ranges
             LOGGER.debug(
                 "Missing model input value ranges required during conversion. "
                 "Use `value_ranges` config to define missing dataset profiles. "
@@ -247,44 +251,71 @@ class RandomDataloader(Dataloader):
                 return
             raise
 
-        if self.dataset_profile.min_shapes is None:
-            self.dataset_profile.min_shapes = sig_min_shapes
+        if self.dataset_profile_config.min_shapes is None:
+            self.dataset_profile_config.min_shapes = sig_min_shapes
             LOGGER.debug("Generated default dataset profile: min_shapes=%s.", sig_min_shapes)
-        if self.dataset_profile.max_shapes is None:
+        if self.dataset_profile_config.max_shapes is None:
             if not max_batch_size:
                 raise ModelNavigatorException("Cannot construct default dataset profile: max_batch_size not provided")
             if max_batch_size < 0:
                 raise ModelNavigatorException("Cannot construct default dataset profile: max_batch_size negative")
 
-            self.dataset_profile.max_shapes = sig_max_shapes
+            self.dataset_profile_config.max_shapes = sig_max_shapes
             LOGGER.debug("Generated default dataset profile: max_shapes=%s.", sig_max_shapes)
 
     @property
-    def min_shapes(self) -> Dict[str, List[int]]:
-        return self.dataset_profile.min_shapes
+    def min_shapes(self) -> Dict[str, Iterable[int]]:
+        return self.dataset_profile_config.min_shapes
 
     @property
-    def max_shapes(self) -> Dict[str, List[int]]:
-        return self.dataset_profile.max_shapes
+    def max_shapes(self) -> Dict[str, Iterable[int]]:
+        return self.dataset_profile_config.max_shapes
 
     @property
-    def opt_shapes(self) -> Dict[str, List[int]]:
-        if self.dataset_profile.opt_shapes is None:
+    def opt_shapes(self) -> Dict[str, Iterable[int]]:
+        if self.dataset_profile_config.opt_shapes is None:
             LOGGER.info("opt_shapes not provided, using opt_shapes=max_shapes")
-            self.dataset_profile.opt_shapes = self.dataset_profile.max_shapes
-        return self.dataset_profile.opt_shapes
+            self.dataset_profile_config.opt_shapes = self.dataset_profile_config.max_shapes
+        return self.dataset_profile_config.opt_shapes
 
     @property
     def dtypes(self) -> Dict[str, List[np.dtype]]:
-        return {k: t.type for k, t in self.dataset_profile.dtypes.items()}
+        def _extract_type(dtype, name):
+            if not self.model_signature_config or not self.model_signature_config.inputs:
+                return dtype.type
+
+            tensor_spec = self.model_signature_config.inputs.get(name)
+            if not tensor_spec:
+                LOGGER.debug(f"Input {name} not found in signature.")
+                return dtype.type
+
+            return tensor_spec.dtype.type
+
+        return {k: _extract_type(t, k) for k, t in self.dataset_profile_config.dtypes.items()}
 
     def __iter__(self) -> Iterator[Dict[str, np.ndarray]]:
+        def _extract_dtype(dtype, name):
+            if not self.model_signature_config or not self.model_signature_config.inputs:
+                return dtype
+
+            tensor_spec = self.model_signature_config.inputs.get(name)
+            if not tensor_spec:
+                LOGGER.debug(f"Input {name} not found in signature.")
+                return dtype
+
+            return tensor_spec.dtype
+
         yield from (
             {
-                name: _generate_random(dtype, shapes[name], self.dataset_profile.value_ranges[name], rng=self.rng)
-                for name, dtype in self.dataset_profile.dtypes.items()
+                name: _generate_random(
+                    _extract_dtype(dtype, name),
+                    shapes[name],
+                    self.dataset_profile_config.value_ranges[name],
+                    rng=self.rng,
+                )
+                for name, dtype in self.dataset_profile_config.dtypes.items()
             }
-            for shapes in (self.dataset_profile.min_shapes, self.dataset_profile.max_shapes)
+            for shapes in (self.dataset_profile_config.min_shapes, self.dataset_profile_config.max_shapes)
         )
 
 
@@ -293,7 +324,13 @@ class NavPackageDataloader(Dataloader):
     It generates batches of size 1 and max_batch_size.
     """
 
-    def __init__(self, package: NavPackage, dataset: str, max_batch_size: int = 0):
+    def __init__(
+        self,
+        package: NavPackage,
+        dataset: str,
+        max_batch_size: int = 0,
+        model_signature_config: Optional[ModelSignatureConfig] = None,
+    ):
         LOGGER.debug("Creating dataloader from package %s", package.path)
         if max_batch_size == 0:
             raise ModelNavigatorException("Please provide the --max-batch-size option")
@@ -303,26 +340,11 @@ class NavPackageDataloader(Dataloader):
         self.package = package
         self.dataset = dataset
         self.max_batch_size = max_batch_size
+        self.model_signature_config = model_signature_config
         self.size_index = None
         if dataset not in package.datasets:
             raise ModelNavigatorException(f"Dataset {dataset} not found in {package}")
         self._index_by_shape()
-
-    def _index_by_shape(self):
-        """Group samples by shapes, so that batches can be made when iterating"""
-        self.size_index = defaultdict(list)
-        for file in self.package.datasets[self.dataset]:
-            with self.package.open(file) as fobj:
-                sample = dict(np.load(fobj))
-                key = frozenset((k, v.shape) for k, v in sample.items())
-                self.size_index[key].append(file)
-
-    @staticmethod
-    def _stack_batch(inputs, samples):
-        batch = {}
-        for name, _ in inputs:
-            batch[name] = np.stack(s[name] for s in samples)
-        return batch
 
     def __iter__(self) -> Iterator[Dict[str, np.ndarray]]:
         """Make batches from samples of the same size.
@@ -376,7 +398,51 @@ class NavPackageDataloader(Dataloader):
         dtypes = {}
         for sample in self:
             for inp, val in sample.items():
-                dtypes[inp] = val.dtype.type
+                dtypes[inp] = self._extract_dtype(val, inp)
+
             break
 
         return dtypes
+
+    def _index_by_shape(self):
+        """Group samples by shapes, so that batches can be made when iterating"""
+        self.size_index = defaultdict(list)
+        for file in self.package.datasets[self.dataset]:
+            with self.package.open(file) as fobj:
+                sample = dict(np.load(fobj))
+                key = frozenset((k, v.shape) for k, v in sample.items())
+                self.size_index[key].append(file)
+
+    def _format_sample(self, sample, name):
+        if not self.model_signature_config or not self.model_signature_config.inputs:
+            LOGGER.debug("No signature. No cast.")
+            return sample[name]
+
+        input_sample = sample[name]
+        tensor_spec = self.model_signature_config.inputs.get(name)
+        if not tensor_spec:
+            LOGGER.debug(f"Input {name} not found in signature")
+            return input_sample
+
+        if tensor_spec.dtype != input_sample.dtype:
+            LOGGER.debug(f"Casting input {name} to {tensor_spec.dtype}")
+            input_sample = input_sample.astype(tensor_spec.dtype)
+
+        return input_sample
+
+    def _stack_batch(self, inputs, samples):
+        batch = {}
+        for name, _ in inputs:
+            batch[name] = np.stack(self._format_sample(s, name) for s in samples)
+        return batch
+
+    def _extract_dtype(self, val, name):
+        if not self.model_signature_config or not self.model_signature_config.inputs:
+            return val.dtype.type
+
+        tensor_spec = self.model_signature_config.inputs.get(name)
+        if not tensor_spec:
+            LOGGER.debug(f"Input {name} not found in signature.")
+            return val.dtype.type
+
+        return tensor_spec.dtype.type

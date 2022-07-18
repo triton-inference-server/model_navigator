@@ -11,6 +11,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from model_navigator.perf_analyzer.config import MeasurementMode, PerfMeasurementConfig  # noqa: F401
-from model_navigator.perf_analyzer.perf_analyzer import PerfAnalyzer  # noqa: F401
-from model_navigator.perf_analyzer.perf_config import PerfAnalyzerConfig  # noqa: F401

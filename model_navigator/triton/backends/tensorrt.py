@@ -11,15 +11,26 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import logging
+
 from model_navigator.common.config import TensorRTCommonConfig
-from model_navigator.model import Format
+from model_navigator.model import Format, Model
 from model_navigator.triton import TritonModelOptimizationConfig
 from model_navigator.triton.backends.base import BaseBackendConfigurator
+from model_navigator.triton.utils import rewrite_signature_to_model_config
+from model_navigator.utils import tensorrt as tensorrt_utils
+
+LOGGER = logging.getLogger(__name__)
 
 
 class TensorRTBackendConfigurator(BaseBackendConfigurator):
     platform_name = "tensorrt_plan"
     supported_formats = [Format.TENSORRT]
+
+    def _extract_signature(self, model_config, model: Model):
+        if model.signature and not model.signature.is_missing():
+            signature = tensorrt_utils.rewrite_signature_config(model.signature)
+            rewrite_signature_to_model_config(model_config, signature)
 
     def _set_backend_acceleration(
         self,

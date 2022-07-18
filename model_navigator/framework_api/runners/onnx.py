@@ -17,13 +17,13 @@ from collections import OrderedDict
 
 from polygraphy.backend.onnxrt import OnnxrtRunner as _OnnxrtRunner
 
-from model_navigator.framework_api.exceptions import UserErrorContext
+from model_navigator.framework_api.exceptions import ExecutionContext
 from model_navigator.framework_api.utils import Framework, validate_sample_output
 
 
 class OnnxrtRunner(_OnnxrtRunner):
     def activate(self):
-        with UserErrorContext():
+        with ExecutionContext():
             return super().activate()
 
     def infer(self, feed_dict, check_inputs=None, *args, **kwargs):

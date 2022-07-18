@@ -183,7 +183,7 @@ def export(
     config = Config(
         Framework.TF2,
         model=model,
-        model_name=model_name,
+        model_name=model_name.replace("/", "-"),
         dataloader=dataloader,
         target_precisions=target_precisions,
         max_workspace_size=max_workspace_size,

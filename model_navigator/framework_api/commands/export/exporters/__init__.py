@@ -11,6 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from model_navigator.perf_analyzer.config import MeasurementMode, PerfMeasurementConfig  # noqa: F401
-from model_navigator.perf_analyzer.perf_analyzer import PerfAnalyzer  # noqa: F401
-from model_navigator.perf_analyzer.perf_config import PerfAnalyzerConfig  # noqa: F401
+
+from model_navigator.framework_api.package_utils import is_tf_available, is_torch_available
+
+if is_torch_available():
+    from model_navigator.framework_api.commands.export.exporters import onnx, torchscript  # noqa: F401
+
+if is_tf_available():
+    from model_navigator.framework_api.commands.export.exporters import sm  # noqa: F401

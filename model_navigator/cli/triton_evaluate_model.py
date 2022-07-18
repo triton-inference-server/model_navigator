@@ -26,6 +26,7 @@ from model_navigator.cli.create_profiling_data import create_profiling_data_cmd
 from model_navigator.cli.spec import (
     DatasetProfileConfigCli,
     ModelConfigCli,
+    ModelSignatureConfigCli,
     PerfMeasurementConfigCli,
     TritonClientConfigCli,
 )
@@ -33,12 +34,8 @@ from model_navigator.cli.utils import exit_cli_command, get_dataloader, is_cli_c
 from model_navigator.converter import DatasetProfileConfig
 from model_navigator.exceptions import ModelNavigatorException
 from model_navigator.log import log_dict, set_logger
-from model_navigator.perf_analyzer import (
-    DEFAULT_RANDOM_DATA_FILENAME,
-    PerfAnalyzer,
-    PerfAnalyzerConfig,
-    PerfMeasurementConfig,
-)
+from model_navigator.model import ModelSignatureConfig
+from model_navigator.perf_analyzer import PerfAnalyzer, PerfAnalyzerConfig, PerfMeasurementConfig
 from model_navigator.perf_analyzer.config import SharedMemoryMode
 from model_navigator.results import State, Status
 from model_navigator.triton import TritonClientConfig, parse_server_url
@@ -47,6 +44,8 @@ from model_navigator.utils import Workspace, cli
 from model_navigator.utils.nav_package import NavPackage
 
 LOGGER = logging.getLogger("triton_evaluate_model")
+
+DEFAULT_RANDOM_DATA_FILENAME = "random_data.json"
 
 
 class MeasurementMode(Enum):
@@ -254,6 +253,7 @@ def _get_max_shapes(kwargs, dataset_profile_config):
 @cli.options_from_config(PerfMeasurementConfig, PerfMeasurementConfigCli)
 @cli.options_from_config(DatasetProfileConfig, DatasetProfileConfigCli)
 @cli.options_from_config(TritonClientConfig, TritonClientConfigCli)
+@cli.options_from_config(ModelSignatureConfig, ModelSignatureConfigCli)
 @click.pass_context
 def triton_evaluate_model_cmd(
     ctx,
@@ -277,6 +277,7 @@ def triton_evaluate_model_cmd(
     dataset_profile_config = DatasetProfileConfig.from_dict(kwargs)
     triton_client_config = TritonClientConfig.from_dict(kwargs)
     perf_measurement_config = PerfMeasurementConfig.from_dict(kwargs)
+    model_signature_config = ModelSignatureConfig.from_dict(kwargs)
 
     batch_sizes = list(map(lambda v: int(v.strip()), batch_sizes.split(",")))
 
@@ -297,6 +298,7 @@ def triton_evaluate_model_cmd(
                 **dataclasses.asdict(perf_measurement_config),
                 **dataclasses.asdict(dataset_profile_config),
                 **dataclasses.asdict(triton_client_config),
+                **dataclasses.asdict(model_signature_config),
             },
         )
 
@@ -312,6 +314,7 @@ def triton_evaluate_model_cmd(
                 create_profiling_data_cmd,
                 data_output_path=profiling_data,
                 **dataclasses.asdict(dataset_profile_config),
+                **dataclasses.asdict(model_signature_config),
             )
         else:
             max_shapes = _get_max_shapes(kwargs, dataset_profile_config)

@@ -22,7 +22,7 @@ from polygraphy.comparator import util as comp_util
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.common import DataObject, Sample, TensorMetadata
-from model_navigator.framework_api.exceptions import UserErrorContext
+from model_navigator.framework_api.exceptions import ExecutionContext
 from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.utils import JitType, RuntimeProvider, Status
 from model_navigator.model import Format
@@ -107,7 +107,7 @@ class Correctness(Command):
         per_output_tolerance = TolerancePerOutputName({name: Tolerance(0.0, 0.0) for name in output_names})
         with self._runner as runner:
             for sample, original_output in zip(correctness_samples, correctness_samples_output):
-                with UserErrorContext():
+                with ExecutionContext():
                     comp_output = runner.infer(sample)
 
                 is_len_valid = len(original_output) == len(comp_output)

@@ -13,7 +13,7 @@
 # limitations under the License.
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Dict, Optional
 
 from model_navigator.common.config import BatchingConfig
 from model_navigator.converter import DatasetProfileConfig
@@ -37,8 +37,8 @@ class ProfileResult:
     triton_docker_image: str
     profile_config: ModelAnalyzerProfileConfig
     triton_config: ModelAnalyzerTritonConfig
+    profiling_data: Dict[Optional[str], Path]
     dataset_profile: Optional[DatasetProfileConfig] = None
-    profiling_data_path: Optional[Path] = None
     profiling_results_path: Optional[Path] = None
 
 

@@ -11,6 +11,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from model_navigator.perf_analyzer.config import MeasurementMode, PerfMeasurementConfig  # noqa: F401
-from model_navigator.perf_analyzer.perf_analyzer import PerfAnalyzer  # noqa: F401
-from model_navigator.perf_analyzer.perf_config import PerfAnalyzerConfig  # noqa: F401
+
+
+import fire
+import tensorflow as tf  # pytype: disable=import-error
+
+
+def get_model():
+    raise NotImplementedError("Please implement the get_model() function to reproduce the export error.")
+
+
+def export(
+    exported_model_path: str,
+):
+    model = get_model()
+    tf.keras.models.save_model(model=model, filepath=exported_model_path, overwrite=True)
+
+
+if __name__ == "__main__":
+    fire.Fire(export)
