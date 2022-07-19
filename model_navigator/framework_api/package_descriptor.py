@@ -24,6 +24,7 @@ from pathlib import Path
 from typing import Dict, Optional, Sequence, Tuple, Union
 
 import yaml
+from polygraphy.backend.trt import Profile
 
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.performance import ProfilerConfig
@@ -87,6 +88,7 @@ class PackageDescriptor:
             model_status=[],
             input_metadata=TensorMetadata(),
             output_metadata=TensorMetadata(),
+            trt_profile=Profile(),
         )
 
         pkg_desc = cls(navigator_status, config.workdir, model=config.model)

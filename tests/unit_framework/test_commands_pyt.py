@@ -27,6 +27,7 @@ from model_navigator.framework_api.commands.data_dump.samples import (
     samples_to_npz,
 )
 from model_navigator.framework_api.commands.export.pyt import ExportPYT2ONNX, ExportPYT2TorchScript
+from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.runners.pyt import PytRunner
 from model_navigator.framework_api.utils import Framework, JitType
 from model_navigator.model import Format
@@ -226,8 +227,8 @@ def test_pyt_export_onnx():
             workdir=workdir,
             opset=OPSET,
             dynamic_axes={"input": {0: "batch"}},
-            input_metadata={"input": TensorSpec("input", (-1, 5), numpy.dtype("float32"))},
-            output_metadata={"output": TensorSpec("output", (-1, 7), numpy.dtype("float32"))},
+            input_metadata=TensorMetadata({"input": TensorSpec("input", (-1, 5), numpy.dtype("float32"))}),
+            output_metadata=TensorMetadata({"output": TensorSpec("output", (-1, 7), numpy.dtype("float32"))}),
             target_device=device,
         )
 

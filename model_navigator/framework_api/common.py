@@ -14,10 +14,12 @@
 # pytype: skip-file
 
 import pathlib
+from collections import defaultdict
 from enum import Enum
 from typing import Dict, Iterator, List, Mapping, Optional, Protocol, Sequence, Union, runtime_checkable
 
 import numpy
+from polygraphy.backend.trt.profile import Profile, ShapeTuple
 from polygraphy.common import TensorMetadata as PolygraphyTensorMetadata
 
 from model_navigator.tensor import TensorSpec
@@ -47,7 +49,7 @@ class DataObject:
             value = value.to_dict(parse=True)
         elif hasattr(value, "to_json"):
             value = value.to_json()
-        elif isinstance(value, Mapping):
+        elif isinstance(value, (Mapping, Profile)):
             value = self._from_dict(value)
         elif isinstance(value, list) or isinstance(value, tuple):
             value = self._from_list(value)
@@ -55,6 +57,8 @@ class DataObject:
             value = value.value
         elif isinstance(value, pathlib.Path):
             value = str(value)
+        elif isinstance(value, ShapeTuple):
+            value = vars(value)
         return value
 
     def _from_dict(self, values):
@@ -101,6 +105,15 @@ class TensorMetadata(Dict[str, TensorSpec]):
             shape = [d if isinstance(d, int) else -1 for d in data.shape]
             tensor_metadata.add(name, shape, data.dtype)
         return tensor_metadata
+
+    @property
+    def dynamic_axes(self):
+        dynamic_axes = defaultdict(list)
+        for name, tensor_spec in self.items():
+            for ax, d in enumerate(tensor_spec.shape):
+                if d == -1:
+                    dynamic_axes[name].append(ax)
+        return dynamic_axes
 
 
 @runtime_checkable

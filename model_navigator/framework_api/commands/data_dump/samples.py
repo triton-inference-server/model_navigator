@@ -13,12 +13,12 @@
 # limitations under the License.
 
 import json
-from collections import defaultdict
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple
 
 import numpy
 from polygraphy.backend.onnxrt import SessionFromOnnx
+from polygraphy.backend.trt import Profile
 
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.common import Sample, SizedDataLoader, TensorMetadata
@@ -28,17 +28,9 @@ from model_navigator.framework_api.utils import (
     Framework,
     RuntimeProvider,
     extract_bs1,
+    extract_sample,
     get_package_path,
-    sample_to_tuple,
-    to_numpy,
-    validate_sample_input,
 )
-
-
-def extract_sample(sample, input_metadata, framework):
-    sample = sample_to_tuple(sample)
-    sample = {n: to_numpy(t, framework) for n, t in zip(input_metadata, sample)}
-    return sample
 
 
 def samples_to_json(samples: List[Sample], path: Path, batch_dim: Optional[int]) -> None:
@@ -67,27 +59,6 @@ def samples_to_npz(samples: List[Sample], path: Path, batch_dim: Optional[int]) 
         numpy.savez((path / f"{i}.npz").as_posix(), **squeezed_sample)
 
 
-def extract_trt_axes(axes_shapes, batch_dim):
-    trt_dynamic_axes = {}
-    for name, axes in axes_shapes.items():
-        trt_dynamic_axes[name] = {}
-        for ax, shapes in axes.items():
-            if ax == batch_dim:  # min bs = 1
-                trt_dynamic_axes[name][ax] = (1, int(numpy.median(shapes)), max(shapes))
-            else:
-                trt_dynamic_axes[name][ax] = (min(shapes), int(numpy.median(shapes)), max(shapes))
-    return trt_dynamic_axes
-
-
-def extract_dynamic_axes(trt_dynamic_axes):
-    dynamic_axes = defaultdict(list)
-    for name, axes in trt_dynamic_axes.items():
-        for ax, shapes in axes.items():
-            if shapes[0] != shapes[2]:  # min != max
-                dynamic_axes[name].append(ax)
-    return dynamic_axes
-
-
 class FetchInputModelData(Command):
     def __init__(self, requires: Tuple[Command, ...] = ()):
         super().__init__(name="Fetch input model data", command_type=CommandType.FETCH_MODEL_INPUT, requires=requires)
@@ -98,20 +69,16 @@ class FetchInputModelData(Command):
             "profiling_sample",
             "correctness_samples",
             "conversion_samples",
-            "dynamic_axes",
-            "trt_dynamic_axes",
-            "max_batch_size",
         )
 
     @staticmethod
-    def collect_samples(
-        dataloader, dynamic_axes, trt_dynamic_axes, input_metadata, framework, batch_dim, correctness_samples_ind
-    ):
+    def collect_samples(dataloader, input_metadata, trt_profile, framework, batch_dim, correctness_samples_ind):
         profiling_sample = None
         correctness_samples = []
         conversion_samples = []
         conversion_min_max_sampled = {
-            name: {ax: {"min": False, "max": False} for ax in trt_dynamic_axes[name]} for name in trt_dynamic_axes
+            name: {ax: {"min": False, "max": False} for ax in range(len(input_metadata[name].shape))}
+            for name in input_metadata
         }
         for i, sample in enumerate(dataloader):
             if i >= len(dataloader):
@@ -123,11 +90,10 @@ class FetchInputModelData(Command):
             do_sample_conversion = False
             do_sample_profiling = False
             for name in input_metadata:
-                if name not in dynamic_axes:
-                    continue
-                for (ax, shapes), tensor_dim in zip(trt_dynamic_axes[name].items(), sample[name].shape):
-                    if ax == batch_dim:
-                        continue
+                for (ax, shapes), tensor_dim in zip(
+                    enumerate(zip(trt_profile[name].min, trt_profile[name].opt, trt_profile[name].max)),
+                    sample[name].shape,
+                ):
                     if tensor_dim == shapes[0] and not conversion_min_max_sampled[name][ax]["min"]:
                         do_sample_conversion = True
                         conversion_min_max_sampled[name][ax]["min"] = True
@@ -156,10 +122,9 @@ class FetchInputModelData(Command):
         input_metadata: TensorMetadata,
         batch_dim: Optional[int],
         seed: int,
-        dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None,
-        trt_dynamic_axes: Optional[Dict[str, Dict[int, Tuple[int, int, int]]]] = None,
+        trt_profile: Profile,
         **kwargs,
-    ) -> List[Sample]:
+    ) -> Tuple[List[Sample], List[Sample], List[Sample]]:
 
         num_samples = len(dataloader)
         if sample_count > num_samples:
@@ -170,44 +135,11 @@ class FetchInputModelData(Command):
 
         numpy.random.seed(seed)
         correctness_samples_ind = set(numpy.random.choice(num_samples, size=sample_count, replace=False))
-
-        axes_shapes = {name: {ax: [] for ax in range(len(spec.shape))} for name, spec in input_metadata.items()}
-        max_batch_size = 0
-        for i, sample in enumerate(dataloader):
-            if i >= num_samples:
-                LOGGER.warning(f"{len(dataloader)=}, but more samples found.")
-                break
-            validate_sample_input(sample, framework)
-            sample = extract_sample(sample, input_metadata, framework)
-            for name, tensor in sample.items():
-                for k, dim in enumerate(tensor.shape):
-                    axes_shapes[name][k].append(dim)
-            if batch_dim is not None:
-                max_batch_size = max(max_batch_size, sample_to_tuple(sample)[0].shape[batch_dim])
-
-        assert i + 1 >= len(dataloader), f"{len(dataloader)=}, but only {i + 1} samples found."
-
-        if trt_dynamic_axes is None:
-            trt_dynamic_axes = extract_trt_axes(axes_shapes, batch_dim)
-
-            LOGGER.warning(
-                f"No TRT (min, opt, max) values for axes provided. Using values derived from the dataloader: {trt_dynamic_axes}."
-            )
-
-        if dynamic_axes is None:
-            dynamic_axes = extract_dynamic_axes(trt_dynamic_axes)
-
-            LOGGER.warning(f"No dynamic axes provided. Using values derived from the dataloader: {dynamic_axes}")
-
-        # profiling - one sample with max shape
-        # correctness - sample_count random samples
-        # conversion - samples with min / max shapes for all dims (except batch)
-        # all samples with batch size 1
         profiling_sample, correctness_samples, conversion_samples = self.collect_samples(
-            dataloader, dynamic_axes, trt_dynamic_axes, input_metadata, framework, batch_dim, correctness_samples_ind
+            dataloader, input_metadata, trt_profile, framework, batch_dim, correctness_samples_ind
         )
 
-        return profiling_sample, correctness_samples, conversion_samples, dynamic_axes, trt_dynamic_axes, max_batch_size
+        return profiling_sample, correctness_samples, conversion_samples
 
 
 class DumpInputModelData(Command):
