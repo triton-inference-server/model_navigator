@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Optional, Tuple
 
 import torch  # pytype: disable=import-error
 
@@ -106,7 +106,6 @@ class ExportPYT2ONNX(ExportBase):
         input_metadata: TensorMetadata,
         output_metadata: TensorMetadata,
         target_device: str,
-        dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None,
         forward_kw_names: Optional[Tuple[str, ...]] = None,
         model: Optional[torch.nn.Module] = None,
         batch_dim: Optional[int] = None,
@@ -133,7 +132,7 @@ class ExportPYT2ONNX(ExportBase):
                 "opset": opset,
                 "input_names": list(input_metadata.keys()),
                 "output_names": list(output_metadata.keys()),
-                "dynamic_axes": dict(**dynamic_axes),
+                "dynamic_axes": dict(**input_metadata.dynamic_axes, **output_metadata.dynamic_axes),
                 "package_path": get_package_path(workdir, model_name).as_posix(),
                 "batch_dim": batch_dim,
                 "forward_kw_names": forward_kw_names,

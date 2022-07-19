@@ -16,6 +16,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Mapping, Optional
 
+from polygraphy.backend.trt import Profile
+
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.correctness import TolerancePerOutputName
 from model_navigator.framework_api.commands.performance import ProfilingResults
@@ -77,9 +79,18 @@ class NavigatorStatus(DataObject):
     model_status: List[ModelStatus]
     input_metadata: TensorMetadata
     output_metadata: TensorMetadata
+    trt_profile: Profile
 
     @classmethod
     def from_dict(cls, dict: Mapping):
+        trt_profile_dict = dict.get("trt_profile", None)
+        if trt_profile_dict is not None:
+            trt_profile = Profile()
+            for name, val in trt_profile_dict.items():
+                trt_profile.add(name, **val)
+        else:
+            trt_profile = None
+
         return cls(
             format_version=dict["format_version"],
             model_navigator_version=dict["model_navigator_version"],
@@ -88,6 +99,7 @@ class NavigatorStatus(DataObject):
             environment=dict["environment"],
             export_config=dict["export_config"],
             model_status=[ModelStatus.from_dict(model_status) for model_status in dict["model_status"]],
-            input_metadata=TensorMetadata.from_json(dict["input_metadata"]) if dict.get("input_metadata") else None,
-            output_metadata=TensorMetadata.from_json(dict["output_metadata"]) if dict.get("output_metadata") else None,
+            input_metadata=TensorMetadata.from_json(dict.get("input_metadata", {})),
+            output_metadata=TensorMetadata.from_json(dict.get("output_metadata", {})),
+            trt_profile=trt_profile,
         )

@@ -183,6 +183,12 @@ def sample_to_tuple(input: Any) -> Tuple[Any, ...]:
     return (input,)
 
 
+def extract_sample(sample, input_metadata, framework: Framework) -> Sample:
+    sample = sample_to_tuple(sample)
+    sample = {n: to_numpy(t, framework) for n, t in zip(input_metadata, sample)}
+    return sample
+
+
 def extract_bs1(sample: Sample, batch_dim: Optional[int]) -> Sample:
     if batch_dim is not None:
         return {name: tensor.take([0], batch_dim) for name, tensor in sample.items()}

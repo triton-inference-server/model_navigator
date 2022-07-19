@@ -13,14 +13,14 @@
 # limitations under the License.
 
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Optional, Tuple
 
 from polygraphy.backend.onnxrt import SessionFromOnnx
+from polygraphy.backend.trt import Profile
 
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.convert.base import ConvertBase
 from model_navigator.framework_api.commands.core import Command, CommandType
-from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.exceptions import ExecutionContext, UserError
 from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.runners.onnx import OnnxrtRunner
@@ -56,11 +56,9 @@ class ConvertONNX2TRT(ConvertBase):
         workdir: Path,
         framework: Framework,
         model_name: str,
-        input_metadata: TensorMetadata,
         target_device: str,
+        trt_profile: Profile,
         max_workspace_size: Optional[int] = None,
-        dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None,
-        trt_dynamic_axes: Optional[Dict[str, Dict[int, Tuple[int, int, int]]]] = None,
         **kwargs,
     ) -> Optional[Path]:
         LOGGER.info("ONNX to TRT conversion started")
@@ -102,19 +100,17 @@ class ConvertONNX2TRT(ConvertBase):
         convert_cmd.extend(["--convert-to", "trt"])
         convert_cmd.extend(["-o", converted_model_path.as_posix()])
 
-        if dynamic_axes is not None:
-            for i, arg in enumerate(("--trt-min-shapes", "--trt-opt-shapes", "--trt-max-shapes")):
-                shapes = []
-                for input_name, spec in input_metadata.items():
-                    if input_name not in onnx_input_metadata:
-                        continue
-                    tensor_shape = list(spec.shape)
-                    for ax, val in trt_dynamic_axes[input_name].items():
-                        tensor_shape[ax] = val[i]
-                    shape = ",".join([str(d) for d in tensor_shape])
-                    shapes.append(f"{input_name}:[{shape}]")
-                if shapes:
-                    convert_cmd.extend([f"{arg}"] + shapes)
+        # for i, arg in enumerate(("--trt-min-shapes", "--trt-opt-shapes", "--trt-max-shapes")):
+        for attr in ("min", "opt", "max"):
+            arg = f"--trt-{attr}-shapes"
+            shapes = []
+            for input_name in trt_profile:
+                if input_name not in onnx_input_metadata:
+                    continue
+                shape = ",".join([str(d) for d in getattr(trt_profile[input_name], attr)])
+                shapes.append(f"{input_name}:[{shape}]")
+            if shapes:
+                convert_cmd.extend([f"{arg}"] + shapes)
 
         precision_arg = self.trt_precision_to_arg[self.target_precision]
         if precision_arg:

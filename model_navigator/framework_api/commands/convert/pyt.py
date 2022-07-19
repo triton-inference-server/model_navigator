@@ -13,9 +13,10 @@
 # limitations under the License.
 
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Optional, Tuple
 
 import numpy as np
+from polygraphy.backend.trt import Profile
 
 from model_navigator.converter.config import TensorRTPrecision, TensorRTPrecisionMode
 from model_navigator.framework_api.commands.convert.base import ConvertBase
@@ -57,7 +58,7 @@ class ConvertTorchScript2TorchTensorRT(ConvertBase):
         input_metadata: TensorMetadata,
         precision_mode: TensorRTPrecisionMode,
         max_workspace_size: int,
-        trt_dynamic_axes: Optional[Dict[str, Dict[int, Tuple[int, int, int]]]] = None,
+        trt_profile: Profile,
         **kwargs,
     ) -> Optional[Path]:
         LOGGER.info("Conversion TorchScript to TorchTensorRT started")
@@ -78,21 +79,11 @@ class ConvertTorchScript2TorchTensorRT(ConvertBase):
             trt_casts.get(input_spec.dtype, input_spec.dtype).name for input_spec in input_metadata.values()
         ]
 
-        all_shapes = {}
-        for input_name, spec in input_metadata.items():
-            shapes = {}
-            for i, shape_type in enumerate(("min", "opt", "max")):
-                tensor_shape = list(spec.shape)
-                for ax, val in trt_dynamic_axes[input_name].items():
-                    tensor_shape[ax] = val[i]
-                shapes[shape_type] = tensor_shape
-            all_shapes[input_name] = shapes
-
         with ExecutionContext(converted_model_path.parent / "reproduce.py") as context:
             kwargs = {
                 "exported_model_path": exported_model_path.as_posix(),
                 "converted_model_path": converted_model_path.as_posix(),
-                "shapes": all_shapes,
+                "shapes": {name: vars(shape_tuple) for name, shape_tuple in trt_profile.items()},
                 "input_dtypes": input_dtypes_str,
                 "max_workspace_size": max_workspace_size,
                 "precision": self.target_precision.value,

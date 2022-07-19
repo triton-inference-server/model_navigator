@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Optional, Tuple
 
 import yaml
+from polygraphy.backend.trt import Profile
 
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.common import TensorMetadata
@@ -32,12 +33,13 @@ class LoadMetadata(Command):
 
     @staticmethod
     def get_output_name():
-        return "input_metadata", "output_metadata"
+        return "input_metadata", "output_metadata", "trt_profile"
 
     def _update_package_descriptor(self, package_descriptor: "PackageDescriptor", **kwargs) -> None:
         (
             package_descriptor.navigator_status.input_metadata,
             package_descriptor.navigator_status.output_metadata,
+            package_descriptor.navigator_status.trt_profile,
         ) = self.output
 
     def __call__(
@@ -45,13 +47,13 @@ class LoadMetadata(Command):
         workdir: Path,
         model_name: str,
         **kwargs,
-    ) -> Tuple[TensorMetadata, TensorMetadata]:
+    ) -> Tuple[TensorMetadata, TensorMetadata, Profile]:
 
         package_path = get_package_path(workdir, model_name)
         with open(package_path / get_default_status_filename()) as f:
             navigator_status = NavigatorStatus.from_dict(yaml.safe_load(f))
 
-        return navigator_status.input_metadata, navigator_status.output_metadata
+        return navigator_status.input_metadata, navigator_status.output_metadata, navigator_status.trt_profile
 
 
 class LoadSamples(Command):
