@@ -52,7 +52,7 @@ from model_navigator.framework_api.utils import (
 from model_navigator.model import Format
 from model_navigator.utils.environment import get_env, get_git_info
 
-NAV_PACKAGE_FORMAT_VERSION = "0.1.2"
+NAV_PACKAGE_FORMAT_VERSION = "0.1.3"
 
 
 class PackageDescriptor:
