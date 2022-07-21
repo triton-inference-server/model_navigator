@@ -21,7 +21,7 @@ from polygraphy.backend.trt import Profile
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.status import NavigatorStatus
-from model_navigator.framework_api.utils import get_default_status_filename, get_package_path, load_samples
+from model_navigator.framework_api.utils import Status, get_default_status_filename, get_package_path, load_samples
 
 if TYPE_CHECKING:
     from model_navigator.framework_api.package_descriptor import PackageDescriptor
@@ -36,11 +36,12 @@ class LoadMetadata(Command):
         return "input_metadata", "output_metadata", "trt_profile"
 
     def _update_package_descriptor(self, package_descriptor: "PackageDescriptor", **kwargs) -> None:
-        (
-            package_descriptor.navigator_status.input_metadata,
-            package_descriptor.navigator_status.output_metadata,
-            package_descriptor.navigator_status.trt_profile,
-        ) = self.output
+        if self.status == Status.OK:
+            (
+                package_descriptor.navigator_status.input_metadata,
+                package_descriptor.navigator_status.output_metadata,
+                package_descriptor.navigator_status.trt_profile,
+            ) = self.output
 
     def __call__(
         self,

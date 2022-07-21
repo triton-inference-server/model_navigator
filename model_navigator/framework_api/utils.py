@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any, List, Mapping, Optional, Sequence, Tuple, Type, TypeVar
 
 import numpy
+from polygraphy.backend.trt import Profile
 
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.common import Sample
@@ -316,3 +317,10 @@ def load_samples(samples_name, package_path, batch_dim):
         samples = samples[0]
 
     return samples
+
+
+def get_trt_profile_from_trt_dynamic_axes(trt_dynamic_axes):
+    trt_profile = Profile()
+    for name, axes in trt_dynamic_axes.items():
+        trt_profile.add(name, *list(zip(*list(axes.values()))))
+    return trt_profile

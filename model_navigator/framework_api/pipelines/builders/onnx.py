@@ -27,12 +27,13 @@ if TYPE_CHECKING:
 
 
 def onnx_export_builder(config: Config, package_descriptor: "PackageDescriptor") -> Pipeline:
-    commands: List[Command] = []
+    return Pipeline(name="ONNX Export", framework=Framework.ONNX, commands=[CopyONNX()])
 
-    copy_onnx = CopyONNX()
-    commands.append(copy_onnx)
+
+def onnx_conversion_builder(config: Config, package_descriptor: "PackageDescriptor") -> Pipeline:
+    commands: List[Command] = []
     if Format.TENSORRT in config.target_formats:
         for target_precision in config.target_precisions:
-            commands.append(ConvertONNX2TRT(target_precision=target_precision, requires=(copy_onnx,)))
+            commands.append(ConvertONNX2TRT(target_precision=target_precision))
 
-    return Pipeline(name="ONNX Export", framework=Framework.ONNX, commands=commands)
+    return Pipeline(name="ONNX Conversion", framework=Framework.ONNX, commands=commands)

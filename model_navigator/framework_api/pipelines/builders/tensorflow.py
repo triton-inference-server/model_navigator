@@ -15,9 +15,9 @@
 from typing import TYPE_CHECKING, List
 
 from model_navigator.framework_api.commands.convert.onnx import ConvertONNX2TRT
-from model_navigator.framework_api.commands.convert.pyt import ConvertTorchScript2TorchTensorRT
+from model_navigator.framework_api.commands.convert.tf import ConvertSavedModel2ONNX, ConvertSavedModel2TFTRT
 from model_navigator.framework_api.commands.core import Command
-from model_navigator.framework_api.commands.export.pyt import ExportPYT2ONNX, ExportPYT2TorchScript
+from model_navigator.framework_api.commands.export.tf import ExportTF2SavedModel
 from model_navigator.framework_api.config import Config
 from model_navigator.framework_api.pipelines.pipeline import Pipeline
 from model_navigator.framework_api.utils import Framework
@@ -27,30 +27,20 @@ if TYPE_CHECKING:
     from model_navigator.framework_api.package_descriptor import PackageDescriptor
 
 
-def torch_export_builder(config: Config, package_descriptor: "PackageDescriptor") -> Pipeline:
-    commands: List[Command] = []
-    ts_exports = {}
+def tensorflow_export_builder(config: Config, package_descriptor: "PackageDescriptor") -> Pipeline:
+    return Pipeline(name="TensorFlow2 Export", framework=Framework.TF2, commands=[ExportTF2SavedModel()])
 
-    if Format.TORCHSCRIPT in config.target_formats or Format.TORCH_TRT in config.target_formats:
-        for target_jit_type in config.target_jit_type:
-            export = ExportPYT2TorchScript(target_jit_type=target_jit_type)
-            commands.append(export)
-            ts_exports[target_jit_type] = export
+
+def tensorflow_conversion_builder(config: Config, package_descriptor: "PackageDescriptor") -> Pipeline:
+    commands: List[Command] = []
+
     if Format.ONNX in config.target_formats or Format.TENSORRT in config.target_formats:
-        onnx_export = ExportPYT2ONNX()
-        commands.append(onnx_export)
-    if Format.TORCH_TRT in config.target_formats:
-        for target_jit_type in config.target_jit_type:
-            for precision in config.target_precisions:
-                commands.append(
-                    ConvertTorchScript2TorchTensorRT(
-                        target_jit_type=target_jit_type,
-                        target_precision=precision,
-                        requires=(ts_exports[target_jit_type],),
-                    )
-                )
+        commands.append(ConvertSavedModel2ONNX())
     if Format.TENSORRT in config.target_formats:
         for target_precision in config.target_precisions:
-            commands.append(ConvertONNX2TRT(target_precision=target_precision, requires=(onnx_export,)))
+            commands.append(ConvertONNX2TRT(target_precision=target_precision))
+    if Format.TF_TRT in config.target_formats:
+        for target_precision in config.target_precisions:
+            commands.append(ConvertSavedModel2TFTRT(target_precision=target_precision))
 
-    return Pipeline(name="PyTorch Export", framework=Framework.PYT, commands=commands)
+    return Pipeline(name="TensorFlow2 Conversion", framework=Framework.TF2, commands=commands)

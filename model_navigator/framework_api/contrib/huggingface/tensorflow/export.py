@@ -41,6 +41,7 @@ from model_navigator.framework_api.pipelines.builders import (
     correctness_builder,
     preprocessing_builder,
     profiling_builder,
+    tensorflow_conversion_builder,
     tensorflow_export_builder,
 )
 from model_navigator.framework_api.pipelines.pipeline_manager import PipelineManager
@@ -203,7 +204,13 @@ def export(
         profiler_config=profiler_config,
     )
 
-    builders = [preprocessing_builder, tensorflow_export_builder, correctness_builder, config_generation_builder]
+    builders = [
+        preprocessing_builder,
+        tensorflow_export_builder,
+        tensorflow_conversion_builder,
+        correctness_builder,
+        config_generation_builder,
+    ]
     if run_profiling:
         builders.append(profiling_builder)
     pipeline_manager = PipelineManager(builders)

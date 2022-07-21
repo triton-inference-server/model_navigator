@@ -90,7 +90,7 @@ class Command(metaclass=ABCMeta):
             try:
                 if self.status == Status.OK:
                     self.output = self.__call__(**kwargs)
-                    assert self.status == Status.OK, self.err_msg
+                    assert self.status in (Status.OK, Status.SKIPPED), self.err_msg
                 else:
                     self.missing_params = self._get_missing_params(**kwargs)
             except Exception as e:

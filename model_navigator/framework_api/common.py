@@ -38,21 +38,22 @@ class DataObject:
 
         if parse:
             for key, value in filtered_data.items():
-                data[key] = self._parse_value(value)
+                data[key] = self.parse_value(value)
         else:
             data = filtered_data
 
         return data
 
-    def _parse_value(self, value):
+    @staticmethod
+    def parse_value(value):
         if isinstance(value, DataObject):
             value = value.to_dict(parse=True)
         elif hasattr(value, "to_json"):
             value = value.to_json()
         elif isinstance(value, (Mapping, Profile)):
-            value = self._from_dict(value)
+            value = DataObject._from_dict(value)
         elif isinstance(value, list) or isinstance(value, tuple):
-            value = self._from_list(value)
+            value = DataObject._from_list(value)
         elif isinstance(value, Enum):
             value = value.value
         elif isinstance(value, pathlib.Path):
@@ -61,17 +62,19 @@ class DataObject:
             value = vars(value)
         return value
 
-    def _from_dict(self, values):
+    @staticmethod
+    def _from_dict(values):
         data = {}
         for key, value in values.items():
-            data[key] = self._parse_value(value)
+            data[key] = DataObject.parse_value(value)
 
         return data
 
-    def _from_list(self, values):
+    @staticmethod
+    def _from_list(values):
         items = []
         for value in values:
-            item = self._parse_value(value)
+            item = DataObject.parse_value(value)
             items.append(item)
 
         return items

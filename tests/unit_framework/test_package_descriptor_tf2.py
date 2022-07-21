@@ -34,6 +34,11 @@ from model_navigator.tensor import TensorSpec
 # pytype: enable=import-error
 
 
+gpus = tensorflow.config.experimental.list_physical_devices("GPU")
+for gpu in gpus:
+    tensorflow.config.experimental.set_memory_growth(gpu, True)
+
+
 dataloader = [tensorflow.random.uniform(shape=[1, 224, 224, 3], minval=0, maxval=1, dtype=tensorflow.dtypes.float32)]
 
 

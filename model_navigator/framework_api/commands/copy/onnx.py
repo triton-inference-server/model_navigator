@@ -46,7 +46,7 @@ class CopyONNX(CopyBase):
         **kwargs,
     ) -> Optional[Path]:
         destination_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
-        if destination_model_path.is_file() or destination_model_path.is_dir():
+        if destination_model_path.exists():
             return self.get_output_relative_path()
         assert model is not None
         destination_model_path.parent.mkdir(parents=True, exist_ok=True)

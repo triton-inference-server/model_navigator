@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # pytype: disable=import-error
+import os
 import tempfile
 from pathlib import Path
 
+import pytest
 import torch
 
 import model_navigator as nav
@@ -24,6 +26,9 @@ from model_navigator.utils.device import get_gpus
 # pytype: enable=import-error
 
 CUDA_AVAILABLE = bool(get_gpus(["all"]))
+UNAVAILABLE_FORMATS = () if CUDA_AVAILABLE else ("trt",)
+UNAVAILABLE_RUNTIMES = () if CUDA_AVAILABLE else ("tensorrt", "cuda")
+MN_TEST_PACKAGES_DIR_VAR_NAME = "MN_TEST_PACKAGES_DIR"
 
 
 def check_model_dir(model_dir: Path, format: nav.Format, only_config: bool = False) -> bool:
@@ -253,3 +258,39 @@ def test_onnx_save_load_retest():
         assert check_model_dir(model_dir=loaded_package_dir / "onnx", format=nav.Format.ONNX)
         assert check_model_dir(model_dir=loaded_package_dir / "trt-fp16", format=nav.Format.TENSORRT) is CUDA_AVAILABLE
         assert check_model_dir(model_dir=loaded_package_dir / "trt-fp32", format=nav.Format.TENSORRT) is CUDA_AVAILABLE
+
+
+@pytest.mark.skipif(
+    MN_TEST_PACKAGES_DIR_VAR_NAME not in os.environ,
+    reason=f"{MN_TEST_PACKAGES_DIR_VAR_NAME} variable not found in the environment.",
+)
+@pytest.mark.parametrize(
+    "nav_package_path",
+    list((Path(os.environ.get(MN_TEST_PACKAGES_DIR_VAR_NAME)) / "pytorch").iterdir())
+    if MN_TEST_PACKAGES_DIR_VAR_NAME in os.environ
+    else (),
+)
+def test_backward_compatibility(nav_package_path):
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        workdir = Path(tmp_dir) / "navigator_workdir"
+
+        pkg_desc = nav.load(nav_package_path, workdir=workdir, retest_conversions=False)
+        old_status = pkg_desc.get_formats_status()
+        retest_pkg_desc = nav.load(
+            nav_package_path,
+            workdir=workdir,
+            override_workdir=True,
+            retest_conversions=True,
+            profiler_config=ProfilerConfig(max_trials=100),
+        )
+        new_status = retest_pkg_desc.get_formats_status()
+
+        for format, format_status in old_status.items():
+            for runtime, runtime_status in format_status.items():
+                if any(ft in format.lower() for ft in UNAVAILABLE_FORMATS) or any(
+                    rt in runtime.lower() for rt in UNAVAILABLE_RUNTIMES
+                ):
+                    continue
+                assert (
+                    runtime_status == new_status[format][runtime]
+                ), f"{format} {runtime} status not matching with the old package."

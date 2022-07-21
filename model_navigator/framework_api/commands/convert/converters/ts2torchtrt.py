@@ -56,6 +56,7 @@ def convert(
     max_workspace_size,
     precision,
     precision_mode,
+    target_device,
 ):
     import torch_tensorrt  # pytype: disable=import-error
 
@@ -73,7 +74,7 @@ def convert(
                 dtype=input_dtype,
             )
         )
-    model = torch.jit.load(exported_model_path)
+    model = torch.jit.load(exported_model_path, map_location=target_device)
 
     tr_model_compiled = torch_tensorrt.compile(
         module=model,

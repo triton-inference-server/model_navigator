@@ -27,7 +27,9 @@ from model_navigator.framework_api.runners.onnx import OnnxrtRunner
 from model_navigator.framework_api.utils import (
     Framework,
     RuntimeProvider,
+    Status,
     extract_sample,
+    get_trt_profile_from_trt_dynamic_axes,
     sample_to_tuple,
     validate_sample_input,
 )
@@ -78,13 +80,6 @@ def _get_trt_profile_from_axes_shapes(axes_shapes, batch_dim):
             else:
                 min_max_opt.append((min(shapes), int(np.median(shapes)), max(shapes)))
         trt_profile.add(name, *list(zip(*min_max_opt)))
-    return trt_profile
-
-
-def _get_trt_profile_from_trt_dynamic_axes(trt_dynamic_axes):
-    trt_profile = Profile()
-    for name, axes in trt_dynamic_axes.items():
-        trt_profile.add(name, *list(zip(*list(axes.values()))))
     return trt_profile
 
 
@@ -153,8 +148,9 @@ class InferInputMetadata(Command):
         )
 
     def _update_package_descriptor(self, package_descriptor: "PackageDescriptor", **kwargs) -> None:
-        package_descriptor.navigator_status.input_metadata = self.output[0]
-        package_descriptor.navigator_status.trt_profile = self.output[1]
+        if self.status == Status.OK:
+            package_descriptor.navigator_status.input_metadata = self.output[0]
+            package_descriptor.navigator_status.trt_profile = self.output[1]
 
     def __call__(
         self,
@@ -202,7 +198,7 @@ class InferInputMetadata(Command):
                 f"No TRT (min, opt, max) values for axes provided. Using values derived from the dataloader: {trt_profile}."
             )
         else:
-            trt_profile = _get_trt_profile_from_trt_dynamic_axes(trt_dynamic_axes)
+            trt_profile = get_trt_profile_from_trt_dynamic_axes(trt_dynamic_axes)
             _verify_user_trt_profile(trt_profile, dataloader_trt_profile)
 
         input_metadata = _get_metadata_from_axes_shapes(axes_shapes, batch_dim, input_dtypes)
@@ -227,7 +223,8 @@ class InferOutputMetadata(Command):
         return "output_metadata"
 
     def _update_package_descriptor(self, package_descriptor: "PackageDescriptor", **kwargs) -> None:
-        package_descriptor.navigator_status.output_metadata = self.output
+        if self.status == Status.OK:
+            package_descriptor.navigator_status.output_metadata = self.output
 
     def __call__(
         self,

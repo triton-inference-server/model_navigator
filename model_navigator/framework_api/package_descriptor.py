@@ -21,12 +21,13 @@ import zipfile
 from importlib.metadata import version
 from itertools import chain
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple, Union
+from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 import yaml
 from polygraphy.backend.trt import Profile
 
-from model_navigator.converter.config import TensorRTPrecision
+from model_navigator.converter.config import TensorRTPrecision, TensorRTPrecisionMode
+from model_navigator.framework_api._nav_package_format_version import NAV_PACKAGE_FORMAT_VERSION
 from model_navigator.framework_api.commands.performance import ProfilerConfig
 from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.config import Config
@@ -52,8 +53,6 @@ from model_navigator.framework_api.utils import (
 from model_navigator.model import Format
 from model_navigator.utils.environment import get_env, get_git_info
 
-NAV_PACKAGE_FORMAT_VERSION = "0.1.3"
-
 
 class PackageDescriptor:
     status_filename = get_default_status_filename()
@@ -64,7 +63,12 @@ class PackageDescriptor:
         self.model = model
 
     @classmethod
-    def build(cls, pipeline_manager: PipelineManager, config: Config):
+    def build(
+        cls,
+        pipeline_manager: PipelineManager,
+        config: Config,
+        existing_model_status: Optional[List[ModelStatus]] = None,
+    ):
         config_filter_fields = [
             "model",
             "dataloader",
@@ -85,7 +89,7 @@ class PackageDescriptor:
                 config_filter_fields,
                 parse=True,
             ),
-            model_status=[],
+            model_status=existing_model_status or [],
             input_metadata=TensorMetadata(),
             output_metadata=TensorMetadata(),
             trt_profile=Profile(),
@@ -380,13 +384,17 @@ class PackageDescriptor:
 
     @property
     def _target_jit_type(self):
-        return tuple(JitType(jit_type) for jit_type in self.navigator_status.export_config.get("target_jit_type", []))
+        target_jit_type = self.navigator_status.export_config.get("target_jit_type", [])
+        if target_jit_type is None:
+            return ()
+        return tuple(JitType(jit_type) for jit_type in target_jit_type)
 
     @property
     def _target_precisions(self):
-        return tuple(
-            TensorRTPrecision(prec) for prec in self.navigator_status.export_config.get("target_precisions", [])
-        )
+        target_precisions = self.navigator_status.export_config.get("target_precisions", [])
+        if target_precisions is None:
+            return ()
+        return tuple(TensorRTPrecision(prec) for prec in target_precisions)
 
     def _get_base_formats(self, target_formats: Sequence[Format]) -> Tuple[Format]:
         base_formats = set()
@@ -561,6 +569,11 @@ class PackageDescriptor:
         config_dict["target_precisions"] = self._target_precisions
         config_dict["onnx_runtimes"] = tuple(RuntimeProvider(prov) for prov in config_dict["onnx_runtimes"])
         config_dict["profiler_config"] = ProfilerConfig.from_dict(config_dict.get("profiler_config", {}))
+        config_dict["precision_mode"] = (
+            TensorRTPrecisionMode(config_dict["precision_mode"])
+            if config_dict.get("precision_mode", None) is not None
+            else None
+        )
         if "batch_dim" not in config_dict:
             config_dict["batch_dim"] = None
         return Config(
@@ -577,8 +590,8 @@ class PackageDescriptor:
         Run profiling on the package for each batch size from the `batch_sizes`.
         """
         config = self.config
-        config.profiler_config = profiler_config
-
+        if profiler_config is not None:
+            config.profiler_config = profiler_config
         pipeline_manager = PipelineManager([profiling_builder])
         pipeline_manager.run(config=config, package_descriptor=self)
         self.save_status_file()

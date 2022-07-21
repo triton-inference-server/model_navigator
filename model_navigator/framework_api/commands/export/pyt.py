@@ -55,6 +55,7 @@ class ExportPYT2TorchScript(ExportBase):
         LOGGER.info("TorchScrip export started")
         exported_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
         if exported_model_path.is_file() or exported_model_path.is_dir():
+            LOGGER.info("Model already exists. Skipping export.")
             return self.get_output_relative_path()
 
         exported_model_path.parent.mkdir(parents=True, exist_ok=True)
@@ -113,7 +114,8 @@ class ExportPYT2ONNX(ExportBase):
     ) -> Optional[Path]:
         LOGGER.info("PyTorch to ONNX export started")
         exported_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
-        if exported_model_path.is_file() or exported_model_path.is_dir():
+        if exported_model_path.exists():
+            LOGGER.info("Model already exists. Skipping export.")
             return self.get_output_relative_path()
 
         exported_model_path.parent.mkdir(parents=True, exist_ok=True)
