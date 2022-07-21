@@ -25,7 +25,7 @@ from model_navigator.framework_api.commands.export.tf import ExportTF2SavedModel
 from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.exceptions import ExecutionContext
 from model_navigator.framework_api.logger import LOGGER
-from model_navigator.framework_api.utils import format_to_relative_model_path, get_package_path
+from model_navigator.framework_api.utils import Status, format_to_relative_model_path, get_package_path
 from model_navigator.model import Format
 
 
@@ -55,6 +55,14 @@ class ConvertSavedModel2ONNX(ConvertBase):
         LOGGER.info("SavedModel to ONNX conversion started")
         exported_model_path = get_package_path(workdir, model_name) / ExportTF2SavedModel().get_output_relative_path()
         converted_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
+
+        if converted_model_path.exists():
+            LOGGER.info("Model already exists. Skipping conversion.")
+            return self.get_output_relative_path()
+        if not exported_model_path.exists():
+            LOGGER.warning(f"Exported SavedModel model not found at {exported_model_path}. Skipping conversion")
+            self.status = Status.SKIPPED
+            return
 
         convert_cmd = [
             "python",
@@ -111,6 +119,14 @@ class ConvertSavedModel2TFTRT(ConvertBase):
         exported_model_path = get_package_path(workdir, model_name) / ExportTF2SavedModel().get_output_relative_path()
         converted_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
         converted_model_path.parent.mkdir(parents=True, exist_ok=True)
+
+        if converted_model_path.exists():
+            LOGGER.info("Model already exists. Skipping conversion.")
+            return self.get_output_relative_path()
+        if not exported_model_path.exists():
+            LOGGER.warning(f"Exported SavedModel model not found at {exported_model_path}. Skipping conversion")
+            self.status = Status.SKIPPED
+            return
 
         with ExecutionContext(converted_model_path.parent / "reproduce.py") as context:
             kwargs = {

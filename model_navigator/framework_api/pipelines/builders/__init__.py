@@ -19,11 +19,18 @@ from model_navigator.framework_api.pipelines.builders.preprocessing import prepr
 from model_navigator.framework_api.pipelines.builders.profiling import profiling_builder  # noqa: F401
 
 if is_torch_available():
-    from model_navigator.framework_api.pipelines.builders.torch_export import torch_export_builder  # noqa: F401
+    from model_navigator.framework_api.pipelines.builders.torch import (  # noqa: F401
+        torch_conversion_builder,
+        torch_export_builder,
+    )
 
 if is_tf_available():
-    from model_navigator.framework_api.pipelines.builders.tensorflow_export import (  # noqa: F401
-        tensorflow_export_builder,  # noqa: F401
+    from model_navigator.framework_api.pipelines.builders.tensorflow import (  # noqa: F401
+        tensorflow_export_builder,
+        tensorflow_conversion_builder,  # noqa: F401
     )  # noqa: F401
 
-from model_navigator.framework_api.pipelines.builders.onnx_export import onnx_export_builder  # noqa: F401
+from model_navigator.framework_api.pipelines.builders.onnx import (  # noqa: F401
+    onnx_conversion_builder,
+    onnx_export_builder,
+)

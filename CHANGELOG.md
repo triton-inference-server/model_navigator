@@ -20,6 +20,7 @@ limitations under the License.
 - Model Navigator Export API:
   - new: improved handling inputs and outputs metadata
   - new: Navigator Package version updated to 0.1.3
+  - new: backward compatibility with previous versions of Navigator Package
   - fix: dynamic shapes for output shapes were read incorrectly
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)

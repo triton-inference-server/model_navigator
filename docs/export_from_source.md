@@ -443,6 +443,7 @@ def load(
     retest_conversions: bool = True,
     run_profiling: Optional[bool] = None,
     profiler_config: Optional[ProfilerConfig] = None,
+    target_device: Optional[str] = None,
 ) -> PackageDescriptor:
     """Load .nav package from the path.
         If `retest_conversions = True` rerun conversion tests.

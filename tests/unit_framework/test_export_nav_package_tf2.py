@@ -23,6 +23,11 @@ from model_navigator.framework_api.commands.performance import ProfilerConfig
 # pytype: enable=import-error
 
 
+gpus = tensorflow.config.experimental.list_physical_devices("GPU")
+for gpu in gpus:
+    tensorflow.config.experimental.set_memory_growth(gpu, True)
+
+
 def check_model_dir(model_dir: Path, format: nav.Format) -> bool:
     if not model_dir.is_dir():
         return False

@@ -49,7 +49,8 @@ class ExportTF2SavedModel(ExportBase):
         LOGGER.info("TensorFlow2 to SavedModel export started")
 
         exported_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
-        if exported_model_path.is_file() or exported_model_path.is_dir():
+        if exported_model_path.exists():
+            LOGGER.info("Model already exists. Skipping export.")
             return self.get_output_relative_path()
         assert model is not None
         exported_model_path.parent.mkdir(parents=True, exist_ok=True)

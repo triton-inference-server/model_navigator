@@ -26,7 +26,7 @@ from model_navigator.framework_api.commands.export.pyt import ExportPYT2TorchScr
 from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.exceptions import ExecutionContext
 from model_navigator.framework_api.logger import LOGGER, get_pytorch_loggers_names
-from model_navigator.framework_api.utils import JitType, format_to_relative_model_path, get_package_path
+from model_navigator.framework_api.utils import JitType, Status, format_to_relative_model_path, get_package_path
 from model_navigator.model import Format
 
 
@@ -59,6 +59,7 @@ class ConvertTorchScript2TorchTensorRT(ConvertBase):
         precision_mode: TensorRTPrecisionMode,
         max_workspace_size: int,
         trt_profile: Profile,
+        target_device: str,
         **kwargs,
     ) -> Optional[Path]:
         LOGGER.info("Conversion TorchScript to TorchTensorRT started")
@@ -70,8 +71,14 @@ class ConvertTorchScript2TorchTensorRT(ConvertBase):
             / ExportPYT2TorchScript(target_jit_type=self.target_jit_type).get_output_relative_path()
         )
         converted_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
-        if converted_model_path.is_file() or converted_model_path.is_dir():
+        if converted_model_path.exists():
+            LOGGER.info("Model already exists. Skipping conversion.")
             return self.get_output_relative_path()
+        if not exported_model_path.exists():
+            LOGGER.warning(f"Exported TorchScript model not found at {exported_model_path}. Skipping conversion.")
+            self.status = Status.SKIPPED
+            return
+
         converted_model_path.parent.mkdir(parents=True, exist_ok=True)
 
         trt_casts = {np.dtype(np.int64): np.dtype(np.int32)}
@@ -88,6 +95,7 @@ class ConvertTorchScript2TorchTensorRT(ConvertBase):
                 "max_workspace_size": max_workspace_size,
                 "precision": self.target_precision.value,
                 "precision_mode": precision_mode.value,
+                "target_device": target_device,
             }
 
             args = []

@@ -57,10 +57,10 @@ class PytRunner(BaseRunner):
 
     def activate_impl(self):
         if isinstance(self._model, (str, Path)):
-            self.model = torch.jit.load(str(self._model))
+            self.model = torch.jit.load(str(self._model), map_location=self._target_device).eval()
         else:
             self.model = self._model
-        self.model.to(self._target_device).eval()
+            self.model.to(self._target_device).eval()
 
     def deactivate_impl(self):
         self.model = None

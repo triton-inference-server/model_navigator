@@ -24,6 +24,7 @@ from model_navigator.framework_api.pipelines import PipelineManager
 from model_navigator.framework_api.pipelines.builders import (
     config_generation_builder,
     correctness_builder,
+    onnx_conversion_builder,
     onnx_export_builder,
     preprocessing_builder,
     profiling_builder,
@@ -113,7 +114,13 @@ def export(
         profiler_config=profiler_config,
     )
 
-    builders = [preprocessing_builder, onnx_export_builder, correctness_builder, config_generation_builder]
+    builders = [
+        preprocessing_builder,
+        onnx_export_builder,
+        onnx_conversion_builder,
+        correctness_builder,
+        config_generation_builder,
+    ]
     if run_profiling:
         builders.append(profiling_builder)
     pipeline_manager = PipelineManager(builders)
