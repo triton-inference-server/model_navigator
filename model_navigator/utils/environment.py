@@ -107,7 +107,9 @@ def _split_to_dict(lines: List[str], separator: str):
 
 
 def _get_packages():
-    return _split_to_dict(_command_runner(["pip", "list", "--format=freeze"]).splitlines(), "==")
+    return _split_to_dict(
+        _command_runner(["pip", "list", "--format=freeze", "--disable-pip-version-check"]).splitlines(), "=="
+    )
 
 
 def _remove(input: str, regex: str):

@@ -16,7 +16,7 @@ limitations under the License.
 
 # Changelog
 
-## 0.3.3 (unreleased)
+## 0.3.3
 - Model Navigator Export API:
   - new: improved handling inputs and outputs metadata
   - new: Navigator Package version updated to 0.1.3
