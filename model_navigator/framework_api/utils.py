@@ -27,13 +27,23 @@ from model_navigator.utils.device import get_available_gpus
 T = TypeVar("T")
 
 
-def get_available_onnx_providers() -> List:
+def get_supported_onnx_providers(exclude_trt: bool = False):
+    gpu_available = bool(get_available_gpus())
+    supported_providers = []
+    if gpu_available:
+        supported_providers.append(RuntimeProvider.CUDA)
+    supported_providers.append(RuntimeProvider.CPU)
+    if gpu_available and not exclude_trt:
+        supported_providers.append(RuntimeProvider.TRT)
+    return supported_providers
+
+
+def get_available_onnx_providers(exclude_trt: bool = False) -> List:
     import onnxruntime as onnxrt  # pytype: disable=import-error
 
-    onnx_providers = onnxrt.get_available_providers()
-    if not get_available_gpus():  # filter out providers that require GPU
-        gpu_providers = [RuntimeProvider.CUDA, RuntimeProvider.TRT]
-        onnx_providers = [prov for prov in onnx_providers if prov not in gpu_providers]
+    supported_providers = get_supported_onnx_providers(exclude_trt=exclude_trt)
+    available_providers = onnxrt.get_available_providers()
+    onnx_providers = [prov for prov in supported_providers if prov in available_providers]
     return onnx_providers
 
 
