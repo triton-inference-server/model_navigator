@@ -49,9 +49,11 @@ class RuntimeResults(DataObject):
         return cls(
             runtime=RuntimeProvider(data_dict["runtime"]),
             status=Status(data_dict["status"]),
-            tolerance=data_dict.get("tolerance"),
-            performance=[ProfilingResults.from_dict(perf) for perf in data_dict.get("performance", [])]
-            if data_dict["performance"] is not None
+            tolerance=TolerancePerOutputName.from_json(data_dict.get("tolerance"))
+            if data_dict.get("tolerance") is not None
+            else None,
+            performance=[ProfilingResults.from_dict(perf) for perf in data_dict["performance"]]
+            if data_dict.get("performance") is not None
             else None,
             err_msg=data_dict.get("err_msg"),
             verified=data_dict["verified"],
@@ -130,7 +132,7 @@ class DataDictUpdater:
     def _update_navigator_status_v0_1_0(data_dict: Dict):
         for model_status in data_dict["model_status"]:
             for runtime_results in model_status["runtime_results"]:
-                for i in range(len(runtime_results["performance"])):
+                for i in range(len(runtime_results.get("performance", []))):
                     perf_results = runtime_results["performance"][i]
                     runtime_results["performance"][i] = {
                         "batch_size": perf_results["batch_size"],
