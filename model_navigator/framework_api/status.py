@@ -14,7 +14,7 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Sequence
 
 from polygraphy.backend.trt import Profile
 
@@ -157,6 +157,8 @@ class DataDictUpdater:
             default_val = ProfilerConfig().to_dict()
             LOGGER.info(f"Using default `profiler_config`: {default_val}")
             data_dict["export_config"]["profiler_config"] = default_val
+        if "git_info" not in data_dict:
+            data_dict["git_info"] = {}
 
         return DataDictUpdater._update_navigator_status_v0_1_1(data_dict)
 
@@ -172,6 +174,10 @@ class DataDictUpdater:
         for model_status in data_dict["model_status"]:
             if model_status["format"] == "torch-trt" and model_status.get("precision") is None:
                 model_status["precision"] = "fp32"
+        if isinstance(data_dict["export_config"].get("_input_names"), Sequence):
+            data_dict["export_config"]["_input_names"] = tuple(data_dict["export_config"]["_input_names"])
+        if isinstance(data_dict["export_config"].get("_output_names"), Sequence):
+            data_dict["export_config"]["_output_names"] = tuple(data_dict["export_config"]["_output_names"])
         return DataDictUpdater._update_navigator_status_v0_1_3(data_dict)
 
     @staticmethod
