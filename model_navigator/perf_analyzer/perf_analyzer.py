@@ -113,7 +113,7 @@ class PerfAnalyzer:
         commands_lst = ["timeout", str(self._timeout)]
         commands_lst.extend(command)
         LOGGER.debug(f"Run with stream: {commands_lst}")
-        process = Popen(commands_lst, start_new_session=True, stdout=PIPE, encoding="utf-8")
+        process = Popen(commands_lst, start_new_session=True, stdout=PIPE, stderr=STDOUT, encoding="utf-8")
         streamed_output = ""
         while True:
             output = process.stdout.readline()

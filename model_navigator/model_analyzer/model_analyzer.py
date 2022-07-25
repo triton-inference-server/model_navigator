@@ -72,5 +72,6 @@ class ModelAnalyzer:
             except CalledProcessError as e:
                 raise ModelNavigatorException(
                     f"Running {self._analyzer_path} with {e.cmd} failed with"
-                    f" exit status {e.returncode} : {e.output}"
+                    f" exit status {e.returncode} : {e.stderr}"
+                    f" output : {e.output}"
                 )
