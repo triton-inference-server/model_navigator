@@ -16,6 +16,21 @@ limitations under the License.
 
 # Changelog
 
+## 0.3.4 (unreleased)
+- Model Navigator Export API:
+  - new: support for building framework containers with Model Navigator installed
+  - new: example for loading Navigator Package for reproducing the results
+
+[//]: <> (put here on external component update with short summary what change or link to changelog)
+- Version of external components used during testing:
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.36.2
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.19
+    - [Triton Model Analyzer 1.17.0](https://github.com/triton-inference-server/model_analyzer)
+    - tf2onnx: [v1.11.1](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.11.1)
+    - Other component versions depend on the used framework and Triton Inference Server containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
+
 ## 0.3.3
 - Model Navigator Export API:
   - new: improved handling inputs and outputs metadata

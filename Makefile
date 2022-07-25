@@ -136,4 +136,10 @@ install-dev: clean
 	$(PIP_INSTALL) -r dev_requirements.txt
 
 docker: clean
-	docker build --network host -t model-navigator:latest .
+	docker build --network host -f docker/Dockerfile.triton -t model-navigator:latest .
+
+docker-pytorch: clean
+	docker build --network host -f docker/Dockerfile.pytorch -t model-navigator-pytorch:latest .
+
+docker-tensorflow: clean
+	docker build --network host -f docker/Dockerfile.tensorflow -t model-navigator-tensorflow:latest .
