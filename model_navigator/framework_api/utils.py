@@ -331,6 +331,9 @@ def load_samples(samples_name, package_path, batch_dim):
 
 def get_trt_profile_from_trt_dynamic_axes(trt_dynamic_axes):
     trt_profile = Profile()
+    if trt_dynamic_axes is None:
+        return trt_profile
     for name, axes in trt_dynamic_axes.items():
-        trt_profile.add(name, *list(zip(*list(axes.values()))))
+        if axes:
+            trt_profile.add(name, *list(zip(*list(axes.values()))))
     return trt_profile
