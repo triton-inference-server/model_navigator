@@ -41,15 +41,13 @@ def check_model_dir(model_dir: Path, format: nav.Format, only_config: bool = Fal
         return False
     if not Path(model_dir / "config.yaml").is_file():
         return False
-    if only_config:
-        return True
     if format == nav.Format.ONNX:
         model_path = model_dir / "model.onnx"
     elif format == nav.Format.TENSORRT:
         model_path = model_dir / "model.plan"
     else:
         model_path = model_dir / "model.savedmodel"
-    if not Path(model_path).exists():
+    if Path(model_path).exists() == only_config:
         return False
     return True
 

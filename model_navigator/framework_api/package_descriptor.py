@@ -434,12 +434,16 @@ class PackageDescriptor:
                 return runtime_results
         raise RuntimeError(f"Model status not found for {format=}, {jit_type=}, {precision=}, {runtime_provider=}.")
 
-    def _make_zip(self, zip_path, package_path, dirs_to_save, base_models_paths) -> None:
+    def _make_zip(self, zip_path, package_path, dirs_to_save, base_models_paths, converted_models_paths) -> None:
 
         checkpoint_extensions = {ext.value for ext in Extension}
         with zipfile.ZipFile(zip_path.as_posix(), "w") as zf:
             for dirname, _, files in os.walk(package_path.as_posix()):
-                if dirname != package_path.as_posix() and not dirname.startswith(dirs_to_save):
+                if dirname != package_path.as_posix() and not dirname.startswith(
+                    tuple(d.as_posix() for d in dirs_to_save)
+                ):
+                    continue
+                if dirname.startswith(tuple(p.as_posix() for p in converted_models_paths)):
                     continue
                 for filename in files:
                     filepath = os.path.join(dirname, filename)
@@ -522,13 +526,10 @@ class PackageDescriptor:
         base_models_paths, converted_models_paths = self._get_models_paths_to_save(
             package_path,
         )
-
         dirs_to_save = [model_path.parent for model_path in chain(base_models_paths, converted_models_paths)]
         if save_data:
             dirs_to_save.extend([package_path / "model_output", package_path / "model_input"])
-        dirs_to_save = tuple(dirname.as_posix() for dirname in dirs_to_save)
-
-        self._make_zip(path, package_path, dirs_to_save, base_models_paths)
+        self._make_zip(path, package_path, dirs_to_save, base_models_paths, converted_models_paths)
 
         if not keep_workdir:
             self._cleanup()
