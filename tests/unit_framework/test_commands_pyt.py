@@ -19,7 +19,10 @@ from pathlib import Path
 import numpy
 import onnx
 import torch
+from polygraphy.backend.trt import Profile
 
+from model_navigator.__version__ import __version__
+from model_navigator.framework_api._nav_package_format_version import NAV_PACKAGE_FORMAT_VERSION
 from model_navigator.framework_api.commands.correctness import Correctness
 from model_navigator.framework_api.commands.data_dump.samples import (
     DumpInputModelData,
@@ -28,7 +31,8 @@ from model_navigator.framework_api.commands.data_dump.samples import (
 )
 from model_navigator.framework_api.commands.export.pyt import ExportPYT2ONNX, ExportPYT2TorchScript
 from model_navigator.framework_api.common import TensorMetadata
-from model_navigator.framework_api.runners.pyt import PytRunner
+from model_navigator.framework_api.package_descriptor import PackageDescriptor
+from model_navigator.framework_api.status import ModelStatus, NavigatorStatus
 from model_navigator.framework_api.utils import Framework, JitType
 from model_navigator.model import Format
 from model_navigator.tensor import TensorSpec
@@ -153,31 +157,55 @@ def test_pyt_correctness():
         torch.jit.save(script_module, model_path.as_posix())
 
         input_data = next(iter(dataloader))
-        numpy_data = input_data.cpu().numpy()
+        numpy_input = input_data.numpy()
         numpy_output = model(input_data).detach().cpu().numpy()
+        batch_dim = None
 
-        input_metadata = {"input__1": TensorSpec("input__1", numpy_data.shape, numpy_data.dtype)}
-        output_metadata = {"output__1": TensorSpec("output__1", numpy_output.shape, numpy_output.dtype)}
+        samples_to_npz([{"input__1": numpy_input}], package_dir / "model_input" / "correctness", batch_dim=batch_dim)
+        samples_to_npz([{"output__1": numpy_output}], package_dir / "model_output" / "correctness", batch_dim=batch_dim)
+
+        input_metadata = TensorMetadata({"input__1": TensorSpec("input__1", numpy_input.shape, numpy_input.dtype)})
+        output_metadata = TensorMetadata({"output__1": TensorSpec("output__1", numpy_output.shape, numpy_output.dtype)})
+        nav_status = NavigatorStatus(
+            format_version=NAV_PACKAGE_FORMAT_VERSION,
+            model_navigator_version=__version__,
+            uuid="1",
+            git_info={},
+            environment={},
+            export_config={
+                "model_name": model_name,
+                "target_device": "cpu",
+            },
+            model_status=[
+                ModelStatus(
+                    format=Format.TORCHSCRIPT,
+                    path=Path("torchscript-script/model.pt"),
+                    runtime_results=[],
+                    torch_jit=JitType.SCRIPT,
+                )
+            ],
+            input_metadata=input_metadata,
+            output_metadata=output_metadata,
+            trt_profile=Profile(),
+        )
+        pkg_desc = PackageDescriptor(nav_status, workdir)
+        pkg_desc.save_status_file()
 
         correctness_cmd = Correctness(
             name="test correctness",
             target_format=Format.TORCHSCRIPT,
-            runner=PytRunner(script_module, input_metadata, list(output_metadata.keys())),
             target_jit_type=JitType.SCRIPT,
         )
 
         correctness_cmd(
-            framework=Framework.PYT,
-            model=model,
             workdir=workdir,
             model_name=model_name,
             rtol=0.0,
             atol=0.0,
-            correctness_samples=[{"input__1": numpy_data}],
-            correctness_samples_output=[{"output__1": numpy_output}],
             input_metadata=input_metadata,
             output_metadata=output_metadata,
             target_device="cpu",
+            batch_dim=batch_dim,
         )
 
 

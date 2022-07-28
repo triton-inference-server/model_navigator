@@ -12,19 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
+import tempfile
 from dataclasses import dataclass
+from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
 import numpy
-from polygraphy.backend.base import BaseRunner
-from polygraphy.comparator import util as comp_util
 
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.core import Command, CommandType
-from model_navigator.framework_api.common import DataObject, Sample, TensorMetadata
+from model_navigator.framework_api.common import DataObject, TensorMetadata
 from model_navigator.framework_api.exceptions import ExecutionContext
 from model_navigator.framework_api.logger import LOGGER
-from model_navigator.framework_api.utils import JitType, RuntimeProvider, Status
+from model_navigator.framework_api.runners.runner_manager import RunnerManager
+from model_navigator.framework_api.utils import (
+    JitType,
+    RuntimeProvider,
+    Status,
+    format_to_relative_model_path,
+    get_package_path,
+)
 from model_navigator.model import Format
 
 if TYPE_CHECKING:
@@ -64,7 +72,6 @@ class Correctness(Command):
     def __init__(
         self,
         name: str,
-        runner: BaseRunner,
         target_format: Format,
         requires: Tuple[Command, ...] = (),
         target_jit_type: Optional[JitType] = None,
@@ -74,7 +81,6 @@ class Correctness(Command):
         super().__init__(
             name=name, command_type=CommandType.CORRECTNESS, target_format=target_format, requires=requires
         )
-        self._runner = runner
         self.target_jit_type = target_jit_type
         self.target_precision = target_precision
         self.runtime_provider = runtime_provider
@@ -95,47 +101,64 @@ class Correctness(Command):
 
     def __call__(
         self,
-        correctness_samples: List[Sample],
-        correctness_samples_output: List[Sample],
+        workdir: Path,
+        model_name: str,
+        input_metadata: TensorMetadata,
         output_metadata: TensorMetadata,
+        target_device: str,
+        batch_dim: Optional[int],
         rtol: Optional[float] = None,
         atol: Optional[float] = None,
         **kwargs,
     ) -> TolerancePerOutputName:
         LOGGER.info(f"Correctness test for: {self.target_format} {self.runtime_provider} started")
-        output_names = [v.name for v in output_metadata.values()]
-        per_output_tolerance = TolerancePerOutputName({name: Tolerance(0.0, 0.0) for name in output_names})
-        with self._runner as runner:
-            for sample, original_output in zip(correctness_samples, correctness_samples_output):
-                with ExecutionContext():
-                    comp_output = runner.infer(sample)
 
-                is_len_valid = len(original_output) == len(comp_output)
-                assert is_len_valid, "Original model output length is different from exported model output"
+        model_path = get_package_path(workdir=workdir, model_name=model_name) / format_to_relative_model_path(
+            format=self.target_format, jit_type=self.target_jit_type, precision=self.target_precision
+        )
+        model_dir = model_path.parent
+        output_names = list(output_metadata.keys())
 
-                for name in output_names:
-                    out0, out1 = original_output[name], comp_output[name]
-                    absdiff = numpy.abs(out0 - out1)
-                    absout1 = numpy.abs(out1)
+        runner_manager = RunnerManager(input_metadata, output_metadata, target_device)
 
-                    reldiff = absdiff / absout1
-                    max_reldiff = comp_util.compute_max(reldiff)
-                    max_absdiff = comp_util.compute_max(absdiff)
+        with ExecutionContext(
+            model_dir / "reproduce_correctness.py"
+        ) as context, tempfile.NamedTemporaryFile() as temp_file:
+            kwargs = {
+                "workdir": workdir.as_posix(),
+                "model_name": model_name,
+                "output_names": output_names,
+                "package_path": get_package_path(workdir, model_name).as_posix(),
+                "batch_dim": batch_dim,
+                "results_path": temp_file.name,
+                "format": self.target_format.value,
+                "precision": self.target_precision.value if self.target_precision else None,
+                "jit_type": self.target_jit_type.value if self.target_jit_type else None,
+                "runtime": self.runtime_provider.value if self.runtime_provider else None,
+                "runner_manager_dict": str(runner_manager.to_dict(parse=True)).replace(" ", ""),
+            }
 
-                    if max_absdiff > per_output_tolerance[name].atol:
-                        per_output_tolerance[name].atol = float(max_absdiff)
-                    if max_reldiff > per_output_tolerance[name].rtol:
-                        per_output_tolerance[name].rtol = float(max_reldiff)
+            args = []
+            for k, v in kwargs.items():
+                s = str(v).replace("'", '"')
+                args.extend([f"--{k}", s])
 
-                    def is_diff_within_tol(diff, tol):
-                        return not numpy.isnan(diff) and diff <= tol
+            from model_navigator.framework_api.commands.correctness import correctness_script
 
-                    if is_len_valid and atol is not None:
-                        if not is_diff_within_tol(max_absdiff, atol):
-                            self.status = Status.FAIL
-                            self.err_msg = get_assert_message(atol, rtol)
-                    if is_len_valid and rtol is not None:
-                        if not is_diff_within_tol(max_reldiff, rtol):
-                            self.status = Status.FAIL
-                            self.err_msg = get_assert_message(atol, rtol)
+            context.execute_external_runtime_script(correctness_script.__file__, args)
+            per_output_tolerance = TolerancePerOutputName.from_json(json.load(temp_file))
+
+        def is_diff_within_tol(diff, tol):
+            return not numpy.isnan(diff) and diff <= tol
+
+        for name in output_names:
+            if atol is not None:
+                if not is_diff_within_tol(per_output_tolerance[name].atol, atol):
+                    self.status = Status.FAIL
+                    self.err_msg = get_assert_message(atol, rtol)
+            if rtol is not None:
+                if not is_diff_within_tol(per_output_tolerance[name].rtol, rtol):
+                    self.status = Status.FAIL
+                    self.err_msg = get_assert_message(atol, rtol)
+
         return per_output_tolerance

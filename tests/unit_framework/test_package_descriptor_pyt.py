@@ -16,6 +16,7 @@ import tempfile
 from pathlib import Path
 
 import numpy
+import pytest
 import torch
 
 from model_navigator.converter.config import TensorRTPrecision
@@ -27,7 +28,6 @@ from model_navigator.framework_api.package_descriptor import PackageDescriptor
 from model_navigator.framework_api.pipelines.builders import preprocessing_builder
 from model_navigator.framework_api.pipelines.pipeline import Pipeline
 from model_navigator.framework_api.pipelines.pipeline_manager import PipelineManager
-from model_navigator.framework_api.runners.pyt import PytRunner
 from model_navigator.framework_api.utils import Format, Framework, JitType, Status
 from model_navigator.tensor import TensorSpec
 
@@ -91,7 +91,6 @@ def test_pyt_package_descriptor():
             cmd_correctness = Correctness(
                 name="test correctness",
                 target_format=Format.TORCHSCRIPT,
-                runner=PytRunner(torch.jit.load(model_path.as_posix()), input_metadata, list(output_metadata.keys())),
                 target_jit_type=JitType.SCRIPT,
             )
             cmd_correctness.status = Status.OK
@@ -115,14 +114,17 @@ def test_pyt_package_descriptor():
         # These models should be not available:
         assert package_desc.get_status(format=Format.TORCHSCRIPT, jit_type=JitType.TRACE) is False
         assert package_desc.get_model(format=Format.TORCHSCRIPT, jit_type=JitType.TRACE) is None
-        assert package_desc.get_runner(format=Format.TORCHSCRIPT, jit_type=JitType.TRACE) is None
+        with pytest.raises(ValueError):
+            package_desc.get_runner(format=Format.TORCHSCRIPT, jit_type=JitType.TRACE)
 
         for jit_type in (JitType.SCRIPT, JitType.TRACE):
             for precision in (TensorRTPrecision.FP16, TensorRTPrecision.FP32):
                 assert package_desc.get_status(format=Format.TORCH_TRT, jit_type=jit_type, precision=precision) is False
                 assert package_desc.get_model(format=Format.TORCH_TRT, jit_type=jit_type, precision=precision) is None
-                assert package_desc.get_runner(format=Format.TORCH_TRT, jit_type=jit_type, precision=precision) is None
+                with pytest.raises(ValueError):
+                    package_desc.get_runner(format=Format.TORCH_TRT, jit_type=jit_type, precision=precision)
 
         assert package_desc.get_status(format=Format.ONNX) is False
         assert package_desc.get_model(format=Format.ONNX) is None
-        assert package_desc.get_runner(format=Format.ONNX) is None
+        with pytest.raises(ValueError):
+            package_desc.get_runner(format=Format.ONNX)

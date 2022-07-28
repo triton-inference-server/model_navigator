@@ -12,8 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
+import tempfile
 import time
 from dataclasses import dataclass
+from pathlib import Path
 from typing import TYPE_CHECKING, List, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
@@ -21,8 +24,17 @@ from polygraphy.backend.base import BaseRunner
 
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.core import Command, CommandType
-from model_navigator.framework_api.common import DataObject, Sample
-from model_navigator.framework_api.utils import JitType, Parameter, RuntimeProvider, Status
+from model_navigator.framework_api.common import DataObject, Sample, TensorMetadata
+from model_navigator.framework_api.exceptions import ExecutionContext
+from model_navigator.framework_api.runners.runner_manager import RunnerManager
+from model_navigator.framework_api.utils import (
+    JitType,
+    Parameter,
+    RuntimeProvider,
+    Status,
+    format_to_relative_model_path,
+    get_package_path,
+)
 from model_navigator.model import Format
 
 if TYPE_CHECKING:
@@ -173,7 +185,6 @@ class Performance(Command):
     def __init__(
         self,
         name: str,
-        runner: BaseRunner,
         target_format: Format,
         requires: Tuple[Command, ...] = (),
         target_jit_type: Optional[JitType] = None,
@@ -183,7 +194,6 @@ class Performance(Command):
         super().__init__(
             name=name, command_type=CommandType.PERFORMANCE, target_format=target_format, requires=requires
         )
-        self._runner = runner
         self.target_jit_type = target_jit_type
         self.target_precision = target_precision
         self.runtime_provider = runtime_provider
@@ -204,11 +214,50 @@ class Performance(Command):
 
     def __call__(
         self,
+        workdir: Path,
+        model_name: str,
         profiler_config: ProfilerConfig,
-        profiling_sample: Sample,
+        input_metadata: TensorMetadata,
+        output_metadata: TensorMetadata,
+        target_device: str,
         batch_dim: Optional[int],
         max_batch_size: Optional[int],
         **kwargs,
     ) -> List[ProfilingResults]:
 
-        return Profiler(self._runner, profiling_sample, profiler_config, batch_dim, max_batch_size).run()
+        model_path = get_package_path(workdir=workdir, model_name=model_name) / format_to_relative_model_path(
+            format=self.target_format, jit_type=self.target_jit_type, precision=self.target_precision
+        )
+        model_dir = model_path.parent
+
+        runner_manager = RunnerManager(input_metadata, output_metadata, target_device)
+
+        with ExecutionContext(
+            model_dir / "reproduce_profiling.py"
+        ) as context, tempfile.NamedTemporaryFile() as temp_file:
+            kwargs = {
+                "workdir": workdir.as_posix(),
+                "model_name": model_name,
+                "package_path": get_package_path(workdir, model_name).as_posix(),
+                "batch_dim": batch_dim,
+                "results_path": temp_file.name,
+                "format": self.target_format.value,
+                "precision": self.target_precision.value if self.target_precision else None,
+                "jit_type": self.target_jit_type.value if self.target_jit_type else None,
+                "runtime": self.runtime_provider.value if self.runtime_provider else None,
+                "profiler_config": str(profiler_config.to_dict(parse=True)).replace(" ", ""),
+                "max_batch_size": max_batch_size,
+                "runner_manager_dict": str(runner_manager.to_dict(parse=True)).replace(" ", ""),
+            }
+
+            args = []
+            for k, v in kwargs.items():
+                s = str(v).replace("'", '"')
+                args.extend([f"--{k}", s])
+
+            from model_navigator.framework_api.commands.performance import performance_script
+
+            context.execute_external_runtime_script(performance_script.__file__, args)
+            results = [ProfilingResults.from_dict(res) for res in json.load(temp_file)]
+
+        return results

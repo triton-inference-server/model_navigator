@@ -102,6 +102,11 @@ class NavigatorStatus(DataObject):
 
         data_dict = DataDictUpdater.update(data_dict, format_version)
 
+        if isinstance(data_dict["export_config"].get("_input_names"), Sequence):
+            data_dict["export_config"]["_input_names"] = tuple(data_dict["export_config"]["_input_names"])
+        if isinstance(data_dict["export_config"].get("_output_names"), Sequence):
+            data_dict["export_config"]["_output_names"] = tuple(data_dict["export_config"]["_output_names"])
+
         trt_profile = Profile()
         for name, val in data_dict["trt_profile"].items():
             trt_profile.add(name, **val)
@@ -174,12 +179,12 @@ class DataDictUpdater:
         for model_status in data_dict["model_status"]:
             if model_status["format"] == "torch-trt" and model_status.get("precision") is None:
                 model_status["precision"] = "fp32"
-        if isinstance(data_dict["export_config"].get("_input_names"), Sequence):
-            data_dict["export_config"]["_input_names"] = tuple(data_dict["export_config"]["_input_names"])
-        if isinstance(data_dict["export_config"].get("_output_names"), Sequence):
-            data_dict["export_config"]["_output_names"] = tuple(data_dict["export_config"]["_output_names"])
         return DataDictUpdater._update_navigator_status_v0_1_3(data_dict)
 
     @staticmethod
     def _update_navigator_status_v0_1_3(data_dict: Dict):
+        if isinstance(data_dict["export_config"].get("_input_names"), Sequence):
+            data_dict["export_config"]["_input_names"] = tuple(data_dict["export_config"]["_input_names"])
+        if isinstance(data_dict["export_config"].get("_output_names"), Sequence):
+            data_dict["export_config"]["_output_names"] = tuple(data_dict["export_config"]["_output_names"])
         return data_dict

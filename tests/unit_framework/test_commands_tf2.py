@@ -18,13 +18,22 @@ from pathlib import Path
 
 import numpy
 import tensorflow
+from polygraphy.backend.trt import Profile
 
+from model_navigator.__version__ import __version__
 from model_navigator.converter.config import TensorRTPrecision
+from model_navigator.framework_api._nav_package_format_version import NAV_PACKAGE_FORMAT_VERSION
 from model_navigator.framework_api.commands.convert.tf import ConvertSavedModel2TFTRT
 from model_navigator.framework_api.commands.correctness import Correctness
-from model_navigator.framework_api.commands.data_dump.samples import DumpInputModelData, DumpOutputModelData
+from model_navigator.framework_api.commands.data_dump.samples import (
+    DumpInputModelData,
+    DumpOutputModelData,
+    samples_to_npz,
+)
 from model_navigator.framework_api.commands.export.tf import ExportTF2SavedModel
-from model_navigator.framework_api.runners.tf import TFRunner
+from model_navigator.framework_api.common import TensorMetadata
+from model_navigator.framework_api.package_descriptor import PackageDescriptor
+from model_navigator.framework_api.status import ModelStatus, NavigatorStatus
 from model_navigator.framework_api.utils import Framework, get_default_max_workspace_size
 from model_navigator.model import Format
 from model_navigator.tensor import TensorSpec
@@ -149,28 +158,53 @@ def test_tf2_correctness():
         tensorflow.keras.models.save_model(model=model, filepath=model_path, overwrite=True)
 
         input_data = next(iter(dataloader))
-        np_output = model.predict(input_data)
-        np_input = input_data.numpy()
+        numpy_output = model.predict(input_data)
+        numpy_input = input_data.numpy()
+        batch_dim = None
 
-        input_metadata = {"input__1": TensorSpec("input__1", np_input.shape, np_input.dtype)}
-        output_metadata = {"output__1": TensorSpec("output__1", np_output.shape, np_output.dtype)}
+        samples_to_npz([{"input__1": numpy_input}], package_dir / "model_input" / "correctness", batch_dim=batch_dim)
+        samples_to_npz([{"output__1": numpy_output}], package_dir / "model_output" / "correctness", batch_dim=batch_dim)
+
+        input_metadata = TensorMetadata({"input__1": TensorSpec("input__1", numpy_input.shape, numpy_input.dtype)})
+        output_metadata = TensorMetadata({"output__1": TensorSpec("output__1", numpy_output.shape, numpy_output.dtype)})
+        nav_status = NavigatorStatus(
+            format_version=NAV_PACKAGE_FORMAT_VERSION,
+            model_navigator_version=__version__,
+            uuid="1",
+            git_info={},
+            environment={},
+            export_config={
+                "model_name": model_name,
+                "target_device": "cpu",
+            },
+            model_status=[
+                ModelStatus(
+                    format=Format.TORCHSCRIPT,
+                    path=Path("tf-savedmodel/model.savedmodel"),
+                    runtime_results=[],
+                )
+            ],
+            input_metadata=input_metadata,
+            output_metadata=output_metadata,
+            trt_profile=Profile(),
+        )
+        pkg_desc = PackageDescriptor(nav_status, workdir)
+        pkg_desc.save_status_file()
+
         correctness_cmd = Correctness(
             name="test correctness",
             target_format=Format.TF_SAVEDMODEL,
-            runner=TFRunner(model_path, input_metadata, list(output_metadata.keys())),
         )
+
         correctness_cmd(
-            framework=Framework.TF2,
-            model=model,
-            model_name=model_name,
             workdir=workdir,
+            model_name=model_name,
             rtol=0.0,
             atol=0.0,
-            correctness_samples=[{"input__1": np_input}],
-            correctness_samples_output=[{"output__1": np_output}],
             input_metadata=input_metadata,
             output_metadata=output_metadata,
-            batch_dim=None,
+            target_device="cpu",
+            batch_dim=batch_dim,
         )
 
 

@@ -16,6 +16,7 @@ import tempfile
 from pathlib import Path
 
 import numpy
+import pytest
 import tensorflow
 
 from model_navigator.converter.config import TensorRTPrecision
@@ -27,7 +28,6 @@ from model_navigator.framework_api.package_descriptor import PackageDescriptor
 from model_navigator.framework_api.pipelines.builders import preprocessing_builder
 from model_navigator.framework_api.pipelines.pipeline import Pipeline
 from model_navigator.framework_api.pipelines.pipeline_manager import PipelineManager
-from model_navigator.framework_api.runners.tf import TFRunner
 from model_navigator.framework_api.utils import Format, Framework, Status
 from model_navigator.tensor import TensorSpec
 
@@ -98,7 +98,6 @@ def test_tf2_package_descriptor():
             cmd_correctness = Correctness(
                 name="test correctness",
                 target_format=Format.TF_SAVEDMODEL,
-                runner=TFRunner(model_path, input_metadata, list(output_metadata.keys())),
             )
             cmd_correctness.status = Status.OK
             cmd_correctness.output = Tolerance(0, 0)
@@ -121,12 +120,15 @@ def test_tf2_package_descriptor():
         # These models should be not available:
         assert package_desc.get_status(format=Format.TF_TRT, precision=TensorRTPrecision.FP16) is False
         assert package_desc.get_model(format=Format.TF_TRT, precision=TensorRTPrecision.FP16) is None
-        assert package_desc.get_runner(format=Format.TF_TRT, precision=TensorRTPrecision.FP16) is None
+        with pytest.raises(ValueError):
+            package_desc.get_runner(format=Format.TF_TRT, precision=TensorRTPrecision.FP16)
 
         assert package_desc.get_status(format=Format.TF_TRT, precision=TensorRTPrecision.FP32) is False
         assert package_desc.get_model(format=Format.TF_TRT, precision=TensorRTPrecision.FP32) is None
-        assert package_desc.get_runner(format=Format.TF_TRT, precision=TensorRTPrecision.FP32) is None
+        with pytest.raises(ValueError):
+            package_desc.get_runner(format=Format.TF_TRT, precision=TensorRTPrecision.FP32)
 
         assert package_desc.get_status(format=Format.ONNX) is False
         assert package_desc.get_model(format=Format.ONNX) is None
-        assert package_desc.get_runner(format=Format.ONNX) is None
+        with pytest.raises(ValueError):
+            package_desc.get_runner(format=Format.ONNX)

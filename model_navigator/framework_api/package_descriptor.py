@@ -35,6 +35,7 @@ from model_navigator.framework_api.exceptions import UserError
 from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.pipelines.builders.profiling import profiling_builder
 from model_navigator.framework_api.pipelines.pipeline_manager import PipelineManager
+from model_navigator.framework_api.runners.runner_manager import RunnerManager
 from model_navigator.framework_api.status import ModelStatus, NavigatorStatus, RuntimeResults
 from model_navigator.framework_api.utils import (
     Extension,
@@ -151,56 +152,6 @@ class PackageDescriptor:
             import tensorflow  # pytype: disable=import-error
 
             return tensorflow.keras.models.load_model(model_path)
-
-    def _load_runner(self, model_path: Path, format: Format, runtime: Optional[RuntimeProvider] = None):
-        model_path = model_path.as_posix()
-        LOGGER.debug(f"Loading runner from path: {model_path}")
-
-        if runtime is None:
-            runtime = format2runtimes(format)
-
-        if format == Format.ONNX:
-            from polygraphy.backend.onnxrt import SessionFromOnnx
-
-            from model_navigator.framework_api.runners.onnx import OnnxrtRunner
-
-            if not isinstance(runtime, (tuple, list)):
-                runtime = [runtime]
-            return OnnxrtRunner(SessionFromOnnx(model_path, providers=runtime))
-        elif format == Format.TENSORRT:
-            from polygraphy.backend.common import BytesFromPath
-            from polygraphy.backend.trt import EngineFromBytes
-
-            from model_navigator.framework_api.runners.trt import TrtRunner
-
-            return TrtRunner(EngineFromBytes(BytesFromPath(model_path)))
-        elif format in (Format.TORCHSCRIPT, Format.TORCH_TRT):
-            from model_navigator.framework_api.runners.pyt import PytRunner
-
-            return PytRunner(
-                model_path,
-                input_metadata=self.navigator_status.input_metadata,
-                output_names=list(self.navigator_status.output_metadata.keys()),
-                target_device=self.navigator_status.export_config["target_device"],
-            )
-        elif format == Format.TF_SAVEDMODEL:
-            from model_navigator.framework_api.runners.tf import TFRunner
-
-            return TFRunner(
-                model_path,
-                input_metadata=self.navigator_status.input_metadata,
-                output_names=list(self.navigator_status.output_metadata.keys()),
-            )
-        elif format == Format.TF_TRT:
-            from model_navigator.framework_api.runners.tf import TFRunner
-
-            return TFRunner(
-                model_path,
-                input_metadata=self.navigator_status.input_metadata,
-                output_names=list(self.navigator_status.output_metadata.keys()),
-            )
-        else:
-            raise ValueError(f"Unknown format: {format}")
 
     def _cleanup(self):
         if self.workdir.exists():
@@ -332,13 +283,19 @@ class PackageDescriptor:
         :return
             Polygraphy BaseRunner object: https://github.com/NVIDIA/TensorRT/blob/main/tools/Polygraphy/polygraphy/backend/base/runner.py
         """
-        model_path = get_package_path(workdir=self.workdir, model_name=self.model_name) / format_to_relative_model_path(
-            format=format, jit_type=jit_type, precision=precision
+
+        return RunnerManager(
+            input_metadata=self.navigator_status.input_metadata,
+            output_metadata=self.navigator_status.output_metadata,
+            target_device=self.navigator_status.export_config["target_device"],
+        ).get_runner(
+            workdir=self.workdir,
+            model_name=self.model_name,
+            format=format,
+            jit_type=jit_type,
+            precision=precision,
+            runtime=runtime,
         )
-        if model_path.exists():
-            return self._load_runner(model_path=model_path, format=format, runtime=runtime)
-        else:
-            return None
 
     def get_source_runner(
         self,

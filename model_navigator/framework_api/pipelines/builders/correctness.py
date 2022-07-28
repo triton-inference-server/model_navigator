@@ -29,17 +29,10 @@ def correctness_builder(config: Config, package_descriptor: "PackageDescriptor")
     for model_status in package_descriptor.navigator_status.model_status:
         for runtime_results in model_status.runtime_results:
             if runtime_results.status == Status.OK:
-                runner = package_descriptor.get_runner(
-                    format=model_status.format,
-                    jit_type=model_status.torch_jit,
-                    precision=model_status.precision,
-                    runtime=runtime_results.runtime,
-                )
                 commands.append(
                     Correctness(
                         name=f"Correctness {model_status.format.value}",
                         target_format=model_status.format,
-                        runner=runner,
                         target_jit_type=model_status.torch_jit,
                         target_precision=model_status.precision,
                         runtime_provider=runtime_results.runtime,

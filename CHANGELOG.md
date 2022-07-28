@@ -20,7 +20,9 @@ limitations under the License.
 - Model Navigator Export API:
   - new: support for building framework containers with Model Navigator installed
   - new: example for loading Navigator Package for reproducing the results
+  - new: create reproducing script for correctness and performance steps
   - fix: do not save TF-TRT models to the .nav package
+  - fix: correctly load .nav packages when `_input_names` or `_output_names` specified
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 - Version of external components used during testing:
