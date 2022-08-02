@@ -54,6 +54,7 @@ from model_navigator.model_analyzer import (
     ModelAnalyzerProfileConfig,
     ModelAnalyzerTritonConfig,
     ProfileResult,
+    check_model_analyzer,
 )
 from model_navigator.perf_analyzer import PerfMeasurementConfig
 from model_navigator.results import ResultsStore, State, Status
@@ -116,6 +117,7 @@ def optimize_cmd(
     override_conversion_container: bool,
     **kwargs,
 ):
+    check_model_analyzer()
     timer = Timer()
     timer.start()
 

@@ -15,6 +15,7 @@ import logging
 import shutil
 import sys
 from distutils.version import LooseVersion
+from importlib.metadata import PackageNotFoundError
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -35,14 +36,22 @@ from model_navigator.utils import Workspace
 
 LOGGER = logging.getLogger(__name__)
 
-if LooseVersion(sys.version) >= LooseVersion("3.8.0"):
-    from importlib.metadata import version
+try:
+    if LooseVersion(sys.version) >= LooseVersion("3.8.0"):
+        from importlib.metadata import version
 
-    TRITON_MODEL_ANALYZER_VERSION = LooseVersion(version("triton-model-analyzer"))
-else:
-    import pkg_resources
+        TRITON_MODEL_ANALYZER_VERSION = LooseVersion(version("triton-model-analyzer"))
+    else:
+        import pkg_resources
 
-    TRITON_MODEL_ANALYZER_VERSION = LooseVersion(pkg_resources.get_distribution("triton-model-analyzer").version)
+        TRITON_MODEL_ANALYZER_VERSION = LooseVersion(pkg_resources.get_distribution("triton-model-analyzer").version)
+except PackageNotFoundError:
+    TRITON_MODEL_ANALYZER_VERSION = None
+
+
+def check_model_analyzer():
+    if TRITON_MODEL_ANALYZER_VERSION is None:
+        raise ModelNavigatorProfileException("Model Analyzer package not found.")
 
 
 class Profiler:
@@ -59,6 +68,8 @@ class Profiler:
         perf_measurement_config: PerfMeasurementConfig,
         dataset_profile_config: Optional[DatasetProfileConfig] = None,
     ):
+        check_model_analyzer()
+
         self._workspace = workspace
 
         self._triton_config = triton_config
