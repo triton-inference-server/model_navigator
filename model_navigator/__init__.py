@@ -19,7 +19,7 @@ from model_navigator.framework_api._nav_package_format_version import NAV_PACKAG
 from model_navigator.framework_api.commands.performance import MeasurementMode, ProfilerConfig  # noqa: F401
 from model_navigator.framework_api.logger import LOGGER  # noqa: F401
 from model_navigator.framework_api.package_descriptor import profile, save  # noqa: F401
-from model_navigator.framework_api.package_utils import is_tf_available, is_torch_available
+from model_navigator.framework_api.package_utils import is_jax_available, is_tf_available, is_torch_available
 from model_navigator.framework_api.utils import Framework, JitType, RuntimeProvider, Status  # noqa: F401
 from model_navigator.model import Format  # noqa: F401
 from model_navigator.tensor import TensorSpec  # noqa: F401
@@ -29,6 +29,9 @@ if is_torch_available():
 
 if is_tf_available():
     from model_navigator.framework_api import tensorflow  # noqa: F401
+
+if is_tf_available() and is_jax_available():
+    from model_navigator.framework_api import jax  # noqa: F401
 
 from model_navigator.framework_api import contrib  # noqa: F401 pylint: disable=wrong-import-position
 from model_navigator.framework_api import onnx  # noqa: F401

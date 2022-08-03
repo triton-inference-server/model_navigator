@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Mapping, Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
 from polygraphy.backend.onnxrt import SessionFromOnnx
@@ -235,6 +235,7 @@ class InferOutputMetadata(Command):
         profiling_sample: Sample,
         conversion_samples: List[Sample],
         input_metadata: TensorMetadata,
+        model_params: Optional[Any] = None,
         target_device: Optional[str] = None,
         _output_names: Optional[Tuple[str, ...]] = None,
         dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None,
@@ -259,6 +260,10 @@ class InferOutputMetadata(Command):
                 SessionFromOnnx(model.as_posix(), providers=get_available_onnx_providers(exclude_trt=True))
             )
             # pytype: enable=attribute-error
+        elif framework == Framework.JAX:
+            from model_navigator.framework_api.runners.jax import JAXRunner
+
+            runner = JAXRunner(model, model_params, input_metadata, _output_names, forward_kw_names=forward_kw_names)
         else:
             raise UserError(f"Unknown framework: {framework.value}")
 

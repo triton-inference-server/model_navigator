@@ -14,7 +14,7 @@
 
 import json
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 import numpy
 from polygraphy.backend.onnxrt import SessionFromOnnx
@@ -199,6 +199,7 @@ class DumpOutputModelData(Command):
         input_metadata: TensorMetadata,
         output_metadata: TensorMetadata,
         batch_dim: Optional[int],
+        model_params: Optional[Any] = None,
         target_device: Optional[str] = None,
         forward_kw_names: Optional[Tuple[str, ...]] = None,
         **kwargs,
@@ -224,6 +225,10 @@ class DumpOutputModelData(Command):
             runner = OnnxrtRunner(
                 SessionFromOnnx(model.as_posix(), providers=get_available_onnx_providers(exclude_trt=True))
             )
+        elif framework == Framework.JAX:
+            from model_navigator.framework_api.runners.jax import JAXRunner
+
+            runner = JAXRunner(model, model_params, input_metadata, output_names, forward_kw_names=forward_kw_names)
         else:
             raise UserError(f"Unknown framework: {framework.value}")
 
@@ -235,6 +240,7 @@ class DumpOutputModelData(Command):
         ]:
             with runner:
                 outputs = [runner.infer(sample) for sample in samples]
+
             samples_to_npz(outputs, output_data_path / dirname, batch_dim)
             ret.append(outputs)
 

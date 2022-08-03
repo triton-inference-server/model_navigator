@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from model_navigator.framework_api.package_utils import is_tf_available, is_torch_available
+
+from model_navigator.framework_api.package_utils import is_jax_available, is_tf_available, is_torch_available
 from model_navigator.framework_api.pipelines.builders.config_generation import config_generation_builder  # noqa: F401
 from model_navigator.framework_api.pipelines.builders.correctness import correctness_builder  # noqa: F401
 from model_navigator.framework_api.pipelines.builders.preprocessing import preprocessing_builder  # noqa: F401
@@ -25,10 +26,13 @@ if is_torch_available():
     )
 
 if is_tf_available():
-    from model_navigator.framework_api.pipelines.builders.tensorflow import (  # noqa: F401
+    from model_navigator.framework_api.pipelines.builders.tensorflow import (  # noqa: F401;
+        tensorflow_conversion_builder,
         tensorflow_export_builder,
-        tensorflow_conversion_builder,  # noqa: F401
-    )  # noqa: F401
+    )
+
+if is_tf_available() and is_jax_available():
+    from model_navigator.framework_api.pipelines.builders.jax import jax_export_builder  # noqa: F401
 
 from model_navigator.framework_api.pipelines.builders.onnx import (  # noqa: F401
     onnx_conversion_builder,

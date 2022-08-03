@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from model_navigator.framework_api.package_utils import is_jax_available, is_tf_available, is_torch_available
+set -ex
 
-if is_torch_available():
-    from model_navigator.framework_api.commands.export.exporters import onnx, torchscript  # noqa: F401
+if [ -z "$1" ]
+then
+    WORKDIR=$(mktemp -d)
+else
+    WORKDIR=${1}
+fi
 
-if is_tf_available():
-    from model_navigator.framework_api.commands.export.exporters import sm  # noqa: F401
+./tests/functional_framework/test_e2e_hf_gpt2_jax.py --workdir ${WORKDIR}
 
-if is_tf_available and is_jax_available():
-    from model_navigator.framework_api.commands.export.exporters import jax  # noqa: F401

@@ -39,6 +39,7 @@ limitations under the License.
 - [API](#api)
   - [Export PyTorch](#export-pytorch)
   - [Export TensorFlow 2](#export-tensorflow-2)
+  - [Export JAX](#export-jax)
   - [Package Descriptor](#package-descriptor)
   - [Package Save](#package-save)
   - [Package Load](#package-load)
@@ -64,14 +65,17 @@ NGC Containers are the recommended environments for Model Navigator, they have a
 To install Model Navigator use command:
 
 ```shell
-$ pip install --extra-index-url https://pypi.ngc.nvidia.com git+https://github.com/triton-inference-server/model_navigator.git@v0.3.3#egg=model-navigator[<extras,>] --upgrade
+$ pip install --extra-index-url https://pypi.ngc.nvidia.com -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html git+https://github.com/triton-inference-server/model_navigator.git@v0.3.3#egg=model-navigator[<extras,>] --upgrade
 ```
 
 Extras:
-* pyt - Model Navigator for PyTorch
-* tf - Model Navigator for TensorFlow2
-* cli - Model Navigator CLI
-* huggingface - Model Navigator with HuggingFace
+- pyt - Model Navigator Export API for PyTorch
+- tf - Model Navigator Export API for TensorFlow2
+- jax - Model Navigator Export API for JAX CPU
+- jax_cuda - Model Navigator Export API for JAX GPU
+- jax_tpu - Model Navigator Export API for JAX TPU
+- cli - Model Navigator CLI
+- huggingface - Model Navigator Export API for HuggingFace
 
 
 ## Exporting from source
@@ -346,6 +350,34 @@ def export(
     """Exports TensorFlow 2 model to all supported formats."""
 ```
 
+### Export JAX
+```python
+def export(
+    model Callable, # JAX predict function
+    model_params: Any, # model weights passed to JAX predict function
+    dataloader: SizedDataLoader, # has to implement len() and iter()
+    target_precisions: Optional[Union[Union[str, TensorRTPrecision], Tuple[Union[str, TensorRTPrecision], ...]]] = None,
+    max_workspace_size: Optional[int] = None,
+    minimum_segment_size: int = 3,
+    model_name: Optional[str] = None,
+    target_formats: Optional[Union[Union[str, Format], Tuple[Union[str, Format], ...]]] = None,
+    workdir: Optional[Path] = None, # default workdir is navigator_workdir in current working directory
+    override_workdir: bool = False,
+    sample_count: Optional[int] = None, # number of samples that will be saved from dataloader
+    opset: Optional[int] = None,
+    jit_compile: bool = False, # enables tf.function jit_compile parameter
+    enable_xla: bool = False, # enables xla for jax2tf converter
+    atol: Optional[float] = None, # absolute tolerance used for correctness tests. If None, value will be calculated during run
+    rtol: Optional[float] = None, # relative tolerance used for correctness tests. If None, value will be calculated during run
+    disable_git_info: bool = False,
+    batch_dim: Optional[int] = 0,
+    onnx_runtimes: Optional[Union[Union[str, RuntimeProvider], Tuple[Union[str, RuntimeProvider], ...]]] = None, # defaults to all available runtimes
+    run_profiling: bool = True,
+    profiler_config: Optional[ProfilerConfig] = None,
+) -> PackageDescriptor:
+    """Function exports JAX model to all supported formats."""
+```
+
 ### Package Descriptor
 ```python
 def get_formats_status(self) -> Dict:
@@ -494,6 +526,8 @@ polygraphy convert /workspace/navigator_workdir/resnext101-32x4d_pyt.nav.workspa
 ### Export
 
 Export needs the model object as an input and user must provide the `get_model()` function in the script to reproduce the error.
+
+JAX models additionally requires `get_model_params()` function that returns model params (model weights).
 
 Here is an example of reproducing script for ONNX export:
 ```python

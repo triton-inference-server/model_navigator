@@ -73,6 +73,7 @@ class PackageDescriptor:
     ):
         config_filter_fields = [
             "model",
+            "model_params",
             "dataloader",
             "workdir",
             "override_workdir",

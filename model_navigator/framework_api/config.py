@@ -15,7 +15,7 @@
 import datetime
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union, get_args, get_origin
+from typing import Any, Dict, List, Optional, Tuple, Union, get_args, get_origin
 
 from model_navigator.converter.config import TensorRTPrecision, TensorRTPrecisionMode
 from model_navigator.framework_api.commands.performance import ProfilerConfig
@@ -68,6 +68,11 @@ class Config(DataObject):
     dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None
     onnx_runtimes: Tuple[RuntimeProvider, ...] = ()
 
+    # JAX
+    model_params: Optional[Any] = None
+    jit_compile: Optional[bool] = None
+    enable_xla: Optional[bool] = None
+
     # Correctness is computed using allclose function for all tensors
     # for output from converted model and source model
     # https://numpy.org/doc/stable/reference/generated/numpy.allclose.html
@@ -91,6 +96,10 @@ class Config(DataObject):
             else:
                 expected_type = get_origin(expected_type) or expected_type
             value = getattr(self, field_name)
+
+            if isinstance(expected_type, (list, tuple)) and Any in expected_type:
+                continue
+
             if not isinstance(value, expected_type):
                 raise TypeError(
                     f"Incorrect type for {field_name}. Expected type {expected_type} got {type(value)} instead."

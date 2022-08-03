@@ -15,6 +15,13 @@
 from packaging import version
 
 try:
+    import jax.experimental  # pytype: disable=import-error # noqa: F401
+
+    _JAX_AVILABLE = True
+except ModuleNotFoundError:
+    _JAX_AVILABLE = False
+
+try:
     import torch  # pytype: disable=import-error # noqa: F401
 
     _TORCH_AVAILABLE = True
@@ -52,3 +59,7 @@ def is_tf_available() -> bool:
 
 def is_hf_available() -> bool:
     return _HF_AVAILABLE
+
+
+def is_jax_available() -> bool:
+    return _JAX_AVILABLE

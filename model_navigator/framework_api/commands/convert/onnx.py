@@ -69,7 +69,7 @@ class ConvertONNX2TRT(ConvertBase):
             from model_navigator.framework_api.commands.export.pyt import ExportPYT2ONNX
 
             input_model_path = get_package_path(workdir, model_name) / ExportPYT2ONNX().get_output_relative_path()
-        elif framework == Framework.TF2:
+        elif framework in (Framework.TF2, Framework.JAX):
             from model_navigator.framework_api.commands.convert.tf import ConvertSavedModel2ONNX
 
             input_model_path = (

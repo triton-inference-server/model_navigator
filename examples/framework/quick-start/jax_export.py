@@ -12,13 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from model_navigator.framework_api.package_utils import is_jax_available, is_tf_available, is_torch_available
+import numpy
 
-if is_torch_available():
-    from model_navigator.framework_api.commands.export.exporters import onnx, torchscript  # noqa: F401
+import model_navigator as nav
 
-if is_tf_available():
-    from model_navigator.framework_api.commands.export.exporters import sm  # noqa: F401
+dataloader = [numpy.full((3, 5), 1.0) for _ in range(10)]
 
-if is_tf_available and is_jax_available():
-    from model_navigator.framework_api.commands.export.exporters import jax  # noqa: F401
+model = "dummy model"
+
+pkg_desc = nav.jax.export(
+    model=model,
+    dataloader=dataloader,
+    override_workdir=True,
+)

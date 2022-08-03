@@ -108,6 +108,7 @@ class Framework(Parameter):
     TF2 = "tensorflow2"
     PYT = "pytorch"
     ONNX = "onnx"
+    JAX = "jax"
 
 
 class Indent(str, Parameter):
@@ -221,6 +222,7 @@ def get_framework_export_formats(framework: Framework):
             Format.TF_SAVEDMODEL,
         },
         Framework.ONNX: {Format.ONNX},
+        Framework.JAX: {Format.TF_SAVEDMODEL},
     }[framework]
 
 
@@ -236,6 +238,11 @@ def get_base_format(format: Format, framework: Framework):
             Format.TF_TRT: Format.TF_SAVEDMODEL,
         },
         Framework.ONNX: {Format.TENSORRT: Format.ONNX},
+        Framework.JAX: {
+            Format.ONNX: Format.TF_SAVEDMODEL,
+            Format.TENSORRT: Format.TF_SAVEDMODEL,
+            Format.TF_TRT: Format.TF_SAVEDMODEL,
+        },
     }[framework].get(format)
 
 

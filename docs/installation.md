@@ -42,12 +42,15 @@ Triton Model Navigator Export API is installed with Model Navigator package.
 To install Model Navigator Export API without Model Navigator dependencies use commands:
 
 ```shell
-$ pip install --extra-index-url https://pypi.ngc.nvidia.com git+https://github.com/triton-inference-server/model_navigator.git@v0.3.3#egg=model-navigator[<extras,>] --upgrade
+$ pip install --extra-index-url https://pypi.ngc.nvidia.com -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html git+https://github.com/triton-inference-server/model_navigator.git@v0.3.3#egg=model-navigator[<extras,>] --upgrade
 ```
 
 Extras:
 - pyt - Model Navigator Export API for PyTorch
 - tf - Model Navigator Export API for TensorFlow2
+- jax - Model Navigator Export API for JAX CPU
+- jax_cuda - Model Navigator Export API for JAX GPU
+- jax_tpu - Model Navigator Export API for JAX TPU
 - cli - Model Navigator CLI
 - huggingface - Model Navigator Export API for HuggingFace
 

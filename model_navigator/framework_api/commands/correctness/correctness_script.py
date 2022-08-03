@@ -40,7 +40,6 @@ def correctness(
     runtime: str,
     runner_manager_dict: Dict,
 ):
-
     correctness_samples = load_samples("correctness_samples", package_path, batch_dim)
     correctness_samples_output = load_samples("correctness_samples_output", package_path, batch_dim)
     results_path = Path(results_path)
@@ -61,8 +60,9 @@ def correctness(
 
             is_len_valid = len(original_output) == len(comp_output)
             assert is_len_valid, "Original model output length is different from exported model output"
-
             for name in output_names:
+                assert any(np.isnan(comp_output[name]).flatten()) is False, "Comparison output contains NaN"
+                assert any(np.isinf(comp_output[name]).flatten()) is False, "Comparison output contains inf"
                 out0, out1 = original_output[name], comp_output[name]
                 absdiff = np.abs(out0 - out1)
                 absout1 = np.abs(out1)
