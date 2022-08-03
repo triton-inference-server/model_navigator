@@ -48,6 +48,7 @@ class Config(DataObject):
     input_metadata: Optional[TensorMetadata] = None
     output_metadata: Optional[TensorMetadata] = None
     profiler_config: Optional[ProfilerConfig] = None
+    forward_kw_names: Optional[Tuple[str, ...]] = None
 
     # TRT params
     max_workspace_size: Optional[int] = None
@@ -60,7 +61,6 @@ class Config(DataObject):
 
     # PyTorch
     target_jit_type: Optional[Tuple[JitType, ...]] = None
-    forward_kw_names: Optional[Tuple[str, ...]] = None
     target_device: str = "cpu"
 
     # ONNX

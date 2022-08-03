@@ -250,9 +250,9 @@ class InferOutputMetadata(Command):
                 model, input_metadata, _output_names, target_device=target_device, forward_kw_names=forward_kw_names
             )
         elif framework == Framework.TF2:
-            from model_navigator.framework_api.runners.tf import TFRunner
+            from model_navigator.framework_api.runners.tf import TFKerasRunner
 
-            runner = TFRunner(model, input_metadata, _output_names)
+            runner = TFKerasRunner(model, input_metadata, _output_names, forward_kw_names=forward_kw_names)
         elif framework == Framework.ONNX:
             # pytype: disable=attribute-error
             runner = OnnxrtRunner(

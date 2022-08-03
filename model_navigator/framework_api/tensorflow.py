@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Mapping, Optional, Tuple, Union
 
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.performance import ProfilerConfig
@@ -92,6 +92,11 @@ def export(
     if profiler_config is None:
         profiler_config = ProfilerConfig()
 
+    forward_kw_names = None
+    sample = next(iter(dataloader))
+    if isinstance(sample, Mapping):
+        forward_kw_names = tuple(sample.keys())
+
     target_formats, target_precisions, onnx_runtimes = (
         parse_enum(target_formats, Format),
         parse_enum(target_precisions, TensorRTPrecision),
@@ -120,6 +125,7 @@ def export(
         batch_dim=batch_dim,
         onnx_runtimes=onnx_runtimes,
         profiler_config=profiler_config,
+        forward_kw_names=forward_kw_names,
     )
 
     builders = [

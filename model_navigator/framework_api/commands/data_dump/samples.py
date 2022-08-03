@@ -214,9 +214,9 @@ class DumpOutputModelData(Command):
                 model, input_metadata, output_names, target_device=target_device, forward_kw_names=forward_kw_names
             )
         elif framework == Framework.TF2:
-            from model_navigator.framework_api.runners.tf import TFRunner
+            from model_navigator.framework_api.runners.tf import TFKerasRunner
 
-            runner = TFRunner(model, input_metadata, output_names)
+            runner = TFKerasRunner(model, input_metadata, output_names, forward_kw_names=forward_kw_names)
 
         elif framework == Framework.ONNX:
             from model_navigator.framework_api.runners.onnx import OnnxrtRunner

@@ -20,6 +20,7 @@ import tensorflow as tf  # pytype: disable=import-error
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.export import exporters
 from model_navigator.framework_api.commands.export.base import ExportBase
+from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.exceptions import ExecutionContext
 from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.utils import format_to_relative_model_path, get_package_path
@@ -44,7 +45,14 @@ class ExportTF2SavedModel(ExportBase):
         return [tf.get_logger()]
 
     def __call__(
-        self, model_name: str, workdir: Path, model: Optional[tf.keras.Model] = None, **kwargs
+        self,
+        model: tf.keras.Model,
+        model_name: str,
+        input_metadata: TensorMetadata,
+        output_metadata: TensorMetadata,
+        workdir: Path,
+        forward_kw_names: Optional[Tuple[str, ...]] = None,
+        **kwargs,
     ) -> Optional[Path]:
         LOGGER.info("TensorFlow2 to SavedModel export started")
 
@@ -61,6 +69,62 @@ class ExportTF2SavedModel(ExportBase):
 
             kwargs = {
                 "exported_model_path": exported_model_path.as_posix(),
+                "input_metadata": input_metadata.to_json(),
+                "output_names": list(output_metadata.keys()),
+                "keras_input_names": forward_kw_names,
+            }
+
+            args = []
+            for k, v in kwargs.items():
+                s = str(v).replace("'", '"')
+                args.extend([f"--{k}", s])
+
+            context.execute_local_runtime_script(exporters.sm.__file__, exporters.sm.export, args)
+
+        return self.get_output_relative_path()
+
+
+class UpdateSavedModelSignature(ExportBase):
+    def __init__(self, requires: Tuple[Command, ...] = ()):
+        super().__init__(
+            name="Update SavedModel Signature",
+            command_type=CommandType.EXPORT,
+            target_format=Format.TF_SAVEDMODEL,
+            requires=requires,
+        )
+
+    def get_output_relative_path(
+        self,
+    ) -> Path:
+        return format_to_relative_model_path(self.target_format)
+
+    def _get_loggers(self) -> list:
+        return [tf.get_logger()]
+
+    def __call__(
+        self,
+        model_name: str,
+        input_metadata: TensorMetadata,
+        output_metadata: TensorMetadata,
+        workdir: Path,
+        forward_kw_names: Optional[Tuple[str, ...]] = None,
+        **kwargs,
+    ) -> Optional[Path]:
+        LOGGER.info("TensorFlow2 to SavedModel export started")
+
+        exported_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
+        assert exported_model_path.exists()
+        exported_model_path.parent.mkdir(parents=True, exist_ok=True)
+
+        exporters.sm.get_model = lambda: tf.keras.models.load_model(exported_model_path)
+
+        with ExecutionContext(exported_model_path.parent / "reproduce.py") as context:
+
+            kwargs = {
+                "exported_model_path": exported_model_path.as_posix(),
+                "input_metadata": input_metadata.to_json(),
+                "output_names": list(output_metadata.keys()),
+                "keras_input_names": forward_kw_names,
             }
 
             args = []

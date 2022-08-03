@@ -160,7 +160,10 @@ def test_tf2_dict_dataloader():
             for _ in range(10)
         ]
 
-        input = {"x": tensorflow.keras.layers.Input((224, 224, 3)), "y": tensorflow.keras.layers.Input((224, 224, 3))}
+        input = {
+            "x": tensorflow.keras.layers.Input((224, 224, 3), name="x"),
+            "y": tensorflow.keras.layers.Input((224, 224, 3), name="y"),
+        }
         layer_output = tensorflow.keras.layers.Lambda(lambda x: x["x"] + x["y"])(input)
         model_output = tensorflow.keras.layers.Lambda(lambda x: x)(layer_output)
         model = tensorflow.keras.Model(input, model_output)

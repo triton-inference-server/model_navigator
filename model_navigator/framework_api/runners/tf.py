@@ -25,7 +25,7 @@ from polygraphy.common import TensorMetadata
 from model_navigator.framework_api.utils import Framework, validate_sample_output
 
 
-class TFRunner(BaseRunner):
+class TFBaseRunner(BaseRunner):
     """
     Runs inference using TensorFlow2.
     """
@@ -68,28 +68,7 @@ class TFRunner(BaseRunner):
     def infer_impl(self, feed_dict):
 
         start = time.time()
-        if isinstance(self.model, tf.keras.Model):
-            if isinstance(self.model._saved_model_inputs_spec, Mapping):
-                outputs = self.model.predict(dict(zip(self.model._saved_model_inputs_spec.keys(), feed_dict.values())))
-            else:
-                outputs = self.model.predict(list(feed_dict.values()))
-
-            validate_sample_output(outputs, Framework.TF2)
-            if self.output_names is None:
-                if isinstance(outputs, Mapping):
-                    self.output_names = outputs.keys()
-                else:
-                    self.output_names = [f"output__{i}" for i in range(len(outputs))]
-
-            if isinstance(outputs, numpy.ndarray):
-                outputs = (outputs,)
-            if isinstance(outputs, Mapping):
-                outputs = outputs.values()
-        else:
-            sample = tuple(feed_dict.values())
-            infer = self.model.signatures["serving_default"]
-            inputs = dict(zip(self.model.signatures["serving_default"]._arg_keywords, sample))
-            outputs = [output.numpy() for output in infer(**inputs).values()]
+        outputs = self._infer_impl(feed_dict)
         end = time.time()
 
         out_dict = OrderedDict()
@@ -97,3 +76,39 @@ class TFRunner(BaseRunner):
             out_dict[name] = output
         self.inference_time = end - start
         return out_dict
+
+    def _infer_impl(self, feed_dict):
+        raise NotImplementedError
+
+
+class TFSavedModelRunner(TFBaseRunner):
+    def _infer_impl(self, feed_dict):
+        infer = self.model.signatures["serving_default"]
+        outputs = [output.numpy() for output in infer(**feed_dict).values()]
+        return outputs
+
+
+class TFKerasRunner(TFBaseRunner):
+    def __init__(self, model, input_metadata, output_names, name=None, forward_kw_names=None):
+        super().__init__(model, input_metadata, output_names, name)
+        self._forward_kw_names = forward_kw_names
+
+    def _infer_impl(self, feed_dict):
+        if self._forward_kw_names is not None:
+            outputs = self.model.predict(dict(zip(self._forward_kw_names, feed_dict.values())))
+        else:
+            outputs = self.model.predict(list(feed_dict.values()))
+
+        validate_sample_output(outputs, Framework.TF2)
+        if self.output_names is None:
+            if isinstance(outputs, Mapping):
+                self.output_names = outputs.keys()
+            else:
+                self.output_names = [f"output__{i}" for i in range(len(outputs))]
+
+        if isinstance(outputs, numpy.ndarray):
+            outputs = (outputs,)
+        if isinstance(outputs, Mapping):
+            outputs = outputs.values()
+
+        return outputs

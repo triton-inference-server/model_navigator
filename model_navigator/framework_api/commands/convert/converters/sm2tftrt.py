@@ -16,7 +16,7 @@
 import fire
 from tensorflow.python.compiler.tensorrt import trt_convert as trtc  # pytype: disable=import-error
 
-from model_navigator.framework_api.utils import load_samples, sample_to_tuple
+from model_navigator.framework_api.utils import load_samples
 
 
 def convert(
@@ -32,8 +32,7 @@ def convert(
     conversion_samples = load_samples("conversion_samples", package_path, batch_dim)
 
     def _dataloader():
-        for sample in conversion_samples:
-            yield sample_to_tuple(sample)
+        yield from conversion_samples
 
     params = trtc.DEFAULT_TRT_CONVERSION_PARAMS._replace(
         max_workspace_size_bytes=max_workspace_size,

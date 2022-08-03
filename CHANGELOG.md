@@ -22,7 +22,9 @@ limitations under the License.
   - new: example for loading Navigator Package for reproducing the results
   - new: create reproducing script for correctness and performance steps
   - fix: do not save TF-TRT models to the .nav package
+  - fix: do not save TF-TRT models from the .nav package
   - fix: correctly load .nav packages when `_input_names` or `_output_names` specified
+  - fix: adjust TF and TF-TRT model signatures to match `input_names`
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 - Version of external components used during testing:

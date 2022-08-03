@@ -15,7 +15,10 @@
 from pathlib import Path
 from typing import Optional, Union
 
+from packaging import version
+
 from model_navigator.framework_api.commands.performance import ProfilerConfig
+from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.package_descriptor import PackageDescriptor
 from model_navigator.framework_api.pipelines.builders import (
@@ -41,6 +44,16 @@ def _copy_verified_staus(pkg_desc_from: PackageDescriptor, pkg_desc_to: PackageD
 def _copy_git_info(pkg_desc_from: PackageDescriptor, pkg_desc_to: PackageDescriptor):
     pkg_desc_to.navigator_status.git_info = pkg_desc_from.navigator_status.git_info
     pkg_desc_to.save_status_file()
+
+
+def _update_savedmodel_signature(
+    model_name: str, input_metadata: TensorMetadata, output_metadata: TensorMetadata, workdir: Path
+):
+    LOGGER.info("Updating SavedModel signature...")
+    from model_navigator.framework_api.commands.export.tf import UpdateSavedModelSignature
+
+    cmd = UpdateSavedModelSignature()
+    cmd(model_name, input_metadata, output_metadata, workdir)
 
 
 def load(
@@ -74,6 +87,16 @@ def load(
         target_device = "cuda" if get_gpus(["all"]) else "cpu"
         LOGGER.info(f"Using `{target_device}` as target device.")
     config.target_device = target_device
+
+    if pkg_desc.framework == Framework.TF2 and version.parse(
+        pkg_desc.navigator_status.model_navigator_version
+    ) < version.parse("0.3.4"):
+        _update_savedmodel_signature(
+            model_name=config.model_name,
+            input_metadata=pkg_desc.navigator_status.input_metadata,
+            output_metadata=pkg_desc.navigator_status.output_metadata,
+            workdir=pkg_desc.workdir,
+        )
 
     if pkg_desc.framework == Framework.PYT:
         from model_navigator.framework_api.pipelines.builders import torch_conversion_builder as conversion_builder

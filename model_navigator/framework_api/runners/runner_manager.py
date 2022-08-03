@@ -101,18 +101,10 @@ class RunnerManager(DataObject):
                 output_names=list(self.output_metadata.keys()),
                 target_device=self.target_device,
             )
-        elif format == Format.TF_SAVEDMODEL:
-            from model_navigator.framework_api.runners.tf import TFRunner
+        elif format in (Format.TF_SAVEDMODEL, Format.TF_TRT):
+            from model_navigator.framework_api.runners.tf import TFSavedModelRunner
 
-            return TFRunner(
-                model_path,
-                input_metadata=self.input_metadata,
-                output_names=list(self.output_metadata.keys()),
-            )
-        elif format == Format.TF_TRT:
-            from model_navigator.framework_api.runners.tf import TFRunner
-
-            return TFRunner(
+            return TFSavedModelRunner(
                 model_path,
                 input_metadata=self.input_metadata,
                 output_names=list(self.output_metadata.keys()),

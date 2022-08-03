@@ -66,17 +66,14 @@ class ConvertSavedModel2ONNX(ConvertBase):
 
         convert_cmd = [
             "python",
-            "-mtf2onnx.convert",
+            "-m",
+            "tf2onnx.convert",
             "--saved-model",
             exported_model_path.as_posix(),
             "--output",
             converted_model_path.as_posix(),
             "--opset",
             str(opset),
-            "--rename-inputs",
-            ",".join(input_metadata.keys()),
-            "--rename-outputs",
-            ",".join(output_metadata.keys()),
         ]
 
         with ExecutionContext() as context:

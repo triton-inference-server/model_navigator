@@ -50,7 +50,7 @@ VALUE_IN_TENSOR = 9.0
 dataloader = [tensorflow.fill(dims=[1, 224, 224, 3], value=VALUE_IN_TENSOR) for _ in range(10)]
 
 
-inp = tensorflow.keras.layers.Input((224, 224, 3))
+inp = tensorflow.keras.layers.Input((224, 224, 3), name="input__1")
 layer_output = tensorflow.keras.layers.Lambda(lambda x: x)(inp)
 layer_output = tensorflow.keras.layers.Lambda(lambda x: x)(layer_output)
 layer_output = tensorflow.keras.layers.Lambda(lambda x: x)(layer_output)
@@ -217,9 +217,22 @@ def test_tf2_export_savedmodel():
         model_dir = package_dir / "tf-savedmodel"
         model_dir.mkdir(parents=True, exist_ok=True)
 
+        input_data = next(iter(dataloader))
+        np_output = model.predict(input_data)
+        np_input = input_data.numpy()
+
+        input_metadata = TensorMetadata({"input__1": TensorSpec("input__1", np_input.shape, np_input.dtype)})
+        output_metadata = TensorMetadata({"output__1": TensorSpec("output__1", np_output.shape, np_output.dtype)})
+
         export_cmd = ExportTF2SavedModel()
 
-        exported_model_path = package_dir / export_cmd(model=model, model_name=model_name, workdir=workdir)
+        exported_model_path = package_dir / export_cmd(
+            model=model,
+            model_name=model_name,
+            workdir=workdir,
+            input_metadata=input_metadata,
+            output_metadata=output_metadata,
+        )
         tensorflow.keras.models.load_model(exported_model_path)
 
 
@@ -237,7 +250,7 @@ def test_tf2_convert_tf_trt():
         tensorflow.keras.models.save_model(model=model, filepath=input_model_path, overwrite=True)
 
         input_data = next(iter(dataloader))
-        samples_to_npz([{"input__0": input_data.numpy()}], package_dir / "model_input" / "conversion", None)
+        samples_to_npz([{"input__1": input_data.numpy()}], package_dir / "model_input" / "conversion", None)
 
         convert_cmd = ConvertSavedModel2TFTRT(target_precision=TensorRTPrecision.FP16)
 

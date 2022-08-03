@@ -62,6 +62,7 @@ class PackageDescriptor:
         self.navigator_status = navigator_status
         self.workdir = workdir
         self.model = model
+        self._forward_kw_names = None
 
     @classmethod
     def build(
@@ -108,6 +109,8 @@ class PackageDescriptor:
             "Initially models are not verified. Validate exported models and use "
             "PackageDescriptor.set_verified(format, runtime, jit_type, precision) method to set models as verified."
         )
+
+        pkg_desc._forward_kw_names = config.forward_kw_names
 
         return pkg_desc
 
@@ -317,14 +320,16 @@ class PackageDescriptor:
                 input_metadata=self.navigator_status.input_metadata,
                 output_names=list(self.navigator_status.output_metadata.keys()),
                 target_device=self.navigator_status.export_config["target_device"],
+                forward_kw_names=self._forward_kw_names,
             )
         elif self.framework == Framework.TF2:
-            from model_navigator.framework_api.runners.tf import TFRunner
+            from model_navigator.framework_api.runners.tf import TFKerasRunner
 
-            return TFRunner(
+            return TFKerasRunner(
                 self.model,
                 input_metadata=self.navigator_status.input_metadata,
                 output_names=list(self.navigator_status.output_metadata.keys()),
+                forward_kw_names=self._forward_kw_names,
             )
         elif self.framework == Framework.ONNX:
             from polygraphy.backend.onnxrt import SessionFromOnnx
@@ -498,6 +503,15 @@ class PackageDescriptor:
         workdir: Optional[Union[str, Path]] = None,
         override_workdir: bool = False,
     ) -> "PackageDescriptor":
+        def _filter_out_converted_models(paths: List[str], pkg_desc: PackageDescriptor):
+            export_formats = get_framework_export_formats(pkg_desc.framework)
+            converted_model_paths = []
+            for model_status in pkg_desc.navigator_status.model_status:
+                if model_status.format not in export_formats:
+                    if model_status.path:
+                        converted_model_paths.append(model_status.path.as_posix())
+            return [p for p in paths if not p.startswith(tuple(converted_model_paths))]
+
         path = Path(path)
         if workdir is None:
             workdir = get_default_workdir()
@@ -514,9 +528,13 @@ class PackageDescriptor:
                     shutil.rmtree(package_path)
                 else:
                     raise FileExistsError(package_path)
-            zf.extractall(package_path)
 
-        return cls(navigator_status, workdir)
+            pkg_desc = cls(navigator_status, workdir)
+            all_members = zf.namelist()
+            filtered_members = _filter_out_converted_models(all_members, pkg_desc)
+            zf.extractall(package_path, members=filtered_members)
+
+        return pkg_desc
 
     @property
     def config(self):

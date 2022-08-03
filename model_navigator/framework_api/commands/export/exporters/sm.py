@@ -13,8 +13,12 @@
 # limitations under the License.
 
 
+from typing import Any, Dict, List, Optional
+
 import fire
 import tensorflow as tf  # pytype: disable=import-error
+
+from model_navigator.framework_api.common import TensorMetadata
 
 
 def get_model():
@@ -23,9 +27,35 @@ def get_model():
 
 def export(
     exported_model_path: str,
+    input_metadata: Dict[str, Any],
+    output_names: List[str],
+    keras_input_names: Optional[List[str]],
 ):
     model = get_model()
-    tf.keras.models.save_model(model=model, filepath=exported_model_path, overwrite=True)
+
+    input_metadata = TensorMetadata.from_json(input_metadata)
+
+    @tf.function()
+    def predict(inputs_dict):
+        inputs = list(inputs_dict.values())
+        if keras_input_names:
+            inputs = dict(zip(keras_input_names, inputs))
+        outputs = model(inputs)
+        if isinstance(outputs, (list, tuple)):
+            outputs_seq = outputs
+        elif isinstance(outputs, Dict):
+            outputs_seq = outputs.values()
+        else:
+            outputs_seq = [outputs]
+        return dict(zip(output_names, outputs_seq))
+
+    input_specs = {
+        name: tf.TensorSpec(shape=[d if d != -1 else None for d in spec.shape], dtype=spec.dtype, name=name)
+        for name, spec in input_metadata.items()
+    }
+    signatures = predict.get_concrete_function(input_specs)
+
+    tf.keras.models.save_model(model=model, filepath=exported_model_path, overwrite=True, signatures=signatures)
 
 
 if __name__ == "__main__":
