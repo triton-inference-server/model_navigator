@@ -14,7 +14,7 @@
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-from model_navigator.converter.config import ComparatorConfig, TensorRTPrecision
+from model_navigator.converter.config import ComparatorConfig, ConversionSetConfig, TensorRTPrecision
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.status import RuntimeResults
 from model_navigator.framework_api.utils import (
@@ -92,6 +92,11 @@ class ConfigCli(Command):
             )
 
             comparator_config = ComparatorConfig(atol=self.atol, rtol=self.rtol)
+
+            if opset:
+                conversion_set_config = ConversionSetConfig()
+                conversion_set_config.onnx_opsets = [opset]
+                config_file.save_config(conversion_set_config, fields=["onnx_opsets"])
 
             config_file.save_config(src_model_config)
             config_file.save_config(model_signature_config)

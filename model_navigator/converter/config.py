@@ -11,11 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import dataclasses
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -45,6 +46,16 @@ class TensorRTPrecisionMode(Enum):
     HIERARCHY = "hierarchy"
     SINGLE = "single"
     MIXED = "mixed"
+
+
+TRITON_SUPPORTED_FORMATS = [
+    Format.TF_TRT,
+    Format.TF_SAVEDMODEL,
+    Format.ONNX,
+    Format.TENSORRT,
+    Format.TORCHSCRIPT,
+    Format.TORCH_TRT,
+]
 
 
 @dataclass
@@ -110,3 +121,48 @@ class TargetFormatConfigSetIterator(ABC):
             Format.TORCH_TRT: TensorRTConfigSetIterator,
         }[target_format]
         return iterator_cls(config_set, target_format=target_format)
+
+
+@dataclasses.dataclass
+class ConversionSetConfig(BaseConfig):
+    target_formats: List[Format] = dataclasses.field(default_factory=lambda: TRITON_SUPPORTED_FORMATS)
+
+    # ONNX related
+    onnx_opsets: List[int] = dataclasses.field(default_factory=lambda: [14])
+
+    # TRT related
+    tensorrt_precisions: List[TensorRTPrecision] = dataclasses.field(
+        default_factory=lambda: [TensorRTPrecision.FP16, TensorRTPrecision.TF32]
+    )
+    tensorrt_precisions_mode: TensorRTPrecisionMode = TensorRTPrecisionMode.HIERARCHY
+    tensorrt_explicit_precision: bool = False
+    tensorrt_sparse_weights: bool = False
+    tensorrt_max_workspace_size: int = DEFAULT_TENSORRT_MAX_WORKSPACE_SIZE
+
+    def __iter__(self):
+        for target_format in self.target_formats:
+            config_set_iterator = TargetFormatConfigSetIterator.for_target_format(target_format, self)
+            yield from config_set_iterator
+
+    @classmethod
+    def from_single_config(cls, config: ConversionConfig):
+        if not config.target_format:
+            return cls(
+                target_formats=[],
+                tensorrt_precisions=[],
+                onnx_opsets=[],
+                tensorrt_precisions_mode=config.tensorrt_config.precision_mode,
+                tensorrt_explicit_precision=config.tensorrt_config.explicit_precision,
+                tensorrt_sparse_weights=config.tensorrt_config.sparse_weights,
+                tensorrt_max_workspace_size=config.tensorrt_config.max_workspace_size,
+            )
+
+        return cls(
+            target_formats=[config.target_format],
+            onnx_opsets=[config.onnx_opset] if config.onnx_opset else [],
+            tensorrt_precisions=[config.tensorrt_config.precision] or [],
+            tensorrt_precisions_mode=config.tensorrt_config.precision_mode,
+            tensorrt_explicit_precision=config.tensorrt_config.explicit_precision,
+            tensorrt_sparse_weights=config.tensorrt_config.sparse_weights,
+            tensorrt_max_workspace_size=config.tensorrt_config.max_workspace_size,
+        )

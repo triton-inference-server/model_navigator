@@ -152,8 +152,10 @@ def export(
         max_workspace_size = get_default_max_workspace_size()
     if target_precisions is None:
         target_precisions = (TensorRTPrecision.FP32, TensorRTPrecision.FP16)
+
     if opset is None:
-        opset = 14
+        opset = onnx_config.default_onnx_opset
+
     if sample_count is None:
         sample_count = 100
 

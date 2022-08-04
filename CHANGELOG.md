@@ -25,6 +25,7 @@ limitations under the License.
   - fix: do not save TF-TRT models from the .nav package
   - fix: correctly load .nav packages when `_input_names` or `_output_names` specified
   - fix: adjust TF and TF-TRT model signatures to match `input_names`
+  - fix: save ONNX opset for CLI configuration inside package
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 - Version of external components used during testing:

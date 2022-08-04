@@ -24,7 +24,7 @@ from transformers.models.gpt2.tokenization_gpt2 import GPT2Tokenizer
 from transformers.models.gpt2.tokenization_gpt2_fast import GPT2TokenizerFast
 from transformers.onnx import OnnxConfig
 
-from model_navigator.converter.config import TensorRTPrecision
+from model_navigator.converter.config import TensorRTPrecision, TensorRTPrecisionMode
 from model_navigator.framework_api.commands.performance import ProfilerConfig
 from model_navigator.framework_api.common import SizedDataLoader
 from model_navigator.framework_api.config import Config
@@ -121,6 +121,7 @@ def export(
     rtol: Optional[float] = None,
     onnx_config: Optional[OnnxConfig] = None,
     target_precisions: Optional[Union[Union[str, TensorRTPrecision], Tuple[Union[str, TensorRTPrecision], ...]]] = None,
+    precision_mode: Optional[Union[str, TensorRTPrecisionMode]] = None,
     trt_dynamic_axes: Optional[Dict[str, Dict[int, Tuple[int, int, int]]]] = None,
     max_workspace_size: Optional[int] = None,
     target_device: Optional[str] = None,
@@ -154,6 +155,10 @@ def export(
         sample_count = 100
     if target_precisions is None:
         target_precisions = (TensorRTPrecision.FP32, TensorRTPrecision.FP16)
+
+    if precision_mode is None:
+        precision_mode = TensorRTPrecisionMode.HIERARCHY
+
     if target_device is None:
         target_device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -204,12 +209,14 @@ def export(
     if profiler_config is None:
         profiler_config = ProfilerConfig()
 
-    target_formats, jit_options, target_precisions, onnx_runtimes = (
+    target_formats, jit_options, target_precisions, onnx_runtimes, precision_mode = (
         parse_enum(target_formats, Format),
         parse_enum(jit_options, JitType),
         parse_enum(target_precisions, TensorRTPrecision),
         parse_enum(onnx_runtimes, RuntimeProvider),
+        *parse_enum(precision_mode, TensorRTPrecisionMode),
     )
+
     config = Config(
         framework=Framework.PYT,
         model=model,
@@ -225,6 +232,7 @@ def export(
         rtol=rtol,
         dynamic_axes=dynamic_axes,
         target_precisions=target_precisions,
+        precision_mode=precision_mode,
         _input_names=input_names,
         _output_names=output_names,
         forward_kw_names=forward_kw_names,

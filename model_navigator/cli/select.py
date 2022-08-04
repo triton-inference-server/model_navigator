@@ -22,9 +22,8 @@ from typing import Dict, List, Optional
 
 import click
 
-from model_navigator.cli.convert_model import TRITON_SUPPORTED_FORMATS
 from model_navigator.cli.spec import SelectConfigCli
-from model_navigator.converter.config import TensorRTPrecision
+from model_navigator.converter.config import TRITON_SUPPORTED_FORMATS, TensorRTPrecision
 from model_navigator.log import init_logger, log_dict
 from model_navigator.model import Format
 from model_navigator.model_analyzer import ModelAnalyzerAnalysisConfig

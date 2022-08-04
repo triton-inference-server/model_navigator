@@ -208,6 +208,7 @@ class DockerImage:
         LOGGER.debug(f"Setting environment: {environment}")
         container = self._docker_client.containers.run(
             image=self._image_name,
+            command="/bin/sh",
             device_requests=devices,
             environment=environment,
             volumes=volumes,

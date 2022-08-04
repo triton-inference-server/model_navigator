@@ -20,7 +20,6 @@ from typing import Optional
 
 import click
 
-from model_navigator.cli.convert_model import ConversionSetConfig
 from model_navigator.cli.spec import (
     BatchingConfigCli,
     ComparatorConfigCli,
@@ -36,7 +35,7 @@ from model_navigator.cli.spec import (
 )
 from model_navigator.cli.utils import exit_cli_command, is_cli_command
 from model_navigator.common.config import BatchingConfig, TensorRTCommonConfig
-from model_navigator.converter.config import ComparatorConfig, DatasetProfileConfig
+from model_navigator.converter.config import ComparatorConfig, ConversionSetConfig, DatasetProfileConfig
 from model_navigator.converter.utils import FORMAT2FRAMEWORK
 from model_navigator.exceptions import ModelNavigatorException
 from model_navigator.framework import SUFFIX2FRAMEWORK

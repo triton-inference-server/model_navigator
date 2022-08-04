@@ -35,16 +35,16 @@ from model_navigator.common.config import BatchingConfig
 from model_navigator.constants import MODEL_NAVIGATOR_DIR
 from model_navigator.converter import (
     ComparatorConfig,
-    ConversionConfig,
     ConversionLaunchMode,
     ConversionResult,
     Converter,
     DatasetProfileConfig,
 )
-from model_navigator.converter.config import TargetFormatConfigSetIterator, TensorRTPrecision, TensorRTPrecisionMode
+from model_navigator.converter.config import (
+    ConversionSetConfig,
+)
 from model_navigator.converter.dataloader import NavPackageDataloader, RandomDataloader
 from model_navigator.converter.utils import FORMAT2FRAMEWORK
-from model_navigator.core import DEFAULT_TENSORRT_MAX_WORKSPACE_SIZE
 from model_navigator.exceptions import ModelNavigatorCliException, ModelNavigatorException
 from model_navigator.log import init_logger, log_dict
 from model_navigator.model import Format, Model, ModelConfig, ModelSignatureConfig
@@ -52,7 +52,7 @@ from model_navigator.results import ResultsStore, State
 from model_navigator.triton import DeviceKind, TritonModelInstancesConfig
 from model_navigator.utils import Workspace
 from model_navigator.utils.cli import clean_workspace_if_needed, common_options, options_from_config
-from model_navigator.utils.config import BaseConfig, YamlConfigFile
+from model_navigator.utils.config import YamlConfigFile
 from model_navigator.utils.device import get_available_device_kinds, get_gpus
 from model_navigator.utils.docker import DockerBuilder, DockerImage
 from model_navigator.utils.environment import EnvironmentStore, get_env
@@ -63,60 +63,6 @@ from model_navigator.validators import run_command_validators
 LOGGER = logging.getLogger("convert")
 
 _RUN_BY_MODEL_NAVIGATOR = "MODEL_NAVIGATOR_RUN_BY"
-
-TRITON_SUPPORTED_FORMATS = [
-    Format.TF_TRT,
-    Format.TF_SAVEDMODEL,
-    Format.ONNX,
-    Format.TENSORRT,
-    Format.TORCHSCRIPT,
-    Format.TORCH_TRT,
-]
-
-
-@dataclasses.dataclass
-class ConversionSetConfig(BaseConfig):
-    target_formats: List[Format] = dataclasses.field(default_factory=lambda: TRITON_SUPPORTED_FORMATS)
-
-    # ONNX related
-    onnx_opsets: List[int] = dataclasses.field(default_factory=lambda: [14])
-
-    # TRT related
-    tensorrt_precisions: List[TensorRTPrecision] = dataclasses.field(
-        default_factory=lambda: [TensorRTPrecision.FP16, TensorRTPrecision.TF32]
-    )
-    tensorrt_precisions_mode: TensorRTPrecisionMode = TensorRTPrecisionMode.HIERARCHY
-    tensorrt_explicit_precision: bool = False
-    tensorrt_sparse_weights: bool = False
-    tensorrt_max_workspace_size: int = DEFAULT_TENSORRT_MAX_WORKSPACE_SIZE
-
-    def __iter__(self):
-        for target_format in self.target_formats:
-            config_set_iterator = TargetFormatConfigSetIterator.for_target_format(target_format, self)
-            yield from config_set_iterator
-
-    @classmethod
-    def from_single_config(cls, config: ConversionConfig):
-        if not config.target_format:
-            return cls(
-                target_formats=[],
-                tensorrt_precisions=[],
-                onnx_opsets=[],
-                tensorrt_precisions_mode=config.tensorrt_config.precision_mode,
-                tensorrt_explicit_precision=config.tensorrt_config.explicit_precision,
-                tensorrt_sparse_weights=config.tensorrt_config.sparse_weights,
-                tensorrt_max_workspace_size=config.tensorrt_config.max_workspace_size,
-            )
-
-        return cls(
-            target_formats=[config.target_format],
-            onnx_opsets=[config.onnx_opset] if config.onnx_opset else [],
-            tensorrt_precisions=[config.tensorrt_config.precision] or [],
-            tensorrt_precisions_mode=config.tensorrt_config.precision_mode,
-            tensorrt_explicit_precision=config.tensorrt_config.explicit_precision,
-            tensorrt_sparse_weights=config.tensorrt_config.sparse_weights,
-            tensorrt_max_workspace_size=config.tensorrt_config.max_workspace_size,
-        )
 
 
 def _run_locally(

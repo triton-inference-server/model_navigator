@@ -20,7 +20,7 @@ from typing import List, Optional
 import click
 
 from model_navigator.cli.analyze import analyze_cmd
-from model_navigator.cli.convert_model import ConversionSetConfig, convert_cmd
+from model_navigator.cli.convert_model import convert_cmd
 from model_navigator.cli.helm_chart_create import helm_chart_create_cmd
 from model_navigator.cli.profile import profile_cmd
 from model_navigator.cli.spec import (
@@ -41,8 +41,14 @@ from model_navigator.cli.triton_config_model import config_model_on_triton_cmd
 from model_navigator.cli.triton_evaluate_model import triton_evaluate_model_cmd
 from model_navigator.common.config import BatchingConfig, TensorRTCommonConfig
 from model_navigator.configurator import Configurator, TritonConfiguratorResult, log_configuration_error
-from model_navigator.converter import ComparatorConfig, ConversionLaunchMode, ConversionResult, DatasetProfileConfig
-from model_navigator.converter.utils import FORMAT2FRAMEWORK
+from model_navigator.converter import (
+    FORMAT2FRAMEWORK,
+    ComparatorConfig,
+    ConversionLaunchMode,
+    ConversionResult,
+    ConversionSetConfig,
+    DatasetProfileConfig,
+)
 from model_navigator.exceptions import ModelNavigatorException
 from model_navigator.framework import SUFFIX2FRAMEWORK
 from model_navigator.kubernetes.triton import TritonServer

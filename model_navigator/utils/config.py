@@ -17,7 +17,7 @@ import logging
 from abc import ABC, abstractmethod
 from enum import Enum
 from pathlib import Path
-from typing import Union
+from typing import List, Optional, Union
 
 import dacite
 import numpy as np
@@ -179,7 +179,7 @@ class YamlConfigFile(ConfigFile):
     def __exit__(self, _exc_type, _exc_val, _exc_tb):
         self.close()
 
-    def save_config(self, config):
+    def save_config(self, config, fields: Optional[List] = None):
         new_config_dict = dataclass2dict(config)
 
         mismatched_same_config_values = False
@@ -192,6 +192,9 @@ class YamlConfigFile(ConfigFile):
             mismatched_same_config_values = old_config != config
 
         for name, value in new_config_dict.items():
+            if fields and name not in fields:
+                continue
+
             old_value = self._config_dict.get(name, _MISSING)
             if (
                 old_value != _MISSING

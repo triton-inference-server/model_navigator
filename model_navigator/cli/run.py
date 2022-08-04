@@ -15,7 +15,6 @@ import logging
 
 import click
 
-from model_navigator.cli.convert_model import ConversionSetConfig
 from model_navigator.cli.optimize import optimize_cmd
 from model_navigator.cli.spec import (
     ComparatorConfigCli,
@@ -33,7 +32,7 @@ from model_navigator.cli.spec import (
     TritonModelInstancesConfigCli,
 )
 from model_navigator.common.config import TensorRTCommonConfig
-from model_navigator.converter import ComparatorConfig, ConversionLaunchMode, DatasetProfileConfig
+from model_navigator.converter import ComparatorConfig, ConversionLaunchMode, ConversionSetConfig, DatasetProfileConfig
 from model_navigator.model import ModelConfig, ModelSignatureConfig
 from model_navigator.model_analyzer import ModelAnalyzerAnalysisConfig, ModelAnalyzerProfileConfig
 from model_navigator.perf_analyzer import PerfMeasurementConfig

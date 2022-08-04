@@ -15,10 +15,11 @@ from model_navigator.converter.config import (  # noqa: F401
     ComparatorConfig,
     ConversionConfig,
     ConversionLaunchMode,
+    ConversionSetConfig,
     DatasetProfileConfig,
     TensorRTConversionConfig,
 )
 from model_navigator.converter.convert import Converter  # noqa: F401
 from model_navigator.converter.polygraphy.dataloader import DataLoader  # noqa: F401
 from model_navigator.converter.results import ConversionResult  # noqa: F401
-from model_navigator.converter.utils import PARAMETERS_SEP  # noqa: F401
+from model_navigator.converter.utils import FORMAT2FRAMEWORK, PARAMETERS_SEP  # noqa: F401

@@ -15,13 +15,12 @@ import logging
 from pathlib import Path
 from typing import List, Optional, Type, Union
 
-from model_navigator.cli.convert_model import ConversionSetConfig
 from model_navigator.common.config import BatchingConfig, TensorRTCommonConfig
 from model_navigator.converter.config import (
     ComparatorConfig,
     ConversionConfig,
     ConversionLaunchMode,
-    DatasetProfileConfig,
+    DatasetProfileConfig, ConversionSetConfig,
 )
 from model_navigator.framework import PyTorch, TensorFlow2
 from model_navigator.kubernetes.generator import generator
