@@ -75,13 +75,24 @@ if __name__ == "__main__":
         target_precisions=(nav.TensorRTPrecision.FP32,),
         opset=13,
         override_workdir=True,
+        profiler_config=nav.ProfilerConfig(measurement_request_count=200),
     )
-    expected_formats = ("tf-savedmodel", "onnx", "trt-fp32", "tf-trt-fp32")
+    expected_runtimes = {
+        "tf-savedmodel": [nav.RuntimeProvider.TF.value],
+        "onnx": [nav.RuntimeProvider.CPU.value, nav.RuntimeProvider.CUDA.value],
+        "trt-fp32": [nav.RuntimeProvider.TRT.value],
+        "tf-trt-fp32": [nav.RuntimeProvider.TF.value],
+    }
+    nav.LOGGER.info(f"{pkg_desc.get_formats_status()=}")
     for format, runtimes_status in pkg_desc.get_formats_status().items():
         for runtime, status in runtimes_status.items():
-            assert (status == nav.Status.OK) == (
-                format in expected_formats
-            ), f"{format} {runtime} status is {status}, but expected formats are {expected_formats}."
+            if runtime in expected_runtimes.get(format, {}):
+                assert (
+                    status == nav.Status.OK
+                ), f"{format} {runtime} status is {status}, but expected runtimes are {expected_runtimes}."
+            else:
+                if status == nav.Status.OK:
+                    nav.LOGGER.warning(f"{format} {runtime} status is {status} but it is not in expected runtimes.")
     nav.save(pkg_desc, nav_workdir / f"{model_name}_tf2.nav")
 
     nav.LOGGER.info(f"{model_name} passed.")

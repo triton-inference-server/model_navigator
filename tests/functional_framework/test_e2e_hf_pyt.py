@@ -26,7 +26,10 @@ EXPORT_CONFIGS = [
         "max_sequence_len": 384,
         "max_bs": 2,
         "sample_count": 10,
-        "expected_formats": ("torchscript-trace", "onnx", "trt-fp32", "trt-fp16"),
+        "expected_runtimes": {
+            "torchscript-trace": [nav.RuntimeProvider.PYT.value],
+            "onnx": [nav.RuntimeProvider.CPU.value, nav.RuntimeProvider.CUDA.value],
+        },
     },
     {
         "model_name": "gpt2",
@@ -35,7 +38,9 @@ EXPORT_CONFIGS = [
         "max_sequence_len": 384,
         "max_bs": 2,
         "sample_count": 10,
-        "expected_formats": ("onnx", "trt-fp32", "trt-fp16"),
+        "expected_runtimes": {
+            "onnx": [nav.RuntimeProvider.CPU.value, nav.RuntimeProvider.CUDA.value],
+        },
     },
     {
         "model_name": "bert-base-uncased",
@@ -44,7 +49,10 @@ EXPORT_CONFIGS = [
         "max_sequence_len": 384,
         "max_bs": 2,
         "sample_count": 10,
-        "expected_formats": ("torchscript-trace", "onnx", "trt-fp32", "trt-fp16"),
+        "expected_runtimes": {
+            "torchscript-trace": [nav.RuntimeProvider.PYT.value],
+            "onnx": [nav.RuntimeProvider.CPU.value, nav.RuntimeProvider.CUDA.value],
+        },
     },
     {
         "model_name": "distilgpt2",
@@ -53,7 +61,9 @@ EXPORT_CONFIGS = [
         "max_sequence_len": 384,
         "max_bs": 2,
         "sample_count": 10,
-        "expected_formats": ("onnx", "trt-fp32", "trt-fp16"),
+        "expected_runtimes": {
+            "onnx": [nav.RuntimeProvider.CPU.value, nav.RuntimeProvider.CUDA.value],
+        },
     },
     {
         "model_name": "sentence-transformers/multi-qa-MiniLM-L6-cos-v1",
@@ -62,7 +72,10 @@ EXPORT_CONFIGS = [
         "max_sequence_len": 384,
         "max_bs": 2,
         "sample_count": 10,
-        "expected_formats": ("torchscript-trace", "onnx", "trt-fp32", "trt-fp16"),
+        "expected_runtimes": {
+            "torchscript-trace": [nav.RuntimeProvider.PYT.value],
+            "onnx": [nav.RuntimeProvider.CPU.value, nav.RuntimeProvider.CUDA.value],
+        },
     },
     {
         "model_name": "bert-base-chinese",
@@ -71,7 +84,10 @@ EXPORT_CONFIGS = [
         "max_sequence_len": 384,
         "max_bs": 2,
         "sample_count": 10,
-        "expected_formats": ("torchscript-trace", "onnx", "trt-fp32", "trt-fp16"),
+        "expected_runtimes": {
+            "torchscript-trace": [nav.RuntimeProvider.PYT.value],
+            "onnx": [nav.RuntimeProvider.CPU.value, nav.RuntimeProvider.CUDA.value],
+        },
     },
 ]
 
@@ -86,18 +102,24 @@ if __name__ == "__main__":
     nav_workdir = Path(args.workdir)
     for export_config in EXPORT_CONFIGS:
         nav.LOGGER.info(f"Testing {export_config['model_name']}...")
-        expected_formats = export_config.pop("expected_formats")
+        expected_runtimes = export_config.pop("expected_runtimes")
         # pytype: disable=not-callable # TODO why is not-calleble being raised by pytype?
         pkg_desc = nav.contrib.huggingface.torch.export(
             workdir=nav_workdir,
             **export_config,
+            profiler_config=nav.ProfilerConfig(measurement_request_count=200),
         )
         # pytype: enable=not-callable
+        nav.LOGGER.info(f"{pkg_desc.get_formats_status()=}")
         for format, runtimes_status in pkg_desc.get_formats_status().items():
             for runtime, status in runtimes_status.items():
-                assert (status == nav.Status.OK) == (
-                    format in expected_formats
-                ), f"{format} {runtime} status is {status}, but expected formats are {expected_formats}."
-        nav.save(pkg_desc, Path(args.workdir) / f"{export_config['model_name']}_pyt.nav")
+                if runtime in expected_runtimes.get(format, {}):
+                    assert (
+                        status == nav.Status.OK
+                    ), f"{format} {runtime} status is {status}, but expected runtimes are {expected_runtimes}."
+                else:
+                    if status == nav.Status.OK:
+                        nav.LOGGER.warning(f"{format} {runtime} status is {status} but it is not in expected runtimes.")
+        nav.save(pkg_desc, Path(args.workdir) / f"{export_config['model_name'].replace('/', '-')}_pyt.nav")
         nav.LOGGER.info(f"{export_config['model_name']} passed.")
     nav.LOGGER.info("All models passed.")

@@ -118,13 +118,19 @@ if __name__ == "__main__":
             dataloader=eval_dataloader,
             sample_count=1,
             input_names=("input_ids", "token_type_ids", "attention_mask"),
+            profiler_config=nav.ProfilerConfig(measurement_request_count=200),
         )
-        expected_formats = ()  # ("torchscript-script", "torchscript-trace", "onnx", "trt-fp32", "trt-fp16") # fails on the pytorch:22.02 container
+        expected_runtimes = {}
+        nav.LOGGER.info(f"{pkg_desc.get_formats_status()=}")
         for format, runtimes_status in pkg_desc.get_formats_status().items():
             for runtime, status in runtimes_status.items():
-                assert (status == nav.Status.OK) == (
-                    format in expected_formats
-                ), f"{format} {runtime} status is {status}, but expected formats are {expected_formats}."
+                if runtime in expected_runtimes.get(format, {}):
+                    assert (
+                        status == nav.Status.OK
+                    ), f"{format} {runtime} status is {status}, but expected runtimes are {expected_runtimes}."
+                else:
+                    if status == nav.Status.OK:
+                        nav.LOGGER.warning(f"{format} {runtime} status is {status} but it is not in expected runtimes.")
         try:
             nav.save(pkg_desc, navigator_workdir / "bert_pyt.nav")
         except RuntimeError:

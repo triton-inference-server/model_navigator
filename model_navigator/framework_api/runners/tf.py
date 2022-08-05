@@ -71,6 +71,7 @@ class TFBaseRunner(BaseRunner):
         end = time.time()
 
         validate_sample_output(outputs, Framework.TF2)
+
         if self.output_names is None:
             if isinstance(outputs, Mapping):
                 self.output_names = outputs.keys()
@@ -109,17 +110,5 @@ class TFKerasRunner(TFBaseRunner):
             outputs = self.model.predict(dict(zip(self._forward_kw_names, feed_dict.values())))
         else:
             outputs = self.model.predict(list(feed_dict.values()))
-
-        validate_sample_output(outputs, Framework.TF2)
-        if self.output_names is None:
-            if isinstance(outputs, Mapping):
-                self.output_names = outputs.keys()
-            else:
-                self.output_names = [f"output__{i}" for i in range(len(outputs))]
-
-        if isinstance(outputs, numpy.ndarray):
-            outputs = (outputs,)
-        if isinstance(outputs, Mapping):
-            outputs = outputs.values()
 
         return outputs

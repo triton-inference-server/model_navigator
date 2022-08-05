@@ -161,16 +161,24 @@ if __name__ == "__main__":
             workdir=navigator_workdir,
             dataloader=dataloader,
             sample_count=10,
-            target_formats=(nav.Format.TENSORRT,),
             target_precisions=(nav.TensorRTPrecision.FP32,),
             opset=13,
+            profiler_config=nav.ProfilerConfig(measurement_request_count=200),
         )
-        expected_formats = ("tf-trt-fp32", "onnx")
+        expected_runtimes = {
+            "tf-trt-fp32": [nav.RuntimeProvider.TF.value],
+            "onnx": [nav.RuntimeProvider.CPU.value, nav.RuntimeProvider.CUDA.value],
+        }
+        nav.LOGGER.info(f"{pkg_desc.get_formats_status()=}")
         for format, runtimes_status in pkg_desc.get_formats_status().items():
             for runtime, status in runtimes_status.items():
-                assert (status == nav.Status.OK) == (
-                    format in expected_formats
-                ), f"{format} {runtime} status is {status}, but expected formats are {expected_formats}."
+                if runtime in expected_runtimes.get(format, {}):
+                    assert (
+                        status == nav.Status.OK
+                    ), f"{format} {runtime} status is {status}, but expected runtimes are {expected_runtimes}."
+                else:
+                    if status == nav.Status.OK:
+                        nav.LOGGER.warning(f"{format} {runtime} status is {status} but it is not in expected runtimes.")
         nav.save(pkg_desc, navigator_workdir / "bert_tf2.nav")
 
     nav.LOGGER.info("All models passed.")

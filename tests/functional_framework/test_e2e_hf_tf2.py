@@ -28,7 +28,12 @@ EXPORT_CONFIGS = {
         "max_sequence_len": 384,
         "max_bs": 2,
         "sample_count": 10,
-        "expected_formats": ("tf-savedmodel", "tf-trt-fp32", "onnx", "trt-fp32"),
+        "expected_runtimes": {
+            "tf-savedmodel": [nav.RuntimeProvider.TF.value],
+            "trt-fp32": [nav.RuntimeProvider.TRT.value],
+            "onnx": [nav.RuntimeProvider.CPU.value, nav.RuntimeProvider.CUDA.value],
+            "tf-trt-fp32": [nav.RuntimeProvider.TF.value],
+        },
     },
     "distilgpt2": {
         "model_name": "distilgpt2",
@@ -37,7 +42,12 @@ EXPORT_CONFIGS = {
         "max_sequence_len": 384,
         "max_bs": 2,
         "sample_count": 10,
-        "expected_formats": ("tf-savedmodel", "tf-trt-fp32", "onnx", "trt-fp32"),
+        "expected_runtimes": {
+            "tf-savedmodel": [nav.RuntimeProvider.TF.value],
+            "trt-fp32": [nav.RuntimeProvider.TRT.value],
+            "onnx": [nav.RuntimeProvider.CPU.value, nav.RuntimeProvider.CUDA.value],
+            "tf-trt-fp32": [nav.RuntimeProvider.TF.value],
+        },
     },
 }
 
@@ -58,20 +68,26 @@ if __name__ == "__main__":
 
     nav_workdir = Path(args.workdir)
     nav.LOGGER.info(f"Testing {export_config['model_name']}...")
-    expected_formats = export_config.pop("expected_formats")
+    expected_runtimes = export_config.pop("expected_runtimes")
     # pytype: disable=not-callable # TODO why is not-calleble being raised by pytype?
     pkg_desc = nav.contrib.huggingface.tensorflow.export(
         workdir=nav_workdir,
         **export_config,
         target_precisions=(nav.TensorRTPrecision.FP32,),
         opset=13,
+        profiler_config=nav.ProfilerConfig(measurement_request_count=200),
     )
     # pytype: enable=not-callable
+    nav.LOGGER.info(f"{pkg_desc.get_formats_status()=}")
     for format, runtimes_status in pkg_desc.get_formats_status().items():
         for runtime, status in runtimes_status.items():
-            assert (status == nav.Status.OK) == (
-                format in expected_formats
-            ), f"{format} {runtime} status is {status}, but expected formats are {expected_formats}."
+            if runtime in expected_runtimes.get(format, {}):
+                assert (
+                    status == nav.Status.OK
+                ), f"{format} {runtime} status is {status}, but expected runtimes are {expected_runtimes}."
+            else:
+                if status == nav.Status.OK:
+                    nav.LOGGER.warning(f"{format} {runtime} status is {status} but it is not in expected runtimes.")
 
     nav.save(pkg_desc, Path(args.workdir) / f"{export_config['model_name']}_tf2.nav")
     nav.LOGGER.info(f"{export_config['model_name']} passed.")

@@ -13,7 +13,7 @@
 # limitations under the License.
 from enum import Enum
 from pathlib import Path
-from typing import Any, List, Mapping, Optional, Sequence, Tuple, Type, TypeVar
+from typing import Any, Iterable, List, Mapping, Optional, Sequence, Tuple, Type, TypeVar
 
 import numpy
 from polygraphy.backend.trt import Profile
@@ -268,49 +268,37 @@ def get_tensor_type_name(framework: Framework):
         return "numpy.ndarray"
 
 
-def validate_sample_input(sample, framework: Framework):
-    def is_valid(sample):
-        if isinstance(sample, Sequence):
-            for tensor in sample:
-                if not is_tensor(tensor, framework):
-                    return False
-        elif isinstance(sample, Mapping):
-            for tensor in sample.values():
-                if not is_tensor(tensor, framework):
-                    return False
-        else:
-            tensor = sample
+def _is_valid_io(sample, framework):
+    if is_tensor(sample, framework):
+        return True
+    if isinstance(sample, Mapping):
+        for tensor in sample.values():
             if not is_tensor(tensor, framework):
                 return False
         return True
+    elif isinstance(sample, Iterable):
+        for tensor in sample:
+            if not is_tensor(tensor, framework):
+                return False
+        return True
+    return False
 
-    if not is_valid(sample):
+
+def validate_sample_input(sample, framework: Framework):
+
+    if not _is_valid_io(sample, framework):
         tensor_type = get_tensor_type_name(framework)
         raise UserError(
-            f"Invalid sample type. Sample must be of type Union[{tensor_type}, Sequence[{tensor_type}], Mapping[str, {tensor_type}]]. Dataloader returned {sample}."
+            f"Invalid sample type. Sample must be of type Union[{tensor_type}, Iterable[{tensor_type}], Mapping[str, {tensor_type}]]. Dataloader returned {sample}."
         )
 
 
 def validate_sample_output(sample, framework: Framework):
-    def is_valid(sample):
-        if isinstance(sample, Sequence):
-            for tensor in sample:
-                if not is_tensor(tensor, framework):
-                    return False
-        elif isinstance(sample, Mapping):
-            for tensor in sample.values():
-                if not is_tensor(tensor, framework):
-                    return False
-        else:
-            tensor = sample
-            if not is_tensor(tensor, framework):
-                return False
-        return True
 
-    if not is_valid(sample):
+    if not _is_valid_io(sample, framework):
         tensor_type = get_tensor_type_name(framework)
         raise UserError(
-            f"Invalid model output type. Output must be of type Union[{tensor_type}, Sequence[{tensor_type}]], Mapping[str, {tensor_type}]]. Model returned {sample}."
+            f"Invalid model output type. Output must be of type Union[{tensor_type}, Iterable[{tensor_type}]], Mapping[str, {tensor_type}]]. Model returned {sample}."
         )
 
 

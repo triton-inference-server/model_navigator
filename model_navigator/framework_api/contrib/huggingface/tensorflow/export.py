@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from pathlib import Path
-from typing import Callable, Optional, Tuple, Union
+from typing import Callable, Mapping, Optional, Tuple, Union
 
 import tensorflow as tf  # pytype: disable=import-error
 from datasets import load_dataset
@@ -168,6 +168,10 @@ def export(
     }
     model._saved_model_inputs_spec = None
     model._set_save_spec(input_spec)
+    if isinstance(sample, Mapping):
+        forward_kw_names = tuple(sample.keys())
+    else:
+        forward_kw_names = None
 
     if hasattr(model.config, "use_cache"):
         model.config.use_cache = False
@@ -204,6 +208,7 @@ def export(
         _output_names=output_names,
         onnx_runtimes=onnx_runtimes,
         profiler_config=profiler_config,
+        forward_kw_names=forward_kw_names,
     )
 
     builders = [
