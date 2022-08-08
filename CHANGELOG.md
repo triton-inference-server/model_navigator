@@ -17,6 +17,7 @@ limitations under the License.
 # Changelog
 
 ## 0.3.4 (unreleased)
+- Updated NVIDIA containers defaults to 22.07
 - Model Navigator Export API:
   - new: support for building framework containers with Model Navigator installed
   - new: example for loading Navigator Package for reproducing the results

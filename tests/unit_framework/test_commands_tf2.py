@@ -17,6 +17,7 @@ import tempfile
 from pathlib import Path
 
 import numpy
+import pytest
 import tensorflow
 from polygraphy.backend.trt import Profile
 
@@ -37,6 +38,7 @@ from model_navigator.framework_api.status import ModelStatus, NavigatorStatus
 from model_navigator.framework_api.utils import Framework, get_default_max_workspace_size
 from model_navigator.model import Format
 from model_navigator.tensor import TensorSpec
+from model_navigator.utils.device import get_gpus
 
 # pytype: enable=import-error
 
@@ -45,6 +47,7 @@ gpus = tensorflow.config.experimental.list_physical_devices("GPU")
 for gpu in gpus:
     tensorflow.config.experimental.set_memory_growth(gpu, True)
 
+CUDA_AVAILABLE = bool(get_gpus(["all"]))
 VALUE_IN_TENSOR = 9.0
 
 dataloader = [tensorflow.fill(dims=[1, 224, 224, 3], value=VALUE_IN_TENSOR) for _ in range(10)]
@@ -236,6 +239,10 @@ def test_tf2_export_savedmodel():
         tensorflow.keras.models.load_model(exported_model_path)
 
 
+@pytest.mark.skipif(
+    not CUDA_AVAILABLE,
+    reason="GPU not available.",
+)
 def test_tf2_convert_tf_trt():
     from model_navigator.framework_api.commands.data_dump.samples import samples_to_npz
 

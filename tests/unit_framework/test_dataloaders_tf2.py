@@ -19,9 +19,11 @@ import tensorflow
 
 import model_navigator as nav
 from model_navigator.framework_api.commands.performance import ProfilerConfig
+from model_navigator.utils.device import get_gpus
 
 # pytype: enable=import-error
 
+CUDA_AVAILABLE = bool(get_gpus(["all"]))
 
 gpus = tensorflow.config.experimental.list_physical_devices("GPU")
 for gpu in gpus:
@@ -82,8 +84,8 @@ def test_tf2_tensor_dataloader():
 
         # Output formats
         assert check_model_dir(model_dir=package_dir / "tf-savedmodel")
-        assert check_model_dir(model_dir=package_dir / "tf-trt-fp16")
-        assert check_model_dir(model_dir=package_dir / "tf-trt-fp32")
+        assert check_model_dir(model_dir=package_dir / "tf-trt-fp16") is CUDA_AVAILABLE
+        assert check_model_dir(model_dir=package_dir / "tf-trt-fp32") is CUDA_AVAILABLE
 
 
 def test_tf2_sequence_dataloader():
@@ -133,8 +135,8 @@ def test_tf2_sequence_dataloader():
 
         # Output formats
         assert check_model_dir(model_dir=package_dir / "tf-savedmodel")
-        assert check_model_dir(model_dir=package_dir / "tf-trt-fp16")
-        assert check_model_dir(model_dir=package_dir / "tf-trt-fp32")
+        assert check_model_dir(model_dir=package_dir / "tf-trt-fp16") is CUDA_AVAILABLE
+        assert check_model_dir(model_dir=package_dir / "tf-trt-fp32") is CUDA_AVAILABLE
 
 
 def test_tf2_dict_dataloader():
@@ -191,5 +193,5 @@ def test_tf2_dict_dataloader():
 
         # Output formats
         assert check_model_dir(model_dir=package_dir / "tf-savedmodel")
-        assert check_model_dir(model_dir=package_dir / "tf-trt-fp16")
-        assert check_model_dir(model_dir=package_dir / "tf-trt-fp32")
+        assert check_model_dir(model_dir=package_dir / "tf-trt-fp16") is CUDA_AVAILABLE
+        assert check_model_dir(model_dir=package_dir / "tf-trt-fp32") is CUDA_AVAILABLE

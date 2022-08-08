@@ -15,12 +15,16 @@
 import tempfile
 from pathlib import Path
 
+import pytest
 import tensorflow
 
 import model_navigator as nav
 from model_navigator.framework_api.commands.performance import ProfilerConfig
+from model_navigator.utils.device import get_gpus
 
 # pytype: enable=import-error
+
+CUDA_AVAILABLE = bool(get_gpus(["all"]))
 
 
 gpus = tensorflow.config.experimental.list_physical_devices("GPU")
@@ -100,6 +104,10 @@ def test_tf2_export_savedmodel():
         assert check_model_dir(model_dir=package_dir / "tf-trt-fp32", format=nav.Format.TF_SAVEDMODEL) is False
 
 
+@pytest.mark.skipif(
+    not CUDA_AVAILABLE,
+    reason="GPU not available.",
+)
 def test_tf2_export_tf_trt():
     with tempfile.TemporaryDirectory() as tmp_dir:
         model_name = "navigator_model"
@@ -255,7 +263,7 @@ def test_tf2_export_string_format():
 
         # Output formats
         assert check_model_dir(model_dir=package_dir / "tf-trt-fp16", format=nav.Format.TF_SAVEDMODEL) is False
-        assert check_model_dir(model_dir=package_dir / "tf-trt-fp32", format=nav.Format.TF_SAVEDMODEL)
+        assert check_model_dir(model_dir=package_dir / "tf-trt-fp32", format=nav.Format.TF_SAVEDMODEL) is CUDA_AVAILABLE
 
         # Formats not exported but present as step for tf-trt
         assert check_model_dir(model_dir=package_dir / "tf-savedmodel", format=nav.Format.TF_SAVEDMODEL)

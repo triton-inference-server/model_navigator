@@ -28,6 +28,7 @@ from model_navigator.framework_api.exceptions import ExecutionContext
 from model_navigator.framework_api.logger import LOGGER, get_pytorch_loggers_names
 from model_navigator.framework_api.utils import JitType, Status, format_to_relative_model_path, get_package_path
 from model_navigator.model import Format
+from model_navigator.utils.device import get_available_gpus
 
 
 class ConvertTorchScript2TorchTensorRT(ConvertBase):
@@ -63,6 +64,8 @@ class ConvertTorchScript2TorchTensorRT(ConvertBase):
         **kwargs,
     ) -> Optional[Path]:
         LOGGER.info("Conversion TorchScript to TorchTensorRT started")
+        if not get_available_gpus():
+            raise RuntimeError("No GPUs available.")
 
         import torch_tensorrt  # pytype: disable=import-error # noqa: F401
 
