@@ -13,4 +13,4 @@
 # limitations under the License.
 
 
-NAV_PACKAGE_FORMAT_VERSION = "0.1.3"
+NAV_PACKAGE_FORMAT_VERSION = "0.1.4"

@@ -49,6 +49,7 @@ class StatusDictUpdater:
         self._updates = {
             version.parse("0.1.1"): self._update_to_v0_1_1,
             version.parse("0.1.3"): self._update_to_v0_1_3,
+            version.parse("0.1.4"): self._update_to_v0_1_4,
         }
 
     @staticmethod
@@ -91,6 +92,16 @@ class StatusDictUpdater:
         for model_status in data_dict["model_status"]:
             if model_status["format"] == "torch-trt" and model_status.get("precision") is None:
                 model_status["precision"] = "fp32"
+
+    @staticmethod
+    def _update_to_v0_1_4(data_dict: Dict):
+        if (
+            Framework(data_dict["export_config"]["framework"]) == Framework.PYT
+            and data_dict["export_config"].get("precision_mode") is None
+        ):
+            default_val = TensorRTPrecisionMode.SINGLE.value
+            LOGGER.info(f"Using default `precision_mode`: {default_val}")
+            data_dict["export_config"]["precision_mode"] = default_val
 
     def update_(self, data_dict: Dict, format_version: version.Version):
         for update_to_version, update_func in self._updates.items():
