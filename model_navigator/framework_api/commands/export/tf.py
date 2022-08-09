@@ -55,7 +55,7 @@ class ExportTF2SavedModel(ExportBase):
         assert model is not None
         exported_model_path.parent.mkdir(parents=True, exist_ok=True)
 
-        exporters.sm.get_model = lambda: model
+        exporters.keras2savedmodel.get_model = lambda: model
 
         with ExecutionContext(exported_model_path.parent / "reproduce.py") as context:
 
@@ -71,7 +71,9 @@ class ExportTF2SavedModel(ExportBase):
                 s = str(v).replace("'", '"')
                 args.extend([f"--{k}", s])
 
-            context.execute_local_runtime_script(exporters.sm.__file__, exporters.sm.export, args)
+            context.execute_local_runtime_script(
+                exporters.keras2savedmodel.__file__, exporters.keras2savedmodel.export, args
+            )
 
         return self.get_output_relative_path()
 
@@ -91,7 +93,6 @@ class UpdateSavedModelSignature(ExportBase):
         input_metadata: TensorMetadata,
         output_metadata: TensorMetadata,
         workdir: Path,
-        forward_kw_names: Optional[Tuple[str, ...]] = None,
         **kwargs,
     ) -> Optional[Path]:
         LOGGER.info("TensorFlow2 to SavedModel export started")
@@ -100,7 +101,7 @@ class UpdateSavedModelSignature(ExportBase):
         assert exported_model_path.exists()
         exported_model_path.parent.mkdir(parents=True, exist_ok=True)
 
-        exporters.sm.get_model = lambda: tf.keras.models.load_model(exported_model_path)
+        exporters.savedmodel2savedmodel.get_model = lambda: tf.keras.models.load_model(exported_model_path)
 
         with ExecutionContext(exported_model_path.parent / "reproduce.py") as context:
 
@@ -108,7 +109,6 @@ class UpdateSavedModelSignature(ExportBase):
                 "exported_model_path": exported_model_path.as_posix(),
                 "input_metadata": input_metadata.to_json(),
                 "output_names": list(output_metadata.keys()),
-                "keras_input_names": forward_kw_names,
             }
 
             args = []
@@ -116,6 +116,8 @@ class UpdateSavedModelSignature(ExportBase):
                 s = str(v).replace("'", '"')
                 args.extend([f"--{k}", s])
 
-            context.execute_local_runtime_script(exporters.sm.__file__, exporters.sm.export, args)
+            context.execute_local_runtime_script(
+                exporters.savedmodel2savedmodel.__file__, exporters.savedmodel2savedmodel.export, args
+            )
 
         return self.get_output_relative_path()

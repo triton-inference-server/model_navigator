@@ -29,6 +29,10 @@ class UserError(Exception):
     pass
 
 
+class ModelNavigatorBackwardCompatibilityError(Exception):
+    pass
+
+
 class ExecutionContext(contextlib.AbstractContextManager):
     accepted_types = (int, float, bool, str)
 

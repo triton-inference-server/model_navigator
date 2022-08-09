@@ -56,8 +56,8 @@ class ExportJAX2SavedModel(ExportBase):
         assert model is not None
         exported_model_path.parent.mkdir(parents=True, exist_ok=True)
 
-        exporters.jax.get_model = lambda: model
-        exporters.jax.get_model_params = lambda: model_params
+        exporters.jax2savedmodel.get_model = lambda: model
+        exporters.jax2savedmodel.get_model_params = lambda: model_params
 
         with ExecutionContext(exported_model_path.parent / "reproduce.py") as context:
             kwargs = {
@@ -72,6 +72,8 @@ class ExportJAX2SavedModel(ExportBase):
                 s = str(v).replace("'", '"')
                 args.extend([f"--{k}", s])
 
-            context.execute_local_runtime_script(exporters.jax.__file__, exporters.jax.export, args)
+            context.execute_local_runtime_script(
+                exporters.jax2savedmodel.__file__, exporters.jax2savedmodel.export, args
+            )
 
         return self.get_output_relative_path()

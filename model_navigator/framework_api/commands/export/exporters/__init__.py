@@ -15,10 +15,13 @@
 from model_navigator.framework_api.package_utils import is_jax_available, is_tf_available, is_torch_available
 
 if is_torch_available():
-    from model_navigator.framework_api.commands.export.exporters import onnx, torchscript  # noqa: F401
+    from model_navigator.framework_api.commands.export.exporters import pytorch2onnx, pytorch2torchscript  # noqa: F401
 
 if is_tf_available():
-    from model_navigator.framework_api.commands.export.exporters import sm  # noqa: F401
+    from model_navigator.framework_api.commands.export.exporters import (  # noqa: F401
+        keras2savedmodel,
+        savedmodel2savedmodel,
+    )
 
 if is_tf_available and is_jax_available():
-    from model_navigator.framework_api.commands.export.exporters import jax  # noqa: F401
+    from model_navigator.framework_api.commands.export.exporters import jax2savedmodel  # noqa: F401

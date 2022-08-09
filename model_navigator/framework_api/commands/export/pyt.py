@@ -59,7 +59,7 @@ class ExportPYT2TorchScript(ExportBase):
 
         model.to(target_device)
 
-        exporters.torchscript.get_model = lambda: model
+        exporters.pytorch2torchscript.get_model = lambda: model
 
         with ExecutionContext(exported_model_path.parent / "reproduce.py") as context:
 
@@ -76,7 +76,9 @@ class ExportPYT2TorchScript(ExportBase):
                 s = str(v).replace("'", '"')
                 args.extend([f"--{k}", s])
 
-            context.execute_local_runtime_script(exporters.torchscript.__file__, exporters.torchscript.export, args)
+            context.execute_local_runtime_script(
+                exporters.pytorch2torchscript.__file__, exporters.pytorch2torchscript.export, args
+            )
 
         return self.get_output_relative_path()
 
@@ -113,7 +115,7 @@ class ExportPYT2ONNX(ExportBase):
 
         model.to(target_device)
 
-        exporters.onnx.get_model = lambda: model
+        exporters.pytorch2onnx.get_model = lambda: model
 
         with ExecutionContext(exported_model_path.parent / "reproduce.py") as context:
 
@@ -134,6 +136,6 @@ class ExportPYT2ONNX(ExportBase):
                 s = str(v).replace("'", '"')
                 args.extend([f"--{k}", s])
 
-            context.execute_local_runtime_script(exporters.onnx.__file__, exporters.onnx.export, args)
+            context.execute_local_runtime_script(exporters.pytorch2onnx.__file__, exporters.pytorch2onnx.export, args)
 
         return self.get_output_relative_path()

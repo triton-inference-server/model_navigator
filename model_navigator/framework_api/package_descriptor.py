@@ -47,7 +47,6 @@ from model_navigator.framework_api.utils import (
     format_to_relative_model_path,
     get_base_format,
     get_default_status_filename,
-    get_default_workdir,
     get_framework_export_formats,
     get_package_path,
 )
@@ -496,46 +495,6 @@ class PackageDescriptor:
 
         if not keep_workdir:
             self._cleanup()
-
-    @classmethod
-    def load(
-        cls,
-        path: Union[str, Path],
-        workdir: Optional[Union[str, Path]] = None,
-        override_workdir: bool = False,
-    ) -> "PackageDescriptor":
-        def _filter_out_converted_models(paths: List[str], pkg_desc: PackageDescriptor):
-            export_formats = get_framework_export_formats(pkg_desc.framework)
-            converted_model_paths = []
-            for model_status in pkg_desc.navigator_status.model_status:
-                if model_status.format not in export_formats:
-                    if model_status.path:
-                        converted_model_paths.append(model_status.path.as_posix())
-            return [p for p in paths if not p.startswith(tuple(converted_model_paths))]
-
-        path = Path(path)
-        if workdir is None:
-            workdir = get_default_workdir()
-        workdir = Path(workdir)
-
-        with zipfile.ZipFile(path, "r") as zf:
-            with zf.open(cls.status_filename) as status_file:
-                status_dict = yaml.safe_load(status_file)
-            navigator_status = NavigatorStatus.from_dict(status_dict)
-
-            package_path = get_package_path(workdir=workdir, model_name=navigator_status.export_config["model_name"])
-            if package_path.exists():
-                if override_workdir:
-                    shutil.rmtree(package_path)
-                else:
-                    raise FileExistsError(package_path)
-
-            pkg_desc = cls(navigator_status, workdir)
-            all_members = zf.namelist()
-            filtered_members = _filter_out_converted_models(all_members, pkg_desc)
-            zf.extractall(package_path, members=filtered_members)
-
-        return pkg_desc
 
     @property
     def config(self):

@@ -19,19 +19,12 @@ from typing import Dict, List, Optional, Sequence
 from polygraphy.backend.trt import Profile
 
 from model_navigator.__version__ import __version__
-from model_navigator.converter.config import TensorRTPrecision, TensorRTPrecisionMode
+from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api._nav_package_format_version import NAV_PACKAGE_FORMAT_VERSION
 from model_navigator.framework_api.commands.correctness import TolerancePerOutputName
-from model_navigator.framework_api.commands.performance import ProfilerConfig, ProfilingResults
+from model_navigator.framework_api.commands.performance import ProfilingResults
 from model_navigator.framework_api.common import DataObject, TensorMetadata
-from model_navigator.framework_api.logger import LOGGER
-from model_navigator.framework_api.utils import (
-    Framework,
-    JitType,
-    RuntimeProvider,
-    Status,
-    get_trt_profile_from_trt_dynamic_axes,
-)
+from model_navigator.framework_api.utils import JitType, RuntimeProvider, Status
 from model_navigator.model import Format
 
 
@@ -96,12 +89,6 @@ class NavigatorStatus(DataObject):
 
     @classmethod
     def from_dict(cls, data_dict: Dict):
-        format_version = data_dict.get("format_version")
-        if format_version == "0.1.0" and "profiler_config" in data_dict["export_config"]:
-            format_version = "0.1.1"
-
-        data_dict = DataDictUpdater.update(data_dict, format_version)
-
         if isinstance(data_dict["export_config"].get("_input_names"), Sequence):
             data_dict["export_config"]["_input_names"] = tuple(data_dict["export_config"]["_input_names"])
         if isinstance(data_dict["export_config"].get("_output_names"), Sequence):
@@ -123,68 +110,3 @@ class NavigatorStatus(DataObject):
             output_metadata=TensorMetadata.from_json(data_dict["output_metadata"]),
             trt_profile=trt_profile,
         )
-
-
-class DataDictUpdater:
-    @staticmethod
-    def update(data_dict: Dict, format_version: str):
-        try:
-            return getattr(DataDictUpdater, f"_update_navigator_status_v{format_version.replace('.', '_')}")(data_dict)
-        except AttributeError:
-            raise ValueError(f"Unknown .nav package format version: {format_version}")
-
-    @staticmethod
-    def _update_navigator_status_v0_1_0(data_dict: Dict):
-        for model_status in data_dict["model_status"]:
-            for runtime_results in model_status["runtime_results"]:
-                for i in range(len(runtime_results.get("performance", []))):
-                    perf_results = runtime_results["performance"][i]
-                    runtime_results["performance"][i] = {
-                        "batch_size": perf_results["batch_size"],
-                        "avg_latency": perf_results["latency"],
-                        "std_latency": None,
-                        "p50_latency": None,
-                        "p90_latency": None,
-                        "p95_latency": None,
-                        "p99_latency": None,
-                        "throughput": perf_results["throughput"],
-                        "request_count": None,
-                    }
-
-        if (
-            Framework(data_dict["export_config"]["framework"]) == Framework.PYT
-            and "precision_mode" not in data_dict["export_config"]
-        ):
-            default_val = TensorRTPrecisionMode.SINGLE.value
-            LOGGER.info(f"Using default `precision_mode`: {default_val}")
-            data_dict["export_config"]["precision_mode"] = default_val
-        if "profiler_config" not in data_dict["export_config"]:
-            default_val = ProfilerConfig().to_dict()
-            LOGGER.info(f"Using default `profiler_config`: {default_val}")
-            data_dict["export_config"]["profiler_config"] = default_val
-        if "git_info" not in data_dict:
-            data_dict["git_info"] = {}
-
-        return DataDictUpdater._update_navigator_status_v0_1_1(data_dict)
-
-    @staticmethod
-    def _update_navigator_status_v0_1_1(data_dict: Dict):
-        return DataDictUpdater._update_navigator_status_v0_1_2(data_dict)
-
-    @staticmethod
-    def _update_navigator_status_v0_1_2(data_dict: Dict):
-        data_dict["trt_profile"] = DataObject.parse_value(
-            get_trt_profile_from_trt_dynamic_axes(data_dict["export_config"]["trt_dynamic_axes"])
-        )
-        for model_status in data_dict["model_status"]:
-            if model_status["format"] == "torch-trt" and model_status.get("precision") is None:
-                model_status["precision"] = "fp32"
-        return DataDictUpdater._update_navigator_status_v0_1_3(data_dict)
-
-    @staticmethod
-    def _update_navigator_status_v0_1_3(data_dict: Dict):
-        if isinstance(data_dict["export_config"].get("_input_names"), Sequence):
-            data_dict["export_config"]["_input_names"] = tuple(data_dict["export_config"]["_input_names"])
-        if isinstance(data_dict["export_config"].get("_output_names"), Sequence):
-            data_dict["export_config"]["_output_names"] = tuple(data_dict["export_config"]["_output_names"])
-        return data_dict
