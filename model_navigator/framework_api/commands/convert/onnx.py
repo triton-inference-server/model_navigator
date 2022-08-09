@@ -24,7 +24,7 @@ from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.exceptions import ExecutionContext, UserError
 from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.runners.onnx import OnnxrtRunner
-from model_navigator.framework_api.utils import Framework, Status, format_to_relative_model_path, get_package_path
+from model_navigator.framework_api.utils import Framework, Status, get_package_path
 from model_navigator.model import Format
 from model_navigator.utils.device import get_available_gpus
 
@@ -47,9 +47,6 @@ class ConvertONNX2TRT(ConvertBase):
         )
         self.target_precision = target_precision
         # pytype: enable=wrong-arg-types
-
-    def get_output_relative_path(self) -> Path:
-        return format_to_relative_model_path(self.target_format, precision=self.target_precision)
 
     def __call__(
         self,

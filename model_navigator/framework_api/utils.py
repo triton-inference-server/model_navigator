@@ -165,26 +165,30 @@ def get_package_path(workdir: Path, model_name: str):
 
 
 # pytype: disable=wrong-arg-types
+# pytype: disable=attribute-error
 def format_to_relative_model_path(
-    format: Format, jit_type: JitType = JitType.SCRIPT, precision: TensorRTPrecision = TensorRTPrecision.FP32
+    format: Optional[Format] = None, jit_type: Optional[JitType] = None, precision: Optional[TensorRTPrecision] = None
 ) -> Path:
     if format == Format.ONNX:
         return Path(f"{format.value}") / "model.onnx"
-    if format == Format.TORCHSCRIPT:
+    if format == Format.TORCHSCRIPT and jit_type:
         return Path(f"{format.value}-{jit_type.value}") / "model.pt"
-    if format == Format.TORCH_TRT:
+    if format == Format.TORCH_TRT and jit_type and precision:
         return Path(f"{format.value}-{jit_type.value}-{precision.value}") / "model.pt"
     if format == Format.TF_SAVEDMODEL:
         return Path(format.value) / "model.savedmodel"
-    if format == Format.TF_TRT:
+    if format == Format.TF_TRT and precision:
         return Path(f"{format.value}-{precision.value}") / "model.savedmodel"
-    if format == Format.TENSORRT:
+    if format == Format.TENSORRT and precision:
         return Path(f"{format.value}-{precision.value}") / "model.plan"
     else:
-        return Path(f"unknown-format-{format}")
+        raise Exception(
+            f"No model path found for format: {format}, jit_type: {jit_type}, precision: {precision}, provide valid arguments or implmenet this method in your Command."
+        )
 
 
 # pytype: enable=wrong-arg-types
+# pytype: enable=attribute-error
 
 
 def sample_to_tuple(input: Any) -> Tuple[Any, ...]:

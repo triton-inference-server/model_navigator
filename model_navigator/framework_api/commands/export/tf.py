@@ -23,7 +23,7 @@ from model_navigator.framework_api.commands.export.base import ExportBase
 from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.exceptions import ExecutionContext
 from model_navigator.framework_api.logger import LOGGER
-from model_navigator.framework_api.utils import format_to_relative_model_path, get_package_path
+from model_navigator.framework_api.utils import get_package_path
 from model_navigator.model import Format
 
 
@@ -35,14 +35,6 @@ class ExportTF2SavedModel(ExportBase):
             target_format=Format.TF_SAVEDMODEL,
             requires=requires,
         )
-
-    def get_output_relative_path(
-        self,
-    ) -> Path:
-        return format_to_relative_model_path(self.target_format)
-
-    def _get_loggers(self) -> list:
-        return [tf.get_logger()]
 
     def __call__(
         self,
@@ -92,14 +84,6 @@ class UpdateSavedModelSignature(ExportBase):
             target_format=Format.TF_SAVEDMODEL,
             requires=requires,
         )
-
-    def get_output_relative_path(
-        self,
-    ) -> Path:
-        return format_to_relative_model_path(self.target_format)
-
-    def _get_loggers(self) -> list:
-        return [tf.get_logger()]
 
     def __call__(
         self,

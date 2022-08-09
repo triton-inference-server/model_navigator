@@ -23,8 +23,8 @@ from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Tuple, Union
 import typing_inspect
 
 from model_navigator.framework_api.exceptions import UserError
-from model_navigator.framework_api.logger import LOGGER
-from model_navigator.framework_api.utils import Parameter, Status
+from model_navigator.framework_api.logger import LOGGER, get_logger_names
+from model_navigator.framework_api.utils import Parameter, Status, format_to_relative_model_path
 from model_navigator.model import Format
 
 if TYPE_CHECKING:
@@ -123,7 +123,9 @@ class Command(metaclass=ABCMeta):
         return True
 
     def get_output_relative_path(self):
-        return None
+        return format_to_relative_model_path(
+            format=self.target_format, jit_type=self.target_jit_type, precision=self.target_precision
+        )
 
     @staticmethod
     def get_output_name() -> Optional[Union[Iterable[str], str]]:
@@ -134,7 +136,7 @@ class Command(metaclass=ABCMeta):
         pass
 
     def _get_loggers(self) -> list:
-        return []
+        return get_logger_names()
 
     @staticmethod
     def _log_subprocess_output(output):
@@ -176,8 +178,8 @@ class Command(metaclass=ABCMeta):
     def _attach_logger_to_command_log_file(
         self, loggers: List[Union[str, logging.Logger]], workdir: Path, model_name: str
     ):
-        output_relative_path = self.get_output_relative_path()
-        if output_relative_path is not None:
+        if self.target_format is not None:
+            output_relative_path = self.get_output_relative_path()
             log_format = "%(asctime)s %(levelname)-8s %(name)s: %(message)s"
 
             log_dir = workdir / f"{model_name}.nav.workspace" / output_relative_path.parent
@@ -190,11 +192,11 @@ class Command(metaclass=ABCMeta):
             self.log_file_handler.setFormatter(formatter)
             LOGGER.addHandler(self.log_file_handler)
 
-        for logger in loggers:
-            if isinstance(logger, str):
-                logger = logging.getLogger(logger)
-            if self.log_file_handler:
-                logger.addHandler(self.log_file_handler)
+            for logger in loggers:
+                if isinstance(logger, str):
+                    logger = logging.getLogger(logger)
+                if self.log_file_handler:
+                    logger.addHandler(self.log_file_handler)
 
     def _detach_logger_from_command_log_file(self, loggers: list):
         for logger in loggers:

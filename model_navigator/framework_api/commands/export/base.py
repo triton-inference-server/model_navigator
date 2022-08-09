@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from pathlib import Path
 from typing import TYPE_CHECKING, List
 
 from model_navigator.framework_api.commands.core import Command
@@ -25,9 +24,6 @@ if TYPE_CHECKING:
 
 
 class ExportBase(Command):
-    def get_output_relative_path(self) -> Path:
-        raise NotImplementedError
-
     def _update_package_descriptor(
         self, package_descriptor: "PackageDescriptor", onnx_runtimes: List[RuntimeProvider], **kwargs
     ) -> None:

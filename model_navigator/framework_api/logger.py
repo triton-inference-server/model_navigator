@@ -44,5 +44,5 @@ def add_log_file_handler(log_dir: Path):
     LOGGER.addHandler(fh)
 
 
-def get_pytorch_loggers_names() -> list:
-    return [name for name in logging.root.manager.loggerDict if "torch" in name]
+def get_logger_names() -> list:
+    return list(logging.root.manager.loggerDict.keys())

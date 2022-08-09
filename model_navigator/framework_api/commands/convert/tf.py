@@ -15,8 +15,6 @@
 from pathlib import Path
 from typing import Optional, Tuple
 
-import tensorflow as tf  # pytype: disable=import-error
-
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.convert.base import ConvertBase
 from model_navigator.framework_api.commands.convert.converters import sm2tftrt
@@ -25,7 +23,7 @@ from model_navigator.framework_api.commands.export.tf import ExportTF2SavedModel
 from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.exceptions import ExecutionContext
 from model_navigator.framework_api.logger import LOGGER
-from model_navigator.framework_api.utils import Status, format_to_relative_model_path, get_package_path
+from model_navigator.framework_api.utils import Status, get_package_path
 from model_navigator.model import Format
 from model_navigator.utils.device import get_available_gpus
 
@@ -40,9 +38,6 @@ class ConvertSavedModel2ONNX(ConvertBase):
             requires=requires,
         )
         # pytype: enable=wrong-arg-types
-
-    def get_output_relative_path(self) -> Path:
-        return format_to_relative_model_path(self.target_format)
 
     def __call__(
         self,
@@ -94,12 +89,6 @@ class ConvertSavedModel2TFTRT(ConvertBase):
         )
         self.target_precision = target_precision
         # pytype: enable=wrong-arg-types
-
-    def _get_loggers(self) -> list:
-        return [tf.get_logger()]
-
-    def get_output_relative_path(self) -> Path:
-        return format_to_relative_model_path(self.target_format, precision=self.target_precision)
 
     def __call__(
         self,

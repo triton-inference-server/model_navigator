@@ -22,8 +22,8 @@ from model_navigator.framework_api.commands.export import exporters
 from model_navigator.framework_api.commands.export.base import ExportBase
 from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.exceptions import ExecutionContext
-from model_navigator.framework_api.logger import LOGGER, get_pytorch_loggers_names
-from model_navigator.framework_api.utils import JitType, format_to_relative_model_path, get_package_path
+from model_navigator.framework_api.logger import LOGGER
+from model_navigator.framework_api.utils import JitType, get_package_path
 from model_navigator.model import Format
 
 
@@ -36,12 +36,6 @@ class ExportPYT2TorchScript(ExportBase):
             requires=requires,
         )
         self.target_jit_type = target_jit_type
-
-    def get_output_relative_path(self) -> Path:
-        return format_to_relative_model_path(self.target_format, jit_type=self.target_jit_type)
-
-    def _get_loggers(self) -> list:
-        return get_pytorch_loggers_names()
 
     def __call__(
         self,
@@ -92,12 +86,6 @@ class ExportPYT2ONNX(ExportBase):
         super().__init__(
             name="Export PyTorch to ONNX", command_type=CommandType.EXPORT, target_format=Format.ONNX, requires=requires
         )
-
-    def get_output_relative_path(self) -> Path:
-        return format_to_relative_model_path(self.target_format)
-
-    def _get_loggers(self) -> list:
-        return get_pytorch_loggers_names()
 
     def __call__(
         self,

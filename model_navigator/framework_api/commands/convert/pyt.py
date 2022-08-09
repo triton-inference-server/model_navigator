@@ -25,8 +25,8 @@ from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.export.pyt import ExportPYT2TorchScript
 from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.exceptions import ExecutionContext
-from model_navigator.framework_api.logger import LOGGER, get_pytorch_loggers_names
-from model_navigator.framework_api.utils import JitType, Status, format_to_relative_model_path, get_package_path
+from model_navigator.framework_api.logger import LOGGER
+from model_navigator.framework_api.utils import JitType, Status, get_package_path
 from model_navigator.model import Format
 from model_navigator.utils.device import get_available_gpus
 
@@ -43,14 +43,6 @@ class ConvertTorchScript2TorchTensorRT(ConvertBase):
         )
         self.target_jit_type = target_jit_type
         self.target_precision = target_precision
-
-    def get_output_relative_path(self) -> Path:
-        return format_to_relative_model_path(
-            self.target_format, jit_type=self.target_jit_type, precision=self.target_precision
-        )
-
-    def _get_loggers(self) -> list:
-        return get_pytorch_loggers_names()
 
     def __call__(
         self,
