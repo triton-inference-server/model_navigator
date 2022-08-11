@@ -47,13 +47,13 @@ from model_navigator.utils.device import get_gpus
 class StatusDictUpdater:
     def __init__(self):
         self._updates = {
-            version.parse("0.1.1"): self._update_to_v0_1_1,
-            version.parse("0.1.3"): self._update_to_v0_1_3,
-            version.parse("0.1.4"): self._update_to_v0_1_4,
+            version.parse("0.1.0"): self._update_from_v0_1_0,
+            version.parse("0.1.2"): self._update_from_v0_1_2,
+            version.parse("0.1.3"): self._update_from_v0_1_3,
         }
 
     @staticmethod
-    def _update_to_v0_1_1(data_dict: Dict):
+    def _update_from_v0_1_0(data_dict: Dict):
         for model_status in data_dict["model_status"]:
             for runtime_results in model_status["runtime_results"]:
                 for i in range(len(runtime_results.get("performance", []))):
@@ -85,7 +85,7 @@ class StatusDictUpdater:
             data_dict["git_info"] = {}
 
     @staticmethod
-    def _update_to_v0_1_3(data_dict: Dict):
+    def _update_from_v0_1_2(data_dict: Dict):
         data_dict["trt_profile"] = DataObject.parse_value(
             get_trt_profile_from_trt_dynamic_axes(data_dict["export_config"]["trt_dynamic_axes"])
         )
@@ -94,7 +94,7 @@ class StatusDictUpdater:
                 model_status["precision"] = "fp32"
 
     @staticmethod
-    def _update_to_v0_1_4(data_dict: Dict):
+    def _update_from_v0_1_3(data_dict: Dict):
         if (
             Framework(data_dict["export_config"]["framework"]) == Framework.PYT
             and data_dict["export_config"].get("precision_mode") is None
@@ -104,17 +104,17 @@ class StatusDictUpdater:
             data_dict["export_config"]["precision_mode"] = default_val
 
     def update_(self, data_dict: Dict, format_version: version.Version):
-        for update_to_version, update_func in self._updates.items():
-            if format_version < update_to_version:
+        for update_from_version, update_func in self._updates.items():
+            if format_version <= update_from_version:
                 update_func(data_dict)
 
 
 class PackageUpdater:
     def __init__(self):
-        self._updates = {version.parse("0.3.4"): self._update_to_v0_3_4}
+        self._updates = {version.parse("0.3.3"): self._update_from_v0_3_3}
 
     @staticmethod
-    def _update_to_v0_3_4(pkg_desc):
+    def _update_from_v0_3_3(pkg_desc):
         if pkg_desc.framework == Framework.TF2:
             if len(pkg_desc.navigator_status.input_metadata) > 1:
                 raise ModelNavigatorBackwardCompatibilityError(
@@ -128,8 +128,8 @@ class PackageUpdater:
             )
 
     def update_(self, package_descriptor: PackageDescriptor, pkg_version: version.Version):
-        for update_to_version, update_func in self._updates.items():
-            if pkg_version < update_to_version:
+        for update_from_version, update_func in self._updates.items():
+            if pkg_version <= update_from_version:
                 update_func(package_descriptor)
 
 
