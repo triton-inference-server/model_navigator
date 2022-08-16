@@ -314,7 +314,7 @@ def export(
     target_device: Optional[str] = None, # target device for exporting the model
     disable_git_info: bool = False,
     batch_dim: Optional[int] = 0,
-    onnx_runtimes: Optional[Union[Union[str, RuntimeProvider], Tuple[Union[str, RuntimeProvider], ...]]] = None, # defaults to all available runtimes
+    runtimes: Optional[Union[Union[str, RuntimeProvider], Tuple[Union[str, RuntimeProvider], ...]]] = None, # defaults to all available runtimes
     run_profiling: bool = True,
     profiler_config: Optional[ProfilerConfig] = None,
 ) -> PackageDescriptor:
@@ -343,7 +343,7 @@ def export(
     trt_dynamic_axes: Optional[Dict[str, Dict[int, Tuple[int, int, int]]]] = None,
     disable_git_info: bool = False,
     batch_dim: Optional[int] = 0,
-    onnx_runtimes: Optional[Union[Union[str, RuntimeProvider], Tuple[Union[str, RuntimeProvider], ...]]] = None, # defaults to all available runtimes
+    runtimes: Optional[Union[Union[str, RuntimeProvider], Tuple[Union[str, RuntimeProvider], ...]]] = None, # defaults to all available runtimes
     run_profiling: bool = True,
     profiler_config: Optional[ProfilerConfig] = None,
 ) -> PackageDescriptor:
@@ -371,7 +371,7 @@ def export(
     rtol: Optional[float] = None, # relative tolerance used for correctness tests. If None, value will be calculated during run
     disable_git_info: bool = False,
     batch_dim: Optional[int] = 0,
-    onnx_runtimes: Optional[Union[Union[str, RuntimeProvider], Tuple[Union[str, RuntimeProvider], ...]]] = None, # defaults to all available runtimes
+    runtimes: Optional[Union[Union[str, RuntimeProvider], Tuple[Union[str, RuntimeProvider], ...]]] = None, # defaults to all available runtimes
     run_profiling: bool = True,
     profiler_config: Optional[ProfilerConfig] = None,
 ) -> PackageDescriptor:

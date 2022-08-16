@@ -61,7 +61,7 @@ class ExportPYT2TorchScript(ExportBase):
 
         exporters.pytorch2torchscript.get_model = lambda: model
 
-        with ExecutionContext(exported_model_path.parent / "reproduce.py") as context:
+        with ExecutionContext(exported_model_path.parent / "reproduce_conversion.py") as context:
 
             kwargs = {
                 "exported_model_path": exported_model_path.as_posix(),
@@ -117,7 +117,7 @@ class ExportPYT2ONNX(ExportBase):
 
         exporters.pytorch2onnx.get_model = lambda: model
 
-        with ExecutionContext(exported_model_path.parent / "reproduce.py") as context:
+        with ExecutionContext(exported_model_path.parent / "reproduce_conversion.py") as context:
 
             kwargs = {
                 "exported_model_path": exported_model_path.as_posix(),

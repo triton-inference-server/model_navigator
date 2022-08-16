@@ -66,7 +66,7 @@ class Config(DataObject):
     # ONNX
     opset: Optional[int] = None
     dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None
-    onnx_runtimes: Tuple[RuntimeProvider, ...] = ()
+    runtimes: Tuple[RuntimeProvider, ...] = ()
 
     # JAX
     model_params: Optional[Any] = None

@@ -77,6 +77,7 @@ class Parameter(Enum):
 
 class RuntimeProvider(str, Parameter):
     TRT = "TensorrtExecutionProvider"
+    TRT_EXEC = "TrtexecExecutionProvider"
     CUDA = "CUDAExecutionProvider"
     CPU = "CPUExecutionProvider"
     TF = "TensorFlowExecutionProvider"
@@ -91,7 +92,7 @@ def format2runtimes(model_format: Format) -> Tuple:
     elif model_format in (Format.TF_SAVEDMODEL, Format.TF_TRT):
         return (RuntimeProvider.TF,)
     elif model_format == Format.TENSORRT:
-        return (RuntimeProvider.TRT,)
+        return (RuntimeProvider.TRT, RuntimeProvider.TRT_EXEC)
     else:
         return ()
 

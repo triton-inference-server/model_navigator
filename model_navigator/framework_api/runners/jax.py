@@ -20,8 +20,10 @@ import numpy
 from polygraphy.backend.base import BaseRunner
 from polygraphy.common import TensorMetadata
 
+from model_navigator.framework_api.runners.base import INavigatorRunner
 
-class JAXRunner(BaseRunner):
+
+class JAXRunner(INavigatorRunner, BaseRunner):
     """
     Runs inference using JAX.
     """

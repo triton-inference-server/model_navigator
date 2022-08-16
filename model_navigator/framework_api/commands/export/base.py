@@ -25,10 +25,10 @@ if TYPE_CHECKING:
 
 class ExportBase(Command):
     def _update_package_descriptor(
-        self, package_descriptor: "PackageDescriptor", onnx_runtimes: List[RuntimeProvider], **kwargs
+        self, package_descriptor: "PackageDescriptor", runtimes: List[RuntimeProvider], **kwargs
     ) -> None:
         runtime_results = []
-        runtimes = onnx_runtimes if self.target_format == Format.ONNX else format2runtimes(self.target_format)
+        runtimes = runtimes if self.target_format == Format.ONNX else format2runtimes(self.target_format)
         for runtime_provider in runtimes:
             err_msg = {}
             if self.err_msg:

@@ -21,10 +21,11 @@ import torch  # pytype: disable=import-error
 from polygraphy.backend.base import BaseRunner
 from polygraphy.common import TensorMetadata
 
+from model_navigator.framework_api.runners.base import INavigatorRunner
 from model_navigator.framework_api.utils import Framework, validate_sample_output
 
 
-class PytRunner(BaseRunner):
+class PytRunner(INavigatorRunner, BaseRunner):
     """
     Runs inference using PyTorch.
     """

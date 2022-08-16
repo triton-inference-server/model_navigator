@@ -59,7 +59,7 @@ class ExportJAX2SavedModel(ExportBase):
         exporters.jax2savedmodel.get_model = lambda: model
         exporters.jax2savedmodel.get_model_params = lambda: model_params
 
-        with ExecutionContext(exported_model_path.parent / "reproduce.py") as context:
+        with ExecutionContext(exported_model_path.parent / "reproduce_conversion.py") as context:
             kwargs = {
                 "exported_model_path": exported_model_path.as_posix(),
                 "jit_compile": jit_compile,

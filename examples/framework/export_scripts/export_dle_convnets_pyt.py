@@ -137,7 +137,7 @@ def main():
             target_device=device,
             input_names=("image",),
             output_names=("logits",),
-            onnx_runtimes=nav.RuntimeProvider.CUDA,
+            runtimes=nav.RuntimeProvider.CUDA,
         )
 
         if args.min_top1_accuracy is not None:

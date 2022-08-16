@@ -18,10 +18,11 @@ from collections import OrderedDict
 from polygraphy.backend.onnxrt import OnnxrtRunner as _OnnxrtRunner
 
 from model_navigator.framework_api.exceptions import ExecutionContext
+from model_navigator.framework_api.runners.base import INavigatorRunner
 from model_navigator.framework_api.utils import Framework, validate_sample_output
 
 
-class OnnxrtRunner(_OnnxrtRunner):
+class OnnxrtRunner(INavigatorRunner, _OnnxrtRunner):
     def activate(self):
         with ExecutionContext():
             return super().activate()

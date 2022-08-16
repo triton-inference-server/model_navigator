@@ -17,6 +17,7 @@ import contextlib
 import shutil
 import subprocess
 import sys
+import textwrap
 from pathlib import Path
 from typing import Optional
 
@@ -56,7 +57,6 @@ class ExecutionContext(contextlib.AbstractContextManager):
             raise UserError(
                 f"Command to reproduce error:\n{' '.join([sys.executable, self._path.as_posix()] + args)}"
             ) from e
-        self._path.unlink()
 
     def execute_external_runtime_script(self, path, args):
         shutil.copy(path, self._path)
@@ -64,14 +64,16 @@ class ExecutionContext(contextlib.AbstractContextManager):
         self.execute_cmd(cmd)
 
     def execute_cmd(self, cmd):
+        LOGGER.info(f"Command: {' '.join(cmd)}")
+
         output = subprocess.run(cmd, capture_output=True)
 
-        LOGGER.info(f"Command args: {output.args}")
-        LOGGER.info(f"Command output: {output.stdout.decode('utf-8')}")
+        if len(output.stdout):
+            LOGGER.info(f"Command stdout:\n\n{textwrap.indent(output.stdout.decode('utf-8'), '    ')}")
+        if len(output.stderr):
+            LOGGER.info(f"Command stderr:\n\n{textwrap.indent(output.stderr.decode('utf-8'), '    ')}")
         if output.returncode != 0:
             raise UserError(f"{output.stderr.decode('utf-8')}\nCommand to reproduce error:\n{' '.join(cmd)}")
-        if self._path and self._path.exists():
-            self._path.unlink()
 
 
 class TensorTypeError(TypeError):

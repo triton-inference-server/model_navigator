@@ -57,7 +57,7 @@ class ExportTF2SavedModel(ExportBase):
 
         exporters.keras2savedmodel.get_model = lambda: model
 
-        with ExecutionContext(exported_model_path.parent / "reproduce.py") as context:
+        with ExecutionContext(exported_model_path.parent / "reproduce_conversion.py") as context:
 
             kwargs = {
                 "exported_model_path": exported_model_path.as_posix(),
@@ -103,7 +103,7 @@ class UpdateSavedModelSignature(ExportBase):
 
         exporters.savedmodel2savedmodel.get_model = lambda: tf.keras.models.load_model(exported_model_path)
 
-        with ExecutionContext(exported_model_path.parent / "reproduce.py") as context:
+        with ExecutionContext(exported_model_path.parent / "reproduce_conversion.py") as context:
 
             kwargs = {
                 "exported_model_path": exported_model_path.as_posix(),

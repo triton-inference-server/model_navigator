@@ -108,6 +108,11 @@ class Profiler:
         batch_dim: Optional[int] = 0,
         max_batch_size: Optional[int] = None,
     ) -> None:
+
+        if runner.is_inference_time_stabilized():
+            config.max_trials = 3
+            config.measurement_request_count = 1
+
         self._runner = runner
         self._profiling_sample = profiling_sample
         self._config = config
@@ -150,26 +155,29 @@ class Profiler:
             measurements.append(runner.last_inference_time() * 1000)
         return ProfilingResults.from_measurments(measurements, batch_size)
 
-    def _is_measurment_stable(self, windows: List[ProfilingResults]) -> bool:
+    def _is_measurement_stable(self, windows: List[ProfilingResults], count: int = 3) -> bool:
+        windows = windows[-count:]
         avg_latency = np.array([window.avg_latency for window in windows])
         avg_avg_atency = np.mean(avg_latency)
         deviation_perc = (avg_latency - avg_avg_atency) / avg_avg_atency * 100
         return np.all(deviation_perc < self._config.stability_percentage)
 
-    def _run_measurment(self, runner: BaseRunner, sample: Sample, batch_size: int) -> ProfilingResults:
+    def _run_measurement(self, runner: BaseRunner, sample: Sample, batch_size: int) -> ProfilingResults:
         windows = []
+
+        measurement_fn = {
+            MeasurementMode.TIME_WINDOWS: self._run_time_window_measurement,
+            MeasurementMode.COUNT_WINDOWS: self._run_count_window_measurement,
+        }[self._config.measurement_mode]
+
         for _ in range(self._config.max_trials):
-            windows.append(
-                {
-                    MeasurementMode.TIME_WINDOWS: self._run_time_window_measurement,
-                    MeasurementMode.COUNT_WINDOWS: self._run_count_window_measurement,
-                }[self._config.measurement_mode](runner, sample, batch_size)
-            )
-            if len(windows) >= 3 and self._is_measurment_stable(windows[-3:]):
+            windows.append(measurement_fn(runner, sample, batch_size))
+            if self._is_measurement_stable(windows, count=min(3, self._config.max_trials)):
                 return windows[-1]
 
         raise RuntimeError(
-            "Unable to get stable performance results. Consider increasing measurement_interval | measurement_request_count | stability_percentage | max_trials in ProfilerConfig."
+            "Unable to get stable performance results. Consider increasing "
+            "measurement_interval | measurement_request_count | stability_percentage | max_trials in ProfilerConfig."
         )
 
     def run(self) -> List[ProfilingResults]:
@@ -177,7 +185,7 @@ class Profiler:
         with self._runner as runner:
             for batch_size in self._batch_sizes:
                 sample = self.expand_sample(self._profiling_sample, self._batch_dim, batch_size)
-                results.append(self._run_measurment(runner, sample, batch_size))
+                results.append(self._run_measurement(runner, sample, batch_size))
         return results
 
 

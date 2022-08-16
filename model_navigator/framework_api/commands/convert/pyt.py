@@ -81,7 +81,7 @@ class ConvertTorchScript2TorchTensorRT(ConvertBase):
             trt_casts.get(input_spec.dtype, input_spec.dtype).name for input_spec in input_metadata.values()
         ]
 
-        with ExecutionContext(converted_model_path.parent / "reproduce.py") as context:
+        with ExecutionContext(converted_model_path.parent / "reproduce_conversion.py") as context:
             kwargs = {
                 "exported_model_path": exported_model_path.as_posix(),
                 "converted_model_path": converted_model_path.as_posix(),

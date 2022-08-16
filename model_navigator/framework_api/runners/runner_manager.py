@@ -20,6 +20,7 @@ from polygraphy.backend.base import BaseRunner
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.common import DataObject, TensorMetadata
 from model_navigator.framework_api.logger import LOGGER
+from model_navigator.framework_api.runners.trt import TrtexecRunner, TrtExecRuntimeConfig
 from model_navigator.framework_api.utils import (
     Format,
     JitType,
@@ -88,7 +89,10 @@ class RunnerManager(DataObject):
 
             from model_navigator.framework_api.runners.trt import TrtRunner
 
-            return TrtRunner(EngineFromBytes(BytesFromPath(model_path)))
+            if runtime == RuntimeProvider.TRT_EXEC:
+                return TrtexecRunner(model_path, Format.TENSORRT, runtime_config=TrtExecRuntimeConfig())
+            else:
+                return TrtRunner(EngineFromBytes(BytesFromPath(model_path)))
         elif format in (Format.TORCHSCRIPT, Format.TORCH_TRT):
             from model_navigator.framework_api.runners.pyt import PytRunner
 

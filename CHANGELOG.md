@@ -22,6 +22,8 @@ limitations under the License.
   - new: support for building framework containers with Model Navigator installed
   - new: example for loading Navigator Package for reproducing the results
   - new: create reproducing script for correctness and performance steps
+  - new: TrtexecRunner for correctness and performance tests with [trtexec](https://docs.nvidia.com/deeplearning/tensorrt/developer-guide/index.html#trtexec) tool
+  - change: rename of `onnx_runtimes` export function parameters to `runtimes`
   - fix: do not save TF-TRT models to the .nav package
   - fix: do not save TF-TRT models from the .nav package
   - fix: correctly load .nav packages when `_input_names` or `_output_names` specified

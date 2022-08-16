@@ -102,6 +102,8 @@ class StatusDictUpdater:
             default_val = TensorRTPrecisionMode.SINGLE.value
             LOGGER.info(f"Using default `precision_mode`: {default_val}")
             data_dict["export_config"]["precision_mode"] = default_val
+        if "onnx_runtimes" in data_dict["export_config"]:
+            data_dict["export_config"]["runtimes"] = data_dict["export_config"].pop("onnx_runtimes")
 
     def update_(self, data_dict: Dict, format_version: version.Version):
         for update_from_version, update_func in self._updates.items():

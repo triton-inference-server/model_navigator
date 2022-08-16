@@ -503,7 +503,7 @@ class PackageDescriptor:
         config_dict["target_formats"] = self._target_formats
         config_dict["target_jit_type"] = self._target_jit_type
         config_dict["target_precisions"] = self._target_precisions
-        config_dict["onnx_runtimes"] = tuple(RuntimeProvider(prov) for prov in config_dict["onnx_runtimes"])
+        config_dict["runtimes"] = tuple(RuntimeProvider(prov) for prov in config_dict["runtimes"])
         config_dict["profiler_config"] = ProfilerConfig.from_dict(config_dict.get("profiler_config", {}))
         config_dict["precision_mode"] = (
             TensorRTPrecisionMode(config_dict["precision_mode"])

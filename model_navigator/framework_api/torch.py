@@ -66,7 +66,7 @@ def export(
     target_device: Optional[str] = None,
     disable_git_info: bool = False,
     batch_dim: Optional[int] = 0,
-    onnx_runtimes: Optional[Union[Union[str, RuntimeProvider], Tuple[Union[str, RuntimeProvider], ...]]] = None,
+    runtimes: Optional[Union[Union[str, RuntimeProvider], Tuple[Union[str, RuntimeProvider], ...]]] = None,
     run_profiling: bool = True,
     profiler_config: Optional[ProfilerConfig] = None,
 ) -> PackageDescriptor:
@@ -111,17 +111,17 @@ def export(
     if target_device is None:
         target_device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    if onnx_runtimes is None:
-        onnx_runtimes = format2runtimes(Format.ONNX)
+    if runtimes is None:
+        runtimes = format2runtimes(Format.ONNX)
 
     if profiler_config is None:
         profiler_config = ProfilerConfig()
 
-    target_formats, jit_options, target_precisions, onnx_runtimes, precision_mode = (
+    target_formats, jit_options, target_precisions, runtimes, precision_mode = (
         parse_enum(target_formats, Format),
         parse_enum(jit_options, JitType),
         parse_enum(target_precisions, TensorRTPrecision),
-        parse_enum(onnx_runtimes, RuntimeProvider),
+        parse_enum(runtimes, RuntimeProvider),
         *parse_enum(precision_mode, TensorRTPrecisionMode),
     )
 
@@ -149,7 +149,7 @@ def export(
         target_device=target_device,
         disable_git_info=disable_git_info,
         batch_dim=batch_dim,
-        onnx_runtimes=onnx_runtimes,
+        runtimes=runtimes,
         profiler_config=profiler_config,
     )
 

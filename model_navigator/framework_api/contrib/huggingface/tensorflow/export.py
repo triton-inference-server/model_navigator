@@ -90,7 +90,7 @@ def export(
     batch_dim: Optional[int] = 0,
     padding: Union[bool, str] = True,
     max_sequence_len: Optional[int] = None,
-    onnx_runtimes: Optional[Union[Union[str, RuntimeProvider], Tuple[Union[str, RuntimeProvider], ...]]] = None,
+    runtimes: Optional[Union[Union[str, RuntimeProvider], Tuple[Union[str, RuntimeProvider], ...]]] = None,
     run_profiling: bool = True,
     profiler_config: Optional[ProfilerConfig] = None,
 ) -> PackageDescriptor:
@@ -176,16 +176,16 @@ def export(
     if hasattr(model.config, "use_cache"):
         model.config.use_cache = False
 
-    if onnx_runtimes is None:
-        onnx_runtimes = format2runtimes(Format.ONNX)
+    if runtimes is None:
+        runtimes = format2runtimes(Format.ONNX)
 
     if profiler_config is None:
         profiler_config = ProfilerConfig()
 
-    target_formats, target_precisions, onnx_runtimes = (
+    target_formats, target_precisions, runtimes = (
         parse_enum(target_formats, Format),
         parse_enum(target_precisions, TensorRTPrecision),
-        parse_enum(onnx_runtimes, RuntimeProvider),
+        parse_enum(runtimes, RuntimeProvider),
     )
     config = Config(
         Framework.TF2,
@@ -206,7 +206,7 @@ def export(
         batch_dim=batch_dim,
         _input_names=input_names,
         _output_names=output_names,
-        onnx_runtimes=onnx_runtimes,
+        runtimes=runtimes,
         profiler_config=profiler_config,
         forward_kw_names=forward_kw_names,
     )
