@@ -233,7 +233,7 @@ model_path: path
 [ onnx_opsets: list[integer] | default: [14] ]
 
 # Configure TensorRT builder for precision layer selection.
-[ tensorrt_precisions: list[choice(int8, fp16, fp32, tf32)] | default: ['fp16', 'tf32'] ]
+[ tensorrt_precisions: list[choice(int8, fp16, fp32)] | default: ['fp16', 'fp32'] ]
 
 # Select how target precision should be applied during conversion:
 # 'hierarchy': enable possible precisions for values passed in target precisions int8 enable tf32, fp16 and int8

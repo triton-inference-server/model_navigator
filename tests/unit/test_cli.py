@@ -401,7 +401,7 @@ def test_config_from_cli_multiple_values():
 class MyConfigWithEnumMultipleValues:
     config_a: int
     config_b: List[Format]
-    config_c: List[TensorRTPrecision] = field(default_factory=lambda: [TensorRTPrecision.FP16, TensorRTPrecision.TF32])
+    config_c: List[TensorRTPrecision] = field(default_factory=lambda: [TensorRTPrecision.FP16, TensorRTPrecision.FP32])
     config_d: bool = False
 
 

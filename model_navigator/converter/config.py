@@ -39,7 +39,6 @@ class TensorRTPrecision(Enum):
     INT8 = "int8"
     FP16 = "fp16"
     FP32 = "fp32"
-    TF32 = "tf32"
 
 
 class TensorRTPrecisionMode(Enum):
@@ -132,7 +131,7 @@ class ConversionSetConfig(BaseConfig):
 
     # TRT related
     tensorrt_precisions: List[TensorRTPrecision] = dataclasses.field(
-        default_factory=lambda: [TensorRTPrecision.FP16, TensorRTPrecision.TF32]
+        default_factory=lambda: [TensorRTPrecision.FP16, TensorRTPrecision.FP32]
     )
     tensorrt_precisions_mode: TensorRTPrecisionMode = TensorRTPrecisionMode.HIERARCHY
     tensorrt_explicit_precision: bool = False

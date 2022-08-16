@@ -36,14 +36,12 @@ def _get_precision(precision, precision_mode):
     if precision_mode == TensorRTPrecisionMode.HIERARCHY:
         enabled_precisions = {
             TensorRTPrecision.FP32: [torch.float],
-            TensorRTPrecision.TF32: [torch.float],
             TensorRTPrecision.FP16: [torch.float, torch.half],
             TensorRTPrecision.INT8: [torch.float, torch.half, torch.int8],
         }[precision]
     elif precision_mode == TensorRTPrecisionMode.SINGLE:
         enabled_precisions = {
             TensorRTPrecision.FP32: [torch.float],
-            TensorRTPrecision.TF32: [torch.float],
             TensorRTPrecision.FP16: [torch.half],
             TensorRTPrecision.INT8: [torch.int8],
         }[precision]
@@ -54,7 +52,6 @@ def _get_precision(precision, precision_mode):
         )
     return {
         "enabled_precisions": enabled_precisions,
-        "disable_tf32": precision == TensorRTPrecision.FP32,
     }
 
 

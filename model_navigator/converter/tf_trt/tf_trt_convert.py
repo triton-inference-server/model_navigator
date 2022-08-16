@@ -49,10 +49,6 @@ def convert_tf2(
     with TF-TRT.
     Store the resulting SavedModel at `output_path`.
     """
-    if precision.lower() == "tf32":
-        LOGGER.info("Precision TF32 is equivalent to FP32")
-        precision = "fp32"
-
     params = trtc.DEFAULT_TRT_CONVERSION_PARAMS._replace(
         max_workspace_size_bytes=max_workspace_size,
         precision_mode=precision,

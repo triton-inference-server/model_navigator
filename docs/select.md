@@ -94,7 +94,7 @@ $ model-navigator select my_model.triton.nav \
 [ backend_accelerator: list[choice(none, amp, trt, openvino)] ]
 
 # Select only from among model configurations using given precision for TensorRT acceleration.
-[ tensorrt_precision: list[choice(int8, fp16, fp32, tf32)] ]
+[ tensorrt_precision: list[choice(int8, fp16, fp32)] ]
 
 # Select only from among model configurations using the CUDA capture graph feature on the TensorRT backend.
 [ tensorrt_capture_cuda_graph: boolean ]

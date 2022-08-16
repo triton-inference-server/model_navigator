@@ -31,8 +31,7 @@ from model_navigator.utils.device import get_available_gpus
 
 class ConvertONNX2TRT(ConvertBase):
     trt_precision_to_arg = {
-        TensorRTPrecision.FP32: "",
-        TensorRTPrecision.TF32: "--tf32",
+        TensorRTPrecision.FP32: "--tf32",
         TensorRTPrecision.FP16: "--fp16",
         TensorRTPrecision.INT8: "--int8",
     }

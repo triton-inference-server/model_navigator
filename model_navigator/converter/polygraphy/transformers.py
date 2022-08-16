@@ -144,14 +144,12 @@ def onnx2trt(
     if tensorrt_config.precision_mode == TensorRTPrecisionMode.HIERARCHY:
         trt_precision_flags = {
             TensorRTPrecision.FP32: ["tf32"],
-            TensorRTPrecision.TF32: ["tf32"],
             TensorRTPrecision.FP16: ["tf32", "fp16"],
             TensorRTPrecision.INT8: ["tf32", "fp16", "int8"],
         }[tensorrt_config.precision]
     elif tensorrt_config.precision_mode == TensorRTPrecisionMode.SINGLE:
         trt_precision_flags = {
             TensorRTPrecision.FP32: ["tf32"],
-            TensorRTPrecision.TF32: ["tf32"],
             TensorRTPrecision.FP16: ["fp16"],
             TensorRTPrecision.INT8: ["int8"],
         }[tensorrt_config.precision]
