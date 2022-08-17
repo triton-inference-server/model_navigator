@@ -110,7 +110,7 @@ class Profiler:
     ) -> None:
 
         if runner.is_inference_time_stabilized():
-            config.max_trials = 3
+            config.max_trials = 1
             config.measurement_request_count = 1
 
         self._runner = runner

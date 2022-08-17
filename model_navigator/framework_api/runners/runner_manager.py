@@ -90,7 +90,7 @@ class RunnerManager(DataObject):
             from model_navigator.framework_api.runners.trt import TrtRunner
 
             if runtime == RuntimeProvider.TRT_EXEC:
-                return TrtexecRunner(model_path, Format.TENSORRT, runtime_config=TrtExecRuntimeConfig())
+                return TrtexecRunner(model_path, Format.TENSORRT, runtime_config=TrtExecRuntimeConfig(tf32=True))
             else:
                 return TrtRunner(EngineFromBytes(BytesFromPath(model_path)))
         elif format in (Format.TORCHSCRIPT, Format.TORCH_TRT):
