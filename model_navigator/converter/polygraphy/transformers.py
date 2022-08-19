@@ -28,6 +28,7 @@ from model_navigator.converter.polygraphy.comparator import ToleranceParameterHe
 from model_navigator.converter.utils import navigator_subprocess, prepare_log_header
 from model_navigator.exceptions import ModelNavigatorConverterCommandException, ModelNavigatorConverterException
 from model_navigator.model import Format
+from model_navigator.utils import tensorrt
 
 LOGGER = logging.getLogger("polygraphy.transformers")
 
@@ -97,11 +98,16 @@ def _run_polygraphy(
         profile.add(name, dataloader.min_shapes[name], dataloader.opt_shapes[name], dataloader.max_shapes[name])
     profiles = [profile]
     config = CreateConfig(
-        max_workspace_size=tensorrt_config.max_workspace_size,
         profiles=profiles,
         sparse_weights=tensorrt_config.sparse_weights,
         **{precision: True for precision in trt_precision_flags},
     )
+    if tensorrt.get_version() < LooseVersion("8.4.0"):
+        config.max_workspace_size = tensorrt_config.max_workspace_size
+    else:
+        config.memory_pool_limits = {
+            "workspace": tensorrt_config.max_workspace_size,
+        }
 
     # Loaders
     parse_network_from_onnx = NetworkFromOnnxPath(

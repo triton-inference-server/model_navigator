@@ -41,17 +41,17 @@ class TrtRunner(INavigatorRunner, _TrtRunner):
         with ExecutionContext():
             return super().activate()
 
-    def _cast_tensor(self, tensor):
-        if tensor.dtype in self.trt_casts:
-            LOGGER.debug(f"Casting f{tensor.dtype} tensor to f{self.trt_casts[tensor.dtype]}.")
-            return tensor.astype(self.trt_casts[tensor.dtype])
-        return tensor
-
     def infer(self, feed_dict, check_inputs=None, *args, **kwargs):
         feed_dict = {
             name: self._cast_tensor(tensor) for name, tensor in feed_dict.items() if name in self.get_input_metadata()
         }
         return super().infer(feed_dict, check_inputs, *args, **kwargs)
+
+    def _cast_tensor(self, tensor):
+        if tensor.dtype in self.trt_casts:
+            LOGGER.debug(f"Casting f{tensor.dtype} tensor to f{self.trt_casts[tensor.dtype]}.")
+            return tensor.astype(self.trt_casts[tensor.dtype])
+        return tensor
 
 
 @dataclasses.dataclass
@@ -107,7 +107,6 @@ def _format_dict(d: typing.Dict):
 
 
 class TrtexecRunner(INavigatorRunner, _TrtexecRunner):
-
     # TODO: observe TRT API on this cast
     trt_casts = {np.dtype(np.int64): np.int32}
 

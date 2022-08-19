@@ -26,11 +26,15 @@ import fire
 from model_navigator.framework_api.logger import LOGGER
 
 
-class UserError(Exception):
+class ModelNavigatorExportAPIError(Exception):
     pass
 
 
-class ModelNavigatorBackwardCompatibilityError(Exception):
+class UserError(ModelNavigatorExportAPIError):
+    pass
+
+
+class ModelNavigatorBackwardCompatibilityError(ModelNavigatorExportAPIError):
     pass
 
 
@@ -73,7 +77,9 @@ class ExecutionContext(contextlib.AbstractContextManager):
         if len(output.stderr):
             LOGGER.info(f"Command stderr:\n\n{textwrap.indent(output.stderr.decode('utf-8'), '    ')}")
         if output.returncode != 0:
-            raise UserError(f"{output.stderr.decode('utf-8')}\nCommand to reproduce error:\n{' '.join(cmd)}")
+            raise UserError(
+                f"{output.stderr.decode('utf-8')}\nCommand to reproduce error:\n{' '.join(cmd)}"
+            )
 
 
 class TensorTypeError(TypeError):

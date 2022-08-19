@@ -11,14 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+from distutils.version import LooseVersion
 from pathlib import Path
 from typing import Optional, Tuple
 
 from polygraphy.backend.onnxrt import SessionFromOnnx
 from polygraphy.backend.trt import Profile
 
-from model_navigator.converter.config import TensorRTPrecision
+from model_navigator.converter.config import TensorRTPrecision, TensorRTPrecisionMode
 from model_navigator.framework_api.commands.convert.base import ConvertBase
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.exceptions import ExecutionContext, UserError
@@ -26,17 +26,16 @@ from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.runners.onnx import OnnxrtRunner
 from model_navigator.framework_api.utils import Framework, Status, get_package_path
 from model_navigator.model import Format
-from model_navigator.utils.device import get_available_gpus
+from model_navigator.utils import device, tensorrt
 
 
 class ConvertONNX2TRT(ConvertBase):
-    trt_precision_to_arg = {
-        TensorRTPrecision.FP32: "--tf32",
-        TensorRTPrecision.FP16: "--fp16",
-        TensorRTPrecision.INT8: "--int8",
-    }
-
-    def __init__(self, target_precision: TensorRTPrecision, requires: Tuple[Command, ...] = ()):
+    def __init__(
+        self,
+        target_precision: TensorRTPrecision,
+        precision_mode: TensorRTPrecisionMode,
+        requires: Tuple[Command, ...] = (),
+    ):
         # pytype: disable=wrong-arg-types
         super().__init__(
             name="Convert ONNX to TensorRT",
@@ -44,6 +43,7 @@ class ConvertONNX2TRT(ConvertBase):
             target_format=Format.TENSORRT,
             requires=requires,
         )
+        self.precision_mode = precision_mode
         self.target_precision = target_precision
         # pytype: enable=wrong-arg-types
 
@@ -58,7 +58,7 @@ class ConvertONNX2TRT(ConvertBase):
         **kwargs,
     ) -> Optional[Path]:
         LOGGER.info("ONNX to TRT conversion started")
-        if not get_available_gpus():
+        if not device.get_available_gpus():
             raise RuntimeError("No GPUs available.")
 
         if framework == Framework.PYT:
@@ -97,6 +97,24 @@ class ConvertONNX2TRT(ConvertBase):
         convert_cmd.extend(["--convert-to", "trt"])
         convert_cmd.extend(["-o", converted_model_path.as_posix()])
 
+        if self.precision_mode == TensorRTPrecisionMode.HIERARCHY:
+            trt_precision_flags = {
+                TensorRTPrecision.FP32: ["--tf32"],
+                TensorRTPrecision.FP16: ["--tf32", "--fp16"],
+                TensorRTPrecision.INT8: ["--tf32", "--fp16", "--int8"],
+            }[self.target_precision]
+        elif self.precision_mode == TensorRTPrecisionMode.SINGLE:
+            trt_precision_flags = {
+                TensorRTPrecision.FP32: ["--tf32"],
+                TensorRTPrecision.FP16: ["--fp16"],
+                TensorRTPrecision.INT8: ["--int8"],
+            }[self.target_precision]
+        else:
+            trt_precision_flags = None
+
+        if trt_precision_flags:
+            convert_cmd.extend(trt_precision_flags)
+
         # for i, arg in enumerate(("--trt-min-shapes", "--trt-opt-shapes", "--trt-max-shapes")):
         for attr in ("min", "opt", "max"):
             arg = f"--trt-{attr}-shapes"
@@ -109,12 +127,11 @@ class ConvertONNX2TRT(ConvertBase):
             if shapes:
                 convert_cmd.extend([f"{arg}"] + shapes)
 
-        precision_arg = self.trt_precision_to_arg[self.target_precision]
-        if precision_arg:
-            convert_cmd.append(precision_arg)
-
         if max_workspace_size is not None:
-            convert_cmd.append(f"--workspace={max_workspace_size}")
+            if tensorrt.get_version() < LooseVersion("8.4.0"):
+                convert_cmd.extend(["--workspace", f"{max_workspace_size}"])
+            else:
+                convert_cmd.extend(["--pool-limit", f"workspace:{max_workspace_size}"])
 
         with ExecutionContext() as context:
             context.execute_cmd(convert_cmd)

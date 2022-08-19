@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
+from distutils.version import LooseVersion
 
 import numpy as np
 
@@ -20,17 +21,12 @@ from model_navigator.model import ModelSignatureConfig
 LOGGER = logging.getLogger(__name__)
 
 
-def _cast_tensor(tensor):
-    """
-    Cast TensorSpec object to supported type for TensorRT
-    """
-    trt_casts = {np.dtype(np.int64): np.int32}
+def get_version():
+    from polygraphy import mod
 
-    if tensor.dtype in trt_casts:
-        LOGGER.debug(f"Casting {tensor.dtype} tensor to {trt_casts[tensor.dtype]}.")
-        return tensor.astype(trt_casts[tensor.dtype])
-
-    return tensor
+    trt = mod.lazy_import("tensorrt")
+    trt_version = LooseVersion(trt.__version__)
+    return trt_version
 
 
 def rewrite_signature_config(signature: ModelSignatureConfig):
@@ -48,3 +44,16 @@ def rewrite_signature_config(signature: ModelSignatureConfig):
         rewritten_signature.outputs[name] = _cast_tensor(tensor)
 
     return rewritten_signature
+
+
+def _cast_tensor(tensor):
+    """
+    Cast TensorSpec object to supported type for TensorRT
+    """
+    trt_casts = {np.dtype(np.int64): np.int32}
+
+    if tensor.dtype in trt_casts:
+        LOGGER.debug(f"Casting {tensor.dtype} tensor to {trt_casts[tensor.dtype]}.")
+        return tensor.astype(trt_casts[tensor.dtype])
+
+    return tensor

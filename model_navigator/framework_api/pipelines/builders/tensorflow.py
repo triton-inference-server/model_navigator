@@ -38,7 +38,7 @@ def tensorflow_conversion_builder(config: Config, package_descriptor: "PackageDe
         commands.append(ConvertSavedModel2ONNX())
     if Format.TENSORRT in config.target_formats:
         for target_precision in config.target_precisions:
-            commands.append(ConvertONNX2TRT(target_precision=target_precision))
+            commands.append(ConvertONNX2TRT(target_precision=target_precision, precision_mode=config.precision_mode))
     if Format.TF_TRT in config.target_formats:
         for target_precision in config.target_precisions:
             commands.append(ConvertSavedModel2TFTRT(target_precision=target_precision))
