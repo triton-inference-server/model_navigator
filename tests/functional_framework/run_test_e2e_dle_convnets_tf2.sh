@@ -36,5 +36,4 @@ fi
 
 
 ./tests/functional_framework/test_e2e_dle_convnets_tf2.py --model-name EfficientNet-v1-B0 --workdir ${WORKDIR}
-./tests/functional_framework/test_e2e_dle_convnets_tf2.py --model-name EfficientNet-v1-B4 --workdir ${WORKDIR}
 ./tests/functional_framework/test_e2e_dle_convnets_tf2.py --model-name EfficientNet-v2-S --workdir ${WORKDIR}

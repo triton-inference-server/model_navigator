@@ -28,30 +28,7 @@ EXPORT_CONFIGS = [
         "sample_count": 10,
         "expected_runtimes": {
             "torchscript-trace": [nav.RuntimeProvider.PYT.value],
-            "onnx": [nav.RuntimeProvider.CPU.value, nav.RuntimeProvider.CUDA.value],
-        },
-    },
-    {
-        "model_name": "gpt2",
-        "dataset_name": "imdb",
-        "padding": "max_length",
-        "max_sequence_len": 384,
-        "max_bs": 2,
-        "sample_count": 10,
-        "expected_runtimes": {
-            "onnx": [nav.RuntimeProvider.CPU.value, nav.RuntimeProvider.CUDA.value],
-        },
-    },
-    {
-        "model_name": "bert-base-uncased",
-        "dataset_name": "imdb",
-        "padding": "max_length",
-        "max_sequence_len": 384,
-        "max_bs": 2,
-        "sample_count": 10,
-        "expected_runtimes": {
-            "torchscript-trace": [nav.RuntimeProvider.PYT.value],
-            "onnx": [nav.RuntimeProvider.CPU.value, nav.RuntimeProvider.CUDA.value],
+            "onnx": [nav.RuntimeProvider.CUDA.value],
         },
     },
     {
@@ -62,31 +39,7 @@ EXPORT_CONFIGS = [
         "max_bs": 2,
         "sample_count": 10,
         "expected_runtimes": {
-            "onnx": [nav.RuntimeProvider.CPU.value, nav.RuntimeProvider.CUDA.value],
-        },
-    },
-    {
-        "model_name": "sentence-transformers/multi-qa-MiniLM-L6-cos-v1",
-        "dataset_name": "imdb",
-        "padding": "max_length",
-        "max_sequence_len": 384,
-        "max_bs": 2,
-        "sample_count": 10,
-        "expected_runtimes": {
-            "torchscript-trace": [nav.RuntimeProvider.PYT.value],
-            "onnx": [nav.RuntimeProvider.CPU.value, nav.RuntimeProvider.CUDA.value],
-        },
-    },
-    {
-        "model_name": "bert-base-chinese",
-        "dataset_name": "imdb",
-        "padding": "max_length",
-        "max_sequence_len": 384,
-        "max_bs": 2,
-        "sample_count": 10,
-        "expected_runtimes": {
-            "torchscript-trace": [nav.RuntimeProvider.PYT.value],
-            "onnx": [nav.RuntimeProvider.CPU.value, nav.RuntimeProvider.CUDA.value],
+            "onnx": [nav.RuntimeProvider.CUDA.value],
         },
     },
 ]
@@ -108,6 +61,7 @@ if __name__ == "__main__":
             workdir=nav_workdir,
             **export_config,
             profiler_config=nav.ProfilerConfig(measurement_request_count=20),
+            runtimes=(nav.RuntimeProvider.PYT, nav.RuntimeProvider.CUDA, nav.RuntimeProvider.TRT),
         )
         # pytype: enable=not-callable
         nav.LOGGER.info(f"{pkg_desc.get_formats_status()=}")

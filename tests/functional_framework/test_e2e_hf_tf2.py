@@ -31,7 +31,7 @@ EXPORT_CONFIGS = {
         "expected_runtimes": {
             "tf-savedmodel": [nav.RuntimeProvider.TF.value],
             "trt-fp32": [nav.RuntimeProvider.TRT.value],
-            "onnx": [nav.RuntimeProvider.CPU.value, nav.RuntimeProvider.CUDA.value],
+            "onnx": [nav.RuntimeProvider.CUDA.value],
             "tf-trt-fp32": [nav.RuntimeProvider.TF.value],
         },
     },
@@ -45,7 +45,7 @@ EXPORT_CONFIGS = {
         "expected_runtimes": {
             "tf-savedmodel": [nav.RuntimeProvider.TF.value],
             "trt-fp32": [nav.RuntimeProvider.TRT.value],
-            "onnx": [nav.RuntimeProvider.CPU.value, nav.RuntimeProvider.CUDA.value],
+            "onnx": [nav.RuntimeProvider.CUDA.value],
             "tf-trt-fp32": [nav.RuntimeProvider.TF.value],
         },
     },
@@ -76,6 +76,7 @@ if __name__ == "__main__":
         target_precisions=(nav.TensorRTPrecision.FP32,),
         opset=13,
         profiler_config=nav.ProfilerConfig(measurement_request_count=20),
+        runtimes=(nav.RuntimeProvider.TF, nav.RuntimeProvider.CUDA, nav.RuntimeProvider.TRT),
     )
     # pytype: enable=not-callable
     nav.LOGGER.info(f"{pkg_desc.get_formats_status()=}")

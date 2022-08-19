@@ -76,10 +76,11 @@ if __name__ == "__main__":
         opset=13,
         override_workdir=True,
         profiler_config=nav.ProfilerConfig(measurement_request_count=20),
+        runtimes=(nav.RuntimeProvider.TF, nav.RuntimeProvider.CUDA, nav.RuntimeProvider.TRT),
     )
     expected_runtimes = {
         "tf-savedmodel": [nav.RuntimeProvider.TF.value],
-        "onnx": [nav.RuntimeProvider.CPU.value, nav.RuntimeProvider.CUDA.value],
+        "onnx": [nav.RuntimeProvider.CUDA.value],
         "trt-fp32": [nav.RuntimeProvider.TRT.value],
         "tf-trt-fp32": [nav.RuntimeProvider.TF.value],
     }

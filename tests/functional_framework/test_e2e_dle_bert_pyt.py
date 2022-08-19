@@ -119,6 +119,7 @@ if __name__ == "__main__":
             sample_count=1,
             input_names=("input_ids", "token_type_ids", "attention_mask"),
             profiler_config=nav.ProfilerConfig(measurement_request_count=20),
+            runtimes=(nav.RuntimeProvider.PYT, nav.RuntimeProvider.CUDA, nav.RuntimeProvider.TRT),
         )
         expected_runtimes = {}
         nav.LOGGER.info(f"{pkg_desc.get_formats_status()=}")

@@ -45,7 +45,11 @@ if __name__ == "__main__":
     nav.LOGGER.info("Testing GPT2")
     expected_formats = (nav.Format.TF_SAVEDMODEL,)
     pkg_desc = nav.jax.export(
-        model=model.__call__, model_params=model._params, dataloader=dataloader, workdir=nav_workdir
+        model=model.__call__,
+        model_params=model._params,
+        dataloader=dataloader,
+        workdir=nav_workdir,
+        runtimes=(nav.RuntimeProvider.TF, nav.RuntimeProvider.CUDA, nav.RuntimeProvider.TRT),
     )
 
     expected_runtimes = {

@@ -23,14 +23,7 @@ import model_navigator as nav
 
 MODELS = {
     "resnet50": convnet_models.resnet50,
-    "resnext101-32x4d": convnet_models.resnext101_32x4d,
-    "se-resnext101-32x4d": convnet_models.se_resnext101_32x4d,
-    "efficientnet-b0": convnet_models.efficientnet_b0,
-    "efficientnet-b4": convnet_models.efficientnet_b4,
     "efficientnet-widese-b0": convnet_models.efficientnet_widese_b0,
-    "efficientnet-widese-b4": convnet_models.efficientnet_widese_b4,
-    # "efficientnet-quant-b0": convnet_models.efficientnet_quant_b0,
-    # "efficientnet-quant-b4": convnet_models.efficientnet_quant_b4
 }
 
 
@@ -57,6 +50,7 @@ if __name__ == "__main__":
             workdir=nav_workdir,
             target_device="cuda",
             profiler_config=nav.ProfilerConfig(measurement_request_count=20),
+            runtimes=(nav.RuntimeProvider.PYT, nav.RuntimeProvider.CUDA, nav.RuntimeProvider.TRT),
         )
         if model_name == "se-resnext101-32x4d":
             expected_runtimes = {
@@ -64,13 +58,13 @@ if __name__ == "__main__":
                 "torchscript-trace": [nav.RuntimeProvider.PYT.value],
                 "trt-fp32": [nav.RuntimeProvider.TRT.value],
                 "trt-fp16": [nav.RuntimeProvider.TRT.value],
-                "onnx": [nav.RuntimeProvider.CPU.value, nav.RuntimeProvider.CUDA.value],
+                "onnx": [nav.RuntimeProvider.CUDA.value],
             }
         else:
             expected_runtimes = {
                 "torchscript-script": [nav.RuntimeProvider.PYT.value],
                 "torchscript-trace": [nav.RuntimeProvider.PYT.value],
-                "onnx": [nav.RuntimeProvider.CPU.value, nav.RuntimeProvider.CUDA.value],
+                "onnx": [nav.RuntimeProvider.CUDA.value],
                 "torch-trt-trace-fp16": [nav.RuntimeProvider.PYT.value],
                 "torch-trt-trace-fp32": [nav.RuntimeProvider.PYT.value],
                 "torch-trt-script-fp16": [nav.RuntimeProvider.PYT.value],

@@ -164,10 +164,11 @@ if __name__ == "__main__":
             target_precisions=(nav.TensorRTPrecision.FP32,),
             opset=13,
             profiler_config=nav.ProfilerConfig(measurement_request_count=20),
+            runtimes=(nav.RuntimeProvider.TF, nav.RuntimeProvider.CUDA, nav.RuntimeProvider.TRT),
         )
         expected_runtimes = {
             "tf-trt-fp32": [nav.RuntimeProvider.TF.value],
-            "onnx": [nav.RuntimeProvider.CPU.value, nav.RuntimeProvider.CUDA.value],
+            "onnx": [nav.RuntimeProvider.CUDA.value],
         }
         nav.LOGGER.info(f"{pkg_desc.get_formats_status()=}")
         for format, runtimes_status in pkg_desc.get_formats_status().items():
