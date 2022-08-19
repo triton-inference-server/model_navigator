@@ -56,7 +56,7 @@ if __name__ == "__main__":
             dataloader=DATALOADER,
             workdir=nav_workdir,
             target_device="cuda",
-            profiler_config=nav.ProfilerConfig(measurement_request_count=200),
+            profiler_config=nav.ProfilerConfig(measurement_request_count=20),
         )
         if model_name == "se-resnext101-32x4d":
             expected_runtimes = {

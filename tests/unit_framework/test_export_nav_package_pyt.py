@@ -18,7 +18,6 @@ from pathlib import Path
 import torch
 
 import model_navigator as nav
-from model_navigator.framework_api.commands.performance import ProfilerConfig
 from model_navigator.utils.device import get_gpus
 
 # pytype: enable=import-error
@@ -43,7 +42,7 @@ def check_model_dir(model_dir: Path, format: nav.Format) -> bool:
     return True
 
 
-dataloader = [torch.randn(1) for _ in range(10)]
+dataloader = [torch.randn(1) for _ in range(5)]
 
 
 class MyModule(torch.nn.Module):
@@ -72,7 +71,7 @@ def test_pyt_export_torchscript():
             override_workdir=True,
             workdir=workdir,
             model_name=model_name,
-            profiler_config=ProfilerConfig(measurement_interval=100),
+            run_profiling=False,
         )
 
         assert status_file.is_file()
@@ -116,7 +115,7 @@ def test_pyt_export_onnx():
             override_workdir=True,
             workdir=workdir,
             model_name=model_name,
-            profiler_config=ProfilerConfig(measurement_interval=100),
+            run_profiling=False,
         )
 
         assert status_file.is_file()
@@ -161,7 +160,7 @@ def test_pyt_export_torch_trt_script():
             override_workdir=True,
             workdir=workdir,
             model_name=model_name,
-            profiler_config=ProfilerConfig(measurement_interval=100),
+            run_profiling=False,
         )
 
         assert status_file.is_file()
@@ -219,7 +218,7 @@ def test_pyt_export_trt():
             override_workdir=True,
             workdir=workdir,
             model_name=model_name,
-            profiler_config=ProfilerConfig(measurement_interval=100),
+            run_profiling=False,
         )
 
         assert status_file.is_file()
@@ -253,7 +252,7 @@ def test_pyt_export_multi_input():
             return x + 10
 
     multi_input_model = MultiInputModule()
-    dict_dataloader = [{"x": torch.randn(1), "y": torch.randn(2)} for _ in range(10)]
+    dict_dataloader = [{"x": torch.randn(1), "y": torch.randn(2)} for _ in range(5)]
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         model_name = "navigator_model"
@@ -271,7 +270,7 @@ def test_pyt_export_multi_input():
             override_workdir=True,
             workdir=workdir,
             model_name=model_name,
-            profiler_config=ProfilerConfig(measurement_interval=100),
+            run_profiling=False,
         )
 
         assert status_file.is_file()
@@ -323,7 +322,7 @@ def test_pyt_export_string_format():
             override_workdir=True,
             workdir=workdir,
             model_name=model_name,
-            profiler_config=ProfilerConfig(measurement_interval=100),
+            run_profiling=False,
         )
 
         assert status_file.is_file()
@@ -353,7 +352,7 @@ def test_pyt_export_onnx2trt():
     with tempfile.TemporaryDirectory() as tmp_dir:
         onnx_model_path = Path(tmp_dir) / "model.onnx"
 
-        _torch_dataloader = [torch.randn(1) for _ in range(10)]
+        _torch_dataloader = [torch.randn(1) for _ in range(5)]
         _numpy_dataloader = [t.cpu().detach().numpy() for t in _torch_dataloader]
 
         torch.onnx.export(
@@ -378,7 +377,7 @@ def test_pyt_export_onnx2trt():
             dataloader=_numpy_dataloader,
             opset=13,
             workdir=workdir,
-            profiler_config=ProfilerConfig(measurement_interval=100),
+            run_profiling=False,
         )
 
         assert status_file.is_file()
@@ -436,7 +435,7 @@ def test_pyt_export_onnx_large():
             override_workdir=True,
             workdir=workdir,
             model_name=model_name,
-            profiler_config=ProfilerConfig(measurement_interval=100),
+            run_profiling=False,
         )
 
         assert status_file.is_file()

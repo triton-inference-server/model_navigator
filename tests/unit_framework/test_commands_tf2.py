@@ -50,7 +50,7 @@ for gpu in gpus:
 CUDA_AVAILABLE = bool(get_gpus(["all"]))
 VALUE_IN_TENSOR = 9.0
 
-dataloader = [tensorflow.fill(dims=[1, 224, 224, 3], value=VALUE_IN_TENSOR) for _ in range(10)]
+dataloader = [tensorflow.fill(dims=[1, 224, 224, 3], value=VALUE_IN_TENSOR) for _ in range(5)]
 
 
 inp = tensorflow.keras.layers.Input((224, 224, 3), name="input__1")

@@ -48,3 +48,5 @@ config_search_max_instance_count: 1
 config_search_max_batch_size: 1
 # analyzer constraints
 max_latency_ms: 1000
+# measurement config
+perf_measurement_request_count: 10

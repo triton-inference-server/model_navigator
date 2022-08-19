@@ -20,7 +20,6 @@ import pytest
 import tensorflow
 
 import model_navigator as nav
-from model_navigator.framework_api.commands.performance import ProfilerConfig
 from model_navigator.utils.device import get_gpus
 
 # pytype: enable=import-error
@@ -63,7 +62,7 @@ model = tensorflow.keras.Model(inp, model_output)
 
 dataloader = [
     tensorflow.random.uniform(shape=[1, 224, 224, 3], minval=0, maxval=1, dtype=tensorflow.dtypes.float32)
-    for _ in range(10)
+    for _ in range(5)
 ]
 
 
@@ -86,17 +85,17 @@ def test_tf2_save_load_no_retest():
             override_workdir=True,
             workdir=workdir,
             model_name=model_name,
-            target_precisions="fp32",
-            profiler_config=ProfilerConfig(measurement_interval=100),
+            target_formats=(nav.Format.TF_SAVEDMODEL,),
+            run_profiling=False,
         )
 
-        pkg_desc.set_verified(nav.Format.TENSORRT, nav.RuntimeProvider.TRT, precision=nav.TensorRTPrecision.FP32)
+        pkg_desc.set_verified(nav.Format.TF_SAVEDMODEL, nav.RuntimeProvider.TF)
         nav.save(pkg_desc, nav_package_path)
         nav.load(
             nav_package_path,
             workdir=load_workdir,
             retest_conversions=False,
-            profiler_config=ProfilerConfig(measurement_interval=100),
+            run_profiling=False,
         )
 
         assert status_file.is_file()
@@ -112,23 +111,6 @@ def test_tf2_save_load_no_retest():
 
         # Exported formats
         assert check_model_dir(model_dir=loaded_package_dir / "tf-savedmodel", format=nav.Format.TF_SAVEDMODEL)
-
-        # Converted formats
-        assert (
-            check_model_dir(model_dir=loaded_package_dir / "trt-fp32", format=nav.Format.TENSORRT, only_config=True)
-            is CUDA_AVAILABLE
-        )
-        assert check_model_dir(model_dir=loaded_package_dir / "onnx", format=nav.Format.ONNX, only_config=True)
-        assert (
-            check_model_dir(
-                model_dir=loaded_package_dir / "tf-trt-fp32", format=nav.Format.TF_SAVEDMODEL, only_config=True
-            )
-            is CUDA_AVAILABLE
-        )
-
-        # Formats not exported
-        assert check_model_dir(model_dir=loaded_package_dir / "trt-fp16", format=nav.Format.TENSORRT) is False
-        assert check_model_dir(model_dir=loaded_package_dir / "tf-trt-fp16", format=nav.Format.TF_SAVEDMODEL) is False
 
 
 def test_tf2_save_load_retest():
@@ -150,16 +132,16 @@ def test_tf2_save_load_retest():
             override_workdir=True,
             workdir=workdir,
             model_name=model_name,
-            target_precisions="fp32",
-            profiler_config=ProfilerConfig(measurement_interval=100),
+            target_formats=(nav.Format.TF_SAVEDMODEL,),
+            run_profiling=False,
         )
 
-        pkg_desc.set_verified(nav.Format.TENSORRT, nav.RuntimeProvider.TRT, precision=nav.TensorRTPrecision.FP32)
+        pkg_desc.set_verified(nav.Format.TF_SAVEDMODEL, nav.RuntimeProvider.TF)
         nav.save(pkg_desc, nav_package_path)
         nav.load(
             nav_package_path,
             workdir=load_workdir,
-            profiler_config=ProfilerConfig(measurement_interval=100),
+            run_profiling=False,
         )
 
         assert status_file.is_file()
@@ -175,16 +157,6 @@ def test_tf2_save_load_retest():
 
         # Output formats
         assert check_model_dir(model_dir=loaded_package_dir / "tf-savedmodel", format=nav.Format.TF_SAVEDMODEL)
-        assert check_model_dir(model_dir=loaded_package_dir / "onnx", format=nav.Format.ONNX)
-        assert check_model_dir(model_dir=loaded_package_dir / "trt-fp32", format=nav.Format.TENSORRT) is CUDA_AVAILABLE
-        assert (
-            check_model_dir(model_dir=loaded_package_dir / "tf-trt-fp32", format=nav.Format.TF_SAVEDMODEL)
-            is CUDA_AVAILABLE
-        )
-
-        # Formats not exported
-        assert check_model_dir(model_dir=loaded_package_dir / "trt-fp16", format=nav.Format.TENSORRT) is False
-        assert check_model_dir(model_dir=loaded_package_dir / "tf-trt-fp16", format=nav.Format.TF_SAVEDMODEL) is False
 
 
 @pytest.mark.skipif(
@@ -207,8 +179,7 @@ def test_backward_compatibility(nav_package_path):
             nav_package_path,
             workdir=workdir,
             override_workdir=True,
-            retest_conversions=True,
-            profiler_config=ProfilerConfig(max_trials=100),
+            retest_conversions=False,
         )
         new_status = retest_pkg_desc.get_formats_status()
 

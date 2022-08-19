@@ -75,7 +75,7 @@ if __name__ == "__main__":
         target_precisions=(nav.TensorRTPrecision.FP32,),
         opset=13,
         override_workdir=True,
-        profiler_config=nav.ProfilerConfig(measurement_request_count=200),
+        profiler_config=nav.ProfilerConfig(measurement_request_count=20),
     )
     expected_runtimes = {
         "tf-savedmodel": [nav.RuntimeProvider.TF.value],

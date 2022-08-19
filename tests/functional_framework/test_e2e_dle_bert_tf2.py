@@ -163,7 +163,7 @@ if __name__ == "__main__":
             sample_count=10,
             target_precisions=(nav.TensorRTPrecision.FP32,),
             opset=13,
-            profiler_config=nav.ProfilerConfig(measurement_request_count=200),
+            profiler_config=nav.ProfilerConfig(measurement_request_count=20),
         )
         expected_runtimes = {
             "tf-trt-fp32": [nav.RuntimeProvider.TF.value],

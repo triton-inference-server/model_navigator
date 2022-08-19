@@ -19,7 +19,7 @@ import pytest
 import tensorflow
 
 import model_navigator as nav
-from model_navigator.framework_api.commands.performance import ProfilerConfig
+
 from model_navigator.utils.device import get_gpus
 
 # pytype: enable=import-error
@@ -50,7 +50,7 @@ def check_model_dir(model_dir: Path, format: nav.Format) -> bool:
 
 dataloader = [
     tensorflow.random.uniform(shape=[1, 224, 224, 3], minval=0, maxval=1, dtype=tensorflow.dtypes.float32)
-    for _ in range(10)
+    for _ in range(5)
 ]
 
 inp = tensorflow.keras.layers.Input((224, 224, 3))
@@ -82,7 +82,7 @@ def test_tf2_export_savedmodel():
             model_name=model_name,
             override_workdir=True,
             target_formats=(nav.Format.TF_SAVEDMODEL,),
-            profiler_config=ProfilerConfig(measurement_interval=100),
+            run_profiling=False,
         )
 
         assert status_file.is_file()
@@ -126,7 +126,7 @@ def test_tf2_export_tf_trt():
             model_name=model_name,
             override_workdir=True,
             target_formats=(nav.Format.TF_TRT,),
-            profiler_config=ProfilerConfig(measurement_interval=100),
+            run_profiling=False,
         )
 
         assert status_file.is_file()
@@ -166,7 +166,7 @@ def test_tf2_export_tf_onnx():
             model_name=model_name,
             override_workdir=True,
             target_formats=(nav.Format.ONNX,),
-            profiler_config=ProfilerConfig(measurement_interval=100),
+            run_profiling=False,
         )
 
         assert status_file.is_file()
@@ -247,7 +247,7 @@ def test_tf2_export_string_format():
             override_workdir=True,
             target_formats="tf-trt",
             target_precisions="fp32",
-            profiler_config=ProfilerConfig(measurement_interval=100),
+            run_profiling=False,
         )
 
         assert status_file.is_file()

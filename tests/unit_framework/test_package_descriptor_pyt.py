@@ -34,7 +34,7 @@ from model_navigator.tensor import TensorSpec
 # pytype: enable=import-error
 
 
-dataloader = [torch.randn(1) for _ in range(10)]
+dataloader = [torch.randn(1) for _ in range(5)]
 
 
 class MyModule(torch.nn.Module):

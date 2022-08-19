@@ -18,7 +18,6 @@ from pathlib import Path
 import tensorflow
 
 import model_navigator as nav
-from model_navigator.framework_api.commands.performance import ProfilerConfig
 from model_navigator.utils.device import get_gpus
 
 # pytype: enable=import-error
@@ -53,7 +52,7 @@ def test_tf2_tensor_dataloader():
 
         dataloader = [
             tensorflow.random.uniform(shape=[1, 224, 224, 3], minval=0, maxval=1, dtype=tensorflow.dtypes.float32)
-            for _ in range(10)
+            for _ in range(5)
         ]
 
         inp = tensorflow.keras.layers.Input((224, 224, 3))
@@ -68,7 +67,8 @@ def test_tf2_tensor_dataloader():
             model_name=model_name,
             override_workdir=True,
             input_names=("input_x",),
-            profiler_config=ProfilerConfig(measurement_interval=100),
+            run_profiling=False,
+            target_formats=(nav.Format.TF_SAVEDMODEL,),
         )
 
         assert status_file.is_file()
@@ -84,8 +84,6 @@ def test_tf2_tensor_dataloader():
 
         # Output formats
         assert check_model_dir(model_dir=package_dir / "tf-savedmodel")
-        assert check_model_dir(model_dir=package_dir / "tf-trt-fp16") is CUDA_AVAILABLE
-        assert check_model_dir(model_dir=package_dir / "tf-trt-fp32") is CUDA_AVAILABLE
 
 
 def test_tf2_sequence_dataloader():
@@ -104,7 +102,7 @@ def test_tf2_sequence_dataloader():
                 tensorflow.random.uniform(shape=[1, 224, 224, 3], minval=0, maxval=1, dtype=tensorflow.dtypes.float32),
                 tensorflow.random.uniform(shape=[1, 224, 224, 3], minval=0, maxval=1, dtype=tensorflow.dtypes.float32),
             ]
-            for _ in range(10)
+            for _ in range(5)
         ]
 
         x, y = tensorflow.keras.layers.Input((224, 224, 3)), tensorflow.keras.layers.Input((224, 224, 3))
@@ -119,7 +117,8 @@ def test_tf2_sequence_dataloader():
             model_name=model_name,
             override_workdir=True,
             input_names=("input_x", "input_y"),
-            profiler_config=ProfilerConfig(measurement_interval=100),
+            run_profiling=False,
+            target_formats=(nav.Format.TF_SAVEDMODEL,),
         )
 
         assert status_file.is_file()
@@ -135,8 +134,6 @@ def test_tf2_sequence_dataloader():
 
         # Output formats
         assert check_model_dir(model_dir=package_dir / "tf-savedmodel")
-        assert check_model_dir(model_dir=package_dir / "tf-trt-fp16") is CUDA_AVAILABLE
-        assert check_model_dir(model_dir=package_dir / "tf-trt-fp32") is CUDA_AVAILABLE
 
 
 def test_tf2_dict_dataloader():
@@ -159,7 +156,7 @@ def test_tf2_dict_dataloader():
                     shape=[1, 224, 224, 3], minval=0, maxval=1, dtype=tensorflow.dtypes.float32
                 ),
             }
-            for _ in range(10)
+            for _ in range(5)
         ]
 
         input = {
@@ -177,7 +174,8 @@ def test_tf2_dict_dataloader():
             model_name=model_name,
             override_workdir=True,
             input_names=("input_x", "input_y"),
-            profiler_config=ProfilerConfig(measurement_interval=100),
+            run_profiling=False,
+            target_formats=(nav.Format.TF_SAVEDMODEL,),
         )
 
         assert status_file.is_file()
@@ -193,5 +191,3 @@ def test_tf2_dict_dataloader():
 
         # Output formats
         assert check_model_dir(model_dir=package_dir / "tf-savedmodel")
-        assert check_model_dir(model_dir=package_dir / "tf-trt-fp16") is CUDA_AVAILABLE
-        assert check_model_dir(model_dir=package_dir / "tf-trt-fp32") is CUDA_AVAILABLE

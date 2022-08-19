@@ -21,7 +21,6 @@ import numpy
 import tensorflow
 
 import model_navigator as nav
-from model_navigator.framework_api.commands.performance import ProfilerConfig
 
 # pytype: enable=import-error
 
@@ -46,7 +45,7 @@ def check_model_dir(model_dir: Path, format: nav.Format) -> bool:
     return True
 
 
-dataloader = [numpy.random.rand(1, 10, 10) for _ in range(10)]
+dataloader = [numpy.random.rand(1, 10, 10) for _ in range(5)]
 params = numpy.random.rand(1, 10, 10)
 
 
@@ -74,7 +73,7 @@ def test_jax_export_savedmodel():
             model_name=model_name,
             override_workdir=True,
             target_formats=(nav.Format.TF_SAVEDMODEL,),
-            profiler_config=ProfilerConfig(measurement_interval=100),
+            run_profiling=False,
             batch_dim=None,
         )
         assert status_file.is_file()

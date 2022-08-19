@@ -22,17 +22,16 @@ import tensorflow
 
 import model_navigator as nav
 
-# from model_navigator.framework_api.commands.correctness import Correctness
+
 from model_navigator.framework_api.commands.data_dump.samples import DumpInputModelData, DumpOutputModelData
 
-# from model_navigator.framework_api.commands.performance import ProfilerConfig
 from model_navigator.tensor import TensorSpec
 
 gpus = tensorflow.config.experimental.list_physical_devices("GPU")
 for gpu in gpus:
     tensorflow.config.experimental.set_memory_growth(gpu, True)
 
-dataloader = [numpy.random.rand(1, 10, 10) for _ in range(10)]
+dataloader = [numpy.random.rand(1, 10, 10) for _ in range(5)]
 params = numpy.random.rand(1, 10, 10)
 
 

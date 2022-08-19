@@ -75,7 +75,7 @@ if __name__ == "__main__":
         **export_config,
         target_precisions=(nav.TensorRTPrecision.FP32,),
         opset=13,
-        profiler_config=nav.ProfilerConfig(measurement_request_count=200),
+        profiler_config=nav.ProfilerConfig(measurement_request_count=20),
     )
     # pytype: enable=not-callable
     nav.LOGGER.info(f"{pkg_desc.get_formats_status()=}")

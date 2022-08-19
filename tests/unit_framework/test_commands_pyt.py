@@ -43,7 +43,7 @@ VALUE_IN_TENSOR = 9.0
 OPSET = 11
 
 
-dataloader = [torch.full((1, 1), VALUE_IN_TENSOR) for _ in range(10)]
+dataloader = [torch.full((1, 1), VALUE_IN_TENSOR) for _ in range(5)]
 
 
 class MyModule(torch.nn.Module):
@@ -241,7 +241,7 @@ def test_pyt_export_onnx():
 
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        dataloader_ = (torch.full((3, 5), VALUE_IN_TENSOR, device=device) for _ in range(10))
+        dataloader_ = (torch.full((3, 5), VALUE_IN_TENSOR, device=device) for _ in range(5))
         model_ = torch.nn.Linear(5, 7).to(device).eval()
 
         input_data = next(iter(dataloader_))
