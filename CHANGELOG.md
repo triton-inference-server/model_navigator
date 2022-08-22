@@ -18,18 +18,22 @@ limitations under the License.
 
 ## 0.3.4 (unreleased)
 - Updated NVIDIA containers defaults to 22.07
+- Model Navigator OTIS:
+  - removed: `TF32` precision for TensorRT from CLI options
+  - fix: Tensorflow module was imported when obtaining model signature during conversion
 - Model Navigator Export API:
-  - new: support for building framework containers with Model Navigator installed
-  - new: example for loading Navigator Package for reproducing the results
-  - new: create reproducing script for correctness and performance steps
+  - new: Support for building framework containers with Model Navigator installed
+  - new: Example for loading Navigator Package for reproducing the results
+  - new: Create reproducing script for correctness and performance steps
   - new: TrtexecRunner for correctness and performance tests with [trtexec](https://docs.nvidia.com/deeplearning/tensorrt/developer-guide/index.html#trtexec) tool
-  - new: removed `TF32` precision for TensorRT and use TF32 support by default for models with FP32 precision
-  - change: rename of `onnx_runtimes` export function parameters to `runtimes`
-  - fix: do not save TF-TRT models to the .nav package
-  - fix: do not save TF-TRT models from the .nav package
-  - fix: correctly load .nav packages when `_input_names` or `_output_names` specified
-  - fix: adjust TF and TF-TRT model signatures to match `input_names`
-  - fix: save ONNX opset for CLI configuration inside package
+  - new: Use TF32 support by default for models with FP32 precision
+  - change: Rename of `onnx_runtimes` export function parameters to `runtimes`
+  - removed: `TF32` precision for TensorRT from available options
+  - fix: Do not save TF-TRT models to the .nav package
+  - fix: Do not save TF-TRT models from the .nav package
+  - fix: Correctly load .nav packages when `_input_names` or `_output_names` specified
+  - fix: Adjust TF and TF-TRT model signatures to match `input_names`
+  - fix: Save ONNX opset for CLI configuration inside package
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 - Version of external components used during testing:
@@ -43,10 +47,10 @@ limitations under the License.
 
 ## 0.3.3
 - Model Navigator Export API:
-  - new: improved handling inputs and outputs metadata
+  - new: Improved handling inputs and outputs metadata
   - new: Navigator Package version updated to 0.1.3
-  - new: backward compatibility with previous versions of Navigator Package
-  - fix: dynamic shapes for output shapes were read incorrectly
+  - new: Backward compatibility with previous versions of Navigator Package
+  - fix: Dynamic shapes for output shapes were read incorrectly
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 - Version of external components used during testing:
@@ -60,7 +64,7 @@ limitations under the License.
 
 ## 0.3.2
 - Updated NVIDIA containers defaults to 22.06
-- Model Navigator CLI:
+- Model Navigator OTIS:
   - new: Perf Analyzer profiling data use base64 format for content
   - fix: Signature for TensorRT model when has `uint64` or `int64` input and/or outputs defined
 - Model Navigator Export API:
@@ -69,7 +73,7 @@ limitations under the License.
   - new: Add atol and rtol configuration to CLI config for model
   - new: Added experimental support for JAX models
   - new: In case of export or conversion failures prepere minimal scripts to reproduce errors
-  - fix: conversion parameters are not stored in Navigator Package for CLI execution
+  - fix: Conversion parameters are not stored in Navigator Package for CLI execution
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 - Version of external components used during testing:
@@ -83,7 +87,7 @@ limitations under the License.
 
 ## 0.3.1
 - Updated NVIDIA containers defaults to 22.05
-- Model Navigator CLI:
+- Model Navigator OTIS:
   - fix: Saving paths inside the Triton package status file
   - fix: Empty list of gpus cause the process run on CPU only
   - fix: Reading content from zipped Navigator Package
@@ -96,10 +100,10 @@ limitations under the License.
     even if it's not the best performing one.
   - removed: The `--tensorrt-strict-types` option has been removed due to deprecation of the functionality in upstream libraries.
 - Model Navigator Export API:
-  - Added dynamic shapes support and trt dynamic shapes support for TensorFlow2 export
-  - Improved per format logging
-  - PyTorch to Torch-TRT precision selection added
-  - Advanced profiling (measurement windows, configurable batch sizes)
+  - new: Added dynamic shapes support and trt dynamic shapes support for TensorFlow2 export
+  - new: Improved per format logging
+  - new: PyTorch to Torch-TRT precision selection added
+  - new: Advanced profiling (measurement windows, configurable batch sizes)
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 - Version of external components used during testing:
@@ -119,12 +123,11 @@ limitations under the License.
   - Support for exporting HuggingFace models
   - Conversion, Correctness and performance tests for exported models
   - Definition of package structure for storing all exported models and additional metadata
-- `run` command has been deprecated and may be removed in a future release. Two new commands are introduced to replace it:
-  - `optimize` which does the same conversion, configuration, profiling and analysis steps as `run` and produces an output .triton.nav package.
-  - `select`, which, given the result of `optimize` and a set of constraints,
-    selects the best-performing configuration and deploys it as a Triton Inference Server model repository.
-- Profiling related:
-  - Added support for using shared memory option for Perf Analyzer
+- Model Navigator OTIS:
+  - change: `run` command has been deprecated and may be removed in a future release
+  - new: `optimize` command replace `run` and produces an output `*.triton.nav` package
+  - new: `select` selects the best-performing configuration from `*.triton.nav` package and create a Triton Inference Server model repository
+  - new: Added support for using shared memory option for Perf Analyzer
 - Remove wkhtmltopdf package dependency
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)

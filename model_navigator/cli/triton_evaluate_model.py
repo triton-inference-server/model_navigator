@@ -30,7 +30,7 @@ from model_navigator.cli.spec import (
     PerfMeasurementConfigCli,
     TritonClientConfigCli,
 )
-from model_navigator.cli.utils import exit_cli_command, get_dataloader, is_cli_command
+from model_navigator.cli.utils import exit_cli_command, is_cli_command
 from model_navigator.converter import DatasetProfileConfig
 from model_navigator.exceptions import ModelNavigatorException
 from model_navigator.log import log_dict, set_logger
@@ -207,15 +207,6 @@ def _perf_analyzer_evaluation(
     return output
 
 
-def _get_max_shapes(kwargs, dataset_profile_config):
-    try:
-        dataloader = get_dataloader(**kwargs)
-    except ModelNavigatorException:
-        return dataset_profile_config.max_shapes
-    else:
-        return dataloader.max_shapes
-
-
 @cli.common_options
 @click.command(name="triton-evaluate-model", help="Evaluate model on Triton using Perf Analyzer")
 @click.option("--model-name", required=True, help=ModelConfigCli.model_name.help)
@@ -317,8 +308,7 @@ def triton_evaluate_model_cmd(
                 **dataclasses.asdict(model_signature_config),
             )
         else:
-            max_shapes = _get_max_shapes(kwargs, dataset_profile_config)
-            shapes_params = get_shape_params(max_shapes)
+            shapes_params = get_shape_params(dataset_profile_config.max_shapes)
             if shapes_params:
                 shapes = shapes_params
 

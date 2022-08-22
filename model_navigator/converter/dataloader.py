@@ -23,7 +23,7 @@ import numpy as np
 from model_navigator.converter import DatasetProfileConfig
 from model_navigator.converter.utils import navigator_subprocess
 from model_navigator.exceptions import ModelNavigatorException
-from model_navigator.model import ModelConfig, ModelSignatureConfig
+from model_navigator.model import Format, Model, ModelConfig, ModelSignatureConfig
 from model_navigator.tensor import TensorSpec
 from model_navigator.utils.nav_package import NavPackage
 
@@ -71,58 +71,19 @@ def _generate_random(dtype, shapes, value_range, rng) -> Iterable[Tuple]:
         raise ModelNavigatorException(f"Don't know how to generate random tensor for dtype={dtype}")
 
 
-def _get_tf_signature(model_path):
-    import tensorflow as tf  # pytype: disable=import-error
+def extract_model_signature(model_config: ModelConfig):
+    model = Model(model_config.model_name, model_config.model_path, explicit_format=model_config.model_format)
 
-    def conv_shape(shape):
-        xl = shape.as_list()
-        for i, x in enumerate(xl):
-            if not x:
-                xl[i] = -1
-        return tuple(xl)
+    # PyTorch and ONNX models are available with input model
+    if model.has_signature():
+        return model.signature
 
-    model = tf.saved_model.load(model_path.as_posix())
-
-    try:
-        concrete_func = model.signatures["serving_default"]
-
-        # inspired by https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/tools/saved_model_cli.py#L205
-        if concrete_func.structured_input_signature:
-            input_args, input_kwargs = concrete_func.structured_input_signature
-            input_names = list(input_kwargs)
-            assert not input_args, f"Unsupported positional args in concrete function signature: args={input_args}"
-            inputs = {
-                name: TensorSpec(sig.name, conv_shape(sig.shape), np.dtype(sig.dtype.as_numpy_dtype))
-                for name, sig in input_kwargs.items()
-            }
-        elif concrete_func._arg_keywords:  # pylint: disable=protected-access
-            # For pure ConcreteFunctions we might have nothing better than _arg_keywords.
-            assert concrete_func._num_positional_args in [0, 1]
-            input_names = concrete_func._arg_keywords
-
-            # TODO: Is this needed at all? Is this even correct?
-            input_tensors = [tensor for tensor in concrete_func.inputs if tensor.dtype != tf.dtypes.resource]
-            inputs = {
-                name: TensorSpec(tensor.name, conv_shape(tensor.shape), np.dtype(tensor.dtype.as_numpy_dtype))
-                for name, tensor in zip(input_names, input_tensors)
-            }
-
-        outputs = {
-            tensor.name: TensorSpec(tensor.name, conv_shape(tensor.shape), np.dtype(tensor.dtype.as_numpy_dtype))
-            for tensor in concrete_func.outputs
-        }
-
-        return ModelSignatureConfig(inputs=inputs, outputs=outputs)
-    except Exception as e:
-        LOGGER.error(e)
-        raise
-
-
-def extract_model_signature(model_path):
-    # run in a separate process to avoid problems with global resource management
-    with navigator_subprocess() as navigator:
-        module = navigator.module("model_navigator.converter.dataloader")
-        return module._get_tf_signature(model_path)
+    # Obtain signature for TF-SavedModel only when the input model has correct format
+    if model_config.model_format == Format.TF_SAVEDMODEL:
+        # Run in a separate process to avoid problems with global resource management
+        with navigator_subprocess() as navigator:
+            module = navigator.module("model_navigator.converter.tf.utils")
+            return module.get_tf_signature(model_config.model_path)
 
 
 def _check_dynamic_dims(shape, inp):
@@ -168,7 +129,7 @@ class RandomDataloader(Dataloader):
             the value is ignored, unless `enforce_max_batch_size` is set to True.
         enforce_max_batch_size:
             Override batch size range specified in `dataset_profile` to (1, `max_batch_size`),
-            if both those args are provided are provided. This exists only to facilitate
+            if both those args are provided. This exists only to facilitate
             compatibility with previous Model Navigator releases and should be deprecated
             and removed in the future.
     """
@@ -217,10 +178,13 @@ class RandomDataloader(Dataloader):
 
     def _generate_default_profile(self, model_config, model_signature, max_batch_size):
         if model_config is None and (model_signature is None or model_signature.is_missing()):
-            raise ModelNavigatorException("Cannot reconstruct input signatures")
+            raise ModelNavigatorException("Cannot reconstruct input signatures.")
 
         if model_signature is None or model_signature.is_missing():
             model_signature = extract_model_signature(model_config.model_path)
+
+        if model_signature is None or model_signature.is_missing():
+            raise ModelNavigatorException("Extracted input signatures is missing.")
 
         # dtypes are almost always missing, so do those first
         if self.dataset_profile_config.dtypes is None:
