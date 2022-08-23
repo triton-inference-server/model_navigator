@@ -32,3 +32,4 @@ Sphinx>=4.0.1
 sphinx-rtd-theme>=0.5.2
 tox>=3.23.1
 watchdog[watchmedo]>=2.1.1
+pytest-unordered>=0.5.1

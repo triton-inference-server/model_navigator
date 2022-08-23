@@ -15,11 +15,16 @@
 import os
 import tempfile
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 import torch
+from pytest_unordered import unordered
 
 import model_navigator as nav
+from model_navigator.converter.config import TensorRTPrecision, TensorRTPrecisionMode
+from model_navigator.framework_api.package_descriptor import PackageDescriptor
+from model_navigator.model import Format
 from model_navigator.utils.device import get_gpus
 
 # pytype: enable=import-error
@@ -245,3 +250,108 @@ def test_backward_compatibility(nav_package_path: str):
                 assert (
                     runtime_status == new_status[format][runtime]
                 ), f"{format} {runtime} status not matching with the old package."
+
+
+def test_use_defaults_override_conversion_parameters_for_pyt():
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        model_name = "navigator_model"
+
+        workdir = Path(tmp_dir) / "navigator_workdir"
+        load_workdir = Path(tmp_dir) / "load_navigator_workdir"
+        nav_package_path = Path(tmp_dir) / f"{model_name}.nav"
+
+        pkg_desc = nav.torch.export(
+            model=model,
+            dataloader=dataloader,
+            override_workdir=True,
+            workdir=workdir,
+            model_name=model_name,
+            run_profiling=False,
+            target_formats=(nav.Format.TORCHSCRIPT,),
+        )
+        nav.save(pkg_desc, path=nav_package_path)
+
+        with patch.object(PackageDescriptor, "build") as mock_method, patch(
+            "model_navigator.framework_api.load._copy_verified_status"
+        ), patch("model_navigator.framework_api.load._copy_git_info"):
+            nav.load(
+                nav_package_path,
+                workdir=load_workdir,
+                retest_conversions=True,
+                use_config_defaults=True,
+            )
+
+            assert mock_method.called
+
+            mock_call = mock_method.mock_calls[0]
+            config = mock_call.args[1]
+
+            assert config.target_formats == (Format.TORCHSCRIPT, Format.ONNX, Format.TORCH_TRT, Format.TENSORRT)
+            assert config.target_precisions == (TensorRTPrecision.FP32, TensorRTPrecision.FP16)
+            assert config.precision_mode == TensorRTPrecisionMode.HIERARCHY
+
+
+def test_use_defaults_override_conversion_parameters_for_onnx():
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        model_name = "navigator_model"
+
+        workdir = Path(tmp_dir) / "navigator_workdir"
+        load_workdir = Path(tmp_dir) / "load_navigator_workdir"
+        onnx_model_path = Path(tmp_dir) / "dummy_onnx.onnx"
+        nav_package_path = Path(tmp_dir) / f"{model_name}.nav"
+
+        torch.onnx.export(
+            model.to(device),
+            dataloader[0].to(device),
+            onnx_model_path.as_posix(),
+            opset_version=13,
+            dynamic_axes={"input_0": {0: "batch"}},
+            input_names=["input_0"],
+        )
+
+        if CUDA_AVAILABLE:
+            runtime = nav.RuntimeProvider.CUDA
+        else:
+            runtime = nav.RuntimeProvider.CPU
+
+        pkg_desc = nav.onnx.export(
+            model=onnx_model_path,
+            dataloader=numpy_dataloader,
+            override_workdir=True,
+            workdir=workdir,
+            model_name=model_name,
+            run_profiling=False,
+            target_formats=(nav.Format.ONNX,),
+            runtimes=(runtime,),
+        )
+
+        nav.save(pkg_desc, path=nav_package_path)
+
+        if CUDA_AVAILABLE:
+            expected_runtimes = (
+                nav.RuntimeProvider.CPU,
+                nav.RuntimeProvider.CUDA,
+                nav.RuntimeProvider.TRT,
+            )
+        else:
+            expected_runtimes = (nav.RuntimeProvider.CPU,)
+
+        with patch.object(PackageDescriptor, "build") as mock_method, patch(
+            "model_navigator.framework_api.load._copy_verified_status"
+        ), patch("model_navigator.framework_api.load._copy_git_info"):
+            nav.load(
+                nav_package_path,
+                workdir=load_workdir,
+                retest_conversions=True,
+                use_config_defaults=True,
+            )
+
+            assert mock_method.called
+
+            mock_call = mock_method.mock_calls[0]
+            config = mock_call.args[1]
+
+            assert config.target_formats == (Format.ONNX, Format.TENSORRT)
+            assert config.target_precisions == (TensorRTPrecision.FP32, TensorRTPrecision.FP16)
+            assert config.precision_mode == TensorRTPrecisionMode.HIERARCHY
+            assert config.runtimes == unordered(expected_runtimes)

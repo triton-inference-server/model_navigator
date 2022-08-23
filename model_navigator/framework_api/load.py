@@ -20,9 +20,10 @@ from typing import Dict, List, Optional, Union
 import yaml
 from packaging import version
 
-from model_navigator.converter.config import TensorRTPrecisionMode
+from model_navigator.converter.config import TensorRTPrecision, TensorRTPrecisionMode
 from model_navigator.framework_api.commands.performance import ProfilerConfig
 from model_navigator.framework_api.common import DataObject, TensorMetadata
+from model_navigator.framework_api.config import Config
 from model_navigator.framework_api.exceptions import ModelNavigatorBackwardCompatibilityError
 from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.package_descriptor import PackageDescriptor
@@ -36,11 +37,13 @@ from model_navigator.framework_api.pipelines.pipeline_manager import PipelineMan
 from model_navigator.framework_api.status import NavigatorStatus
 from model_navigator.framework_api.utils import (
     Framework,
+    format2runtimes,
     get_default_workdir,
     get_framework_export_formats,
     get_package_path,
     get_trt_profile_from_trt_dynamic_axes,
 )
+from model_navigator.model import Format
 from model_navigator.utils.device import get_gpus
 
 
@@ -135,7 +138,7 @@ class PackageUpdater:
                 update_func(package_descriptor)
 
 
-def _copy_verified_staus(pkg_desc_from: PackageDescriptor, pkg_desc_to: PackageDescriptor):
+def _copy_verified_status(pkg_desc_from: PackageDescriptor, pkg_desc_to: PackageDescriptor):
     for model_status_1, model_status_2 in zip(
         pkg_desc_from.navigator_status.model_status, pkg_desc_to.navigator_status.model_status
     ):
@@ -212,11 +215,28 @@ def _load_package_descriptor(
     return pkg_desc
 
 
+def _update_config_defaults(config: Config, framework: Framework):
+    config.target_precisions = (TensorRTPrecision.FP32, TensorRTPrecision.FP16)
+    config.precision_mode = TensorRTPrecisionMode.HIERARCHY
+    config.runtimes = format2runtimes(Format.ONNX)
+
+    if framework == Framework.PYT:
+        config.target_formats = (Format.TORCHSCRIPT, Format.ONNX, Format.TORCH_TRT, Format.TENSORRT)
+    elif framework == Framework.TF2:
+        config.target_formats = (Format.TF_SAVEDMODEL, Format.TF_TRT, Format.ONNX, Format.TENSORRT)
+    elif framework == Framework.JAX:
+        config.target_formats = (Format.TF_SAVEDMODEL, Format.TF_TRT, Format.ONNX, Format.TENSORRT)
+    else:
+        assert framework == Framework.ONNX
+        config.target_formats = (Format.ONNX, Format.TENSORRT)
+
+
 def load(
     path: Union[str, Path],
     workdir: Optional[Union[str, Path]] = None,
     override_workdir: bool = False,
     retest_conversions: bool = True,
+    use_config_defaults: bool = True,
     run_profiling: Optional[bool] = None,
     profiler_config: Optional[ProfilerConfig] = None,
     target_device: Optional[str] = None,
@@ -237,6 +257,10 @@ def load(
     config.from_source = False
     config.override_workdir = False
     config.disable_git_info = True
+
+    if use_config_defaults:
+        _update_config_defaults(config, pkg_desc.framework)
+
     if profiler_config is not None:
         config.profiler_config = profiler_config
     if target_device is None:
@@ -262,6 +286,6 @@ def load(
     ]
     pipeline_manager = PipelineManager(builders)
     new_pkg_desc = PackageDescriptor.build(pipeline_manager, config, existing_model_status=exported_model_status)
-    _copy_verified_staus(pkg_desc, new_pkg_desc)
+    _copy_verified_status(pkg_desc, new_pkg_desc)
     _copy_git_info(pkg_desc, new_pkg_desc)
     return new_pkg_desc

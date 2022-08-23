@@ -15,11 +15,15 @@
 import os
 import tempfile
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 import tensorflow
 
 import model_navigator as nav
+from model_navigator.converter.config import TensorRTPrecision, TensorRTPrecisionMode
+from model_navigator.framework_api.package_descriptor import PackageDescriptor
+from model_navigator.model import Format
 from model_navigator.utils.device import get_gpus
 
 # pytype: enable=import-error
@@ -192,3 +196,42 @@ def test_backward_compatibility(nav_package_path):
                 assert (
                     runtime_status == new_status[format][runtime]
                 ), f"{format} {runtime} status not matching with the old package."
+
+
+def test_use_defaults_override_conversion_parameters():
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        model_name = "navigator_model"
+
+        workdir = Path(tmp_dir) / "navigator_workdir"
+        load_workdir = Path(tmp_dir) / "load_navigator_workdir"
+        nav_package_path = Path(tmp_dir) / f"{model_name}.nav"
+
+        pkg_desc = nav.tensorflow.export(
+            model=model,
+            dataloader=dataloader,
+            override_workdir=True,
+            workdir=workdir,
+            model_name=model_name,
+            target_formats=(nav.Format.TF_SAVEDMODEL,),
+            run_profiling=False,
+        )
+        nav.save(pkg_desc, path=nav_package_path)
+
+        with patch.object(PackageDescriptor, "build") as mock_method, patch(
+            "model_navigator.framework_api.load._copy_verified_status"
+        ), patch("model_navigator.framework_api.load._copy_git_info"):
+            nav.load(
+                nav_package_path,
+                workdir=load_workdir,
+                retest_conversions=True,
+                use_config_defaults=True,
+            )
+
+            assert mock_method.called
+
+            mock_call = mock_method.mock_calls[0]
+            config = mock_call.args[1]
+
+            assert config.target_formats == (Format.TF_SAVEDMODEL, Format.TF_TRT, Format.ONNX, Format.TENSORRT)
+            assert config.target_precisions == (TensorRTPrecision.FP32, TensorRTPrecision.FP16)
+            assert config.precision_mode == TensorRTPrecisionMode.HIERARCHY
