@@ -182,7 +182,7 @@ def get_gpu_info():
             "tdp": device_details[3].strip(),
             "cuda_version": cuda_version,
         }
-    except FileNotFoundError as e:
+    except (FileNotFoundError, CalledProcessError) as e:
         LOGGER.debug(str(e))
         gpu_details = {
             "name": "n/a",
