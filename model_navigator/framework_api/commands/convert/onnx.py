@@ -24,7 +24,7 @@ from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.exceptions import ExecutionContext, UserError
 from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.runners.onnx import OnnxrtRunner
-from model_navigator.framework_api.utils import Framework, Status, get_package_path
+from model_navigator.framework_api.utils import Framework, Status, format_to_relative_model_path, get_package_path
 from model_navigator.model import Format
 from model_navigator.utils import device, tensorrt
 
@@ -34,6 +34,8 @@ class ConvertONNX2TRT(ConvertBase):
         self,
         target_precision: TensorRTPrecision,
         precision_mode: TensorRTPrecisionMode,
+        enable_xla: Optional[bool] = None,
+        jit_compile: Optional[bool] = None,
         requires: Tuple[Command, ...] = (),
     ):
         # pytype: disable=wrong-arg-types
@@ -45,6 +47,8 @@ class ConvertONNX2TRT(ConvertBase):
         )
         self.precision_mode = precision_mode
         self.target_precision = target_precision
+        self.enable_xla = enable_xla
+        self.jit_compile = jit_compile
         # pytype: enable=wrong-arg-types
 
     def __call__(
@@ -66,10 +70,10 @@ class ConvertONNX2TRT(ConvertBase):
 
             input_model_path = get_package_path(workdir, model_name) / ExportPYT2ONNX().get_output_relative_path()
         elif framework in (Framework.TF2, Framework.JAX):
-            from model_navigator.framework_api.commands.convert.tf import ConvertSavedModel2ONNX
-
-            input_model_path = (
-                get_package_path(workdir, model_name) / ConvertSavedModel2ONNX().get_output_relative_path()
+            input_model_path = get_package_path(workdir, model_name) / format_to_relative_model_path(
+                format=Format.ONNX,
+                enable_xla=self.enable_xla,
+                jit_compile=self.jit_compile,
             )
         elif framework == Framework.ONNX:  # ONNX
             from model_navigator.framework_api.commands.copy.onnx import CopyONNX

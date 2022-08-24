@@ -124,7 +124,11 @@ class Command(metaclass=ABCMeta):
 
     def get_output_relative_path(self):
         return format_to_relative_model_path(
-            format=self.target_format, jit_type=self.target_jit_type, precision=self.target_precision
+            format=self.target_format,
+            jit_type=self.target_jit_type,
+            precision=self.target_precision,
+            enable_xla=self.enable_xla,
+            jit_compile=self.jit_compile,
         )
 
     @staticmethod

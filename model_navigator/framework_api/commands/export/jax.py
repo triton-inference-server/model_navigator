@@ -28,27 +28,27 @@ from model_navigator.model import Format
 
 
 class ExportJAX2SavedModel(ExportBase):
-    def __init__(self, requires: Tuple[Command, ...] = ()):
+    def __init__(self, jit_compile: bool, enable_xla: bool, requires: Tuple[Command, ...] = ()):
         super().__init__(
             name="Export JAX to SavedModel",
             command_type=CommandType.EXPORT,
             target_format=Format.TF_SAVEDMODEL,
             requires=requires,
         )
+        self.enable_xla = enable_xla
+        self.jit_compile = jit_compile
 
     def __call__(
         self,
         model_name: str,
         model_params,
         workdir: Path,
-        jit_compile: bool,
-        enable_xla: bool,
         input_metadata: TensorMetadata,
         model: Optional[tf.keras.Model] = None,
         batch_dim: Optional[int] = 0,
         **kwargs,
     ) -> Optional[Path]:
-        LOGGER.info("JAX to SavedModel export started")
+        LOGGER.info(f"JAX to SavedModel export started {self.jit_compile=}, {self.enable_xla=}")
 
         exported_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
         if exported_model_path.is_file() or exported_model_path.is_dir():
@@ -62,8 +62,8 @@ class ExportJAX2SavedModel(ExportBase):
         with ExecutionContext(exported_model_path.parent / "reproduce_conversion.py") as context:
             kwargs = {
                 "exported_model_path": exported_model_path.as_posix(),
-                "jit_compile": jit_compile,
-                "enable_xla": enable_xla,
+                "jit_compile": self.jit_compile,
+                "enable_xla": self.enable_xla,
                 "input_metadata": input_metadata.to_json(),
             }
 

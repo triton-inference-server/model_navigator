@@ -55,6 +55,8 @@ class ConfigCli(Command):
         requires: Tuple[Command, ...] = (),
         target_jit_type: Optional[JitType] = None,
         target_precision: Optional[TensorRTPrecision] = None,
+        enable_xla: Optional[bool] = None,
+        jit_compile: Optional[bool] = None,
     ):
         super().__init__(name=name, command_type=CommandType.GEN_CONFIG, requires=requires, target_format=target_format)
         self.target_jit_type = target_jit_type
@@ -62,6 +64,8 @@ class ConfigCli(Command):
         self.runtime_results = runtime_results
         self.atol = atol
         self.rtol = rtol
+        self.enable_xla = enable_xla
+        self.jit_compile = jit_compile
 
     def __call__(
         self,
@@ -74,7 +78,11 @@ class ConfigCli(Command):
         **kwargs,
     ) -> Optional[Path]:
         model_path = format_to_relative_model_path(
-            format=self.target_format, jit_type=self.target_jit_type, precision=self.target_precision
+            format=self.target_format,
+            jit_type=self.target_jit_type,
+            precision=self.target_precision,
+            enable_xla=self.enable_xla,
+            jit_compile=self.jit_compile,
         )
         config_relative_path = model_path.parent / "config.yaml"
         config_path = get_package_path(workdir, model_name) / config_relative_path

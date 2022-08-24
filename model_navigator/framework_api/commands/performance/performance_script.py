@@ -38,6 +38,8 @@ def profile(
     runtime: str,
     profiler_config: Dict,
     max_batch_size: Optional[int],
+    enable_xla: bool,
+    jit_compile: bool,
     runner_manager_dict: Dict,
 ):
 
@@ -51,6 +53,8 @@ def profile(
         jit_type=JitType(jit_type) if jit_type else None,
         precision=TensorRTPrecision(precision) if precision else None,
         runtime=RuntimeProvider(runtime) if runtime else None,
+        enable_xla=enable_xla,
+        jit_compile=jit_compile,
     )
 
     results = Profiler(

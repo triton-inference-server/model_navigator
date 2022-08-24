@@ -70,8 +70,8 @@ class Config(DataObject):
 
     # JAX
     model_params: Optional[Any] = None
-    jit_compile: Optional[bool] = None
-    enable_xla: Optional[bool] = None
+    jit_compile: Optional[Tuple[bool]] = None
+    enable_xla: Optional[Tuple[bool]] = None
 
     # Correctness is computed using allclose function for all tensors
     # for output from converted model and source model

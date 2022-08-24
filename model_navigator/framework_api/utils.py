@@ -168,20 +168,36 @@ def get_package_path(workdir: Path, model_name: str):
 # pytype: disable=wrong-arg-types
 # pytype: disable=attribute-error
 def format_to_relative_model_path(
-    format: Optional[Format] = None, jit_type: Optional[JitType] = None, precision: Optional[TensorRTPrecision] = None
+    format: Optional[Format] = None,
+    jit_type: Optional[JitType] = None,
+    precision: Optional[TensorRTPrecision] = None,
+    enable_xla: Optional[bool] = None,
+    jit_compile: Optional[bool] = None,
 ) -> Path:
+    path_str = f"{format.value}"
+    if jit_type:
+        path_str += f"-{jit_type.value}"
+    if enable_xla is True:
+        path_str += "-xla"
+    if jit_compile is True:
+        path_str += "-jit"
+    if precision:
+        path_str += f"-{precision.value}"
+
+    path = Path(path_str)
+
     if format == Format.ONNX:
-        return Path(f"{format.value}") / "model.onnx"
+        return path / "model.onnx"
     if format == Format.TORCHSCRIPT and jit_type:
-        return Path(f"{format.value}-{jit_type.value}") / "model.pt"
+        return path / "model.pt"
     if format == Format.TORCH_TRT and jit_type and precision:
-        return Path(f"{format.value}-{jit_type.value}-{precision.value}") / "model.pt"
+        return path / "model.pt"
     if format == Format.TF_SAVEDMODEL:
-        return Path(format.value) / "model.savedmodel"
+        return path / "model.savedmodel"
     if format == Format.TF_TRT and precision:
-        return Path(f"{format.value}-{precision.value}") / "model.savedmodel"
+        return path / "model.savedmodel"
     if format == Format.TENSORRT and precision:
-        return Path(f"{format.value}-{precision.value}") / "model.plan"
+        return path / "model.plan"
     else:
         raise Exception(
             f"No model path found for format: {format}, jit_type: {jit_type}, precision: {precision}, provide valid arguments or implmenet this method in your Command."

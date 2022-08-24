@@ -256,6 +256,8 @@ class Performance(Command):
         target_jit_type: Optional[JitType] = None,
         target_precision: Optional[TensorRTPrecision] = None,
         runtime_provider: Optional[RuntimeProvider] = None,
+        enable_xla: Optional[bool] = None,
+        jit_compile: Optional[bool] = None,
     ):
         super().__init__(
             name=name, command_type=CommandType.PERFORMANCE, target_format=target_format, requires=requires
@@ -263,6 +265,8 @@ class Performance(Command):
         self.target_jit_type = target_jit_type
         self.target_precision = target_precision
         self.runtime_provider = runtime_provider
+        self.enable_xla = enable_xla
+        self.jit_compile = jit_compile
 
     def _update_package_descriptor(self, package_descriptor: "PackageDescriptor", **kwargs) -> None:
         runtime_results = package_descriptor.get_runtime_results(
@@ -270,6 +274,8 @@ class Performance(Command):
             jit_type=self.target_jit_type,
             precision=self.target_precision,
             runtime_provider=self.runtime_provider,
+            enable_xla=self.enable_xla,
+            jit_compile=self.jit_compile,
         )
         if runtime_results.status == Status.OK:
             if self.status == Status.OK:
@@ -290,9 +296,14 @@ class Performance(Command):
         max_batch_size: Optional[int],
         **kwargs,
     ) -> List[ProfilingResults]:
+        LOGGER.info(f"Performance test for: {self.target_format} {self.runtime_provider} started.")
 
         model_path = get_package_path(workdir=workdir, model_name=model_name) / format_to_relative_model_path(
-            format=self.target_format, jit_type=self.target_jit_type, precision=self.target_precision
+            format=self.target_format,
+            jit_type=self.target_jit_type,
+            precision=self.target_precision,
+            enable_xla=self.enable_xla,
+            jit_compile=self.jit_compile,
         )
         model_dir = model_path.parent
 
@@ -311,6 +322,8 @@ class Performance(Command):
                 "precision": self.target_precision.value if self.target_precision else None,
                 "jit_type": self.target_jit_type.value if self.target_jit_type else None,
                 "runtime": self.runtime_provider.value if self.runtime_provider else None,
+                "enable_xla": self.enable_xla,
+                "jit_compile": self.jit_compile,
                 "profiler_config": str(profiler_config.to_dict(parse=True)).replace(" ", ""),
                 "max_batch_size": max_batch_size,
                 "runner_manager_dict": str(runner_manager.to_dict(parse=True)).replace(" ", ""),

@@ -33,14 +33,26 @@ def tensorflow_export_builder(config: Config, package_descriptor: "PackageDescri
 
 def tensorflow_conversion_builder(config: Config, package_descriptor: "PackageDescriptor") -> Pipeline:
     commands: List[Command] = []
-
-    if Format.ONNX in config.target_formats or Format.TENSORRT in config.target_formats:
-        commands.append(ConvertSavedModel2ONNX())
-    if Format.TENSORRT in config.target_formats:
-        for target_precision in config.target_precisions:
-            commands.append(ConvertONNX2TRT(target_precision=target_precision, precision_mode=config.precision_mode))
-    if Format.TF_TRT in config.target_formats:
-        for target_precision in config.target_precisions:
-            commands.append(ConvertSavedModel2TFTRT(target_precision=target_precision))
+    for enable_xla in config.enable_xla if config.enable_xla else [None]:
+        for jit_compile in config.jit_compile if config.jit_compile else [None]:
+            if Format.ONNX in config.target_formats or Format.TENSORRT in config.target_formats:
+                commands.append(ConvertSavedModel2ONNX(enable_xla=enable_xla, jit_compile=jit_compile))
+            if Format.TENSORRT in config.target_formats:
+                for target_precision in config.target_precisions:
+                    commands.append(
+                        ConvertONNX2TRT(
+                            target_precision=target_precision,
+                            precision_mode=config.precision_mode,
+                            enable_xla=enable_xla,
+                            jit_compile=jit_compile,
+                        )
+                    )
+            if Format.TF_TRT in config.target_formats:
+                for target_precision in config.target_precisions:
+                    commands.append(
+                        ConvertSavedModel2TFTRT(
+                            target_precision=target_precision, enable_xla=enable_xla, jit_compile=jit_compile
+                        )
+                    )
 
     return Pipeline(name="TensorFlow2 Conversion", framework=Framework.TF2, commands=commands)

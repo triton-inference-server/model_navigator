@@ -34,8 +34,9 @@ limitations under the License.
   - [Saved samples](#saved-samples)
   - [Saving and loading .nav package](#saving-and-loading-nav-package)
 - [Examples](#examples)
-  - [PyTorch export](#pytorch-export)
-  - [Example TensorFlow](#example-tensorflow)
+  - [PyTorch](#pytorch)
+  - [TensorFlow2](#tensorflow2)
+  - [JAX](#jax)
 - [API](#api)
   - [Export PyTorch](#export-pytorch)
   - [Export TensorFlow 2](#export-tensorflow-2)
@@ -60,20 +61,43 @@ NGC Containers are the recommended environments for Model Navigator, they have a
 - [PyTorch](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch)
 - [TensorFlow](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/tensorflow)
 
+The minimal required `Python` version for Triton Model Navigator is `3.8`.
+
+For JAX models, the apropriate JAX library version is required`(CPU, CUDA, TPU)` and all other derived frameworks used by model `(Flax, Haiku)`.
+
+Installation details:
+- [JAX](https://github.com/google/jax#installation)
+- [Flax](https://github.com/google/flax#quick-install)
+- [Haiku](https://github.com/deepmind/dm-haiku#installation)
+
+For JAX models set `XLA_PYTHON_CLIENT_PREALLOCATE` environment variable to avoid Out of Memory issues:
+
+```shell
+$ export XLA_PYTHON_CLIENT_PREALLOCATE=false
+```
+
+For JAX and TensorFlow2 models, enable tensorflow memory growth to avoid allocating all GPU memory:
+
+```python
+import tensorflow
+
+gpus = tensorflow.config.experimental.list_physical_devices("GPU")
+for gpu in gpus:
+    tensorflow.config.experimental.set_memory_growth(gpu, True)
+```
+
 ## Installation
 
 To install Model Navigator use command:
 
 ```shell
-$ pip install --extra-index-url https://pypi.ngc.nvidia.com -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html git+https://github.com/triton-inference-server/model_navigator.git@v0.3.3#egg=model-navigator[<extras,>] --upgrade
+$ pip install --extra-index-url https://pypi.ngc.nvidia.com git+https://github.com/triton-inference-server/model_navigator.git@v0.3.3#egg=model-navigator[<extras,>] --upgrade
 ```
 
 Extras:
 - pyt - Model Navigator Export API for PyTorch
-- tf - Model Navigator Export API for TensorFlow2
-- jax - Model Navigator Export API for JAX CPU
-- jax_cuda - Model Navigator Export API for JAX GPU
-- jax_tpu - Model Navigator Export API for JAX TPU
+- tf - Model Navigator Export API for TensorFlow2.
+- jax - Model Navigator Export API for JAX.
 - cli - Model Navigator CLI
 - huggingface - Model Navigator Export API for HuggingFace
 
@@ -84,6 +108,9 @@ Steps described below represent core functionality related to export and model v
 
 ### Model export
 Exports model from framework source code to binary format.
+
+Supported output formats for JAX:
+- SavedModel
 
 Supported output formats for TensorFlow2:
 - SavedModel
@@ -100,7 +127,7 @@ Convert model from exported format to target format.
 We perform the set of conversion to test functionality. Main purpose of this step is to test conversion paths for model.
 For optimal performance you have to do conversion on production target with Model Navigator CLI.
 
-Supported conversions for TensorFlow2:
+Supported conversions for TensorFlow2 and JAX:
 - SavedModel to TensorFlow-TensorRT SavedModel
 - SavedModel to ONNX
 - ONNX to TensorRT
@@ -219,7 +246,7 @@ Saved ```.nav``` package can be loaded back into the Model Navigator API with ``
 
 ## Examples
 
-### PyTorch export
+### PyTorch
 ```python
 import torch
 import model_navigator as nav
@@ -253,7 +280,7 @@ package_desc.save("example_pyt.nav")
 loaded_package_desc = nav.load("example_pyt.nav")
 ```
 
-### Example TensorFlow
+### TensorFlow2
 ```python
 import tensorflow as tf
 import model_navigator as nav
@@ -287,6 +314,54 @@ package_desc.save("example_tf2.nav")
 
 loaded_package_desc = nav.load("example_tf2.nav")
 ```
+
+### JAX
+Before running JAX EXPORT set environment variable `export XLA_PYTHON_CLIENT_PREALLOCATE=false` to stop JAX from taking all GPU memory.
+
+Signature of model forward function must match number and order of inputs returned from dataloader. Last argument of forward function must be `params` and should contain model weights.
+Forward function can be wrapped to workaround signature missmatch.
+
+For T5 model addionally install SentencePiece:
+
+```shell
+pip install sentencepiece
+```
+
+```python
+from pathlib import Path
+
+import tensorflow
+from transformers import FlaxT5Model, T5Tokenizer
+
+import model_navigator as nav
+
+gpus = tensorflow.config.experimental.list_physical_devices("GPU")
+for gpu in gpus:
+    tensorflow.config.experimental.set_memory_growth(gpu, True)
+
+tokenizer = T5Tokenizer.from_pretrained("t5-small")
+model = FlaxT5Model.from_pretrained("t5-small")
+
+input_ids = tokenizer("Studies have been shown that owning a dog is good for you", return_tensors="np").input_ids
+decoder_input_ids = tokenizer("Studies show that", return_tensors="np").input_ids
+dataloader = [{"input_ids": input_ids, "decoder_input_ids": decoder_input_ids}]
+
+
+def call_wrapper(input_ids, decoder_input_ids, params):
+    return model.__call__(input_ids=input_ids, decoder_input_ids=decoder_input_ids, params=params)
+
+
+desc = nav.jax.export(
+    model=call_wrapper,
+    model_params=model._params,
+    dataloader=dataloader,
+    override_workdir=True,
+)
+
+desc.save(Path.cwd() / "t5.nav")
+
+```
+
 
 ## API
 ### Export PyTorch
@@ -365,8 +440,8 @@ def export(
     override_workdir: bool = False,
     sample_count: Optional[int] = None, # number of samples that will be saved from dataloader
     opset: Optional[int] = None,
-    jit_compile: bool = False, # enables tf.function jit_compile parameter
-    enable_xla: bool = False, # enables xla for jax2tf converter
+    jit_compile: Optional[Tuple[bool]] = None, # enables tf.function jit_compile parameter
+    enable_xla: Optional[Tuple[bool]] = None, # enables xla for jax2tf converter
     atol: Optional[float] = None, # absolute tolerance used for correctness tests. If None, value will be calculated during run
     rtol: Optional[float] = None, # relative tolerance used for correctness tests. If None, value will be calculated during run
     disable_git_info: bool = False,

@@ -45,6 +45,8 @@ class RunnerManager(DataObject):
         jit_type: Optional[JitType] = None,
         precision: Optional[TensorRTPrecision] = None,
         runtime: Optional[RuntimeProvider] = None,
+        enable_xla: Optional[bool] = None,
+        jit_compile: Optional[bool] = None,
     ) -> BaseRunner:
         """
         Load exported model for given format, jit_type and precision and return Polygraphy runner for given runtime.
@@ -53,7 +55,11 @@ class RunnerManager(DataObject):
             Polygraphy BaseRunner object: https://github.com/NVIDIA/TensorRT/blob/main/tools/Polygraphy/polygraphy/backend/base/runner.py
         """
         model_path = get_package_path(workdir=workdir, model_name=model_name) / format_to_relative_model_path(
-            format=format, jit_type=jit_type, precision=precision
+            format=format,
+            jit_type=jit_type,
+            precision=precision,
+            enable_xla=enable_xla,
+            jit_compile=jit_compile,
         )
         if model_path.exists():
             return self._load_runner(model_path=model_path, format=format, runtime=runtime)

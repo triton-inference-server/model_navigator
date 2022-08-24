@@ -166,6 +166,8 @@ class PackageDescriptor:
         runtime: RuntimeProvider,
         jit_type: Optional[JitType] = None,
         precision: Optional[TensorRTPrecision] = None,
+        enable_xla: Optional[bool] = None,
+        jit_compile: Optional[bool] = None,
     ):
         for model_status in self.navigator_status.model_status:
             for runtime_results in model_status.runtime_results:
@@ -173,6 +175,8 @@ class PackageDescriptor:
                     model_status.format == format
                     and model_status.torch_jit == jit_type
                     and model_status.precision == precision
+                    and model_status.enable_xla == enable_xla
+                    and model_status.jit_compile == jit_compile
                     and runtime_results.runtime == runtime
                 ):
                     return runtime_results.verified
@@ -183,6 +187,8 @@ class PackageDescriptor:
         runtime: RuntimeProvider,
         jit_type: Optional[JitType] = None,
         precision: Optional[TensorRTPrecision] = None,
+        enable_xla: Optional[bool] = None,
+        jit_compile: Optional[bool] = None,
     ):
         """Set exported model verified for given format, jit_type and precision"""
         for model_status in self.navigator_status.model_status:
@@ -191,6 +197,8 @@ class PackageDescriptor:
                     model_status.format == format
                     and model_status.torch_jit == jit_type
                     and model_status.precision == precision
+                    and model_status.enable_xla == enable_xla
+                    and model_status.jit_compile == jit_compile
                     and runtime_results.runtime == runtime
                 ):
                     runtime_results.verified = True
@@ -358,6 +366,20 @@ class PackageDescriptor:
             return ()
         return tuple(TensorRTPrecision(prec) for prec in target_precisions)
 
+    @property
+    def _enable_xla(self):
+        enable_xla = self.navigator_status.export_config.get("enable_xla", [])
+        if enable_xla is None:
+            return ()
+        return enable_xla
+
+    @property
+    def _jit_compile(self):
+        jit_compile = self.navigator_status.export_config.get("jit_compile", [])
+        if jit_compile is None:
+            return ()
+        return jit_compile
+
     def _get_base_formats(self, target_formats: Sequence[Format]) -> Tuple[Format]:
         base_formats = set()
         for target_format in target_formats:
@@ -371,15 +393,21 @@ class PackageDescriptor:
         format: Format,
         jit_type: Optional[JitType] = None,
         precision: Optional[TensorRTPrecision] = None,
+        enable_xla: Optional[bool] = None,
+        jit_compile: Optional[bool] = None,
     ) -> ModelStatus:
         for model_status in self.navigator_status.model_status:
             if (
                 model_status.format == format
                 and (model_status.torch_jit in (None, jit_type))
                 and (model_status.precision in (None, precision))
+                and (model_status.enable_xla in (None, enable_xla))
+                and (model_status.jit_compile in (None, jit_compile))
             ):
                 return model_status
-        raise RuntimeError(f"Model status not found for {format=}, {jit_type=}, {precision=}.")
+        raise RuntimeError(
+            f"Model status not found for {format=}, {jit_type=}, {precision=}, {enable_xla=}. {jit_compile=}."
+        )
 
     def get_runtime_results(
         self,
@@ -387,8 +415,10 @@ class PackageDescriptor:
         jit_type: Optional[JitType] = None,
         precision: Optional[TensorRTPrecision] = None,
         runtime_provider: Optional[RuntimeProvider] = None,
+        enable_xla: Optional[bool] = None,
+        jit_compile: Optional[bool] = None,
     ) -> RuntimeResults:
-        model_status = self._get_model_status(format, jit_type, precision)
+        model_status = self._get_model_status(format, jit_type, precision, enable_xla, jit_compile)
         if not runtime_provider and len(model_status.runtime_results) == 1:
             return model_status.runtime_results[0]
         for runtime_results in model_status.runtime_results:
@@ -427,17 +457,31 @@ class PackageDescriptor:
             prec_iter = (
                 [None] if format not in (Format.TENSORRT, Format.TF_TRT, Format.TORCH_TRT) else self._target_precisions
             )
-            for jit_type, prec in itertools.product(jit_iter, prec_iter):
-                model_path = package_path / format_to_relative_model_path(format, jit_type, prec)
+
+            enable_xla_iter = [None] if len(self._enable_xla) == 0 else self._enable_xla
+
+            jit_compile_iter = [None] if len(self._jit_compile) == 0 else self._jit_compile
+
+            for jit_type, prec, enable_xla, jit_compile in itertools.product(
+                jit_iter, prec_iter, enable_xla_iter, jit_compile_iter
+            ):
+                model_path = package_path / format_to_relative_model_path(
+                    format, jit_type, prec, enable_xla, jit_compile
+                )
                 if not model_path.exists():
                     LOGGER.warning(f"Model not found for {model_path.parent.name}.")
                     continue
-                model_status = self._get_model_status(format, jit_type, prec)
+                model_status = self._get_model_status(format, jit_type, prec, enable_xla, jit_compile)
                 if format in self._target_formats:
                     for runtime_status in model_status.runtime_results:
                         runtime = runtime_status.runtime
                         verified_status = self.get_verified_status(
-                            format=format, runtime=runtime, jit_type=jit_type, precision=prec
+                            format=format,
+                            runtime=runtime,
+                            jit_type=jit_type,
+                            precision=prec,
+                            enable_xla=enable_xla,
+                            jit_compile=jit_compile,
                         )
                         if not verified_status:
                             LOGGER.warning(f"Unverified runtime: {runtime} for the {model_path.parent.name} model.")

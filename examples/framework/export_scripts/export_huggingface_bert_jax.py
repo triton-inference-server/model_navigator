@@ -38,7 +38,6 @@ desc = nav.jax.export(
     model_params=model._params,
     dataloader=dataloader,
     override_workdir=True,
-    target_formats=(nav.Format.TF_SAVEDMODEL,),
 )
 
 desc.save(Path.cwd() / "bert.nav")

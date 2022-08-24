@@ -41,6 +41,8 @@ def profiling_builder(config: Config, package_descriptor: "PackageDescriptor") -
                         target_jit_type=model_status.torch_jit,
                         target_precision=model_status.precision,
                         runtime_provider=runtime_results.runtime,
+                        enable_xla=model_status.enable_xla,
+                        jit_compile=model_status.jit_compile,
                     )
                 )
 

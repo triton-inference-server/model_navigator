@@ -54,8 +54,8 @@ def export(
     override_workdir: bool = False,
     sample_count: Optional[int] = None,
     opset: Optional[int] = None,
-    jit_compile: bool = False,
-    enable_xla: bool = False,
+    jit_compile: Optional[Tuple[bool]] = None,
+    enable_xla: Optional[Tuple[bool]] = None,
     atol: Optional[float] = None,
     rtol: Optional[float] = None,
     disable_git_info: bool = False,
@@ -94,7 +94,10 @@ def export(
         sample_count = 100
     if runtimes is None:
         runtimes = format2runtimes(Format.ONNX)
-
+    if jit_compile is None:
+        jit_compile = (True, False)
+    if enable_xla is None:
+        enable_xla = (True, False)
     if profiler_config is None:
         profiler_config = ProfilerConfig()
 

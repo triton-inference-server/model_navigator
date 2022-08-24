@@ -270,7 +270,7 @@ def load(
 
     if pkg_desc.framework == Framework.PYT:
         from model_navigator.framework_api.pipelines.builders import torch_conversion_builder as conversion_builder
-    elif pkg_desc.framework == Framework.TF2:
+    elif pkg_desc.framework in (Framework.TF2, Framework.JAX):
         from model_navigator.framework_api.pipelines.builders import tensorflow_conversion_builder as conversion_builder
     else:
         assert pkg_desc.framework == Framework.ONNX

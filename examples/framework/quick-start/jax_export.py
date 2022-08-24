@@ -12,16 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import jax.numpy as jnp
 import numpy
+import tensorflow
 
 import model_navigator as nav
 
-dataloader = [numpy.full((3, 5), 1.0) for _ in range(10)]
+gpus = tensorflow.config.experimental.list_physical_devices("GPU")
+for gpu in gpus:
+    tensorflow.config.experimental.set_memory_growth(gpu, True)
 
-model = "dummy model"
+dataloader = [numpy.random.rand(1, 10, 10) for _ in range(10)]
+params = numpy.random.rand(1, 10, 10)
+
+
+def predict(inputs, params):
+    outputs = jnp.dot(inputs, params)
+    return outputs
+
 
 pkg_desc = nav.jax.export(
-    model=model,
+    model=predict,
+    model_params=params,
     dataloader=dataloader,
     override_workdir=True,
+    batch_dim=None,
 )

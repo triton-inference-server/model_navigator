@@ -36,21 +36,42 @@ NGC Containers are the recommended environments for Model Navigator Export API, 
 
 The minimal required `Python` version for Triton Model Navigator is `3.8`.
 
+For JAX models, the apropriate JAX library version is required `(CPU, CUDA, TPU)` and all other derived frameworks used by model `(Flax, Haiku)`.
+
+Installation details:
+- [JAX](https://github.com/google/jax#installation)
+- [Flax](https://github.com/google/flax#quick-install)
+- [Haiku](https://github.com/deepmind/dm-haiku#installation)
+
+For JAX models set `XLA_PYTHON_CLIENT_PREALLOCATE` environment variable to avoid Out of Memory issues:
+
+```shell
+$ export XLA_PYTHON_CLIENT_PREALLOCATE=false
+```
+
+For JAX and TensorFlow2 models, enable tensorflow memory growth to avoid allocating all GPU memory:
+
+```python
+import tensorflow
+
+gpus = tensorflow.config.experimental.list_physical_devices("GPU")
+for gpu in gpus:
+    tensorflow.config.experimental.set_memory_growth(gpu, True)
+```
+
 ## Export From Source
 
 Triton Model Navigator Export API is installed with Model Navigator package.
 To install Model Navigator Export API without Model Navigator dependencies use commands:
 
 ```shell
-$ pip install --extra-index-url https://pypi.ngc.nvidia.com -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html git+https://github.com/triton-inference-server/model_navigator.git@v0.3.3#egg=model-navigator[<extras,>] --upgrade
+$ pip install --extra-index-url https://pypi.ngc.nvidia.com git+https://github.com/triton-inference-server/model_navigator.git@v0.3.3#egg=model-navigator[<extras,>] --upgrade
 ```
 
 Extras:
 - pyt - Model Navigator Export API for PyTorch
 - tf - Model Navigator Export API for TensorFlow2
-- jax - Model Navigator Export API for JAX CPU
-- jax_cuda - Model Navigator Export API for JAX GPU
-- jax_tpu - Model Navigator Export API for JAX TPU
+- jax - Model Navigator Export API for JAX.
 - cli - Model Navigator CLI
 - huggingface - Model Navigator Export API for HuggingFace
 

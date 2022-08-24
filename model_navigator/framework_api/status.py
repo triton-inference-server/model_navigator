@@ -55,11 +55,14 @@ class RuntimeResults(DataObject):
 
 @dataclass
 class ModelStatus(DataObject):
+
     format: Format
     path: Path
     runtime_results: List[RuntimeResults]
     torch_jit: Optional[JitType] = None
     precision: Optional[TensorRTPrecision] = None
+    enable_xla: Optional[bool] = None
+    jit_compile: Optional[bool] = None
 
     @classmethod
     def from_dict(cls, data_dict: Dict):
@@ -71,6 +74,8 @@ class ModelStatus(DataObject):
             ],
             torch_jit=JitType(data_dict["torch_jit"]) if data_dict.get("torch_jit") is not None else None,
             precision=TensorRTPrecision(data_dict["precision"]) if data_dict.get("precision") is not None else None,
+            enable_xla=bool(data_dict["enable_xla"]) if data_dict.get("enable_xla") is not None else None,
+            jit_compile=bool(data_dict["jit_compile"]) if data_dict.get("jit_compile") is not None else None,
         )
 
 

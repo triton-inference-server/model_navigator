@@ -19,17 +19,17 @@ from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.convert.base import ConvertBase
 from model_navigator.framework_api.commands.convert.converters import sm2tftrt
 from model_navigator.framework_api.commands.core import Command, CommandType
-from model_navigator.framework_api.commands.export.tf import ExportTF2SavedModel
-from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.exceptions import ExecutionContext
 from model_navigator.framework_api.logger import LOGGER
-from model_navigator.framework_api.utils import Status, get_package_path
+from model_navigator.framework_api.utils import Status, format_to_relative_model_path, get_package_path
 from model_navigator.model import Format
 from model_navigator.utils.device import get_available_gpus
 
 
 class ConvertSavedModel2ONNX(ConvertBase):
-    def __init__(self, requires: Tuple[Command, ...] = ()):
+    def __init__(
+        self, enable_xla: Optional[bool] = None, jit_compile: Optional[bool] = None, requires: Tuple[Command, ...] = ()
+    ):
         # pytype: disable=wrong-arg-types
         super().__init__(
             name="Convert SavedModel to ONNX",
@@ -37,6 +37,8 @@ class ConvertSavedModel2ONNX(ConvertBase):
             target_format=Format.ONNX,
             requires=requires,
         )
+        self.enable_xla = enable_xla
+        self.jit_compile = jit_compile
         # pytype: enable=wrong-arg-types
 
     def __call__(
@@ -44,12 +46,15 @@ class ConvertSavedModel2ONNX(ConvertBase):
         workdir: Path,
         opset: int,
         model_name: str,
-        input_metadata: TensorMetadata,
-        output_metadata: TensorMetadata,
         **kwargs,
     ):
         LOGGER.info("SavedModel to ONNX conversion started")
-        exported_model_path = get_package_path(workdir, model_name) / ExportTF2SavedModel().get_output_relative_path()
+        exported_model_path = get_package_path(workdir, model_name) / format_to_relative_model_path(
+            format=Format.TF_SAVEDMODEL,
+            enable_xla=self.enable_xla,
+            jit_compile=self.jit_compile,
+        )
+
         converted_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
 
         if converted_model_path.exists():
@@ -79,7 +84,13 @@ class ConvertSavedModel2ONNX(ConvertBase):
 
 
 class ConvertSavedModel2TFTRT(ConvertBase):
-    def __init__(self, target_precision: TensorRTPrecision, requires: Tuple[Command, ...] = ()):
+    def __init__(
+        self,
+        target_precision: TensorRTPrecision,
+        enable_xla: Optional[bool] = None,
+        jit_compile: Optional[bool] = None,
+        requires: Tuple[Command, ...] = (),
+    ):
         # pytype: disable=wrong-arg-types
         super().__init__(
             name="Convert SavedModel to TF-TRT",
@@ -88,6 +99,8 @@ class ConvertSavedModel2TFTRT(ConvertBase):
             requires=requires,
         )
         self.target_precision = target_precision
+        self.enable_xla = enable_xla
+        self.jit_compile = jit_compile
         # pytype: enable=wrong-arg-types
 
     def __call__(
@@ -102,8 +115,11 @@ class ConvertSavedModel2TFTRT(ConvertBase):
         LOGGER.info("SavedModel to TF-TRT conversion started")
         if not get_available_gpus():
             raise RuntimeError("No GPUs available.")
-
-        exported_model_path = get_package_path(workdir, model_name) / ExportTF2SavedModel().get_output_relative_path()
+        exported_model_path = get_package_path(workdir, model_name) / format_to_relative_model_path(
+            format=Format.TF_SAVEDMODEL,
+            enable_xla=self.enable_xla,
+            jit_compile=self.jit_compile,
+        )
         converted_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
         converted_model_path.parent.mkdir(parents=True, exist_ok=True)
 

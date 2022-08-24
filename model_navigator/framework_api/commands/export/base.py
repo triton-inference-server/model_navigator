@@ -49,6 +49,8 @@ class ExportBase(Command):
                 path=self.output,
                 torch_jit=self.target_jit_type,
                 precision=self.target_precision,
+                enable_xla=self.enable_xla,
+                jit_compile=self.jit_compile,
                 runtime_results=runtime_results,
             )
         )

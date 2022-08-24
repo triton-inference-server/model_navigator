@@ -68,6 +68,8 @@ def config_generation_builder(config: Config, package_descriptor: "PackageDescri
                     runtime_results=model_status.runtime_results,
                     atol=atol,
                     rtol=rtol,
+                    enable_xla=model_status.enable_xla,
+                    jit_compile=model_status.jit_compile,
                 )
             )
 

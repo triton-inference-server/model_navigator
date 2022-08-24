@@ -25,5 +25,8 @@ if TYPE_CHECKING:
 
 
 def jax_export_builder(config: Config, package_descriptor: "PackageDescriptor") -> Pipeline:
-    commands: List[Command] = [ExportJAX2SavedModel()]
+    commands: List[Command] = []
+    for enable_xla in config.enable_xla:
+        for jit_compile in config.jit_compile:
+            commands.append(ExportJAX2SavedModel(enable_xla=enable_xla, jit_compile=jit_compile))
     return Pipeline(name="JAX Export", framework=Framework.JAX, commands=commands)

@@ -38,6 +38,8 @@ def correctness(
     precision: str,
     jit_type: str,
     runtime: str,
+    enable_xla: bool,
+    jit_compile: bool,
     runner_manager_dict: Dict,
 ):
     correctness_samples = load_samples("correctness_samples", package_path, batch_dim)
@@ -51,6 +53,8 @@ def correctness(
         jit_type=JitType(jit_type) if jit_type else None,
         precision=TensorRTPrecision(precision) if precision else None,
         runtime=RuntimeProvider(runtime) if runtime else None,
+        enable_xla=enable_xla,
+        jit_compile=jit_compile,
     )
 
     per_output_tolerance = TolerancePerOutputName({name: Tolerance(0.0, 0.0) for name in output_names})
