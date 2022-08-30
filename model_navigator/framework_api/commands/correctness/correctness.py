@@ -32,6 +32,7 @@ from model_navigator.framework_api.utils import (
     Status,
     format_to_relative_model_path,
     get_package_path,
+    parse_kwargs_to_cmd,
 )
 from model_navigator.model import Format
 
@@ -132,7 +133,7 @@ class Correctness(Command):
         runner_manager = RunnerManager(input_metadata, output_metadata, target_device)
 
         with ExecutionContext(
-            model_dir / "reproduce_correctness.py"
+            model_dir / "reproduce_correctness.py", model_dir / "reproduce_correctness.sh"
         ) as context, tempfile.NamedTemporaryFile() as temp_file:
             kwargs = {
                 "workdir": workdir.as_posix(),
@@ -147,13 +148,10 @@ class Correctness(Command):
                 "runtime": self.runtime_provider.value if self.runtime_provider else None,
                 "enable_xla": self.enable_xla,
                 "jit_compile": self.jit_compile,
-                "runner_manager_dict": str(runner_manager.to_dict(parse=True)).replace(" ", ""),
+                "runner_manager_dict": runner_manager.to_dict(parse=True),
             }
 
-            args = []
-            for k, v in kwargs.items():
-                s = str(v).replace("'", '"')
-                args.extend([f"--{k}", s])
+            args = parse_kwargs_to_cmd(kwargs, (list, dict, tuple))
 
             from model_navigator.framework_api.commands.correctness import correctness_script
 

@@ -26,7 +26,7 @@ from model_navigator.framework_api.commands.export.pyt import ExportPYT2TorchScr
 from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.exceptions import ExecutionContext
 from model_navigator.framework_api.logger import LOGGER
-from model_navigator.framework_api.utils import JitType, Status, get_package_path
+from model_navigator.framework_api.utils import JitType, Status, get_package_path, parse_kwargs_to_cmd
 from model_navigator.model import Format
 from model_navigator.utils.device import get_available_gpus
 
@@ -81,7 +81,10 @@ class ConvertTorchScript2TorchTensorRT(ConvertBase):
             trt_casts.get(input_spec.dtype, input_spec.dtype).name for input_spec in input_metadata.values()
         ]
 
-        with ExecutionContext(converted_model_path.parent / "reproduce_conversion.py") as context:
+        with ExecutionContext(
+            converted_model_path.parent / "reproduce_conversion.py",
+            converted_model_path.parent / "reproduce_conversion.sh",
+        ) as context:
             kwargs = {
                 "exported_model_path": exported_model_path.as_posix(),
                 "converted_model_path": converted_model_path.as_posix(),
@@ -93,10 +96,7 @@ class ConvertTorchScript2TorchTensorRT(ConvertBase):
                 "target_device": target_device,
             }
 
-            args = []
-            for k, v in kwargs.items():
-                s = str(v).replace("'", '"')
-                args.extend([f"--{k}", s])
+            args = parse_kwargs_to_cmd(kwargs, (list, dict, tuple))
 
             context.execute_external_runtime_script(ts2torchtrt.__file__, args)
 

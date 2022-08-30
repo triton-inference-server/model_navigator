@@ -36,6 +36,7 @@ from model_navigator.framework_api.utils import (
     Status,
     format_to_relative_model_path,
     get_package_path,
+    parse_kwargs_to_cmd,
 )
 from model_navigator.model import Format
 
@@ -310,7 +311,7 @@ class Performance(Command):
         runner_manager = RunnerManager(input_metadata, output_metadata, target_device)
 
         with ExecutionContext(
-            model_dir / "reproduce_profiling.py"
+            model_dir / "reproduce_profiling.py", model_dir / "reproduce_profiling.sh"
         ) as context, tempfile.NamedTemporaryFile() as temp_file:
             kwargs = {
                 "workdir": workdir.as_posix(),
@@ -329,10 +330,7 @@ class Performance(Command):
                 "runner_manager_dict": str(runner_manager.to_dict(parse=True)).replace(" ", ""),
             }
 
-            args = []
-            for k, v in kwargs.items():
-                s = str(v).replace("'", '"')
-                args.extend([f"--{k}", s])
+            args = parse_kwargs_to_cmd(kwargs, (list, dict, tuple))
 
             from model_navigator.framework_api.commands.performance import performance_script
 

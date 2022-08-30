@@ -14,6 +14,7 @@
 
 
 import contextlib
+import os
 import shutil
 import subprocess
 import sys
@@ -41,9 +42,10 @@ class ModelNavigatorBackwardCompatibilityError(ModelNavigatorExportAPIError):
 class ExecutionContext(contextlib.AbstractContextManager):
     accepted_types = (int, float, bool, str)
 
-    def __init__(self, path: Optional[Path] = None):
+    def __init__(self, scipt_path: Optional[Path] = None, cmd_path: Optional[Path] = None):
         super().__init__()
-        self._path = Path(path) if path else path
+        self._scipt_path = Path(scipt_path) if scipt_path else scipt_path
+        self._cmd_path = Path(cmd_path) if cmd_path else cmd_path
         self._cache = {}
         self._output = None
 
@@ -54,23 +56,35 @@ class ExecutionContext(contextlib.AbstractContextManager):
         raise UserError(exc_value)
 
     def execute_local_runtime_script(self, path, func, args):
-        shutil.copy(path, self._path)
+        shutil.copy(path, self._scipt_path)
+        run_cmd = self.execute_cmd(' '.join([sys.executable, self._scipt_path.as_posix()] + args), dry_run=True)
         try:
             fire.Fire(func, args)
         except Exception as e:
             raise UserError(
-                f"Command to reproduce error:\n{' '.join([sys.executable, self._path.as_posix()] + args)}"
+                f"Command to reproduce error:\n{run_cmd}"
             ) from e
 
     def execute_external_runtime_script(self, path, args):
-        shutil.copy(path, self._path)
-        cmd = [sys.executable, self._path.as_posix()] + args
+        shutil.copy(path, self._scipt_path)
+        cmd = [sys.executable, self._scipt_path.as_posix()] + args
         self.execute_cmd(cmd)
 
-    def execute_cmd(self, cmd):
+    def execute_cmd(self, cmd, dry_run=False):
         LOGGER.info(f"Command: {' '.join(cmd)}")
 
-        output = subprocess.run(cmd, capture_output=True)
+        if self._cmd_path is None:
+            raise ValueError("cmd_path is required when using `execute_cmd` method.")
+
+        with self._cmd_path.open("w") as f:
+            f.write(" ".join(cmd))
+
+        run_cmd = [os.environ.get("SHELL", "bash"), self._cmd_path.as_posix()]
+
+        if dry_run:
+            return run_cmd
+
+        output = subprocess.run(run_cmd, capture_output=True)
 
         if len(output.stdout):
             LOGGER.info(f"Command stdout:\n\n{textwrap.indent(output.stdout.decode('utf-8'), '    ')}")
@@ -78,7 +92,7 @@ class ExecutionContext(contextlib.AbstractContextManager):
             LOGGER.info(f"Command stderr:\n\n{textwrap.indent(output.stderr.decode('utf-8'), '    ')}")
         if output.returncode != 0:
             raise UserError(
-                f"{output.stderr.decode('utf-8')}\nCommand to reproduce error:\n{' '.join(cmd)}"
+                f"{output.stderr.decode('utf-8')}\nCommand to reproduce error:\n{' '.join(run_cmd)}"
             )
 
 

@@ -23,7 +23,7 @@ from model_navigator.framework_api.commands.export.base import ExportBase
 from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.exceptions import ExecutionContext
 from model_navigator.framework_api.logger import LOGGER
-from model_navigator.framework_api.utils import JitType, get_package_path
+from model_navigator.framework_api.utils import JitType, get_package_path, parse_kwargs_to_cmd
 from model_navigator.model import Format
 
 
@@ -61,7 +61,9 @@ class ExportPYT2TorchScript(ExportBase):
 
         exporters.pytorch2torchscript.get_model = lambda: model
 
-        with ExecutionContext(exported_model_path.parent / "reproduce_conversion.py") as context:
+        with ExecutionContext(
+            exported_model_path.parent / "reproduce_export.py", exported_model_path.parent / "reproduce_export.sh"
+        ) as context:
 
             kwargs = {
                 "exported_model_path": exported_model_path.as_posix(),
@@ -71,10 +73,7 @@ class ExportPYT2TorchScript(ExportBase):
                 "target_device": target_device,
             }
 
-            args = []
-            for k, v in kwargs.items():
-                s = str(v).replace("'", '"')
-                args.extend([f"--{k}", s])
+            args = parse_kwargs_to_cmd(kwargs, (list, dict, tuple))
 
             context.execute_local_runtime_script(
                 exporters.pytorch2torchscript.__file__, exporters.pytorch2torchscript.export, args
@@ -117,7 +116,9 @@ class ExportPYT2ONNX(ExportBase):
 
         exporters.pytorch2onnx.get_model = lambda: model
 
-        with ExecutionContext(exported_model_path.parent / "reproduce_conversion.py") as context:
+        with ExecutionContext(
+            exported_model_path.parent / "reproduce_export.py", exported_model_path.parent / "reproduce_export.sh"
+        ) as context:
 
             kwargs = {
                 "exported_model_path": exported_model_path.as_posix(),
@@ -131,10 +132,7 @@ class ExportPYT2ONNX(ExportBase):
                 "target_device": target_device,
             }
 
-            args = []
-            for k, v in kwargs.items():
-                s = str(v).replace("'", '"')
-                args.extend([f"--{k}", s])
+            args = parse_kwargs_to_cmd(kwargs)
 
             context.execute_local_runtime_script(exporters.pytorch2onnx.__file__, exporters.pytorch2onnx.export, args)
 

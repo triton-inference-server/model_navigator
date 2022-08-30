@@ -353,3 +353,13 @@ def get_trt_profile_from_trt_dynamic_axes(trt_dynamic_axes):
         if axes:
             trt_profile.add(name, *list(zip(*list(axes.values()))))
     return trt_profile
+
+
+def parse_kwargs_to_cmd(kwargs, quote_wrap_classes=None):
+    if quote_wrap_classes is None:
+        quote_wrap_classes = ()
+    args = []
+    for k, v in kwargs.items():
+        s = str(v).replace("'", '"')
+        args.extend([f"--{k}", f"'{s}'" if isinstance(v, quote_wrap_classes) else s])
+    return args

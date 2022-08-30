@@ -137,7 +137,7 @@ class ConvertONNX2TRT(ConvertBase):
             else:
                 convert_cmd.extend(["--pool-limit", f"workspace:{max_workspace_size}"])
 
-        with ExecutionContext() as context:
+        with ExecutionContext(cmd_path=converted_model_path.parent / "reproduce_conversion.sh") as context:
             context.execute_cmd(convert_cmd)
 
         return self.get_output_relative_path()

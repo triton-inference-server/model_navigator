@@ -21,7 +21,12 @@ from model_navigator.framework_api.commands.convert.converters import sm2tftrt
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.exceptions import ExecutionContext
 from model_navigator.framework_api.logger import LOGGER
-from model_navigator.framework_api.utils import Status, format_to_relative_model_path, get_package_path
+from model_navigator.framework_api.utils import (
+    Status,
+    format_to_relative_model_path,
+    get_package_path,
+    parse_kwargs_to_cmd,
+)
 from model_navigator.model import Format
 from model_navigator.utils.device import get_available_gpus
 
@@ -77,7 +82,7 @@ class ConvertSavedModel2ONNX(ConvertBase):
             str(opset),
         ]
 
-        with ExecutionContext() as context:
+        with ExecutionContext(cmd_path=converted_model_path.parent / "reproduce_conversion.sh") as context:
             context.execute_cmd(convert_cmd)
 
         return self.get_output_relative_path()
@@ -131,7 +136,10 @@ class ConvertSavedModel2TFTRT(ConvertBase):
             self.status = Status.SKIPPED
             return
 
-        with ExecutionContext(converted_model_path.parent / "reproduce_conversion.py") as context:
+        with ExecutionContext(
+            converted_model_path.parent / "reproduce_conversion.py",
+            converted_model_path.parent / "reproduce_conversion.sh",
+        ) as context:
             kwargs = {
                 "exported_model_path": exported_model_path.as_posix(),
                 "converted_model_path": converted_model_path.as_posix(),
@@ -142,10 +150,7 @@ class ConvertSavedModel2TFTRT(ConvertBase):
                 "batch_dim": batch_dim,
             }
 
-            args = []
-            for k, v in kwargs.items():
-                s = str(v).replace("'", '"')
-                args.extend([f"--{k}", s])
+            args = parse_kwargs_to_cmd(kwargs, (list, dict, tuple))
 
             context.execute_external_runtime_script(sm2tftrt.__file__, args)
 

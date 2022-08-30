@@ -23,7 +23,7 @@ from model_navigator.framework_api.commands.export.base import ExportBase
 from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.exceptions import ExecutionContext
 from model_navigator.framework_api.logger import LOGGER
-from model_navigator.framework_api.utils import get_package_path
+from model_navigator.framework_api.utils import get_package_path, parse_kwargs_to_cmd
 from model_navigator.model import Format
 
 
@@ -57,7 +57,9 @@ class ExportTF2SavedModel(ExportBase):
 
         exporters.keras2savedmodel.get_model = lambda: model
 
-        with ExecutionContext(exported_model_path.parent / "reproduce_conversion.py") as context:
+        with ExecutionContext(
+            exported_model_path.parent / "reproduce_export.py", exported_model_path.parent / "reproduce_export.sh"
+        ) as context:
 
             kwargs = {
                 "exported_model_path": exported_model_path.as_posix(),
@@ -66,10 +68,7 @@ class ExportTF2SavedModel(ExportBase):
                 "keras_input_names": forward_kw_names,
             }
 
-            args = []
-            for k, v in kwargs.items():
-                s = str(v).replace("'", '"')
-                args.extend([f"--{k}", s])
+            args = parse_kwargs_to_cmd(kwargs)
 
             context.execute_local_runtime_script(
                 exporters.keras2savedmodel.__file__, exporters.keras2savedmodel.export, args
@@ -103,7 +102,9 @@ class UpdateSavedModelSignature(ExportBase):
 
         exporters.savedmodel2savedmodel.get_model = lambda: tf.keras.models.load_model(exported_model_path)
 
-        with ExecutionContext(exported_model_path.parent / "reproduce_conversion.py") as context:
+        with ExecutionContext(
+            exported_model_path.parent / "reproduce_export.py", exported_model_path.parent / "reproduce_export.sh"
+        ) as context:
 
             kwargs = {
                 "exported_model_path": exported_model_path.as_posix(),
@@ -111,10 +112,7 @@ class UpdateSavedModelSignature(ExportBase):
                 "output_names": list(output_metadata.keys()),
             }
 
-            args = []
-            for k, v in kwargs.items():
-                s = str(v).replace("'", '"')
-                args.extend([f"--{k}", s])
+            args = parse_kwargs_to_cmd(kwargs)
 
             context.execute_local_runtime_script(
                 exporters.savedmodel2savedmodel.__file__, exporters.savedmodel2savedmodel.export, args

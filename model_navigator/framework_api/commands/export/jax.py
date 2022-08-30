@@ -23,7 +23,7 @@ from model_navigator.framework_api.commands.export.base import ExportBase
 from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.exceptions import ExecutionContext
 from model_navigator.framework_api.logger import LOGGER
-from model_navigator.framework_api.utils import get_package_path
+from model_navigator.framework_api.utils import get_package_path, parse_kwargs_to_cmd
 from model_navigator.model import Format
 
 
@@ -59,7 +59,9 @@ class ExportJAX2SavedModel(ExportBase):
         exporters.jax2savedmodel.get_model = lambda: model
         exporters.jax2savedmodel.get_model_params = lambda: model_params
 
-        with ExecutionContext(exported_model_path.parent / "reproduce_conversion.py") as context:
+        with ExecutionContext(
+            exported_model_path.parent / "reproduce_export.py", exported_model_path.parent / "reproduce_export.sh"
+        ) as context:
             kwargs = {
                 "exported_model_path": exported_model_path.as_posix(),
                 "jit_compile": self.jit_compile,
@@ -67,10 +69,7 @@ class ExportJAX2SavedModel(ExportBase):
                 "input_metadata": input_metadata.to_json(),
             }
 
-            args = []
-            for k, v in kwargs.items():
-                s = str(v).replace("'", '"')
-                args.extend([f"--{k}", s])
+            args = parse_kwargs_to_cmd(kwargs)
 
             context.execute_local_runtime_script(
                 exporters.jax2savedmodel.__file__, exporters.jax2savedmodel.export, args
