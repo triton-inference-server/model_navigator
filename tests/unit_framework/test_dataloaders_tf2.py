@@ -44,11 +44,10 @@ def test_tf2_tensor_dataloader():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav.workspace"
-        status_file = package_dir / "status.yaml"
-        model_input_dir = package_dir / "model_input"
-        model_output_dir = package_dir / "model_output"
-        navigator_log_file = package_dir / "navigator.log"
+        status_file = workdir / "status.yaml"
+        model_input_dir = workdir / "model_input"
+        model_output_dir = workdir / "model_output"
+        navigator_log_file = workdir / "navigator.log"
 
         dataloader = [
             tensorflow.random.uniform(shape=[1, 224, 224, 3], minval=0, maxval=1, dtype=tensorflow.dtypes.float32)
@@ -83,7 +82,7 @@ def test_tf2_tensor_dataloader():
         assert navigator_log_file.is_file()
 
         # Output formats
-        assert check_model_dir(model_dir=package_dir / "tf-savedmodel")
+        assert check_model_dir(model_dir=workdir / "tf-savedmodel")
 
 
 def test_tf2_sequence_dataloader():
@@ -91,11 +90,11 @@ def test_tf2_sequence_dataloader():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav.workspace"
-        status_file = package_dir / "status.yaml"
-        model_input_dir = package_dir / "model_input"
-        model_output_dir = package_dir / "model_output"
-        navigator_log_file = package_dir / "navigator.log"
+
+        status_file = workdir / "status.yaml"
+        model_input_dir = workdir / "model_input"
+        model_output_dir = workdir / "model_output"
+        navigator_log_file = workdir / "navigator.log"
 
         dataloader = [
             [
@@ -133,7 +132,7 @@ def test_tf2_sequence_dataloader():
         assert navigator_log_file.is_file()
 
         # Output formats
-        assert check_model_dir(model_dir=package_dir / "tf-savedmodel")
+        assert check_model_dir(model_dir=workdir / "tf-savedmodel")
 
 
 def test_tf2_dict_dataloader():
@@ -141,11 +140,11 @@ def test_tf2_dict_dataloader():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav.workspace"
-        status_file = package_dir / "status.yaml"
-        model_input_dir = package_dir / "model_input"
-        model_output_dir = package_dir / "model_output"
-        navigator_log_file = package_dir / "navigator.log"
+
+        status_file = workdir / "status.yaml"
+        model_input_dir = workdir / "model_input"
+        model_output_dir = workdir / "model_output"
+        navigator_log_file = workdir / "navigator.log"
 
         dataloader = [
             {
@@ -190,4 +189,4 @@ def test_tf2_dict_dataloader():
         assert navigator_log_file.is_file()
 
         # Output formats
-        assert check_model_dir(model_dir=package_dir / "tf-savedmodel")
+        assert check_model_dir(model_dir=workdir / "tf-savedmodel")

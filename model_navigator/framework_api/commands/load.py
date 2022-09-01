@@ -21,7 +21,7 @@ from polygraphy.backend.trt import Profile
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.status import NavigatorStatus
-from model_navigator.framework_api.utils import Status, get_default_status_filename, get_package_path, load_samples
+from model_navigator.framework_api.utils import Status, get_default_status_filename, load_samples
 
 if TYPE_CHECKING:
     from model_navigator.framework_api.package_descriptor import PackageDescriptor
@@ -49,9 +49,7 @@ class LoadMetadata(Command):
         model_name: str,
         **kwargs,
     ) -> Tuple[TensorMetadata, TensorMetadata, Profile]:
-
-        package_path = get_package_path(workdir, model_name)
-        with open(package_path / get_default_status_filename()) as f:
+        with open(workdir / get_default_status_filename()) as f:
             navigator_status = NavigatorStatus.from_dict(yaml.safe_load(f))
 
         return navigator_status.input_metadata, navigator_status.output_metadata, navigator_status.trt_profile
@@ -79,11 +77,9 @@ class LoadSamples(Command):
         batch_dim: Optional[int] = None,
         **kwargs,
     ) -> Tuple[TensorMetadata, TensorMetadata]:
-
-        package_path = get_package_path(workdir, model_name)
         ret = []
         for samples_name in self.get_output_name():
-            samples = load_samples(samples_name, package_path, batch_dim)
+            samples = load_samples(samples_name, workdir, batch_dim)
             ret.append(samples)
 
         return tuple(ret)

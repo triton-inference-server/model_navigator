@@ -23,7 +23,7 @@ from polygraphy.backend.trt import Profile
 
 from model_navigator.__version__ import __version__
 from model_navigator.converter.config import TensorRTPrecision
-from model_navigator.framework_api._nav_package_format_version import NAV_PACKAGE_FORMAT_VERSION
+from model_navigator.framework_api.constants import NAV_PACKAGE_FORMAT_VERSION
 from model_navigator.framework_api.commands.convert.tf import ConvertSavedModel2TFTRT
 from model_navigator.framework_api.commands.correctness import Correctness
 from model_navigator.framework_api.commands.data_dump.samples import (
@@ -80,8 +80,7 @@ def test_tf2_dump_model_input():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav.workspace"
-        model_input_dir = package_dir / "model_input"
+        model_input_dir = workdir / "model_input"
         dump_cmd = DumpInputModelData()
 
         input_data = next(iter(dataloader))
@@ -113,12 +112,11 @@ def test_tf2_dump_model_output():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav.workspace"
-        model_dir = package_dir / "tf-savedmodel"
+        model_dir = workdir / "tf-savedmodel"
         model_dir.mkdir(parents=True, exist_ok=True)
-        model_input_dir = package_dir / "model_input"
+        model_input_dir = workdir / "model_input"
         model_input_dir.mkdir(parents=True, exist_ok=True)
-        model_output_dir = package_dir / "model_output"
+        model_output_dir = workdir / "model_output"
 
         input_data = next(iter(dataloader))
         np_output = model.predict(input_data)
@@ -154,8 +152,8 @@ def test_tf2_correctness():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav.workspace"
-        model_dir = package_dir / "tf-savedmodel"
+
+        model_dir = workdir / "tf-savedmodel"
         model_dir.mkdir(parents=True, exist_ok=True)
         model_path = model_dir / "model.savedmodel"
         tensorflow.keras.models.save_model(model=model, filepath=model_path, overwrite=True)
@@ -165,8 +163,8 @@ def test_tf2_correctness():
         numpy_input = input_data.numpy()
         batch_dim = None
 
-        samples_to_npz([{"input__1": numpy_input}], package_dir / "model_input" / "correctness", batch_dim=batch_dim)
-        samples_to_npz([{"output__1": numpy_output}], package_dir / "model_output" / "correctness", batch_dim=batch_dim)
+        samples_to_npz([{"input__1": numpy_input}], workdir / "model_input" / "correctness", batch_dim=batch_dim)
+        samples_to_npz([{"output__1": numpy_output}], workdir / "model_output" / "correctness", batch_dim=batch_dim)
 
         input_metadata = TensorMetadata({"input__1": TensorSpec("input__1", numpy_input.shape, numpy_input.dtype)})
         output_metadata = TensorMetadata({"output__1": TensorSpec("output__1", numpy_output.shape, numpy_output.dtype)})
@@ -216,8 +214,8 @@ def test_tf2_export_savedmodel():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav.workspace"
-        model_dir = package_dir / "tf-savedmodel"
+
+        model_dir = workdir / "tf-savedmodel"
         model_dir.mkdir(parents=True, exist_ok=True)
 
         input_data = next(iter(dataloader))
@@ -229,7 +227,7 @@ def test_tf2_export_savedmodel():
 
         export_cmd = ExportTF2SavedModel()
 
-        exported_model_path = package_dir / export_cmd(
+        exported_model_path = workdir / export_cmd(
             model=model,
             model_name=model_name,
             workdir=workdir,
@@ -250,18 +248,18 @@ def test_tf2_convert_tf_trt():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav.workspace"
-        model_dir = package_dir / "tf-savedmodel"
+
+        model_dir = workdir / "tf-savedmodel"
         model_dir.mkdir(parents=True, exist_ok=True)
         input_model_path = model_dir / "model.savedmodel"
         tensorflow.keras.models.save_model(model=model, filepath=input_model_path, overwrite=True)
 
         input_data = next(iter(dataloader))
-        samples_to_npz([{"input__1": input_data.numpy()}], package_dir / "model_input" / "conversion", None)
+        samples_to_npz([{"input__1": input_data.numpy()}], workdir / "model_input" / "conversion", None)
 
         convert_cmd = ConvertSavedModel2TFTRT(target_precision=TensorRTPrecision.FP16)
 
-        converted_model_path = package_dir / convert_cmd(
+        converted_model_path = workdir / convert_cmd(
             max_workspace_size=get_default_max_workspace_size(),
             minimum_segment_size=3,
             workdir=workdir,

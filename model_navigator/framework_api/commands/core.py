@@ -83,8 +83,7 @@ class Command(metaclass=ABCMeta):
 
     def transform(self, package_descriptor: "PackageDescriptor", **kwargs):
         workdir = kwargs.get("workdir")
-        model_name = kwargs.get("model_name")
-        self._attach_logger_to_command_log_file(loggers=self._get_loggers(), workdir=workdir, model_name=model_name)
+        self._attach_logger_to_command_log_file(loggers=self._get_loggers(), workdir=workdir)
         self.status = self._validate(**kwargs)
         if self._check_requires():
             try:
@@ -180,13 +179,13 @@ class Command(metaclass=ABCMeta):
         return missing_params
 
     def _attach_logger_to_command_log_file(
-        self, loggers: List[Union[str, logging.Logger]], workdir: Path, model_name: str
+        self, loggers: List[Union[str, logging.Logger]], workdir: Path
     ):
         if self.target_format is not None:
             output_relative_path = self.get_output_relative_path()
             log_format = "%(asctime)s %(levelname)-8s %(name)s: %(message)s"
 
-            log_dir = workdir / f"{model_name}.nav.workspace" / output_relative_path.parent
+            log_dir = workdir / output_relative_path.parent
             log_dir.mkdir(parents=True, exist_ok=True)
             log_file = log_dir / "format.log"
 

@@ -69,11 +69,11 @@ def test_tf2_export_savedmodel():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav.workspace"
-        status_file = package_dir / "status.yaml"
-        model_input_dir = package_dir / "model_input"
-        model_output_dir = package_dir / "model_output"
-        navigator_log_file = package_dir / "navigator.log"
+
+        status_file = workdir / "status.yaml"
+        model_input_dir = workdir / "model_input"
+        model_output_dir = workdir / "model_output"
+        navigator_log_file = workdir / "navigator.log"
 
         nav.tensorflow.export(
             model=model,
@@ -97,11 +97,11 @@ def test_tf2_export_savedmodel():
         assert navigator_log_file.is_file()
 
         # Output formats
-        assert check_model_dir(model_dir=package_dir / "tf-savedmodel", format=nav.Format.TF_SAVEDMODEL)
+        assert check_model_dir(model_dir=workdir / "tf-savedmodel", format=nav.Format.TF_SAVEDMODEL)
 
         # Formats not exported
-        assert check_model_dir(model_dir=package_dir / "tf-trt-fp16", format=nav.Format.TF_SAVEDMODEL) is False
-        assert check_model_dir(model_dir=package_dir / "tf-trt-fp32", format=nav.Format.TF_SAVEDMODEL) is False
+        assert check_model_dir(model_dir=workdir / "tf-trt-fp16", format=nav.Format.TF_SAVEDMODEL) is False
+        assert check_model_dir(model_dir=workdir / "tf-trt-fp32", format=nav.Format.TF_SAVEDMODEL) is False
 
 
 @pytest.mark.skipif(
@@ -113,11 +113,11 @@ def test_tf2_export_tf_trt():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav.workspace"
-        status_file = package_dir / "status.yaml"
-        model_input_dir = package_dir / "model_input"
-        model_output_dir = package_dir / "model_output"
-        navigator_log_file = package_dir / "navigator.log"
+
+        status_file = workdir / "status.yaml"
+        model_input_dir = workdir / "model_input"
+        model_output_dir = workdir / "model_output"
+        navigator_log_file = workdir / "navigator.log"
 
         nav.tensorflow.export(
             model=model,
@@ -141,11 +141,11 @@ def test_tf2_export_tf_trt():
         assert navigator_log_file.is_file()
 
         # Output formats
-        assert check_model_dir(model_dir=package_dir / "tf-trt-fp16", format=nav.Format.TF_SAVEDMODEL)
-        assert check_model_dir(model_dir=package_dir / "tf-trt-fp32", format=nav.Format.TF_SAVEDMODEL)
+        assert check_model_dir(model_dir=workdir / "tf-trt-fp16", format=nav.Format.TF_SAVEDMODEL)
+        assert check_model_dir(model_dir=workdir / "tf-trt-fp32", format=nav.Format.TF_SAVEDMODEL)
 
         # Formats not exported but present as step for tf-trt
-        assert check_model_dir(model_dir=package_dir / "tf-savedmodel", format=nav.Format.TF_SAVEDMODEL)
+        assert check_model_dir(model_dir=workdir / "tf-savedmodel", format=nav.Format.TF_SAVEDMODEL)
 
 
 def test_tf2_export_tf_onnx():
@@ -153,11 +153,11 @@ def test_tf2_export_tf_onnx():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav.workspace"
-        status_file = package_dir / "status.yaml"
-        model_input_dir = package_dir / "model_input"
-        model_output_dir = package_dir / "model_output"
-        navigator_log_file = package_dir / "navigator.log"
+
+        status_file = workdir / "status.yaml"
+        model_input_dir = workdir / "model_input"
+        model_output_dir = workdir / "model_output"
+        navigator_log_file = workdir / "navigator.log"
 
         nav.tensorflow.export(
             model=model,
@@ -181,10 +181,10 @@ def test_tf2_export_tf_onnx():
         assert navigator_log_file.is_file()
 
         # Output formats
-        assert check_model_dir(model_dir=package_dir / "onnx", format=nav.Format.ONNX)
+        assert check_model_dir(model_dir=workdir / "onnx", format=nav.Format.ONNX)
 
         # Formats not exported but present as step for onnx
-        assert check_model_dir(model_dir=package_dir / "tf-savedmodel", format=nav.Format.TF_SAVEDMODEL)
+        assert check_model_dir(model_dir=workdir / "tf-savedmodel", format=nav.Format.TF_SAVEDMODEL)
 
 
 # TODO: Fix test - tf2 is using all memory
@@ -193,11 +193,11 @@ def test_tf2_export_tf_onnx():
 #         model_name = "navigator_model"
 #
 #         workdir = Path(tmp_dir) / "navigator_workdir"
-#         package_dir = workdir / f"{model_name}.nav.workspace"
-#         status_file = package_dir / "status.yaml"
-#         model_input_dir = package_dir / "model_input"
-#         model_output_dir = package_dir / "model_output"
-#         navigator_log_file = package_dir / "navigator.log"
+#
+#         status_file = workdir / "status.yaml"
+#         model_input_dir = workdir / "model_input"
+#         model_output_dir = workdir / "model_output"
+#         navigator_log_file = workdir / "navigator.log"
 #
 #         nav.tensorflow.export(
 #             model=model,
@@ -221,11 +221,11 @@ def test_tf2_export_tf_onnx():
 #         assert navigator_log_file.is_file()
 #
 #         # Output formats
-#         assert check_model_dir(model_dir=package_dir / "trt-fp16", format=nav.Format.TENSORRT)
-#         assert check_model_dir(model_dir=package_dir / "trt-fp32", format=nav.Format.TENSORRT)
+#         assert check_model_dir(model_dir=workdir / "trt-fp16", format=nav.Format.TENSORRT)
+#         assert check_model_dir(model_dir=workdir / "trt-fp32", format=nav.Format.TENSORRT)
 #
 #         # Formats not exported but present as step for TRT
-#         assert check_model_dir(model_dir=package_dir / "tf-savedmodel", format=nav.Format.TF_SAVEDMODEL)
+#         assert check_model_dir(model_dir=workdir / "tf-savedmodel", format=nav.Format.TF_SAVEDMODEL)
 
 
 def test_tf2_export_string_format():
@@ -233,11 +233,11 @@ def test_tf2_export_string_format():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav.workspace"
-        status_file = package_dir / "status.yaml"
-        model_input_dir = package_dir / "model_input"
-        model_output_dir = package_dir / "model_output"
-        navigator_log_file = package_dir / "navigator.log"
+
+        status_file = workdir / "status.yaml"
+        model_input_dir = workdir / "model_input"
+        model_output_dir = workdir / "model_output"
+        navigator_log_file = workdir / "navigator.log"
 
         nav.tensorflow.export(
             model=model,
@@ -262,8 +262,8 @@ def test_tf2_export_string_format():
         assert navigator_log_file.is_file()
 
         # Output formats
-        assert check_model_dir(model_dir=package_dir / "tf-trt-fp16", format=nav.Format.TF_SAVEDMODEL) is False
-        assert check_model_dir(model_dir=package_dir / "tf-trt-fp32", format=nav.Format.TF_SAVEDMODEL) is CUDA_AVAILABLE
+        assert check_model_dir(model_dir=workdir / "tf-trt-fp16", format=nav.Format.TF_SAVEDMODEL) is False
+        assert check_model_dir(model_dir=workdir / "tf-trt-fp32", format=nav.Format.TF_SAVEDMODEL) is CUDA_AVAILABLE
 
         # Formats not exported but present as step for tf-trt
-        assert check_model_dir(model_dir=package_dir / "tf-savedmodel", format=nav.Format.TF_SAVEDMODEL)
+        assert check_model_dir(model_dir=workdir / "tf-savedmodel", format=nav.Format.TF_SAVEDMODEL)

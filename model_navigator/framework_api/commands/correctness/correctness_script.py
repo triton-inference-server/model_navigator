@@ -14,8 +14,8 @@
 
 
 import json
-from pathlib import Path
-from typing import Dict, List
+import pathlib
+from typing import Dict, List, Optional
 
 import fire
 import numpy as np
@@ -28,10 +28,8 @@ from model_navigator.framework_api.utils import Format, JitType, RuntimeProvider
 
 
 def correctness(
-    workdir: str,
     model_name: str,
     output_names: List[str],
-    package_path: str,
     batch_dim: int,
     results_path: str,
     format: str,
@@ -41,14 +39,17 @@ def correctness(
     enable_xla: bool,
     jit_compile: bool,
     runner_manager_dict: Dict,
+    navigator_workdir: Optional[str] = None,
 ):
-    correctness_samples = load_samples("correctness_samples", package_path, batch_dim)
-    correctness_samples_output = load_samples("correctness_samples_output", package_path, batch_dim)
-    results_path = Path(results_path)
+    if not navigator_workdir:
+        navigator_workdir = pathlib.Path.cwd()
+    navigator_workdir = pathlib.Path(navigator_workdir)
+
+    correctness_samples = load_samples("correctness_samples", navigator_workdir, batch_dim)
+    correctness_samples_output = load_samples("correctness_samples_output", navigator_workdir, batch_dim)
 
     runner = RunnerManager.from_dict(runner_manager_dict).get_runner(
-        workdir=Path(workdir),
-        model_name=model_name,
+        workdir=navigator_workdir,
         format=Format(format),
         jit_type=JitType(jit_type) if jit_type else None,
         precision=TensorRTPrecision(precision) if precision else None,
@@ -80,6 +81,7 @@ def correctness(
                 if max_reldiff > per_output_tolerance[name].rtol:
                     per_output_tolerance[name].rtol = float(max_reldiff)
 
+    results_path = pathlib.Path(results_path)
     with results_path.open("w") as f:
         json.dump(per_output_tolerance.to_json(), f)
 

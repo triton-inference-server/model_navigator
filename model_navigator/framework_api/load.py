@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import shutil
 import zipfile
 from pathlib import Path
@@ -40,7 +39,6 @@ from model_navigator.framework_api.utils import (
     format2runtimes,
     get_default_workdir,
     get_framework_export_formats,
-    get_package_path,
     get_trt_profile_from_trt_dynamic_axes,
 )
 from model_navigator.model import Format
@@ -198,17 +196,16 @@ def _load_package_descriptor(
         StatusDictUpdater().update_(status_dict, format_version)
         navigator_status = NavigatorStatus.from_dict(status_dict)
 
-        package_path = get_package_path(workdir=workdir, model_name=navigator_status.export_config["model_name"])
-        if package_path.exists():
+        if workdir.exists():
             if override_workdir:
-                shutil.rmtree(package_path)
+                shutil.rmtree(workdir)
             else:
-                raise FileExistsError(package_path)
+                raise FileExistsError(workdir)
 
         pkg_desc = PackageDescriptor(navigator_status, workdir)
         all_members = zf.namelist()
         filtered_members = _filter_out_converted_models(all_members, pkg_desc)
-        zf.extractall(package_path, members=filtered_members)
+        zf.extractall(workdir, members=filtered_members)
 
     PackageUpdater().update_(pkg_desc, pkg_version)
     pkg_desc.save_status_file()

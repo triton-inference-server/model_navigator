@@ -11,8 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from typing import Dict, List
+import pathlib
+from typing import Dict, List, Optional
 
 import fire
 import numpy
@@ -33,9 +33,14 @@ def export(
     jit_compile: bool,
     enable_xla: bool,
     input_metadata: List[Dict],
+    navigator_workdir: Optional[str] = None,
 ):
     model = get_model()
     model_params = get_model_params()
+
+    if not navigator_workdir:
+        navigator_workdir = pathlib.Path.cwd()
+    navigator_workdir = pathlib.Path(navigator_workdir)
 
     polymorphic_shapes = []
     tensor_spec = []
@@ -72,9 +77,13 @@ def export(
 
     signatures = {tf.saved_model.DEFAULT_SERVING_SIGNATURE_DEF_KEY: tf_module.f.get_concrete_function(*tensor_spec)}
 
+    exported_model_path = pathlib.Path(exported_model_path)
+    if not exported_model_path.is_absolute():
+        exported_model_path = navigator_workdir / exported_model_path
+
     tf.saved_model.save(
         tf_module,
-        exported_model_path,
+        exported_model_path.as_posix(),
         signatures=signatures,
     )
 

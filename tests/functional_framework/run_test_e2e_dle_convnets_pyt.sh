@@ -29,9 +29,10 @@ export PYTHONPATH="${PYTHONPATH}:${TEMPDIR}/DeepLearningExamples/PyTorch/Classif
 
 if [ -z "$1" ]
 then
-    WORKDIR=${TEMPDIR}
+    WORKDIR=${TEMPDIR}/workdir
 else
     WORKDIR=${1}
 fi
 
-./tests/functional_framework/test_e2e_dle_convnets_pyt.py --workdir ${WORKDIR}
+./tests/functional_framework/test_e2e_dle_convnets_pyt.py --model-name resnet50 --workdir ${WORKDIR}
+./tests/functional_framework/test_e2e_dle_convnets_pyt.py --model-name efficientnet-widese-b0 --workdir ${WORKDIR}

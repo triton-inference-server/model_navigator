@@ -24,7 +24,7 @@ from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.exceptions import ExecutionContext, UserError
 from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.runners.onnx import OnnxrtRunner
-from model_navigator.framework_api.utils import Framework, Status, format_to_relative_model_path, get_package_path
+from model_navigator.framework_api.utils import Framework, Status, format_to_relative_model_path
 from model_navigator.model import Format
 from model_navigator.utils import devices, tensorrt
 
@@ -68,9 +68,9 @@ class ConvertONNX2TRT(ConvertBase):
         if framework == Framework.PYT:
             from model_navigator.framework_api.commands.export.pyt import ExportPYT2ONNX
 
-            input_model_path = get_package_path(workdir, model_name) / ExportPYT2ONNX().get_output_relative_path()
+            input_model_path = workdir / ExportPYT2ONNX().get_output_relative_path()
         elif framework in (Framework.TF2, Framework.JAX):
-            input_model_path = get_package_path(workdir, model_name) / format_to_relative_model_path(
+            input_model_path = workdir / format_to_relative_model_path(
                 format=Format.ONNX,
                 enable_xla=self.enable_xla,
                 jit_compile=self.jit_compile,
@@ -78,10 +78,10 @@ class ConvertONNX2TRT(ConvertBase):
         elif framework == Framework.ONNX:  # ONNX
             from model_navigator.framework_api.commands.copy.onnx import CopyONNX
 
-            input_model_path = get_package_path(workdir, model_name) / CopyONNX().get_output_relative_path()
+            input_model_path = workdir / CopyONNX().get_output_relative_path()
         else:
             raise UserError(f"Unknown framework: {framework.value}")
-        converted_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
+        converted_model_path = workdir / self.get_output_relative_path()
 
         if converted_model_path.exists():
             LOGGER.info("Model already exists. Skipping conversion.")
@@ -92,14 +92,14 @@ class ConvertONNX2TRT(ConvertBase):
             return
         converted_model_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with ExecutionContext():
+        with ExecutionContext(workdir=workdir):
             onnx_runner = OnnxrtRunner(SessionFromOnnx(input_model_path.as_posix(), providers=[target_device]))
             with onnx_runner:
                 onnx_input_metadata = onnx_runner.get_input_metadata()
 
-        convert_cmd = ["polygraphy", "convert", input_model_path.as_posix()]
+        convert_cmd = ["polygraphy", "convert", input_model_path.relative_to(workdir).as_posix()]
         convert_cmd.extend(["--convert-to", "trt"])
-        convert_cmd.extend(["-o", converted_model_path.as_posix()])
+        convert_cmd.extend(["-o", converted_model_path.relative_to(workdir).as_posix()])
 
         if self.precision_mode == TensorRTPrecisionMode.HIERARCHY:
             trt_precision_flags = {
@@ -137,7 +137,10 @@ class ConvertONNX2TRT(ConvertBase):
             else:
                 convert_cmd.extend(["--pool-limit", f"workspace:{max_workspace_size}"])
 
-        with ExecutionContext(cmd_path=converted_model_path.parent / "reproduce_conversion.sh") as context:
+        with ExecutionContext(
+            workdir=workdir,
+            cmd_path=converted_model_path.parent / "reproduce_conversion.sh",
+        ) as context:
             context.execute_cmd(convert_cmd)
 
         return self.get_output_relative_path()

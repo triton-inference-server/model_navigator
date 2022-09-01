@@ -22,7 +22,6 @@ from polygraphy.backend.trt import TrtRunner as _TrtRunner
 from polygraphy_trtexec.backend import TrtexecRunner as _TrtexecRunner
 
 from model_navigator.framework_api.common import TensorMetadata
-from model_navigator.framework_api.exceptions import ExecutionContext
 from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.runners.base import INavigatorRunner
 from model_navigator.model import Format
@@ -36,10 +35,6 @@ class TrtRunner(INavigatorRunner, _TrtRunner):
 
     # TODO: observe TRT API on this cast
     trt_casts = {np.dtype(np.int64): np.int32}
-
-    def activate(self):
-        with ExecutionContext():
-            return super().activate()
 
     def infer(self, feed_dict, check_inputs=None, *args, **kwargs):
         feed_dict = {
@@ -147,10 +142,6 @@ class TrtexecRunner(INavigatorRunner, _TrtexecRunner):
             kwargs.update(**runtime_config_dict)
 
         super().__init__(**kwargs)
-
-    def activate_impl(self):
-        with ExecutionContext():
-            return super().activate_impl()
 
     def _cast_tensor(self, tensor):
         if tensor.dtype in self.trt_casts:

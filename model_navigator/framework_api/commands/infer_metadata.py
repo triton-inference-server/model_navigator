@@ -235,6 +235,7 @@ class InferOutputMetadata(Command):
         profiling_sample: Sample,
         conversion_samples: List[Sample],
         input_metadata: TensorMetadata,
+        workdir: Path,
         model_params: Optional[Any] = None,
         target_device: Optional[str] = None,
         _output_names: Optional[Tuple[str, ...]] = None,
@@ -267,7 +268,7 @@ class InferOutputMetadata(Command):
         else:
             raise UserError(f"Unknown framework: {framework.value}")
 
-        with runner, ExecutionContext():
+        with runner, ExecutionContext(workdir=workdir):
             output_sample = runner.infer(profiling_sample)
             output_names = list(output_sample.keys())
             output_generator = (runner.infer(sample) for sample in conversion_samples)

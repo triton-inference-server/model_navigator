@@ -35,10 +35,11 @@ limitations under the License.
   - fix: Correctly load .nav packages when `_input_names` or `_output_names` specified
   - fix: Adjust TF and TF-TRT model signatures to match `input_names`
   - fix: Save ONNX opset for CLI configuration inside package
+  - fix: Reproduction scripts were missing for failing paths
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 - Version of external components used during testing:
-    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.36.2
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.38.0
     - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.19
     - [Triton Model Analyzer 1.17.0](https://github.com/triton-inference-server/model_analyzer)
     - tf2onnx: [v1.11.1](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.11.1)

@@ -17,16 +17,11 @@ from collections import OrderedDict
 
 from polygraphy.backend.onnxrt import OnnxrtRunner as _OnnxrtRunner
 
-from model_navigator.framework_api.exceptions import ExecutionContext
 from model_navigator.framework_api.runners.base import INavigatorRunner
 from model_navigator.framework_api.utils import Framework, validate_sample_output
 
 
 class OnnxrtRunner(INavigatorRunner, _OnnxrtRunner):
-    def activate(self):
-        with ExecutionContext():
-            return super().activate()
-
     def infer(self, feed_dict, check_inputs=None, *args, **kwargs):
         feed_dict = {name: tensor for name, tensor in feed_dict.items() if name in self.get_input_metadata()}
         return super().infer(feed_dict, check_inputs, *args, **kwargs)

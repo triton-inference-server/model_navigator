@@ -50,7 +50,7 @@ python3 ${BERT_PATH}/data/bertPrep.py --action download --dataset google_pretrai
 
 if [ -z "$1" ]
 then
-    WORKDIR=${TEMPDIR}
+    WORKDIR=${TEMPDIR}/workdir
 else
     WORKDIR=${1}
 fi

@@ -22,10 +22,12 @@ def parse_args():
     parser.add_argument(
         "--input-path",
         type=str,
+        required=True,
     )
     parser.add_argument(
         "--output-path",
         type=str,
+        required=True,
     )
     parser.add_argument(
         "--keep-workdir",

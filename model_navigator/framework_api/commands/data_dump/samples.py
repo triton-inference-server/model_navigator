@@ -29,7 +29,6 @@ from model_navigator.framework_api.utils import (
     extract_bs1,
     extract_sample,
     get_available_onnx_providers,
-    get_package_path,
 )
 
 
@@ -160,7 +159,7 @@ class DumpInputModelData(Command):
         batch_dim: Optional[int],
         **kwargs,
     ):
-        sample_data_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
+        sample_data_path = workdir / self.get_output_relative_path()
         sample_data_path.mkdir(parents=True, exist_ok=True)
 
         for samples, dirname in [
@@ -205,7 +204,7 @@ class DumpOutputModelData(Command):
         **kwargs,
     ):
         output_names = list(output_metadata.keys())
-        output_data_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
+        output_data_path = workdir / self.get_output_relative_path()
         output_data_path.mkdir(parents=True, exist_ok=True)
 
         if framework == Framework.PYT:

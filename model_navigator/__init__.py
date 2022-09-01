@@ -15,7 +15,7 @@
 from model_navigator.__version__ import __version__  # noqa: F401
 from model_navigator.converter.config import TensorRTPrecision  # noqa: F401
 from model_navigator.framework_api import commands, config, pipelines  # noqa: F401
-from model_navigator.framework_api._nav_package_format_version import NAV_PACKAGE_FORMAT_VERSION  # noqa: F401
+from model_navigator.framework_api.constants import NAV_PACKAGE_FORMAT_VERSION  # noqa: F401
 from model_navigator.framework_api.commands.performance import MeasurementMode, ProfilerConfig  # noqa: F401
 from model_navigator.framework_api.logger import LOGGER  # noqa: F401
 from model_navigator.framework_api.package_descriptor import profile, save  # noqa: F401

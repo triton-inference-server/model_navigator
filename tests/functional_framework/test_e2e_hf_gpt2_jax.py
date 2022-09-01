@@ -50,6 +50,7 @@ if __name__ == "__main__":
         dataloader=dataloader,
         workdir=nav_workdir,
         runtimes=(nav.RuntimeProvider.TF, nav.RuntimeProvider.CUDA, nav.RuntimeProvider.TRT),
+        override_workdir=True,
     )
 
     expected_runtimes = {
@@ -66,4 +67,4 @@ if __name__ == "__main__":
                 if status == nav.Status.OK:
                     nav.LOGGER.warning(f"{format} {runtime} status is {status} but it is not in expected runtimes.")
     nav.LOGGER.info("GPT2 passed.")
-    nav.save(pkg_desc, Path(args.workdir) / "gpt2_jax.nav")
+    nav.save(pkg_desc, "gpt2_jax.nav")

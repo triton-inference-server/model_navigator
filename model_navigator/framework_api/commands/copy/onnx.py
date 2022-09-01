@@ -19,7 +19,6 @@ from typing import Optional, Tuple
 
 from model_navigator.framework_api.commands.copy.base import CopyBase
 from model_navigator.framework_api.commands.core import Command, CommandType
-from model_navigator.framework_api.utils import get_package_path
 from model_navigator.model import Format
 
 
@@ -42,7 +41,7 @@ class CopyONNX(CopyBase):
         model: Optional[Path] = None,
         **kwargs,
     ) -> Optional[Path]:
-        destination_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
+        destination_model_path = workdir / self.get_output_relative_path()
         if destination_model_path.exists():
             return self.get_output_relative_path()
         assert model is not None

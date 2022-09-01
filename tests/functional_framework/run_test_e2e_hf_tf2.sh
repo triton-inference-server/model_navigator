@@ -15,9 +15,18 @@
 
 set -ex
 
+TEMPDIR=$(mktemp -d)
+
+function cleanup {
+    echo "Cleanup..."
+    rm -r ${TEMPDIR}
+}
+
+trap cleanup EXIT
+
 if [ -z "$1" ]
 then
-    WORKDIR=$(mktemp -d)
+    WORKDIR=${TEMPDIR}/workdir
 else
     WORKDIR=${1}
 fi

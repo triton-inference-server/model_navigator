@@ -50,8 +50,8 @@ def test_pyt_package_descriptor():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav.workspace"
-        model_dir = package_dir / "torchscript-script"
+
+        model_dir = workdir / "torchscript-script"
         model_dir.mkdir(parents=True, exist_ok=True)
         model_path = model_dir / "model.pt"
         script_module = torch.jit.script(model)

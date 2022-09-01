@@ -26,7 +26,7 @@ from model_navigator.framework_api.commands.export.pyt import ExportPYT2TorchScr
 from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.exceptions import ExecutionContext
 from model_navigator.framework_api.logger import LOGGER
-from model_navigator.framework_api.utils import JitType, Status, get_package_path, parse_kwargs_to_cmd
+from model_navigator.framework_api.utils import JitType, Status, parse_kwargs_to_cmd
 from model_navigator.model import Format
 from model_navigator.utils import devices
 
@@ -62,10 +62,9 @@ class ConvertTorchScript2TorchTensorRT(ConvertBase):
         import torch_tensorrt  # pytype: disable=import-error # noqa: F401
 
         exported_model_path = (
-            get_package_path(workdir, model_name)
-            / ExportPYT2TorchScript(target_jit_type=self.target_jit_type).get_output_relative_path()
+            workdir / ExportPYT2TorchScript(target_jit_type=self.target_jit_type).get_output_relative_path()
         )
-        converted_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
+        converted_model_path = workdir / self.get_output_relative_path()
         if converted_model_path.exists():
             LOGGER.info("Model already exists. Skipping conversion.")
             return self.get_output_relative_path()
@@ -82,18 +81,20 @@ class ConvertTorchScript2TorchTensorRT(ConvertBase):
         ]
 
         with ExecutionContext(
-            converted_model_path.parent / "reproduce_conversion.py",
-            converted_model_path.parent / "reproduce_conversion.sh",
+            workdir=workdir,
+            script_path=converted_model_path.parent / "reproduce_conversion.py",
+            cmd_path=converted_model_path.parent / "reproduce_conversion.sh",
         ) as context:
             kwargs = {
-                "exported_model_path": exported_model_path.as_posix(),
-                "converted_model_path": converted_model_path.as_posix(),
+                "exported_model_path": exported_model_path.relative_to(workdir).as_posix(),
+                "converted_model_path": converted_model_path.relative_to(workdir).as_posix(),
                 "shapes": {name: vars(shape_tuple) for name, shape_tuple in trt_profile.items()},
                 "input_dtypes": input_dtypes_str,
                 "max_workspace_size": max_workspace_size,
                 "precision": self.target_precision.value,
                 "precision_mode": precision_mode.value,
                 "target_device": target_device,
+                "navigator_workdir": workdir.as_posix(),
             }
 
             args = parse_kwargs_to_cmd(kwargs, (list, dict, tuple))

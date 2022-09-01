@@ -53,11 +53,11 @@ def test_np_dict_dataloader():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav.workspace"
-        status_file = package_dir / "status.yaml"
-        model_input_dir = package_dir / "model_input"
-        model_output_dir = package_dir / "model_output"
-        navigator_log_file = package_dir / "navigator.log"
+
+        status_file = workdir / "status.yaml"
+        model_input_dir = workdir / "model_input"
+        model_output_dir = workdir / "model_output"
+        navigator_log_file = workdir / "navigator.log"
 
         nav.jax.export(
             model=predict,
@@ -81,7 +81,7 @@ def test_np_dict_dataloader():
         assert navigator_log_file.is_file()
 
         # Output formats
-        assert check_model_dir(model_dir=package_dir / "tf-savedmodel")
+        assert check_model_dir(model_dir=workdir / "tf-savedmodel")
 
 
 def test_np_sequence_dataloader():
@@ -89,11 +89,11 @@ def test_np_sequence_dataloader():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav.workspace"
-        status_file = package_dir / "status.yaml"
-        model_input_dir = package_dir / "model_input"
-        model_output_dir = package_dir / "model_output"
-        navigator_log_file = package_dir / "navigator.log"
+
+        status_file = workdir / "status.yaml"
+        model_input_dir = workdir / "model_input"
+        model_output_dir = workdir / "model_output"
+        navigator_log_file = workdir / "navigator.log"
 
         nav.jax.export(
             model=predict,
@@ -117,4 +117,4 @@ def test_np_sequence_dataloader():
         assert navigator_log_file.is_file()
 
         # Output formats
-        assert check_model_dir(model_dir=package_dir / "tf-savedmodel")
+        assert check_model_dir(model_dir=workdir / "tf-savedmodel")

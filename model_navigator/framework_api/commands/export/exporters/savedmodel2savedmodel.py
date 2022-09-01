@@ -11,9 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-
-from typing import Any, Dict, List
+import pathlib
+from typing import Any, Dict, List, Optional
 
 import fire
 import tensorflow as tf  # pytype: disable=import-error
@@ -29,6 +28,7 @@ def export(
     exported_model_path: str,
     input_metadata: Dict[str, Any],
     output_names: List[str],
+    navigator_workdir: Optional[str] = None,
 ):
     model = get_model()
     infer = model.signatures["serving_default"]
@@ -36,6 +36,10 @@ def export(
     assert len(infer_input_names) < 2, "Cannot update signature for SavedModel with multiple inputs."
 
     input_metadata = TensorMetadata.from_json(input_metadata)
+
+    if not navigator_workdir:
+        navigator_workdir = pathlib.Path.cwd()
+    navigator_workdir = pathlib.Path(navigator_workdir)
 
     @tf.function()
     def predict(inputs_dict):
@@ -54,7 +58,13 @@ def export(
     }
     signatures = predict.get_concrete_function(input_specs)
 
-    tf.keras.models.save_model(model=model, filepath=exported_model_path, overwrite=True, signatures=signatures)
+    exported_model_path = pathlib.Path(exported_model_path)
+    if not exported_model_path.is_absolute():
+        exported_model_path = navigator_workdir / exported_model_path
+
+    tf.keras.models.save_model(
+        model=model, filepath=exported_model_path.as_posix(), overwrite=True, signatures=signatures
+    )
 
 
 if __name__ == "__main__":

@@ -60,7 +60,8 @@ if __name__ == "__main__":
         required=True,
     )
     args = parser.parse_args()
-    export_config = EXPORT_CONFIGS[args.model_name]
+    model_name = args.model_name
+    export_config = EXPORT_CONFIGS[model_name]
 
     gpus = tensorflow.config.experimental.list_physical_devices("GPU")
     for gpu in gpus:
@@ -77,6 +78,7 @@ if __name__ == "__main__":
         opset=13,
         profiler_config=nav.ProfilerConfig(measurement_request_count=20),
         runtimes=(nav.RuntimeProvider.TF, nav.RuntimeProvider.CUDA, nav.RuntimeProvider.TRT),
+        override_workdir=True,
     )
     # pytype: enable=not-callable
     nav.LOGGER.info(f"{pkg_desc.get_formats_status()=}")
@@ -90,5 +92,5 @@ if __name__ == "__main__":
                 if status == nav.Status.OK:
                     nav.LOGGER.warning(f"{format} {runtime} status is {status} but it is not in expected runtimes.")
 
-    nav.save(pkg_desc, Path(args.workdir) / f"{export_config['model_name']}_tf2.nav")
-    nav.LOGGER.info(f"{export_config['model_name']} passed.")
+    nav.save(pkg_desc, f"{model_name}_tf2.nav")
+    nav.LOGGER.info(f"{model_name} passed.")

@@ -37,7 +37,7 @@ python3 ${BERT_PATH}/data/bertPrep.py --action download --dataset squad
 
 if [ -z "$1" ]
 then
-    WORKDIR=${TEMPDIR}
+    WORKDIR=${TEMPDIR}/workdir
 else
     WORKDIR=${1}
 fi

@@ -22,7 +22,6 @@ from model_navigator.framework_api.utils import (
     Framework,
     JitType,
     format_to_relative_model_path,
-    get_package_path,
 )
 from model_navigator.model import Format, ModelConfig, ModelSignatureConfig
 from model_navigator.tensor import TensorSpec
@@ -85,7 +84,7 @@ class ConfigCli(Command):
             jit_compile=self.jit_compile,
         )
         config_relative_path = model_path.parent / "config.yaml"
-        config_path = get_package_path(workdir, model_name) / config_relative_path
+        config_path = workdir / config_relative_path
         if config_path.is_file():
             return None
         with YamlConfigFile(config_path) as config_file:

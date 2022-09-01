@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import pathlib
+from typing import Optional
 
 import fire
 import numpy as np
@@ -54,8 +56,13 @@ def convert(
     precision,
     precision_mode,
     target_device,
+    workdir: Optional[str] = None,
 ):
     import torch_tensorrt  # pytype: disable=import-error
+
+    if not workdir:
+        workdir = pathlib.Path.cwd()
+    workdir = pathlib.Path(workdir)
 
     print(type(shapes), shapes)
     print(type(input_dtypes), input_dtypes)
@@ -71,7 +78,12 @@ def convert(
                 dtype=input_dtype,
             )
         )
-    model = torch.jit.load(exported_model_path, map_location=target_device)
+
+    exported_model_path = pathlib.Path(exported_model_path)
+    if not exported_model_path.is_absolute():
+        exported_model_path = workdir / exported_model_path
+
+    model = torch.jit.load(exported_model_path.as_posix(), map_location=target_device)
 
     tr_model_compiled = torch_tensorrt.compile(
         module=model,
@@ -80,7 +92,12 @@ def convert(
         truncate_long_and_double=True,
         **_get_precision(precision, precision_mode),
     )
-    tr_model_compiled.save(converted_model_path)
+
+    converted_model_path = pathlib.Path(converted_model_path)
+    if not converted_model_path.is_absolute():
+        converted_model_path = workdir / converted_model_path
+
+    tr_model_compiled.save(converted_model_path.as_posix())
 
 
 if __name__ == "__main__":

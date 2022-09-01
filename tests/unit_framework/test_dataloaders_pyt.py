@@ -47,11 +47,11 @@ def test_pyt_tensor_dataloader():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav.workspace"
-        status_file = package_dir / "status.yaml"
-        model_input_dir = package_dir / "model_input"
-        model_output_dir = package_dir / "model_output"
-        navigator_log_file = package_dir / "navigator.log"
+
+        status_file = workdir / "status.yaml"
+        model_input_dir = workdir / "model_input"
+        model_output_dir = workdir / "model_output"
+        navigator_log_file = workdir / "navigator.log"
 
         dataloader = [torch.randn(1) for _ in range(5)]
 
@@ -84,8 +84,8 @@ def test_pyt_tensor_dataloader():
         assert navigator_log_file.is_file()
 
         # Output formats
-        assert check_model_dir(model_dir=package_dir / "torchscript-script", format=nav.Format.TORCHSCRIPT)
-        assert check_model_dir(model_dir=package_dir / "torchscript-trace", format=nav.Format.TORCHSCRIPT)
+        assert check_model_dir(model_dir=workdir / "torchscript-script", format=nav.Format.TORCHSCRIPT)
+        assert check_model_dir(model_dir=workdir / "torchscript-trace", format=nav.Format.TORCHSCRIPT)
 
 
 def test_pyt_sequence_dataloader():
@@ -93,11 +93,11 @@ def test_pyt_sequence_dataloader():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav.workspace"
-        status_file = package_dir / "status.yaml"
-        model_input_dir = package_dir / "model_input"
-        model_output_dir = package_dir / "model_output"
-        navigator_log_file = package_dir / "navigator.log"
+
+        status_file = workdir / "status.yaml"
+        model_input_dir = workdir / "model_input"
+        model_output_dir = workdir / "model_output"
+        navigator_log_file = workdir / "navigator.log"
 
         dataloader = [[torch.randn(1), torch.randn(1)] for _ in range(5)]
 
@@ -130,8 +130,8 @@ def test_pyt_sequence_dataloader():
         assert navigator_log_file.is_file()
 
         # Output formats
-        assert check_model_dir(model_dir=package_dir / "torchscript-script", format=nav.Format.TORCHSCRIPT)
-        assert check_model_dir(model_dir=package_dir / "torchscript-trace", format=nav.Format.TORCHSCRIPT)
+        assert check_model_dir(model_dir=workdir / "torchscript-script", format=nav.Format.TORCHSCRIPT)
+        assert check_model_dir(model_dir=workdir / "torchscript-trace", format=nav.Format.TORCHSCRIPT)
 
 
 def test_pyt_dict_dataloader():
@@ -139,11 +139,11 @@ def test_pyt_dict_dataloader():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav.workspace"
-        status_file = package_dir / "status.yaml"
-        model_input_dir = package_dir / "model_input"
-        model_output_dir = package_dir / "model_output"
-        navigator_log_file = package_dir / "navigator.log"
+
+        status_file = workdir / "status.yaml"
+        model_input_dir = workdir / "model_input"
+        model_output_dir = workdir / "model_output"
+        navigator_log_file = workdir / "navigator.log"
 
         dataloader = [{"x": torch.randn(1), "z": torch.randn(1)} for _ in range(5)]
 
@@ -176,8 +176,8 @@ def test_pyt_dict_dataloader():
         assert navigator_log_file.is_file()
 
         # Output formats
-        assert check_model_dir(model_dir=package_dir / "torchscript-script", format=nav.Format.TORCHSCRIPT)
-        assert check_model_dir(model_dir=package_dir / "torchscript-trace", format=nav.Format.TORCHSCRIPT)
+        assert check_model_dir(model_dir=workdir / "torchscript-script", format=nav.Format.TORCHSCRIPT)
+        assert check_model_dir(model_dir=workdir / "torchscript-trace", format=nav.Format.TORCHSCRIPT)
 
 
 def test_pyt_dict_dataloader_with_kwargs():
@@ -185,11 +185,11 @@ def test_pyt_dict_dataloader_with_kwargs():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav.workspace"
-        status_file = package_dir / "status.yaml"
-        model_input_dir = package_dir / "model_input"
-        model_output_dir = package_dir / "model_output"
-        navigator_log_file = package_dir / "navigator.log"
+
+        status_file = workdir / "status.yaml"
+        model_input_dir = workdir / "model_input"
+        model_output_dir = workdir / "model_output"
+        navigator_log_file = workdir / "navigator.log"
 
         dataloader = [{"x": torch.randn(1), "z": torch.randn(1)} for _ in range(5)]
 
@@ -225,7 +225,7 @@ def test_pyt_dict_dataloader_with_kwargs():
         assert navigator_log_file.is_file()
 
         # Output formats
-        assert check_model_dir(model_dir=package_dir / "onnx", format=nav.Format.ONNX)
+        assert check_model_dir(model_dir=workdir / "onnx", format=nav.Format.ONNX)
 
 
 def test_onnx_sequence_dataloader():
@@ -253,15 +253,16 @@ def test_onnx_sequence_dataloader():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav.workspace"
-        status_file = package_dir / "status.yaml"
-        model_input_dir = package_dir / "model_input"
-        model_output_dir = package_dir / "model_output"
-        navigator_log_file = package_dir / "navigator.log"
+
+        status_file = workdir / "status.yaml"
+        model_input_dir = workdir / "model_input"
+        model_output_dir = workdir / "model_output"
+        navigator_log_file = workdir / "navigator.log"
 
         nav.onnx.export(
             model=onnx_model_path,
             dataloader=_numpy_dataloader,
+            model_name=model_name,
             opset=13,
             workdir=workdir,
             run_profiling=False,
@@ -279,11 +280,11 @@ def test_onnx_sequence_dataloader():
         assert navigator_log_file.is_file()
 
         # Source format copied to package
-        assert check_model_dir(model_dir=package_dir / "onnx", format=nav.Format.ONNX)
+        assert check_model_dir(model_dir=workdir / "onnx", format=nav.Format.ONNX)
 
         # Output formats
-        assert check_model_dir(model_dir=package_dir / "trt-fp16", format=nav.Format.TENSORRT) is CUDA_AVAILABLE
-        assert check_model_dir(model_dir=package_dir / "trt-fp32", format=nav.Format.TENSORRT) is CUDA_AVAILABLE
+        assert check_model_dir(model_dir=workdir / "trt-fp16", format=nav.Format.TENSORRT) is CUDA_AVAILABLE
+        assert check_model_dir(model_dir=workdir / "trt-fp32", format=nav.Format.TENSORRT) is CUDA_AVAILABLE
 
 
 def test_onnx_dict_dataloader():
@@ -310,14 +311,19 @@ def test_onnx_dict_dataloader():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav.workspace"
-        status_file = package_dir / "status.yaml"
-        model_input_dir = package_dir / "model_input"
-        model_output_dir = package_dir / "model_output"
-        navigator_log_file = package_dir / "navigator.log"
+
+        status_file = workdir / "status.yaml"
+        model_input_dir = workdir / "model_input"
+        model_output_dir = workdir / "model_output"
+        navigator_log_file = workdir / "navigator.log"
 
         nav.onnx.export(
-            model=onnx_model_path, dataloader=_numpy_dataloader, opset=13, workdir=workdir, run_profiling=False
+            model=onnx_model_path,
+            model_name=model_name,
+            dataloader=_numpy_dataloader,
+            opset=13,
+            workdir=workdir,
+            run_profiling=False,
         )
 
         assert status_file.is_file()
@@ -332,8 +338,8 @@ def test_onnx_dict_dataloader():
         assert navigator_log_file.is_file()
 
         # Source format copied to package
-        assert check_model_dir(model_dir=package_dir / "onnx", format=nav.Format.ONNX)
+        assert check_model_dir(model_dir=workdir / "onnx", format=nav.Format.ONNX)
 
         # Output formats
-        assert check_model_dir(model_dir=package_dir / "trt-fp16", format=nav.Format.TENSORRT) is CUDA_AVAILABLE
-        assert check_model_dir(model_dir=package_dir / "trt-fp32", format=nav.Format.TENSORRT) is CUDA_AVAILABLE
+        assert check_model_dir(model_dir=workdir / "trt-fp16", format=nav.Format.TENSORRT) is CUDA_AVAILABLE
+        assert check_model_dir(model_dir=workdir / "trt-fp32", format=nav.Format.TENSORRT) is CUDA_AVAILABLE

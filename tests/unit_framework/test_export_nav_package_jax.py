@@ -59,11 +59,11 @@ def test_jax_export_savedmodel():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav.workspace"
-        status_file = package_dir / "status.yaml"
-        model_input_dir = package_dir / "model_input"
-        model_output_dir = package_dir / "model_output"
-        navigator_log_file = package_dir / "navigator.log"
+
+        status_file = workdir / "status.yaml"
+        model_input_dir = workdir / "model_input"
+        model_output_dir = workdir / "model_output"
+        navigator_log_file = workdir / "navigator.log"
 
         nav.jax.export(
             model=predict,
@@ -88,11 +88,11 @@ def test_jax_export_savedmodel():
         assert navigator_log_file.is_file()
 
         # Output formats
-        assert check_model_dir(model_dir=package_dir / "tf-savedmodel", format=nav.Format.TF_SAVEDMODEL)
+        assert check_model_dir(model_dir=workdir / "tf-savedmodel", format=nav.Format.TF_SAVEDMODEL)
 
         # Formats not exported
-        assert check_model_dir(model_dir=package_dir / "onnx", format=nav.Format.ONNX) is False
-        assert check_model_dir(model_dir=package_dir / "trt-fp16", format=nav.Format.TENSORRT) is False
-        assert check_model_dir(model_dir=package_dir / "trt-fp32", format=nav.Format.TENSORRT) is False
-        assert check_model_dir(model_dir=package_dir / "tf-trt-fp16", format=nav.Format.TF_TRT) is False
-        assert check_model_dir(model_dir=package_dir / "tf-trt-fp32", format=nav.Format.TF_TRT) is False
+        assert check_model_dir(model_dir=workdir / "onnx", format=nav.Format.ONNX) is False
+        assert check_model_dir(model_dir=workdir / "trt-fp16", format=nav.Format.TENSORRT) is False
+        assert check_model_dir(model_dir=workdir / "trt-fp32", format=nav.Format.TENSORRT) is False
+        assert check_model_dir(model_dir=workdir / "tf-trt-fp16", format=nav.Format.TF_TRT) is False
+        assert check_model_dir(model_dir=workdir / "tf-trt-fp32", format=nav.Format.TF_TRT) is False

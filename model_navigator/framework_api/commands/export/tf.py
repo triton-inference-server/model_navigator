@@ -23,7 +23,7 @@ from model_navigator.framework_api.commands.export.base import ExportBase
 from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.exceptions import ExecutionContext
 from model_navigator.framework_api.logger import LOGGER
-from model_navigator.framework_api.utils import get_package_path, parse_kwargs_to_cmd
+from model_navigator.framework_api.utils import parse_kwargs_to_cmd
 from model_navigator.model import Format
 
 
@@ -47,8 +47,7 @@ class ExportTF2SavedModel(ExportBase):
         **kwargs,
     ) -> Optional[Path]:
         LOGGER.info("TensorFlow2 to SavedModel export started")
-
-        exported_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
+        exported_model_path = workdir / self.get_output_relative_path()
         if exported_model_path.exists():
             LOGGER.info("Model already exists. Skipping export.")
             return self.get_output_relative_path()
@@ -58,14 +57,17 @@ class ExportTF2SavedModel(ExportBase):
         exporters.keras2savedmodel.get_model = lambda: model
 
         with ExecutionContext(
-            exported_model_path.parent / "reproduce_export.py", exported_model_path.parent / "reproduce_export.sh"
+            workdir=workdir,
+            script_path=exported_model_path.parent / "reproduce_export.py",
+            cmd_path=exported_model_path.parent / "reproduce_export.sh",
         ) as context:
 
             kwargs = {
-                "exported_model_path": exported_model_path.as_posix(),
+                "exported_model_path": exported_model_path.relative_to(workdir).as_posix(),
                 "input_metadata": input_metadata.to_json(),
                 "output_names": list(output_metadata.keys()),
-                "keras_input_names": forward_kw_names,
+                "keras_input_names": list(forward_kw_names) if forward_kw_names else None,
+                "navigator_workdir": workdir.as_posix(),
             }
 
             args = parse_kwargs_to_cmd(kwargs)
@@ -96,20 +98,23 @@ class UpdateSavedModelSignature(ExportBase):
     ) -> Optional[Path]:
         LOGGER.info("TensorFlow2 to SavedModel export started")
 
-        exported_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
+        exported_model_path = workdir / self.get_output_relative_path()
         assert exported_model_path.exists()
         exported_model_path.parent.mkdir(parents=True, exist_ok=True)
 
         exporters.savedmodel2savedmodel.get_model = lambda: tf.keras.models.load_model(exported_model_path)
 
         with ExecutionContext(
-            exported_model_path.parent / "reproduce_export.py", exported_model_path.parent / "reproduce_export.sh"
+            workdir=workdir,
+            script_path=exported_model_path.parent / "reproduce_export.py",
+            cmd_path=exported_model_path.parent / "reproduce_export.sh",
         ) as context:
 
             kwargs = {
-                "exported_model_path": exported_model_path.as_posix(),
+                "exported_model_path": exported_model_path.relative_to(workdir).as_posix(),
                 "input_metadata": input_metadata.to_json(),
                 "output_names": list(output_metadata.keys()),
+                "navigator_workdir": workdir.as_posix(),
             }
 
             args = parse_kwargs_to_cmd(kwargs)

@@ -56,8 +56,8 @@ def test_jax_dump_model_input():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav.workspace"
-        model_input_dir = package_dir / "model_input"
+
+        model_input_dir = workdir / "model_input"
 
         dump_cmd = DumpInputModelData()
 
@@ -89,12 +89,11 @@ def test_tf2_dump_model_output():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav.workspace"
-        model_dir = package_dir / "tf-savedmodel"
+        model_dir = workdir / "tf-savedmodel"
         model_dir.mkdir(parents=True, exist_ok=True)
-        model_input_dir = package_dir / "model_input"
+        model_input_dir = workdir / "model_input"
         model_input_dir.mkdir(parents=True, exist_ok=True)
-        model_output_dir = package_dir / "model_output"
+        model_output_dir = workdir / "model_output"
 
         input_data = next(iter(dataloader))
         np_output = predict(input_data, params=params)

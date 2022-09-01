@@ -27,7 +27,7 @@ import yaml
 from polygraphy.backend.trt import Profile
 
 from model_navigator.converter.config import TensorRTPrecision, TensorRTPrecisionMode
-from model_navigator.framework_api._nav_package_format_version import NAV_PACKAGE_FORMAT_VERSION
+from model_navigator.framework_api.constants import NAV_PACKAGE_FORMAT_VERSION
 from model_navigator.framework_api.commands.performance import ProfilerConfig
 from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.config import Config
@@ -48,7 +48,6 @@ from model_navigator.framework_api.utils import (
     get_base_format,
     get_default_status_filename,
     get_framework_export_formats,
-    get_package_path,
 )
 from model_navigator.model import Format
 from model_navigator.utils.environment import get_env, get_git_info
@@ -123,12 +122,12 @@ class PackageDescriptor:
         return Framework(self.navigator_status.export_config["framework"])
 
     def create_status_file(self):
-        path = get_package_path(self.workdir, self.model_name) / self.status_filename
+        path = self.workdir / self.status_filename
         with open(path, "w") as f:
             yaml.safe_dump(self.navigator_status.to_dict(parse=True), f, sort_keys=False)
 
     def delete_status_file(self):
-        path = get_package_path(self.workdir, self.model_name) / self.status_filename
+        path = self.workdir / self.status_filename
         if path.exists():
             path.unlink()
 
@@ -282,7 +281,7 @@ class PackageDescriptor:
             model object for TensorFlow, PyTorch and ONNX
             model path for TensorRT
         """
-        model_path = get_package_path(workdir=self.workdir, model_name=self.model_name) / format_to_relative_model_path(
+        model_path = self.workdir / format_to_relative_model_path(
             format=format,
             jit_type=jit_type,
             precision=precision,
@@ -316,7 +315,6 @@ class PackageDescriptor:
             target_device=self.navigator_status.export_config["target_device"],
         ).get_runner(
             workdir=self.workdir,
-            model_name=self.model_name,
             format=format,
             jit_type=jit_type,
             precision=precision,
@@ -443,14 +441,12 @@ class PackageDescriptor:
                 return runtime_results
         raise RuntimeError(f"Model status not found for {format=}, {jit_type=}, {precision=}, {runtime_provider=}.")
 
-    def _make_zip(self, zip_path, package_path, dirs_to_save, base_models_paths, converted_models_paths) -> None:
+    def _make_zip(self, zip_path, workdir, dirs_to_save, base_models_paths, converted_models_paths) -> None:
 
         checkpoint_extensions = {ext.value for ext in Extension}
         with zipfile.ZipFile(zip_path.as_posix(), "w") as zf:
-            for dirname, _, files in os.walk(package_path.as_posix()):
-                if dirname != package_path.as_posix() and not dirname.startswith(
-                    tuple(d.as_posix() for d in dirs_to_save)
-                ):
+            for dirname, _, files in os.walk(workdir.as_posix()):
+                if dirname != workdir.as_posix() and not dirname.startswith(tuple(d.as_posix() for d in dirs_to_save)):
                     continue
                 if dirname.startswith(tuple(p.as_posix() for p in converted_models_paths)):
                     continue
@@ -461,7 +457,7 @@ class PackageDescriptor:
                         mp.as_posix() for mp in base_models_paths
                     ]:
                         continue
-                    zf.write(filepath, filepath[len(package_path.as_posix()) :])
+                    zf.write(filepath, filepath[len(workdir.as_posix()) :])
 
     def _get_models_paths_to_save(
         self,
@@ -486,8 +482,10 @@ class PackageDescriptor:
                     format, jit_type, prec, enable_xla, jit_compile
                 )
                 if not model_path.exists():
-                    LOGGER.warning(f"Model not found for {model_path.parent.name}.")
-                    continue
+                    LOGGER.warning(
+                        f"Model not found for {model_path.parent.name}. Saving the reproduction scripts only."
+                    )
+
                 model_status = self._get_model_status(format, jit_type, prec, enable_xla, jit_compile)
                 if format in self._target_formats:
                     for runtime_status in model_status.runtime_results:
@@ -538,21 +536,19 @@ class PackageDescriptor:
             else:
                 raise FileExistsError(path)
 
-        package_path = get_package_path(workdir=self.workdir, model_name=self.model_name)
-
-        if not package_path.exists():
+        if not self.workdir.exists():
             raise FileNotFoundError("Workdir has been removed. Save() no longer available.")
 
         if self._is_empty:
             raise RuntimeError("No successful exports, .nav package cannot be created.")
 
         base_models_paths, converted_models_paths = self._get_models_paths_to_save(
-            package_path,
+            self.workdir,
         )
         dirs_to_save = [model_path.parent for model_path in chain(base_models_paths, converted_models_paths)]
         if save_data:
-            dirs_to_save.extend([package_path / "model_output", package_path / "model_input"])
-        self._make_zip(path, package_path, dirs_to_save, base_models_paths, converted_models_paths)
+            dirs_to_save.extend([self.workdir / "model_output", self.workdir / "model_input"])
+        self._make_zip(path, self.workdir, dirs_to_save, base_models_paths, converted_models_paths)
 
         if not keep_workdir:
             self._cleanup()

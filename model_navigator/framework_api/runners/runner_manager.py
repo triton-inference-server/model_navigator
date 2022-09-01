@@ -27,7 +27,6 @@ from model_navigator.framework_api.utils import (
     RuntimeProvider,
     format2runtimes,
     format_to_relative_model_path,
-    get_package_path,
 )
 
 
@@ -40,7 +39,6 @@ class RunnerManager(DataObject):
     def get_runner(
         self,
         workdir: Path,
-        model_name: str,
         format: Format,
         jit_type: Optional[JitType] = None,
         precision: Optional[TensorRTPrecision] = None,
@@ -54,7 +52,7 @@ class RunnerManager(DataObject):
         :return
             Polygraphy BaseRunner object: https://github.com/NVIDIA/TensorRT/blob/main/tools/Polygraphy/polygraphy/backend/base/runner.py
         """
-        model_path = get_package_path(workdir=workdir, model_name=model_name) / format_to_relative_model_path(
+        model_path = workdir / format_to_relative_model_path(
             format=format,
             jit_type=jit_type,
             precision=precision,
@@ -64,7 +62,7 @@ class RunnerManager(DataObject):
         if model_path.exists():
             return self._load_runner(model_path=model_path, format=format, runtime=runtime)
         else:
-            raise ValueError("Runner does not exists.")
+            raise ValueError(f"Runner does not exists for {model_path}.")
 
     @classmethod
     def from_dict(cls, data_dict: Dict):

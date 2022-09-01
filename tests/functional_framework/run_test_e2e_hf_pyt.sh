@@ -15,11 +15,21 @@
 
 set -ex
 
+TEMPDIR=$(mktemp -d)
+
+function cleanup {
+    echo "Cleanup..."
+    rm -r ${TEMPDIR}
+}
+
+trap cleanup EXIT
+
 if [ -z "$1" ]
 then
-    WORKDIR=$(mktemp -d)
+    WORKDIR=${TEMPDIR}/workdir
 else
     WORKDIR=${1}
 fi
 
-./tests/functional_framework/test_e2e_hf_pyt.py --workdir ${WORKDIR}
+./tests/functional_framework/test_e2e_hf_pyt.py --model-name distilbert-base-uncased --workdir ${WORKDIR}
+./tests/functional_framework/test_e2e_hf_pyt.py --model-name distilgpt2 --workdir ${WORKDIR}

@@ -23,7 +23,7 @@ from model_navigator.framework_api.commands.export.base import ExportBase
 from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.exceptions import ExecutionContext
 from model_navigator.framework_api.logger import LOGGER
-from model_navigator.framework_api.utils import JitType, get_package_path, parse_kwargs_to_cmd
+from model_navigator.framework_api.utils import JitType, parse_kwargs_to_cmd
 from model_navigator.model import Format
 
 
@@ -47,7 +47,8 @@ class ExportPYT2TorchScript(ExportBase):
         **kwargs,
     ) -> Optional[Path]:
         LOGGER.info("TorchScrip export started")
-        exported_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
+
+        exported_model_path = workdir / self.get_output_relative_path()
         if exported_model_path.is_file() or exported_model_path.is_dir():
             LOGGER.info("Model already exists. Skipping export.")
             return self.get_output_relative_path()
@@ -62,15 +63,17 @@ class ExportPYT2TorchScript(ExportBase):
         exporters.pytorch2torchscript.get_model = lambda: model
 
         with ExecutionContext(
-            exported_model_path.parent / "reproduce_export.py", exported_model_path.parent / "reproduce_export.sh"
+            workdir=workdir,
+            script_path=exported_model_path.parent / "reproduce_export.py",
+            cmd_path=exported_model_path.parent / "reproduce_export.sh",
         ) as context:
 
             kwargs = {
-                "exported_model_path": exported_model_path.as_posix(),
+                "exported_model_path": exported_model_path.relative_to(workdir).as_posix(),
                 "target_jit_type": self.target_jit_type.value,
-                "package_path": get_package_path(workdir, model_name).as_posix(),
                 "batch_dim": batch_dim,
                 "target_device": target_device,
+                "navigator_workdir": workdir.as_posix(),
             }
 
             args = parse_kwargs_to_cmd(kwargs, (list, dict, tuple))
@@ -102,7 +105,7 @@ class ExportPYT2ONNX(ExportBase):
         **kwargs,
     ) -> Optional[Path]:
         LOGGER.info("PyTorch to ONNX export started")
-        exported_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
+        exported_model_path = workdir / self.get_output_relative_path()
         if exported_model_path.exists():
             LOGGER.info("Model already exists. Skipping export.")
             return self.get_output_relative_path()
@@ -117,18 +120,20 @@ class ExportPYT2ONNX(ExportBase):
         exporters.pytorch2onnx.get_model = lambda: model
 
         with ExecutionContext(
-            exported_model_path.parent / "reproduce_export.py", exported_model_path.parent / "reproduce_export.sh"
+            workdir=workdir,
+            script_path=exported_model_path.parent / "reproduce_export.py",
+            cmd_path=exported_model_path.parent / "reproduce_export.sh",
         ) as context:
 
             kwargs = {
-                "exported_model_path": exported_model_path.as_posix(),
+                "navigator_workdir": workdir.as_posix(),
+                "exported_model_path": exported_model_path.relative_to(workdir).as_posix(),
                 "opset": opset,
                 "input_names": list(input_metadata.keys()),
                 "output_names": list(output_metadata.keys()),
                 "dynamic_axes": dict(**input_metadata.dynamic_axes, **output_metadata.dynamic_axes),
-                "package_path": get_package_path(workdir, model_name).as_posix(),
                 "batch_dim": batch_dim,
-                "forward_kw_names": forward_kw_names,
+                "forward_kw_names": list(forward_kw_names) if forward_kw_names else None,
                 "target_device": target_device,
             }
 

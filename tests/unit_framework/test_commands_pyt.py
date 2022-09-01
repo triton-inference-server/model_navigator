@@ -22,7 +22,7 @@ import torch
 from polygraphy.backend.trt import Profile
 
 from model_navigator.__version__ import __version__
-from model_navigator.framework_api._nav_package_format_version import NAV_PACKAGE_FORMAT_VERSION
+from model_navigator.framework_api.constants import NAV_PACKAGE_FORMAT_VERSION
 from model_navigator.framework_api.commands.correctness import Correctness
 from model_navigator.framework_api.commands.data_dump.samples import (
     DumpInputModelData,
@@ -70,8 +70,7 @@ def test_pyt_dump_model_input():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav.workspace"
-        model_input_dir = package_dir / "model_input"
+        model_input_dir = workdir / "model_input"
 
         input_data = next(iter(dataloader))
         numpy_data = input_data.cpu().numpy()
@@ -105,12 +104,11 @@ def test_pyt_dump_model_output():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav.workspace"
-        model_dir = package_dir / "torchscript-script"
+        model_dir = workdir / "torchscript-script"
         model_dir.mkdir(parents=True, exist_ok=True)
-        model_input_dir = package_dir / "model_input"
+        model_input_dir = workdir / "model_input"
         model_input_dir.mkdir(parents=True, exist_ok=True)
-        model_output_dir = package_dir / "model_output"
+        model_output_dir = workdir / "model_output"
 
         input_data = next(iter(dataloader))
         numpy_data = input_data.cpu().numpy()
@@ -148,8 +146,7 @@ def test_pyt_correctness():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav.workspace"
-        model_dir = package_dir / "torchscript-script"
+        model_dir = workdir / "torchscript-script"
         model_dir.mkdir(parents=True, exist_ok=True)
         model_path = model_dir / "model.pt"
 
@@ -161,8 +158,8 @@ def test_pyt_correctness():
         numpy_output = model(input_data).detach().cpu().numpy()
         batch_dim = None
 
-        samples_to_npz([{"input__1": numpy_input}], package_dir / "model_input" / "correctness", batch_dim=batch_dim)
-        samples_to_npz([{"output__1": numpy_output}], package_dir / "model_output" / "correctness", batch_dim=batch_dim)
+        samples_to_npz([{"input__1": numpy_input}], workdir / "model_input" / "correctness", batch_dim=batch_dim)
+        samples_to_npz([{"output__1": numpy_output}], workdir / "model_output" / "correctness", batch_dim=batch_dim)
 
         input_metadata = TensorMetadata({"input__1": TensorSpec("input__1", numpy_input.shape, numpy_input.dtype)})
         output_metadata = TensorMetadata({"output__1": TensorSpec("output__1", numpy_output.shape, numpy_output.dtype)})
@@ -214,14 +211,13 @@ def test_pyt_export_torchscript():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav.workspace"
 
         export_cmd = ExportPYT2TorchScript(target_jit_type=JitType.SCRIPT)
         input_data = next(iter(dataloader))
         numpy_data = input_data.cpu().numpy()
-        samples_to_npz([{"input__1": numpy_data}], package_dir / "model_input" / "profiling", None)
+        samples_to_npz([{"input__1": numpy_data}], workdir / "model_input" / "profiling", None)
 
-        exported_model_path = package_dir / export_cmd(
+        exported_model_path = workdir / export_cmd(
             model=model,
             model_name=model_name,
             workdir=workdir,
@@ -237,7 +233,6 @@ def test_pyt_export_onnx():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav.workspace"
 
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -246,10 +241,10 @@ def test_pyt_export_onnx():
 
         input_data = next(iter(dataloader_))
         sample = {"input": input_data.detach().cpu().numpy()}
-        samples_to_npz([sample], package_dir / "model_input" / "profiling", None)
+        samples_to_npz([sample], workdir / "model_input" / "profiling", None)
 
         export_cmd = ExportPYT2ONNX()
-        exported_model_path = package_dir / export_cmd(
+        exported_model_path = workdir / export_cmd(
             model=model_,
             model_name=model_name,
             workdir=workdir,

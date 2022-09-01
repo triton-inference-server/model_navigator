@@ -94,6 +94,6 @@ if __name__ == "__main__":
             else:
                 if status == nav.Status.OK:
                     nav.LOGGER.warning(f"{format} {runtime} status is {status} but it is not in expected runtimes.")
-    nav.save(pkg_desc, nav_workdir / f"{model_name}_tf2.nav")
+    nav.save(pkg_desc, f"{model_name}_tf2.nav")
 
     nav.LOGGER.info(f"{model_name} passed.")

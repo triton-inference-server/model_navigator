@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, Callable, List, Sequence
 from model_navigator.framework_api.config import Config
 from model_navigator.framework_api.logger import LOGGER, add_log_file_handler
 from model_navigator.framework_api.pipelines.pipeline import Pipeline
-from model_navigator.framework_api.utils import Indent, Status, get_package_path, pad_string
+from model_navigator.framework_api.utils import Indent, Status, pad_string
 
 if TYPE_CHECKING:
     from model_navigator.framework_api.package_descriptor import PackageDescriptor
@@ -31,7 +31,7 @@ class PipelineManager:
 
     def run(self, config: Config, package_descriptor: "PackageDescriptor") -> Sequence[Pipeline]:
         self._validate(config)
-        self._prepare_package_dir(config)
+        self._prepare_workdir(config)
         self._prepare_log_file(config)
 
         additional_params = {}
@@ -46,15 +46,16 @@ class PipelineManager:
         return self._pipelines
 
     @staticmethod
-    def _prepare_package_dir(config: Config):
-        package_dir_path = get_package_path(config.workdir, config.model_name)
-        if package_dir_path.exists() and config.override_workdir:
-            shutil.rmtree(package_dir_path, ignore_errors=True)
-        package_dir_path.mkdir(parents=True, exist_ok=True)
+    def _prepare_workdir(config: Config):
+        workdir = config.workdir
+        if workdir.exists() and config.override_workdir:
+            shutil.rmtree(workdir, ignore_errors=True)
+
+        workdir.mkdir(parents=True, exist_ok=True)
 
     @staticmethod
     def _prepare_log_file(config: Config):
-        add_log_file_handler(log_dir=get_package_path(config.workdir, config.model_name))
+        add_log_file_handler(log_dir=config.workdir)
 
     @staticmethod
     def _validate(config: Config):

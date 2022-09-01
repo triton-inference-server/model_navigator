@@ -165,6 +165,7 @@ if __name__ == "__main__":
             opset=13,
             profiler_config=nav.ProfilerConfig(measurement_request_count=20),
             runtimes=(nav.RuntimeProvider.TF, nav.RuntimeProvider.CUDA, nav.RuntimeProvider.TRT),
+            override_workdir=True,
         )
         expected_runtimes = {
             "tf-trt-fp32": [nav.RuntimeProvider.TF.value],
@@ -180,6 +181,6 @@ if __name__ == "__main__":
                 else:
                     if status == nav.Status.OK:
                         nav.LOGGER.warning(f"{format} {runtime} status is {status} but it is not in expected runtimes.")
-        nav.save(pkg_desc, navigator_workdir / "bert_tf2.nav")
+        nav.save(pkg_desc, "bert_tf2.nav")
 
     nav.LOGGER.info("All models passed.")

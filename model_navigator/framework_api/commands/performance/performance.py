@@ -35,7 +35,6 @@ from model_navigator.framework_api.utils import (
     RuntimeProvider,
     Status,
     format_to_relative_model_path,
-    get_package_path,
     parse_kwargs_to_cmd,
 )
 from model_navigator.model import Format
@@ -299,7 +298,7 @@ class Performance(Command):
     ) -> List[ProfilingResults]:
         LOGGER.info(f"Performance test for: {self.target_format} {self.runtime_provider} started.")
 
-        model_path = get_package_path(workdir=workdir, model_name=model_name) / format_to_relative_model_path(
+        model_path = workdir / format_to_relative_model_path(
             format=self.target_format,
             jit_type=self.target_jit_type,
             precision=self.target_precision,
@@ -311,12 +310,13 @@ class Performance(Command):
         runner_manager = RunnerManager(input_metadata, output_metadata, target_device)
 
         with ExecutionContext(
-            model_dir / "reproduce_profiling.py", model_dir / "reproduce_profiling.sh"
+            workdir=workdir,
+            script_path=model_dir / "reproduce_profiling.py",
+            cmd_path=model_dir / "reproduce_profiling.sh",
         ) as context, tempfile.NamedTemporaryFile() as temp_file:
             kwargs = {
-                "workdir": workdir.as_posix(),
+                "navigator_workdir": workdir.as_posix(),
                 "model_name": model_name,
-                "package_path": get_package_path(workdir, model_name).as_posix(),
                 "batch_dim": batch_dim,
                 "results_path": temp_file.name,
                 "format": self.target_format.value,
@@ -325,9 +325,9 @@ class Performance(Command):
                 "runtime": self.runtime_provider.value if self.runtime_provider else None,
                 "enable_xla": self.enable_xla,
                 "jit_compile": self.jit_compile,
-                "profiler_config": str(profiler_config.to_dict(parse=True)).replace(" ", ""),
+                "profiler_config": profiler_config.to_dict(parse=True),
                 "max_batch_size": max_batch_size,
-                "runner_manager_dict": str(runner_manager.to_dict(parse=True)).replace(" ", ""),
+                "runner_manager_dict": runner_manager.to_dict(parse=True),
             }
 
             args = parse_kwargs_to_cmd(kwargs, (list, dict, tuple))

@@ -58,8 +58,8 @@ def test_tf2_package_descriptor():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
-        package_dir = workdir / f"{model_name}.nav.workspace"
-        model_dir = package_dir / "tf-savedmodel"
+
+        model_dir = workdir / "tf-savedmodel"
         model_dir.mkdir(parents=True, exist_ok=True)
         model_path = model_dir / "model.savedmodel"
         tensorflow.keras.models.save_model(model=model, filepath=model_path, overwrite=True)

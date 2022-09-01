@@ -75,13 +75,13 @@ def test_tf2_save_load_no_retest():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
+        nav_package_path = Path(tmp_dir) / f"{model_name}.nav"
+
         load_workdir = Path(tmp_dir) / "load_navigator_workdir"
-        nav_package_path = workdir / f"{model_name}.nav"
-        loaded_package_dir = load_workdir / f"{model_name}.nav.workspace"
-        status_file = loaded_package_dir / "status.yaml"
-        model_input_dir = loaded_package_dir / "model_input"
-        model_output_dir = loaded_package_dir / "model_output"
-        navigator_log_file = loaded_package_dir / "navigator.log"
+        status_file = load_workdir / "status.yaml"
+        model_input_dir = load_workdir / "model_input"
+        model_output_dir = load_workdir / "model_output"
+        navigator_log_file = load_workdir / "navigator.log"
 
         pkg_desc = nav.tensorflow.export(
             model=model,
@@ -114,7 +114,7 @@ def test_tf2_save_load_no_retest():
         assert navigator_log_file.is_file()
 
         # Exported formats
-        assert check_model_dir(model_dir=loaded_package_dir / "tf-savedmodel", format=nav.Format.TF_SAVEDMODEL)
+        assert check_model_dir(model_dir=load_workdir / "tf-savedmodel", format=nav.Format.TF_SAVEDMODEL)
 
 
 def test_tf2_save_load_retest():
@@ -122,13 +122,13 @@ def test_tf2_save_load_retest():
         model_name = "navigator_model"
 
         workdir = Path(tmp_dir) / "navigator_workdir"
+        nav_package_path = Path(tmp_dir) / f"{model_name}.nav"
+
         load_workdir = Path(tmp_dir) / "load_navigator_workdir"
-        nav_package_path = workdir / f"{model_name}.nav"
-        loaded_package_dir = load_workdir / f"{model_name}.nav.workspace"
-        status_file = loaded_package_dir / "status.yaml"
-        model_input_dir = loaded_package_dir / "model_input"
-        model_output_dir = loaded_package_dir / "model_output"
-        navigator_log_file = loaded_package_dir / "navigator.log"
+        status_file = load_workdir / "status.yaml"
+        model_input_dir = load_workdir / "model_input"
+        model_output_dir = load_workdir / "model_output"
+        navigator_log_file = load_workdir / "navigator.log"
 
         pkg_desc = nav.tensorflow.export(
             model=model,
@@ -160,7 +160,7 @@ def test_tf2_save_load_retest():
         assert navigator_log_file.is_file()
 
         # Output formats
-        assert check_model_dir(model_dir=loaded_package_dir / "tf-savedmodel", format=nav.Format.TF_SAVEDMODEL)
+        assert check_model_dir(model_dir=load_workdir / "tf-savedmodel", format=nav.Format.TF_SAVEDMODEL)
 
 
 @pytest.mark.skipif(

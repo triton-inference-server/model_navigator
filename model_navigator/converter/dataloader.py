@@ -79,7 +79,7 @@ def extract_model_signature(model_config: ModelConfig):
         return model.signature
 
     # Obtain signature for TF-SavedModel only when the input model has correct format
-    if model_config.model_format == Format.TF_SAVEDMODEL:
+    if model.format == Format.TF_SAVEDMODEL:
         # Run in a separate process to avoid problems with global resource management
         with navigator_subprocess() as navigator:
             module = navigator.module("model_navigator.converter.tf.utils")
@@ -181,7 +181,7 @@ class RandomDataloader(Dataloader):
             raise ModelNavigatorException("Cannot reconstruct input signatures.")
 
         if model_signature is None or model_signature.is_missing():
-            model_signature = extract_model_signature(model_config.model_path)
+            model_signature = extract_model_signature(model_config)
 
         if model_signature is None or model_signature.is_missing():
             raise ModelNavigatorException("Extracted input signatures is missing.")

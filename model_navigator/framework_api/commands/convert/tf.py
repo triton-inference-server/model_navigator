@@ -21,12 +21,7 @@ from model_navigator.framework_api.commands.convert.converters import sm2tftrt
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.exceptions import ExecutionContext
 from model_navigator.framework_api.logger import LOGGER
-from model_navigator.framework_api.utils import (
-    Status,
-    format_to_relative_model_path,
-    get_package_path,
-    parse_kwargs_to_cmd,
-)
+from model_navigator.framework_api.utils import Status, format_to_relative_model_path, parse_kwargs_to_cmd
 from model_navigator.model import Format
 from model_navigator.utils import devices
 
@@ -54,13 +49,13 @@ class ConvertSavedModel2ONNX(ConvertBase):
         **kwargs,
     ):
         LOGGER.info("SavedModel to ONNX conversion started")
-        exported_model_path = get_package_path(workdir, model_name) / format_to_relative_model_path(
+        exported_model_path = workdir / format_to_relative_model_path(
             format=Format.TF_SAVEDMODEL,
             enable_xla=self.enable_xla,
             jit_compile=self.jit_compile,
         )
 
-        converted_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
+        converted_model_path = workdir / self.get_output_relative_path()
 
         if converted_model_path.exists():
             LOGGER.info("Model already exists. Skipping conversion.")
@@ -75,14 +70,17 @@ class ConvertSavedModel2ONNX(ConvertBase):
             "-m",
             "tf2onnx.convert",
             "--saved-model",
-            exported_model_path.as_posix(),
+            exported_model_path.relative_to(workdir).as_posix(),
             "--output",
-            converted_model_path.as_posix(),
+            converted_model_path.relative_to(workdir).as_posix(),
             "--opset",
             str(opset),
         ]
 
-        with ExecutionContext(cmd_path=converted_model_path.parent / "reproduce_conversion.sh") as context:
+        with ExecutionContext(
+            workdir=workdir,
+            cmd_path=converted_model_path.parent / "reproduce_conversion.sh",
+        ) as context:
             context.execute_cmd(convert_cmd)
 
         return self.get_output_relative_path()
@@ -120,12 +118,13 @@ class ConvertSavedModel2TFTRT(ConvertBase):
         LOGGER.info("SavedModel to TF-TRT conversion started")
         if not devices.get_available_gpus():
             raise RuntimeError("No GPUs available.")
-        exported_model_path = get_package_path(workdir, model_name) / format_to_relative_model_path(
+
+        exported_model_path = workdir / format_to_relative_model_path(
             format=Format.TF_SAVEDMODEL,
             enable_xla=self.enable_xla,
             jit_compile=self.jit_compile,
         )
-        converted_model_path = get_package_path(workdir, model_name) / self.get_output_relative_path()
+        converted_model_path = workdir / self.get_output_relative_path()
         converted_model_path.parent.mkdir(parents=True, exist_ok=True)
 
         if converted_model_path.exists():
@@ -137,17 +136,18 @@ class ConvertSavedModel2TFTRT(ConvertBase):
             return
 
         with ExecutionContext(
-            converted_model_path.parent / "reproduce_conversion.py",
-            converted_model_path.parent / "reproduce_conversion.sh",
+            workdir=workdir,
+            script_path=converted_model_path.parent / "reproduce_conversion.py",
+            cmd_path=converted_model_path.parent / "reproduce_conversion.sh",
         ) as context:
             kwargs = {
-                "exported_model_path": exported_model_path.as_posix(),
-                "converted_model_path": converted_model_path.as_posix(),
+                "exported_model_path": exported_model_path.relative_to(workdir).as_posix(),
+                "converted_model_path": converted_model_path.relative_to(workdir).as_posix(),
                 "max_workspace_size": max_workspace_size,
                 "target_precision": self.target_precision.value,
                 "minimum_segment_size": minimum_segment_size,
-                "package_path": get_package_path(workdir, model_name).as_posix(),
                 "batch_dim": batch_dim,
+                "navigator_workdir": workdir.as_posix(),
             }
 
             args = parse_kwargs_to_cmd(kwargs, (list, dict, tuple))

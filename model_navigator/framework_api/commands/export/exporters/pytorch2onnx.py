@@ -11,8 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-
+import pathlib
 from typing import Dict, List, Optional
 
 import fire
@@ -31,22 +30,31 @@ def export(
     input_names: List[str],
     output_names: List[str],
     dynamic_axes: Dict[str, Dict[int, str]],
-    package_path: str,
     batch_dim: Optional[int],
     forward_kw_names: Optional[List[str]],
     target_device: str,
+    navigator_workdir: Optional[str] = None,
 ):
     model = get_model()
-    profiling_sample = load_samples("profiling_sample", package_path, batch_dim)
+
+    if not navigator_workdir:
+        navigator_workdir = pathlib.Path.cwd()
+    navigator_workdir = pathlib.Path(navigator_workdir)
+
+    profiling_sample = load_samples("profiling_sample", navigator_workdir, batch_dim)
 
     dummy_input = tuple(torch.from_numpy(val).to(target_device) for val in profiling_sample.values())
     if forward_kw_names is not None:
         dummy_input = ({key: val for key, val in zip(forward_kw_names, dummy_input)},)
 
+    exported_model_path = pathlib.Path(exported_model_path)
+    if not exported_model_path.is_absolute():
+        exported_model_path = navigator_workdir / exported_model_path
+
     torch.onnx.export(
         model,
         args=dummy_input,
-        f=exported_model_path,
+        f=exported_model_path.as_posix(),
         verbose=False,
         opset_version=opset,
         input_names=input_names,

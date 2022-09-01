@@ -160,10 +160,6 @@ def to_numpy(tensor, from_framework: Framework):
         return tensor.numpy()
 
 
-def get_package_path(workdir: Path, model_name: str):
-    return workdir / f"{model_name}.nav.workspace"
-
-
 # pytype: disable=wrong-arg-types
 # pytype: disable=attribute-error
 def format_to_relative_model_path(
@@ -314,12 +310,12 @@ def validate_sample_output(sample, framework: Framework):
         )
 
 
-def load_samples(samples_name, package_path, batch_dim):
-    if isinstance(package_path, str):
-        package_path = Path(package_path)
+def load_samples(samples_name, workdir, batch_dim):
+    if isinstance(workdir, str):
+        workdir = Path(workdir)
     samples_type = samples_name.split("_")[0]
     samples_dirname = "model_output" if samples_name.split("_")[-1] == "output" else "model_input"
-    samples_dirpath = package_path / samples_dirname / samples_type
+    samples_dirpath = workdir / samples_dirname / samples_type
     samples = []
     for sample_filepath in samples_dirpath.iterdir():
         sample = {}

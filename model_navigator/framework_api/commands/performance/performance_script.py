@@ -14,7 +14,7 @@
 
 
 import json
-from pathlib import Path
+import pathlib
 from typing import Dict, Optional
 
 import fire
@@ -27,9 +27,7 @@ from model_navigator.framework_api.utils import Format, JitType, RuntimeProvider
 
 
 def profile(
-    workdir: str,
     model_name: str,
-    package_path: str,
     batch_dim: int,
     results_path: str,
     format: str,
@@ -41,14 +39,16 @@ def profile(
     enable_xla: bool,
     jit_compile: bool,
     runner_manager_dict: Dict,
+    navigator_workdir: Optional[str] = None,
 ):
+    if not navigator_workdir:
+        navigator_workdir = pathlib.Path.cwd()
+    navigator_workdir = pathlib.Path(navigator_workdir)
 
-    profiling_sample = load_samples("profiling_sample", package_path, batch_dim)
-    results_path = Path(results_path)
+    profiling_sample = load_samples("profiling_sample", navigator_workdir, batch_dim)
 
     runner = RunnerManager.from_dict(runner_manager_dict).get_runner(
-        workdir=Path(workdir),
-        model_name=model_name,
+        workdir=navigator_workdir,
         format=Format(format),
         jit_type=JitType(jit_type) if jit_type else None,
         precision=TensorRTPrecision(precision) if precision else None,
@@ -61,6 +61,7 @@ def profile(
         runner, profiling_sample, ProfilerConfig.from_dict(profiler_config), batch_dim, max_batch_size
     ).run()
 
+    results_path = pathlib.Path(results_path)
     with results_path.open("w") as f:
         json.dump([res.to_dict() for res in results], f)
 
