@@ -471,9 +471,11 @@ def get_status(
     runtime_provider: Optional[RuntimeProvider] = None,
     jit_type: Optional[JitType] = None,
     precision: Optional[TensorRTPrecision] = None,
+    enable_xla: Optional[bool] = None,
+    jit_compile: Optional[bool] = None,
 ) -> bool:
     """Return status (True or False) of export operation for particular format, jit_type,
-    precision and runtime_provider."""
+    precision, enable_xla, jit_compile and runtime_provider."""
 ```
 
 
@@ -482,10 +484,12 @@ def get_model(
     self,
     format: Format,
     jit_type: Optional[JitType] = None,
-    precision: Optional[TensorRTPrecision] = None
+    precision: Optional[TensorRTPrecision] = None,
+    enable_xla: Optional[bool] = None,
+    jit_compile: Optional[bool] = None,
 ):
     """
-    Load exported model for given format, jit_type and precision and return model object
+    Load exported model for given format, jit_type, precision, enable_xla and jit_compile and return model object
 
     :return
         model object for TensorFlow, PyTorch and ONNX
@@ -499,9 +503,11 @@ def get_runner(
     jit_type: Optional[JitType] = None,
     precision: Optional[TensorRTPrecision] = None,
     runtime: Optional[RuntimeProvider] = None,
+    enable_xla: Optional[bool] = None,
+    jit_compile: Optional[bool] = None,
 ):
     """
-    Load exported model for given format, jit_type and precision and return Polygraphy runner for given runtime.
+    Load exported model for given format, jit_type, precision, enable_xla and jit_compile and return Polygraphy runner for given runtime.
 
     :return
         Polygraphy BaseRunner object: https://github.com/NVIDIA/TensorRT/blob/main/tools/Polygraphy/polygraphy/backend/base/runner.py
@@ -514,6 +520,8 @@ def set_verified(
     runtime: RuntimeProvider,
     jit_type: Optional[JitType] = None,
     precision: Optional[TensorRTPrecision] = None,
+    enable_xla: Optional[bool] = None,
+    jit_compile: Optional[bool] = None,
 ):
     """Set exported model verified for given format, jit_type and precision"""
 ```

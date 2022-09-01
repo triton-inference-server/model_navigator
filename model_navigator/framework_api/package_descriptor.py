@@ -190,7 +190,7 @@ class PackageDescriptor:
         enable_xla: Optional[bool] = None,
         jit_compile: Optional[bool] = None,
     ):
-        """Set exported model verified for given format, jit_type and precision"""
+        """Set exported model verified for given format, jit_type precision, enable_xla and jit_compile"""
         for model_status in self.navigator_status.model_status:
             for runtime_results in model_status.runtime_results:
                 if (
@@ -213,9 +213,11 @@ class PackageDescriptor:
         runtime_provider: Optional[RuntimeProvider] = None,
         jit_type: Optional[JitType] = None,
         precision: Optional[TensorRTPrecision] = None,
+        enable_xla: Optional[bool] = None,
+        jit_compile: Optional[bool] = None,
     ) -> bool:
         """Return status (True or False) of export operation for particular format, jit_type,
-        precision and runtime_provider."""
+        precision, enable_xla, jit_compile and runtime_provider."""
         if runtime_provider is None:
             runtime_provider = format2runtimes(format)[0]
 
@@ -225,6 +227,8 @@ class PackageDescriptor:
                 model_status.format == format
                 and model_status.torch_jit == jit_type
                 and model_status.precision == precision
+                and model_status.enable_xla == enable_xla
+                and model_status.jit_compile == jit_compile
             ):
                 for runtime_results in model_status.runtime_results:
                     if runtime_provider == runtime_results.runtime and runtime_results.status == Status.OK:
@@ -264,7 +268,12 @@ class PackageDescriptor:
         return results
 
     def get_model(
-        self, format: Format, jit_type: Optional[JitType] = None, precision: Optional[TensorRTPrecision] = None
+        self,
+        format: Format,
+        jit_type: Optional[JitType] = None,
+        precision: Optional[TensorRTPrecision] = None,
+        enable_xla: Optional[RuntimeProvider] = None,
+        jit_compile: Optional[RuntimeProvider] = None,
     ):
         """
         Load exported model for given format, jit_type and precision and return model object
@@ -274,7 +283,11 @@ class PackageDescriptor:
             model path for TensorRT
         """
         model_path = get_package_path(workdir=self.workdir, model_name=self.model_name) / format_to_relative_model_path(
-            format=format, jit_type=jit_type, precision=precision
+            format=format,
+            jit_type=jit_type,
+            precision=precision,
+            enable_xla=enable_xla,
+            jit_compile=jit_compile,
         )
         if model_path.exists():
             return self._load_model(model_path=model_path, format=format)
@@ -287,6 +300,8 @@ class PackageDescriptor:
         jit_type: Optional[JitType] = None,
         precision: Optional[TensorRTPrecision] = None,
         runtime: Optional[RuntimeProvider] = None,
+        enable_xla: Optional[RuntimeProvider] = None,
+        jit_compile: Optional[RuntimeProvider] = None,
     ):
         """
         Load exported model for given format, jit_type and precision and return Polygraphy runner for given runtime.
@@ -306,6 +321,8 @@ class PackageDescriptor:
             jit_type=jit_type,
             precision=precision,
             runtime=runtime,
+            enable_xla=enable_xla,
+            jit_compile=jit_compile,
         )
 
     def get_source_runner(
