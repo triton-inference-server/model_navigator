@@ -88,7 +88,19 @@ for gpu in gpus:
 
 ## Installation
 
-To install Model Navigator use command:
+To install Model Navigator Export API use installation script:
+
+| Frameworks                  | Script                          |
+|-----------------------------|---------------------------------|
+| PyTorch                     | $ . ./install_scripts/pyt.py    |
+| PyTorch and HuggingFace     | $ . ./install_scripts/pyt_hf.py |
+| TensorFlow2                 | $ . ./install_scripts/tf.py     |
+| TensorFlow2 and HuggingFace | $ . ./install_scripts/tf_hf.py  |
+| JAX                         | $ . ./install_scripts/jax.py    |
+| JAX and HuggingFace         | $ . ./install_scripts/jax_hf.py |
+| CLI                         | $ . ./install_scripts/cli.py    |
+
+Or use pip command:
 
 ```shell
 $ pip install --extra-index-url https://pypi.ngc.nvidia.com git+https://github.com/triton-inference-server/model_navigator.git@v0.3.3#egg=model-navigator[<extras,>] --upgrade

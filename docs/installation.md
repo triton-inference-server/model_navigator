@@ -62,7 +62,19 @@ for gpu in gpus:
 ## Export From Source
 
 Triton Model Navigator Export API is installed with Model Navigator package.
-To install Model Navigator Export API without Model Navigator dependencies use commands:
+To install Model Navigator Export API use install script:
+
+| Frameworks                  | Script                          |
+|-----------------------------|---------------------------------|
+| PyTorch                     | $ . ./install_scripts/pyt.py    |
+| PyTorch and HuggingFace     | $ . ./install_scripts/pyt_hf.py |
+| TensorFlow2                 | $ . ./install_scripts/tf.py     |
+| TensorFlow2 and HuggingFace | $ . ./install_scripts/tf_hf.py  |
+| JAX                         | $ . ./install_scripts/jax.py    |
+| JAX and HuggingFace         | $ . ./install_scripts/jax_hf.py |
+| CLI                         | $ . ./install_scripts/cli.py    |
+
+Or use pip command:
 
 ```shell
 $ pip install --extra-index-url https://pypi.ngc.nvidia.com git+https://github.com/triton-inference-server/model_navigator.git@v0.3.3#egg=model-navigator[<extras,>] --upgrade
@@ -70,7 +82,7 @@ $ pip install --extra-index-url https://pypi.ngc.nvidia.com git+https://github.c
 
 Extras:
 - pyt - Model Navigator Export API for PyTorch
-- tf - Model Navigator Export API for TensorFlow2
+- tf - Model Navigator Export API for TensorFlow2.
 - jax - Model Navigator Export API for JAX.
 - cli - Model Navigator CLI
 - huggingface - Model Navigator Export API for HuggingFace
