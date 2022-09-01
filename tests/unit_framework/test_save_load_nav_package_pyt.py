@@ -25,7 +25,7 @@ import model_navigator as nav
 from model_navigator.converter.config import TensorRTPrecision, TensorRTPrecisionMode
 from model_navigator.framework_api.package_descriptor import PackageDescriptor
 from model_navigator.model import Format
-from model_navigator.utils.device import get_gpus
+from model_navigator.utils.devices import get_gpus
 
 # pytype: enable=import-error
 

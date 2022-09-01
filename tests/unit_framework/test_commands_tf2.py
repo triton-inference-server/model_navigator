@@ -38,7 +38,7 @@ from model_navigator.framework_api.status import ModelStatus, NavigatorStatus
 from model_navigator.framework_api.utils import Framework, get_default_max_workspace_size
 from model_navigator.model import Format
 from model_navigator.tensor import TensorSpec
-from model_navigator.utils.device import get_gpus
+from model_navigator.utils.devices import get_gpus
 
 # pytype: enable=import-error
 

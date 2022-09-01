@@ -13,7 +13,7 @@
 # limitations under the License.
 from enum import Enum
 from pathlib import Path
-from typing import Any, Iterable, List, Mapping, Optional, Sequence, Tuple, Type, TypeVar
+from typing import Any, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 import numpy
 from polygraphy.backend.trt import Profile
@@ -22,13 +22,12 @@ from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.common import Sample
 from model_navigator.framework_api.exceptions import UserError
 from model_navigator.model import Format
-from model_navigator.utils.device import get_available_gpus
-
-T = TypeVar("T")
+from model_navigator.utils import devices as devices_utils
+from model_navigator.utils import enums
 
 
 def get_supported_onnx_providers(exclude_trt: bool = False):
-    gpu_available = bool(get_available_gpus())
+    gpu_available = bool(devices_utils.get_available_gpus())
     supported_providers = []
     if gpu_available:
         supported_providers.append(RuntimeProvider.CUDA)
@@ -86,7 +85,7 @@ class RuntimeProvider(str, Parameter):
 
 def format2runtimes(model_format: Format) -> Tuple:
     if model_format == Format.ONNX:
-        return parse_enum(get_available_onnx_providers(), RuntimeProvider)
+        return enums.parse(get_available_onnx_providers(), RuntimeProvider)
     elif model_format in (Format.TORCHSCRIPT, Format.TORCH_TRT):
         return (RuntimeProvider.PYT,)
     elif model_format in (Format.TF_SAVEDMODEL, Format.TF_TRT):
@@ -226,14 +225,6 @@ def extract_bs1(sample: Sample, batch_dim: Optional[int]) -> Sample:
     if batch_dim is not None:
         return {name: tensor.take([0], batch_dim) for name, tensor in sample.items()}
     return sample
-
-
-def parse_enum(value: Any, enum_type: Type[T]) -> Tuple[T, ...]:
-    if value is not None:
-        value = tuple(value) if isinstance(value, (tuple, list)) else (value,)
-        value = tuple(enum_type(v) for v in value)
-        return value
-    return ()
 
 
 def get_framework_export_formats(framework: Framework):

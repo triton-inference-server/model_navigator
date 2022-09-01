@@ -17,7 +17,7 @@ from google.protobuf import json_format, text_format  # pytype: disable=pyi-erro
 from tritonclient.grpc import model_config_pb2  # pytype: disable=pyi-error
 
 from model_navigator.exceptions import ModelNavigatorException
-from model_navigator.utils.device import get_available_gpus
+from model_navigator.utils.devices import get_available_gpus
 
 
 class ModelConfig:

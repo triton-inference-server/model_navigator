@@ -44,7 +44,7 @@ from model_navigator.framework_api.utils import (
     get_trt_profile_from_trt_dynamic_axes,
 )
 from model_navigator.model import Format
-from model_navigator.utils.device import get_gpus
+from model_navigator.utils import devices
 
 
 class StatusDictUpdater:
@@ -264,7 +264,7 @@ def load(
     if profiler_config is not None:
         config.profiler_config = profiler_config
     if target_device is None:
-        target_device = "cuda" if get_gpus(["all"]) else "cpu"
+        target_device = "cuda" if devices.get_gpus(["all"]) else "cpu"
         LOGGER.info(f"Using `{target_device}` as target device.")
     config.target_device = target_device
 

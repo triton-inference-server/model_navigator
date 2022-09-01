@@ -28,7 +28,7 @@ from model_navigator.framework_api.utils import (
     parse_kwargs_to_cmd,
 )
 from model_navigator.model import Format
-from model_navigator.utils.device import get_available_gpus
+from model_navigator.utils import devices
 
 
 class ConvertSavedModel2ONNX(ConvertBase):
@@ -118,7 +118,7 @@ class ConvertSavedModel2TFTRT(ConvertBase):
         **kwargs,
     ) -> Optional[Path]:
         LOGGER.info("SavedModel to TF-TRT conversion started")
-        if not get_available_gpus():
+        if not devices.get_available_gpus():
             raise RuntimeError("No GPUs available.")
         exported_model_path = get_package_path(workdir, model_name) / format_to_relative_model_path(
             format=Format.TF_SAVEDMODEL,

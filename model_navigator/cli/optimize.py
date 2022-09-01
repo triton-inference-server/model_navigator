@@ -72,9 +72,10 @@ from model_navigator.triton import (
 )
 from model_navigator.triton.config import RunTritonConfig, TritonCustomBackendParametersConfig, TritonLaunchMode
 from model_navigator.utils import Workspace, cli
+from model_navigator.utils import tensorrt
 from model_navigator.utils import tensorrt as tensorrt_utils
 from model_navigator.utils.config import dataclass2dict
-from model_navigator.utils.device import get_available_device_kinds, get_gpus
+from model_navigator.utils.devices import get_available_device_kinds, get_gpus
 from model_navigator.utils.environment import EnvironmentStore, get_env
 from model_navigator.utils.pack_workspace import pack_workspace
 from model_navigator.utils.timer import Timer
@@ -171,6 +172,11 @@ def optimize_cmd(
             f"""model-format: {src_model_config.model_format}\n"""
             f"""model-path: {src_model_config.model_path}"""
         )
+
+    # Deprecation handling
+    conversion_set_config.tensorrt_precisions = tensorrt.filter_deprecated_precision(
+        conversion_set_config.tensorrt_precisions
+    )
 
     framework_docker_image = framework_docker_image or framework.container_image(container_version)
     triton_docker_image = triton_docker_image or TritonServer.container_image(container_version)

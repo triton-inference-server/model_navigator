@@ -19,7 +19,7 @@ limitations under the License.
 ## 0.3.4 (unreleased)
 - Updated NVIDIA containers defaults to 22.07
 - Model Navigator OTIS:
-  - removed: `TF32` precision for TensorRT from CLI options
+  - deprecated: `TF32` precision for TensorRT from CLI options - will be removed in future versions
   - fix: Tensorflow module was imported when obtaining model signature during conversion
 - Model Navigator Export API:
   - new: Support for building framework containers with Model Navigator installed
@@ -29,7 +29,7 @@ limitations under the License.
   - new: Use TF32 support by default for models with FP32 precision
   - new: Reset conversion parameters to defaults when using `load` for package
   - change: Rename of `onnx_runtimes` export function parameters to `runtimes`
-  - removed: `TF32` precision for TensorRT from available options
+  - deprecated: `TF32` precision for TensorRT from available options - will be removed in future versions
   - fix: Do not save TF-TRT models to the .nav package
   - fix: Do not save TF-TRT models from the .nav package
   - fix: Correctly load .nav packages when `_input_names` or `_output_names` specified

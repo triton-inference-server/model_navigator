@@ -39,9 +39,9 @@ from model_navigator.framework_api.utils import (
     get_default_max_workspace_size,
     get_default_model_name,
     get_default_workdir,
-    parse_enum,
 )
 from model_navigator.model import Format
+from model_navigator.utils import tensorrt, enums
 
 
 def export(
@@ -98,6 +98,8 @@ def export(
 
     if target_precisions is None:
         target_precisions = (TensorRTPrecision.FP32, TensorRTPrecision.FP16)
+    else:
+        target_precisions = tensorrt.filter_deprecated_precision(target_precisions)
 
     if precision_mode is None:
         precision_mode = TensorRTPrecisionMode.HIERARCHY
@@ -118,11 +120,11 @@ def export(
         profiler_config = ProfilerConfig()
 
     target_formats, jit_options, target_precisions, runtimes, precision_mode = (
-        parse_enum(target_formats, Format),
-        parse_enum(jit_options, JitType),
-        parse_enum(target_precisions, TensorRTPrecision),
-        parse_enum(runtimes, RuntimeProvider),
-        *parse_enum(precision_mode, TensorRTPrecisionMode),
+        enums.parse(target_formats, Format),
+        enums.parse(jit_options, JitType),
+        enums.parse(target_precisions, TensorRTPrecision),
+        enums.parse(runtimes, RuntimeProvider),
+        *enums.parse(precision_mode, TensorRTPrecisionMode),
     )
 
     config = Config(

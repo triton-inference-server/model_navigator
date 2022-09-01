@@ -20,7 +20,7 @@ import tensorflow
 
 import model_navigator as nav
 
-from model_navigator.utils.device import get_gpus
+from model_navigator.utils.devices import get_gpus
 
 # pytype: enable=import-error
 

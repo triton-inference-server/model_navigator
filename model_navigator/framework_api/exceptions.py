@@ -57,13 +57,11 @@ class ExecutionContext(contextlib.AbstractContextManager):
 
     def execute_local_runtime_script(self, path, func, args):
         shutil.copy(path, self._scipt_path)
-        run_cmd = self.execute_cmd(' '.join([sys.executable, self._scipt_path.as_posix()] + args), dry_run=True)
+        run_cmd = self.execute_cmd(" ".join([sys.executable, self._scipt_path.as_posix()] + args), dry_run=True)
         try:
             fire.Fire(func, args)
         except Exception as e:
-            raise UserError(
-                f"Command to reproduce error:\n{run_cmd}"
-            ) from e
+            raise UserError(f"Command to reproduce error:\n{run_cmd}") from e
 
     def execute_external_runtime_script(self, path, args):
         shutil.copy(path, self._scipt_path)
@@ -91,9 +89,7 @@ class ExecutionContext(contextlib.AbstractContextManager):
         if len(output.stderr):
             LOGGER.info(f"Command stderr:\n\n{textwrap.indent(output.stderr.decode('utf-8'), '    ')}")
         if output.returncode != 0:
-            raise UserError(
-                f"{output.stderr.decode('utf-8')}\nCommand to reproduce error:\n{' '.join(run_cmd)}"
-            )
+            raise UserError(f"{output.stderr.decode('utf-8')}\nCommand to reproduce error:\n{' '.join(run_cmd)}")
 
 
 class TensorTypeError(TypeError):

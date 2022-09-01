@@ -96,6 +96,9 @@ class Summary:
 
     def _rows_from_csv(self, *, file_path: Path) -> List[Dict]:
         data = []
+        if not file_path.exists():
+            return data
+
         with file_path.open("r") as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:

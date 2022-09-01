@@ -13,10 +13,13 @@
 # limitations under the License.
 import logging
 from distutils.version import LooseVersion
+from typing import Tuple
 
 import numpy as np
 
+from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.model import ModelSignatureConfig
+from model_navigator.utils import enums
 
 LOGGER = logging.getLogger(__name__)
 
@@ -27,6 +30,20 @@ def get_version():
     trt = mod.lazy_import("tensorrt")
     trt_version = LooseVersion(trt.__version__)
     return trt_version
+
+
+def filter_deprecated_precision(target_precisions: Tuple[TensorRTPrecision, ...]) -> Tuple:
+    filtered_precision = set()
+    target_precisions = enums.parse(target_precisions, TensorRTPrecision)
+    for precision in target_precisions:
+        mapped_precision = TensorRTPrecision(precision)
+        if mapped_precision == TensorRTPrecision.TF32:
+            LOGGER.warning(f"The {mapped_precision} is deprecated. Using {TensorRTPrecision.FP32.value}.")
+            filtered_precision.add(TensorRTPrecision.FP32)
+        else:
+            filtered_precision.add(mapped_precision)
+
+    return tuple(filtered_precision)
 
 
 def rewrite_signature_config(signature: ModelSignatureConfig):

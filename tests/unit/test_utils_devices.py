@@ -18,7 +18,7 @@ from unittest.mock import patch
 import pytest
 
 from model_navigator.exceptions import ModelNavigatorException
-from model_navigator.utils import device
+from model_navigator.utils import devices
 
 
 class MockCuda:
@@ -64,38 +64,38 @@ class MockCuda:
 
 def test_no_gpus():
     for v in [[], None]:
-        gpus = device.get_gpus(v)
+        gpus = devices.get_gpus(v)
         assert len(gpus) == 0
 
 
 def test_all_1():
     for v in [["all"]]:
-        with patch("model_navigator.utils.device.cuda", new=MockCuda(1)) as mock_cuda:
-            gpus = device.get_gpus(v)
+        with patch("model_navigator.utils.devices.cuda", new=MockCuda(1)) as mock_cuda:
+            gpus = devices.get_gpus(v)
             assert len(gpus) == 1
             assert gpus[0] == f"GPU-{str(mock_cuda.devices[0])}"
 
 
 def test_uuid_1():
-    with patch("model_navigator.utils.device.cuda", new=MockCuda(1)) as mock_cuda:
-        gpus = device.get_gpus([f"GPU-{str(mock_cuda.devices[0])}"])
+    with patch("model_navigator.utils.devices.cuda", new=MockCuda(1)) as mock_cuda:
+        gpus = devices.get_gpus([f"GPU-{str(mock_cuda.devices[0])}"])
         assert len(gpus) == 1
         assert gpus[0] == f"GPU-{str(mock_cuda.devices[0])}"
 
 
 def test_some_8():
-    with patch("model_navigator.utils.device.cuda", new=MockCuda(8)) as mock_cuda:
+    with patch("model_navigator.utils.devices.cuda", new=MockCuda(8)) as mock_cuda:
         for gs in [[0, 1, 2, 3], [0, 2, 4, 6], [7, 5, 3, 1], [3, 5, 7, 1], list(range(8)), list(reversed(range(8)))]:
-            gpus = device.get_gpus([str(x) for x in gs])
+            gpus = devices.get_gpus([str(x) for x in gs])
             assert len(gpus) == len(gs)
             for i, g in enumerate(gs):
                 assert gpus[i] == f"GPU-{str(mock_cuda.devices[g])}"
 
 
 def test_some_uuid_8():
-    with patch("model_navigator.utils.device.cuda", new=MockCuda(8)) as mock_cuda:
+    with patch("model_navigator.utils.devices.cuda", new=MockCuda(8)) as mock_cuda:
         for gs in [[0, 1, 2, 3], [0, 2, 4, 6], [7, 5, 3, 1], [3, 5, 7, 1], list(range(8)), list(reversed(range(8)))]:
-            gpus = device.get_gpus([f"GPU-{mock_cuda.devices[g]}" for g in gs])
+            gpus = devices.get_gpus([f"GPU-{mock_cuda.devices[g]}" for g in gs])
             assert len(gpus) == len(gs)
             for i, g in enumerate(gs):
                 assert gpus[i] == f"GPU-{mock_cuda.devices[g]}"
@@ -103,31 +103,31 @@ def test_some_uuid_8():
 
 def test_all_8():
     for v in [["all"]]:
-        with patch("model_navigator.utils.device.cuda", new=MockCuda(8)) as mock_cuda:
-            gpus = device.get_gpus(v)
+        with patch("model_navigator.utils.devices.cuda", new=MockCuda(8)) as mock_cuda:
+            gpus = devices.get_gpus(v)
             assert len(gpus) == 8
             for i in range(8):
                 assert gpus[i] == f"GPU-{str(mock_cuda.devices[i])}"
 
 
 def test_oob_8():
-    with patch("model_navigator.utils.device.cuda", new=MockCuda(8)):
+    with patch("model_navigator.utils.devices.cuda", new=MockCuda(8)):
         with pytest.raises(ModelNavigatorException):
-            device.get_gpus(["9"])
+            devices.get_gpus(["9"])
 
 
 def test_invalid_uuid_8():
-    with patch("model_navigator.utils.device.cuda", new=MockCuda(8)):
+    with patch("model_navigator.utils.devices.cuda", new=MockCuda(8)):
         with pytest.raises(ModelNavigatorException):
-            device.get_gpus([f"GPU-{str(uuid.uuid4())}"])
+            devices.get_gpus([f"GPU-{str(uuid.uuid4())}"])
 
 
 def test_twice():
-    with patch("model_navigator.utils.device.cuda", new=MockCuda(1)) as mock_cuda:
-        gpus = device.get_gpus(gpus=[0])
+    with patch("model_navigator.utils.devices.cuda", new=MockCuda(1)) as mock_cuda:
+        gpus = devices.get_gpus(gpus=[0])
         assert len(gpus) == 1
         assert gpus[0] == f"GPU-{str(mock_cuda.devices[0])}"
 
-        gpus = device.get_gpus(gpus=[0])
+        gpus = devices.get_gpus(gpus=[0])
         assert len(gpus) == 1
         assert gpus[0] == f"GPU-{str(mock_cuda.devices[0])}"

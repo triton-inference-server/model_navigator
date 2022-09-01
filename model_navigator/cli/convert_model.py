@@ -40,9 +40,7 @@ from model_navigator.converter import (
     Converter,
     DatasetProfileConfig,
 )
-from model_navigator.converter.config import (
-    ConversionSetConfig,
-)
+from model_navigator.converter.config import ConversionSetConfig
 from model_navigator.converter.dataloader import NavPackageDataloader, RandomDataloader
 from model_navigator.converter.utils import FORMAT2FRAMEWORK
 from model_navigator.exceptions import ModelNavigatorCliException, ModelNavigatorException
@@ -50,10 +48,10 @@ from model_navigator.log import init_logger, log_dict
 from model_navigator.model import Format, Model, ModelConfig, ModelSignatureConfig
 from model_navigator.results import ResultsStore, State
 from model_navigator.triton import DeviceKind, TritonModelInstancesConfig
-from model_navigator.utils import Workspace
+from model_navigator.utils import Workspace, tensorrt
 from model_navigator.utils.cli import clean_workspace_if_needed, common_options, options_from_config
 from model_navigator.utils.config import YamlConfigFile
-from model_navigator.utils.device import get_available_device_kinds, get_gpus
+from model_navigator.utils.devices import get_available_device_kinds, get_gpus
 from model_navigator.utils.docker import DockerBuilder, DockerImage
 from model_navigator.utils.environment import EnvironmentStore, get_env
 from model_navigator.utils.nav_package import NavPackage
@@ -276,6 +274,11 @@ def convert(
     comparator_config = ComparatorConfig.from_dict(kwargs)
     dataset_profile_config = DatasetProfileConfig.from_dict(kwargs)
     instances_config = TritonModelInstancesConfig.from_dict(kwargs)
+
+    # Deprecation handling
+    conversion_set_config.tensorrt_precisions = tensorrt.filter_deprecated_precision(
+        conversion_set_config.tensorrt_precisions
+    )
 
     src_model = Model(
         name=src_model_config.model_name,

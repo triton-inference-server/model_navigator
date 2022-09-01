@@ -22,7 +22,7 @@ from model_navigator.converter import ConversionLaunchMode
 from model_navigator.exceptions import ModelNavigatorException
 from model_navigator.log import log_dict
 from model_navigator.triton.config import Batching, DeviceKind
-from model_navigator.utils.device import get_gpus
+from model_navigator.utils.devices import get_gpus
 from model_navigator.utils.env import EnvironmentState, get_environment_state
 
 LOGGER = logging.getLogger(__name__)

@@ -36,9 +36,9 @@ from model_navigator.framework_api.utils import (
     get_default_max_workspace_size,
     get_default_model_name,
     get_default_workdir,
-    parse_enum,
 )
 from model_navigator.model import Format
+from model_navigator.utils import enums, tensorrt
 
 
 def export(
@@ -77,6 +77,9 @@ def export(
         max_workspace_size = get_default_max_workspace_size()
     if target_precisions is None:
         target_precisions = (TensorRTPrecision.FP32, TensorRTPrecision.FP16)
+    else:
+        target_precisions = tensorrt.filter_deprecated_precision(target_precisions)
+
     if opset is None:
         opset = 14
     if sample_count is None:
@@ -89,9 +92,9 @@ def export(
         profiler_config = ProfilerConfig()
 
     target_formats, target_precisions, runtimes = (
-        parse_enum(target_formats, Format),
-        parse_enum(target_precisions, TensorRTPrecision),
-        parse_enum(runtimes, RuntimeProvider),
+        enums.parse(target_formats, Format),
+        enums.parse(target_precisions, TensorRTPrecision),
+        enums.parse(runtimes, RuntimeProvider),
     )
     config = Config(
         Framework.ONNX,

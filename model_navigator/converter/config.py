@@ -40,6 +40,9 @@ class TensorRTPrecision(Enum):
     FP16 = "fp16"
     FP32 = "fp32"
 
+    # Deprecated
+    TF32 = "tf32"
+
 
 class TensorRTPrecisionMode(Enum):
     HIERARCHY = "hierarchy"
