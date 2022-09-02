@@ -15,7 +15,6 @@
 import json
 import tempfile
 import time
-from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Mapping, Optional, Sequence, Tuple
@@ -28,6 +27,7 @@ from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.common import DataObject, Sample, TensorMetadata
 from model_navigator.framework_api.exceptions import ExecutionContext, ModelNavigatorExportAPIError
 from model_navigator.framework_api.logger import LOGGER
+from model_navigator.framework_api.runners.base import INavigatorStabilizedRunner
 from model_navigator.framework_api.runners.runner_manager import RunnerManager
 from model_navigator.framework_api.utils import (
     JitType,
@@ -60,7 +60,7 @@ class ProfilingResults(DataObject):
         return cls(**d)
 
     @classmethod
-    def from_measurments(cls, measurements: List[float], batch_size: int):
+    def from_measurements(cls, measurements: List[float], batch_size: int):
         measurements = np.array(measurements)
         return cls(
             batch_size=batch_size,
@@ -74,17 +74,48 @@ class ProfilingResults(DataObject):
             request_count=len(measurements),
         )
 
+    @classmethod
+    def from_profiling_results(cls, profiling_results: List["ProfilingResults"]):
+        batch_size = profiling_results[0].batch_size
+
+        return cls(
+            batch_size=batch_size,
+            avg_latency=float(np.mean([result.avg_latency for result in profiling_results])),
+            std_latency=float(np.mean([result.std_latency for result in profiling_results])),
+            p50_latency=float(np.mean([result.p50_latency for result in profiling_results])),
+            p90_latency=float(np.mean([result.p90_latency for result in profiling_results])),
+            p95_latency=float(np.mean([result.p95_latency for result in profiling_results])),
+            p99_latency=float(np.mean([result.p99_latency for result in profiling_results])),
+            throughput=float(np.mean([result.throughput for result in profiling_results])),
+            request_count=int(np.mean([result.request_count for result in profiling_results])),
+        )
+
+    @classmethod
+    def from_stable_runner(cls, runner: INavigatorStabilizedRunner, batch_size: int):
+
+        return cls(
+            batch_size=batch_size,
+            avg_latency=runner.avg_latency(),
+            std_latency=runner.std_latency(),
+            p50_latency=runner.p50_latency(),
+            p90_latency=runner.p90_latency(),
+            p95_latency=runner.p95_latency(),
+            p99_latency=runner.p99_latency(),
+            throughput=float(1000 * max(1, batch_size) / runner.avg_latency()),
+            request_count=runner.request_count(),
+        )
+
     def __str__(self):
         return (
             f"Batch: {self.batch_size}\n"
             f"Request count: {self.request_count}\n"
-            f"Throughput: {self.throughput:.2f} [infer/sec]\n"
-            f"Avg Latency: {self.avg_latency:.2f} [ms]\n"
-            f"Std Latency: {self.std_latency:.2f} [ms]\n"
-            f"p50 Latency: {self.p50_latency:.2f} [ms]\n"
-            f"p90 Latency: {self.p90_latency:.2f} [ms]\n"
-            f"p95 Latency: {self.p95_latency:.2f} [ms]\n"
-            f"p99 Latency: {self.p99_latency:.2f} [ms]"
+            f"Throughput: {self.throughput:.4f} [infer/sec]\n"
+            f"Avg Latency: {self.avg_latency:.4f} [ms]\n"
+            f"Std Latency: {self.std_latency:.4f} [ms]\n"
+            f"p50 Latency: {self.p50_latency:.4f} [ms]\n"
+            f"p90 Latency: {self.p90_latency:.4f} [ms]\n"
+            f"p95 Latency: {self.p95_latency:.4f} [ms]\n"
+            f"p99 Latency: {self.p99_latency:.4f} [ms]"
         )
 
 
@@ -124,11 +155,6 @@ class Profiler:
         max_batch_size: Optional[int] = None,
     ) -> None:
 
-        if runner.is_inference_time_stabilized():
-            config = deepcopy(config)
-            config.max_trials = 1
-            config.measurement_request_count = 1
-
         self._runner = runner
         self._profiling_sample = profiling_sample
         self._config = config
@@ -162,14 +188,16 @@ class Profiler:
         while (time.monotonic() - start) * 1000 < self._config.measurement_interval:
             runner.infer(sample)
             measurements.append(runner.last_inference_time() * 1000)
-        return ProfilingResults.from_measurments(measurements, batch_size)
+
+        return ProfilingResults.from_measurements(measurements, batch_size)
 
     def _run_count_window_measurement(self, runner: BaseRunner, sample: Sample, batch_size: int) -> ProfilingResults:
         measurements = []
         for _ in range(self._config.measurement_request_count):
             runner.infer(sample)
             measurements.append(runner.last_inference_time() * 1000)
-        return ProfilingResults.from_measurments(measurements, batch_size)
+
+        return ProfilingResults.from_measurements(measurements, batch_size)
 
     def _is_measurement_stable(self, profiling_results: List[ProfilingResults], count: int = 3) -> bool:
         if len(profiling_results) < count:
@@ -189,25 +217,7 @@ class Profiler:
             )
 
         profiling_results = profiling_results[-count:]
-
-        for idx in range(1, len(profiling_results)):
-            assert profiling_results[idx - 1].batch_size == profiling_results[idx].batch_size
-            assert profiling_results[idx - 1].request_count == profiling_results[idx].request_count
-
-        batch_size = profiling_results[0].batch_size
-        request_count = profiling_results[0].request_count
-
-        profiling_result = ProfilingResults(
-            batch_size=batch_size,
-            avg_latency=float(np.mean([result.avg_latency for result in profiling_results])),
-            std_latency=float(np.mean([result.std_latency for result in profiling_results])),
-            p50_latency=float(np.mean([result.p50_latency for result in profiling_results])),
-            p90_latency=float(np.mean([result.p90_latency for result in profiling_results])),
-            p95_latency=float(np.mean([result.p95_latency for result in profiling_results])),
-            p99_latency=float(np.mean([result.p99_latency for result in profiling_results])),
-            throughput=float(np.mean([result.throughput for result in profiling_results])),
-            request_count=request_count,
-        )
+        profiling_result = ProfilingResults.from_profiling_results(profiling_results)
 
         return profiling_result
 
@@ -219,14 +229,19 @@ class Profiler:
             MeasurementMode.COUNT_WINDOWS: self._run_count_window_measurement,
         }[self._config.measurement_mode]
 
-        for idx in range(self._config.max_trials):
-            profiling_result = measurement_fn(runner, sample, batch_size)
-            profiling_results.append(profiling_result)
-            LOGGER.debug(
-                f"Measurement [{idx}]: {profiling_result.throughput} infer/sec, {profiling_result.avg_latency} ms"
-            )
-            if self._is_measurement_stable(profiling_results, count=min(3, self._config.max_trials)):
-                return self._measurements_result(profiling_results, count=min(3, self._config.max_trials))
+        if runner.is_inference_time_stabilized():
+            runner.infer(sample)
+            profiling_result = ProfilingResults.from_stable_runner(runner, batch_size)
+            return profiling_result
+        else:
+            for idx in range(self._config.max_trials):
+                profiling_result = measurement_fn(runner, sample, batch_size)
+                profiling_results.append(profiling_result)
+                LOGGER.debug(
+                    f"Measurement [{idx}]: {profiling_result.throughput} infer/sec, {profiling_result.avg_latency} ms"
+                )
+                if self._is_measurement_stable(profiling_results, count=min(3, self._config.max_trials)):
+                    return self._measurements_result(profiling_results, count=min(3, self._config.max_trials))
 
         raise RuntimeError(
             "Unable to get stable performance results. Consider increasing "

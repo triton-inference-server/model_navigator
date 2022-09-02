@@ -28,6 +28,7 @@ limitations under the License.
   - new: TrtexecRunner for correctness and performance tests with [trtexec](https://docs.nvidia.com/deeplearning/tensorrt/developer-guide/index.html#trtexec) tool
   - new: Use TF32 support by default for models with FP32 precision
   - new: Reset conversion parameters to defaults when using `load` for package
+  - change: Profiling stability improvements
   - change: Rename of `onnx_runtimes` export function parameters to `runtimes`
   - deprecated: `TF32` precision for TensorRT from available options - will be removed in future versions
   - fix: Do not save TF-TRT models to the .nav package

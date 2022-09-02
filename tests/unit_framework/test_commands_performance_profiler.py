@@ -38,8 +38,8 @@ def test_is_measurement_stable_return_false_when_window_size_less_than_count():
     batch_size = 1
     measurements = [25, 24, 23]
     windows = [
-        ProfilingResults.from_measurments(measurements, batch_size),
-        ProfilingResults.from_measurments(measurements, batch_size),
+        ProfilingResults.from_measurements(measurements, batch_size),
+        ProfilingResults.from_measurements(measurements, batch_size),
     ]
 
     assert profiler._is_measurement_stable(windows) is False
@@ -55,9 +55,9 @@ def test_is_measurement_stable_return_false_when_avg_latencies_are_out_of_stabil
 
     batch_size = 1
     windows = [
-        ProfilingResults.from_measurments([250, 220, 200], batch_size),
-        ProfilingResults.from_measurments([200, 150, 100], batch_size),
-        ProfilingResults.from_measurments([50, 49, 47], batch_size),
+        ProfilingResults.from_measurements([250, 220, 200], batch_size),
+        ProfilingResults.from_measurements([200, 150, 100], batch_size),
+        ProfilingResults.from_measurements([50, 49, 47], batch_size),
     ]
 
     assert bool(profiler._is_measurement_stable(windows)) is False
@@ -73,11 +73,11 @@ def test_is_measurement_stable_return_true_when_avg_latencies_are_in_stability_r
 
     batch_size = 1
     windows = [
-        ProfilingResults.from_measurments([250, 220, 200], batch_size),
-        ProfilingResults.from_measurments([200, 150, 100], batch_size),
-        ProfilingResults.from_measurments([52, 52, 51], batch_size),
-        ProfilingResults.from_measurments([50, 49, 48], batch_size),
-        ProfilingResults.from_measurments([52, 49, 47], batch_size),
+        ProfilingResults.from_measurements([250, 220, 200], batch_size),
+        ProfilingResults.from_measurements([200, 150, 100], batch_size),
+        ProfilingResults.from_measurements([52, 52, 51], batch_size),
+        ProfilingResults.from_measurements([50, 49, 48], batch_size),
+        ProfilingResults.from_measurements([52, 49, 47], batch_size),
     ]
 
     assert bool(profiler._is_measurement_stable(windows)) is True

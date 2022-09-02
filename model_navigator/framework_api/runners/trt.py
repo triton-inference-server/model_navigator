@@ -13,17 +13,19 @@
 # limitations under the License.
 import dataclasses
 import json
+import subprocess
 import typing
 from collections import OrderedDict
 
 import numpy as np
 from polygraphy.backend.trt import Profile
 from polygraphy.backend.trt import TrtRunner as _TrtRunner
+from polygraphy.logger import G_LOGGER, LogMode
 from polygraphy_trtexec.backend import TrtexecRunner as _TrtexecRunner
 
 from model_navigator.framework_api.common import TensorMetadata
 from model_navigator.framework_api.logger import LOGGER
-from model_navigator.framework_api.runners.base import INavigatorRunner
+from model_navigator.framework_api.runners.base import INavigatorRunner, INavigatorStabilizedRunner
 from model_navigator.model import Format
 from model_navigator.utils.config import dataclass2dict
 
@@ -101,7 +103,7 @@ def _format_dict(d: typing.Dict):
     return ",".join([f"{k}:{v}" for k, v in d.items()])
 
 
-class TrtexecRunner(INavigatorRunner, _TrtexecRunner):
+class TrtexecRunner(INavigatorStabilizedRunner, _TrtexecRunner):
     # TODO: observe TRT API on this cast
     trt_casts = {np.dtype(np.int64): np.int32}
 
@@ -141,13 +143,35 @@ class TrtexecRunner(INavigatorRunner, _TrtexecRunner):
 
             kwargs.update(**runtime_config_dict)
 
+        self._request_count = None
+        self._avg_latency = None
+        self._p50_latency = None
+        self._p99_latency = None
+
         super().__init__(**kwargs)
 
-    def _cast_tensor(self, tensor):
-        if tensor.dtype in self.trt_casts:
-            LOGGER.debug(f"Casting f{tensor.dtype} tensor to f{self.trt_casts[tensor.dtype]}.")
-            return tensor.astype(self.trt_casts[tensor.dtype])
-        return tensor
+    def infer_impl(self, feed_dict):
+        # TODO: This is WAR for TRTExec Runner - remove once implemented in source runner
+        # Adds other args that need to generated during inference. For example,
+        # `feed_dict` is used to generate the args for `loadInputs`
+        self.construct_final_cmd(feed_dict)
+        G_LOGGER.info(f"The trtexec command being run: {self.cmd_args}")
+        perf_output = subprocess.run(self.cmd_args, stdout=subprocess.PIPE, text=True).stdout
+        inference_time_stats = self._get_inference_stats(perf_output)
+        G_LOGGER.verbose(f"Inference time statistics: {inference_time_stats}")
+
+        outputs = self.read_output_file()
+
+        self._request_count = self._get_request_count(perf_output)
+        self._avg_latency = inference_time_stats["mean"]
+        self._p50_latency = inference_time_stats["median"]
+        self._p99_latency = inference_time_stats["percentile(99%)"]
+
+        # inference_time_stats records time in 'ms'. However, polygraphy
+        # expects time in seconds.
+        self.inference_time = self._avg_latency / 1000.0
+
+        return outputs
 
     def infer(self, feed_dict, check_inputs=None, *args, **kwargs):
         feed_dict = {
@@ -181,6 +205,143 @@ class TrtexecRunner(INavigatorRunner, _TrtexecRunner):
             outputs[name] = np.array(values).reshape(*dimensions)
         return outputs
 
-    @classmethod
-    def is_inference_time_stabilized(cls) -> bool:
-        return True
+    def avg_latency(self):
+        """
+        Returns the mean inference time required during the last call to ``infer()``.
+
+        Returns:
+            float: The time in milliseconds, or None if runtime was not measured by the runner.
+        """
+        if self._avg_latency is None:
+            G_LOGGER.warning(
+                "{:35} | avg_latency was not set. Inference time will be incorrect!"
+                "To correctly compare runtimes, please set the avg_latency property in the"
+                "infer() function".format(self.name),
+                mode=LogMode.ONCE,
+            )
+            return None
+        return self._avg_latency
+
+    def std_latency(self):
+        """
+        Returns the std of measured stable latency.
+
+        Returns:
+            float: The time in milliseconds, or None if runtime was not measured by the runner.
+        """
+        # TODO: Obtain from TRTExec once available
+        return 0.0
+
+    def p50_latency(self):
+        """
+        Returns the p50 of measured stable latency.
+
+        Returns:
+            float: The time in milliseconds, or None if runtime was not measured by the runner.
+        """
+        if self._p50_latency is None:
+            G_LOGGER.warning(
+                "{:35} | p50_latency was not set. Inference time will be incorrect!"
+                "To correctly compare runtimes, please set the p50_latency property in the"
+                "infer() function".format(self.name),
+                mode=LogMode.ONCE,
+            )
+            return None
+        return self._p50_latency
+
+    def p90_latency(self):
+        """
+        Returns the p90 of measured stable latency.
+
+        Returns:
+            float: The time in milliseconds, or None if runtime was not measured by the runner.
+        """
+        # TODO: Obtain from TRTExec once available
+        return 0.0
+
+    def p95_latency(self):
+        """
+        Returns the p95 of measured stable latency.
+
+        Returns:
+            float: The time in milliseconds, or None if runtime was not measured by the runner.
+        """
+        # TODO: Obtain from TRTExec once available
+        return 0.0
+
+    def p99_latency(self):
+        """
+        Returns the p99 of measured stable latency.
+
+        Returns:
+            float: The time in milliseconds, or None if runtime was not measured by the runner.
+        """
+        if self._p99_latency is None:
+            G_LOGGER.warning(
+                "{:35} | p99_latency was not set. Inference time will be incorrect!"
+                "To correctly compare runtimes, please set the p99_latency property in the"
+                "infer() function".format(self.name),
+                mode=LogMode.ONCE,
+            )
+            return None
+        return self._p99_latency
+
+    def request_count(self):
+        """
+        Returns the number of queries of measurement.
+
+        Returns:
+            float: The number of queries, or None if runtime was not measured by the runner.
+        """
+        if self._request_count is None:
+            G_LOGGER.warning(
+                "{:35} | request_count was not set. Inference time will be incorrect!"
+                "To correctly compare runtimes, please set the request_count property in the"
+                "infer() function".format(self.name),
+                mode=LogMode.ONCE,
+            )
+            return None
+        return self._request_count
+
+    def _cast_tensor(self, tensor):
+        if tensor.dtype in self.trt_casts:
+            LOGGER.debug(f"Casting f{tensor.dtype} tensor to f{self.trt_casts[tensor.dtype]}.")
+            return tensor.astype(self.trt_casts[tensor.dtype])
+        return tensor
+
+    def _get_inference_stats(self, perf_output):
+        """
+        Reads the output from the performance summary generated by the trtexec
+        binary to extract the required performance statistics
+        """
+        inference_time_stats = {}
+        inference_time_field = "Latency:"
+        for line in perf_output.split("\n"):
+            index = line.find(inference_time_field)
+            if index >= 0:
+                stats = line[index + len(inference_time_field) :].split(",")
+                for stat in stats:
+                    metric, value = stat.split("=")
+                    value = value.strip().split(" ")[0]
+                    inference_time_stats[metric.strip()] = float(value)
+                return inference_time_stats
+        G_LOGGER.critical(
+            "Could not read inference time for trtexec backend. This " "might cause polygraphy to misbehave"
+        )
+
+    @staticmethod
+    def _get_request_count(perf_output):
+        """
+        Reads the output from the performance summary generated by the trtexec
+        binary to extract the required performance statistics
+        """
+        inference_time_field = "Timing trace has"
+        for line in perf_output.split("\n"):
+            index = line.find(inference_time_field)
+            if index >= 0:
+                stats = line[index + len(inference_time_field) :].split(" ")
+                request_count = int(stats[1])
+                return request_count
+        G_LOGGER.critical(
+            "Could not read request count for trtexec backend. This " "might cause polygraphy to misbehave"
+        )

@@ -17,3 +17,30 @@ class INavigatorRunner:
     @classmethod
     def is_inference_time_stabilized(cls) -> bool:
         return False
+
+
+class INavigatorStabilizedRunner(INavigatorRunner):
+    @classmethod
+    def is_inference_time_stabilized(cls) -> bool:
+        return True
+
+    def avg_latency(self) -> float:
+        raise NotImplementedError
+
+    def std_latency(self) -> float:
+        raise NotImplementedError
+
+    def p50_latency(self) -> float:
+        raise NotImplementedError
+
+    def p90_latency(self) -> float:
+        raise NotImplementedError
+
+    def p95_latency(self) -> float:
+        raise NotImplementedError
+
+    def p99_latency(self) -> float:
+        raise NotImplementedError
+
+    def request_count(self) -> int:
+        raise NotImplementedError
