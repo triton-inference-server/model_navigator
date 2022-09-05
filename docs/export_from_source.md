@@ -48,6 +48,8 @@ limitations under the License.
 - [Reproducibility](#reproducibility)
   - [Export](#export)
   - [Conversion](#conversion)
+  - [Correctness](#correctness)
+  - [Profiling](#profiling-1)
 - [Contrib](#contrib)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -64,6 +66,7 @@ NGC Containers are the recommended environments for Model Navigator, they have a
 The minimal required `Python` version for Triton Model Navigator is `3.8`.
 
 For JAX models, the apropriate JAX library version is required`(CPU, CUDA, TPU)` and all other derived frameworks used by model `(Flax, Haiku)`.
+Model Navigator uses experimental [jax2tf](https://github.com/google/jax/tree/main/jax/experimental/jax2tf) tool for JAX models export. It means that JAX export API may change in the future
 
 Installation details:
 - [JAX](https://github.com/google/jax#installation)
