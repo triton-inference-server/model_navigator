@@ -96,12 +96,12 @@ class Command(metaclass=ABCMeta):
                 self.status = Status.FAIL
                 self.err_msg = str(e)
 
-                LOGGER.error(f"{type(e).__name__} raised.")
                 if isinstance(e, UserError):
                     LOGGER.warning(
                         "External errors are usually caused by incompatibilites between the model and the target formats and/or runtimes."
                     )
-                LOGGER.error(traceback.format_exc())
+                message = traceback.format_exc()
+                LOGGER.warning(f"Encountered an error when executing command: \n{message}")
                 import os
 
                 if "NAV_DEBUG" in os.environ:
@@ -146,7 +146,7 @@ class Command(metaclass=ABCMeta):
         LOGGER.info(output.args)
         LOGGER.info(output.stdout.decode("utf-8"))
         if output.returncode != 0:
-            LOGGER.error(f"return code: {output.returncode}")
+            LOGGER.warning(f"return code: {output.returncode}")
             raise RuntimeError(output.stderr.decode("utf-8"))
 
     @staticmethod

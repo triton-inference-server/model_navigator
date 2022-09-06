@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 from model_navigator.framework_api.commands.core import Command
 from model_navigator.framework_api.config import Config
 from model_navigator.framework_api.logger import LOGGER
-from model_navigator.framework_api.utils import Framework, pad_string
+from model_navigator.framework_api.utils import Framework, Status, pad_string
 
 if TYPE_CHECKING:
     from model_navigator.framework_api.package_descriptor import PackageDescriptor
@@ -34,6 +34,7 @@ class Pipeline:
         self.id = name.lower().replace(" ", "_").replace("-", "_")
         self.framework = framework
         self.commands = commands
+        self.status = Status.INITIALIZED
 
     def __call__(self, config: Config, package_descriptor: "PackageDescriptor", **kwargs) -> Dict[str, Any]:
         LOGGER.info(pad_string(f"Pipeline '{self.name}' started"))
@@ -53,4 +54,5 @@ class Pipeline:
                     additional_params[output_name] = output
                     if output_name in config.__dataclass_fields__:
                         setattr(config, output_name, output)
+
         return additional_params

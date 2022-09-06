@@ -15,6 +15,7 @@
 
 import json
 import pathlib
+import sys
 from typing import Dict, List, Optional
 
 import fire
@@ -23,6 +24,7 @@ from polygraphy.comparator import util as comp_util
 
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.correctness import Tolerance, TolerancePerOutputName
+from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.runners.runner_manager import RunnerManager
 from model_navigator.framework_api.utils import Format, JitType, RuntimeProvider, load_samples
 
@@ -64,10 +66,19 @@ def correctness(
             comp_output = runner.infer(sample)
 
             is_len_valid = len(original_output) == len(comp_output)
-            assert is_len_valid, "Original model output length is different from exported model output"
+            if not is_len_valid:
+                LOGGER.error("Original model output length is different from exported model output")
+                sys.exit(1)
+
             for name in output_names:
-                assert any(np.isnan(comp_output[name]).flatten()) is False, "Comparison output contains NaN"
-                assert any(np.isinf(comp_output[name]).flatten()) is False, "Comparison output contains inf"
+                if any(np.isnan(comp_output[name]).flatten()):
+                    LOGGER.error("Comparison output contains NaN")
+                    sys.exit(1)
+
+                if any(np.isinf(comp_output[name]).flatten()):
+                    LOGGER.error("Comparison output contains inf")
+                    sys.exit(1)
+
                 out0, out1 = original_output[name], comp_output[name]
                 absdiff = np.abs(out0 - out1)
                 absout1 = np.abs(out1)

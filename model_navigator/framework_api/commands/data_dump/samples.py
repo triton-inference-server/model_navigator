@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any, List, Optional, Tuple
 
 import numpy
+import numpy as np
 from polygraphy.backend.onnxrt import SessionFromOnnx
 from polygraphy.backend.trt import Profile
 
@@ -54,7 +55,17 @@ def samples_to_npz(samples: List[Sample], path: Path, batch_dim: Optional[int]) 
     for i, sample in enumerate(samples):
         squeezed_sample = {}
         for name, tensor in sample.items():
-            squeezed_sample[name] = tensor.squeeze(batch_dim) if batch_dim is not None else tensor
+            if batch_dim is not None:
+                tensor = tensor.squeeze(batch_dim)
+
+            if any(np.isnan(tensor.flatten())):
+                raise UserError("Tensor data contains `NaN` value. Please verify the dataloader and model.")
+
+            if any(np.isinf(tensor.flatten())):
+                raise UserError("Tensor data contains `inf` value. Please verify the dataloader and model.")
+
+            squeezed_sample[name] = tensor
+
         numpy.savez((path / f"{i}.npz").as_posix(), **squeezed_sample)
 
 

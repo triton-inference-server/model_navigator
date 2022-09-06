@@ -94,6 +94,7 @@ class ExecutionContext(contextlib.AbstractContextManager):
             LOGGER.info(f"Command stdout:\n\n{textwrap.indent(output.stdout.decode('utf-8'), '    ')}")
         if len(output.stderr):
             LOGGER.info(f"Command stderr:\n\n{textwrap.indent(output.stderr.decode('utf-8'), '    ')}")
+
         if output.returncode != 0:
             raise UserError(f"{output.stderr.decode('utf-8')}\nCommand to reproduce error:\n{' '.join(run_cmd)}")
 

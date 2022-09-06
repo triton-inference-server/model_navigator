@@ -77,7 +77,7 @@ class PipelineManager:
                 if command.status == Status.OK:
                     LOGGER.info(command_name_and_details)
                 elif command.status == Status.FAIL:
-                    LOGGER.error(command_name_and_details)
+                    LOGGER.warning(command_name_and_details)
                 else:
                     LOGGER.warning(command_name_and_details)
                 for param_name, param_desc in command.missing_params.items():
