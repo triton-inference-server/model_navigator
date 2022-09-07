@@ -16,7 +16,7 @@ limitations under the License.
 
 # Changelog
 
-## 0.3.4 (unreleased)
+## 0.3.4
 - Updated NVIDIA containers defaults to 22.07
 - Model Navigator OTIS:
   - deprecated: `TF32` precision for TensorRT from CLI options - will be removed in future versions
