@@ -24,7 +24,14 @@ from model_navigator.framework_api.constants import NAV_PACKAGE_FORMAT_VERSION
 from model_navigator.framework_api.commands.correctness import TolerancePerOutputName
 from model_navigator.framework_api.commands.performance import ProfilingResults
 from model_navigator.framework_api.common import DataObject, TensorMetadata
-from model_navigator.framework_api.utils import JitType, RuntimeProvider, Status
+from model_navigator.framework_api.logger import LOGGER
+from model_navigator.framework_api.utils import (
+    Framework,
+    JitType,
+    RuntimeProvider,
+    Status,
+    get_trt_profile_from_trt_dynamic_axes,
+)
 from model_navigator.model import Format
 
 
