@@ -77,13 +77,13 @@ To install Model Navigator Export API use install script:
 Or use pip command:
 
 ```shell
-$ pip install --extra-index-url https://pypi.ngc.nvidia.com git+https://github.com/triton-inference-server/model_navigator.git@v0.3.3#egg=model-navigator[<extras,>] --upgrade
+$ pip install --extra-index-url https://pypi.ngc.nvidia.com git+https://github.com/triton-inference-server/model_navigator.git@v0.3.4#egg=model-navigator[<extras,>] --upgrade
 ```
 
 Extras:
 - pyt - Model Navigator Export API for PyTorch
-- tf - Model Navigator Export API for TensorFlow2.
-- jax - Model Navigator Export API for JAX.
+- tf - Model Navigator Export API for TensorFlow2
+- jax - Model Navigator Export API for JAX
 - cli - Model Navigator CLI
 - huggingface - Model Navigator Export API for HuggingFace
 

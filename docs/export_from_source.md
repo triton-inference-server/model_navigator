@@ -106,13 +106,13 @@ To install Model Navigator Export API use installation script:
 Or use pip command:
 
 ```shell
-$ pip install --extra-index-url https://pypi.ngc.nvidia.com git+https://github.com/triton-inference-server/model_navigator.git@v0.3.3#egg=model-navigator[<extras,>] --upgrade
+$ pip install --extra-index-url https://pypi.ngc.nvidia.com git+https://github.com/triton-inference-server/model_navigator.git@v0.3.4#egg=model-navigator[<extras,>] --upgrade
 ```
 
 Extras:
 - pyt - Model Navigator Export API for PyTorch
-- tf - Model Navigator Export API for TensorFlow2.
-- jax - Model Navigator Export API for JAX.
+- tf - Model Navigator Export API for TensorFlow2
+- jax - Model Navigator Export API for JAX
 - cli - Model Navigator CLI
 - huggingface - Model Navigator Export API for HuggingFace
 
@@ -883,7 +883,7 @@ Example of correctness Bash script for ONNX:
   --format onnx \
   --precision None \
   --jit_type None \
-  --runtime TensorrtExecutionProvider \
+  --runtime CUDAExecutionProvider \
   --enable_xla None \
   --jit_compile None \
   --runner_manager_dict '{"input_metadata": [{"name": "input_ids", "shape": (-1, -1), "dtype": "int64"}, {"name": "attention_mask", "shape": (-1, -1), "dtype": "int64"}, {"name": "token_type_ids", "shape": (-1, -1), "dtype": "int64"}], "output_metadata": [{"name": "logits", "shape": (-1, 384, 30522), "dtype": "float32"}], "target_device": "cuda"}'
@@ -960,7 +960,7 @@ Example of Bash profiling script for ONNX:
   --format onnx \
   --precision None \
   --jit_type None \
-  --runtime CPUExecutionProvider \
+  --runtime CUDAExecutionProvider \
   --enable_xla None \
   --jit_compile None \
   --profiler_config '{"batch_sizes": None, "measurement_interval": 5000, "measurement_mode": "count_windows", "measurement_request_count": 50, "stability_percentage": 10.0, "max_trials": 10}' --max_batch_size 2 --runner_manager_dict '{"input_metadata": [{"name": "input_ids", "shape": (-1, -1), "dtype": "int64"}, {"name": "attention_mask", "shape": (-1, -1), "dtype": "int64"}, {"name": "token_type_ids", "shape": (-1, -1), "dtype": "int64"}], "output_metadata": [{"name": "logits", "shape": (-1, 384, 30522), "dtype": "float32"}], "target_device": "cuda"}'
