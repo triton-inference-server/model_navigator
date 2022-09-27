@@ -85,8 +85,9 @@ def _get_trt_profile_from_axes_shapes(axes_shapes, batch_dim):
 
 def _verify_user_trt_profile(user_profile: Profile, dl_profile: Profile):
     for name, user_shape_tuple in user_profile.items():
-        dl_shape_tuple = dl_profile.get(name, None)
-        if dl_shape_tuple is None:
+        if name in dl_profile:
+            dl_shape_tuple = dl_profile[name]
+        else:
             raise ValueError(f"TRT dynamic axes not specified for axis `{name}`.")
         for attr in ("min", "opt", "max"):
             user_shapes, dl_shapes = getattr(user_shape_tuple, attr), getattr(dl_shape_tuple, attr)
