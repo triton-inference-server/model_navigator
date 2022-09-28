@@ -62,6 +62,7 @@ def test_numpy_to_numpy():
 
 def test_tensorspec():
     TensorSpec("name", shape=(-1, 224, 224, 3), dtype=np.dtype("float32"))
+    # pytype: disable=wrong-arg-types
     with pytest.raises(TypeError):
         TensorSpec("name", shape=(-1, 224, 224, 3), dtype="float32")
 

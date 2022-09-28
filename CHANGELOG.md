@@ -18,6 +18,8 @@ limitations under the License.
 
 ## 0.3.5 (unreleased)
 - Updated NVIDIA containers defaults to 22.07
+- Model Navigator Export API:
+    - fix: invalid use of Polygraphy TRT profile when trt_dynamic_axes is passed to export function
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 - Version of external components used during testing:
