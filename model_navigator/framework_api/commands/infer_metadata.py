@@ -79,7 +79,12 @@ def _get_trt_profile_from_axes_shapes(axes_shapes, batch_dim):
                 min_max_opt.append((1, int(np.median(shapes)), max(shapes)))
             else:
                 min_max_opt.append((min(shapes), int(np.median(shapes)), max(shapes)))
-        trt_profile.add(name, *list(zip(*min_max_opt)))
+        if min_max_opt:
+            trt_profile.add(name, *list(zip(*min_max_opt)))
+        else:
+            raise UserError(
+                f"Missing shape information for {name} input from dataloader. Scalar values are not supported by Triton Inference Server. Wrap it in tuple to add dimension e.g. tensor(3) -> tensor((3,))"
+            )
     return trt_profile
 
 
