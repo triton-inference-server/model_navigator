@@ -20,7 +20,9 @@ limitations under the License.
 - Updated NVIDIA containers defaults to 22.08
 - Model Navigator Export API:
   - new: TRTExec runner use `use_cuda_graph=True` by default
+  - new: log warning instead of raising error when dataloader dump inputs with `nan` or `inf` values
   - fix: invalid use of Polygraphy TRT profile when trt_dynamic_axes is passed to export function
+
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 - Version of external components used during testing:

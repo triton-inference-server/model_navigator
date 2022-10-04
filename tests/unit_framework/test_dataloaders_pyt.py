@@ -15,6 +15,7 @@
 import tempfile
 from pathlib import Path
 
+import numpy as np
 import torch
 
 import model_navigator as nav
@@ -343,3 +344,95 @@ def test_onnx_dict_dataloader():
         # Output formats
         assert check_model_dir(model_dir=workdir / "trt-fp16", format=nav.Format.TENSORRT) is CUDA_AVAILABLE
         assert check_model_dir(model_dir=workdir / "trt-fp32", format=nav.Format.TENSORRT) is CUDA_AVAILABLE
+
+
+def test_dataloader_with_nan_and_inf_in_and_valid_out():
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        model_name = "navigator_model"
+
+        workdir = Path(tmp_dir) / "navigator_workdir"
+
+        status_file = workdir / "status.yaml"
+        model_input_dir = workdir / "model_input"
+        model_output_dir = workdir / "model_output"
+        navigator_log_file = workdir / "navigator.log"
+
+        dataloader = np.array([torch.Tensor([np.NaN]) for _ in range(5)])
+
+        class MyModule(torch.nn.Module):
+            def forward(self, _):
+                return torch.full((1, 5), 1.0, device="cpu")
+
+        model = MyModule()
+
+        nav.torch.export(
+            model=model,
+            dataloader=dataloader,
+            override_workdir=True,
+            workdir=workdir,
+            model_name=model_name,
+            input_names=("input_0",),
+            run_profiling=False,
+            target_formats=(nav.Format.TORCHSCRIPT,),
+        )
+
+        assert status_file.is_file()
+        assert model_input_dir.is_dir()
+        assert all(
+            [path.suffix == ".npz" for samples_dir in model_input_dir.iterdir() for path in samples_dir.iterdir()]
+        )
+        assert model_output_dir.is_dir()
+        assert all(
+            [path.suffix == ".npz" for samples_dir in model_output_dir.iterdir() for path in samples_dir.iterdir()]
+        )
+        assert navigator_log_file.is_file()
+
+        # Output formats
+        assert check_model_dir(model_dir=workdir / "torchscript-script", format=nav.Format.TORCHSCRIPT)
+        assert check_model_dir(model_dir=workdir / "torchscript-trace", format=nav.Format.TORCHSCRIPT)
+
+
+def test_dataloader_with_nan_and_inf_inout():
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        model_name = "navigator_model"
+
+        workdir = Path(tmp_dir) / "navigator_workdir"
+
+        status_file = workdir / "status.yaml"
+        model_input_dir = workdir / "model_input"
+        model_output_dir = workdir / "model_output"
+        navigator_log_file = workdir / "navigator.log"
+
+        dataloader = np.array([torch.Tensor([np.NaN]) for _ in range(5)])
+
+        class MyModule(torch.nn.Module):
+            def forward(self, x):
+                return x
+
+        model = MyModule()
+
+        nav.torch.export(
+            model=model,
+            dataloader=dataloader,
+            override_workdir=True,
+            workdir=workdir,
+            model_name=model_name,
+            input_names=("input_0",),
+            run_profiling=False,
+            target_formats=(nav.Format.TORCHSCRIPT,),
+        )
+
+        assert status_file.is_file()
+        assert all(
+            [path.suffix == ".npz" for samples_dir in model_input_dir.iterdir() for path in samples_dir.iterdir()]
+        )
+        assert model_output_dir.is_dir()
+        assert [
+            path.suffix == ".npz" for samples_dir in model_output_dir.iterdir() for path in samples_dir.iterdir()
+        ] == []
+
+        assert navigator_log_file.is_file()
+
+        # Output formats
+        assert check_model_dir(model_dir=workdir / "torchscript-script", format=nav.Format.TORCHSCRIPT) is False
+        assert check_model_dir(model_dir=workdir / "torchscript-trace", format=nav.Format.TORCHSCRIPT) is False

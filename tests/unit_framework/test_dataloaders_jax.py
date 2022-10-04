@@ -17,7 +17,7 @@ import tempfile
 from pathlib import Path
 
 import jax.numpy as jnp
-import numpy
+import numpy as np
 import tensorflow
 
 import model_navigator as nav
@@ -39,8 +39,8 @@ def check_model_dir(model_dir: Path) -> bool:
     return True
 
 
-dataloader = [numpy.random.rand(1, 10, 10) for _ in range(5)]
-params = numpy.random.rand(1, 10, 10)
+dataloader = [np.random.rand(1, 10, 10) for _ in range(5)]
+params = np.random.rand(1, 10, 10)
 
 
 def predict(inputs, params):
@@ -118,3 +118,82 @@ def test_np_sequence_dataloader():
 
         # Output formats
         assert check_model_dir(model_dir=workdir / "tf-savedmodel")
+
+
+def test_dataloader_with_nan_and_inf_in_and_valid_out():
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        model_name = "navigator_model"
+
+        workdir = Path(tmp_dir) / "navigator_workdir"
+
+        status_file = workdir / "status.yaml"
+        model_input_dir = workdir / "model_input"
+        model_output_dir = workdir / "model_output"
+        navigator_log_file = workdir / "navigator.log"
+
+        dataloader = [np.array([np.NaN] * 10) for _ in range(5)]
+
+        def valid_predict(inputs, params):
+            return np.array([1])
+
+        nav.jax.export(
+            model=valid_predict,
+            model_params=params,
+            dataloader=dataloader,
+            workdir=workdir,
+            model_name=model_name,
+            override_workdir=True,
+            run_profiling=False,
+            batch_dim=None,
+        )
+        assert status_file.is_file()
+        assert model_input_dir.is_dir()
+        assert all(
+            [path.suffix == ".npz" for samples_dir in model_input_dir.iterdir() for path in samples_dir.iterdir()]
+        )
+        assert model_output_dir.is_dir()
+        assert all(
+            [path.suffix == ".npz" for samples_dir in model_output_dir.iterdir() for path in samples_dir.iterdir()]
+        )
+        assert navigator_log_file.is_file()
+
+        # Output formats
+        assert check_model_dir(model_dir=workdir / "tf-savedmodel")
+
+
+def test_dataloader_with_nan_and_inf_inout():
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        model_name = "navigator_model"
+
+        workdir = Path(tmp_dir) / "navigator_workdir"
+
+        status_file = workdir / "status.yaml"
+        model_input_dir = workdir / "model_input"
+        model_output_dir = workdir / "model_output"
+        navigator_log_file = workdir / "navigator.log"
+
+        dataloader = [np.array([np.NaN] * 10) for _ in range(5)]
+
+        nav.jax.export(
+            model=predict,
+            model_params=params,
+            dataloader=dataloader,
+            workdir=workdir,
+            model_name=model_name,
+            override_workdir=True,
+            run_profiling=False,
+            batch_dim=None,
+        )
+        assert status_file.is_file()
+        assert model_input_dir.is_dir()
+        assert all(
+            [path.suffix == ".npz" for samples_dir in model_input_dir.iterdir() for path in samples_dir.iterdir()]
+        )
+        assert model_output_dir.is_dir()
+        assert [
+            path.suffix == ".npz" for samples_dir in model_output_dir.iterdir() for path in samples_dir.iterdir()
+        ] == []
+        assert navigator_log_file.is_file()
+
+        # Output formats
+        assert check_model_dir(model_dir=workdir / "tf-savedmodel") is False

@@ -15,6 +15,7 @@
 import tempfile
 from pathlib import Path
 
+import numpy as np
 import tensorflow
 
 import model_navigator as nav
@@ -190,3 +191,90 @@ def test_tf2_dict_dataloader():
 
         # Output formats
         assert check_model_dir(model_dir=workdir / "tf-savedmodel")
+
+
+def test_tf2_tensor_dataloader_nan_and_inf_in_and_valid_out():
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        model_name = "navigator_model"
+
+        workdir = Path(tmp_dir) / "navigator_workdir"
+        status_file = workdir / "status.yaml"
+        model_input_dir = workdir / "model_input"
+        model_output_dir = workdir / "model_output"
+        navigator_log_file = workdir / "navigator.log"
+
+        dataloader = [tensorflow.constant(np.NaN, dtype=tensorflow.dtypes.float32, shape=[1, 224, 224, 3])]
+
+        inp = tensorflow.keras.layers.Input((224, 224, 3))
+        layer_output = tensorflow.keras.layers.Lambda(lambda x: x**0)(inp)
+        model_output = tensorflow.keras.layers.Lambda(lambda x: x)(layer_output)
+        model = tensorflow.keras.Model(inp, model_output)
+
+        nav.tensorflow.export(
+            model=model,
+            dataloader=dataloader,
+            workdir=workdir,
+            model_name=model_name,
+            override_workdir=True,
+            input_names=("input_x",),
+            run_profiling=False,
+            target_formats=(nav.Format.TF_SAVEDMODEL,),
+        )
+
+        assert status_file.is_file()
+        assert model_input_dir.is_dir()
+        assert all(
+            [path.suffix == ".npz" for samples_dir in model_input_dir.iterdir() for path in samples_dir.iterdir()]
+        )
+        assert model_output_dir.is_dir()
+        assert all(
+            [path.suffix == ".npz" for samples_dir in model_output_dir.iterdir() for path in samples_dir.iterdir()]
+        )
+        assert navigator_log_file.is_file()
+
+        # Output formats
+        assert check_model_dir(model_dir=workdir / "tf-savedmodel")
+
+
+def test_tf2_tensor_dataloader_nan_and_inf_inout():
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        model_name = "navigator_model"
+
+        workdir = Path(tmp_dir) / "navigator_workdir"
+        status_file = workdir / "status.yaml"
+        model_input_dir = workdir / "model_input"
+        model_output_dir = workdir / "model_output"
+        navigator_log_file = workdir / "navigator.log"
+
+        dataloader = [tensorflow.constant(np.NaN, dtype=tensorflow.dtypes.float32, shape=[1, 224, 224, 3])]
+
+        inp = tensorflow.keras.layers.Input((224, 224, 3))
+        layer_output = tensorflow.keras.layers.Lambda(lambda x: x)(inp)
+        model_output = tensorflow.keras.layers.Lambda(lambda x: x)(layer_output)
+        model = tensorflow.keras.Model(inp, model_output)
+
+        nav.tensorflow.export(
+            model=model,
+            dataloader=dataloader,
+            workdir=workdir,
+            model_name=model_name,
+            override_workdir=True,
+            input_names=("input_x",),
+            run_profiling=False,
+            target_formats=(nav.Format.TF_SAVEDMODEL,),
+        )
+
+        assert status_file.is_file()
+        assert model_input_dir.is_dir()
+        assert all(
+            [path.suffix == ".npz" for samples_dir in model_input_dir.iterdir() for path in samples_dir.iterdir()]
+        )
+        assert model_output_dir.is_dir()
+        assert [
+            path.suffix == ".npz" for samples_dir in model_output_dir.iterdir() for path in samples_dir.iterdir()
+        ] == []
+
+        assert navigator_log_file.is_file()
+
+        # Output formats
+        assert check_model_dir(model_dir=workdir / "tf-savedmodel") is False

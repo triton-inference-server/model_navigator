@@ -16,7 +16,6 @@ import json
 from pathlib import Path
 from typing import Any, List, Optional, Tuple
 
-import numpy
 import numpy as np
 from polygraphy.backend.onnxrt import SessionFromOnnx
 from polygraphy.backend.trt import Profile
@@ -25,21 +24,37 @@ from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.common import Sample, SizedDataLoader, TensorMetadata
 from model_navigator.framework_api.exceptions import UserError
 from model_navigator.framework_api.logger import LOGGER
-from model_navigator.framework_api.utils import (
-    Framework,
-    extract_bs1,
-    extract_sample,
-    get_available_onnx_providers,
-)
+from model_navigator.framework_api.utils import Framework, extract_bs1, extract_sample, get_available_onnx_providers
 
 
-def samples_to_json(samples: List[Sample], path: Path, batch_dim: Optional[int]) -> None:
+def _validate_tensor(tensor: np.ndarray, *, raise_on_error: bool = True):
+    if any(np.isnan(tensor.flatten())):
+        message = "Tensor data contains `NaN` value. Please verify the dataloader and model."
+        if raise_on_error:
+            raise UserError(message)
+        else:
+            LOGGER.warning(message)
+
+    if any(np.isinf(tensor.flatten())):
+        message = "Tensor data contains `inf` value. Please verify the dataloader and model."
+        if raise_on_error:
+            raise UserError(message)
+        else:
+            LOGGER.warning(message)
+
+
+def samples_to_json(
+    samples: List[Sample], path: Path, batch_dim: Optional[int], *, raise_on_error: bool = True
+) -> None:
     flatten_samples = []
     for sample in samples:
         sample_data = {}
         for name, tensor in sample.items():
             if batch_dim is not None:
                 tensor = tensor.squeeze(batch_dim)
+
+            _validate_tensor(tensor, raise_on_error=raise_on_error)
+
             sample_data[name] = {
                 "content": tensor.flatten().tolist(),
                 "shape": tensor.shape,
@@ -50,7 +65,7 @@ def samples_to_json(samples: List[Sample], path: Path, batch_dim: Optional[int])
         json.dump({"data": flatten_samples}, f)
 
 
-def samples_to_npz(samples: List[Sample], path: Path, batch_dim: Optional[int]) -> None:
+def samples_to_npz(samples: List[Sample], path: Path, batch_dim: Optional[int], *, raise_on_error: bool = True) -> None:
     path.mkdir(parents=True, exist_ok=True)
     for i, sample in enumerate(samples):
         squeezed_sample = {}
@@ -58,15 +73,11 @@ def samples_to_npz(samples: List[Sample], path: Path, batch_dim: Optional[int]) 
             if batch_dim is not None:
                 tensor = tensor.squeeze(batch_dim)
 
-            if any(np.isnan(tensor.flatten())):
-                raise UserError("Tensor data contains `NaN` value. Please verify the dataloader and model.")
-
-            if any(np.isinf(tensor.flatten())):
-                raise UserError("Tensor data contains `inf` value. Please verify the dataloader and model.")
+            _validate_tensor(tensor, raise_on_error=raise_on_error)
 
             squeezed_sample[name] = tensor
 
-        numpy.savez((path / f"{i}.npz").as_posix(), **squeezed_sample)
+        np.savez((path / f"{i}.npz").as_posix(), **squeezed_sample)
 
 
 class FetchInputModelData(Command):
@@ -143,8 +154,8 @@ class FetchInputModelData(Command):
             )
             sample_count = num_samples
 
-        numpy.random.seed(seed)
-        correctness_samples_ind = set(numpy.random.choice(num_samples, size=sample_count, replace=False))
+        np.random.seed(seed)
+        correctness_samples_ind = set(np.random.choice(num_samples, size=sample_count, replace=False))
         profiling_sample, correctness_samples, conversion_samples = self.collect_samples(
             dataloader, input_metadata, trt_profile, framework, batch_dim, correctness_samples_ind
         )
@@ -153,8 +164,9 @@ class FetchInputModelData(Command):
 
 
 class DumpInputModelData(Command):
-    def __init__(self, requires: Tuple[Command, ...] = ()):
+    def __init__(self, requires: Tuple[Command, ...] = (), raise_on_error: bool = False):
         super().__init__(name="Dump input model data", command_type=CommandType.DUMP_MODEL_INPUT, requires=requires)
+        self._raise_on_error = raise_on_error
 
     @staticmethod
     def get_output_relative_path() -> Path:
@@ -178,12 +190,13 @@ class DumpInputModelData(Command):
             (correctness_samples, "correctness"),
             (conversion_samples, "conversion"),
         ]:
-            samples_to_npz(samples, sample_data_path / dirname, batch_dim)
+            samples_to_npz(samples, sample_data_path / dirname, batch_dim, raise_on_error=self._raise_on_error)
 
 
 class DumpOutputModelData(Command):
-    def __init__(self, requires: Tuple[Command, ...] = ()):
+    def __init__(self, requires: Tuple[Command, ...] = (), raise_on_error: bool = True):
         super().__init__(name="Dump output model data", command_type=CommandType.DUMP_MODEL_OUTPUT, requires=requires)
+        self._raise_on_error = raise_on_error
 
     @staticmethod
     def get_output_relative_path() -> Path:
@@ -251,7 +264,7 @@ class DumpOutputModelData(Command):
             with runner:
                 outputs = [runner.infer(sample) for sample in samples]
 
-            samples_to_npz(outputs, output_data_path / dirname, batch_dim)
+            samples_to_npz(outputs, output_data_path / dirname, batch_dim, raise_on_error=self._raise_on_error)
             ret.append(outputs)
 
         return tuple(ret)
