@@ -12,13 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import logging
 import traceback
 import typing
 from abc import ABCMeta, abstractmethod
 from inspect import getfullargspec
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Union
 
 import typing_inspect
 
@@ -81,6 +82,32 @@ class Command(metaclass=ABCMeta):
             cmd_name_and_details += f" {self.runtime_provider}"
         return cmd_name_and_details
 
+    def log_command_params(self, params: Dict):
+        try:
+            filtered_params = {}
+            for name, value in params.items():
+                if name in getfullargspec(self.__call__).args:
+                    if name in ("dataloader", "name"):
+                        samples_count = len(params["dataloader"])
+                        if isinstance(params["dataloader"][0], Sequence):
+                            tensors_count = len(params["dataloader"][0])
+                            tensors_shapes = [t.shape for t in params["dataloader"][0]]
+                        elif isinstance(params["dataloader"][0], Mapping):
+                            tensors_count = len(params["dataloader"][0])
+                            tensors_shapes = {n: t.shape for n, t in params["dataloader"][0].items()}
+                        else:
+                            tensors_count = 1
+                            tensors_shapes = params["dataloader"][0].shape
+
+                        filtered_params[
+                            name
+                        ] = f"{{samples_count: {samples_count}, tensors_count: {tensors_count}, tensors_shapes: {tensors_shapes}}}"
+                    else:
+                        filtered_params[name] = str(value)
+            LOGGER.info(f"Command {self.name} paramters: {json.dumps(filtered_params, indent=4)}")
+        except Exception:
+            LOGGER.warning(f"Logging input parameters for Command {self.name} failed:\n{traceback.format_exc()}")
+
     def transform(self, package_descriptor: "PackageDescriptor", **kwargs):
         workdir = kwargs.get("workdir")
         self._attach_logger_to_command_log_file(loggers=self._get_loggers(), workdir=workdir)
@@ -88,6 +115,7 @@ class Command(metaclass=ABCMeta):
         if self._check_requires():
             try:
                 if self.status == Status.OK:
+                    self.log_command_params(kwargs)
                     self.output = self.__call__(**kwargs)
                     assert self.status in (Status.OK, Status.SKIPPED), self.err_msg
                 else:
@@ -178,9 +206,7 @@ class Command(metaclass=ABCMeta):
                 ] = f"{getfullargspec(self.__call__).annotations[param]} = {provided_params.get(param)}"
         return missing_params
 
-    def _attach_logger_to_command_log_file(
-        self, loggers: List[Union[str, logging.Logger]], workdir: Path
-    ):
+    def _attach_logger_to_command_log_file(self, loggers: List[Union[str, logging.Logger]], workdir: Path):
         if self.target_format is not None:
             output_relative_path = self.get_output_relative_path()
             log_format = "%(asctime)s %(levelname)-8s %(name)s: %(message)s"
