@@ -21,6 +21,7 @@ limitations under the License.
 - Model Navigator Export API:
   - new: TRTExec runner use `use_cuda_graph=True` by default
   - new: log warning instead of raising error when dataloader dump inputs with `nan` or `inf` values
+  - new: enabled logging for command input parameters
   - fix: invalid use of Polygraphy TRT profile when trt_dynamic_axes is passed to export function
 
 
