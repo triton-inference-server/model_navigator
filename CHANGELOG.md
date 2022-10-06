@@ -16,7 +16,7 @@ limitations under the License.
 
 # Changelog
 
-## 0.3.5 (unreleased)
+## 0.3.5
 - Updated NVIDIA containers defaults to 22.08
 - Model Navigator Export API:
   - new: TRTExec runner use `use_cuda_graph=True` by default
