@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ARG BASE_IMAGE=nvcr.io/nvidia/tensorflow:22.08-tf2-py3
+ARG BASE_IMAGE=nvcr.io/nvidia/tensorflow:22.09-tf2-py3
 FROM $BASE_IMAGE
 
 # Ensure apt-get won't prompt for selecting options

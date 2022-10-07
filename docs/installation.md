@@ -77,7 +77,7 @@ To install Model Navigator Export API use install script:
 Or use pip command:
 
 ```shell
-$ pip install --extra-index-url https://pypi.ngc.nvidia.com git+https://github.com/triton-inference-server/model_navigator.git@v0.3.5#egg=model-navigator[<extras,>] --upgrade
+$ pip install --extra-index-url https://pypi.ngc.nvidia.com git+https://github.com/triton-inference-server/model_navigator.git@v0.3.6#egg=model-navigator[<extras,>] --upgrade
 ```
 
 Extras:
