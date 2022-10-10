@@ -69,7 +69,7 @@ class PipelineManager:
         return f"{Indent.SINGLE}Missing parameter: {param_name}: {param_desc}"
 
     def _log_results(self):
-        LOGGER.info(pad_string("Framework Navigator summary"))
+        LOGGER.info(pad_string("Model Navigator summary"))
         for pipeline in self._pipelines:
             LOGGER.info(pad_string(f"Pipeline '{pipeline.name}' summary"))
             for command in pipeline.commands:
