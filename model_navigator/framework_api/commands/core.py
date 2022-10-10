@@ -87,7 +87,7 @@ class Command(metaclass=ABCMeta):
             filtered_params = {}
             for name, value in params.items():
                 if name in getfullargspec(self.__call__).args:
-                    if name in ("dataloader", "name"):
+                    if name == "dataloader":
                         samples_count = len(params["dataloader"])
                         if isinstance(params["dataloader"][0], Sequence):
                             tensors_count = len(params["dataloader"][0])
@@ -102,8 +102,28 @@ class Command(metaclass=ABCMeta):
                         filtered_params[
                             name
                         ] = f"{{samples_count: {samples_count}, tensors_count: {tensors_count}, tensors_shapes: {tensors_shapes}}}"
+                    elif name in ("profiling_sample", "correctness_samples", "conversion_samples"):
+                        if isinstance(params[name], Sequence):
+                            samples_count = len(params[name])
+                            tensors_count = len(params[name][0])
+                            tensors_shapes = {n: t.shape for n, t in params[name][0].items()}
+                        else:
+                            samples_count = 1
+                            tensors_count = len(params[name])
+                            tensors_shapes = {n: t.shape for n, t in params[name].items()}
+                        filtered_params[
+                            name
+                        ] = f"{{samples_count: {samples_count}, tensors_count: {tensors_count}, tensors_shapes: {tensors_shapes}}}"
+                    elif name == "model":
+                        if isinstance(value, (Path, str)):
+                            filtered_params[name] = value
+                        else:
+                            filtered_params[name] = str(params[name].__class__)
+                    elif name == "model_params":
+                        filtered_params[name] = str(params[name].__class__)
                     else:
                         filtered_params[name] = str(value)
+
             LOGGER.info(f"Command {self.name} paramters: {json.dumps(filtered_params, indent=4)}")
         except Exception:
             LOGGER.warning(f"Logging input parameters for Command {self.name} failed:\n{traceback.format_exc()}")
