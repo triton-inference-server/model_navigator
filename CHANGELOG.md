@@ -18,6 +18,8 @@ limitations under the License.
 
 ## 0.3.6 (unreleased)
 - Updated NVIDIA containers defaults to 22.09
+- Model Navigator Export API:
+  - new: cast int64 input data to int32 in runner for Torch-TensorRT
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 - Version of external components used during testing:

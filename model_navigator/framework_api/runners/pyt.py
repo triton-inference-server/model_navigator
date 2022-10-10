@@ -23,6 +23,7 @@ from polygraphy.common import TensorMetadata
 
 from model_navigator.framework_api.runners.base import INavigatorRunner
 from model_navigator.framework_api.utils import Framework, validate_sample_output
+from model_navigator.utils import tensorrt
 
 
 class PytRunner(INavigatorRunner, BaseRunner):
@@ -30,7 +31,16 @@ class PytRunner(INavigatorRunner, BaseRunner):
     Runs inference using PyTorch.
     """
 
-    def __init__(self, model, input_metadata, output_names=None, target_device="cpu", name=None, forward_kw_names=None):
+    def __init__(
+        self,
+        model,
+        input_metadata,
+        output_names=None,
+        target_device="cpu",
+        name=None,
+        forward_kw_names=None,
+        trt_dtype_cast=False,
+    ):
         """
         Args:
             model (Union[torch.nn.Module, str, pathlib.Path]):
@@ -44,6 +54,9 @@ class PytRunner(INavigatorRunner, BaseRunner):
             name (str):
                     The human-readable name prefix to use for this runner.
                     A runner count and timestamp will be appended to this prefix.
+
+            trt_dtype_cast (bool):
+                Cast data type is required for Torch-TensorRT
         """
         super().__init__(name=name, prefix="pytorch-runner")
         self._model = model
@@ -55,6 +68,7 @@ class PytRunner(INavigatorRunner, BaseRunner):
             self.input_metadata.add(name, spec.dtype, spec.shape)
         self.output_names = output_names
         self._forward_kw_names = forward_kw_names
+        self._trt_dtype_cast = trt_dtype_cast
 
     def activate_impl(self):
         if isinstance(self._model, (str, Path)):
@@ -73,7 +87,7 @@ class PytRunner(INavigatorRunner, BaseRunner):
         start = time.time()
         with torch.no_grad():
             inputs = [
-                torch.from_numpy(val.astype(dtype)).to(self._target_device)
+                torch.from_numpy(self._cast_value(val, dtype)).to(self._target_device)
                 for (val, (dtype, _)) in zip(feed_dict.values(), self.input_metadata.values())
             ]
             if self._forward_kw_names is None:
@@ -96,3 +110,9 @@ class PytRunner(INavigatorRunner, BaseRunner):
         end = time.time()
         self.inference_time = end - start
         return out_dict
+
+    def _cast_value(self, value, dtype):
+        value = value.astype(dtype)
+        value = tensorrt.cast_tensor(value)
+
+        return value

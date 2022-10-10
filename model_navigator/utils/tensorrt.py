@@ -19,9 +19,11 @@ import numpy as np
 
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.model import ModelSignatureConfig
+from model_navigator.tensor import TensorSpec
 from model_navigator.utils import enums
 
 LOGGER = logging.getLogger(__name__)
+_TYPE_CASTS = {np.dtype(np.int64): np.dtype(np.int32)}
 
 
 def get_version():
@@ -55,22 +57,31 @@ def rewrite_signature_config(signature: ModelSignatureConfig):
         return rewritten_signature
 
     for name, tensor in signature.inputs.items():
-        rewritten_signature.inputs[name] = _cast_tensor(tensor)
+        rewritten_signature.inputs[name] = cast_tensor(tensor)
 
     for name, tensor in signature.outputs.items():
-        rewritten_signature.outputs[name] = _cast_tensor(tensor)
+        rewritten_signature.outputs[name] = cast_tensor(tensor)
 
     return rewritten_signature
 
 
-def _cast_tensor(tensor):
+def cast_type(dtype: np.dtype) -> np.dtype:
+    """
+    Cast type and return new dtype
+    """
+    if dtype in _TYPE_CASTS:
+        return _TYPE_CASTS[dtype]
+
+    return dtype
+
+
+def cast_tensor(tensor: TensorSpec) -> TensorSpec:
     """
     Cast TensorSpec object to supported type for TensorRT
     """
-    trt_casts = {np.dtype(np.int64): np.int32}
-
-    if tensor.dtype in trt_casts:
-        LOGGER.debug(f"Casting {tensor.dtype} tensor to {trt_casts[tensor.dtype]}.")
-        return tensor.astype(trt_casts[tensor.dtype])
+    if tensor.dtype in _TYPE_CASTS:
+        target_dtype = _TYPE_CASTS[tensor.dtype]
+        LOGGER.debug(f"Casting {tensor.dtype} tensor to {target_dtype.type}.")
+        return tensor.astype(target_dtype.type)
 
     return tensor

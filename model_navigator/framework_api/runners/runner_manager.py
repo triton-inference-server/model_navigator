@@ -102,14 +102,17 @@ class RunnerManager(DataObject):
         elif format in (Format.TORCHSCRIPT, Format.TORCH_TRT):
             from model_navigator.framework_api.runners.pyt import PytRunner
 
+            trt_dtype_cast = False
             if format == Format.TORCH_TRT:  # make sure that torch_tensorrt is initialized
                 import torch_tensorrt  # pytype: disable=import-error # noqa: F401
+                trt_dtype_cast = True
 
             return PytRunner(
                 model_path,
                 input_metadata=self.input_metadata,
                 output_names=list(self.output_metadata.keys()),
                 target_device=self.target_device,
+                trt_dtype_cast=trt_dtype_cast,
             )
         elif format in (Format.TF_SAVEDMODEL, Format.TF_TRT):
             from model_navigator.framework_api.runners.tf import TFSavedModelRunner

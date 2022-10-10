@@ -15,7 +15,6 @@
 from pathlib import Path
 from typing import Optional, Tuple
 
-import numpy as np
 from polygraphy.backend.trt import Profile
 
 from model_navigator.converter.config import TensorRTPrecision, TensorRTPrecisionMode
@@ -28,7 +27,7 @@ from model_navigator.framework_api.exceptions import ExecutionContext
 from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.utils import JitType, Status, parse_kwargs_to_cmd
 from model_navigator.model import Format
-from model_navigator.utils import devices
+from model_navigator.utils import devices, tensorrt
 
 
 class ConvertTorchScript2TorchTensorRT(ConvertBase):
@@ -75,10 +74,7 @@ class ConvertTorchScript2TorchTensorRT(ConvertBase):
 
         converted_model_path.parent.mkdir(parents=True, exist_ok=True)
 
-        trt_casts = {np.dtype(np.int64): np.dtype(np.int32)}
-        input_dtypes_str = [
-            trt_casts.get(input_spec.dtype, input_spec.dtype).name for input_spec in input_metadata.values()
-        ]
+        input_dtypes_str = [tensorrt.cast_type(input_spec.dtype).name for input_spec in input_metadata.values()]
 
         with ExecutionContext(
             workdir=workdir,
