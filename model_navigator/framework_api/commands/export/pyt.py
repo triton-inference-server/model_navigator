@@ -21,7 +21,7 @@ from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.export import exporters
 from model_navigator.framework_api.commands.export.base import ExportBase
 from model_navigator.framework_api.common import TensorMetadata
-from model_navigator.framework_api.exceptions import ExecutionContext
+from model_navigator.framework_api.execution_context import ExecutionContext
 from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.utils import JitType, parse_kwargs_to_cmd
 from model_navigator.model import Format
@@ -42,6 +42,7 @@ class ExportPYT2TorchScript(ExportBase):
         workdir: Path,
         model_name: str,
         target_device: str,
+        verbose: bool,
         model: Optional[torch.nn.Module] = None,
         batch_dim: Optional[int] = None,
         **kwargs,
@@ -66,6 +67,7 @@ class ExportPYT2TorchScript(ExportBase):
             workdir=workdir,
             script_path=exported_model_path.parent / "reproduce_export.py",
             cmd_path=exported_model_path.parent / "reproduce_export.sh",
+            verbose=verbose,
         ) as context:
 
             kwargs = {
@@ -99,6 +101,7 @@ class ExportPYT2ONNX(ExportBase):
         input_metadata: TensorMetadata,
         output_metadata: TensorMetadata,
         target_device: str,
+        verbose: bool,
         forward_kw_names: Optional[Tuple[str, ...]] = None,
         model: Optional[torch.nn.Module] = None,
         batch_dim: Optional[int] = None,
@@ -123,6 +126,7 @@ class ExportPYT2ONNX(ExportBase):
             workdir=workdir,
             script_path=exported_model_path.parent / "reproduce_export.py",
             cmd_path=exported_model_path.parent / "reproduce_export.sh",
+            verbose=verbose,
         ) as context:
 
             kwargs = {

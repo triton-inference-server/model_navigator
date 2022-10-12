@@ -19,7 +19,7 @@ from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.convert.base import ConvertBase
 from model_navigator.framework_api.commands.convert.converters import sm2tftrt
 from model_navigator.framework_api.commands.core import Command, CommandType
-from model_navigator.framework_api.exceptions import ExecutionContext
+from model_navigator.framework_api.execution_context import ExecutionContext
 from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.utils import Status, format_to_relative_model_path, parse_kwargs_to_cmd
 from model_navigator.model import Format
@@ -46,6 +46,7 @@ class ConvertSavedModel2ONNX(ConvertBase):
         workdir: Path,
         opset: int,
         model_name: str,
+        verbose: bool,
         **kwargs,
     ):
         LOGGER.info("SavedModel to ONNX conversion started")
@@ -80,6 +81,7 @@ class ConvertSavedModel2ONNX(ConvertBase):
         with ExecutionContext(
             workdir=workdir,
             cmd_path=converted_model_path.parent / "reproduce_conversion.sh",
+            verbose=verbose,
         ) as context:
             context.execute_cmd(convert_cmd)
 
@@ -112,6 +114,7 @@ class ConvertSavedModel2TFTRT(ConvertBase):
         minimum_segment_size: int,
         workdir: Path,
         model_name: str,
+        verbose: bool,
         batch_dim: Optional[int] = None,
         **kwargs,
     ) -> Optional[Path]:
@@ -139,6 +142,7 @@ class ConvertSavedModel2TFTRT(ConvertBase):
             workdir=workdir,
             script_path=converted_model_path.parent / "reproduce_conversion.py",
             cmd_path=converted_model_path.parent / "reproduce_conversion.sh",
+            verbose=verbose,
         ) as context:
             kwargs = {
                 "exported_model_path": exported_model_path.relative_to(workdir).as_posix(),

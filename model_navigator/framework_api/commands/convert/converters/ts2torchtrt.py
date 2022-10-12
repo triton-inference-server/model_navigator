@@ -56,6 +56,7 @@ def convert(
     precision,
     precision_mode,
     target_device,
+    debug,
     workdir: Optional[str] = None,
 ):
     import torch_tensorrt  # pytype: disable=import-error
@@ -84,6 +85,11 @@ def convert(
         exported_model_path = workdir / exported_model_path
 
     model = torch.jit.load(exported_model_path.as_posix(), map_location=target_device)
+
+    if debug:
+        log_level = torch_tensorrt.logging.Level.Debug
+        print(f"Logging set to `debug` ({log_level})")
+        torch_tensorrt.logging.set_reportable_log_level(log_level)
 
     tr_model_compiled = torch_tensorrt.compile(
         module=model,

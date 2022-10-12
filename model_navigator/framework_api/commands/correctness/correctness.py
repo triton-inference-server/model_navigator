@@ -23,7 +23,7 @@ import numpy
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.common import DataObject, TensorMetadata
-from model_navigator.framework_api.exceptions import ExecutionContext
+from model_navigator.framework_api.execution_context import ExecutionContext
 from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.runners.runner_manager import RunnerManager
 from model_navigator.framework_api.utils import (
@@ -113,11 +113,12 @@ class Correctness(Command):
         output_metadata: TensorMetadata,
         target_device: str,
         batch_dim: Optional[int],
+        verbose: bool,
         rtol: Optional[float] = None,
         atol: Optional[float] = None,
         **kwargs,
     ) -> TolerancePerOutputName:
-        LOGGER.info(f"Correctness test for: {self.target_format} {self.runtime_provider}started.")
+        LOGGER.info(f"Correctness test for: {self.target_format} {self.runtime_provider} started.")
 
         model_path = workdir / format_to_relative_model_path(
             format=self.target_format,
@@ -135,6 +136,7 @@ class Correctness(Command):
             workdir=workdir,
             script_path=model_dir / "reproduce_correctness.py",
             cmd_path=model_dir / "reproduce_correctness.sh",
+            verbose=verbose,
         ) as context, tempfile.NamedTemporaryFile() as temp_file:
             kwargs = {
                 "navigator_workdir": workdir.as_posix(),

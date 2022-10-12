@@ -23,7 +23,7 @@ from model_navigator.framework_api.commands.convert.converters import ts2torchtr
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.export.pyt import ExportPYT2TorchScript
 from model_navigator.framework_api.common import TensorMetadata
-from model_navigator.framework_api.exceptions import ExecutionContext
+from model_navigator.framework_api.execution_context import ExecutionContext
 from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.utils import JitType, Status, parse_kwargs_to_cmd
 from model_navigator.model import Format
@@ -52,6 +52,8 @@ class ConvertTorchScript2TorchTensorRT(ConvertBase):
         max_workspace_size: int,
         trt_profile: Profile,
         target_device: str,
+        verbose: bool,
+        debug: bool,
         **kwargs,
     ) -> Optional[Path]:
         LOGGER.info("Conversion TorchScript to TorchTensorRT started")
@@ -80,6 +82,7 @@ class ConvertTorchScript2TorchTensorRT(ConvertBase):
             workdir=workdir,
             script_path=converted_model_path.parent / "reproduce_conversion.py",
             cmd_path=converted_model_path.parent / "reproduce_conversion.sh",
+            verbose=verbose,
         ) as context:
             kwargs = {
                 "exported_model_path": exported_model_path.relative_to(workdir).as_posix(),
@@ -91,6 +94,7 @@ class ConvertTorchScript2TorchTensorRT(ConvertBase):
                 "precision_mode": precision_mode.value,
                 "target_device": target_device,
                 "navigator_workdir": workdir.as_posix(),
+                "debug": debug,
             }
 
             args = parse_kwargs_to_cmd(kwargs, (list, dict, tuple))

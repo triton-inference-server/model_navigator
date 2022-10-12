@@ -151,13 +151,17 @@ def _copy_git_info(pkg_desc_from: PackageDescriptor, pkg_desc_to: PackageDescrip
 
 
 def _update_savedmodel_signature(
-    model_name: str, input_metadata: TensorMetadata, output_metadata: TensorMetadata, workdir: Path
+    model_name: str,
+    input_metadata: TensorMetadata,
+    output_metadata: TensorMetadata,
+    workdir: Path,
+    verbose: bool = False,
 ):
     LOGGER.info("Updating SavedModel signature...")
     from model_navigator.framework_api.commands.export.tf import UpdateSavedModelSignature
 
     cmd = UpdateSavedModelSignature()
-    cmd(model_name, input_metadata, output_metadata, workdir)
+    cmd(model_name, input_metadata, output_metadata, workdir, verbose)
 
 
 def _load_package_descriptor(
@@ -173,6 +177,10 @@ def _load_package_descriptor(
                 if model_status.path:
                     converted_model_paths.append(model_status.path.as_posix())
         return [p for p in paths if not p.startswith(tuple(converted_model_paths))]
+
+    def _filter_out_generated_files(paths: List[str]):
+        generated_files_extensions = [".log", ".sh", ".py"]
+        return [p for p in paths if not any([p.endswith(suffix) for suffix in generated_files_extensions])]
 
     def _extract_pkg_version(status_dict):
         return version.parse(status_dict.get("model_navigator_version", "0.3.0"))
@@ -205,6 +213,7 @@ def _load_package_descriptor(
         pkg_desc = PackageDescriptor(navigator_status, workdir)
         all_members = zf.namelist()
         filtered_members = _filter_out_converted_models(all_members, pkg_desc)
+        filtered_members = _filter_out_generated_files(filtered_members)
         zf.extractall(workdir, members=filtered_members)
 
     PackageUpdater().update_(pkg_desc, pkg_version)
@@ -237,6 +246,8 @@ def load(
     run_profiling: Optional[bool] = None,
     profiler_config: Optional[ProfilerConfig] = None,
     target_device: Optional[str] = None,
+    verbose: bool = False,
+    debug: bool = False,
 ) -> PackageDescriptor:
     """Load .nav package from the path.
     If `retest_conversions = True` rerun conversion tests (including correctness and performance).
@@ -254,6 +265,8 @@ def load(
     config.from_source = False
     config.override_workdir = False
     config.disable_git_info = True
+    config.verbose = verbose
+    config.debug = debug
 
     if use_config_defaults:
         _update_config_defaults(config, pkg_desc.framework)

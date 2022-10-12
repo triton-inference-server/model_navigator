@@ -100,7 +100,7 @@ def test_pyt_save_load_no_retest():
         assert all(
             [path.suffix == ".npz" for samples_dir in model_output_dir.iterdir() for path in samples_dir.iterdir()]
         )
-        assert navigator_log_file.is_file()
+        assert navigator_log_file.is_file() is False
 
         # Exported formats
         assert check_model_dir(model_dir=load_workdir / "torchscript-script", format=nav.Format.TORCHSCRIPT)

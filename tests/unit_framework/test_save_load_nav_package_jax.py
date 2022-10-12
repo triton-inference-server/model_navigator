@@ -96,7 +96,7 @@ def test_jax_save_load_savedmodel():
         assert all(
             [path.suffix == ".npz" for samples_dir in model_output_dir.iterdir() for path in samples_dir.iterdir()]
         )
-        assert navigator_log_file.is_file()
+        assert navigator_log_file.is_file() is False
 
         # Output formats
         assert check_model_dir(model_dir=load_workdir / "tf-savedmodel", format=nav.Format.TF_SAVEDMODEL)

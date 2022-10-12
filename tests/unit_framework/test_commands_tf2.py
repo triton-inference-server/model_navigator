@@ -206,6 +206,7 @@ def test_tf2_correctness():
             output_metadata=output_metadata,
             target_device="cpu",
             batch_dim=batch_dim,
+            verbose=False
         )
 
 
@@ -233,6 +234,7 @@ def test_tf2_export_savedmodel():
             workdir=workdir,
             input_metadata=input_metadata,
             output_metadata=output_metadata,
+            verbose=False,
         )
         tensorflow.keras.models.load_model(exported_model_path)
 
@@ -264,6 +266,7 @@ def test_tf2_convert_tf_trt():
             minimum_segment_size=3,
             workdir=workdir,
             model_name=model_name,
+            verbose=False,
         )
 
         tensorflow.keras.models.load_model(converted_model_path)

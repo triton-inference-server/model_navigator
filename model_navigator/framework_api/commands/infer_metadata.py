@@ -21,7 +21,8 @@ from polygraphy.backend.trt import Profile
 
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.common import Sample, SizedDataLoader, TensorMetadata
-from model_navigator.framework_api.exceptions import ExecutionContext, UserError
+from model_navigator.framework_api.execution_context import ExecutionContext
+from model_navigator.framework_api.exceptions import UserError
 from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.runners.onnx import OnnxrtRunner
 from model_navigator.framework_api.utils import (

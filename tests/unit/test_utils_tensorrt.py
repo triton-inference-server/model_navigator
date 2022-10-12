@@ -25,6 +25,8 @@ def test_cast_type_return_current_type_when_has_no_cast():
 
 def test_cast_type_return_new_type_when_has_cast():
     assert np.dtype("int32") == tensorrt.cast_type(np.dtype("int64"))
+    assert np.dtype("float32") == tensorrt.cast_type(np.dtype("float64"))
+    assert np.dtype("uint32") == tensorrt.cast_type(np.dtype("uint64"))
 
 
 def test_cast_tensor_is_not_changed_when_tensor_has_no_cast_type():
@@ -37,9 +39,16 @@ def test_cast_tensor_is_not_changed_when_tensor_has_no_cast_type():
 
 
 def test_cast_tensor_is_changed_when_tensor_cast_type():
-    tensor = TensorSpec(name="Tensor", shape=(-1,), dtype=np.dtype("int64"))
-    modified_tensor = tensorrt.cast_tensor(tensor)
+    test_cases = [
+        ("int64", "int32"),
+        ("uint64", "uint32"),
+        ("float64", "float32"),
+    ]
+    for input_type, expected_type in test_cases:
 
-    assert modified_tensor.dtype == np.dtype("int32")
-    assert modified_tensor.shape == tensor.shape
-    assert modified_tensor.name == tensor.name
+        tensor = TensorSpec(name="Tensor", shape=(-1,), dtype=np.dtype(input_type))
+        modified_tensor = tensorrt.cast_tensor(tensor)
+
+        assert modified_tensor.dtype == np.dtype(expected_type)
+        assert modified_tensor.shape == tensor.shape
+        assert modified_tensor.name == tensor.name

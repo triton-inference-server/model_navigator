@@ -37,7 +37,14 @@ def parse_args():
         "--run-profiling",
         action="store_true",
     )
-
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+    )
     return parser.parse_args()
 
 
@@ -49,6 +56,8 @@ def main():
         path=args.input_path,
         retest_conversions=True,
         run_profiling=args.run_profiling,
+        verbose=args.verbose,
+        debug=args.debug,
     )
 
     output_path = args.output_path

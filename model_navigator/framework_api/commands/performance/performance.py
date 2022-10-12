@@ -25,7 +25,8 @@ from polygraphy.backend.base import BaseRunner
 from model_navigator.converter.config import TensorRTPrecision
 from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.common import DataObject, Sample, TensorMetadata
-from model_navigator.framework_api.exceptions import ExecutionContext, ModelNavigatorExportAPIError
+from model_navigator.framework_api.exceptions import ModelNavigatorExportAPIError
+from model_navigator.framework_api.execution_context import ExecutionContext
 from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.runners.base import INavigatorStabilizedRunner
 from model_navigator.framework_api.runners.runner_manager import RunnerManager
@@ -92,7 +93,6 @@ class ProfilingResults(DataObject):
 
     @classmethod
     def from_stable_runner(cls, runner: INavigatorStabilizedRunner, batch_size: int):
-
         return cls(
             batch_size=batch_size,
             avg_latency=runner.avg_latency(),
@@ -309,6 +309,7 @@ class Performance(Command):
         target_device: str,
         batch_dim: Optional[int],
         max_batch_size: Optional[int],
+        verbose: bool,
         **kwargs,
     ) -> List[ProfilingResults]:
         LOGGER.info(f"Performance test for: {self.target_format} {self.runtime_provider} started.")
@@ -328,6 +329,7 @@ class Performance(Command):
             workdir=workdir,
             script_path=model_dir / "reproduce_profiling.py",
             cmd_path=model_dir / "reproduce_profiling.sh",
+            verbose=verbose,
         ) as context, tempfile.NamedTemporaryFile() as temp_file:
             kwargs = {
                 "navigator_workdir": workdir.as_posix(),

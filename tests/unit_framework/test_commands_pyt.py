@@ -203,6 +203,7 @@ def test_pyt_correctness():
             output_metadata=output_metadata,
             target_device="cpu",
             batch_dim=batch_dim,
+            verbose=False
         )
 
 
@@ -223,6 +224,7 @@ def test_pyt_export_torchscript():
             workdir=workdir,
             input_metadata={"input__1": TensorSpec("input__1", numpy_data.shape, numpy_data.dtype)},
             target_device="cpu",
+            verbose=False,
         )
 
         torch.jit.load(exported_model_path.as_posix())
@@ -253,6 +255,7 @@ def test_pyt_export_onnx():
             input_metadata=TensorMetadata({"input": TensorSpec("input", (-1, 5), numpy.dtype("float32"))}),
             output_metadata=TensorMetadata({"output": TensorSpec("output", (-1, 7), numpy.dtype("float32"))}),
             target_device=device,
+            verbose=False,
         )
 
         onnx.checker.check_model(exported_model_path.as_posix())

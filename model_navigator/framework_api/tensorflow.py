@@ -64,6 +64,7 @@ def export(
     runtimes: Optional[Union[Union[str, RuntimeProvider], Tuple[Union[str, RuntimeProvider], ...]]] = None,
     run_profiling: bool = True,
     profiler_config: Optional[ProfilerConfig] = None,
+    verbose: bool = False,
 ) -> PackageDescriptor:
     """Function exports TensorFlow2 model to all supported formats."""
     if model_name is None:
@@ -130,6 +131,7 @@ def export(
         runtimes=runtimes,
         profiler_config=profiler_config,
         forward_kw_names=forward_kw_names,
+        verbose=verbose,
     )
 
     builders = [

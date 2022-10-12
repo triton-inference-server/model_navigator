@@ -248,6 +248,9 @@ class Command(metaclass=ABCMeta):
                     logger.addHandler(self.log_file_handler)
 
     def _detach_logger_from_command_log_file(self, loggers: list):
+        if self.log_file_handler:
+            LOGGER.info(f"Command logs saved in {self.log_file_handler.baseFilename}")
+
         for logger in loggers:
             if isinstance(logger, str):
                 logger = logging.getLogger(logger)

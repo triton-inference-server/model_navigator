@@ -23,7 +23,11 @@ from model_navigator.tensor import TensorSpec
 from model_navigator.utils import enums
 
 LOGGER = logging.getLogger(__name__)
-_TYPE_CASTS = {np.dtype(np.int64): np.dtype(np.int32)}
+_TYPE_CASTS = {
+    np.dtype(np.int64): np.dtype(np.int32),
+    np.dtype(np.float64): np.dtype(np.float32),
+    np.dtype(np.uint64): np.dtype(np.uint32),
+}
 
 
 def get_version():

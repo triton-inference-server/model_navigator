@@ -39,8 +39,10 @@ coloredlogs.install(
 
 def add_log_file_handler(log_dir: Path):
     log_file = log_dir / "navigator.log"
+    formatter = logging.Formatter(log_format)
     fh = logging.FileHandler(log_file)
     fh.setLevel(logging.DEBUG)
+    fh.setFormatter(formatter)
     LOGGER.addHandler(fh)
 
 

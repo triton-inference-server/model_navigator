@@ -79,6 +79,12 @@ class Config(DataObject):
     atol: Optional[float] = None
     rtol: Optional[float] = None
 
+    # Verbose logging - enable debug mode in export and conversion paths
+    verbose: bool = False
+
+    # Debug - enabled debug mode for converters
+    debug: bool = False
+
     def _check_types(self):
         try:
             iter(self.dataloader)

@@ -41,7 +41,7 @@ from model_navigator.framework_api.utils import (
     get_default_workdir,
 )
 from model_navigator.model import Format
-from model_navigator.utils import tensorrt, enums
+from model_navigator.utils import enums, tensorrt
 
 
 def export(
@@ -69,6 +69,8 @@ def export(
     runtimes: Optional[Union[Union[str, RuntimeProvider], Tuple[Union[str, RuntimeProvider], ...]]] = None,
     run_profiling: bool = True,
     profiler_config: Optional[ProfilerConfig] = None,
+    verbose: bool = False,
+    debug: bool = False,
 ) -> PackageDescriptor:
     """Function exports PyTorch model to all supported formats."""
 
@@ -153,6 +155,8 @@ def export(
         batch_dim=batch_dim,
         runtimes=runtimes,
         profiler_config=profiler_config,
+        verbose=verbose,
+        debug=debug,
     )
 
     builders = [

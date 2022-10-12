@@ -21,7 +21,7 @@ from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.export import exporters
 from model_navigator.framework_api.commands.export.base import ExportBase
 from model_navigator.framework_api.common import TensorMetadata
-from model_navigator.framework_api.exceptions import ExecutionContext
+from model_navigator.framework_api.execution_context import ExecutionContext
 from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.utils import parse_kwargs_to_cmd
 from model_navigator.model import Format
@@ -44,6 +44,7 @@ class ExportJAX2SavedModel(ExportBase):
         model_params,
         workdir: Path,
         input_metadata: TensorMetadata,
+        verbose: bool,
         model: Optional[tf.keras.Model] = None,
         batch_dim: Optional[int] = 0,
         **kwargs,
@@ -63,6 +64,7 @@ class ExportJAX2SavedModel(ExportBase):
             workdir=workdir,
             script_path=exported_model_path.parent / "reproduce_export.py",
             cmd_path=exported_model_path.parent / "reproduce_export.sh",
+            verbose=verbose,
         ) as context:
             kwargs = {
                 "exported_model_path": exported_model_path.as_posix(),

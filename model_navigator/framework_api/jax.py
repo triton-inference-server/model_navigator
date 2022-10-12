@@ -63,6 +63,7 @@ def export(
     runtimes: Optional[Union[Union[str, RuntimeProvider], Tuple[Union[str, RuntimeProvider], ...]]] = None,
     run_profiling: bool = True,
     profiler_config: Optional[ProfilerConfig] = None,
+    verbose: bool = False,
 ) -> PackageDescriptor:
     """Function exports JAX model to all supported formats."""
     if isinstance(model, str):
@@ -133,6 +134,7 @@ def export(
         batch_dim=batch_dim,
         runtimes=runtimes,
         profiler_config=profiler_config,
+        verbose=verbose,
     )
 
     builders = [

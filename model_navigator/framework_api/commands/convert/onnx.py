@@ -18,10 +18,11 @@ from typing import Optional, Tuple
 from polygraphy.backend.onnxrt import SessionFromOnnx
 from polygraphy.backend.trt import Profile
 
+from model_navigator.framework_api.exceptions import UserError
 from model_navigator.converter.config import TensorRTPrecision, TensorRTPrecisionMode
 from model_navigator.framework_api.commands.convert.base import ConvertBase
 from model_navigator.framework_api.commands.core import Command, CommandType
-from model_navigator.framework_api.exceptions import ExecutionContext, UserError
+from model_navigator.framework_api.execution_context import ExecutionContext
 from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.runners.onnx import OnnxrtRunner
 from model_navigator.framework_api.utils import Framework, Status, format_to_relative_model_path
@@ -58,6 +59,7 @@ class ConvertONNX2TRT(ConvertBase):
         model_name: str,
         target_device: str,
         trt_profile: Profile,
+        verbose: bool,
         max_workspace_size: Optional[int] = None,
         **kwargs,
     ) -> Optional[Path]:
@@ -140,6 +142,7 @@ class ConvertONNX2TRT(ConvertBase):
         with ExecutionContext(
             workdir=workdir,
             cmd_path=converted_model_path.parent / "reproduce_conversion.sh",
+            verbose=verbose,
         ) as context:
             context.execute_cmd(convert_cmd)
 

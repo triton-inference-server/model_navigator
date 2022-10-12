@@ -21,7 +21,7 @@ from model_navigator.framework_api.commands.core import Command, CommandType
 from model_navigator.framework_api.commands.export import exporters
 from model_navigator.framework_api.commands.export.base import ExportBase
 from model_navigator.framework_api.common import TensorMetadata
-from model_navigator.framework_api.exceptions import ExecutionContext
+from model_navigator.framework_api.execution_context import ExecutionContext
 from model_navigator.framework_api.logger import LOGGER
 from model_navigator.framework_api.utils import parse_kwargs_to_cmd
 from model_navigator.model import Format
@@ -43,6 +43,7 @@ class ExportTF2SavedModel(ExportBase):
         input_metadata: TensorMetadata,
         output_metadata: TensorMetadata,
         workdir: Path,
+        verbose: bool,
         forward_kw_names: Optional[Tuple[str, ...]] = None,
         **kwargs,
     ) -> Optional[Path]:
@@ -60,6 +61,7 @@ class ExportTF2SavedModel(ExportBase):
             workdir=workdir,
             script_path=exported_model_path.parent / "reproduce_export.py",
             cmd_path=exported_model_path.parent / "reproduce_export.sh",
+            verbose=verbose,
         ) as context:
 
             kwargs = {
@@ -94,6 +96,7 @@ class UpdateSavedModelSignature(ExportBase):
         input_metadata: TensorMetadata,
         output_metadata: TensorMetadata,
         workdir: Path,
+        verbose: bool,
         **kwargs,
     ) -> Optional[Path]:
         LOGGER.info("TensorFlow2 to SavedModel export started")
@@ -108,6 +111,7 @@ class UpdateSavedModelSignature(ExportBase):
             workdir=workdir,
             script_path=exported_model_path.parent / "reproduce_export.py",
             cmd_path=exported_model_path.parent / "reproduce_export.sh",
+            verbose=verbose,
         ) as context:
 
             kwargs = {

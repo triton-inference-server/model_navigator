@@ -80,7 +80,7 @@ CASE_TENSORRT_PLAN_IMAGE_MODEL_WITH_JUST_BATCH_AXIS = (
     128,
     "model.plan",
     ModelSignatureConfig(
-        inputs={"i__0": TensorSpec("i__0", shape=(-1,), dtype=np.dtype("float64"))},
+        inputs={"i__0": TensorSpec("i__0", shape=(-1,), dtype=np.dtype("float32"))},
         outputs={"o__1": TensorSpec("o__1", shape=(-1,), dtype=np.dtype("float16"))},
     ),
 )
