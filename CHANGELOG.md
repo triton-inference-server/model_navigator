@@ -16,6 +16,19 @@ limitations under the License.
 
 # Changelog
 
+## 0.3.7 (unreleased)
+
+[//]: <> (put here on external component update with short summary what change or link to changelog)
+- Version of external components used during testing:
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.42.2
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.19
+    - [Triton Model Analyzer 1.20.0](https://github.com/triton-inference-server/model_analyzer)
+    - tf2onnx: [v1.12.1](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.12.1)
+    - Other component versions depend on the used framework and Triton Inference Server containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
+
+
 ## 0.3.6
 - Updated NVIDIA containers defaults to 22.09
 - Model Navigator Export API:
