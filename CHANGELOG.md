@@ -16,7 +16,9 @@ limitations under the License.
 
 # Changelog
 
-## 0.3.7 (unreleased)
+## 0.3.7
+
+- Updated NVIDIA containers defaults to 22.10
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 - Version of external components used during testing:
