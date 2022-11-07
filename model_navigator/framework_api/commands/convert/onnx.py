@@ -134,7 +134,7 @@ class ConvertONNX2TRT(ConvertBase):
                 convert_cmd.extend([f"{arg}"] + shapes)
 
         if max_workspace_size is not None:
-            if tensorrt.get_version() < LooseVersion("8.4.0"):
+            if tensorrt.version() < LooseVersion("8.4.0"):
                 convert_cmd.extend(["--workspace", f"{max_workspace_size}"])
             else:
                 convert_cmd.extend(["--pool-limit", f"workspace:{max_workspace_size}"])

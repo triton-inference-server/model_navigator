@@ -19,12 +19,14 @@ limitations under the License.
 ## 0.3.7
 
 - Updated NVIDIA containers defaults to 22.10
+- Model Navigator OTIS:
+  - fix: ONNX loader for TensorRT conversion for Polygraphy >= 0.42.0
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 - Version of external components used during testing:
-    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.42.2
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.43.1
     - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.19
-    - [Triton Model Analyzer 1.20.0](https://github.com/triton-inference-server/model_analyzer)
+    - [Triton Model Analyzer 1.21.0](https://github.com/triton-inference-server/model_analyzer)
     - tf2onnx: [v1.12.1](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.12.1)
     - Other component versions depend on the used framework and Triton Inference Server containers versions.
       See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)

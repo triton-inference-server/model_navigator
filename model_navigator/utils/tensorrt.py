@@ -30,7 +30,14 @@ _TYPE_CASTS = {
 }
 
 
-def get_version():
+def package():
+    from polygraphy import mod
+
+    trt = mod.lazy_import("tensorrt")
+    return trt
+
+
+def version():
     from polygraphy import mod
 
     trt = mod.lazy_import("tensorrt")

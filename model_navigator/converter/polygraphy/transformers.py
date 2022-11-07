@@ -102,17 +102,26 @@ def _run_polygraphy(
         sparse_weights=tensorrt_config.sparse_weights,
         **{precision: True for precision in trt_precision_flags},
     )
-    if tensorrt.get_version() < LooseVersion("8.4.0"):
+    if tensorrt.version() < LooseVersion("8.4.0"):
         config.max_workspace_size = tensorrt_config.max_workspace_size
+    elif tensorrt.version() >= LooseVersion("8.5.0"):
+        tensorrt_pkg = tensorrt.package()
+        config.memory_pool_limits = {
+            tensorrt_pkg.MemoryPoolType.WORKSPACE: tensorrt_config.max_workspace_size,
+        }
     else:
         config.memory_pool_limits = {
             "workspace": tensorrt_config.max_workspace_size,
         }
 
     # Loaders
-    parse_network_from_onnx = NetworkFromOnnxPath(
-        input_path.as_posix(), explicit_precision=tensorrt_config.explicit_precision
-    )
+    if POLYGRAPHY_VERSION >= LooseVersion("0.42.0"):
+        parse_network_from_onnx = NetworkFromOnnxPath(input_path.as_posix())
+    else:
+        parse_network_from_onnx = NetworkFromOnnxPath(
+            input_path.as_posix(), explicit_precision=tensorrt_config.explicit_precision
+        )
+
     build_engine = EngineFromNetwork(parse_network_from_onnx, config=config)
     save_engine = SaveEngine(build_engine, output_path.as_posix())
     build_onnxrt_session = SessionFromOnnx(input_path.as_posix())
