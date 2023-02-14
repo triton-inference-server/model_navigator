@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-.PHONY: clean clean-test clean-pyc clean-build docs help
+.PHONY: clean clean-build clean-pyc clean-docs clean-test docs lint test coverage release dist install install-dev help
 .DEFAULT_GOAL := help
 
 define BROWSER_PYSCRIPT
@@ -40,7 +40,7 @@ PIP_INSTALL := pip install --extra-index-url https://pypi.ngc.nvidia.com
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
-clean: clean-build clean-pyc clean-test ## remove all build, test, coverage and Python artifacts
+clean: clean-build clean-pyc clean-test clean-docs ## remove all build, test, docs, coverage and Python artifacts
 
 clean-build: ## remove build artifacts
 	rm -fr build/
@@ -56,8 +56,7 @@ clean-pyc: ## remove Python file artifacts
 	find . -name '__pycache__' -exec rm -fr {} +
 
 clean-docs: ## remove test and coverage artifacts
-	rm -rf docs/api
-	$(MAKE) -C docs clean
+	rm -rf site
 
 clean-test: ## remove test and coverage artifacts
 	rm -fr .tox/
@@ -66,25 +65,21 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr .pytest_cache
 	rm -fr .pytype/
 
-lint: ## check style with flake8 and pytype
-	tox -e pytype,flake8
+docs: clean-docs ## generate site
+	cp CHANGELOG.md docs
+	cp CONTRIBUTING.md docs
+	cp LICENSE docs/LICENSE.md
+	cp examples/README.md docs/examples.md
+	mkdocs build --clean
 
-test: ## run tests quickly with the default Python
-	pytest --ignore-glob='tests/test_*_pyt.py' --ignore-glob='tests/test_*_tf1.py' --ignore-glob='tests/test_*_tf2.py' --ignore-glob='tests/functional'
+docs-serve: docs
+	mkdocs serve
 
-test-all: ## run tests on every Python version with tox
-	tox
+lint: ## check style with pre-commit and pytype
+	tox -e pytype,pre-commit --develop
 
-test-fw: ## run tests on framework containers
-	docker run --gpus 0 --rm -it -v ${PWD}:/workspace nvcr.io/nvidia/pytorch:21.03-py3 bash -c "pip install tox && tox -e pyt; make clean"
-	docker run --gpus 0 --rm -it -v ${PWD}:/workspace nvcr.io/nvidia/tensorflow:21.03-tf2-py3 bash -c "pip install tox && tox -e tf2; make clean"
-	#docker run --gpus 0 --rm -it -v ${PWD}:/workspace nvcr.io/nvidia/tensorflow:20.12-tf1-py3 bash -c "pip install tox && tox -e tf1 && make clean"
-
-test-func-e2e:
-	@for f in $(shell ls ./tests/functional/run_test_e2e*.sh); do PYTHONPATH=$$PWD $${f}; done
-
-test-func-convert:
-	@for f in $(shell ls ./tests/functional/run_test_convert*.sh); do PYTHONPATH=$$PWD $${f}; done
+test: ## run tests on every Python version with tox
+	tox --develop --skip-missing-interpreters
 
 coverage: ## check code coverage quickly with the default Python
 	coverage run --source model_navigator -m pytest
@@ -92,54 +87,14 @@ coverage: ## check code coverage quickly with the default Python
 	coverage html
 	$(BROWSER) htmlcov/index.html
 
-docs: clean-docs ## generate Sphinx HTML documentation, including API docs
-	sphinx-apidoc -f -o docs/api model_navigator
-	$(MAKE) -C docs html
-
-servedocs: docs ## compile the docs watching for changes
-	$(BROWSER) docs/_build/html/index.html
-	watchmedo shell-command -p '*.rst;*.md;*.py' -c '$(MAKE) -C docs html' -R -D .
-
-release: dist ## package and upload a release
-	# twine upload dist/*
-	echo Commented out to avoid unfinished project publishing
-
 dist: clean ## builds source and wheel package
-	python -m build --sdist --wheel -o dist
-	ls -l dist
+	python3 -m build .
+	ls -lh dist
 
 install: clean ## install the package to the active Python's site-packages
+	$(PIP_INSTALL) --upgrade pip
 	$(PIP_INSTALL) .
 
-install-with-cli: clean
-	$(PIP_INSTALL) -e .[cli]
-
-install-with-cloud-extras: clean
-	$(PIP_INSTALL) --upgrade --upgrade-strategy only-if-needed .[cli,cloud]
-
-install-with-framework-extras: clean
-ifeq ($(origin TENSORFLOW_VERSION), undefined)
-	$(PIP_INSTALL) --upgrade --upgrade-strategy only-if-needed .[pyt]
-else
-	$(PIP_INSTALL) --upgrade --upgrade-strategy only-if-needed .[tf]
-endif
-
-install-with-framework-and-cli-extras: clean
-ifeq ($(origin TENSORFLOW_VERSION), undefined)
-	$(PIP_INSTALL) --upgrade --upgrade-strategy only-if-needed .[cli,pyt]
-else
-	$(PIP_INSTALL) --upgrade --upgrade-strategy only-if-needed .[cli,tf]
-endif
-
-install-dev: clean
-	$(PIP_INSTALL) -e .[cli]
-	$(PIP_INSTALL) -r dev_requirements.txt
-
-docker: clean
-	docker build --network host -f docker/Dockerfile.triton -t model-navigator:latest .
-
-docker-pytorch: clean
-	docker build --network host -f docker/Dockerfile.pytorch -t model-navigator-pytorch:latest .
-
-docker-tensorflow: clean
-	docker build --network host -f docker/Dockerfile.tensorflow -t model-navigator-tensorflow:latest .
+install-dev: clean-build clean-pyc clean-test
+	$(PIP_INSTALL) --upgrade pip
+	$(PIP_INSTALL) -e .[dev]

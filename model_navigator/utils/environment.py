@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,20 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Collect information about current system and environment."""
 import locale
 import logging
 import os
 import platform
 import re
-from pathlib import Path
 from subprocess import CalledProcessError
-from typing import Dict, List
+from typing import Dict, List, Optional, Union
 
 import cpuinfo
 import psutil
-import yaml
-
-from model_navigator.utils import Workspace
 
 LOGGER = logging.getLogger(__name__)
 
@@ -82,63 +79,8 @@ LIBRARIES = {
 }
 
 
-def _command_runner(command):
-    import subprocess
-
-    return (
-        subprocess.run(command, check=True, start_new_session=True, stdout=subprocess.PIPE)
-        .stdout.decode(locale.getpreferredencoding())
-        .strip()
-    )
-
-
-def _search(input: str, regex: str):
-    match = re.search(regex, input)
-    if match:
-        return match.group(1).strip()
-    else:
-        return None
-
-
-def _split_to_dict(lines: List[str], separator: str):
-    output = dict(map(lambda line: line.split(separator), lines))
-    output = {k: v.strip() for k, v in output.items()}
-    return output
-
-
-def _get_packages():
-    return _split_to_dict(
-        _command_runner(["pip", "list", "--format=freeze", "--disable-pip-version-check"]).splitlines(), "=="
-    )
-
-
-def _remove(input: str, regex: str):
-    return re.sub(regex, "", input).strip()
-
-
-def get_git_info(disable_git_info: bool):
-    git_info = {
-        "repository": None,
-        "commit": None,
-        "author": None,
-        "email": None,
-    }
-    if disable_git_info:
-        return git_info
-    try:
-        git_info = {
-            "repository": _command_runner(command=["git", "config", "--get", "remote.origin.url"]),
-            "commit": _command_runner(command=["git", "log", "-1", "--pretty=format:%H"]),
-            "author": _command_runner(command=["git", "log", "-1", "--pretty=format:%an"]),
-            "email": _command_runner(command=["git", "log", "-1", "--pretty=format:%ae"]),
-        }
-    except CalledProcessError as e:
-        LOGGER.warning(f"Unable to get git info: {e}")
-
-    return git_info
-
-
 def get_os_info():
+    """Collect information about the OS."""
     os_details = {
         "name": os.name,
         "platform": platform.system(),
@@ -148,6 +90,7 @@ def get_os_info():
 
 
 def get_cpu_info():
+    """Collect information about CPU available in the system."""
     cpu_details = {
         "name": cpuinfo.get_cpu_info()["brand_raw"],
         "physical_cores": psutil.cpu_count(logical=False),
@@ -158,8 +101,12 @@ def get_cpu_info():
     return cpu_details
 
 
-def get_gpu_info():
+def get_gpu_info() -> Dict:
+    """Collect information about NVIDIA GPU available in the system.
 
+    Returns:
+        Dictionary with GPU information
+    """
     try:
         data = _command_runner(
             command=["nvidia-smi", "--query-gpu=name,driver_version,memory.total,power.max_limit", "--format=csv"]
@@ -195,7 +142,15 @@ def get_gpu_info():
     return gpu_details
 
 
-def get_env():
+def get_env() -> Dict:
+    """Collect information from current environment.
+
+    This method gather information about Python packages, environment variables, OS version as well as
+    CPU and GPU information.
+
+    Returns:
+        Dictionary with details about current working environment
+    """
     packages = _get_packages()
 
     os_details = get_os_info()
@@ -214,28 +169,54 @@ def get_env():
     return env
 
 
-class EnvironmentStore:
-    def __init__(self, workspace: Workspace):
-        self._workspace = workspace
+def _command_runner(command: Union[str, List]) -> str:
+    """Executed command as subprocess and collect information."""
+    import subprocess
 
-    def dump(self, stage, environment: Dict) -> Path:
-        status_path: Path = self.get_path(stage)
-        LOGGER.debug(f"Saving environment info for {stage} stage into {status_path}")
-        status_path.parent.mkdir(parents=True, exist_ok=True)
-        with status_path.open("w") as results_file:
-            yaml.dump(environment, results_file)
-        return status_path
+    return (
+        subprocess.run(command, check=True, start_new_session=True, stdout=subprocess.PIPE)
+        .stdout.decode(locale.getpreferredencoding())
+        .strip()
+    )
 
-    def load(self, stage):
-        status_path: Path = self.get_path(stage)
-        if not status_path.exists():
-            LOGGER.warning(f"No environment found for {stage}")
-            return {}
 
-        with status_path.open("r") as results_file:
-            environment = yaml.safe_load(results_file)
+def _search(input: str, regex: str) -> Optional[str]:
+    """Search for matching regular expression inside given string.
 
-        return environment
+    Returns:
+        Matched string or None if not matches found
+    """
+    match = re.search(regex, input)
+    if match:
+        return match.group(1).strip()
+    else:
+        return None
 
-    def get_path(self, stage: str) -> Path:
-        return self._workspace.path / f"{stage}_environment.yaml"
+
+def _split_to_dict(lines: List[str], separator: str):
+    """Split the lines of string into a dictionary based on separator.
+
+    First value from split is a key and second is value.
+
+    Returns:
+        Dictionary with split values.
+    """
+    output = dict(map(lambda line: line.split(separator), lines))
+    output = {k: v.strip() for k, v in output.items()}
+    return output
+
+
+def _get_packages():
+    """Collect Python packages installed in the system along with the version."""
+    return _split_to_dict(
+        _command_runner(["pip", "list", "--format=freeze", "--disable-pip-version-check"]).splitlines(), "=="
+    )
+
+
+def _remove(input: str, regex: str) -> str:
+    """Format data based on regular expression.
+
+    Returns:
+        Formatted string
+    """
+    return re.sub(regex, "", input).strip()

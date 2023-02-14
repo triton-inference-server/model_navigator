@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,16 +11,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Constants definition."""
+from model_navigator.__version__ import __version__  # noqa: F401
 
-from pathlib import Path
+# Version
+NAVIGATOR_VERSION = __version__
+NAVIGATOR_PACKAGE_VERSION = "0.2.0"
 
-# Config constants
-CONFIG_PARSER_SUCCESS = 1
-CONFIG_PARSER_FAILURE = 0
+# Profiling related
+DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD = 0.05
 
-# Result Comparator Constants
-COMPARISON_SCORE_THRESHOLD = 0.005
+# Dataloader related
+DEFAULT_SAMPLE_COUNT = 100
 
-MODEL_NAVIGATOR_DIR = Path(__file__).parent.parent
+# TensorRT conversion related
+DEFAULT_MAX_WORKSPACE_SIZE = 8589934592
+DEFAULT_MIN_SEGMENT_SIZE = 3
+DEFAULT_TENSORRT_MAX_DIMENSION_SIZE = 2**31 - 1
 
-ALL_OTHER_INPUTS = ""
+# ONNX export/conversion related
+DEFAULT_ONNX_OPSET = 17

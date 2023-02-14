@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -13,120 +13,135 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
+
 # Quick Start
 
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+The prerequisite for this section is installing the NVIDIA Triton Model Navigator which can be found
+in [installation](installation.md) section.
 
-- [Installation](#installation)
-- [Export Model from Source](#export-model-from-source)
-- [Optimize for Triton Inference Server](#optimize-for-triton-inference-server)
+The quick start presents how to optimize Python model for deployment on Triton Inference Server. In the
+example we are using a simple TensorFlow 2 model.
 
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+## Export and optimize model
 
-The following steps below will guide you through  two-step process of using the Triton Model Navigator to export and
-analyze a simple PyTorch model. The instructions assume a directory structure like the following:
+To use Triton Model Navigator you must prepare model and dataloader. We recommend to create following helper
+functions:
 
-```
-$HOME
-  |--- model_navigator
-      |--- docs
-      |--- examples
-      |--- model_navigator
-      |--- tests
-      .
-      .
-      .
-```
+- `get_model` - return model object
+- `get_dataloader` - generate samples required for export and conversion
+- `get_verify_func` (optionally) - validate the correctness of models based on implemented metric
 
-## Installation
+Next you can use Triton Model Navigator `optimize` function with provided model, dataloader and verify function
+to export and convert model to all supported formats.
 
-See the [installation](installation.md) guide to install Triton Model Navigator in training environment or use for optimization
-on Triton Inference Server.
-
-## Export Model from Source
-This step exports model to all available formats and creates `.nav` package with checkpoints and model meta data.
+See the below example of optimizing a simple TensorFlow model.
 
 ```python
+import logging
+
+import numpy as np
+import tensorflow as tf
+
 import model_navigator as nav
-import torch
 
-model = torch.nn.Linear(5, 7).eval()
-dataloader = [torch.full((3, 5), 1.0) for _ in range(10)]
-device = "cuda" if torch.cuda.is_available() else "cpu"
+# enable tensorflow memory growth to avoid allocating all GPU memory
+gpus = tf.config.experimental.list_physical_devices("GPU")
+for gpu in gpus:
+    tf.config.experimental.set_memory_growth(gpu, True)
 
-pkg_desc = nav.torch.export(
+LOGGER = logging.getLogger(__name__)
+
+# dataloader is used for inference and finding input shapes of the model.
+# If you do not have dataloader, create one with samples with min and max shapes.
+def get_dataloader():
+    return [np.random.rand(1, 224, 224, 3).astype("float32") for _ in range(10)]
+
+
+def get_verify_function():
+    def verify_func(ys_runner, ys_expected):
+        for a, b in zip(ys_runner, ys_expected):
+            if not (a["output__0"] == b["output__0"]).all():
+                return False
+
+        return True
+
+    return verify_func
+
+
+# Model inputs must be a Tensor to support deployment on Triton Inference Server.
+def get_model():
+    inp = tf.keras.layers.Input((224, 224, 3))
+    layer_output = tf.keras.layers.Lambda(lambda x: x)(inp)
+    layer_output = tf.keras.layers.Lambda(lambda x: x)(layer_output)
+    layer_output = tf.keras.layers.Lambda(lambda x: x)(layer_output)
+    layer_output = tf.keras.layers.Lambda(lambda x: x)(layer_output)
+    layer_output = tf.keras.layers.Lambda(lambda x: x)(layer_output)
+    model_output = tf.keras.layers.Lambda(lambda x: x)(layer_output)
+    return tf.keras.Model(inp, model_output)
+
+# Check documentation for more details about Profiler Configuration options.
+def get_profiler_config():
+    return nav.ProfilerConfig()
+
+
+model = get_model()
+dataloader = get_dataloader()
+verify_func = get_verify_function()
+profiler_config = get_profiler_config()
+
+# Model Navigator optimize starts export, optimization and testing process.
+# The resulting package represents all artifacts produced by Model Navigator.
+package = nav.tensorflow.optimize(
     model=model,
+    profiler_config=profiler_config,
+    target_formats=(nav.Format.ONNX,),
     dataloader=dataloader,
-    model_name="my_model",
-    target_device=device,
+    verify_func=verify_func,
 )
 
+# Save nav package that can be used for Triton Inference Server deployment or obtaining model runner later.
+# The package contains base format checkpoints that can be used for all other conversions.
+# Models with minimal latency and maximal throughput are added to the package.
+nav.package.save(package=package, path="mlp.nav")
 ```
-Next user should verify exported format. User can use custom metrics, measure accuracy, listen to the output etc.
+
+You can customize behavior of export and conversion steps
+passing [CustomConfig][model_navigator.api.config.CustomConfig]
+to `optimize` function.
+
+## NVIDIA Triton Inference Server deployment
+
+If you prefer the standalone [NVIDIA Triton Inference Server](https://github.com/triton-inference-server) you can create
+and use `model_repository`.
+
 ```python
-import numpy
-import torch
+import logging
+import pathlib
 
-sample_count = 100
-valid_outputs = 0
-for _ in range(sample_count):
-    random_sample = torch.full((3, 5), 1.0)
+from model_navigator.exceptions import ModelNavigatorEmptyPackageError, ModelNavigatorError, ModelNavigatorWrongParameterError
+import model_navigator as nav
 
-    # Use source model to generate dummy ground truth
-    gt = [model(random_sample).detach().cpu().numpy()]
+LOGGER = logging.getLogger(__name__)
 
-    feed_dict = {"input__0": random_sample.detach().cpu().numpy()}
-    onnx_runner = pkg_desc.get_runner(format=nav.Format.ONNX, runtime=nav.RuntimeProvider.CUDA)
-    with onnx_runner:
-        output = onnx_runner.infer(feed_dict)
+package = nav.package.load("mlp.nav", "load_workspace")
 
-    # Compare output and gt
-    for a, b in zip(gt, output.values()):
-        if numpy.allclose(a, b, atol=0, rtol=0):
-            valid_outputs += 1
-
-accuracy = float(valid_outputs) / float(sample_count)
-
-if accuracy > 0.8:
-    pkg_desc.set_verified(format=nav.Format.ONNX, runtime=nav.RuntimeProvider.CUDA)
-```
-After verification user have to save final Navigator package. This package will contain base format and all information
-that allows for recreation of all other formats and rerunning all tests.
-```python
-nav.save(pkg_desc, "my_model.nav")
+# Create model_repository for standalone Triton deployment
+try:
+    nav.triton.model_repository.add_model_from_package(
+        model_repository_path=pathlib.Path("model_repository"), model_name="dummy_model", package=package
+    )
+except (ModelNavigatorWrongParameterError, ModelNavigatorEmptyPackageError, ModelNavigatorError) as e:
+    LOGGER.warning(f"Model repository cannot be created.\n{str(e)}")
 ```
 
-The `.nav` package can then be copied to the deployment environment.
+Use command to start server with provided `model_repository`:
 
-## Optimize for Triton Inference Server
-
-This step uses previously generated `.nav` package and use it for further conversion and applies optimizations for
-Triton Inference Server. In results it produces package that can used directly for deployment on Triton Inference Server.
-
-First, run the model configuration and profiling process.
 ```shell
-$ model-navigator optimize my_model.nav
-```
-
-This produces a new "my_model.triton.nav" package. This can then be used as an input to the
-`model-navigator select` command, which builds a Triton model repository containing the input model in
-its best configuration.
-
-```
-$ model-navigator select my_model.triton.nav
-```
-
-By default, the configuration is selected only for best throughput.
-However other optimization objectives can be specified and combined using weighted ranking.
-Additional constraints can be passed to the `select` command,
-including bounds on latency, throughput and desired model formats:
-
-```
-$ model-navigator select my_model.triton.nav \
-                        --objective perf_throughput=10 perf_latency_avg=5  # objectives with weights
-                        --max-latency-ms 1  \
-                        --min-throughput 100  \
-                        --max-gpu-usage-mb 8000  \
-                        --target-format trt onnx
+$ docker run --gpus=1 --rm \
+  -p8000:8000 \
+  -p8001:8001 \
+  -p8002:8002 \
+  -v ${PWD}/model_repository:/models \
+  nvcr.io/nvidia/tritonserver:23.01-py3 \
+  tritonserver --model-repository=/models
 ```
