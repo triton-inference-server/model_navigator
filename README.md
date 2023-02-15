@@ -14,9 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-# NVIDIA Triton Model Navigator
+# Triton Model Navigator
 
-The [NVIDIA Triton Model Navigator](https://github.com/triton-inference-server/model_navigator) automates
+The [Triton Model Navigator](https://github.com/triton-inference-server/model_navigator) automates
 the process of moving model from source to deployment on NVIDIA Triton Inference Server. The tool validate possible
 export and conversion paths to serializable formats like NVIDIA TensorRT and select the most promising format for
 production deployment.
@@ -85,7 +85,7 @@ example we are using a simple TensorFlow 2 model.
 
 ### Export and optimize model
 
-To use NVIDIA Triton Model Navigator you must prepare model and dataloader. We recommend to create following helper
+To use Triton Model Navigator you must prepare model and dataloader. We recommend to create following helper
 functions:
 
 - `get_model` - return model object

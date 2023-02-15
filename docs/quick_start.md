@@ -16,7 +16,7 @@ limitations under the License.
 
 # Quick Start
 
-The prerequisite for this section is installing the NVIDIA Triton Model Navigator which can be found
+The prerequisite for this section is installing the Triton Model Navigator which can be found
 in [installation](installation.md) section.
 
 The quick start presents how to optimize Python model for deployment on Triton Inference Server. In the

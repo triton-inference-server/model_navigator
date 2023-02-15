@@ -20,6 +20,7 @@ limitations under the License.
 - new: `optimize` method that replace `export` and perform max batch size search and improved profiling during process
 - new: Introduced custom configs in `optimize` for better parametrization of export/conversion commands
 - new: Support for adding user runners for model correctness and profiling
+- new: Search for max possible batch size per format during conversion and profiling
 - new: API for creating Triton model store from Navigator Package and user provided models
 - change: Improved status structure for Navigator Package
 - deprecated: Optimize for Triton Inference Server support
