@@ -17,9 +17,10 @@ limitations under the License.
 # Triton Model Navigator
 
 The [Triton Model Navigator](https://github.com/triton-inference-server/model_navigator) automates
-the process of moving model from source to deployment on NVIDIA Triton Inference Server. The tool validate possible
-export and conversion paths to serializable formats like NVIDIA TensorRT and select the most promising format for
-production deployment.
+the process of moving model from source to deployment on
+[Triton Inference Server](https://github.com/triton-inference-server/server). The tool validate possible
+export and conversion paths to serializable formats like [TensorRT](https://github.com/NVIDIA/TensorRT) and
+select the most promising format for production deployment.
 
 # How it works?
 
