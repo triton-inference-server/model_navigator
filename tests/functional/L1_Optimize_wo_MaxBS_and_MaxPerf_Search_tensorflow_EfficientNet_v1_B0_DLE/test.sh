@@ -18,7 +18,8 @@ set -ex
 THIS_SCRIPT_PATH="$(realpath --relative-to="$(pwd)" "$0")"
 TEST_MODULE="$(dirname "${THIS_SCRIPT_PATH}"|sed 's/\//./g').test"
 
-pip install wget
+pip install wget tensorflow-datasets
+
 
 python -m"${TEST_MODULE}" \
     --status $(pwd)/status.yaml \
