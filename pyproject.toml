@@ -13,7 +13,7 @@
 # limitations under the License.
 [project]
 name = "triton-model-navigator"
-readme = "README.md"
+readme = "docs/pypi.md"
 description = "Triton Model Navigator provides tools supporting to create Deep Learning production ready inference models"
 dynamic = ["version"]
 classifiers = [
@@ -55,6 +55,11 @@ dependencies = [
     "tabulate>=0.8",
     "tritonclient[all]",
 ]
+
+[project.urls]
+"Documentation" = "https://triton-inference-server.github.io/model_navigator"
+"Source" = "https://github.com/triton-inference-server/model_navigator"
+"Tracker" = "https://github.com/triton-inference-server/model_navigator/issues"
 
 [project.optional-dependencies]
 tensorflow = [

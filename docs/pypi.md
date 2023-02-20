@@ -14,55 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-# Triton Model Navigator
+# Project description
 
 The [Triton Model Navigator](https://github.com/triton-inference-server/model_navigator) automates
 the process of moving model from source to deployment on
 [Triton Inference Server](https://github.com/triton-inference-server/server). The tool validate possible
 export and conversion paths to serializable formats like [TensorRT](https://github.com/NVIDIA/TensorRT) and
 select the most promising format for production deployment.
-
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-
-- [Installation](#installation)
-- [How it works?](#how-it-works)
-- [Quick Start](#quick-start)
-  - [Export and optimize model](#export-and-optimize-model)
-  - [NVIDIA Triton Inference Server deployment](#nvidia-triton-inference-server-deployment)
-- [Examples](#examples)
-  - [Optimize for various frameworks](#optimize-for-various-frameworks)
-  - [Optimize Navigator Package](#optimize-navigator-package)
-  - [Using model on Triton Inference Server](#using-model-on-triton-inference-server)
-- [Documentation](#documentation)
-- [Useful Links](#useful-links)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-## Installation
-
-The following prerequisites must be fulfilled to use Triton Model Navigator
-
-- Installed Python `3.8+`
-- Installed [NVIDIA TensorRT](https://developer.nvidia.com/tensorrt) for TensorRT models export.
-
-We recommend to use NGC Containers for PyTorch and TensorFlow which provide have all necessary dependencies:
-
-- [PyTorch](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch)
-- [TensorFlow](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/tensorflow)
-
-To install Triton Model Navigator from source use pip command:
-
-```shell
-$ pip install --extra-index-url https://pypi.ngc.nvidia.com .[<extras,>]
-```
-
-Extras:
-
-- tensorflow - Model Navigator for TensorFlow2
-- jax - Model Navigator for JAX
-
-## How it works?
 
 The Triton Model Navigator is designed to provide a single entrypoint for each supported framework. The usage is
 simple as call a dedicated `optimize` function to start the process of searching for the best
@@ -79,12 +37,27 @@ Finally, the `Navigator Package` can be used for model deployment
 on [NVIDIA Triton Inference Server](https://github.com/triton-inference-server/server). Dedicated API helps with obtaining all
 necessary parameters and creating `model_repository` or receive the optimized model for inference in Python environment.
 
-## Quick Start
+# Installing
+
+The package can be installed from `pypi.org` using:
+
+<!--pytest.mark.skip-->
+
+```shell
+pip install -U triton-model-navigator[<extras,>]
+```
+
+Extras:
+
+- tensorflow - Model Navigator for TensorFlow2
+- jax - Model Navigator for JAX
+
+# Quick Start
 
 The quick start presents how to optimize Python model for deployment on Triton Inference Server. In the
 example we are using a simple TensorFlow 2 model.
 
-### Export and optimize model
+## Export and optimize model
 
 To use Triton Model Navigator you must prepare model and dataloader. We recommend to create following helper
 functions:
@@ -172,7 +145,7 @@ You can customize behavior of export and conversion steps
 passing [CustomConfig][model_navigator.api.config.CustomConfig]
 to `optimize` function.
 
-### NVIDIA Triton Inference Server deployment
+## NVIDIA Triton Inference Server deployment
 
 If you prefer the standalone [NVIDIA Triton Inference Server](https://github.com/triton-inference-server) you can create
 and use `model_repository`.
@@ -181,8 +154,11 @@ and use `model_repository`.
 import logging
 import pathlib
 
-from model_navigator.exceptions import ModelNavigatorEmptyPackageError, ModelNavigatorError,
+from model_navigator.exceptions import (
+    ModelNavigatorEmptyPackageError,
+    ModelNavigatorError,
     ModelNavigatorWrongParameterError
+)
 import model_navigator as nav
 
 LOGGER = logging.getLogger(__name__)
@@ -210,49 +186,46 @@ $ docker run --gpus=1 --rm \
   tritonserver --model-repository=/models
 ```
 
-## Examples
+# Examples
 
 We provide simple examples how to use Triton Model Navigator to optimize the PyTorch, TensorFlow2, JAX and ONNX models
 for deployment on Triton Inference Server.
 
-### Optimize for various frameworks
+## Optimize for various frameworks
 
 - `PyTorch`:
-  * [Linear Model](examples/torch/linear)
-  * [ResNet50](examples/torch/resnet50)
-  * [BERT](examples/torch/bert)
+  * [Linear Model](https://github.com/triton-inference-server/model_navigator/examples/torch/linear)
+  * [ResNet50](https://github.com/triton-inference-server/model_navigator/examples/torch/resnet50)
+  * [BERT](https://github.com/triton-inference-server/model_navigator/examples/torch/bert)
 
 - `TensorFlow`:
-  * [Linear Model](examples/tensorflow/linear)
-  * [EfficientNet](examples/tensorflow/efficientnet)
-  * [BERT](examples/tensorflow/bert)
+  * [Linear Model](https://github.com/triton-inference-server/model_navigator/examples/tensorflow/linear)
+  * [EfficientNet](https://github.com/triton-inference-server/model_navigator/examples/tensorflow/efficientnet)
+  * [BERT](https://github.com/triton-inference-server/model_navigator/examples/tensorflow/bert)
 
 - `JAX`:
-  * [Linear Model](examples/jax/linear)
-  * [GPT-2](examples/jax/gpt2)
+  * [Linear Model](https://github.com/triton-inference-server/model_navigator/examples/jax/linear)
+  * [GPT-2](https://github.com/triton-inference-server/model_navigator/examples/jax/gpt2)
 
 - `ONNX`:
-  * [Identity Model](examples/onnx/identity)
+  * [Identity Model](https://github.com/triton-inference-server/model_navigator/examples/onnx/identity)
 
-### Optimize Navigator Package
+## Optimize Navigator Package
 
 The Navigator Package can be reused for optimize e.g. on the new hardware or with newer libraries.
-The example code can be found in [examples/package](examples/package).
+The example code can be found in [examples/package](https://github.com/triton-inference-server/model_navigator/examples/package).
 
-### Using model on Triton Inference Server
+## Using model on Triton Inference Server
 
 The optimized model by Triton Model Navigator can be used for serving inference through Triton Inference Server. The
-example code can be found in [examples/triton](examples/triton).
+example code can be found in [examples/triton](https://github.com/triton-inference-server/model_navigator/examples/triton).
 
 
-## Documentation
+# Links
 
-More information about `optimize` function, working with packages and Triton Inference Server can be
-found in [documentation](https://triton-inference-server.github.io/model_navigator).
-
-## Useful Links
-
-* [Changelog](CHANGELOG.md)
-* [Support Matrix](docs/support_matrix.md)
-* [Known Issues](docs/known_issues.md)
-* [Contributing](CONTRIBUTING.md)
+* Documentation: https://triton-inference-server.github.io/model_navigator
+* Source: https://github.com/triton-inference-server/model_navigator
+* Issues: https://github.com/triton-inference-server/model_navigator/issues
+* Changelog: https://github.com/triton-inference-server/model_navigator/CHANGELOG.md
+* Known Issues: https://github.com/triton-inference-server/model_navigator/docs/known_issues.md
+* Contributing: https://github.com/triton-inference-server/model_navigator/CONTRIBUTING.md

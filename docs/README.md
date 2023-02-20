@@ -35,7 +35,7 @@ Saved packages only contain the base model formats along with the best selected 
 The package can be reused to recreate the process on same or different hardware. The configuration and execution status
 is saved in the `status.yaml` file located inside the workspace and the `Navigator Package`.
 
-Finally, the `Navigator Packge` can be used for model deployment
+Finally, the `Navigator Package` can be used for model deployment
 on [Triton Inference Server](https://github.com/triton-inference-server/server). Dedicated API helps with obtaining all
 necessary parameters and creating `model_repository` or receive the optimized model for inference in Python environment.
 
