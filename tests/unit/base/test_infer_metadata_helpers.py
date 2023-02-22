@@ -13,14 +13,12 @@
 # limitations under the License.
 
 import numpy
-import pytest
 
 from model_navigator.api.config import TensorRTProfile
 from model_navigator.commands.infer_metadata import (
     _extract_max_batch_size,
     _get_metadata_from_axes_shapes,
     _get_trt_profile_from_axes_shapes,
-    _update_user_dynamic_axes_inplace,
 )
 from model_navigator.utils.tensor import TensorSpec
 
@@ -77,32 +75,3 @@ def test_get_metadata_return_correct_data_from_axes_shapes_when_with_valid_shape
     metadata = _get_metadata_from_axes_shapes(axes_shapes=axes_shapes, batch_dim=batch_dim, dtypes=dtypes)
 
     assert metadata == expected_metadata
-
-
-def test_update_user_dynamic_axes_inplace_return_valid_metadata_when_tensors_with_dynamic_axis_passed():
-    input_name = "input_0"
-    dtype_name = "float64"
-    dynamic_axes = {input_name: (0,)}
-    input_metadata = {
-        input_name: TensorSpec(name=input_name, shape=(5, 224, 224, 3), dtype=numpy.dtype(dtype_name), optional=False)
-    }
-    expected_input_metadata = {
-        input_name: TensorSpec(name=input_name, shape=(-1, 224, 224, 3), dtype=numpy.dtype(dtype_name), optional=False)
-    }
-
-    _update_user_dynamic_axes_inplace(dynamic_axes=dynamic_axes, input_metadata=input_metadata)
-
-    assert input_metadata == expected_input_metadata
-
-
-def test_update_user_dynamic_axes_inplace_raise_exception_when_metadata_and_dataloader_dynamic_axes_missmatch():
-    input_name = "input_0"
-    dtype_name = "float64"
-    dynamic_axes = {input_name: (0,)}
-    input_metadata = {
-        input_name: TensorSpec(name=input_name, shape=(-1, -1, 224, 3), dtype=numpy.dtype(dtype_name), optional=False)
-    }
-
-    with pytest.raises(ValueError):
-        # ValueError: In tensor `input_0` axis `1` is not set as dynamic axes but is dynamic in the dataloader.
-        _update_user_dynamic_axes_inplace(dynamic_axes=dynamic_axes, input_metadata=input_metadata)

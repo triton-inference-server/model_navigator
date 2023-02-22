@@ -16,11 +16,12 @@
 The module provide functionality to export model to TorchScript and/or ONNX.
 """
 from pathlib import Path
-from typing import Any, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from model_navigator.api.config import JitType
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.export import exporters
+from model_navigator.exceptions import ModelNavigatorConfigurationError
 from model_navigator.execution_context import ExecutionContext
 from model_navigator.logger import LOGGER
 from model_navigator.utils.common import parse_kwargs_to_cmd
@@ -140,6 +141,7 @@ class ExportTorch2ONNX(Command):
         forward_kw_names: Optional[Tuple[str, ...]] = None,
         model: Optional[Any] = None,
         batch_dim: Optional[int] = None,
+        dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None,
     ) -> CommandOutput:
         """Execute command.
 
@@ -154,6 +156,7 @@ class ExportTorch2ONNX(Command):
             forward_kw_names: Additional arguments to override input names
             model: The model that has to be exported
             batch_dim: Location of batch position in shapes
+            dynamic_axes: Definition of model inputs dynamic axes
 
         Returns:
             CommandOutput object with status
@@ -168,6 +171,12 @@ class ExportTorch2ONNX(Command):
 
         if model is None:
             raise RuntimeError("Expected model of type torch.nn.Module. Got None instead.")
+
+        if dynamic_axes is None:
+            dynamic_axes = dict(**input_metadata.dynamic_axes, **output_metadata.dynamic_axes)
+            LOGGER.warning(f"No dynamic axes provided. Using values derived from the dataloader: {dynamic_axes}")
+        else:
+            _validate_if_dynamic_axes_aligns_with_dataloader_shapes(dynamic_axes, input_metadata, output_metadata)
 
         model.to(target_device)
 
@@ -191,7 +200,7 @@ class ExportTorch2ONNX(Command):
                 "opset": opset,
                 "input_names": list(input_metadata.keys()),
                 "output_names": list(output_metadata.keys()),
-                "dynamic_axes": dict(**input_metadata.dynamic_axes, **output_metadata.dynamic_axes),
+                "dynamic_axes": dynamic_axes,
                 "batch_dim": batch_dim,
                 "forward_kw_names": list(forward_kw_names) if forward_kw_names else None,
                 "target_device": target_device,
@@ -201,3 +210,20 @@ class ExportTorch2ONNX(Command):
             context.execute_local_runtime_script(exporters.torch2onnx.__file__, exporters.torch2onnx.export, args)
 
         return CommandOutput(status=CommandStatus.OK)
+
+
+def _validate_if_dynamic_axes_aligns_with_dataloader_shapes(
+    dynamic_axes: Dict[str, Union[Dict[int, str], List[int]]],
+    input_metadata: TensorMetadata,
+    output_metadata: TensorMetadata,
+):
+    for name, axes in dynamic_axes.items():
+        axes = list(axes)
+        tensor_spec = input_metadata.get(name, None) or output_metadata.get(name, None)
+        if tensor_spec is None:
+            raise ModelNavigatorConfigurationError(f"Dynamic axis {axes} is specified for unknown input {name}.")
+        for ax, d in enumerate(tensor_spec.shape):
+            if d == -1 and ax not in axes:
+                raise ModelNavigatorConfigurationError(
+                    f"In tensor `{name}` axis `{ax}` is not set as dynamic axes but is dynamic in the dataloader."
+                )

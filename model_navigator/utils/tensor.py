@@ -186,7 +186,7 @@ class BuiltinsTensorUtils(TensorUtils):
 class TensorMetadata(Dict[str, TensorSpec]):
     """Metadata for inputs/outputs tensors."""
 
-    def add(self, name: str, shape: Sequence[int], dtype: Union[np.dtype, Type[np.dtype]]) -> None:
+    def add(self, name: str, shape: Sequence[int], dtype: Union[np.dtype, Type[np.dtype]]) -> "TensorMetadata":
         """Add new item to metadata.
 
         Args:
@@ -195,6 +195,7 @@ class TensorMetadata(Dict[str, TensorSpec]):
             dtype: Type of tensor data
         """
         self[name] = TensorSpec(name, tuple(shape), np.dtype(dtype))
+        return self
 
     @classmethod
     def from_json(cls, data: List[Dict]) -> "TensorMetadata":

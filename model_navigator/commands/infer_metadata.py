@@ -98,23 +98,6 @@ def _get_metadata_from_axes_shapes(axes_shapes, batch_dim, dtypes):
     return metadata
 
 
-def _update_user_dynamic_axes_inplace(dynamic_axes, input_metadata):
-    for name, axes in dynamic_axes.items():
-        axes = list(axes)
-        tensor_spec = input_metadata.get(name, None)
-        if tensor_spec is None:
-            return
-        shape = list(tensor_spec.shape)
-        for ax in axes:
-            shape[ax] = -1  # update
-        input_metadata[name] = TensorSpec(name, tuple(shape), tensor_spec.dtype)
-        for ax, d in enumerate(tensor_spec.shape):
-            if d == -1 and ax not in axes:  # verify
-                raise ValueError(
-                    f"In tensor `{name}` axis `{ax}` is not set as dynamic axes but is dynamic in the dataloader."
-                )
-
-
 class InferInputMetadata(Command, is_required=True):
     """Command to collect model inputs metadata."""
 
@@ -125,7 +108,6 @@ class InferInputMetadata(Command, is_required=True):
         dataloader: SizedDataLoader,
         _input_names: Optional[Tuple[str, ...]] = None,
         batch_dim: Optional[int] = None,
-        dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None,
     ) -> CommandOutput:
         """Execute the InferInputMetadata command.
 
@@ -134,7 +116,6 @@ class InferInputMetadata(Command, is_required=True):
             model: A model object or path to file
             dataloader: Dataloader for providing samples
             _input_names: Name of model inputs
-            dynamic_axes: Definition of model inputs dynamic axes
             batch_dim: Location of batch dimension in data samples
 
         Returns:
@@ -155,11 +136,6 @@ class InferInputMetadata(Command, is_required=True):
         dataloader_trt_profile = _get_trt_profile_from_axes_shapes(axes_shapes, batch_dim)
 
         input_metadata = _get_metadata_from_axes_shapes(axes_shapes, batch_dim, input_dtypes)
-        if dynamic_axes is None:
-            LOGGER.warning(f"No dynamic axes provided. Using values derived from the dataloader: {input_metadata}")
-        else:
-            _update_user_dynamic_axes_inplace(dynamic_axes, input_metadata)
-
         return CommandOutput(
             status=CommandStatus.OK,
             output={
@@ -261,10 +237,6 @@ class InferOutputMetadata(Command, is_required=True):
             )
 
         output_metadata = _get_metadata_from_axes_shapes(axes_shapes, batch_dim, output_dtypes)
-        if dynamic_axes is None:
-            LOGGER.warning(f"No dynamic axes provided. Using values derived from the dataloader: {output_metadata}")
-        else:
-            _update_user_dynamic_axes_inplace(dynamic_axes, output_metadata)
 
         return CommandOutput(
             status=CommandStatus.OK,
