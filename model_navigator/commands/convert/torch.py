@@ -16,7 +16,7 @@
 from pathlib import Path
 from typing import Optional, Tuple
 
-from model_navigator.api.config import TensorRTPrecision, TensorRTPrecisionMode, TensorRTProfile
+from model_navigator.api.config import DeviceKind, TensorRTPrecision, TensorRTPrecisionMode, TensorRTProfile
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.convert.base import Convert2TensorRTWithMaxBatchSizeSearch
 from model_navigator.commands.convert.converters import ts2onnx, ts2torchtrt
@@ -38,7 +38,7 @@ class ConvertTorchScript2ONNX(Command):
         opset: int,
         input_metadata: TensorMetadata,
         output_metadata: TensorMetadata,
-        target_device: str,
+        target_device: DeviceKind,
         verbose: bool,
         forward_kw_names: Optional[Tuple[str, ...]] = None,
         batch_dim: Optional[int] = None,
@@ -52,7 +52,7 @@ class ConvertTorchScript2ONNX(Command):
             opset (int): ONNX opset.
             input_metadata (TensorMetadata): Input metadata.
             output_metadata (TensorMetadata): Output metadata.
-            target_device (str): Device to load TorchScript model on.
+            target_device (DeviceKind): Device to load TorchScript model on.
             verbose (bool): If True verbose logging.
             forward_kw_names (Optional[Tuple[str, ...]], optional): Source model signature input names.
                 Defaults to None.
@@ -86,7 +86,7 @@ class ConvertTorchScript2ONNX(Command):
                 "dynamic_axes": dict(**input_metadata.dynamic_axes, **output_metadata.dynamic_axes),
                 "batch_dim": batch_dim,
                 "forward_kw_names": list(forward_kw_names) if forward_kw_names else None,
-                "target_device": target_device,
+                "target_device": target_device.value,
             }
 
             args = parse_kwargs_to_cmd(kwargs)
@@ -108,7 +108,7 @@ class ConvertTorchScript2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearch):
         input_metadata: TensorMetadata,
         precision_mode: TensorRTPrecisionMode,
         max_workspace_size: int,
-        target_device: str,
+        target_device: DeviceKind,
         verbose: bool,
         debug: bool,
         dataloader_trt_profile: TensorRTProfile,
@@ -130,7 +130,7 @@ class ConvertTorchScript2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearch):
             input_metadata (TensorMetadata): Input metadata.
             precision_mode (TensorRTPrecisionMode): TensorRT precision mode.
             max_workspace_size (int): TensorRT maximum workspace size.
-            target_device (str): Device to load TorchScript model on.
+            target_device (DeviceKind): Device to load TorchScript model on.
             verbose (bool): If True verbose logging.
             debug (bool): If True print debug logs.
             dataloader_trt_profile (TensorRTProfile): Dataloader TensorRT profile.
@@ -179,7 +179,7 @@ class ConvertTorchScript2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearch):
                 "max_workspace_size": max_workspace_size,
                 "precision": precision.value,
                 "precision_mode": precision_mode.value,
-                "target_device": target_device,
+                "target_device": target_device.value,
                 "navigator_workspace": workspace.as_posix(),
                 "debug": debug,
             }

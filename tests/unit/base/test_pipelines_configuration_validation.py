@@ -22,17 +22,24 @@ import tempfile
 
 import pytest
 
-from model_navigator.api.config import Format, OnnxConfig, TensorRTConfig, TensorRTProfile, TorchTensorRTConfig
+from model_navigator.api.config import (
+    Format,
+    OnnxConfig,
+    TensorRTConfig,
+    TensorRTProfile,
+    TorchConfig,
+    TorchTensorRTConfig,
+)
 from model_navigator.exceptions import ModelNavigatorConfigurationError, ModelNavigatorConfigurationWarning
 from model_navigator.pipelines.validation import PipelineManagerConfigurationValidator
-from tests.unit.base.mocks.packages import onnx_package, trochscript_package_without_source
+from tests.unit.base.mocks.packages import onnx_package, onnx_package_with_cpu_runner_only
 
 
 def test_validator_raises_no_errors_when_configuration_is_valid():
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = pathlib.Path(tmpdir)
         workspace = tmpdir / "navigator_workspace"
-        package = trochscript_package_without_source(workspace)
+        package = onnx_package_with_cpu_runner_only(workspace)
         config = package.config
         PipelineManagerConfigurationValidator.run(config, None)
         PipelineManagerConfigurationValidator.run(config, package)
@@ -42,7 +49,7 @@ def test_validator_raises_error_when_wrong_type_in_configuration():
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = pathlib.Path(tmpdir)
         workspace = tmpdir / "navigator_workspace"
-        package = trochscript_package_without_source(workspace)
+        package = onnx_package_with_cpu_runner_only(workspace)
         config = package.config
         config.framework = 0
         with pytest.raises(ModelNavigatorConfigurationError):
@@ -53,9 +60,9 @@ def test_validator_warns_when_custom_config_format_is_not_in_target_formats():
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = pathlib.Path(tmpdir)
         workspace = tmpdir / "navigator_workspace"
-        package = trochscript_package_without_source(workspace)
+        package = onnx_package_with_cpu_runner_only(workspace)
         config = package.config
-        config.custom_configs = {"Onnx": OnnxConfig()}
+        config.custom_configs = {"torch": TorchConfig()}
         with pytest.warns(ModelNavigatorConfigurationWarning):
             PipelineManagerConfigurationValidator.run(config, None)
 
@@ -64,7 +71,7 @@ def test_validator_raises_error_when_target_formats_does_not_match_farmework():
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = pathlib.Path(tmpdir)
         workspace = tmpdir / "navigator_workspace"
-        package = trochscript_package_without_source(workspace)
+        package = onnx_package_with_cpu_runner_only(workspace)
         config = package.config
         config.target_formats = (Format.JAX,)
         with pytest.raises(ModelNavigatorConfigurationError):
@@ -75,7 +82,7 @@ def test_validator_raises_error_when_batching_is_disabled_and_profiler_specify_b
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = pathlib.Path(tmpdir)
         workspace = tmpdir / "navigator_workspace"
-        package = trochscript_package_without_source(workspace)
+        package = onnx_package_with_cpu_runner_only(workspace)
         config = package.config
         config.batch_dim = None
         config.profiler_config.batch_sizes = [1]
@@ -87,12 +94,12 @@ def test_validator_raises_no_error_when_trt_profile_names_match_input_names():
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = pathlib.Path(tmpdir)
         workspace = tmpdir / "navigator_workspace"
-        package = trochscript_package_without_source(workspace)
+        package = onnx_package_with_cpu_runner_only(workspace)
         config = package.config
         config._input_names = ("my_input",)
-        config.target_formats = (Format.TORCH_TRT,)
+        config.target_formats = (Format.TENSORRT,)
         config.custom_configs = {
-            "TorchTRT": TorchTensorRTConfig(trt_profile=TensorRTProfile().add("my_input", (1,), (2,), (4,)))
+            "TensorRT": TensorRTConfig(trt_profile=TensorRTProfile().add("my_input", (1,), (2,), (4,)))
         }
         PipelineManagerConfigurationValidator.run(config, None)
 
@@ -101,7 +108,7 @@ def test_validator_raises_error_when_trt_profile_names_mismatch_input_names():
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = pathlib.Path(tmpdir)
         workspace = tmpdir / "navigator_workspace"
-        package = trochscript_package_without_source(workspace)
+        package = onnx_package_with_cpu_runner_only(workspace)
         config = package.config
         config._input_names = ("my_input",)
         config.target_formats = (Format.TORCH_TRT,)
@@ -116,11 +123,11 @@ def test_validator_raises_no_error_when_trt_profile_batch_dimension_match():
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = pathlib.Path(tmpdir)
         workspace = tmpdir / "navigator_workspace"
-        package = trochscript_package_without_source(workspace)
+        package = onnx_package_with_cpu_runner_only(workspace)
         config = package.config
-        config.target_formats = (Format.TORCH_TRT,)
+        config.target_formats = (Format.TENSORRT,)
         config.custom_configs = {
-            "TorchTRT": TorchTensorRTConfig(
+            "TensorRT": TensorRTConfig(
                 trt_profile=TensorRTProfile().add("my_input", (1,), (2,), (4,)).add("my_input_2", (1,), (2,), (4,))
             )
         }
@@ -131,7 +138,7 @@ def test_validator_raises_error_when_trt_profile_batch_dimension_mismatch():
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = pathlib.Path(tmpdir)
         workspace = tmpdir / "navigator_workspace"
-        package = trochscript_package_without_source(workspace)
+        package = onnx_package_with_cpu_runner_only(workspace)
         config = package.config
         config.target_formats = (Format.TORCH_TRT,)
         config.custom_configs = {
@@ -147,9 +154,9 @@ def test_validator_raises_no_error_when_target_format_source_is_saved_in_pacakge
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = pathlib.Path(tmpdir)
         workspace = tmpdir / "navigator_workspace"
-        package = trochscript_package_without_source(workspace)
+        package = onnx_package(workspace)
         config = package.config
-        config.target_formats = (Format.TORCH_TRT,)
+        config.target_formats = (Format.TENSORRT,)
         PipelineManagerConfigurationValidator.run(config, package)
 
 
@@ -157,7 +164,7 @@ def test_validator_warns_when_target_format_source_is_not_saved_in_pacakge():
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = pathlib.Path(tmpdir)
         workspace = tmpdir / "navigator_workspace"
-        package = trochscript_package_without_source(workspace)
+        package = onnx_package_with_cpu_runner_only(workspace)
         config = package.config
         config.target_formats = (Format.TENSORRT,)
         with pytest.warns(ModelNavigatorConfigurationWarning):

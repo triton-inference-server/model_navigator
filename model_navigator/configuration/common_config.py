@@ -19,7 +19,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Optional, Tuple
 
-from model_navigator.api.config import CustomConfig, Format, ProfilerConfig, SizedDataLoader, VerifyFunction
+from model_navigator.api.config import CustomConfig, DeviceKind, Format, ProfilerConfig, SizedDataLoader, VerifyFunction
 from model_navigator.logger import LOGGER
 from model_navigator.utils.common import DataObject, pad_string
 from model_navigator.utils.framework import Framework
@@ -34,6 +34,7 @@ class CommonConfig(DataObject):
     dataloader: SizedDataLoader
     workspace: Path
     target_formats: Tuple[Format, ...]
+    target_device: DeviceKind
     sample_count: int
     profiler_config: ProfilerConfig
     runner_names: Tuple[str, ...]
@@ -45,9 +46,6 @@ class CommonConfig(DataObject):
     forward_kw_names: Optional[Tuple[str, ...]] = None
     verify_func: Optional[VerifyFunction] = None
     custom_configs: Dict[str, CustomConfig] = dataclasses.field(default_factory=lambda: {})
-
-    # PyTorch
-    target_device: str = "cpu"
 
     # Verbose logging - enable debug mode in export and conversion paths
     verbose: bool = False

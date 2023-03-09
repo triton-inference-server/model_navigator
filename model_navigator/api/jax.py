@@ -15,9 +15,12 @@
 from pathlib import Path
 from typing import Any, Callable, Mapping, Optional, Sequence, Tuple, Type, Union
 
+import tensorflow  # pytype: disable=import-error
+
 from model_navigator.api.config import (
     DEFAULT_JAX_TARGET_FORMATS,
     CustomConfig,
+    DeviceKind,
     Format,
     ProfilerConfig,
     SizedDataLoader,
@@ -28,6 +31,7 @@ from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config_builder import ModelConfigBuilder
 from model_navigator.constants import DEFAULT_SAMPLE_COUNT
 from model_navigator.core.package import Package
+from model_navigator.exceptions import ModelNavigatorConfigurationError
 from model_navigator.pipelines.builders import (
     correctness_builder,
     jax_export_builder,
@@ -38,7 +42,7 @@ from model_navigator.pipelines.builders import (
 )
 from model_navigator.pipelines.pipeline_manager import PipelineManager
 from model_navigator.runners.base import NavigatorRunner
-from model_navigator.runners.registry import runner_registry
+from model_navigator.runners.utils import default_runners
 from model_navigator.utils import enums
 from model_navigator.utils.common import get_default_workspace
 from model_navigator.utils.framework import Framework
@@ -52,6 +56,7 @@ def optimize(
     sample_count: int = DEFAULT_SAMPLE_COUNT,
     batching: Optional[bool] = True,
     target_formats: Optional[Union[Union[str, Format], Tuple[Union[str, Format], ...]]] = None,
+    target_device: Optional[DeviceKind] = DeviceKind.CUDA,
     runners: Optional[Union[Union[str, Type[NavigatorRunner]], Tuple[Union[str, Type[NavigatorRunner]], ...]]] = None,
     profiler_config: Optional[ProfilerConfig] = None,
     workspace: Optional[Path] = None,
@@ -69,6 +74,7 @@ def optimize(
         sample_count: Limits how many samples will be used from dataloader
         batching: Enable or disable batching on first (index 0) dimension of the model
         target_formats: Target model formats for optimize process
+        target_device: Target device for optimize process, default is CUDA
         runners: Use only runners provided as paramter
         profiler_config: Profiling config
         workspace: Workspace where packages will be extracted
@@ -80,6 +86,16 @@ def optimize(
     Returns:
         Package descriptor representing created package.
     """
+    if target_device == DeviceKind.CPU and any(
+        [device.device_type == "GPU" for device in tensorflow.config.get_visible_devices()]
+    ):
+        raise ModelNavigatorConfigurationError(
+            "\n"
+            "    'target_device == nav.DeviceKind.CPU' is not supported for TensorFlow2 "
+            "(exported from JAX) when GPU is available.\n"
+            "    To optimize model for CPU, disable GPU with: "
+            "'tf.config.set_visible_devices([], 'GPU')' directly after importing TensorFlow.\n"
+        )
     if isinstance(model, str):
         model = Path(model)
     if workspace is None:
@@ -91,7 +107,7 @@ def optimize(
     forward_kw_names = tuple(sample.keys()) if isinstance(sample, Mapping) else None
 
     if runners is None:
-        runners = tuple(runner_registry.keys())
+        runners = default_runners(device_kind=target_device)
 
     if profiler_config is None:
         profiler_config = ProfilerConfig()
@@ -109,6 +125,7 @@ def optimize(
         forward_kw_names=forward_kw_names,
         workspace=workspace,
         target_formats=target_formats_enums,
+        target_device=target_device,
         sample_count=sample_count,
         batch_dim=0 if batching else None,
         runner_names=runner_names,

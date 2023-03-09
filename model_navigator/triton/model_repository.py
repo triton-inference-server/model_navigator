@@ -39,7 +39,11 @@ from model_navigator.exceptions import (
     ModelNavigatorWrongParameterError,
 )
 from model_navigator.runners.onnx import OnnxrtCPURunner, OnnxrtCUDARunner, OnnxrtTensorRTRunner
-from model_navigator.runners.tensorflow import TensorFlowSavedModelRunner, TensorFlowTensorRTRunner
+from model_navigator.runners.tensorflow import (
+    TensorFlowSavedModelCPURunner,
+    TensorFlowSavedModelCUDARunner,
+    TensorFlowTensorRTRunner,
+)
 from model_navigator.runners.tensorrt import TensorRTRunner
 from model_navigator.runners.torch import TorchScriptCPURunner, TorchScriptCUDARunner, TorchTensorRTRunner
 from model_navigator.runtime_analyzer import RuntimeAnalyzer
@@ -92,7 +96,8 @@ TRITON_RUNNERS = (
     TorchScriptCUDARunner,
     TorchScriptCPURunner,
     TorchTensorRTRunner,
-    TensorFlowSavedModelRunner,
+    TensorFlowSavedModelCPURunner,
+    TensorFlowSavedModelCUDARunner,
     TensorFlowTensorRTRunner,
 )
 

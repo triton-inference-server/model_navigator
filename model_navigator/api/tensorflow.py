@@ -20,6 +20,7 @@ import tensorflow  # pytype: disable=import-error
 from model_navigator.api.config import (
     DEFAULT_TENSORFLOW_TARGET_FORMATS,
     CustomConfig,
+    DeviceKind,
     Format,
     ProfilerConfig,
     SizedDataLoader,
@@ -30,6 +31,7 @@ from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config_builder import ModelConfigBuilder
 from model_navigator.constants import DEFAULT_SAMPLE_COUNT
 from model_navigator.core.package import Package
+from model_navigator.exceptions import ModelNavigatorConfigurationError
 from model_navigator.pipelines.builders import (
     correctness_builder,
     preprocessing_builder,
@@ -54,6 +56,7 @@ def optimize(
     input_names: Optional[Tuple[str, ...]] = None,
     output_names: Optional[Tuple[str, ...]] = None,
     target_formats: Optional[Union[Union[str, Format], Tuple[Union[str, Format], ...]]] = None,
+    target_device: Optional[DeviceKind] = DeviceKind.CUDA,
     runners: Optional[Union[Union[str, Type[NavigatorRunner]], Tuple[Union[str, Type[NavigatorRunner]], ...]]] = None,
     profiler_config: Optional[ProfilerConfig] = None,
     workspace: Optional[Path] = None,
@@ -72,6 +75,7 @@ def optimize(
         input_names: Model input names
         output_names: Model output names
         target_formats: Target model formats for optimize process
+        target_device: Target device for optimize process, default is CUDA
         runners: Use only runners provided as paramter
         profiler_config: Profiling config
         workspace: Workspace where packages will be extracted
@@ -83,13 +87,22 @@ def optimize(
     Returns:
         Package descriptor representing created package.
     """
+    if target_device == DeviceKind.CPU and any(
+        [device.device_type == "GPU" for device in tensorflow.config.get_visible_devices()]
+    ):
+        raise ModelNavigatorConfigurationError(
+            "\n"
+            "    'target_device == nav.DeviceKind.CPU' is not supported for TensorFlow2 when GPU is available.\n"
+            "    To optimize model for CPU, disable GPU with: "
+            "'tf.config.set_visible_devices([], 'GPU')' directly after importing TensorFlow.\n"
+        )
     if workspace is None:
         workspace = get_default_workspace()
     if target_formats is None:
         target_formats = DEFAULT_TENSORFLOW_TARGET_FORMATS
 
     if runners is None:
-        runners = default_runners()
+        runners = default_runners(device_kind=target_device)
 
     forward_kw_names = None
     sample = next(iter(dataloader))
@@ -110,6 +123,7 @@ def optimize(
         model=model,
         dataloader=dataloader,
         target_formats=target_formats_enums,
+        target_device=target_device,
         workspace=workspace,
         sample_count=sample_count,
         _input_names=input_names,

@@ -18,7 +18,7 @@ The module provide functionality to export model to TorchScript and/or ONNX.
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from model_navigator.api.config import JitType
+from model_navigator.api.config import DeviceKind, JitType
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.export import exporters
 from model_navigator.exceptions import ModelNavigatorConfigurationError
@@ -35,7 +35,7 @@ class ExportTorch2TorchScript(Command):
         ExportTorch2TorchScript.run(
             workspace="/path/to/working/directory",
             path="/path/inside/workdir/to/store/exported/model",
-            target_device="cuda",
+            target_device=DeviceKind.CUDA,
             jit_type=JitType.TRACE,
             verbose=True,
             model=torch.nn.Identity(),
@@ -47,7 +47,7 @@ class ExportTorch2TorchScript(Command):
         self,
         workspace: Path,
         path: Path,
-        target_device: str,
+        target_device: DeviceKind,
         jit_type: JitType,
         verbose: bool,
         model: Optional[Any] = None,
@@ -77,7 +77,7 @@ class ExportTorch2TorchScript(Command):
         if model is None:
             raise RuntimeError("Expected model of type torch.nn.Module. Got None instead.")
 
-        model.to(target_device)
+        model.to(target_device.value)
 
         exporters.torch2torchscript.get_model = lambda: model
 
@@ -97,7 +97,7 @@ class ExportTorch2TorchScript(Command):
                 "exported_model_path": exported_model_path.relative_to(workspace).as_posix(),
                 "target_jit_type": jit_type.value,
                 "batch_dim": batch_dim,
-                "target_device": target_device,
+                "target_device": target_device.value,
                 "navigator_workspace": workspace.as_posix(),
             }
 
@@ -121,7 +121,7 @@ class ExportTorch2ONNX(Command):
             opset=13,
             input_metadata={"input_1": TensorSpec(name="input_1", shape=(128, 20), dtype=np.dtype("float32")),
             output_metadata={"output_1": TensorSpec(name="output_1", shape=(128, 20), dtype=np.dtype("float32")),
-            target_device="cuda",
+            target_device=DeviceKind.CUDA,
             jit_type=JitType.TRACE,
             verbose=True,
             model=torch.nn.Identity(),
@@ -136,7 +136,7 @@ class ExportTorch2ONNX(Command):
         opset: int,
         input_metadata: TensorMetadata,
         output_metadata: TensorMetadata,
-        target_device: str,
+        target_device: DeviceKind,
         verbose: bool,
         forward_kw_names: Optional[Tuple[str, ...]] = None,
         model: Optional[Any] = None,
@@ -178,7 +178,7 @@ class ExportTorch2ONNX(Command):
         else:
             _validate_if_dynamic_axes_aligns_with_dataloader_shapes(dynamic_axes, input_metadata, output_metadata)
 
-        model.to(target_device)
+        model.to(target_device.value)
 
         exporters.torch2onnx.get_model = lambda: model
 
@@ -203,7 +203,7 @@ class ExportTorch2ONNX(Command):
                 "dynamic_axes": dynamic_axes,
                 "batch_dim": batch_dim,
                 "forward_kw_names": list(forward_kw_names) if forward_kw_names else None,
-                "target_device": target_device,
+                "target_device": target_device.value,
             }
 
             args = parse_kwargs_to_cmd(kwargs)

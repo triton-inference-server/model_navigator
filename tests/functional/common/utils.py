@@ -35,8 +35,12 @@ def validate_status(status: Dict, expected_statuses: List) -> None:
     current_statuses = set(status.keys())
 
     if not all([expected_status in current_statuses for expected_status in expected_statuses]):
+        missing_statuses = set(expected_statuses) - current_statuses
+        unexpected_statuses = current_statuses - set(expected_statuses)
         raise ValidationError(
             """Expected statuses not match current statuses.\n """
             f"""Expected: {expected_statuses}\n"""
             f"""Current: {current_statuses}\n"""
+            f"""Missing: {missing_statuses}\n"""
+            f"""Unexpected: {unexpected_statuses}\n"""
         )

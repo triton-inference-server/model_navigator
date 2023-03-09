@@ -18,6 +18,7 @@ from typing import Optional, Sequence, Tuple, Type, Union
 from model_navigator.api.config import (
     DEFAULT_ONNX_TARGET_FORMATS,
     CustomConfig,
+    DeviceKind,
     Format,
     ProfilerConfig,
     SizedDataLoader,
@@ -50,6 +51,7 @@ def optimize(
     sample_count: int = DEFAULT_SAMPLE_COUNT,
     batching: Optional[bool] = True,
     target_formats: Optional[Union[Union[str, Format], Tuple[Union[str, Format], ...]]] = None,
+    target_device: Optional[DeviceKind] = DeviceKind.CUDA,
     runners: Optional[Union[Union[str, Type[NavigatorRunner]], Tuple[Union[str, Type[NavigatorRunner]], ...]]] = None,
     profiler_config: Optional[ProfilerConfig] = None,
     workspace: Optional[Path] = None,
@@ -66,6 +68,7 @@ def optimize(
         sample_count: Limits how many samples will be used from dataloader
         batching: Enable or disable batching on first (index 0) dimension of the model
         target_formats: Target model formats for optimize process
+        target_device: Target device for optimize process, default is CUDA
         runners: Use only runners provided as parameter
         profiler_config: Profiling config
         workspace: Workspace where packages will be extracted
@@ -85,7 +88,7 @@ def optimize(
         target_formats = DEFAULT_ONNX_TARGET_FORMATS
 
     if runners is None:
-        runners = default_runners()
+        runners = default_runners(device_kind=target_device)
 
     if profiler_config is None:
         profiler_config = ProfilerConfig()
@@ -102,6 +105,7 @@ def optimize(
         dataloader=dataloader,
         workspace=workspace,
         target_formats=target_formats_enums,
+        target_device=target_device,
         sample_count=sample_count,
         batch_dim=0 if batching else None,
         runner_names=runner_names,

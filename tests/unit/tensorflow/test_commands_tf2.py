@@ -27,7 +27,7 @@ from model_navigator.commands.correctness import Correctness
 from model_navigator.commands.data_dump.samples import DumpInputModelData, DumpOutputModelData, samples_to_npz
 from model_navigator.commands.export.tf import ExportTF2SavedModel
 from model_navigator.constants import DEFAULT_MAX_WORKSPACE_SIZE
-from model_navigator.runners.tensorflow import TensorFlowSavedModelRunner
+from model_navigator.runners.tensorflow import TensorFlowSavedModelCUDARunner
 from model_navigator.utils.devices import get_gpus
 from model_navigator.utils.framework import Framework
 from model_navigator.utils.tensor import TensorMetadata, TensorSpec
@@ -152,7 +152,7 @@ def test_tf2_correctness():
         command_output = Correctness().run(
             workspace=workspace,
             format=Format.TF_SAVEDMODEL,
-            runner_cls=TensorFlowSavedModelRunner,
+            runner_cls=TensorFlowSavedModelCUDARunner,
             path=model_relative_path,
             input_metadata=input_metadata,
             output_metadata=output_metadata,

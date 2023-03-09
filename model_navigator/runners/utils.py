@@ -18,7 +18,7 @@ from model_navigator.runners.base import DeviceKind
 from model_navigator.runners.registry import runner_registry
 
 
-def default_runners() -> List:
+def default_runners(device_kind: DeviceKind) -> List:
     """Select default runners defined for the process.
 
     Returns:
@@ -26,7 +26,7 @@ def default_runners() -> List:
     """
     _default_runners = set()
     for name, runner in runner_registry.items():
-        if DeviceKind.CUDA in runner.devices_kind():
+        if device_kind in runner.devices_kind():
             _default_runners.add(name)
 
     return list(_default_runners)

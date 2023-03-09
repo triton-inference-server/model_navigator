@@ -21,6 +21,7 @@ from model_navigator.api.config import (
     DEFAULT_TARGET_FORMATS,
     SOURCE_FORMATS,
     CustomConfig,
+    DeviceKind,
     Format,
     ProfilerConfig,
     VerifyFunction,
@@ -120,6 +121,7 @@ def get_best_model_status(
 def optimize(
     package: Package,
     target_formats: Optional[Union[Union[str, Format], Tuple[Union[str, Format], ...]]] = None,
+    target_device: Optional[DeviceKind] = DeviceKind.CUDA,
     runners: Optional[Union[Union[str, Type[NavigatorRunner]], Tuple[Union[str, Type[NavigatorRunner]], ...]]] = None,
     profiler_config: Optional[ProfilerConfig] = None,
     verbose: bool = False,
@@ -133,6 +135,7 @@ def optimize(
     Args:
         package: Package to optimize.
         target_formats: Formats to generate and profile. Defaults to target formats from the package.
+        target_device: Target device for optimize process, default is CUDA
         runners: Runners to run correctness tests and profiling on. Defaults to runners from the package.
         profiler_config: Configuration of the profiler. Defaults to config from the package.
         verbose: If True enable verbose logging. Defaults to False.
@@ -159,7 +162,7 @@ def optimize(
             )
 
     if runners is None:
-        runners = default_runners()
+        runners = default_runners(device_kind=target_device)
 
     if profiler_config is None:
         profiler_config = ProfilerConfig()

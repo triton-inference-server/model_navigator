@@ -30,6 +30,7 @@ from model_navigator.api.config import (
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.core.package import Package
 from model_navigator.exceptions import ModelNavigatorConfigurationError, ModelNavigatorConfigurationWarning
+from model_navigator.runners.registry import get_runner
 from model_navigator.utils.format_helpers import get_base_format, get_framework_export_formats
 from model_navigator.utils.framework import Framework
 
@@ -49,6 +50,7 @@ class PipelineManagerConfigurationValidator:
             config: A configuration object
             package: Package to be optimized, if None package is yet to be build. Defaults to None.
         """
+        cls._validate_if_runners_match_target_device(config)
         cls._validate_config_types(config)
         cls._validate_if_custom_configs_match_target_formats(config)
         cls._validate_if_target_formats_match_framework(config)
@@ -66,6 +68,16 @@ class PipelineManagerConfigurationValidator:
             cls._validate_if_target_formats_sources_are_available_in_package(
                 package, config.target_formats, config.framework
             )
+
+    @classmethod
+    def _validate_if_runners_match_target_device(cls, config: CommonConfig):
+        for runner_name in config.runner_names:
+            runner = get_runner(runner_name)
+            if config.target_device not in runner.devices_kind():
+                raise ModelNavigatorConfigurationError(
+                    f"Runner {runner_name} is configured for devices {runner.devices_kind()}, "
+                    f"but target device is {config.target_device}."
+                )
 
     @classmethod
     def _validate_if_custom_configs_match_target_formats(cls, config: CommonConfig):

@@ -26,8 +26,8 @@ METADATA = {
 EXPECTED_STATUES = [
     "onnx.OnnxCUDA",
     "onnx.OnnxTensorRT",
-    "tensorflow.TensorFlow",
-    "tf-savedmodel.TensorFlowSavedModel",
+    "tensorflow.TensorFlowCUDA",
+    "tf-savedmodel.TensorFlowSavedModelCUDA",
     "tf-trt-fp16.TensorFlowTensorRT",
     "tf-trt-fp32.TensorFlowTensorRT",
     "trt-fp16.TensorRT",

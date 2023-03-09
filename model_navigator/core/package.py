@@ -22,7 +22,7 @@ from typing import Dict, List, Optional, Sequence, Union
 import yaml
 from packaging import version
 
-from model_navigator.api.config import CUSTOM_CONFIGS_MAPPING, SERIALIZED_FORMATS, Format, ProfilerConfig
+from model_navigator.api.config import CUSTOM_CONFIGS_MAPPING, SERIALIZED_FORMATS, DeviceKind, Format, ProfilerConfig
 from model_navigator.commands.base import CommandOutput, CommandStatus, ExecutionUnit
 from model_navigator.commands.correctness.correctness import Correctness
 from model_navigator.commands.performance.performance import Performance
@@ -209,7 +209,7 @@ class Package:
             config_dict["batch_dim"] = None
 
         config_dict["custom_configs"] = self._get_custom_configs(self.status.config["custom_configs"])
-
+        config_dict["target_device"] = DeviceKind(config_dict["target_device"])
         return CommonConfig(
             model=None,
             workspace=self.workspace,
