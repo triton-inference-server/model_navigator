@@ -41,7 +41,7 @@ def main():
 
     import model_navigator as nav
     from tests import utils
-    from tests.functional.common.utils import collect_status, validate_status
+    from tests.functional.common.utils import collect_expected_files, collect_status, validate_package, validate_status
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -84,12 +84,16 @@ def main():
         profiler_config=nav.ProfilerConfig(batch_sizes=[1, 8, 16], stability_percentage=100),
         custom_configs=[nav.OnnxConfig(opset=14)],
     )
-    nav.package.save(package, "package.nav", override=True)
+    package_path = pathlib.Path("package.nav")
+    nav.package.save(package, package_path)
 
     status_file = args.status
     status = collect_status(package.status)
 
     validate_status(status, expected_statuses=EXPECTED_STATUES)
+
+    expected_files = collect_expected_files(package_path=package_path, status=package.status)
+    validate_package(package_path=package_path, expected_files=expected_files)
 
     with status_file.open("w") as fp:
         yaml.safe_dump(status, fp)

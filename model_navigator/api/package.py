@@ -105,7 +105,7 @@ def get_best_model_status(
     """Returns ModelStatus of best model for given strategy.
 
     If model with given strategy cannot be found, search is repeated with MaxThroughputStrategy.
-    If there is no model matching given strategy or MaxThroughputStrategy, function returns None.
+    If there is no model match given strategy or MaxThroughputStrategy, function returns None.
 
     Args:
         package: A package object to be searched for best model.
