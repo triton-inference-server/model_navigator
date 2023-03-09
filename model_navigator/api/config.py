@@ -293,6 +293,20 @@ SOURCE_FORMATS = (
     Format.JAX,
 )
 
+INPUT_FORMATS = {
+    Framework.JAX: Format.JAX,
+    Framework.TORCH: Format.TORCH,
+    Framework.TENSORFLOW: Format.TENSORFLOW,
+    Framework.ONNX: Format.ONNX,
+}
+
+EXPORT_FORMATS = {
+    Framework.JAX: [Format.TF_SAVEDMODEL],
+    Framework.TENSORFLOW: [Format.TF_SAVEDMODEL],
+    Framework.TORCH: [Format.TORCHSCRIPT, Format.ONNX],
+    Framework.ONNX: [Format.ONNX],
+}
+
 DEFAULT_JAX_TARGET_FORMATS = (
     Format.TF_SAVEDMODEL,
     Format.ONNX,
@@ -455,7 +469,7 @@ class TensorFlowTensorRTConfig(CustomConfigForFormat):
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "TensorFlowTensorRTConfig":
         """Instantiate TensorFlowTensorRTConfig from  adictionary."""
-        if "trt_profile" in config_dict and not isinstance(config_dict["trt_profile"], TensorRTProfile):
+        if config_dict.get("trt_profile") is not None and not isinstance(config_dict["trt_profile"], TensorRTProfile):
             config_dict["trt_profile"] = TensorRTProfile.from_dict(config_dict["trt_profile"])
         return cls(**config_dict)
 
@@ -542,7 +556,7 @@ class TorchTensorRTConfig(CustomConfigForFormat):
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "TorchTensorRTConfig":
         """Instantiate TorchTensorRTConfig from  adictionary."""
-        if "trt_profile" in config_dict and not isinstance(config_dict["trt_profile"], TensorRTProfile):
+        if config_dict.get("trt_profile") is not None and not isinstance(config_dict["trt_profile"], TensorRTProfile):
             config_dict["trt_profile"] = TensorRTProfile.from_dict(config_dict["trt_profile"])
         return cls(**config_dict)
 
@@ -625,7 +639,7 @@ class TensorRTConfig(CustomConfigForFormat):
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "TensorRTConfig":
         """Instantiate TensorRTConfig from  adictionary."""
-        if "trt_profile" in config_dict and not isinstance(config_dict["trt_profile"], TensorRTProfile):
+        if config_dict.get("trt_profile") is not None and not isinstance(config_dict["trt_profile"], TensorRTProfile):
             config_dict["trt_profile"] = TensorRTProfile.from_dict(config_dict["trt_profile"])
         return cls(**config_dict)
 

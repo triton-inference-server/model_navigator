@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ConvertONNX2TRT command."""
-
+import json
+import pathlib
 import sys
+import tempfile
 from distutils.version import LooseVersion
 from pathlib import Path
 from typing import Optional
@@ -23,7 +25,6 @@ from model_navigator.commands.base import CommandOutput, CommandStatus
 from model_navigator.commands.convert.base import Convert2TensorRTWithMaxBatchSizeSearch
 from model_navigator.execution_context import ExecutionContext
 from model_navigator.logger import LOGGER
-from model_navigator.runners.onnx import OnnxrtCPURunner
 from model_navigator.runners.tensorrt import TensorRTRunner
 from model_navigator.utils import devices, tensorrt
 from model_navigator.utils.common import parse_kwargs_to_cmd
@@ -79,11 +80,10 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
 
         input_model_path = workspace / parent_path
         converted_model_path = workspace / path
-        converted_model_temp_path = converted_model_path.with_suffix(".temp")
-
         if converted_model_path.exists():
             LOGGER.info("Model already exists. Skipping conversion.")
             return CommandOutput(status=CommandStatus.SKIPPED)
+
         if not input_model_path.exists():
             LOGGER.warning(f"Exported ONNX model not found at {input_model_path}. Skipping conversion.")
             return CommandOutput(status=CommandStatus.SKIPPED)
@@ -94,16 +94,18 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
             dataloader_trt_profile=dataloader_trt_profile, custom_trt_profile=custom_trt_profile
         )
 
-        with ExecutionContext(workspace=workspace):
-            onnx_runner = OnnxrtCPURunner(
-                model=input_model_path, input_metadata=input_metadata, output_metadata=output_metadata
-            )
-            with onnx_runner:
-                onnx_input_metadata = onnx_runner.get_onnx_input_metadata()
+        onnx_input_metadata = self._get_onnx_input_metadata(
+            input_model_path=input_model_path,
+            input_metadata=input_metadata,
+            output_metadata=output_metadata,
+            workspace=workspace,
+            reproduce_script_path=converted_model_path.parent,
+            verbose=verbose,
+        )
 
         convert_cmd = ["polygraphy", "convert", input_model_path.relative_to(workspace).as_posix()]
         convert_cmd.extend(["--convert-to", "trt"])
-        convert_cmd.extend(["-o", converted_model_temp_path.relative_to(workspace).as_posix()])
+        convert_cmd.extend(["-o", converted_model_path.relative_to(workspace).as_posix()])
 
         if precision_mode == TensorRTPrecisionMode.HIERARCHY:
             trt_precision_flags = {
@@ -144,7 +146,7 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
         ) as context:
             kwargs = {
                 "batch_dim": batch_dim,
-                "model_path": converted_model_temp_path,
+                "model_path": converted_model_path.relative_to(workspace).as_posix(),
                 "runner_name": TensorRTRunner.name(),
                 "input_metadata": input_metadata.to_json(),
                 "output_metadata": output_metadata.to_json(),
@@ -153,21 +155,17 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
             load_args = parse_kwargs_to_cmd(kwargs)
             from model_navigator.commands.convert.onnx import trt_load_script
 
-            def convert_func(args):
-                try:
-                    context.execute_cmd(args + ["&&", sys.executable, trt_load_script.__file__] + load_args)
-                    converted_model_temp_path.replace(converted_model_path)
-                finally:
-                    converted_model_temp_path.unlink(missing_ok=True)
-
             self._execute_conversion(
-                convert_func=convert_func,
+                convert_func=lambda args: context.execute_cmd(
+                    args + ["&&", sys.executable, trt_load_script.__file__] + load_args
+                ),
                 get_args=get_args,
                 batch_dim=batch_dim,
                 device_max_batch_size=device_max_batch_size,
                 dataloader_max_batch_size=dataloader_max_batch_size,
                 custom_trt_profile_available=bool(custom_trt_profile),
             )
+
         LOGGER.info("Converted ONNX to TensorRT.")
         return CommandOutput(status=CommandStatus.OK)
 
@@ -198,3 +196,41 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
                 shape_args.extend([f"{arg}"] + shapes)
 
         return shape_args
+
+    def _get_onnx_input_metadata(
+        self,
+        workspace: pathlib.Path,
+        input_model_path: pathlib.Path,
+        input_metadata: TensorMetadata,
+        output_metadata: TensorMetadata,
+        reproduce_script_path: pathlib.Path,
+        verbose: bool,
+    ):
+        with ExecutionContext(
+            script_path=reproduce_script_path / "reproduce_onnx_input_metadata.py",
+            cmd_path=reproduce_script_path / "reproduce_onnx_input_metadata.sh",
+            workspace=workspace,
+            verbose=verbose,
+        ) as context, tempfile.NamedTemporaryFile() as temp_file:
+            kwargs = {
+                "model_path": input_model_path.as_posix(),
+                "input_metadata": input_metadata.to_json(),
+                "output_metadata": output_metadata.to_json(),
+                "results_path": temp_file.name,
+            }
+            args = parse_kwargs_to_cmd(kwargs)
+            from model_navigator.commands.convert.onnx import collect_onnx_input_metadata
+
+            try:
+                context.execute_external_runtime_script(collect_onnx_input_metadata.__file__, args)
+                with open(temp_file.name) as fp:
+                    input_metadata = json.load(fp)
+                LOGGER.info("Input metadata collected from ONNX model.")
+            except Exception as e:
+                LOGGER.warning(
+                    "Unable to collect metadata from ONNX model. The evaluation failed. Empty metadata used."
+                )
+                LOGGER.warning(f"Error during obtaining metadata: {str(e)}")
+                input_metadata = []
+
+            return TensorMetadata.from_json(input_metadata)

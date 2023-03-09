@@ -17,7 +17,7 @@ import os
 import shutil
 import zipfile
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Union
+from typing import Dict, List, Optional, Union
 
 import yaml
 from packaging import version
@@ -137,9 +137,14 @@ class Package:
         if self.is_empty():
             LOGGER.warning("No successful exports, .nav package will be empty.")
 
-        files_to_save = [self.workspace / "status.yaml", self.workspace / "navigator.log"]
-        models_paths_to_save = self._get_models_paths_to_save(self.workspace)
-        dirs_to_save = [model_path.parent for model_path in models_paths_to_save]
+        models_files_to_save = self._get_models_paths_to_save(self.workspace)
+        reproduction_files_to_save = self._get_reproduction_paths_to_save(self.workspace)
+        files_to_save = (
+            [self.workspace / "status.yaml", self.workspace / "navigator.log"]
+            + models_files_to_save
+            + reproduction_files_to_save
+        )
+        dirs_to_save = []
         if save_data:
             dirs_to_save.extend([self.workspace / "model_output", self.workspace / "model_input"])
         self._make_zip(path, self.workspace, dirs_to_save, files_to_save)
@@ -417,16 +422,16 @@ class Package:
     def _get_models_paths_to_save(
         self,
         package_path: Path,
-    ) -> Sequence[Path]:
+    ) -> List[Path]:
         models_paths_to_save = set()
         for model_status in self.status.models_status.values():
             format = model_status.model_config.format
             if format in get_framework_export_formats(self.framework):
                 model_path = package_path / model_status.model_config.path
                 if not model_path.exists():
-                    LOGGER.warning(
-                        f"Model not found for {model_path.parent.name}. Saving the reproduction scripts only."
-                    )
+                    LOGGER.warning(f"Model not found for {model_path.parent.name}.")
+                    continue
+
                 for runtime_results in model_status.runners_status.values():
                     runtime = runtime_results.runner_name
                     if runtime_results.status.get(VerifyModel.__name__) in (None, CommandStatus.SKIPPED):
@@ -443,7 +448,21 @@ class Package:
             except ModelNavigatorRuntimeAnalyzerError:
                 LOGGER.info(f"No model found with strategy: {strategy}")
 
-        return tuple(models_paths_to_save)
+        return list(models_paths_to_save)
+
+    def _get_reproduction_paths_to_save(self, package_path: Path) -> List[Path]:
+        reproduction_paths_to_save = set()
+        for model_status in self.status.models_status.values():
+            model_path = package_path / model_status.model_config.key
+            if not model_path.exists():
+                LOGGER.warning(f"Model path not found {model_path.name}.")
+                continue
+
+            for file in model_path.iterdir():
+                if file.suffix in [".py", ".sh", ".log"]:
+                    reproduction_paths_to_save.add(file)
+
+        return list(reproduction_paths_to_save)
 
     def _get_custom_configs(self, custom_configs: Dict[str, Dict]) -> Dict:
         """Build custom configs from config data.

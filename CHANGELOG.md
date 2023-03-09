@@ -16,6 +16,26 @@ limitations under the License.
 
 # Changelog
 
+## 0.4.2
+ - fix: loading configuration for trt_profile from package
+ - fix: missing reproduction scripts and logs inside package
+ - fix: invalid model path in reproduction script for ONNX to TRT conversion
+ - fix: collecting metadata from ONNX model in main thread during ONNX to TRT conversion
+
+[//]: <> (put here on external component update with short summary what change or link to changelog)
+
+- Version of external components used during testing:
+  - [PyTorch 1.14.0a0+410ce96](https://github.com/pytorch/pytorch/commit/410ce96)
+  - [TensorFlow 2.11.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.11.0)
+  - [TensorRT 8.5.3](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+  - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
+  - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.44.2
+  - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.4.6
+  - [tf2onnx v1.13.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.13.0)
+  - Other component versions depend on the used framework containers versions.
+    See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+    for a detailed summary.
+
 ## 0.4.1
  - fix: when specified use dynamic axes from custom OnnxConfig
 
@@ -29,7 +49,7 @@ limitations under the License.
   - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.43.1
   - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.4.6
   - [tf2onnx v1.13.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.13.0)
-  - Other component versions depend on the used framework and Triton Inference Server containers versions.
+  - Other component versions depend on the used framework containers versions.
     See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
     for a detailed summary.
 
@@ -54,7 +74,7 @@ limitations under the License.
   - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.43.1
   - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.4.6
   - [tf2onnx v1.13.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.13.0)
-  - Other component versions depend on the used framework and Triton Inference Server containers versions.
+  - Other component versions depend on the used framework containers versions.
     See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
     for a detailed summary.
 
