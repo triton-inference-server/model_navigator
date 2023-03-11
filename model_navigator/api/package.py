@@ -179,6 +179,7 @@ def optimize(
         verify_func=verify_func,
         custom_configs=custom_configs,
         defaults=defaults,
+        target_device=target_device,
     )
 
     builders = _get_builders(
@@ -272,6 +273,7 @@ def _update_config(
     verify_func: Optional[VerifyFunction] = None,
     custom_configs: Optional[List[CustomConfig]] = None,
     defaults: bool = True,
+    target_device: DeviceKind = DeviceKind.CUDA,
 ) -> None:
     base_format = FRAMEWORK2BASE_FORMAT[config.framework]
 
@@ -310,6 +312,7 @@ def _update_config(
         mapped_custom_configs = map_custom_configs(custom_configs=custom_configs)
         config.custom_configs.update(**mapped_custom_configs)
 
+    config.target_device = target_device
     config.verbose = verbose
     config.debug = debug
     config.from_source = False
