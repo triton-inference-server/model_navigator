@@ -16,6 +16,21 @@ limitations under the License.
 
 # Changelog
 
+## 0.4.3
+ - fix: in Keras inference use model.predict(tensor) for single input models
+
+[//]: <> (put here on external component update with short summary what change or link to changelog)
+
+- Version of external components used during testing:
+  - [PyTorch 1.14.0a0+410ce96](https://github.com/pytorch/pytorch/commit/410ce96)
+  - [TensorFlow 2.11.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.11.0)
+  - [TensorRT 8.5.3](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+  - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
+  - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.44.2
+  - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.4.6
+  - [tf2onnx v1.13.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.13.0)
+  - Other component versions
+
 ## 0.4.2
  - fix: loading configuration for trt_profile from package
  - fix: missing reproduction scripts and logs inside package

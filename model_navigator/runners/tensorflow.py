@@ -130,7 +130,10 @@ class TensorFlowRunner(_BaseTFRunner):
         if self._input_metadata_mapping is not None:
             outputs = self.model.predict(dict(zip(self._input_metadata_mapping, feed_dict.values())), verbose=0)
         else:
-            outputs = self.model.predict(list(feed_dict.values()), verbose=0)
+            inputs = list(feed_dict.values())
+            if len(inputs) == 1:
+                inputs = inputs[0]
+            outputs = self.model.predict(inputs, verbose=0)
         return outputs
 
     @classmethod
