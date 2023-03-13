@@ -65,7 +65,7 @@ class VerifyModel(Command):
             return False
 
         performance_status = runner_status.status.get(Performance.name())
-        if performance_status != CommandStatus.OK:
+        if performance_status is not None and performance_status != CommandStatus.OK:
             LOGGER.info(f"Runner {runner_cls.name()} performance results is not OK - SKIPPED")
             return False
 

@@ -14,7 +14,7 @@
 import pathlib
 import tempfile
 
-from model_navigator.api.config import ProfilerConfig
+from model_navigator.api.config import DeviceKind, ProfilerConfig
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.constants import NAVIGATOR_PACKAGE_VERSION, NAVIGATOR_VERSION
 from model_navigator.pipelines.pipeline_manager import PipelineManager
@@ -34,6 +34,7 @@ def test_prepare_package_create_new_package_when_no_package_provided(mocker):
             runner_names=(),
             sample_count=10,
             target_formats=(),
+            target_device=DeviceKind.CUDA,
         )
 
         spy_new = mocker.spy(PipelineManager, "_new_package")
@@ -60,6 +61,7 @@ def test_prepare_package_update_status_when_existing_package_provided(mocker):
             runner_names=(),
             sample_count=10,
             target_formats=(),
+            target_device=DeviceKind.CUDA,
         )
 
         previous_package = torchscript_package_with_torch_tensorrt(workspace)

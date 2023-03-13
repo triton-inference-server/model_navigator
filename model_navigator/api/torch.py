@@ -20,6 +20,7 @@ import torch  # pytype: disable=import-error
 from model_navigator.api.config import (
     DEFAULT_TORCH_TARGET_FORMATS,
     CustomConfig,
+    DeviceKind,
     Format,
     ProfilerConfig,
     SizedDataLoader,
@@ -56,6 +57,7 @@ def optimize(
     input_names: Optional[Tuple[str, ...]] = None,
     output_names: Optional[Tuple[str, ...]] = None,
     target_formats: Optional[Union[Union[str, Format], Tuple[Union[str, Format], ...]]] = None,
+    target_device: Optional[DeviceKind] = DeviceKind.CUDA,
     runners: Optional[Union[Union[str, Type[NavigatorRunner]], Tuple[Union[str, Type[NavigatorRunner]], ...]]] = None,
     profiler_config: Optional[ProfilerConfig] = None,
     workspace: Optional[Path] = None,
@@ -74,6 +76,7 @@ def optimize(
         input_names: Model input names
         output_names: Model output names
         target_formats: Target model formats for optimize process
+        target_device: Target device for optimize process, default is CUDA
         runners: Use only runners provided as parameter
         profiler_config: Profiling config
         workspace: Workspace where packages will be extracted
@@ -96,8 +99,6 @@ def optimize(
             )
         LOGGER.info(f"Using default target formats: {[tf.name for tf in target_formats]}")
 
-    target_device = "cuda" if torch.cuda.is_available() else "cpu"
-
     sample = next(iter(dataloader))
     if isinstance(sample, Mapping):
         forward_kw_names = tuple(sample.keys())
@@ -105,7 +106,7 @@ def optimize(
         forward_kw_names = None
 
     if runners is None:
-        runners = default_runners()
+        runners = default_runners(device_kind=target_device)
 
     target_formats = enums.parse(target_formats, Format)
     runner_names = enums.parse(runners, lambda runner: runner if isinstance(runner, str) else runner.name())

@@ -63,7 +63,7 @@ class _BaseTFRunner(NavigatorRunner):
         raise NotImplementedError
 
 
-class TensorFlowSavedModelRunner(_BaseTFRunner):
+class TensorFlowSavedModelCUDARunner(_BaseTFRunner):
     """Runs inference for TensorFlow SavedModels."""
 
     def activate_impl(self):
@@ -89,10 +89,44 @@ class TensorFlowSavedModelRunner(_BaseTFRunner):
     @classmethod
     def name(cls) -> str:
         """Runner name."""
-        return "TensorFlowSavedModel"
+        return "TensorFlowSavedModelCUDA"
 
 
-class TensorFlowTensorRTRunner(TensorFlowSavedModelRunner):
+class TensorFlowSavedModelCPURunner(_BaseTFRunner):
+    """Runs inference for TensorFlow SavedModels."""
+
+    def activate_impl(self):
+        """Runner activation implementation."""
+        if any([device.device_type == "GPU" for device in tf.config.get_visible_devices()]):
+            tf.config.set_visible_devices([], "GPU")
+        self._loaded_model = tf.keras.models.load_model(str(self._model))
+
+    def deactivate_impl(self):
+        """Runner deactivation implementation."""
+
+    def _infer_impl(self, feed_dict: Dict):
+        """Runner inference handler implementation."""
+        infer = self._loaded_model.signatures["serving_default"]
+        outputs = [output.numpy() for output in infer(**feed_dict).values()]
+        return outputs
+
+    @classmethod
+    def format(cls) -> Format:
+        """Runner supported format."""
+        return Format.TF_SAVEDMODEL
+
+    @classmethod
+    def devices_kind(cls) -> List[DeviceKind]:
+        """Return supported devices for runner."""
+        return [DeviceKind.CPU]
+
+    @classmethod
+    def name(cls) -> str:
+        """Runner name."""
+        return "TensorFlowSavedModelCPU"
+
+
+class TensorFlowTensorRTRunner(TensorFlowSavedModelCUDARunner):
     """Runs inference for TensorFlow TensorRT models."""
 
     @classmethod
@@ -111,7 +145,7 @@ class TensorFlowTensorRTRunner(TensorFlowSavedModelRunner):
         return [DeviceKind.CUDA]
 
 
-class TensorFlowRunner(_BaseTFRunner):
+class TensorFlowCUDARunner(_BaseTFRunner):
     """Runs inference for TensorFlow models in source."""
 
     def activate_impl(self):
@@ -149,11 +183,56 @@ class TensorFlowRunner(_BaseTFRunner):
     @classmethod
     def name(cls) -> str:
         """Runner name."""
-        return "TensorFlow"
+        return "TensorFlowCUDA"
+
+
+class TensorFlowCPURunner(_BaseTFRunner):
+    """Runs inference for TensorFlow models in source."""
+
+    def activate_impl(self):
+        """Runner activation implementation."""
+        if any([device.device_type == "GPU" for device in tf.config.get_visible_devices()]):
+            tf.config.set_visible_devices([], "GPU")
+        self._loaded_model = self.model
+
+    def deactivate_impl(self):
+        """Runner deactivation implementation."""
+        super().deactivate_impl()
+        # TODO: this does not allow other processes to use the memory, but allows TF to use it
+        tf.keras.backend.clear_session()
+        gc.collect()
+
+    def _infer_impl(self, feed_dict):
+        """Runner inference handler implementation."""
+        if self._input_metadata_mapping is not None:
+            outputs = self.model.predict(dict(zip(self._input_metadata_mapping, feed_dict.values())), verbose=0)
+        else:
+            inputs = list(feed_dict.values())
+            if len(inputs) == 1:
+                inputs = inputs[0]
+            outputs = self.model.predict(inputs, verbose=0)
+        return outputs
+
+    @classmethod
+    def format(cls) -> Format:
+        """Format for runner."""
+        return Format.TENSORFLOW
+
+    @classmethod
+    def devices_kind(cls) -> List[DeviceKind]:
+        """Return supported devices for runner."""
+        return [DeviceKind.CPU]
+
+    @classmethod
+    def name(cls) -> str:
+        """Runner name."""
+        return "TensorFlowCPU"
 
 
 def register_tensorflow_runners():
     """Register TensorFlow runner in global registry."""
-    register_runner(TensorFlowSavedModelRunner)
+    register_runner(TensorFlowSavedModelCPURunner)
+    register_runner(TensorFlowSavedModelCUDARunner)
     register_runner(TensorFlowTensorRTRunner)
-    register_runner(TensorFlowRunner)
+    register_runner(TensorFlowCUDARunner)
+    register_runner(TensorFlowCPURunner)

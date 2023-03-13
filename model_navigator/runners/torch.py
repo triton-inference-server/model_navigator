@@ -93,7 +93,7 @@ class _BaseTorchScriptRunner(_BaseTorchRunner):
 
 
 class TorchCUDARunner(_BaseTorchRunner):
-    """Torch model CPU based runner."""
+    """Torch model CUDA based runner."""
 
     _target_device = "cuda"
 
@@ -200,3 +200,58 @@ def register_torch_runners():
     register_runner(TorchScriptCUDARunner)
     register_runner(TorchScriptCPURunner)
     register_runner(TorchTensorRTRunner)
+
+
+class TorchCompileCUDARunner(_BaseTorchRunner):
+    """Torch Compile model CUDA based runner."""
+
+    _target_device = "cuda"
+
+    @classmethod
+    def name(cls) -> str:
+        """Runner name."""
+        return "TorchCompileCUDA"
+
+    @classmethod
+    def devices_kind(cls) -> List[DeviceKind]:
+        """Return supported devices for runner."""
+        return [DeviceKind.CUDA]
+
+    def activate_impl(self):
+        """Runner activation implementation."""
+        super().activate_impl()
+        self._loaded_model = torch.compile(self._loaded_model)
+
+    def deactivate_impl(self):
+        """Deactivation implementation."""
+        super().deactivate_impl()
+        # offload the model from the gpu so other processes can use the memory
+        self.model.to("cpu")
+        torch.cuda.empty_cache()
+
+
+class TorchCompileCPURunner(_BaseTorchRunner):
+    """Torch Compile model CPU based runner."""
+
+    _target_device = "cpu"
+
+    @classmethod
+    def devices_kind(cls) -> List[DeviceKind]:
+        """Return supported devices for runner."""
+        return [DeviceKind.CPU]
+
+    @classmethod
+    def name(cls) -> str:
+        """Runner name."""
+        return "TorchCompileCPU"
+
+    def activate_impl(self):
+        """Runner activation implementation."""
+        super().activate_impl()
+        self._loaded_model = torch.compile(self._loaded_model)
+
+
+def register_torch2_runners():
+    """Register runners in global registry."""
+    register_runner(TorchCompileCPURunner)
+    register_runner(TorchCompileCUDARunner)

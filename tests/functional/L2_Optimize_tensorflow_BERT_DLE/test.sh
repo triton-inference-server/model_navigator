@@ -26,6 +26,7 @@ pip install requests \
   pynvml \
   wget \
   progressbar \
+  nltk \
   git+https://github.com/NVIDIA/dllogger
 
 python -m"${TEST_MODULE}" \

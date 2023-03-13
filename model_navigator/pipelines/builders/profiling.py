@@ -47,7 +47,11 @@ def profiling_builder(config: CommonConfig, models_config: Dict[Format, List[Mod
     for model_format in source_last_formats:
         for model_config in models_config[model_format]:
             for runner in runner_registry.values():
-                if runner.format() == model_config.format and runner.name() in config.runner_names:
+                if (
+                    runner.format() == model_config.format
+                    and runner.name() in config.runner_names
+                    and config.target_device in runner.devices_kind()
+                ):
                     execution_units.append(
                         ExecutionUnit(
                             Performance,

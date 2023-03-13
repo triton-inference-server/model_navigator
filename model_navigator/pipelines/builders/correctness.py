@@ -39,6 +39,10 @@ def correctness_builder(config: CommonConfig, models_config: Dict[Format, List[M
     for models_config_list in models_config.values():
         for model_config in models_config_list:
             for runner in runner_registry.values():
-                if runner.format() == model_config.format and runner.name() in config.runner_names:
+                if (
+                    runner.format() == model_config.format
+                    and runner.name() in config.runner_names
+                    and config.target_device in runner.devices_kind()
+                ):
                     execution_units.append(ExecutionUnit(Correctness, config, model_config, runner))
     return Pipeline(name="Correctness", execution_units=execution_units)

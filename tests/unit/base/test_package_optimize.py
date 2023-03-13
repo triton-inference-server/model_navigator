@@ -97,6 +97,7 @@ def test_update_config_returns_original_config_when_no_parameters_passed_and_sou
         )
 
         reset_fields = [
+            "target_device",
             "target_formats",
             "runner_names",
             "profiler_config",
@@ -127,6 +128,7 @@ def test_update_config_returns_config_wo_source_when_serialized_target_format_pa
         _update_config(config, is_source_available=False, target_formats=(Format.TORCHSCRIPT,), defaults=False)
 
         reset_fields = [
+            "target_device",
             "target_formats",
             "runner_names",
             "profiler_config",

@@ -49,6 +49,13 @@ Sample = Dict[str, numpy.ndarray]
 VerifyFunction = Callable[[Iterable[Sample], Iterable[Sample]], bool]
 
 
+class DeviceKind(Enum):
+    """Support types of devices in runners."""
+
+    CPU = "cpu"
+    CUDA = "cuda"
+
+
 @runtime_checkable
 class SizedIterable(Protocol):
     """Protocol representing sized iterable. Used by dataloader."""
@@ -664,9 +671,10 @@ def _custom_configs() -> Dict[str, Type[CustomConfigForFormat]]:
     custom_configs_formats = {}
     for cls in CustomConfigForFormat.__subclasses__():
         assert cls.name() not in custom_configs
-        assert cls.format not in custom_configs_formats
+        cls_format = cls().format
+        assert cls_format not in custom_configs_formats
 
-        custom_configs_formats[cls.format] = custom_configs_formats
+        custom_configs_formats[cls_format] = custom_configs_formats
         custom_configs[cls.name()] = cls
 
     return custom_configs

@@ -503,6 +503,7 @@ def onnx_package_with_cuda_runner(workspace) -> Package:
                 "verbose": False,
                 "debug": False,
                 "target_formats": (Format.ONNX.value,),
+                "target_device": "cuda",
                 "sample_count": 1,
                 "batch_dim": 0,
                 "custom_configs": {
@@ -610,6 +611,7 @@ def onnx_package_with_cpu_runner_only(workspace) -> Package:
                 "verbose": False,
                 "debug": False,
                 "target_formats": (Format.ONNX.value,),
+                "target_device": "cpu",
                 "sample_count": 1,
                 "batch_dim": 0,
                 "custom_configs": {
@@ -690,6 +692,7 @@ def tensorflow_package_with_tensorflow_only(workspace) -> Package:
                 "verbose": False,
                 "debug": False,
                 "target_formats": (Format.TF_SAVEDMODEL.value,),
+                "target_device": "cpu",
                 "sample_count": 1,
                 "batch_dim": 0,
                 "custom_configs": {},
@@ -701,8 +704,8 @@ def tensorflow_package_with_tensorflow_only(workspace) -> Package:
                 tensorflow_savedmodel_config.key: ModelStatus(
                     model_config=tensorflow_savedmodel_config,
                     runners_status={
-                        "TensorFlowSavedModel": RunnerStatus(
-                            runner_name="TensorFlowSavedModel",
+                        "TensorFlowSavedModelCPU": RunnerStatus(
+                            runner_name="TensorFlowSavedModelCPU",
                             status={
                                 "Correctness": CommandStatus.OK,
                                 "Performance": CommandStatus.OK,
@@ -769,6 +772,7 @@ def tensorflow_package_with_tensorflow_tensorrt(workspace) -> Package:
                 "verbose": False,
                 "debug": False,
                 "target_formats": (Format.TF_SAVEDMODEL.value, Format.TORCH_TRT.value),
+                "target_device": "cpu",
                 "sample_count": 1,
                 "batch_dim": 0,
                 "custom_configs": {},
@@ -780,8 +784,8 @@ def tensorflow_package_with_tensorflow_tensorrt(workspace) -> Package:
                 tensorflow_savedmodel_config.key: ModelStatus(
                     model_config=tensorflow_savedmodel_config,
                     runners_status={
-                        "TensorFlowSavedModel": RunnerStatus(
-                            runner_name="TensorFlowSavedModel",
+                        "TensorFlowSavedModelCPU": RunnerStatus(
+                            runner_name="TensorFlowSavedModelCPU",
                             status={
                                 "Correctness": CommandStatus.OK,
                                 "Performance": CommandStatus.OK,
@@ -892,8 +896,8 @@ def tensorflow_package_with_optimal_model_tensorflow_tensorrt_and_dummy_navigato
                 tensorflow_savedmodel_config.key: ModelStatus(
                     model_config=tensorflow_savedmodel_config,
                     runners_status={
-                        "TensorFlowSavedModel": RunnerStatus(
-                            runner_name="TensorFlowSavedModel",
+                        "TensorFlowSavedModelCPU": RunnerStatus(
+                            runner_name="TensorFlowSavedModelCPU",
                             status={
                                 "Correctness": CommandStatus.OK,
                                 "Performance": CommandStatus.OK,
@@ -1302,6 +1306,7 @@ def onnx_package(workspace) -> Package:
                     Format.ONNX.value,
                     Format.TENSORRT.value,
                 ),
+                "target_device": "cuda",
                 "sample_count": 1,
                 "batch_dim": 0,
                 "custom_configs": {
@@ -1415,6 +1420,7 @@ def tensorrt_package(workspace) -> Package:
                 "verbose": False,
                 "debug": False,
                 "target_formats": (Format.TENSORRT.value,),
+                "target_device": "cuda",
                 "sample_count": 1,
                 "batch_dim": 0,
                 "custom_configs": {

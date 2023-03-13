@@ -40,9 +40,9 @@ def get_source_default_runners(format: Format) -> List[Type[NavigatorRunner]]:
 
         return [TorchCUDARunner, TorchCPURunner] if is_cuda_available() else [TorchCPURunner]
     if format == Format.TENSORFLOW:
-        from model_navigator.runners.tensorflow import TensorFlowRunner
+        from model_navigator.runners.tensorflow import TensorFlowCPURunner, TensorFlowCUDARunner
 
-        return [TensorFlowRunner]
+        return [TensorFlowCUDARunner, TensorFlowCPURunner] if is_cuda_available() else [TensorFlowCPURunner]
     if format == Format.ONNX:
         from model_navigator.runners.onnx import OnnxrtCPURunner, OnnxrtCUDARunner
 

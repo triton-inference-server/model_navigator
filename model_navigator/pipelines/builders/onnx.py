@@ -15,7 +15,7 @@
 
 from typing import Dict, List
 
-from model_navigator.api.config import Format
+from model_navigator.api.config import DeviceKind, Format
 from model_navigator.commands.base import ExecutionUnit
 from model_navigator.commands.convert.onnx import ConvertONNX2TRT
 from model_navigator.commands.copy.onnx import CopyONNX
@@ -54,17 +54,18 @@ def onnx_conversion_builder(config: CommonConfig, models_config: Dict[Format, Li
         Pipeline: Conversion pipeline.
     """
     execution_units: List[ExecutionUnit] = []
-    for model_cfg in models_config.get(Format.TENSORRT, []):
-        if do_run_max_batch_size_search(config, model_cfg):
-            runner_cls = OnnxrtCUDARunner
-            assert model_cfg.parent.format == runner_cls.format()
-            execution_units.append(
-                ExecutionUnit(
-                    FindMaxBatchSize,
-                    config,
-                    model_cfg.parent,
-                    runner_cls=runner_cls,
+    if config.target_device == DeviceKind.CUDA:
+        for model_cfg in models_config.get(Format.TENSORRT, []):
+            if do_run_max_batch_size_search(config, model_cfg):
+                runner_cls = OnnxrtCUDARunner
+                assert model_cfg.parent.format == runner_cls.format()
+                execution_units.append(
+                    ExecutionUnit(
+                        FindMaxBatchSize,
+                        config,
+                        model_cfg.parent,
+                        runner_cls=runner_cls,
+                    )
                 )
-            )
-        execution_units.append(ExecutionUnit(ConvertONNX2TRT, config, model_cfg))
+            execution_units.append(ExecutionUnit(ConvertONNX2TRT, config, model_cfg))
     return Pipeline(name="ONNX Conversion", execution_units=execution_units)

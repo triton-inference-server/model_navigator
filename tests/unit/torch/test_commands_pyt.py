@@ -20,7 +20,7 @@ import numpy
 import onnx
 import torch  # pytype: disable=import-error
 
-from model_navigator.api.config import Format, JitType
+from model_navigator.api.config import DeviceKind, Format, JitType
 from model_navigator.commands.base import CommandStatus
 from model_navigator.commands.correctness import Correctness
 from model_navigator.commands.data_dump.samples import DumpInputModelData, DumpOutputModelData, samples_to_npz
@@ -168,7 +168,7 @@ def test_pyt_export_torchscript():
             workspace=workspace,
             path=model_relative_path,
             jit_type=JitType.SCRIPT,
-            target_device="cpu",
+            target_device=DeviceKind.CPU,
             verbose=False,
         )
         assert command_output.status == CommandStatus.OK
@@ -181,10 +181,10 @@ def test_pyt_export_onnx():
         model_relative_path = Path("onnx") / "model.onnx"
         exported_model_path = workspace / model_relative_path
 
-        device = "cuda" if torch.cuda.is_available() else "cpu"
+        device = DeviceKind.CUDA if torch.cuda.is_available() else DeviceKind.CPU
 
-        dataloader_ = (torch.full((3, 5), VALUE_IN_TENSOR, device=device) for _ in range(5))
-        model_ = torch.nn.Linear(5, 7).to(device).eval()
+        dataloader_ = (torch.full((3, 5), VALUE_IN_TENSOR, device=device.value) for _ in range(5))
+        model_ = torch.nn.Linear(5, 7).to(device.value).eval()
 
         input_data = next(iter(dataloader_))
         sample = {"input": input_data.detach().cpu().numpy()}

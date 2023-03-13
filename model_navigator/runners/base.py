@@ -14,23 +14,15 @@
 """Base runners definition for Model Navigator."""
 
 import abc
-import enum
 import time
 from typing import Any, Dict, List, Optional
 
 import numpy as np
 
-from model_navigator.api.config import Format
+from model_navigator.api.config import DeviceKind, Format
 from model_navigator.logger import LOGGER
 from model_navigator.utils.dataloader import validate_sample_output
 from model_navigator.utils.tensor import TensorMetadata
-
-
-class DeviceKind(enum.Enum):
-    """Support types of devices in runners."""
-
-    CPU = "cpu"
-    CUDA = "cuda"
 
 
 class NavigatorRunner(abc.ABC):

@@ -135,6 +135,7 @@ def test_custom_configs_raise_error_when_config_with_duplicated_name_defined():
 
 def test_custom_configs_raise_error_when_config_with_duplicated_format_defined():
     class TestFormat(CustomConfigForFormat):
+        @property
         def format(self):
             return Format.ONNX
 
