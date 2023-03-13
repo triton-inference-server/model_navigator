@@ -26,6 +26,7 @@ try:
     import torch  # pytype: disable=import-error # noqa: F401
 
     _TORCH_AVAILABLE = True
+    _TORCH_VERSION = LooseVersion(torch.__version__)
 except ModuleNotFoundError:
     _TORCH_AVAILABLE = False
 
@@ -67,6 +68,15 @@ def is_torch_available() -> bool:
         bool: True if torch is available.
     """
     return _TORCH_AVAILABLE
+
+
+def is_torch2_available() -> bool:
+    """Check if torch2 is available.
+
+    Returns:
+        bool: True if torch2 is available.
+    """
+    return _TORCH_AVAILABLE and _TORCH_VERSION >= LooseVersion("2.0.0")
 
 
 def is_tf_available() -> bool:
