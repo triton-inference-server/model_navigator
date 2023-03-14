@@ -61,6 +61,8 @@ def export(
         inputs = list(inputs_dict.values())
         if keras_input_names:
             inputs = dict(zip(keras_input_names, inputs))
+        elif len(inputs) == 1:
+            inputs = inputs[0]
         outputs = model(inputs)
         if isinstance(outputs, (list, tuple)):
             outputs_seq = outputs
