@@ -12,16 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Functionality to perform search of max possible batch size that model can be loaded with on device."""
+import dataclasses
 import logging
+import pathlib
 import tempfile
 from pathlib import Path
-from typing import Optional, Type
+from typing import List, Optional, Type, Union
 
 import jsonlines
 
 from model_navigator.api.config import ProfilerConfig
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.performance.performance import Profiler, ProfilingResults
+from model_navigator.core.constants import DEFAULT_MAX_BATCH_SIZE_THRESHOLD
 from model_navigator.execution_context import ExecutionContext
 from model_navigator.logger import LOGGER
 from model_navigator.runners.base import NavigatorRunner
@@ -37,10 +40,63 @@ class MaxBatchSizeFinder(Profiler):
         return logging.DEBUG
 
 
+@dataclasses.dataclass
+class FindMaxBatchSizeConfig:
+    """Configure pairs of model config and runner to execute."""
+
+    model_path: Union[str, pathlib.Path]
+    runner_cls: Type[NavigatorRunner]
+
+
 class FindMaxBatchSize(Command):
     """Command for searching maximal possible batch size that model can be loaded with."""
 
     def _run(
+        self,
+        configurations: List[FindMaxBatchSizeConfig],
+        workspace: Path,
+        input_metadata: TensorMetadata,
+        output_metadata: TensorMetadata,
+        batch_dim: Optional[int],
+        verbose: bool,
+        reproduce_script_dir: Optional[Path] = None,
+    ) -> CommandOutput:
+        """Execute command.
+
+        Args:
+            configurations: Configuration to use during search
+            workspace: Workspace where artifacts are stored
+            input_metadata: Information about model inputs
+            output_metadata: Information about model outputs
+            batch_dim: Place where batch dimension is located in shape
+            verbose: Flag to enable/disable verbose logging for command
+            reproduce_script_dir: Script where reproduction of command is saved
+
+        Returns:
+            CommandOutput with status and additional output parameters
+        """
+        device_max_batch_size = None
+        for configuration in configurations:
+            device_max_batch_size = self._execute_configuration(
+                workspace=workspace,
+                path=configuration.model_path,
+                input_metadata=input_metadata,
+                output_metadata=output_metadata,
+                batch_dim=batch_dim,
+                verbose=verbose,
+                runner_cls=configuration.runner_cls,
+                reproduce_script_dir=reproduce_script_dir,
+            )
+            if device_max_batch_size is not None:
+                break
+
+        return CommandOutput(
+            status=CommandStatus.OK,
+            output={"device_max_batch_size": device_max_batch_size},
+            save=True,
+        )
+
+    def _execute_configuration(
         self,
         workspace: Path,
         path: Path,
@@ -50,33 +106,19 @@ class FindMaxBatchSize(Command):
         verbose: bool,
         runner_cls: Type[NavigatorRunner],
         reproduce_script_dir: Optional[Path] = None,
-    ) -> CommandOutput:
-        """Execute command.
-
-        Args:
-            workspace: Workspace where artifacts are stored
-            path: Path to the model for execution
-            input_metadata: Information about model inputs
-            output_metadata: Information about model outputs
-            batch_dim: Place where batch dimension is located in shape
-            verbose: Flag to enable/disable verbose logging for command
-            runner_cls: Runner used for model execution
-            reproduce_script_dir: Script where reproduction of command is saved
-
-        Returns:
-            CommandOutput with status and additional output parameters
-        """
+    ):
         model_path = workspace / path
         model_dir = model_path.parent
         reproduce_script_dir = reproduce_script_dir or model_dir
+        device_max_batch_size = None
 
         if not model_path.exists():
             LOGGER.warning(f"Model: {model_path.as_posix()!r} not found, command skipped.")
-            return CommandOutput(status=CommandStatus.SKIPPED)
+            return device_max_batch_size
 
         if batch_dim is None:
             LOGGER.info("Model does not support batching.")
-            return CommandOutput(status=CommandStatus.OK, output={"device_max_batch_size": None})
+            return device_max_batch_size
 
         profiler_config = ProfilerConfig(
             max_trials=1,
@@ -106,7 +148,7 @@ class FindMaxBatchSize(Command):
             from model_navigator.commands.find_max_batch_size import find_max_batch_size_script
 
             try:
-                context.execute_external_runtime_script(find_max_batch_size_script.__file__, args)
+                context.execute_external_runtime_script(find_max_batch_size_script.__file__, args, allow_failure=True)
             except Exception:
                 pass
 
@@ -118,6 +160,9 @@ class FindMaxBatchSize(Command):
                 device_max_batch_size = None
             else:
                 device_max_batch_size = results[-1].batch_size
-                LOGGER.info(f"Device max batch size: {device_max_batch_size}")
+                if device_max_batch_size > DEFAULT_MAX_BATCH_SIZE_THRESHOLD:
+                    device_max_batch_size = device_max_batch_size // 2
 
-        return CommandOutput(status=CommandStatus.OK, output={"device_max_batch_size": device_max_batch_size})
+                LOGGER.info(f"Found device max batch size: {device_max_batch_size}.")
+
+            return device_max_batch_size

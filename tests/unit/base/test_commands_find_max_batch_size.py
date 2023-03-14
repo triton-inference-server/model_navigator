@@ -25,7 +25,7 @@ import jsonlines
 import numpy as np
 
 from model_navigator.commands.base import CommandStatus
-from model_navigator.commands.find_max_batch_size import FindMaxBatchSize
+from model_navigator.commands.find_max_batch_size import FindMaxBatchSize, FindMaxBatchSizeConfig
 from model_navigator.execution_context import ExecutionContext
 from model_navigator.runners.onnx import OnnxrtCPURunner
 from model_navigator.utils.tensor import TensorMetadata, TensorSpec
@@ -42,8 +42,8 @@ def test_find_max_batch_size_return_none_when_model_not_support_batching(mocker)
 
         with mocker.patch.object(ExecutionContext, "execute_external_runtime_script"):
             result = FindMaxBatchSize().run(
+                configurations=[FindMaxBatchSizeConfig(model_path=model_path, runner_cls=OnnxrtCPURunner)],
                 workspace=workspace,
-                path=model_path,
                 input_metadata=TensorMetadata(
                     {"input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))}
                 ),
@@ -52,7 +52,6 @@ def test_find_max_batch_size_return_none_when_model_not_support_batching(mocker)
                 ),
                 batch_dim=None,
                 verbose=True,
-                runner_cls=OnnxrtCPURunner,
             )
 
             assert result is not None
@@ -118,8 +117,8 @@ def test_find_max_batch_size_return_max_batch_when_model_support_batching(mocker
             "execute_external_runtime_script",
         ), mocker.patch("tempfile.NamedTemporaryFile", return_value=mock):
             result = FindMaxBatchSize().run(
+                configurations=[FindMaxBatchSizeConfig(model_path=model_path, runner_cls=OnnxrtCPURunner)],
                 workspace=workspace,
-                path=model_path,
                 input_metadata=TensorMetadata(
                     {"input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))}
                 ),
@@ -128,7 +127,6 @@ def test_find_max_batch_size_return_max_batch_when_model_support_batching(mocker
                 ),
                 batch_dim=0,
                 verbose=True,
-                runner_cls=OnnxrtCPURunner,
             )
 
             assert result is not None

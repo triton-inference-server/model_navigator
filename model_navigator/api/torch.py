@@ -29,7 +29,7 @@ from model_navigator.api.config import (
 )
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config_builder import ModelConfigBuilder
-from model_navigator.constants import DEFAULT_SAMPLE_COUNT
+from model_navigator.core.constants import DEFAULT_SAMPLE_COUNT
 from model_navigator.core.package import Package
 from model_navigator.logger import LOGGER
 from model_navigator.pipelines.builders import (
@@ -40,6 +40,7 @@ from model_navigator.pipelines.builders import (
     torch_export_builder,
     verify_builder,
 )
+from model_navigator.pipelines.builders.find_device_max_batch_size import find_device_max_batch_size_builder
 from model_navigator.pipelines.pipeline_manager import PipelineManager
 from model_navigator.runners.base import NavigatorRunner
 from model_navigator.runners.utils import default_runners
@@ -146,6 +147,7 @@ def optimize(
     builders = [
         preprocessing_builder,
         torch_export_builder,
+        find_device_max_batch_size_builder,
         torch_conversion_builder,
         correctness_builder,
     ]

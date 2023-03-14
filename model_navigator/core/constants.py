@@ -16,7 +16,7 @@ from model_navigator.__version__ import __version__  # noqa: F401
 
 # Version
 NAVIGATOR_VERSION = __version__
-NAVIGATOR_PACKAGE_VERSION = "0.2.0"
+NAVIGATOR_PACKAGE_VERSION = "0.2.1"
 
 # Profiling related
 DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD = 0.05
@@ -31,3 +31,7 @@ DEFAULT_TENSORRT_MAX_DIMENSION_SIZE = 2**31 - 1
 
 # ONNX export/conversion related
 DEFAULT_ONNX_OPSET = 17
+
+# Find Max Batch Size
+DEFAULT_MAX_BATCH_SIZE_THRESHOLD = 512
+DEFAULT_MAX_BATCH_SIZE_HALVING = 2

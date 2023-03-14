@@ -26,7 +26,7 @@ from model_navigator.configuration.model.model_config import (
     TorchScriptConfig,
     TorchTensorRTConfig,
 )
-from model_navigator.constants import DEFAULT_MAX_WORKSPACE_SIZE, NAVIGATOR_PACKAGE_VERSION, NAVIGATOR_VERSION
+from model_navigator.core.constants import DEFAULT_MAX_WORKSPACE_SIZE, NAVIGATOR_PACKAGE_VERSION, NAVIGATOR_VERSION
 from model_navigator.core.package import Package
 from model_navigator.core.status import CommandStatus, ModelStatus, RunnerStatus, Status
 from model_navigator.runners.base import NavigatorRunner

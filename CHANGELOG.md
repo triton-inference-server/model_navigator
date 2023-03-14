@@ -18,7 +18,11 @@ limitations under the License.
 
 ## 0.5.0 (unreleased)
 
+- new: Collect conversion max batch size in status
+- new: PyTorch runners with `compile` support
 - change: Improved handling CUDA and CPU runners
+- change: Reduced finding device max batch size time by running it once as separate pipeline
+- change: Stored find max batch size result in separate filed in status
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 

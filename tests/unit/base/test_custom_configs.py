@@ -24,7 +24,7 @@ from model_navigator.api.config import (
     TorchConfig,
     TorchTensorRTConfig,
 )
-from model_navigator.constants import DEFAULT_MAX_WORKSPACE_SIZE, DEFAULT_MIN_SEGMENT_SIZE, DEFAULT_ONNX_OPSET
+from model_navigator.core.constants import DEFAULT_MAX_WORKSPACE_SIZE, DEFAULT_MIN_SEGMENT_SIZE, DEFAULT_ONNX_OPSET
 
 
 def test_default_values_for_tensorflow_custom_config():

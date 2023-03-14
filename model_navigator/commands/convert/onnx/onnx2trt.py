@@ -155,7 +155,7 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
             load_args = parse_kwargs_to_cmd(kwargs)
             from model_navigator.commands.convert.onnx import trt_load_script
 
-            self._execute_conversion(
+            max_conversion_batch_size = self._execute_conversion(
                 convert_func=lambda args: context.execute_cmd(
                     args + ["&&", sys.executable, trt_load_script.__file__] + load_args
                 ),
@@ -167,7 +167,7 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
             )
 
         LOGGER.info("Converted ONNX to TensorRT.")
-        return CommandOutput(status=CommandStatus.OK)
+        return CommandOutput(status=CommandStatus.OK, output={"max_conversion_batch_size": max_conversion_batch_size})
 
     @staticmethod
     def _get_shape_args(

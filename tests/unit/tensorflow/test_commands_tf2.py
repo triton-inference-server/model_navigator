@@ -26,7 +26,7 @@ from model_navigator.commands.convert.tf import ConvertSavedModel2TFTRT
 from model_navigator.commands.correctness import Correctness
 from model_navigator.commands.data_dump.samples import DumpInputModelData, DumpOutputModelData, samples_to_npz
 from model_navigator.commands.export.tf import ExportTF2SavedModel
-from model_navigator.constants import DEFAULT_MAX_WORKSPACE_SIZE
+from model_navigator.core.constants import DEFAULT_MAX_WORKSPACE_SIZE
 from model_navigator.runners.tensorflow import TensorFlowSavedModelCUDARunner
 from model_navigator.utils.devices import get_gpus
 from model_navigator.utils.framework import Framework

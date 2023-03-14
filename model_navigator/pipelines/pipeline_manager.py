@@ -21,7 +21,7 @@ from tabulate import tabulate
 from model_navigator.api.config import Format, TensorRTProfile
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig
-from model_navigator.constants import NAVIGATOR_PACKAGE_VERSION, NAVIGATOR_VERSION
+from model_navigator.core.constants import NAVIGATOR_PACKAGE_VERSION, NAVIGATOR_VERSION
 from model_navigator.core.package import Package
 from model_navigator.core.status import ModelStatus, Status
 from model_navigator.logger import LOGGER, add_log_file_handler

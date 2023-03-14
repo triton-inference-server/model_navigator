@@ -34,7 +34,7 @@ from typing import (
 
 import numpy
 
-from model_navigator.constants import (
+from model_navigator.core.constants import (
     DEFAULT_MAX_WORKSPACE_SIZE,
     DEFAULT_MIN_SEGMENT_SIZE,
     DEFAULT_ONNX_OPSET,

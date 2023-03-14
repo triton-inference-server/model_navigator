@@ -38,7 +38,6 @@ class Pipeline:
         Args:
             name: Name of the pipeline
             execution_units: List of execution units objects
-            framework: Framework for which pipeline was created
         """
         self.name = name
         self.id = name.lower().replace(" ", "_").replace("-", "_")

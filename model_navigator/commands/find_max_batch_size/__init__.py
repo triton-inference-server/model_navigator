@@ -12,4 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # noqa: D104
-from .find_max_batch_size import FindMaxBatchSize  # noqa: F401
+from .find_max_batch_size import FindMaxBatchSize, FindMaxBatchSizeConfig  # noqa: F401

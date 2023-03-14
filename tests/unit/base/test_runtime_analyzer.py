@@ -17,7 +17,7 @@ from model_navigator.api.config import JitType, TensorRTPrecision, TensorRTPreci
 from model_navigator.commands.correctness.correctness import Tolerance
 from model_navigator.commands.performance.performance import ProfilingResults
 from model_navigator.configuration.model.model_config import ONNXConfig, TensorRTConfig, TorchScriptConfig
-from model_navigator.constants import DEFAULT_MAX_WORKSPACE_SIZE
+from model_navigator.core.constants import DEFAULT_MAX_WORKSPACE_SIZE
 from model_navigator.core.status import CommandStatus, ModelStatus, RunnerStatus
 from model_navigator.exceptions import ModelNavigatorRuntimeAnalyzerError, ModelNavigatorUserInputError
 from model_navigator.runtime_analyzer import (

@@ -39,7 +39,7 @@ from model_navigator.commands.correctness.correctness import Correctness, Tolera
 from model_navigator.commands.performance.performance import Performance, ProfilingResults
 from model_navigator.commands.verification.verify import VerifyModel
 from model_navigator.configuration.model.model_config import ModelConfig
-from model_navigator.constants import NAVIGATOR_PACKAGE_VERSION, NAVIGATOR_VERSION
+from model_navigator.core.constants import NAVIGATOR_PACKAGE_VERSION, NAVIGATOR_VERSION
 from model_navigator.logger import LOGGER
 from model_navigator.utils.common import DataObject
 from model_navigator.utils.framework import Framework
@@ -122,7 +122,7 @@ class ModelStatus(DataObject):
                 for runner_name, runner_res in data_dict["runners_status"].items()
             },
             status={k: CommandStatus(v) for k, v in data_dict.get("status", {}).items()},
-            result={},
+            result=data_dict.get("result", {}),
         )
 
 
@@ -140,6 +140,8 @@ class Status(DataObject):
     output_metadata: TensorMetadata
     dataloader_trt_profile: TensorRTProfile
     dataloader_max_batch_size: int
+    status: Dict[str, CommandStatus] = field(default_factory=lambda: {})
+    result: Dict = field(default_factory=lambda: {})
     timestamp: str = dataclasses.field(default_factory=lambda: f"{datetime.datetime.utcnow():%Y-%m-%dT%H:%M:%S.%f}")
 
     @classmethod

@@ -45,6 +45,7 @@ from model_navigator.pipelines.builders import (
     preprocessing_builder,
     profiling_builder,
 )
+from model_navigator.pipelines.builders.find_device_max_batch_size import find_device_max_batch_size_builder
 from model_navigator.pipelines.builders.verify import verify_builder
 from model_navigator.pipelines.pipeline_manager import PipelineManager
 from model_navigator.runners.base import NavigatorRunner
@@ -239,7 +240,12 @@ def _get_builders(framework: Framework, run_profiling: bool) -> List[PipelineBui
         assert framework == Framework.ONNX
         from model_navigator.pipelines.builders import onnx_conversion_builder as conversion_builder
 
-    builders: List[PipelineBuilder] = [preprocessing_builder, conversion_builder, correctness_builder]
+    builders: List[PipelineBuilder] = [
+        preprocessing_builder,
+        find_device_max_batch_size_builder,
+        conversion_builder,
+        correctness_builder,
+    ]
     if run_profiling:
         builders.append(profiling_builder)
     builders.append(verify_builder)

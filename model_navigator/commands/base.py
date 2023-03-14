@@ -42,6 +42,7 @@ class CommandOutput:
 
     status: CommandStatus
     output: Optional[Dict[str, Any]] = None
+    save: bool = False
 
 
 class Command(abc.ABC):
@@ -148,7 +149,7 @@ class ExecutionUnit:
         config: CommonConfig,
         model_config: Optional[ModelConfig] = None,
         runner_cls: Optional[Type[NavigatorRunner]] = None,
-        **kwargs: Dict[str, Any],
+        **kwargs,
     ) -> None:
         """Initialize object.
 

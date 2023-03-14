@@ -16,7 +16,7 @@ import tempfile
 
 from model_navigator.api.config import DeviceKind, ProfilerConfig
 from model_navigator.configuration.common_config import CommonConfig
-from model_navigator.constants import NAVIGATOR_PACKAGE_VERSION, NAVIGATOR_VERSION
+from model_navigator.core.constants import NAVIGATOR_PACKAGE_VERSION, NAVIGATOR_VERSION
 from model_navigator.pipelines.pipeline_manager import PipelineManager
 from model_navigator.utils.framework import Framework
 from tests.unit.base.mocks.packages import torchscript_package_with_torch_tensorrt

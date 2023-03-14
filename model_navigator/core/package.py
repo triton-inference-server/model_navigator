@@ -366,22 +366,25 @@ class Package:
                     model_config=execution_unit.model_config,
                 )
 
-        if execution_unit.model_config is not None and execution_unit.runner_cls is None:
-            model_status = self.status.models_status[execution_unit.model_config.key]
-            model_status.status[execution_unit.command.__name__] = command_output.status
+            if execution_unit.runner_cls is None:
+                model_status = self.status.models_status[execution_unit.model_config.key]
+                model_status.status[execution_unit.command.__name__] = command_output.status
+                if command_output.output:
+                    model_status.result[execution_unit.command.__name__] = command_output.output
+            else:
+                model_status = self.status.models_status[execution_unit.model_config.key]
+                if execution_unit.runner_cls.name() not in model_status.runners_status:
+                    model_status.runners_status[execution_unit.runner_cls.name()] = RunnerStatus(
+                        runner_name=execution_unit.runner_cls.name(),
+                    )
+                runners_status = model_status.runners_status[execution_unit.runner_cls.name()]
+                runners_status.status[execution_unit.command.__name__] = command_output.status
+                if command_output.output:
+                    runners_status.result[execution_unit.command.__name__] = command_output.output
+        elif execution_unit.model_config is None and command_output.save:
+            self.status.status[execution_unit.command.__name__] = command_output.status
             if command_output.output:
-                model_status.result[execution_unit.command.__name__] = command_output.output
-
-        if execution_unit.model_config is not None and execution_unit.runner_cls is not None:
-            model_status = self.status.models_status[execution_unit.model_config.key]
-            if execution_unit.runner_cls.name() not in model_status.runners_status:
-                model_status.runners_status[execution_unit.runner_cls.name()] = RunnerStatus(
-                    runner_name=execution_unit.runner_cls.name(),
-                )
-            runners_status = model_status.runners_status[execution_unit.runner_cls.name()]
-            runners_status.status[execution_unit.command.__name__] = command_output.status
-            if command_output.output:
-                runners_status.result[execution_unit.command.__name__] = command_output.output
+                self.status.result[execution_unit.command.__name__] = command_output.output
 
     def _cleanup(self):
         if self.workspace.exists():
