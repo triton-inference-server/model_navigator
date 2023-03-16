@@ -35,6 +35,10 @@ def get_source_default_runners(format: Format) -> List[Type[NavigatorRunner]]:
     Raises:
         ValueError if provided format is not a source format
     """
+    if format == Format.PYTHON:
+        from model_navigator.runners.python import PythonRunner
+
+        return [PythonRunner]
     if format == Format.TORCH:
         from model_navigator.runners.torch import TorchCPURunner, TorchCUDARunner
 

@@ -50,6 +50,7 @@ class Framework(Enum):
     TORCH = "torch"
     ONNX = "onnx"
     JAX = "jax"
+    NONE = "none"
 
 
 class Extension(Enum):

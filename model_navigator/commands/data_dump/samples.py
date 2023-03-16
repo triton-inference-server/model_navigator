@@ -104,7 +104,7 @@ class FetchInputModelData(Command, is_required=True):
         num_samples = len(dataloader)
         if sample_count > num_samples:
             LOGGER.warning(
-                f"Requested sample_count ({sample_count}) is larger than"
+                f"Requested sample_count ({sample_count}) is larger than "
                 f"the number of available samples ({num_samples}). Using {num_samples} samples."
             )
             sample_count = num_samples

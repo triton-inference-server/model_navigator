@@ -266,7 +266,7 @@ class Package:
         model_config = runtime_result.model_status.model_config
         runner_status = runtime_result.runner_status
 
-        if not (self.workspace / model_config.path).exists():
+        if not is_source_format(model_config.format) and not (self.workspace / model_config.path).exists():
             raise ModelNavigatorNotFoundError(
                 f"The best runner expects {model_config.format.value!r} "
                 "model but it is not available in the loaded package."
@@ -277,7 +277,7 @@ class Package:
                 "The best runner uses the source model but it is not available in the loaded package. "
                 "Please load the source model with `package.load_source_model(model)` "
                 "or exclude source model from optimal runner search "
-                "with `package.get_optimal_runner(include_source=False)`."
+                "with `package.get_runner(include_source=False)`."
             )
 
         return self._get_runner(model_config.key, runner_status.runner_name)

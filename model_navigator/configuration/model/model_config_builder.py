@@ -83,6 +83,9 @@ class ModelConfigBuilder:
 
         model_configs = collections.defaultdict(list)
 
+        if Format.PYTHON in target_formats:
+            ModelConfigBuilder.get_source_python_config(model_configs)
+
         if Format.TORCH in target_formats:
             ModelConfigBuilder.get_source_torch_config(model_configs)
 
@@ -111,6 +114,15 @@ class ModelConfigBuilder:
             ModelConfigBuilder.get_tf_trt_config(custom_configs_for_format, model_configs)
 
         return model_configs
+
+    @staticmethod
+    def get_source_python_config(model_configs: Dict[Format, List[model_config.ModelConfig]]):
+        """Append source Python model configuration to model_configs dictionary.
+
+        Args:
+            model_configs: Dictionary mappint model formats to lists of model configs
+        """
+        model_configs[Format.PYTHON].append(model_config.PythonModelConfig())
 
     @staticmethod
     def get_source_torch_config(model_configs: Dict[Format, List[model_config.ModelConfig]]):

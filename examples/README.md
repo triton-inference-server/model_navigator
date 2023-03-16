@@ -24,6 +24,9 @@ the [NVIDIA Triton Inference Server](https://github.com/triton-inference-server/
 
 You can find examples per each supported framework.
 
+`Python`:
+- [Identity Model](../examples/python/identity)
+
 `PyTorch`:
 
 - [Linear Model](../examples/torch/linear)

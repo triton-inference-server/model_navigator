@@ -32,13 +32,15 @@ def is_source_format(format: Format) -> bool:
         Format.JAX,
         Format.TENSORFLOW,
         Format.TORCH,
+        Format.PYTHON,
     )
 
 
-def get_framework_export_formats(framework: Framework) -> Set[Format]:
+def get_framework_export_formats(framework: Framework) -> Set[Optional[Format]]:
     """Get the base export formats for framework.
 
     The base export format is the one which can be generated directly from the Python sources.
+    Python based models cannot be serialized to any format.
 
     Args:
         framework: A framework for which the base format has to be obtained
@@ -47,6 +49,7 @@ def get_framework_export_formats(framework: Framework) -> Set[Format]:
         Set with supported export formats for given framework.
     """
     return {
+        Framework.NONE: set(),
         Framework.TORCH: {Format.TORCHSCRIPT, Format.ONNX},
         Framework.TENSORFLOW: {
             Format.TF_SAVEDMODEL,
@@ -67,6 +70,9 @@ def get_base_format(format: Format, framework: Framework) -> Optional[Format]:
         A base model format necessary to create provided format.
     """
     return {
+        Framework.NONE: {
+            Format.PYTHON: Format.PYTHON,
+        },
         Framework.TORCH: {
             Format.TENSORRT: Format.ONNX,
             Format.TORCH_TRT: Format.TORCHSCRIPT,
@@ -102,6 +108,7 @@ FORMAT2SUFFIX = {
 }
 
 FRAMEWORK2BASE_FORMAT = {
+    Framework.NONE: Format.PYTHON,
     Framework.TORCH: Format.TORCH,
     Framework.JAX: Format.JAX,
     Framework.TENSORFLOW: Format.TENSORFLOW,

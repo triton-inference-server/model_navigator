@@ -193,6 +193,14 @@ class _SourceModelConfig(ModelConfig, format=None):
         super().__init__(parent=None)
 
 
+class PythonModelConfig(_SourceModelConfig, format=Format.PYTHON):
+    """Source code Python model configuration class."""
+
+    @classmethod
+    def _from_dict(cls, data_dict: Dict):
+        return cls()
+
+
 class TorchModelConfig(_SourceModelConfig, format=Format.TORCH):
     """Source code Torch model configuration class."""
 

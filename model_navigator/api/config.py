@@ -83,6 +83,7 @@ SizedDataLoader = Union[SizedIterable, Sequence]
 class Format(Enum):
     """All model formats supported by Model Navigator 'optimize' function."""
 
+    PYTHON = "python"
     TORCH = "torch"
     TENSORFLOW = "tensorflow"
     JAX = "jax"
@@ -301,6 +302,7 @@ SOURCE_FORMATS = (
 )
 
 INPUT_FORMATS = {
+    Framework.NONE: Format.PYTHON,
     Framework.JAX: Format.JAX,
     Framework.TORCH: Format.TORCH,
     Framework.TENSORFLOW: Format.TENSORFLOW,
@@ -308,11 +310,14 @@ INPUT_FORMATS = {
 }
 
 EXPORT_FORMATS = {
+    Framework.NONE: [],
     Framework.JAX: [Format.TF_SAVEDMODEL],
     Framework.TENSORFLOW: [Format.TF_SAVEDMODEL],
     Framework.TORCH: [Format.TORCHSCRIPT, Format.ONNX],
     Framework.ONNX: [Format.ONNX],
 }
+
+DEFAULT_NONE_FRAMEWORK_TARGET_FORMATS = (Format.PYTHON,)
 
 DEFAULT_JAX_TARGET_FORMATS = (
     Format.TF_SAVEDMODEL,
@@ -341,6 +346,7 @@ DEFAULT_ONNX_TARGET_FORMATS = (
 )
 
 DEFAULT_TARGET_FORMATS = {
+    Framework.NONE: DEFAULT_NONE_FRAMEWORK_TARGET_FORMATS,
     Framework.JAX: DEFAULT_JAX_TARGET_FORMATS,
     Framework.TENSORFLOW: DEFAULT_TENSORFLOW_TARGET_FORMATS,
     Framework.TORCH: DEFAULT_TORCH_TARGET_FORMATS,
@@ -356,7 +362,10 @@ AVAILABLE_TORCH_TARGET_FORMATS = (Format.TORCH,) + DEFAULT_TORCH_TARGET_FORMATS
 
 AVAILABLE_ONNX_TARGET_FORMATS = DEFAULT_ONNX_TARGET_FORMATS
 
+AVAILABLE_NONE_FRAMEWORK_TARGET_FORMATS = (Format.PYTHON,)
+
 AVAILABLE_TARGET_FORMATS = {
+    Framework.NONE: AVAILABLE_NONE_FRAMEWORK_TARGET_FORMATS,
     Framework.JAX: AVAILABLE_JAX_TARGET_FORMATS,
     Framework.TENSORFLOW: AVAILABLE_TENSORFLOW_TARGET_FORMATS,
     Framework.TORCH: AVAILABLE_TORCH_TARGET_FORMATS,

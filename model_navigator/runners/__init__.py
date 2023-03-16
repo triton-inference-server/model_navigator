@@ -15,9 +15,11 @@
 from model_navigator.utils.framework import is_jax_available, is_tf_available, is_torch2_available, is_torch_available
 
 from .onnx import register_onnx_runners
+from .python import register_python_runners
 from .registry import load_runners_from_entry_points, register_runner  # noqa: F401
 from .tensorrt import register_tensorrt_runners
 
+register_python_runners()
 register_onnx_runners()
 register_tensorrt_runners()
 
