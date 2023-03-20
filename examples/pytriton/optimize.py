@@ -13,17 +13,11 @@
 # limitations under the License.
 """Export script template for Model Navigator"""
 import logging
-import pathlib
 
 import numpy as np
 import tensorflow as tf  # pytype: disable=import-error
 
 import model_navigator as nav
-from model_navigator.exceptions import (
-    ModelNavigatorEmptyPackageError,
-    ModelNavigatorError,
-    ModelNavigatorWrongParameterError,
-)
 
 # enable tensorflow memory growth to avoid allocating all GPU memory
 gpus = tf.config.experimental.list_physical_devices("GPU")
@@ -118,10 +112,3 @@ package = nav.tensorflow.optimize(
 )
 
 nav.package.save(package=package, path="mlp.nav", override=True)
-
-try:
-    nav.triton.model_repository.add_model_from_package(
-        model_repository_path=pathlib.Path("model_repository"), model_name="MLP", package=package
-    )
-except (ModelNavigatorWrongParameterError, ModelNavigatorEmptyPackageError, ModelNavigatorError) as e:
-    LOGGER.warning(f"Model repository cannot be created.\n{str(e)}")

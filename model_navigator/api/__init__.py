@@ -44,4 +44,5 @@ if is_tf_available() and is_jax_available():
 from . import onnx  # noqa: F401
 from . import package  # noqa: F401
 from . import python  # noqa: F401
+from . import pytriton  # noqa: F401
 from . import triton  # noqa: F401

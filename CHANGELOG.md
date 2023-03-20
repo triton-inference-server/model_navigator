@@ -18,6 +18,7 @@ limitations under the License.
 
 ## 0.5.0 (unreleased)
 
+- new Support for PyTriton deployemnt
 - new Support for Python models with python.optimize API
 - new PyTorch 2 compile CPU and CUDA runners
 - new: Collect conversion max batch size in status

@@ -53,7 +53,13 @@ You can find examples per each supported framework.
 The Navigator Package can be reused for optimize e.g. on the new hardware or with newer libraries.
 The example code can be found in [examples/package](../examples/package).
 
+### Using model on PyTriton
+
+The optimized model by Triton Model Navigator can be used for serving inference through PyTriton. The
+example code can be found in [examples/pytriton](../examples/pytriton).
+
 ### Using model on Triton Inference Server
 
 The optimized model by Triton Model Navigator can be used for serving inference through Triton Inference Server. The
 example code can be found in [examples/triton](../examples/triton).
+

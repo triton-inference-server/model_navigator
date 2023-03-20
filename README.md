@@ -29,6 +29,7 @@ select the most promising format for production deployment.
 - [How it works?](#how-it-works)
 - [Quick Start](#quick-start)
   - [Export and optimize model](#export-and-optimize-model)
+  - [PyTriton deployment](#pytriton-deployment)
   - [NVIDIA Triton Inference Server deployment](#nvidia-triton-inference-server-deployment)
 - [Examples](#examples)
   - [Optimize for various frameworks](#optimize-for-various-frameworks)
@@ -171,6 +172,44 @@ nav.package.save(package=package, path="mlp.nav")
 You can customize behavior of export and conversion steps
 passing [CustomConfig][model_navigator.api.config.CustomConfig]
 to `optimize` function.
+
+### PyTriton deployment
+
+At this point you can use [NVIDIA PyTriton](https://github.com/triton-inference-server/pytriton) for easy deployment
+of the exported model. Below you can find an example `serve.py` that will select the best model from a previously
+saved `Navigator Package`, get the best runner, and use it to start `PyTriton`.
+
+```python
+from pytriton.decorators import batch
+from pytriton.triton import Triton
+
+import model_navigator as nav
+
+package = nav.package.load("mlp.nav", "load_workspace")
+
+pytriton_adapter = nav.pytriton.PyTritonAdapter(package=package)
+runner = pytriton_adapter.runner
+runner.activate()
+
+
+@batch
+def infer_func(**inputs):
+    return runner.infer(inputs)
+
+
+# Connecting inference callback with Triton Inference Server
+with Triton() as triton:
+    # Load model into Triton Inference Server
+    triton.bind(
+        model_name="mlp",
+        infer_func=infer_func,
+        inputs=pytriton_adapter.inputs,
+        outputs=pytriton_adapter.outputs,
+        config=pytriton_adapter.config,
+    )
+    # Serve model through Triton Inference Server
+    triton.serve()
+```
 
 ### NVIDIA Triton Inference Server deployment
 
