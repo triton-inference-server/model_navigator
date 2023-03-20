@@ -79,13 +79,13 @@ def get_base_format(format: Format, framework: Framework) -> Optional[Format]:
         },
         Framework.TENSORFLOW: {
             Format.ONNX: Format.TF_SAVEDMODEL,
-            Format.TENSORRT: Format.TF_SAVEDMODEL,
+            Format.TENSORRT: Format.ONNX,
             Format.TF_TRT: Format.TF_SAVEDMODEL,
         },
         Framework.ONNX: {Format.TENSORRT: Format.ONNX},
         Framework.JAX: {
             Format.ONNX: Format.TF_SAVEDMODEL,
-            Format.TENSORRT: Format.TF_SAVEDMODEL,
+            Format.TENSORRT: Format.ONNX,
             Format.TF_TRT: Format.TF_SAVEDMODEL,
         },
     }[framework].get(format)
