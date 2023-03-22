@@ -65,8 +65,8 @@ def main():
     dataloader = [encoded_input]
     trt_profile = (
         nav.TensorRTProfile()
-        .add("input_ids", (1, 128), (4, 128), (8, 128))
-        .add("attention_mask", (1, 128), (4, 128), (8, 128))
+        .add("input_ids", (1, 64), (2, 64), (4, 64))
+        .add("attention_mask", (1, 64), (2, 64), (4, 64))
     )
 
     LOGGER.info("Testing GPT2")
@@ -79,7 +79,7 @@ def main():
             nav.TensorRTConfig(trt_profile=trt_profile),
             nav.TensorFlowTensorRTConfig(trt_profile=trt_profile),
         ),
-        profiler_config=nav.ProfilerConfig(batch_sizes=[1, 2, 4, 8]),
+        profiler_config=nav.ProfilerConfig(batch_sizes=[1, 2, 4]),
     )
 
     status_file = args.status
