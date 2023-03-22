@@ -16,11 +16,11 @@ limitations under the License.
 
 # Changelog
 
-## 0.5.0 (unreleased)
+## 0.5.0
 
-- new Support for PyTriton deployemnt
-- new Support for Python models with python.optimize API
-- new PyTorch 2 compile CPU and CUDA runners
+- new: Support for PyTriton deployemnt
+- new: Support for Python models with python.optimize API
+- new: PyTorch 2 compile CPU and CUDA runners
 - new: Collect conversion max batch size in status
 - new: PyTorch runners with `compile` support
 - change: Improved handling CUDA and CPU runners
