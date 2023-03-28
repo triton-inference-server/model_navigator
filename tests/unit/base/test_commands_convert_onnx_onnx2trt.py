@@ -19,6 +19,7 @@ Note:
 """
 import json
 import pathlib
+import shutil
 import tempfile
 from unittest.mock import MagicMock
 
@@ -375,6 +376,10 @@ def test_get_onnx_input_metadata_return_filled_metadata_when_successfully_read_f
         assets_path = get_assets_path()
         model_path = assets_path / "models" / "identity.onnx"
 
+        onnx_model_path = workspace / "onnx" / "model.onnx"
+        onnx_model_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy(model_path, onnx_model_path)
+
         input_metadata = TensorMetadata()
         input_metadata.add(name="X", shape=(-1, 3, 8, 8), dtype=np.float32())
 
@@ -387,7 +392,7 @@ def test_get_onnx_input_metadata_return_filled_metadata_when_successfully_read_f
 
         metadata = ConvertONNX2TRT()._get_onnx_input_metadata(
             workspace=workspace,
-            input_model_path=model_path,
+            input_model_path=onnx_model_path,
             input_metadata=input_metadata,
             output_metadata=output_metadata,
             reproduce_script_path=workspace,
@@ -408,6 +413,10 @@ def test_get_onnx_input_metadata_return_empty_metadata_when_no_file(mocker):
         assets_path = get_assets_path()
         model_path = assets_path / "models" / "identity.onnx"
 
+        onnx_model_path = workspace / "onnx" / "model.onnx"
+        onnx_model_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy(model_path, onnx_model_path)
+
         input_metadata = TensorMetadata()
         input_metadata.add(name="X", shape=(-1, 3, 8, 8), dtype=np.float32())
 
@@ -416,7 +425,7 @@ def test_get_onnx_input_metadata_return_empty_metadata_when_no_file(mocker):
 
         metadata = ConvertONNX2TRT()._get_onnx_input_metadata(
             workspace=workspace,
-            input_model_path=model_path,
+            input_model_path=onnx_model_path,
             input_metadata=input_metadata,
             output_metadata=output_metadata,
             reproduce_script_path=workspace,

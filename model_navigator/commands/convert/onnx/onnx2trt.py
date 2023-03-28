@@ -213,7 +213,7 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
             verbose=verbose,
         ) as context, tempfile.NamedTemporaryFile() as temp_file:
             kwargs = {
-                "model_path": input_model_path.as_posix(),
+                "model_path": input_model_path.relative_to(workspace).as_posix(),
                 "input_metadata": input_metadata.to_json(),
                 "output_metadata": output_metadata.to_json(),
                 "results_path": temp_file.name,
