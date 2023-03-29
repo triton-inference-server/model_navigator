@@ -20,6 +20,7 @@ limitations under the License.
 
 - fix: Using relative workspace cause error during Onnx to TensorRT conversion
 - fix: Added external weight in package for ONNX format
+- fix: bugfixes for functional tests
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 
