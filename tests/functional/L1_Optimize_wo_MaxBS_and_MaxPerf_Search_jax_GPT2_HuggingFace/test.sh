@@ -15,6 +15,8 @@
 
 set -ex
 
+export XLA_PYTHON_CLIENT_PREALLOCATE=false
+
 THIS_SCRIPT_PATH="$(realpath --relative-to="$(pwd)" "$0")"
 TEST_MODULE="$(dirname "${THIS_SCRIPT_PATH}"|sed 's/\//./g').test"
 
