@@ -17,7 +17,7 @@ import os
 import shutil
 import zipfile
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Set, Union
 
 import yaml
 from packaging import version
@@ -46,7 +46,7 @@ from model_navigator.runtime_analyzer.strategy import (
 )
 from model_navigator.utils import package as package_utils
 from model_navigator.utils.common import get_default_status_filename, get_default_workspace
-from model_navigator.utils.format_helpers import get_framework_export_formats, is_source_format
+from model_navigator.utils.format_helpers import FORMAT2SUFFIX, get_framework_export_formats, is_source_format
 from model_navigator.utils.framework import Framework
 
 
@@ -422,6 +422,12 @@ class Package:
         runtime_result = self._get_best_runtime(strategy=strategy, include_source=include_source)
         return runtime_result.model_status
 
+    def _get_onnx_external_weights_filepaths(self, model_path: Path) -> Set[Path]:
+        """Returns external weights paths for ONNX model."""
+        return {fp for fp in model_path.parent.iterdir() if fp.is_file()} - set(
+            self._get_reproduction_paths_to_save(self.workspace)
+        )
+
     def _get_models_paths_to_save(
         self,
         package_path: Path,
@@ -450,6 +456,12 @@ class Package:
                     models_paths_to_save.add(best_format_path)
             except ModelNavigatorRuntimeAnalyzerError:
                 LOGGER.info(f"No model found with strategy: {strategy}")
+
+        external_weights_paths = set()
+        for model_path in models_paths_to_save:
+            if model_path.suffix == FORMAT2SUFFIX[Format.ONNX]:
+                external_weights_paths.update(self._get_onnx_external_weights_filepaths(model_path))
+        models_paths_to_save.update(external_weights_paths)
 
         return list(models_paths_to_save)
 
