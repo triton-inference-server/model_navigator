@@ -44,7 +44,21 @@ For using NVIDIA optimized Docker images we recommend to
 install [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/overview.html) to
 run model inference on NVIDIA GPU.
 
-## Installing from source
+## Installation
+The package can be installed from `pypi.org` using extra index url:
+
+
+```shell
+pip install -U --extra-index-url https://pypi.ngc.nvidia.com triton-model-navigator[<extras,>]
+```
+
+or with nvidia-pyindex:
+
+```shell
+pip install nvidia-pyindex
+
+pip install -U triton-model-navigator[<extras,>]
+```
 
 To install Triton Model Navigator from source use pip command:
 

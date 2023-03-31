@@ -16,6 +16,9 @@ limitations under the License.
 
 # Changelog
 
+## 0.5.2 (unreleased)
+- fix: Added missing --extra-index-url to installation instruction for pypi
+
 ## 0.5.1
 
 - fix: Using relative workspace cause error during Onnx to TensorRT conversion

@@ -34,16 +34,23 @@ The package can be reused to recreate the process on same or different hardware.
 is saved in the `status.yaml` file located inside the workspace and the `Navigator Package`.
 
 Finally, the `Navigator Package` can be used for model deployment
-on [NVIDIA Triton Inference Server](https://github.com/triton-inference-server/server). Dedicated API helps with obtaining all
+on [Triton Inference Server](https://github.com/triton-inference-server/server). Dedicated API helps with obtaining all
 necessary parameters and creating `model_repository` or receive the optimized model for inference in Python environment.
 
 # Installing
 
-The package can be installed from `pypi.org` using:
+The package can be installed using extra index url:
 
-<!--pytest.mark.skip-->
 
 ```shell
+pip install -U --extra-index-url https://pypi.ngc.nvidia.com triton-model-navigator[<extras,>]
+```
+
+or with nvidia-pyindex:
+
+```shell
+pip install nvidia-pyindex
+
 pip install -U triton-model-navigator[<extras,>]
 ```
 
@@ -145,9 +152,47 @@ You can customize behavior of export and conversion steps
 passing [CustomConfig][model_navigator.api.config.CustomConfig]
 to `optimize` function.
 
-## NVIDIA Triton Inference Server deployment
+### PyTriton deployment
 
-If you prefer the standalone [NVIDIA Triton Inference Server](https://github.com/triton-inference-server) you can create
+At this point you can use [PyTriton](https://github.com/triton-inference-server/pytriton) for easy deployment
+of the exported model. Below you can find an example `serve.py` that will select the best model from a previously
+saved `Navigator Package`, get the best runner, and use it to start `PyTriton`.
+
+```python
+from pytriton.decorators import batch
+from pytriton.triton import Triton
+
+import model_navigator as nav
+
+package = nav.package.load("mlp.nav", "load_workspace")
+
+pytriton_adapter = nav.pytriton.PyTritonAdapter(package=package)
+runner = pytriton_adapter.runner
+runner.activate()
+
+
+@batch
+def infer_func(**inputs):
+    return runner.infer(inputs)
+
+
+# Connecting inference callback with Triton Inference Server
+with Triton() as triton:
+    # Load model into Triton Inference Server
+    triton.bind(
+        model_name="mlp",
+        infer_func=infer_func,
+        inputs=pytriton_adapter.inputs,
+        outputs=pytriton_adapter.outputs,
+        config=pytriton_adapter.config,
+    )
+    # Serve model through Triton Inference Server
+    triton.serve()
+```
+
+## Triton Inference Server deployment
+
+If you prefer the standalone [Triton Inference Server](https://github.com/triton-inference-server) you can create
 and use `model_repository`.
 
 ```python
@@ -194,31 +239,31 @@ for deployment on Triton Inference Server.
 ## Optimize for various frameworks
 
 - `PyTorch`:
-  * [Linear Model](https://github.com/triton-inference-server/model_navigator/examples/torch/linear)
-  * [ResNet50](https://github.com/triton-inference-server/model_navigator/examples/torch/resnet50)
-  * [BERT](https://github.com/triton-inference-server/model_navigator/examples/torch/bert)
+  * [Linear Model](https://github.com/triton-inference-server/model_navigator/tree/main/examples/torch/linear)
+  * [ResNet50](https://github.com/triton-inference-server/model_navigator/tree/main/examples/torch/resnet50)
+  * [BERT](https://github.com/triton-inference-server/model_navigator/tree/main/examples/torch/bert)
 
 - `TensorFlow`:
-  * [Linear Model](https://github.com/triton-inference-server/model_navigator/examples/tensorflow/linear)
-  * [EfficientNet](https://github.com/triton-inference-server/model_navigator/examples/tensorflow/efficientnet)
-  * [BERT](https://github.com/triton-inference-server/model_navigator/examples/tensorflow/bert)
+  * [Linear Model](https://github.com/triton-inference-server/model_navigator/tree/main/examples/tensorflow/linear)
+  * [EfficientNet](https://github.com/triton-inference-server/model_navigator/tree/main/examples/tensorflow/efficientnet)
+  * [BERT](https://github.com/triton-inference-server/model_navigator/tree/main/examples/tensorflow/bert)
 
 - `JAX`:
-  * [Linear Model](https://github.com/triton-inference-server/model_navigator/examples/jax/linear)
-  * [GPT-2](https://github.com/triton-inference-server/model_navigator/examples/jax/gpt2)
+  * [Linear Model](https://github.com/triton-inference-server/model_navigator/tree/main/examples/jax/linear)
+  * [GPT-2](https://github.com/triton-inference-server/model_navigator/tree/main/examples/jax/gpt2)
 
 - `ONNX`:
-  * [Identity Model](https://github.com/triton-inference-server/model_navigator/examples/onnx/identity)
+  * [Identity Model](https://github.com/triton-inference-server/model_navigator/tree/main/examples/onnx/identity)
 
 ## Optimize Navigator Package
 
 The Navigator Package can be reused for optimize e.g. on the new hardware or with newer libraries.
-The example code can be found in [examples/package](https://github.com/triton-inference-server/model_navigator/examples/package).
+The example code can be found in [examples/package](https://github.com/triton-inference-server/model_navigator/tree/main/examples/package).
 
 ## Using model on Triton Inference Server
 
 The optimized model by Triton Model Navigator can be used for serving inference through Triton Inference Server. The
-example code can be found in [examples/triton](https://github.com/triton-inference-server/model_navigator/examples/triton).
+example code can be found in [examples/triton](https://github.com/triton-inference-server/model_navigator/tree/main/examples/triton).
 
 
 # Links
@@ -226,6 +271,6 @@ example code can be found in [examples/triton](https://github.com/triton-inferen
 * Documentation: https://triton-inference-server.github.io/model_navigator
 * Source: https://github.com/triton-inference-server/model_navigator
 * Issues: https://github.com/triton-inference-server/model_navigator/issues
-* Changelog: https://github.com/triton-inference-server/model_navigator/CHANGELOG.md
-* Known Issues: https://github.com/triton-inference-server/model_navigator/docs/known_issues.md
-* Contributing: https://github.com/triton-inference-server/model_navigator/CONTRIBUTING.md
+* Changelog: https://github.com/triton-inference-server/model_navigator/blob/main/CHANGELOG.md
+* Known Issues: https://github.com/triton-inference-server/model_navigator/blob/main/docs/known_issues.md
+* Contributing: https://github.com/triton-inference-server/model_navigator/blob/main/CONTRIBUTING.md

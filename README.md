@@ -52,6 +52,21 @@ We recommend to use NGC Containers for PyTorch and TensorFlow which provide have
 - [PyTorch](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch)
 - [TensorFlow](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/tensorflow)
 
+The package can be installed from `pypi.org` using extra index url:
+
+
+```shell
+pip install -U --extra-index-url https://pypi.ngc.nvidia.com triton-model-navigator[<extras,>]
+```
+
+or with nvidia-pyindex:
+
+```shell
+pip install nvidia-pyindex
+
+pip install -U triton-model-navigator[<extras,>]
+```
+
 To install Triton Model Navigator from source use pip command:
 
 ```shell
