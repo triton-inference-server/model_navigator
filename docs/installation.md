@@ -56,7 +56,6 @@ or with nvidia-pyindex:
 
 ```shell
 pip install nvidia-pyindex
-
 pip install -U triton-model-navigator[<extras,>]
 ```
 
@@ -68,8 +67,10 @@ $ pip install --extra-index-url https://pypi.ngc.nvidia.com .[<extras,>]
 
 Extras:
 
-- tensorflow - Model Navigator for TensorFlow2
-- jax - Model Navigator for JAX
+- `tensorflow` - Model Navigator with dependencies for TensorFlow2
+- `jax` - Model Navigator with dependencies for JAX
+
+For using with PyTorch no extras are needed.
 
 ## Building the wheel
 

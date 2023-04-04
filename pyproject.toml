@@ -13,7 +13,7 @@
 # limitations under the License.
 [project]
 name = "triton-model-navigator"
-readme = "docs/pypi.md"
+readme = "docs/pypi.rst"
 description = "Triton Model Navigator provides tools supporting to create Deep Learning production ready inference models"
 dynamic = ["version"]
 classifiers = [
