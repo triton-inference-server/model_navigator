@@ -95,7 +95,9 @@ class ModelConfigBuilder:
         if Format.JAX in target_formats:
             ModelConfigBuilder.get_source_jax_config(model_configs)
 
-        if framework == Framework.TORCH and (Format.TORCHSCRIPT in target_formats or Format.ONNX in target_formats):
+        onnx_custom_config = _get_custom_config(custom_configs_for_format, config_api.OnnxConfig, framework=framework)
+        extended_onnx_export = Format.ONNX in target_formats and onnx_custom_config.onnx_extended_conversion
+        if framework == Framework.TORCH and (Format.TORCHSCRIPT in target_formats or extended_onnx_export):
             ModelConfigBuilder.get_torchscript_config(custom_configs_for_format, model_configs)
 
         if Format.TORCH_TRT in target_formats:

@@ -17,8 +17,11 @@ limitations under the License.
 # Changelog
 
 ## 0.5.2
+- new: add Contributor License Agreement (CLA)
 - fix: Added missing --extra-index-url to installation instruction for pypi
 - fix: Updated wheel readme
+- fix: Do not run torchscript export when only ONNX in target formats and ONNX extended export is disabled
+- fix: log full traceback for ModelNavigatorUserInputError
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 

@@ -111,12 +111,13 @@ class Pipeline:
                 if config.verbose and e.__context__:
                     LOGGER.info(e.__context__)
 
+                error = traceback.format_exc()
                 LOGGER.warning(
                     "Command finished with ModelNavigatorUserInputError. "
                     "The error is considered as external error. Usually caused by "
                     "incompatibilities between the model and the target formats and/or runtimes. "
                     "Please review the command output.\n"
-                    f"{str(e)}"
+                    f"{error}"
                 )
             except Exception:
                 command_output = CommandOutput(status=CommandStatus.FAIL)

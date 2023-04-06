@@ -179,3 +179,14 @@ $ git push --tags
 ## Documentation
 
 Add/update docstrings as defined in [Google Style Guide](https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings).
+
+
+
+## Contributor License Agreement (CLA)
+
+Triton requires that all contributors (or their corporate entity) send
+a signed copy of the [Contributor License
+Agreement](https://github.com/NVIDIA/triton-inference-server/blob/master/Triton-CCLA-v1.pdf)
+to triton-cla@nvidia.com.
+*NOTE*: Contributors with no company affiliation can fill `N/A` in the
+`Corporation Name` and `Corporation Address` fields.
