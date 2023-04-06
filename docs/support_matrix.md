@@ -36,16 +36,16 @@ We have verified that the NVIDIA Model Navigator Optimize API works correctly fo
 
 ## Third-Party Packages
 
-A set of component versions are imposed by the used NGC container. During testing we have used `23.01` container version
+A set of component versions are imposed by the used NGC container. During testing we have used `23.03` container version
 that contains:
 
-- [PyTorch 1.14.0a0+410ce96](https://github.com/pytorch/pytorch/commit/410ce96)
+- [PyTorch 2.0.0a0+1767026](https://github.com/pytorch/pytorch/commit/1767026)
 - [TensorFlow 2.11.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.11.0)
-- [TensorRT 8.5.2.2](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+- [TensorRT 8.5.3.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
 - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
-- [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.43.1
-- [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.4.6
-- [tf2onnx v1.13.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.13.0)
+- [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.44.2
+- [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.26
+- [tf2onnx v1.14.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0)
 
 - Refer to [the containers support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
 for a detailed summary for each version.
