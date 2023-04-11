@@ -17,6 +17,7 @@ limitations under the License.
 # Changelog
 
 ## 0.5.2
+
 - new: Added Contributor License Agreement (CLA)
 - fix: Added missing --extra-index-url to installation instruction for pypi
 - fix: Updated wheel readme
