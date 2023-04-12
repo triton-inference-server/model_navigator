@@ -14,7 +14,7 @@
     limitations under the License.
 
 Triton Model Navigator
-======================
+========================
 
 The `Triton Model Navigator`_ automates the process of moving model from source to deployment on
 `Triton Inference Server`_. The tool validate possible export and conversion paths to serializable formats like
@@ -36,7 +36,7 @@ on `Triton Inference Server`_. Dedicated API helps with obtaining all
 necessary parameters and creating `model_repository` or receive the optimized model for inference in Python environment.
 
 Installation
-------------
+--------------
 
 The package can be installed using extra index url:
 
@@ -62,7 +62,7 @@ Extras:
 For using with PyTorch no extras are needed.
 
 Quick Start
------------
+-------------
 
 The quick start presents how to optimize Python model for deployment on Triton Inference Server. In the
 example we are using a simple TensorFlow 2 model.
@@ -152,7 +152,7 @@ See the below example of optimizing a simple TensorFlow model.
 You can customize behavior of export and conversion steps passing CustomConfig to `optimize` function.
 
 Deploying Model in PyTriton
----------------------------
+-----------------------------
 
 At this point you can use `PyTriton`_ for easy deployment of the exported model. Below you can find an example
 `serve.py` that will select the best model from a previously saved `Navigator Package`, get the best runner, and use
@@ -192,7 +192,7 @@ it to start `PyTriton`.
 
 
 Deploying Model in Triton Inference Server
-----------------------------------
+--------------------------------------------
 
 If you prefer the standalone `Triton Inference Server`_ you can create and use `model_repository`.
 
@@ -233,13 +233,13 @@ Use command to start server with provided `model_repository`:
       tritonserver --model-repository=/models
 
 Examples
---------
+----------
 
 We provide simple examples how to use Triton Model Navigator to optimize the PyTorch, TensorFlow2, JAX and ONNX models
 for deployment on Triton Inference Server. See more in  https://github.com/triton-inference-server/model_navigator/tree/main/examples.
 
 Links
------
+-------
 
 * Documentation: https://triton-inference-server.github.io/model_navigator
 * Source: https://github.com/triton-inference-server/model_navigator
