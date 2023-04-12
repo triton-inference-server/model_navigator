@@ -96,6 +96,7 @@ dev = [
     "pip >= 21.1",
     "pre-commit >= 2.20.0",
     "psutil ~= 5.1",
+    "twine >= 4.0"
 ]
 
 [build-system]
