@@ -150,6 +150,23 @@ class NavigatorRunner(abc.ABC):
         """Deactivate the runner on exiting runner context."""
         self.deactivate()
 
+    def get_input_metadata(self) -> TensorMetadata:
+        """Returns information about the inputs of the model.
+
+        Shapes here may include dynamic dimensions, represented by ``-1``.
+        Must be called only after ``activate()`` and before ``deactivate()``.
+
+        Returns: A ``TensorMetadata`` object describing the inputs of the model.
+        """
+        return self.get_input_metadata_impl()
+
+    def get_input_metadata_impl(self) -> TensorMetadata:  # noqa B027
+        """Implementation for getting input metadata.
+
+        Derived classes should override this function rather than ``get_input_metadata()``.
+        """
+        pass  # pytype: disable=bad-return-type
+
     def activate(self):
         """Activate the runner for inference.
 

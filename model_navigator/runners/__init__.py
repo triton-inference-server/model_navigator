@@ -12,16 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # noqa: D104
-from model_navigator.utils.framework import is_jax_available, is_tf_available, is_torch2_available, is_torch_available
+from model_navigator.utils.framework import (
+    is_jax_available,
+    is_tf_available,
+    is_torch2_available,
+    is_torch_available,
+    is_trt_available,
+)
 
 from .onnx import register_onnx_runners
 from .python import register_python_runners
 from .registry import load_runners_from_entry_points, register_runner  # noqa: F401
-from .tensorrt import register_tensorrt_runners
 
 register_python_runners()
 register_onnx_runners()
-register_tensorrt_runners()
+
+if is_trt_available():
+    from .tensorrt import register_tensorrt_runners
+
+    register_tensorrt_runners()
 
 if is_torch_available():
     from .torch import register_torch_runners

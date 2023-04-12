@@ -43,6 +43,14 @@ except (ModuleNotFoundError, AttributeError):
     _TF_AVAILABLE = False
 
 
+try:
+    import tensorrt  # pytype: disable=import-error # noqa: F401
+
+    _TRT_AVAILABLE = True
+except ModuleNotFoundError:
+    _TRT_AVAILABLE = False
+
+
 class Framework(Enum):
     """Frameworks for models that are supported as input for `optimize` method."""
 
@@ -96,3 +104,12 @@ def is_jax_available() -> bool:
         bool: True if JAX is available.
     """
     return _JAX_AVILABLE
+
+
+def is_trt_available() -> bool:
+    """Check if TensorRT is available.
+
+    Returns:
+        bool: True if TensorRT is available.
+    """
+    return _TRT_AVAILABLE

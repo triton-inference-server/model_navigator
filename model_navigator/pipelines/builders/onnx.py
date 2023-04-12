@@ -17,11 +17,11 @@ from typing import Dict, List
 
 from model_navigator.api.config import DeviceKind, Format
 from model_navigator.commands.base import ExecutionUnit
-from model_navigator.commands.convert.onnx import ConvertONNX2TRT
 from model_navigator.commands.copy.onnx import CopyONNX
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig
 from model_navigator.pipelines.pipeline import Pipeline
+from model_navigator.utils.framework import is_trt_available
 
 
 def onnx_export_builder(config: CommonConfig, models_config: Dict[Format, List[ModelConfig]]) -> Pipeline:
@@ -52,7 +52,9 @@ def onnx_conversion_builder(config: CommonConfig, models_config: Dict[Format, Li
         Pipeline: Conversion pipeline.
     """
     execution_units: List[ExecutionUnit] = []
-    if config.target_device == DeviceKind.CUDA:
+    if is_trt_available() and config.target_device == DeviceKind.CUDA:
+        from model_navigator.commands.convert.onnx import ConvertONNX2TRT
+
         for model_cfg in models_config.get(Format.TENSORRT, []):
             execution_units.append(ExecutionUnit(ConvertONNX2TRT, config, model_cfg))
     return Pipeline(name="ONNX Conversion", execution_units=execution_units)

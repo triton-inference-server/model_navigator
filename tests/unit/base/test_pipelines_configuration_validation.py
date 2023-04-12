@@ -32,6 +32,7 @@ from model_navigator.api.config import (
 )
 from model_navigator.exceptions import ModelNavigatorConfigurationError, ModelNavigatorConfigurationWarning
 from model_navigator.pipelines.validation import PipelineManagerConfigurationValidator
+from model_navigator.utils.framework import is_trt_available
 from tests.unit.base.mocks.packages import onnx_package, onnx_package_with_cpu_runner_only
 
 
@@ -151,48 +152,52 @@ def test_validator_raises_error_when_trt_profile_batch_dimension_mismatch():
 
 
 def test_validator_raises_no_error_when_target_format_source_is_saved_in_pacakge():
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir = pathlib.Path(tmpdir)
-        workspace = tmpdir / "navigator_workspace"
-        package = onnx_package(workspace)
-        config = package.config
-        config.target_formats = (Format.TENSORRT,)
-        PipelineManagerConfigurationValidator.run(config, package)
+    if is_trt_available():
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir = pathlib.Path(tmpdir)
+            workspace = tmpdir / "navigator_workspace"
+            package = onnx_package(workspace)
+            config = package.config
+            config.target_formats = (Format.ONNX,)
+            PipelineManagerConfigurationValidator.run(config, package)
 
 
 def test_validator_warns_when_target_format_source_is_not_saved_in_pacakge():
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir = pathlib.Path(tmpdir)
-        workspace = tmpdir / "navigator_workspace"
-        package = onnx_package_with_cpu_runner_only(workspace)
-        config = package.config
-        config.target_formats = (Format.TENSORRT,)
-        with pytest.warns(ModelNavigatorConfigurationWarning):
-            PipelineManagerConfigurationValidator.run(config, package)
+    if is_trt_available():
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir = pathlib.Path(tmpdir)
+            workspace = tmpdir / "navigator_workspace"
+            package = onnx_package_with_cpu_runner_only(workspace)
+            config = package.config
+            config.target_formats = (Format.TENSORRT,)
+            with pytest.warns(ModelNavigatorConfigurationWarning):
+                PipelineManagerConfigurationValidator.run(config, package)
 
 
 def test_validator_raises_no_error_when_trt_profile_aligns_with_dynamic_axes():
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir = pathlib.Path(tmpdir)
-        workspace = tmpdir / "navigator_workspace"
-        package = onnx_package(workspace)
-        config = package.config
-        config.custom_configs["Onnx"] = OnnxConfig(dynamic_axes={"my_input": [0, 1]})
-        config.custom_configs["TensorRT"] = TensorRTConfig(
-            trt_profile=TensorRTProfile().add("my_input", (1, 1), (2, 2), (4, 4))
-        )
-        PipelineManagerConfigurationValidator.run(config, package)
+    if is_trt_available():
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir = pathlib.Path(tmpdir)
+            workspace = tmpdir / "navigator_workspace"
+            package = onnx_package(workspace)
+            config = package.config
+            config.custom_configs["Onnx"] = OnnxConfig(dynamic_axes={"my_input": [0, 1]})
+            config.custom_configs["TensorRT"] = TensorRTConfig(
+                trt_profile=TensorRTProfile().add("my_input", (1, 1), (2, 2), (4, 4))
+            )
+            PipelineManagerConfigurationValidator.run(config, package)
 
 
 def test_validator_raises_error_when_trt_profile_does_not_align_with_dynamic_axes():
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir = pathlib.Path(tmpdir)
-        workspace = tmpdir / "navigator_workspace"
-        package = onnx_package(workspace)
-        config = package.config
-        config.custom_configs["Onnx"] = OnnxConfig(dynamic_axes={"my_input": [0]})
-        config.custom_configs["TensorRT"] = TensorRTConfig(
-            trt_profile=TensorRTProfile().add("my_input", (1, 1), (2, 2), (4, 4))
-        )
-        with pytest.raises(ModelNavigatorConfigurationError):
-            PipelineManagerConfigurationValidator.run(config, package)
+    if is_trt_available():
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir = pathlib.Path(tmpdir)
+            workspace = tmpdir / "navigator_workspace"
+            package = onnx_package(workspace)
+            config = package.config
+            config.custom_configs["Onnx"] = OnnxConfig(dynamic_axes={"my_input": [0]})
+            config.custom_configs["TensorRT"] = TensorRTConfig(
+                trt_profile=TensorRTProfile().add("my_input", (1, 1), (2, 2), (4, 4))
+            )
+            with pytest.raises(ModelNavigatorConfigurationError):
+                PipelineManagerConfigurationValidator.run(config, package)

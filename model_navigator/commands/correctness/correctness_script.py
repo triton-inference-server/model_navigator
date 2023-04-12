@@ -20,7 +20,6 @@ from typing import List, Optional
 
 import fire
 import numpy as np
-from polygraphy.comparator import util as comp_util
 
 from model_navigator.commands.correctness.correctness import Tolerance, TolerancePerOutputName
 from model_navigator.logger import LOGGER
@@ -106,8 +105,8 @@ def correctness(
                 absout1 = np.abs(out1)
 
                 reldiff = absdiff / absout1
-                max_reldiff = comp_util.compute_max(reldiff)
-                max_absdiff = comp_util.compute_max(absdiff)
+                max_reldiff = np.amax(reldiff)
+                max_absdiff = np.amax(absdiff)
 
                 if max_absdiff > per_output_tolerance[name].atol:
                     per_output_tolerance[name].atol = float(max_absdiff)

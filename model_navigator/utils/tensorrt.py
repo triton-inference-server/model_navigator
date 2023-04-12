@@ -18,6 +18,7 @@ from distutils.version import LooseVersion
 import numpy as np
 
 from model_navigator.api.config import ShapeTuple, TensorRTProfile
+from model_navigator.utils import module
 from model_navigator.utils.tensor import TensorSpec
 
 LOGGER = logging.getLogger(__name__)
@@ -30,9 +31,7 @@ _TYPE_CASTS = {
 
 def get_version():
     """Get TensorRT version."""
-    from polygraphy import mod
-
-    trt = mod.lazy_import("tensorrt")
+    trt = module.lazy_import("tensorrt")
     trt_version = LooseVersion(trt.__version__)
     return trt_version
 

@@ -153,7 +153,7 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
             }
 
             load_args = parse_kwargs_to_cmd(kwargs)
-            from model_navigator.commands.convert.onnx import trt_load_script
+            from . import trt_load_script
 
             max_conversion_batch_size = self._execute_conversion(
                 convert_func=lambda args: context.execute_cmd(
@@ -219,7 +219,7 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
                 "results_path": temp_file.name,
             }
             args = parse_kwargs_to_cmd(kwargs)
-            from model_navigator.commands.convert.onnx import collect_onnx_input_metadata
+            from . import collect_onnx_input_metadata
 
             try:
                 context.execute_external_runtime_script(collect_onnx_input_metadata.__file__, args)

@@ -1,0 +1,275 @@
+# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""TensorRT utils."""
+import contextlib
+import logging
+import os
+import signal
+from distutils.version import LooseVersion
+from typing import Callable, Union
+
+import numpy as np
+
+from model_navigator.api.config import ShapeTuple, TensorRTProfile
+from model_navigator.exceptions import ModelNavigatorNotFoundError
+from model_navigator.utils import module
+from model_navigator.utils.common import invoke_if_callable
+from model_navigator.utils.tensor import TensorMetadata, TensorSpec
+
+trt = module.lazy_import("tensorrt")
+
+LOGGER = logging.getLogger(__name__)
+_TYPE_CASTS = {
+    np.dtype(np.int64): np.dtype(np.int32),
+    np.dtype(np.float64): np.dtype(np.float32),
+    np.dtype(np.uint64): np.dtype(np.uint32),
+}
+
+
+def get_trt_profile_from_trt_dynamic_axes(trt_dynamic_axes):
+    """Create TensorRT profile from dynamic axes."""
+    trt_profile = TensorRTProfile()
+    if trt_dynamic_axes is None:
+        return trt_profile
+    for name, axes in trt_dynamic_axes.items():
+        if axes:
+            trt_profile.add(name, *list(zip(*list(axes.values()))))
+    return trt_profile
+
+
+def cast_type(dtype: np.dtype) -> np.dtype:
+    """Cast type and return new dtype."""
+    if dtype in _TYPE_CASTS:
+        return _TYPE_CASTS[dtype]
+
+    return dtype
+
+
+def cast_tensor(tensor: TensorSpec) -> TensorSpec:
+    """Cast type and return new dtype."""
+    if tensor.dtype in _TYPE_CASTS:
+        target_dtype = _TYPE_CASTS[tensor.dtype]
+        LOGGER.debug(f"Casting {tensor.dtype} tensor to {target_dtype.type}.")
+        return tensor.astype(target_dtype.type)
+
+    return tensor
+
+
+def get_trt_profile_with_new_max_batch_size(
+    trt_profile: TensorRTProfile, max_batch_size: int, batch_dim: int
+) -> TensorRTProfile:
+    """Create new TensorRT profile with maximum batch size.
+
+    Args:
+        trt_profile (TensorRTProfile): TensorRT Profile.
+        max_batch_size (int): new maximum batch size.
+        batch_dim (int): Batch dimension.
+
+    Returns:
+        Profile: New TensoRT Profile.
+    """
+    new_profile = TensorRTProfile()
+    for input_name in trt_profile:
+        max_shapes = list(trt_profile[input_name].max)
+        max_shapes[batch_dim] = max_batch_size
+        new_profile[input_name] = ShapeTuple(
+            trt_profile[input_name].min, trt_profile[input_name].opt, tuple(max_shapes)
+        )
+    return new_profile
+
+
+def _should_use_v3_api():
+    return LooseVersion(trt.__version__) > LooseVersion("8.5.0.9")
+
+
+def get_bindings_per_profile(engine):
+    """Return bindings per profile."""
+    if _should_use_v3_api():
+        LOGGER.error("This function should not be called when using the V3 API")
+
+    return engine.num_bindings // engine.num_optimization_profiles
+
+
+def is_dimension_dynamic(dim) -> bool:
+    """Return True if dimension is dynamic."""
+    is_dim_str = not isinstance(dim, int)
+    return dim is None or is_dim_str or dim < 0
+
+
+def num_dynamic_dimensions(shape) -> int:
+    """Return number of dynamic dimensions in shape."""
+    return len([dim for dim in shape if is_dimension_dynamic(dim)])
+
+
+def is_shape_dynamic(shape) -> bool:
+    """Return True if shape is dynamic."""
+    return num_dynamic_dimensions(shape) > 0
+
+
+TRT_LOGGER = None
+
+
+def get_trt_logger() -> "trt.Logger":
+    """Get the global TensorRT logger.
+
+    Returns:
+        The TensorRT logger.
+    """
+    global TRT_LOGGER
+
+    logger_type = trt.Logger
+    if LooseVersion(trt.__version__) >= LooseVersion("8.0"):
+
+        class CustomTrtLogger(trt.ILogger):
+            def __init__(self):
+                trt.ILogger.__init__(self)
+
+            def log(self, severity, msg):
+                try:
+                    log_func = {
+                        # This function cannot throw, so `critical` should not be used here!
+                        trt.Logger.INTERNAL_ERROR: LOGGER.error,
+                        trt.Logger.ERROR: LOGGER.error,
+                        # Reduce warning spam from TRT.
+                        trt.Logger.WARNING: LOGGER.warning,
+                        trt.Logger.INFO: LOGGER.info,
+                        trt.Logger.VERBOSE: LOGGER.info,
+                    }.get(severity, LOGGER.info)
+
+                    log_func(msg)
+                except KeyboardInterrupt:
+                    # `log()` is `noexcept` so we need to convert exceptions to signals so that
+                    # ctrl-C will work as expected.
+                    os.kill(os.getpid(), signal.SIGTERM)
+
+        logger_type = CustomTrtLogger
+
+    if TRT_LOGGER is None:
+        TRT_LOGGER = logger_type()
+    return TRT_LOGGER
+
+
+class EngineFromBytes:
+    """Functor that deserializes an engine from a buffer."""
+
+    def __init__(self, serialized_engine: Union[Union[str, bytes], Callable]):
+        """Deserializes an engine from a buffer.
+
+        Args:
+            serialized_engine: The serialized engine bytes  or a callable that returns them.
+        """
+        self._serialized_engine = serialized_engine
+
+    def __call__(self, *args, **kwargs):
+        """Invokes the loader by forwarding arguments to ``call_impl``.
+
+        Note: ``call_impl`` should *not* be called directly - use this function instead.
+        """
+        return self.call_impl()
+
+    def call_impl(self) -> "trt.ICudaEngine":
+        """Implementation of ``__call__``.
+
+        Returns: The deserialized engine.
+        """
+        buffer, owns_buffer = invoke_if_callable(self._serialized_engine)
+
+        trt.init_libnvinfer_plugins(get_trt_logger(), "")
+        with contextlib.ExitStack() as stack, trt.Runtime(get_trt_logger()) as runtime:
+            if owns_buffer:
+                try:
+                    buffer.__enter__  # IHostMemory is freed only in __exit__
+                except AttributeError:
+                    pass
+                else:
+                    stack.enter_context(buffer)
+
+            engine = runtime.deserialize_cuda_engine(buffer)
+            if not engine:
+                raise ModelNavigatorNotFoundError("Could not deserialize engine. See log for details.")
+            return engine
+
+
+def np_dtype_from_trt(trt_dtype):
+    """Convert a TensorRT dtype to a numpy dtype."""
+    return np.dtype(trt.nptype(trt_dtype))
+
+
+def add_binding_to_metadata(engine, binding, metadata, name_binding):
+    """Add a binding to metadata."""
+    if _should_use_v3_api():
+        LOGGER.error("This function should not be called when using the V3 API")
+
+    # name_binding always comes from profile 0, since that's where we
+    # get all binding names in the runner
+    metadata.add(
+        name=engine[name_binding],
+        dtype=np_dtype_from_trt(engine.get_binding_dtype(binding)),
+        shape=list(engine.get_binding_shape(binding)),
+    )
+
+
+def get_input_metadata_from_engine(engine, start_binding, end_binding):
+    """Returns input metada from engine."""
+    if _should_use_v3_api():
+        LOGGER.error("This function should not be called when using the V3 API")
+
+    inputs = TensorMetadata()
+    for index, binding in enumerate(range(start_binding, end_binding)):
+        if engine.binding_is_input(binding):
+            add_binding_to_metadata(engine, binding, inputs, name_binding=index)
+    return inputs
+
+
+def get_metadata_from_engine(engine, mode):
+    """Returns metadata from engine."""
+    meta = TensorMetadata()
+    for idx in range(engine.num_io_tensors):
+        name = engine.get_tensor_name(idx)
+        if engine.get_tensor_mode(name) != mode:
+            continue
+
+        meta.add(name=name, dtype=np_dtype_from_trt(engine.get_tensor_dtype(name)), shape=engine.get_tensor_shape(name))
+    return meta
+
+
+def get_active_profile_bindings(context):
+    """Gets the start and end binding indices for the active optimization profile.
+
+    Args:
+        engine (trt.ICudaEngine): The engine in question.
+        context (trt.IExecutionContext): The context where the profile is currently set.
+
+    Returns:
+        Tuple[int, int]: The start and end bindings indices, in that order
+    """
+    if _should_use_v3_api():
+        LOGGER.error("This function should not be called when using the V3 API")
+
+    active_profile = context.active_optimization_profile
+    if active_profile < 0:
+        raise ModelNavigatorNotFoundError(
+            f"Cannot determine profile bindings since the optimization profile for this context is set to: {active_profile}"
+        )
+
+    bindings_per_profile = get_bindings_per_profile(context.engine)
+
+    start_binding = bindings_per_profile * active_profile
+    end_binding = start_binding + bindings_per_profile
+
+    LOGGER.info(
+        f"Total # of Profiles: {context.engine.num_optimization_profiles}, Bindings Per Profile: {bindings_per_profile}, "
+        f"Active Profile: {active_profile}, Start Binding: {start_binding}, End Binding: {end_binding}"
+    )
+    return start_binding, end_binding

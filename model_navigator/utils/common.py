@@ -14,6 +14,8 @@
 """Common utils."""
 
 import dataclasses
+import glob
+import os
 import pathlib
 from enum import Enum
 from pathlib import Path
@@ -22,6 +24,8 @@ from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Mapping, Optional, 
 import dacite
 import numpy
 from polygraphy.backend.trt.profile import Profile, ShapeTuple
+
+from model_navigator.logger import LOGGER
 
 if TYPE_CHECKING:
     import torch  # pytype: disable=import-error
@@ -246,3 +250,238 @@ def parse_kwargs_to_cmd(kwargs: Dict[str, Any]) -> List[str]:
         s = str(v).replace("'", '"')
         args.extend([f"--{k}", f"{s!r}"])
     return args
+
+
+def find_str_in_iterable(name, seq, index=None):
+    """Search for string in sequence.
+
+    Attempts to find matching strings in a sequence. Checks for exact matches, then
+    case-insensitive substring matches, finally falling back to index based matching.
+
+    Args:
+        name: The key to search for.
+        seq: The dictionary to search in.
+        index: An index to fall back to if the string could not be found.
+
+    Returns:
+        str: The element found in the sequence, or None if it could not be found.
+    """
+    if name in seq:
+        return name
+
+    for elem in seq:
+        if name.lower() in elem.lower() or elem.lower() in name.lower():
+            return elem
+
+    if index is not None and index < len(seq):
+        return list(seq)[index]
+    return None
+
+
+def volume(obj):
+    """Calculate the volume of an object.
+
+    Returns: The volume of the object.
+    """
+    vol = 1
+    for elem in obj:
+        vol *= elem
+    return vol
+
+
+def default(value, default):
+    """Returns a specified default value if the provided value is None.
+
+    Args:
+        value : The value.
+        default : The default value to use if value is None.
+
+    Returns:
+        object: Either value, or the default.
+    """
+    return value if value is not None else default
+
+
+def invoke_if_callable(func, *args, **kwargs):
+    """Invoke if callable.
+
+    Attempts to invoke a function with arguments. If `func` is not callable, then returns `func`
+    The second return value of this function indicates whether the argument was a callable.
+    """
+    if callable(func):
+        ret = func(*args, **kwargs)
+        return ret, True
+    return func, False
+
+
+def warn_if_wrong_mode(file_like, mode: str):
+    """Warn if file-like object has a different mode than requested."""
+    # pytype: disable=attribute-error
+    def binary(mode):
+        return "b" in mode
+
+    def readable(mode):
+        return "r" in mode or "+" in mode
+
+    def writable(mode):
+        return "w" in mode or "a" in mode or "+" in mode
+
+    fmode = file_like.mode
+    if (
+        binary(fmode) != binary(mode)
+        or (readable(mode) and not readable(fmode))
+        or (writable(mode) and not writable(fmode))
+    ):
+        LOGGER.warning(
+            f"File-like object has a different mode than requested!\nNote: Requested mode was: {mode} but file-like object has mode: {file_like.mode}"
+        )
+    # pytype: enable=attribute-error
+
+
+def is_file_like(obj):
+    """Check if an object is file-like.
+
+    Args:
+        obj: The object to check.
+
+    Returns:
+        bool: True if the object is file-like, False otherwise.
+    """
+    try:
+        obj.read  # pytype: disable=attribute-error
+        obj.write  # pytype: disable=attribute-error
+    except AttributeError:
+        return False
+    else:
+        return True
+
+
+def load_file(src: Union[str, Path], mode: str = "rb", description: Optional[str] = None) -> Union[str, bytes, None]:
+    """Reads from the specified source path or file-like object.
+
+    Args:
+        src: The path or file-like object to read from.
+
+
+        mode: The mode to use when reading. Defaults to "rb".
+        description: A description of what is being read.
+
+    Returns:
+        The contents read.
+
+    Raises:
+        Exception: If the file or file-like object could not be read.
+    """
+    if description is not None:
+        LOGGER.info(f"Loading {description} from {src}")
+    # pytype: disable=attribute-error
+    if is_file_like(src):
+        warn_if_wrong_mode(src, mode)
+        # Reset cursor position after reading from the beginning of the file.
+        prevpos = src.tell()
+        if src.seekable():
+            src.seek(0)
+        contents = src.read()
+        if src.seekable():
+            src.seek(prevpos)
+        return contents
+    else:
+        with open(src, mode) as f:
+            return f.read()
+    # pytype: enable=attribute-error
+
+
+class BytesFromPath:
+    """Functor that can load a file in binary mode ('rb')."""
+
+    def __init__(self, path):
+        """Loads a file in binary mode ('rb').
+
+        Args:
+            path (str): The file path.
+        """
+        self._path = path
+
+    def __call__(self, *args, **kwargs):
+        """Invokes the loader by forwarding arguments to ``call_impl``.
+
+        Note: ``call_impl`` should *not* be called directly - use this function instead.
+        """
+        return self.call_impl(*args, **kwargs)
+
+    def call_impl(self):
+        """Implementation of ``__call__``.
+
+        Returns:
+            bytes: The contents of the file.
+        """
+        return load_file(self._path, description="bytes")
+
+
+def is_contiguous(array):
+    """Checks whether the provided NumPy array is contiguous in memory.
+
+    Args:
+        array (np.ndarray): The NumPy array.
+
+    Returns:
+        bool: Whether the array is contiguous in memory.
+    """
+    return array.flags["C_CONTIGUOUS"]
+
+
+def make_contiguous(array):
+    """Makes a NumPy array contiguous if it's not already.
+
+    Args:
+        array (np.ndarray): The NumPy array.
+
+    Returns:
+        np.ndarray: The contiguous NumPy array.
+    """
+    if not is_contiguous(array):
+        return numpy.ascontiguousarray(array)
+    return array
+
+
+def resize_buffer(buffer: numpy.ndarray, shape: Sequence[int]) -> numpy.ndarray:
+    """Resize a buffer to the specified shape.
+
+    Resizes the provided buffer and makes it contiguous in memory,
+    possibly reallocating the buffer.
+
+    Args:
+        buffer: The buffer to resize.
+        shape: The desired shape of the buffer.
+
+    Returns:
+        The resized buffer, possibly reallocated.
+    """
+    if shape != buffer.shape:
+        try:
+            buffer.resize(shape, refcheck=False)
+        except ValueError as err:
+            LOGGER.warning(
+                f"Could not resize host buffer to shape: {shape}. "
+                f"Allocating a new buffer instead.\nNote: Error was: {err}"
+            )
+            buffer = numpy.empty(shape, dtype=numpy.dtype(buffer.dtype))
+    return make_contiguous(buffer)
+
+
+def find_in_dirs(name_glob: str, dirs: Sequence[str]) -> List[str]:
+    """Finds a file, optionally including a glob expression, in the specified directories.
+
+    Args:
+        name_glob: The name of the file, optionally including a glob expression.
+                Only the first match will be returned.
+        dirs: The directories in which to search.
+
+    Returns:
+        The paths found, or an empty list if it could not be found.
+    """
+    for dir_name in dirs:
+        paths = glob.glob(os.path.join(dir_name, name_glob))
+        if paths:
+            return paths
+    return []
