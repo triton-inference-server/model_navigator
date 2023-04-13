@@ -16,6 +16,9 @@ limitations under the License.
 
 # Changelog
 
+## 0.6.0 (unreleased)
+
+
 ## 0.5.2
 
 - new: Added Contributor License Agreement (CLA)
