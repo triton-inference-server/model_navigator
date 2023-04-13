@@ -13,7 +13,7 @@
 # limitations under the License.
 """ConvertONNX2TRT command."""
 
-from typing import Callable, Iterable, Iterator, Optional
+from typing import Callable, Generator, Iterable, Optional
 
 from model_navigator.api.config import TensorRTProfile
 from model_navigator.commands.base import Command
@@ -115,7 +115,7 @@ class Convert2TensorRTWithMaxBatchSizeSearch(Command):
     @staticmethod
     def _get_conversion_fallback_batch_sizes(
         device_max_batch_size: int, dataloader_max_batch_size: int
-    ) -> Iterator[int]:
+    ) -> Generator[int, None, None]:
         max_batch_size_halving_left = DEFAULT_MAX_BATCH_SIZE_HALVING  # TODO what is the best value?
         max_batch_size = device_max_batch_size // 2
         while max_batch_size > dataloader_max_batch_size and max_batch_size_halving_left > 0:
