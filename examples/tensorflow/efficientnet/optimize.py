@@ -63,10 +63,8 @@ def get_verify_function():
         """Verify that at least 99% max probability tokens match on any given batch."""
         for y_runner, y_expected in zip(ys_runner, ys_expected):
             if not all(
-                [
-                    np.mean(a.argmax(axis=1) == b.argmax(axis=1)) > 0.99
-                    for a, b in zip(y_runner.values(), y_expected.values())
-                ]
+                np.mean(a.argmax(axis=1) == b.argmax(axis=1)) > 0.99
+                for a, b in zip(y_runner.values(), y_expected.values())
             ):
                 return False
         return True

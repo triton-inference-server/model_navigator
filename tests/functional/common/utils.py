@@ -113,7 +113,7 @@ def collect_expected_files(package_path: pathlib.Path, status: Status) -> List[s
         export_formats = [fmt.value for fmt in EXPORT_FORMATS[framework]]
         if model_status_key == input_format.value:
             format_files = FORMAT_FILES
-        elif any([model_status_key.startswith(fmt) for fmt in export_formats]):
+        elif any(model_status_key.startswith(fmt) for fmt in export_formats):
             format_files = FORMAT_FILES + ["reproduce_export.sh", "reproduce_export.py"]
         else:
             format_files = FORMAT_FILES + ["reproduce_conversion.sh"]
@@ -141,7 +141,7 @@ def collect_status(status: Status) -> Dict:
 def validate_status(status: Dict, expected_statuses: List) -> None:
     current_statuses = set(status.keys())
 
-    if not all([expected_status in current_statuses for expected_status in expected_statuses]):
+    if not all(expected_status in current_statuses for expected_status in expected_statuses):
         missing_statuses = set(expected_statuses) - current_statuses
         unexpected_statuses = current_statuses - set(expected_statuses)
         raise ValidationError(

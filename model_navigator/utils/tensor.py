@@ -61,7 +61,7 @@ class TensorSpec:
         _expect_type("shape", self.shape, tuple)
         _expect_type("dtype", self.dtype, np.dtype, optional=True)
         _expect_type("optional", self.optional, bool, optional=True)
-        if not all([_is_dim_correct(dim) for dim in self.shape]):
+        if not all(_is_dim_correct(dim) for dim in self.shape):
             raise TypeError(f"Shape items should be integers equal to -1 or positive numbers. Got {self.shape}")
 
     def astype(self, dtype: Union[np.dtype, Type[np.dtype]]) -> "TensorSpec":

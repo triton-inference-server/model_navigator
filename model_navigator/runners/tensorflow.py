@@ -97,7 +97,7 @@ class TensorFlowSavedModelCPURunner(_BaseTFRunner):
 
     def activate_impl(self):
         """Runner activation implementation."""
-        if any([device.device_type == "GPU" for device in tf.config.get_visible_devices()]):
+        if any(device.device_type == "GPU" for device in tf.config.get_visible_devices()):
             tf.config.set_visible_devices([], "GPU")
         self._loaded_model = tf.keras.models.load_model(str(self._model))
 
@@ -191,7 +191,7 @@ class TensorFlowCPURunner(_BaseTFRunner):
 
     def activate_impl(self):
         """Runner activation implementation."""
-        if any([device.device_type == "GPU" for device in tf.config.get_visible_devices()]):
+        if any(device.device_type == "GPU" for device in tf.config.get_visible_devices()):
             tf.config.set_visible_devices([], "GPU")
         self._loaded_model = self.model
 

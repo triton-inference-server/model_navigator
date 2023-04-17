@@ -36,7 +36,7 @@ def get_verify_function():
     def verify_func(ys_runner, ys_expected):
         for y_runner, y_expected in zip(ys_runner, ys_expected):
             if not all(
-                [np.allclose(a, b, rtol=1.0e-3, atol=1.0e-3) for a, b in zip(y_runner.values(), y_expected.values())]
+                np.allclose(a, b, rtol=1.0e-3, atol=1.0e-3) for a, b in zip(y_runner.values(), y_expected.values())
             ):
                 return False
         return True
