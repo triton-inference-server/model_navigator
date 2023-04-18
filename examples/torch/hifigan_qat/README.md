@@ -1,0 +1,36 @@
+<!--
+Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+# NeMo HiFiGAN Model
+
+In this example we show how to optimize [NeMo HiFiGAN](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/nemo/models/tts_hifigan) model. We recommend running this example in NVIDIA NGC [PyTorch containter](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch).
+
+**Installation**
+
+1. Install model\_navigator and pre-requisites
+2. Install Riva dependencies
+```
+sudo apt-get install -y libsndfile1 ffmpeg
+python3 -m pip install git+https://github.com/NVIDIA/NeMo.git@r1.7.2#egg=nemo_toolkit[all]
+```
+
+**Usage**
+
+To run the example simply run the `optimize.py` script:
+
+```bash
+./optimize.py --output-path tts_hifigan.nav
+```
