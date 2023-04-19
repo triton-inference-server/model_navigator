@@ -17,7 +17,7 @@ limitations under the License.
 # Changelog
 
 ## 0.6.0 (unreleased)
-
+- new: Custom implementation for ONNX and TensorRT runners
 
 ## 0.5.2
 

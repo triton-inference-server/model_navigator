@@ -78,7 +78,7 @@ def _make_output_allocator():
                 self.buffers[tensor_name] = cuda.DeviceArray.raw(shape)
             else:
                 self.buffers[tensor_name].resize(shape)
-            LOGGER.info(f"Reallocated output tensor: {tensor_name} to: {self.buffers[tensor_name]}")
+            LOGGER.debug(f"Reallocated output tensor: {tensor_name} to: {self.buffers[tensor_name]}")
             return self.buffers[tensor_name].ptr
 
         def notify_shape(self, tensor_name, shape):
@@ -203,7 +203,7 @@ class TensorRTRunner(NavigatorRunner):
                 if not self.engine.binding_is_input(binding):
                     host_output_buffers[binding] = np.empty(shape=(), dtype=dtype)
 
-            LOGGER.info(f"Initialized device buffers: {device_buffers}")
+            LOGGER.debug(f"Initialized device buffers: {device_buffers}")
             return device_buffers, host_output_buffers, None
 
         def make_buffers():
@@ -229,7 +229,7 @@ class TensorRTRunner(NavigatorRunner):
                         "Please update this implementation!"
                     )
 
-            LOGGER.info(f"Initialized device buffers: {device_buffers}")
+            LOGGER.debug(f"Initialized device buffers: {device_buffers}")
             return device_buffers, host_output_buffers, output_allocator
 
         self.device_buffers, self.host_output_buffers, self.output_allocator = (
@@ -270,7 +270,7 @@ class TensorRTRunner(NavigatorRunner):
                     )
 
                 if tuple(self.context.get_shape(binding)) != tuple(inp):
-                    LOGGER.info(f"Setting shape binding: {name} (index: {binding}) to: {inp}")
+                    LOGGER.debug(f"Setting shape binding: {name} (index: {binding}) to: {inp}")
                     if not self.context.set_shape_input(binding, inp):
                         raise ModelNavigatorError(
                             f"Failed to set shape binding: {name} (index: {binding}) to: {inp}. "
@@ -280,7 +280,7 @@ class TensorRTRunner(NavigatorRunner):
             elif trt_utils.is_shape_dynamic(self.engine.get_binding_shape(binding)):
                 shape = inp.shape
                 if tuple(self.context.get_binding_shape(binding)) != tuple(shape):
-                    LOGGER.info(f"Setting binding: {name} (index: {binding}) to shape: {shape}")
+                    LOGGER.debug(f"Setting binding: {name} (index: {binding}) to shape: {shape}")
                     if not self.context.set_binding_shape(binding, shape):
                         raise ModelNavigatorError(
                             f"Failed to set binding: {name} (index: {binding}) to shape: {shape}. "
@@ -390,7 +390,7 @@ class TensorRTRunner(NavigatorRunner):
             # doing extra work unnecessarily.
             # We retrieve the semantic shape from the FormattedArray, *not* the underlying array.
             if self.context.get_tensor_shape(name) != array.shape:
-                LOGGER.info(f"Setting {name} input shape to: {array.shape}")
+                LOGGER.debug(f"Setting {name} input shape to: {array.shape}")
                 if not self.context.set_input_shape(name, array.shape):
                     raise ModelNavigatorError(f"For input: {name}, failed to set shape to: {array.shape}")
 
