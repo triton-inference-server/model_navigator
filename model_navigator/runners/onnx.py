@@ -67,7 +67,8 @@ class _BaseOnnxrtRunner(NavigatorRunner):
     def infer_impl(self, feed_dict):
         input_metadata = self.get_onnx_input_metadata()
         feed_dict = {name: tensor for name, tensor in feed_dict.items() if name in input_metadata}
-        return self._runner.infer_impl(feed_dict)
+        out_dict = self._runner.infer_impl(feed_dict)
+        return {k: v for k, v in out_dict.items() if k in self.output_metadata}
 
     def deactivate_impl(self):
         self._runner.deactivate_impl()

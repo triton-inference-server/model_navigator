@@ -47,7 +47,7 @@ def is_shape_correct(name: str, value: Optional[Tuple], optional: bool = False):
     if not value and not optional:
         raise ModelNavigatorWrongParameterError(f"Empty {name} is not supported.")
 
-    if not all([is_dim_correct(dim) for dim in value]):
+    if not all(is_dim_correct(dim) for dim in value):
         raise ModelNavigatorWrongParameterError(
             f"{name} items should be integers equal to -1 or positive numbers. Got {value}."
         )

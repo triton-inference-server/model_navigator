@@ -71,7 +71,7 @@ def main():
 
     def verify_func(ys_runner, ys_expected):
         for y_runner, y_expected in zip(ys_runner, ys_expected):
-            if not all([np.allclose(a, b) for a, b in zip(y_runner.values(), y_expected.values())]):
+            if not all(np.allclose(a, b) for a, b in zip(y_runner.values(), y_expected.values())):
                 return False
         return True
 

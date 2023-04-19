@@ -61,7 +61,7 @@ class ModelConfig:
         if self.batching and self.max_batch_size <= 0:
             raise ModelNavigatorWrongParameterError("The `max_batch_size` must be greater or equal to 1.")
 
-        if self.backend != Backend.TensorRT and any([group.profile for group in self.instance_groups]):
+        if self.backend != Backend.TensorRT and any(group.profile for group in self.instance_groups):
             raise ModelNavigatorWrongParameterError(
                 "Invalid `profile` option. The value can be set only for `backend=Backend.TensorRT`"
             )

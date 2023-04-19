@@ -53,7 +53,7 @@ class BaseSpecializedModelConfig(abc.ABC):
         if type(self.batcher) not in [DynamicBatcher, SequenceBatcher]:
             raise ModelNavigatorWrongParameterError("Unsupported batcher type provided.")
 
-        if self.backend != Backend.TensorRT and any([group.profile for group in self.instance_groups]):
+        if self.backend != Backend.TensorRT and any(group.profile for group in self.instance_groups):
             raise ModelNavigatorWrongParameterError(
                 "Invalid `profile` option. The value can be set only for `backend=Backend.TensorRT`"
             )

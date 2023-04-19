@@ -35,7 +35,7 @@ def predict(inputs, params):
 
 def test_raise_error_when_target_device_cpu_and_gpu_available():
     # Check if GPU is available
-    if any([device.device_type == "GPU" for device in tensorflow.config.get_visible_devices()]):
+    if any(device.device_type == "GPU" for device in tensorflow.config.get_visible_devices()):
         with pytest.raises(ModelNavigatorConfigurationError):
             nav.jax.optimize(
                 model=predict,

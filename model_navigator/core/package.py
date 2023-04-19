@@ -170,7 +170,7 @@ class Package:
 
         def _filter_out_generated_files(paths: List[str]):
             generated_files_extensions = [".log", ".sh", ".py"]
-            return [p for p in paths if not any([p.endswith(suffix) for suffix in generated_files_extensions])]
+            return [p for p in paths if not any(p.endswith(suffix) for suffix in generated_files_extensions)]
 
         def _extract_pkg_version(status_dict):
             return version.parse(status_dict.get("model_navigator_version", "0.3.0"))

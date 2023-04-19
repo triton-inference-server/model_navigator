@@ -89,7 +89,7 @@ def optimize(
         Package descriptor representing created package.
     """
     if target_device == DeviceKind.CPU and any(
-        [device.device_type == "GPU" for device in tensorflow.config.get_visible_devices()]
+        device.device_type == "GPU" for device in tensorflow.config.get_visible_devices()
     ):
         raise ModelNavigatorConfigurationError(
             "\n"
