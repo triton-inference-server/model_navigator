@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ONNX runners."""
-import time
 from collections import OrderedDict
 from typing import List, Optional, Sequence, Union
 
@@ -131,14 +130,11 @@ class _BaseOnnxrtRunner(NavigatorRunner):
         input_metadata = self.get_onnx_input_metadata()
         feed_dict = {name: tensor for name, tensor in feed_dict.items() if name in input_metadata}
 
-        start = time.time()
         inference_outputs = self.sess.run(None, feed_dict)
-        end = time.time()
-
         out_dict = OrderedDict()
         for node, out in zip(self.sess.get_outputs(), inference_outputs):
             out_dict[node.name] = out
-        self.inference_time = end - start
+        out_dict = {k: v for k, v in out_dict.items() if k in self.output_metadata}
         return out_dict
 
     def deactivate_impl(self):

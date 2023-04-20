@@ -14,7 +14,6 @@
 """TensorRT runners."""
 import contextlib
 import copy
-import time
 from collections import OrderedDict
 from distutils.version import LooseVersion
 from typing import List, Optional, Sequence
@@ -464,15 +463,13 @@ class TensorRTRunner(NavigatorRunner):
 
         copy_outputs_to_host = utils.default(copy_outputs_to_host, True)
 
-        start = time.time()
         if trt_utils._should_use_v3_api():
             output_buffers = self._infer_impl_v3(feed_dict, copy_outputs_to_host)
         else:
             output_buffers = self._infer_impl_legacy(feed_dict, copy_outputs_to_host)
-        end = time.time()
-        self.inference_time = end - start
+        out_dict = {k: v for k, v in output_buffers.items() if k in self.output_metadata}
 
-        return output_buffers
+        return out_dict
 
     def deactivate_impl(self):
         """Implementation for deactivating the runner.
