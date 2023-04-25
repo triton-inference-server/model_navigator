@@ -14,21 +14,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-# Triton Inference Server MLP model deployment
+# Triton Inference Server Torch linear model deployment
 
-This example show how to optimize simple mlp model and deploy it to PyTriton and Triton Inference Server.
+This example show how to optimize simple linear model and deploy it to PyTriton.
 
 ## Requirements
 
-The example requires the `tensorflow` package. It can be installed in your current environment using pip:
+The example requires the `torch` package. It can be installed in your current environment using pip:
 
 ```shell
-pip install tensorflow
+pip install torch
 ```
 
-Or you can use NVIDIA TensorFlow container:
+Or you can use NVIDIA Torch container:
 ```shell
-docker run -it --gpus 1 --shm-size 8gb -v ${PWD}:${PWD} -w ${PWD} nvcr.io/nvidia/tensorflow:23.01-tf2-py3 bash
+docker run -it --gpus 1 --shm-size 8gb -v ${PWD}:${PWD} -w ${PWD} nvcr.io/nvidia/pytorch:23.01-py3 bash
 ```
 
 If you select to use container we recommend to install
@@ -36,10 +36,10 @@ If you select to use container we recommend to install
 
 ## Install the Model Navigator
 
-Install the Triton Model Navigator following the installation guide for tensorflow:
+Install the Triton Model Navigator following the installation guide for Torch:
 
 ```shell
-pip install --extra-index-url https://pypi.ngc.nvidia.com .[tensorflow]
+pip install --extra-index-url https://pypi.ngc.nvidia.com .[torch]
 ```
 
 **Note**: run this command from main catalog inside the repository
@@ -52,7 +52,7 @@ In next step the optimize process is going to be performed for the model.
 python examples/triton/optimize.py
 ```
 
-Once the process is done, the `mlp.nav` package is created in current working directory.
+Once the process is done, the `linear.nav` package is created in current working directory.
 
 ## Start PyTriton server
 

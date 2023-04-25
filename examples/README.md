@@ -16,50 +16,48 @@ limitations under the License.
 
 # Examples
 
-We provide examples how to use Model Navigator to optimize models in frameworks (PyTorch, TensorFlow2, JAX, ONNX), from
-existing .nav packages, and also how to deploy optimized models on
+We provide step-by-step examples that demonstrate how to use various features of Model Navigator.
+For the sake of readability and accessibility, we use a simple torch.nn.Linear model as an example.
+These examples illustrate how to optimize, test, and deploy the model on
 the [NVIDIA Triton Inference Server](https://github.com/triton-inference-server/server).
 
-## Optimize models in frameworks
 
-You can find examples per each supported framework.
+## Step-by-step examples
+
+1. [Optimize and verify model](../examples/01_optimize_torch_linear_model/)
+2. [Optimize model and verify model](../examples/02_optimize_and_verify_model/)
+3. [Optimize model and save package](../examples/03_optimize_model_and_save_package/)
+4. [Load and optimize package](../examples/04_load%E2%80%8E_and_optimize_package%E2%80%8E/)
+5. [Optimize and server model on PyTriton](../examples/05_optimize_and_serve_model_on_pytriton/)
+6. [Optimize and serve model on Triton Inference Server](../examples/06_optimize_and_serve_model_on_triton/)
+7. [Optimize model and use for offline inference](../examples/07_optimize_model_and_use_for_offline_inference/)
+8. [Optimize PyTorch HiFi-GAN QAT model](../examples/08_optimize_pytorch_hifigan_qat_model/)
+9. [Custom configuration for optimize](../examples/09_custom_configurations_for_optimize/)
+
+
+## Example models
+Inside [example/models](../examples/models/) directory you can find ready to use example models in various frameworks.
 
 `Python`:
-- [Identity Model](../examples/python/identity)
+- [Identity Model](../examples/models/python/identity)
 
 `PyTorch`:
 
-- [Linear Model](../examples/torch/linear)
-- [ResNet50](../examples/torch/resnet50)
-- [BERT](../examples/torch/bert)
+- [Linear Model](../examples/models/torch/linear)
+- [ResNet50](../examples/models/torch/resnet50)
+- [BERT](../examples/models/torch/bert)
 
 `TensorFlow`:
 
-- [Linear Model](../examples/tensorflow/linear)
-- [EfficientNet](../examples/tensorflow/efficientnet)
-- [BERT](../examples/tensorflow/bert)
+- [Linear Model](../examples/models/tensorflow/linear)
+- [EfficientNet](../examples/models/tensorflow/efficientnet)
+- [BERT](../examples/models/tensorflow/bert)
 
 `JAX`:
 
-- [Linear Model](../examples/jax/linear)
-- [GPT-2](../examples/jax/gpt2)
+- [Linear Model](../examples/models/jax/linear)
+- [GPT-2](../examples/models/jax/gpt2)
 
 `ONNX`:
 
-- [Identity Model](../examples/onnx/identity)
-
-## Optimize Navigator Package
-
-The Navigator Package can be reused for optimize e.g. on the new hardware or with newer libraries.
-The example code can be found in [examples/package](../examples/package).
-
-### Using model on PyTriton
-
-The optimized model by Triton Model Navigator can be used for serving inference through PyTriton. The
-example code can be found in [examples/pytriton](../examples/pytriton).
-
-### Using model on Triton Inference Server
-
-The optimized model by Triton Model Navigator can be used for serving inference through Triton Inference Server. The
-example code can be found in [examples/triton](../examples/triton).
-
+- [Identity Model](../examples/models/onnx/identity)

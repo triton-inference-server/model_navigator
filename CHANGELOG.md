@@ -19,6 +19,7 @@ limitations under the License.
 ## 0.5.4 (unreleased)
 - new: Custom implementation for ONNX and TensorRT runners
 - new: Use CUDA 12 for JAX in unit tests and functional tests
+- new: Step-by-step examples
 
 ## 0.5.3
 - fix: filter outputs using output_metadata in ONNX runners

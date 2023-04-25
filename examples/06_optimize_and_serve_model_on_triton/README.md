@@ -14,21 +14,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-# Triton Inference Server MLP model deployment
+# Triton Inference Server Linear model deployment
 
-This example show how to optimize simple mlp model and deploy it to Triton Inference Server.
+This example show how to optimize simple linear model and deploy it to Triton Inference Server.
 
 ## Requirements
 
-The example requires the `tensorflow` package. It can be installed in your current environment using pip:
+The example requires the `torch` package. It can be installed in your current environment using pip:
 
 ```shell
-pip install tensorflow
+pip install torch
 ```
 
-Or you can use NVIDIA TensorFlow container:
+Or you can use NVIDIA Torch container:
 ```shell
-docker run -it --gpus 1 --shm-size 8gb -v ${PWD}:${PWD} -w ${PWD} nvcr.io/nvidia/tensorflow:23.01-tf2-py3 bash
+docker run -it --gpus 1 --shm-size 8gb -v ${PWD}:${PWD} -w ${PWD} nvcr.io/nvidia/pytorch:23.01-py3 bash
 ```
 
 If you select to use container we recommend to install
@@ -36,10 +36,10 @@ If you select to use container we recommend to install
 
 ## Install the Model Navigator
 
-Install the Triton Model Navigator following the installation guide for tensorflow:
+Install the Triton Model Navigator following the installation guide for Torch:
 
 ```shell
-pip install --extra-index-url https://pypi.ngc.nvidia.com .[tensorflow]
+pip install --extra-index-url https://pypi.ngc.nvidia.com .[torch]
 ```
 
 **Note**: run this command from main catalog inside the repository
@@ -85,7 +85,7 @@ docker run -it --network=host nvcr.io/nvidia/tritonserver:23.01-py3-sdk bash
 And profile the model:
 
 ```bash
-perf_analyzer -m MLP --concurrency-range 2:32:2
+perf_analyzer -m linear --concurrency-range 2:32:2
 ```
 
 ## Remove containers

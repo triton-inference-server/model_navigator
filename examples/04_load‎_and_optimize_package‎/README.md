@@ -16,13 +16,18 @@ limitations under the License.
 
 # Torch Linear Model
 
-In this example we show how to optimize existing nav package. We recommend running this example in NVIDIA NGC [PyTorch](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch) or [TensorFlow2](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/tensorflow) container. For PyTorch nav package run
+In this example, we show how to optimize an existing `.nav` package.
+After the optimization is completed, a new package is saved.
+
+We recommend running this example in NVIDIA NGC [PyTorch](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch) or [TensorFlow2](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/tensorflow) container.
+
+For PyTorch nav package run
 
 ```bash
 ./optimize.py --input-path torch_linear.nav --output-path optimized_torch_linear.nav --no-defaults
 ```
 
-or for TensorFlow package:
+or for TensorFlow2 package:
 
 ```bash
 ./optimize.py --input-path tensorflow_linear.nav --output-path optimized_tensorflow_linear.nav --no-defaults
