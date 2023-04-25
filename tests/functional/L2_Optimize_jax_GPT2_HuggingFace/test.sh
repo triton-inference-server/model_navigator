@@ -18,7 +18,10 @@ set -ex
 THIS_SCRIPT_PATH="$(realpath --relative-to="$(pwd)" "$0")"
 TEST_MODULE="$(dirname "${THIS_SCRIPT_PATH}"|sed 's/\//./g').test"
 
-pip install --upgrade "jax[cuda]" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+#JAX_VERSION="jax[cuda11_pip]"
+JAX_VERSION="jax[cuda12_pip]"
+
+pip install --upgrade ${JAX_VERSION} -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
 pip install transformers flax
 
 python -m"${TEST_MODULE}" \
