@@ -20,7 +20,7 @@ from model_navigator.commands.infer_metadata import (
     _get_metadata_from_axes_shapes,
     _get_trt_profile_from_axes_shapes,
 )
-from model_navigator.utils.tensor import TensorSpec
+from model_navigator.core.tensor import TensorSpec
 
 
 def test_extract_max_batch_size_return_correct_value_when_multiple_values_passed():

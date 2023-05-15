@@ -13,7 +13,7 @@
 # limitations under the License.
 """Test for Torch API"""
 from model_navigator.api.config import Format, TensorRTConfig, TorchTensorRTConfig
-from model_navigator.utils.torch import update_allowed_batching_parameters
+from model_navigator.frameworks.torch.utils import update_allowed_batching_parameters
 
 
 def test_update_allowed_batching_parameters_return_original_custom_configs_when_empty_none_provide():

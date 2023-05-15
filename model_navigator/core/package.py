@@ -34,6 +34,7 @@ from model_navigator.exceptions import (
     ModelNavigatorNotFoundError,
     ModelNavigatorRuntimeAnalyzerError,
 )
+from model_navigator.frameworks import Framework
 from model_navigator.logger import LOGGER
 from model_navigator.runners.base import NavigatorRunner
 from model_navigator.runners.registry import get_runner
@@ -47,7 +48,6 @@ from model_navigator.runtime_analyzer.strategy import (
 from model_navigator.utils import package as package_utils
 from model_navigator.utils.common import get_default_status_filename, get_default_workspace
 from model_navigator.utils.format_helpers import FORMAT2SUFFIX, get_framework_export_formats, is_source_format
-from model_navigator.utils.framework import Framework
 
 
 class Package:

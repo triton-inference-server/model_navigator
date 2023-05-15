@@ -31,8 +31,8 @@ from model_navigator.api.config import (
     TorchTensorRTConfig,
 )
 from model_navigator.exceptions import ModelNavigatorConfigurationError, ModelNavigatorConfigurationWarning
+from model_navigator.frameworks import is_trt_available
 from model_navigator.pipelines.validation import PipelineManagerConfigurationValidator
-from model_navigator.utils.framework import is_trt_available
 from tests.unit.base.mocks.packages import onnx_package, onnx_package_with_cpu_runner_only
 
 

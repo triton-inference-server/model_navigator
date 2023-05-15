@@ -34,7 +34,7 @@ def main():
     from transformers.models.gpt2.modeling_tf_gpt2 import TFGPT2LMHeadModel  # pytype: disable=import-error
 
     import model_navigator as nav
-    from model_navigator.utils.framework import Framework
+    from model_navigator.frameworks import Framework
     from tests import utils
     from tests.functional.common import huggingface_utils
     from tests.functional.common.utils import collect_status

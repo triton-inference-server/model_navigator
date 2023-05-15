@@ -21,9 +21,9 @@ import numpy
 import tensorflow  # pytype: disable=import-error
 
 from model_navigator.commands.data_dump.samples import DumpInputModelData, DumpOutputModelData
-from model_navigator.utils.framework import Framework
-from model_navigator.utils.jax import JaxModel
-from model_navigator.utils.tensor import TensorMetadata, TensorSpec
+from model_navigator.core.tensor import TensorMetadata, TensorSpec
+from model_navigator.frameworks import Framework
+from model_navigator.frameworks.jax import JaxModel
 
 gpus = tensorflow.config.experimental.list_physical_devices("GPU")
 for gpu in gpus:

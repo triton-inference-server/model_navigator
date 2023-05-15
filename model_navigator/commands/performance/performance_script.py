@@ -20,9 +20,9 @@ import fire
 
 from model_navigator.api.config import ProfilerConfig
 from model_navigator.commands.performance import Profiler
+from model_navigator.core.tensor import TensorMetadata
 from model_navigator.runners.registry import get_runner
 from model_navigator.utils.dataloader import load_samples
-from model_navigator.utils.tensor import TensorMetadata
 
 
 def get_model() -> object:

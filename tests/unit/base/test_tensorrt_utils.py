@@ -14,25 +14,26 @@
 import numpy as np
 
 from model_navigator.api.config import ShapeTuple, TensorRTProfile
-from model_navigator.utils import tensorrt
-from model_navigator.utils.tensor import TensorSpec
+from model_navigator.core.tensor import TensorSpec
+from model_navigator.frameworks.tensorrt import utils as tensorrt_utils
+from model_navigator.frameworks.tensorrt.utils import _opt_batch_size
 
 
 def test_cast_type_return_current_type_when_has_no_cast():
     dtypes = [np.dtype("int32"), np.dtype("float32"), np.dtype("object")]
     for dtype in dtypes:
-        assert dtype == tensorrt.cast_type(dtype)
+        assert dtype == tensorrt_utils.cast_type(dtype)
 
 
 def test_cast_type_return_new_type_when_has_cast():
-    assert np.dtype("int32") == tensorrt.cast_type(np.dtype("int64"))
-    assert np.dtype("float32") == tensorrt.cast_type(np.dtype("float64"))
-    assert np.dtype("uint32") == tensorrt.cast_type(np.dtype("uint64"))
+    assert np.dtype("int32") == tensorrt_utils.cast_type(np.dtype("int64"))
+    assert np.dtype("float32") == tensorrt_utils.cast_type(np.dtype("float64"))
+    assert np.dtype("uint32") == tensorrt_utils.cast_type(np.dtype("uint64"))
 
 
 def test_cast_tensor_is_not_changed_when_tensor_has_no_cast_type():
     tensor = TensorSpec(name="Tensor", shape=(-1,), dtype=np.dtype("int32"))
-    modified_tensor = tensorrt.cast_tensor(tensor)
+    modified_tensor = tensorrt_utils.cast_tensor(tensor)
 
     assert modified_tensor.dtype == tensor.dtype
     assert modified_tensor.shape == tensor.shape
@@ -48,16 +49,39 @@ def test_cast_tensor_is_changed_when_tensor_cast_type():
     for input_type, expected_type in test_cases:
 
         tensor = TensorSpec(name="Tensor", shape=(-1,), dtype=np.dtype(input_type))
-        modified_tensor = tensorrt.cast_tensor(tensor)
+        modified_tensor = tensorrt_utils.cast_tensor(tensor)
 
         assert modified_tensor.dtype == np.dtype(expected_type)
         assert modified_tensor.shape == tensor.shape
         assert modified_tensor.name == tensor.name
 
 
-def test_get_trt_profile_with_new_max_batch_size_updates_batch_size():
+def test_get_trt_profile_return_updates_batch_size_when_max_bs_equal_to_1():
     batch_dim = 0
-    old_max_bs, new_max_bs = 5, 10
+    ref_profile = TensorRTProfile(
+        {
+            "input__0": ShapeTuple((1, 2), (1, 3), (1, 4)),
+            "input__1": ShapeTuple((1, 3), (1, 4), (1, 5)),
+        }
+    )
+    old_profile = TensorRTProfile(
+        {
+            "input__0": ShapeTuple((1, 2), (1, 3), (1, 4)),
+            "input__1": ShapeTuple((1, 3), (1, 4), (1, 5)),
+        }
+    )
+    updated_profile = tensorrt_utils.get_trt_profile_with_new_max_batch_size(old_profile, 1, batch_dim)
+    for old_shape, updated_shape, ref_shape in zip(
+        old_profile.values(), updated_profile.values(), ref_profile.values()
+    ):
+        assert old_shape.min == updated_shape.min == ref_shape.min
+        assert old_shape.opt == updated_shape.opt == ref_shape.opt
+        assert old_shape.max == updated_shape.max == ref_shape.max
+
+
+def test_get_trt_profile_return_updates_batch_size_when_max_bs_greater_than_1():
+    batch_dim = 0
+    old_max_bs, new_max_bs = 16, 32
     ref_profile = TensorRTProfile(
         {
             "input__0": ShapeTuple((1, 2), (2, 3), (old_max_bs, 4)),
@@ -70,12 +94,19 @@ def test_get_trt_profile_with_new_max_batch_size_updates_batch_size():
             "input__1": ShapeTuple((1, 3), (1, 4), (old_max_bs, 5)),
         }
     )
-    updated_profile = tensorrt.get_trt_profile_with_new_max_batch_size(old_profile, new_max_bs, batch_dim)
+    updated_profile = tensorrt_utils.get_trt_profile_with_new_max_batch_size(old_profile, new_max_bs, batch_dim)
     for old_shape, updated_shape, ref_shape in zip(
         old_profile.values(), updated_profile.values(), ref_profile.values()
     ):
         assert old_shape.min == updated_shape.min == ref_shape.min
-        assert old_shape.opt == updated_shape.opt == ref_shape.opt
+
+        for i in range(len(old_shape.opt)):
+            if i == batch_dim:
+                assert old_shape.opt[i] == ref_shape.opt[i]
+                assert updated_shape.opt[i] == _opt_batch_size(new_max_bs)
+            else:
+                assert old_shape.opt[i] == updated_shape.opt[i] == ref_shape.opt[i]
+
         for i in range(len(old_shape.max)):
             if i == batch_dim:
                 assert old_shape.max[i] == ref_shape.max[i] == old_max_bs

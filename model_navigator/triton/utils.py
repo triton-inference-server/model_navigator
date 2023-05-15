@@ -14,7 +14,7 @@
 """Utilities related with Triton Inference Server."""
 from typing import List
 
-from model_navigator.utils.tensor import TensorMetadata
+from model_navigator.core.tensor import TensorMetadata
 
 from .specialized_configs import InputTensorSpec, OutputTensorSpec
 

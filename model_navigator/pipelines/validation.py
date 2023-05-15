@@ -30,9 +30,9 @@ from model_navigator.api.config import (
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.core.package import Package
 from model_navigator.exceptions import ModelNavigatorConfigurationError, ModelNavigatorConfigurationWarning
+from model_navigator.frameworks import Framework
 from model_navigator.runners.registry import get_runner
 from model_navigator.utils.format_helpers import get_base_format, get_framework_export_formats
-from model_navigator.utils.framework import Framework
 
 
 class PipelineManagerConfigurationValidator:

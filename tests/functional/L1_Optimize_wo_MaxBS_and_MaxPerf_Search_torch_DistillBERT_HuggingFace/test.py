@@ -35,7 +35,7 @@ def main():
     from transformers.models.distilbert.modeling_distilbert import DistilBertForMaskedLM  # pytype: disable=import-error
 
     import model_navigator as nav
-    from model_navigator.utils.framework import Framework
+    from model_navigator.frameworks import Framework
     from tests import utils
     from tests.functional.common import huggingface_utils
     from tests.functional.common.utils import collect_status

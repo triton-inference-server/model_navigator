@@ -38,6 +38,7 @@ from model_navigator.exceptions import (
     ModelNavigatorError,
     ModelNavigatorWrongParameterError,
 )
+from model_navigator.frameworks import is_tf_available, is_torch_available  # noqa: F401
 from model_navigator.runners.onnx import OnnxrtCPURunner, OnnxrtCUDARunner, OnnxrtTensorRTRunner
 from model_navigator.runners.tensorflow import (
     TensorFlowSavedModelCPURunner,
@@ -67,7 +68,6 @@ from model_navigator.triton.specialized_configs import (
     TensorRTModelConfig,
 )
 from model_navigator.triton.utils import input_tensor_from_metadata, output_tensor_from_metadata
-from model_navigator.utils.framework import is_tf_available, is_torch_available  # noqa: F401
 
 LOGGER = logging.getLogger(__name__)
 

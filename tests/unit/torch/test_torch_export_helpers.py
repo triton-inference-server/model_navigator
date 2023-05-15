@@ -15,8 +15,8 @@ import numpy as np
 import pytest
 
 from model_navigator.commands.export.torch import _validate_if_dynamic_axes_aligns_with_dataloader_shapes
+from model_navigator.core.tensor import TensorMetadata
 from model_navigator.exceptions import ModelNavigatorConfigurationError
-from model_navigator.utils.tensor import TensorMetadata
 
 
 def test_validate_if_dynamic_axes_aligns_with_dataloader_shapes_raises_error_when_unknown_axes():

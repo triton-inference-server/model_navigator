@@ -18,8 +18,8 @@ from typing import List
 
 import fire
 
+from model_navigator.core.tensor import TensorMetadata
 from model_navigator.runners.onnx import OnnxrtCPURunner
-from model_navigator.utils.tensor import TensorMetadata
 
 
 def collect_onnx_input_metadata(

@@ -28,7 +28,7 @@ from model_navigator.api.config import (
 )
 from model_navigator.configuration.model import model_config
 from model_navigator.configuration.model.model_config_builder import ModelConfigBuilder
-from model_navigator.utils.framework import Framework
+from model_navigator.frameworks import Framework
 
 
 def test_get_source_torch_config_returns_model_configs_matching_custom_config():

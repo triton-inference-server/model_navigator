@@ -40,11 +40,11 @@ from model_navigator.commands.performance.performance import Performance, Profil
 from model_navigator.commands.verification.verify import VerifyModel
 from model_navigator.configuration.model.model_config import ModelConfig
 from model_navigator.core.constants import NAVIGATOR_PACKAGE_VERSION, NAVIGATOR_VERSION
+from model_navigator.core.tensor import TensorMetadata
+from model_navigator.frameworks import Framework
+from model_navigator.frameworks.tensorrt.utils import get_trt_profile_from_trt_dynamic_axes
 from model_navigator.logger import LOGGER
 from model_navigator.utils.common import DataObject
-from model_navigator.utils.framework import Framework
-from model_navigator.utils.tensor import TensorMetadata
-from model_navigator.utils.tensorrt import get_trt_profile_from_trt_dynamic_axes
 
 
 @dataclass

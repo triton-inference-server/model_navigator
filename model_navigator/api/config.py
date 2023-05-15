@@ -40,9 +40,9 @@ from model_navigator.core.constants import (
     DEFAULT_ONNX_OPSET,
     DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD,
 )
+from model_navigator.frameworks import Framework
 from model_navigator.logger import LOGGER
 from model_navigator.utils.common import DataObject
-from model_navigator.utils.framework import Framework
 
 Sample = Dict[str, numpy.ndarray]
 

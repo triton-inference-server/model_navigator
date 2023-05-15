@@ -13,8 +13,8 @@
 # limitations under the License.
 import numpy as np
 
+from model_navigator.core.tensor import TensorMetadata
 from model_navigator.triton.utils import input_tensor_from_metadata, output_tensor_from_metadata
-from model_navigator.utils.tensor import TensorMetadata
 
 
 def test_input_tensor_from_metadata_return_input_tensor_when_no_batching():

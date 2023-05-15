@@ -16,7 +16,7 @@
 from typing import Optional, Set
 
 from model_navigator.api.config import Format
-from model_navigator.utils.framework import Framework
+from model_navigator.frameworks import Framework
 
 
 def is_source_format(format: Format) -> bool:

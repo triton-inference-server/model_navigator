@@ -19,7 +19,7 @@ from typing import Any, Dict, List, Optional
 import fire
 import tensorflow as tf  # pytype: disable=import-error
 
-from model_navigator.utils.tensor import TensorMetadata
+from model_navigator.core.tensor import TensorMetadata
 
 
 def get_model() -> tf.keras.Model:

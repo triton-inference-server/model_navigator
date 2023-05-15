@@ -23,12 +23,13 @@ from typing import Optional
 from model_navigator.api.config import TensorRTPrecision, TensorRTPrecisionMode, TensorRTProfile
 from model_navigator.commands.base import CommandOutput, CommandStatus
 from model_navigator.commands.convert.base import Convert2TensorRTWithMaxBatchSizeSearch
+from model_navigator.core.tensor import TensorMetadata
 from model_navigator.execution_context import ExecutionContext
+from model_navigator.frameworks.tensorrt import utils as tensorrt_utils
 from model_navigator.logger import LOGGER
 from model_navigator.runners.tensorrt import TensorRTRunner
-from model_navigator.utils import devices, tensorrt
+from model_navigator.utils import devices
 from model_navigator.utils.common import parse_kwargs_to_cmd
-from model_navigator.utils.tensor import TensorMetadata
 
 
 class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
@@ -126,7 +127,7 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
             convert_cmd.extend(trt_precision_flags)
 
         if max_workspace_size is not None:
-            if tensorrt.get_version() < LooseVersion("8.4.0"):
+            if tensorrt_utils.get_version() < LooseVersion("8.4.0"):
                 convert_cmd.extend(["--workspace", f"{max_workspace_size}"])
             else:
                 convert_cmd.extend(["--pool-limit", f"workspace:{max_workspace_size}"])
@@ -177,7 +178,7 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
         max_batch_size: Optional[int] = None,
     ):
         if batch_dim is not None and max_batch_size is not None and max_batch_size > 0:
-            trt_profile = tensorrt.get_trt_profile_with_new_max_batch_size(
+            trt_profile = tensorrt_utils.get_trt_profile_with_new_max_batch_size(
                 trt_profile=trt_profile,
                 max_batch_size=max_batch_size,
                 batch_dim=batch_dim,

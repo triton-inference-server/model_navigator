@@ -15,7 +15,7 @@
 import numpy as np
 import pytest
 
-from model_navigator.utils.tensor import TensorSpec, TensorUtils
+from model_navigator.core.tensor import TensorSpec, TensorUtils
 
 
 def test_numpy_eq():

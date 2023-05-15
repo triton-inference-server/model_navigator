@@ -32,6 +32,7 @@ from model_navigator.configuration.model.model_config_builder import ModelConfig
 from model_navigator.core.constants import DEFAULT_SAMPLE_COUNT
 from model_navigator.core.package import Package
 from model_navigator.exceptions import ModelNavigatorConfigurationError
+from model_navigator.frameworks import Framework
 from model_navigator.pipelines.builders import (
     correctness_builder,
     preprocessing_builder,
@@ -46,7 +47,6 @@ from model_navigator.runners.base import NavigatorRunner
 from model_navigator.runners.utils import default_runners
 from model_navigator.utils import enums
 from model_navigator.utils.common import get_default_workspace
-from model_navigator.utils.framework import Framework
 
 
 def optimize(

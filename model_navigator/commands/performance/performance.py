@@ -25,6 +25,7 @@ from jsonlines import jsonlines
 
 from model_navigator.api.config import Format, MeasurementMode, ProfilerConfig, Sample
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
+from model_navigator.core.tensor import TensorMetadata
 from model_navigator.exceptions import ModelNavigatorError, ModelNavigatorProfilingError
 from model_navigator.execution_context import ExecutionContext
 from model_navigator.logger import LOGGER
@@ -32,7 +33,6 @@ from model_navigator.runners.base import NavigatorRunner, NavigatorStabilizedRun
 from model_navigator.utils.common import DataObject, parse_kwargs_to_cmd
 from model_navigator.utils.dataloader import expand_sample
 from model_navigator.utils.format_helpers import is_source_format
-from model_navigator.utils.tensor import TensorMetadata
 
 
 @dataclass

@@ -39,6 +39,8 @@ from model_navigator.exceptions import (
     ModelNavigatorMissingSourceModelError,
     ModelNavigatorNotFoundError,
 )
+from model_navigator.frameworks import Framework
+from model_navigator.frameworks.torch.utils import update_allowed_batching_parameters
 from model_navigator.pipelines.builders import (
     PipelineBuilder,
     correctness_builder,
@@ -54,8 +56,6 @@ from model_navigator.runners.utils import default_runners
 from model_navigator.runtime_analyzer.strategy import RuntimeSearchStrategy
 from model_navigator.utils import enums
 from model_navigator.utils.format_helpers import FRAMEWORK2BASE_FORMAT
-from model_navigator.utils.framework import Framework
-from model_navigator.utils.torch import update_allowed_batching_parameters
 
 
 def load(

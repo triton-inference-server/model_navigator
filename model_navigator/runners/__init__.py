@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # noqa: D104
-from model_navigator.utils.framework import (
+from model_navigator.frameworks import (
     is_jax_available,
     is_tf_available,
     is_torch2_available,

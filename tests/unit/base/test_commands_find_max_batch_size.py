@@ -26,9 +26,9 @@ import numpy as np
 
 from model_navigator.commands.base import CommandStatus
 from model_navigator.commands.find_max_batch_size import FindMaxBatchSize, FindMaxBatchSizeConfig
+from model_navigator.core.tensor import TensorMetadata, TensorSpec
 from model_navigator.execution_context import ExecutionContext
 from model_navigator.runners.onnx import OnnxrtCPURunner
-from model_navigator.utils.tensor import TensorMetadata, TensorSpec
 
 
 def test_find_max_batch_size_return_none_when_model_not_support_batching(mocker):

@@ -20,14 +20,14 @@ from typing import List, Optional, Sequence
 
 import numpy as np
 
-import model_navigator.tensorrt.cuda as cuda
-import model_navigator.tensorrt.utils as trt_utils
-import model_navigator.utils.common as utils
 from model_navigator.api.config import Format
 from model_navigator.exceptions import ModelNavigatorError, ModelNavigatorUserInputError
+from model_navigator.frameworks.tensorrt import cuda
+from model_navigator.frameworks.tensorrt import utils as trt_utils
 from model_navigator.logger import LOGGER
 from model_navigator.runners.base import DeviceKind, NavigatorRunner
 from model_navigator.runners.registry import register_runner
+from model_navigator.utils import common as utils
 from model_navigator.utils import module
 
 trt = module.lazy_import("tensorrt")

@@ -14,6 +14,7 @@
 """TensorRT utils."""
 import contextlib
 import logging
+import math
 import os
 import signal
 from distutils.version import LooseVersion
@@ -22,10 +23,11 @@ from typing import Callable, Union
 import numpy as np
 
 from model_navigator.api.config import ShapeTuple, TensorRTProfile
+from model_navigator.core.constants import OPT_MAX_SHAPE_RATIO
+from model_navigator.core.tensor import TensorMetadata, TensorSpec
 from model_navigator.exceptions import ModelNavigatorNotFoundError
 from model_navigator.utils import module
 from model_navigator.utils.common import invoke_if_callable
-from model_navigator.utils.tensor import TensorMetadata, TensorSpec
 
 trt = module.lazy_import("tensorrt")
 
@@ -35,6 +37,12 @@ _TYPE_CASTS = {
     np.dtype(np.float64): np.dtype(np.float32),
     np.dtype(np.uint64): np.dtype(np.uint32),
 }
+
+
+def get_version():
+    """Get TensorRT version."""
+    trt_version = LooseVersion(trt.__version__)
+    return trt_version
 
 
 def get_trt_profile_from_trt_dynamic_axes(trt_dynamic_axes):
@@ -82,11 +90,19 @@ def get_trt_profile_with_new_max_batch_size(
     new_profile = TensorRTProfile()
     for input_name in trt_profile:
         max_shapes = list(trt_profile[input_name].max)
+        opt_shapes = list(trt_profile[input_name].opt)
+
         max_shapes[batch_dim] = max_batch_size
-        new_profile[input_name] = ShapeTuple(
-            trt_profile[input_name].min, trt_profile[input_name].opt, tuple(max_shapes)
-        )
+        opt_shapes[batch_dim] = _opt_batch_size(max_batch_size)
+
+        new_profile[input_name] = ShapeTuple(trt_profile[input_name].min, tuple(opt_shapes), tuple(max_shapes))
     return new_profile
+
+
+def _opt_batch_size(max_batch_size):
+    opt_batch_size = 2 ** int(math.ceil(math.log2(max_batch_size) * OPT_MAX_SHAPE_RATIO))
+
+    return opt_batch_size
 
 
 def _should_use_v3_api():

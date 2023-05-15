@@ -12,15 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # noqa: D104
-from model_navigator.frameworks import is_jax_available, is_tf_available, is_torch_available
-
-if is_torch_available():
-    from . import torch2onnx  # noqa: F401
-    from . import torch2torchscript  # noqa: F401
-
-if is_tf_available():
-    from . import keras2savedmodel  # noqa: F401
-    from . import savedmodel2savedmodel  # noqa: F401
-
-if is_tf_available and is_jax_available():
-    from . import jax2savedmodel  # noqa: F401
+from .model import JaxModel  # noqa: F401

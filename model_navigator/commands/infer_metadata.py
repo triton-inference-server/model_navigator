@@ -19,15 +19,15 @@ import numpy as np
 
 from model_navigator.api.config import Sample, SizedDataLoader, SizedIterable, TensorRTProfile
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
+from model_navigator.core.tensor import TensorMetadata, TensorSpec
 from model_navigator.exceptions import ModelNavigatorUserInputError
 from model_navigator.execution_context import ExecutionContext
+from model_navigator.frameworks import Framework
 from model_navigator.logger import LOGGER
+from model_navigator.runners.utils import get_format_default_runners
 from model_navigator.utils.dataloader import extract_sample, sample_to_tuple, validate_sample_input
 from model_navigator.utils.devices import is_cuda_available
 from model_navigator.utils.format_helpers import FRAMEWORK2BASE_FORMAT
-from model_navigator.utils.framework import Framework
-from model_navigator.utils.runners import get_format_default_runners
-from model_navigator.utils.tensor import TensorMetadata, TensorSpec
 
 
 def _extract_axes_shapes(

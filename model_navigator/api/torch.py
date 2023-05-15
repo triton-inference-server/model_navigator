@@ -31,6 +31,8 @@ from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config_builder import ModelConfigBuilder
 from model_navigator.core.constants import DEFAULT_SAMPLE_COUNT
 from model_navigator.core.package import Package
+from model_navigator.frameworks import Framework
+from model_navigator.frameworks.torch.utils import update_allowed_batching_parameters
 from model_navigator.logger import LOGGER
 from model_navigator.pipelines.builders import (
     correctness_builder,
@@ -46,8 +48,6 @@ from model_navigator.runners.base import NavigatorRunner
 from model_navigator.runners.utils import default_runners
 from model_navigator.utils import enums
 from model_navigator.utils.common import get_default_workspace
-from model_navigator.utils.framework import Framework
-from model_navigator.utils.torch import update_allowed_batching_parameters
 
 
 def optimize(

@@ -20,7 +20,7 @@ import numpy as np
 
 from model_navigator.api.config import Sample
 from model_navigator.exceptions import ModelNavigatorUserInputError
-from model_navigator.utils.framework import Framework
+from model_navigator.frameworks import Framework
 
 
 def to_numpy(tensor: Any, from_framework: Framework) -> np.ndarray:

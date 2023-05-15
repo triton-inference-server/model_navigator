@@ -20,10 +20,10 @@ from packaging import version
 
 from model_navigator.api.config import Format
 from model_navigator.configuration.model.model_config import ModelConfig
+from model_navigator.core.tensor import TensorMetadata
 from model_navigator.exceptions import ModelNavigatorBackwardCompatibilityError
+from model_navigator.frameworks import Framework
 from model_navigator.logger import LOGGER
-from model_navigator.utils.framework import Framework
-from model_navigator.utils.tensor import TensorMetadata
 
 if TYPE_CHECKING:
     from model_navigator.core.package import Package

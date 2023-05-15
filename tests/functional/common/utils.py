@@ -19,7 +19,7 @@ from typing import Dict, List, Union
 from model_navigator.api.config import EXPORT_FORMATS, INPUT_FORMATS, Format
 from model_navigator.commands.performance.performance import Performance
 from model_navigator.core.status import ModelStatus, Status
-from model_navigator.utils.framework import Framework
+from model_navigator.frameworks import Framework
 
 FORMAT_FILES = [
     "format.log",

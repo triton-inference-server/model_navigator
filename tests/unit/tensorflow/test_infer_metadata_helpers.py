@@ -15,7 +15,7 @@
 import tensorflow  # pytype: disable=import-error
 
 from model_navigator.commands.infer_metadata import _extract_axes_shapes
-from model_navigator.utils.framework import Framework
+from model_navigator.frameworks import Framework
 
 
 def test_extract_axes_shapes_return_correct_shapes_when_valid_dataloader_used():

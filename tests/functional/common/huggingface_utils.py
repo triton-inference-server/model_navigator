@@ -14,7 +14,7 @@
 
 from transformers import DataCollatorWithPadding  # pytype: disable=import-error
 
-from model_navigator.utils.framework import Framework
+from model_navigator.frameworks import Framework
 
 
 def get_default_preprocess_function(dataset_name, tokenizer, max_sequence_length):

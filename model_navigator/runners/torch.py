@@ -16,9 +16,10 @@ from collections import OrderedDict
 from typing import List, Mapping
 
 from model_navigator.api.config import Format
+from model_navigator.frameworks.tensorrt import utils as tensorrt_utils
 from model_navigator.runners.base import DeviceKind, NavigatorRunner
 from model_navigator.runners.registry import register_runner
-from model_navigator.utils import module, tensorrt
+from model_navigator.utils import module
 from model_navigator.utils.dataloader import get_default_output_names
 
 torch = module.lazy_import("torch")
@@ -189,7 +190,7 @@ class TorchTensorRTRunner(_BaseTorchScriptRunner):
 
     def _cast_value(self, value, dtype):
         value = value.astype(dtype)
-        value = tensorrt.cast_tensor(value)
+        value = tensorrt_utils.cast_tensor(value)
         return value
 
 

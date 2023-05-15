@@ -20,9 +20,9 @@ from pathlib import Path
 from typing import Dict, Optional, Tuple
 
 from model_navigator.api.config import CustomConfig, DeviceKind, Format, ProfilerConfig, SizedDataLoader, VerifyFunction
+from model_navigator.frameworks import Framework
 from model_navigator.logger import LOGGER
 from model_navigator.utils.common import DataObject, pad_string
-from model_navigator.utils.framework import Framework
 
 
 @dataclass

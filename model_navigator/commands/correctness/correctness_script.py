@@ -22,10 +22,10 @@ import fire
 import numpy as np
 
 from model_navigator.commands.correctness.correctness import Tolerance, TolerancePerOutputName
+from model_navigator.core.tensor import TensorMetadata
 from model_navigator.logger import LOGGER
 from model_navigator.runners.registry import get_runner
 from model_navigator.utils.dataloader import load_samples
-from model_navigator.utils.tensor import TensorMetadata
 
 
 def get_model() -> object:

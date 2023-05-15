@@ -15,7 +15,7 @@ import torch  # pytype: disable=import-error
 
 from model_navigator.commands.base import CommandStatus
 from model_navigator.commands.infer_metadata import InferInputMetadata
-from model_navigator.utils.framework import Framework
+from model_navigator.frameworks import Framework
 
 
 def test_infer_input_metadata_return_success_status_when_invalid_model_used():

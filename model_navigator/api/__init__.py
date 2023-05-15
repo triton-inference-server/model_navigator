@@ -13,12 +13,12 @@
 # limitations under the License.
 # noqa: D104
 from model_navigator.commands.base import CommandStatus  # noqa: F401
+from model_navigator.frameworks import is_jax_available, is_tf_available, is_torch_available  # noqa: F401
 from model_navigator.runtime_analyzer.strategy import (  # noqa: F401
     MaxThroughputAndMinLatencyStrategy,
     MaxThroughputStrategy,
     MinLatencyStrategy,
 )
-from model_navigator.utils.framework import is_jax_available, is_tf_available, is_torch_available  # noqa: F401
 
 from .config import (  # noqa: F401
     DeviceKind,

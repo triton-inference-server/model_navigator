@@ -24,12 +24,12 @@ from model_navigator.configuration.model.model_config import ModelConfig
 from model_navigator.core.constants import NAVIGATOR_PACKAGE_VERSION, NAVIGATOR_VERSION
 from model_navigator.core.package import Package
 from model_navigator.core.status import ModelStatus, Status
+from model_navigator.core.tensor import TensorMetadata
 from model_navigator.logger import LOGGER, add_log_file_handler
 from model_navigator.pipelines.builders import PipelineBuilder
 from model_navigator.pipelines.validation import PipelineManagerConfigurationValidator
 from model_navigator.utils.common import pad_string
 from model_navigator.utils.environment import get_env
-from model_navigator.utils.tensor import TensorMetadata
 
 
 class PipelineManager:

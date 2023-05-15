@@ -17,13 +17,13 @@ from typing import List, Optional, Sequence, Union
 
 import model_navigator.utils.common as utils
 from model_navigator.api.config import Format
+from model_navigator.core.tensor import TensorMetadata
 from model_navigator.exceptions import ModelNavigatorNotFoundError
+from model_navigator.frameworks.onnx.utils import ONNX_RT_TYPE_TO_NP
 from model_navigator.logger import LOGGER
 from model_navigator.runners.base import DeviceKind, NavigatorRunner
 from model_navigator.runners.registry import register_runner
 from model_navigator.utils import module
-from model_navigator.utils.onnx import ONNX_RT_TYPE_TO_NP
-from model_navigator.utils.tensor import TensorMetadata
 
 onnxrt = module.lazy_import("onnxruntime")
 np = module.lazy_import("numpy")

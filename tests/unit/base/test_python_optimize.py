@@ -27,8 +27,8 @@ from model_navigator.api.config import (
     INPUT_FORMATS,
     Format,
 )
-from model_navigator.utils.framework import Framework
-from model_navigator.utils.tensor import TensorSpec
+from model_navigator.core.tensor import TensorSpec
+from model_navigator.frameworks import Framework
 
 
 def infer_func(input__0):

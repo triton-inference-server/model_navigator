@@ -29,8 +29,8 @@ from model_navigator import TensorRTPrecision, TensorRTPrecisionMode
 from model_navigator.api.config import TensorRTProfile
 from model_navigator.commands.base import CommandStatus
 from model_navigator.commands.convert.onnx import ConvertONNX2TRT
+from model_navigator.core.tensor import TensorMetadata, TensorSpec
 from model_navigator.execution_context import ExecutionContext
-from model_navigator.utils.tensor import TensorMetadata, TensorSpec
 from tests.utils import get_assets_path
 
 

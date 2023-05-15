@@ -21,14 +21,14 @@ from model_navigator.api.config import Format, SizedDataLoader, VerifyFunction
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.correctness import Correctness
 from model_navigator.commands.performance import Performance
+from model_navigator.core.tensor import TensorMetadata
+from model_navigator.frameworks import Framework
 from model_navigator.logger import LOGGER
 from model_navigator.runners.base import NavigatorRunner
 from model_navigator.runners.registry import get_runner
+from model_navigator.runners.utils import get_source_default_runners
 from model_navigator.utils.dataloader import extract_sample
 from model_navigator.utils.format_helpers import FRAMEWORK2BASE_FORMAT
-from model_navigator.utils.framework import Framework
-from model_navigator.utils.runners import get_source_default_runners
-from model_navigator.utils.tensor import TensorMetadata
 
 
 class VerifyModel(Command):

@@ -20,8 +20,8 @@ from model_navigator.commands.base import ExecutionUnit
 from model_navigator.commands.copy.onnx import CopyONNX
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig
+from model_navigator.frameworks import is_trt_available
 from model_navigator.pipelines.pipeline import Pipeline
-from model_navigator.utils.framework import is_trt_available
 
 
 def onnx_export_builder(config: CommonConfig, models_config: Dict[Format, List[ModelConfig]]) -> Pipeline:

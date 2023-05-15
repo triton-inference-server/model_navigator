@@ -20,9 +20,9 @@ import torch  # pytype: disable=import-error
 
 from model_navigator.commands.base import CommandStatus
 from model_navigator.commands.infer_metadata import InferOutputMetadata
+from model_navigator.core.tensor import TensorMetadata
 from model_navigator.exceptions import ModelNavigatorUserInputError
-from model_navigator.utils.framework import Framework
-from model_navigator.utils.tensor import TensorMetadata
+from model_navigator.frameworks import Framework
 
 
 def test_infer_output_metadata_return_fails_status_when_invalid_model_used():

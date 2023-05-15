@@ -25,10 +25,10 @@ from model_navigator.commands.base import CommandStatus
 from model_navigator.commands.correctness import Correctness
 from model_navigator.commands.data_dump.samples import DumpInputModelData, DumpOutputModelData, samples_to_npz
 from model_navigator.commands.export.torch import ExportTorch2ONNX, ExportTorch2TorchScript
+from model_navigator.core.tensor import TensorMetadata, TensorSpec
+from model_navigator.frameworks import Framework
 from model_navigator.runners.torch import TorchScriptCPURunner, TorchScriptCUDARunner
 from model_navigator.utils.devices import is_cuda_available
-from model_navigator.utils.framework import Framework
-from model_navigator.utils.tensor import TensorMetadata, TensorSpec
 
 # pytype: enable=import-error
 

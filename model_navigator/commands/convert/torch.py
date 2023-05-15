@@ -20,11 +20,12 @@ from model_navigator.api.config import DeviceKind, TensorRTPrecision, TensorRTPr
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.convert.base import Convert2TensorRTWithMaxBatchSizeSearch
 from model_navigator.commands.convert.converters import ts2onnx, ts2torchtrt
+from model_navigator.core.tensor import TensorMetadata
 from model_navigator.execution_context import ExecutionContext
+from model_navigator.frameworks.tensorrt import utils as tensorrt_utils
 from model_navigator.logger import LOGGER
-from model_navigator.utils import devices, tensorrt
+from model_navigator.utils import devices
 from model_navigator.utils.common import parse_kwargs_to_cmd
-from model_navigator.utils.tensor import TensorMetadata
 
 
 class ConvertTorchScript2ONNX(Command):
@@ -167,7 +168,7 @@ class ConvertTorchScript2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearch):
 
         converted_model_path.parent.mkdir(parents=True, exist_ok=True)
 
-        input_dtypes_str = [tensorrt.cast_type(input_spec.dtype).name for input_spec in input_metadata.values()]
+        input_dtypes_str = [tensorrt_utils.cast_type(input_spec.dtype).name for input_spec in input_metadata.values()]
 
         def get_args(max_batch_size=None):
             shapes = self._get_shape_args(trt_profile=trt_profile, batch_dim=batch_dim, max_batch_size=max_batch_size)
@@ -211,7 +212,7 @@ class ConvertTorchScript2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearch):
         max_batch_size: Optional[int] = None,
     ):
         if batch_dim is not None and max_batch_size is not None and max_batch_size > 0:
-            trt_profile = tensorrt.get_trt_profile_with_new_max_batch_size(
+            trt_profile = tensorrt_utils.get_trt_profile_with_new_max_batch_size(
                 trt_profile=trt_profile,
                 max_batch_size=max_batch_size,
                 batch_dim=batch_dim,
