@@ -19,7 +19,9 @@ from typing import Optional
 
 import coloredlogs
 
-LOGGER = logging.getLogger("Navigator")
+from model_navigator.core.constants import NAVIGATOR_LOG_NAME, NAVIGATOR_LOGGER_NAME
+
+LOGGER = logging.getLogger(NAVIGATOR_LOGGER_NAME)
 LOGGER.propagate = False
 log_format = "%(asctime)s %(levelname)-8s %(name)s: %(message)s"
 
@@ -39,13 +41,42 @@ coloredlogs.install(
 )
 
 
+class StdoutLogger:
+    """Context manager to redirect stdout to logger."""
+
+    def __init__(self, logger, level=logging.INFO):
+        """Initialize the StdoutLOgger context manager."""
+        self.logger = logger
+        self.name = self.logger.name
+        self.level = level
+        self._redirect_stdout = contextlib.redirect_stdout(self)  # pytype: disable=wrong-arg-types
+
+    def write(self, msg):
+        """Write message to logger."""
+        if msg and not msg.isspace():
+            self.logger.log(self.level, msg)
+
+    def flush(self):
+        """Flush pass method."""
+        pass
+
+    def __enter__(self):
+        """Enter the context manager."""
+        self._redirect_stdout.__enter__()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """Exit the context manager."""
+        self._redirect_stdout.__exit__(exc_type, exc_value, traceback)
+
+
 def add_log_file_handler(log_dir: Path) -> None:
     """Add log file handler to file in defined path.
 
     Args:
         log_dir: A path to log directory
     """
-    log_file = log_dir / "navigator.log"
+    log_file = log_dir / NAVIGATOR_LOG_NAME
     fh = logging.FileHandler(log_file)
     fh.setLevel(logging.DEBUG)
     LOGGER.addHandler(fh)
@@ -82,6 +113,7 @@ class LoggingContext(contextlib.AbstractContextManager):
         super().__init__()
         self.log_dir = log_dir
         self.loggers = list(logging.root.manager.loggerDict.keys())
+
         if self.log_dir:
             log_format = "%(asctime)s %(levelname)-8s %(name)s: %(message)s"
             self.log_dir.mkdir(parents=True, exist_ok=True)

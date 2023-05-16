@@ -20,8 +20,10 @@ limitations under the License.
 - new: Custom implementation for ONNX and TensorRT runners
 - new: Use CUDA 12 for JAX in unit tests and functional tests
 - new: Step-by-step examples
+- new: Updated documentation
 - fix: Optimal shape not set correctly during adaptive conversion
 - fix: Find max batch size command for JAX
+- fix: Save stdout to logfiles in debug mode
 
 ## 0.5.3
 - fix: filter outputs using output_metadata in ONNX runners

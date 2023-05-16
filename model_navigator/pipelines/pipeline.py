@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Definition of Pipeline module - Direct Acyclic Graph (DAG) of commands execution."""
+import contextlib
 import sys
 import traceback
 from typing import Any, Dict, List
@@ -21,7 +22,7 @@ from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.core.package import Package
 from model_navigator.core.status import Status
 from model_navigator.exceptions import ModelNavigatorUserInputError
-from model_navigator.logger import LOGGER, LoggingContext
+from model_navigator.logger import LOGGER, LoggingContext, StdoutLogger
 from model_navigator.utils.common import pad_string
 
 
@@ -89,7 +90,12 @@ class Pipeline:
             if execution_unit.model_config
             else None
         )
-        with LoggingContext(log_dir=log_dir):
+
+        if execution_unit.config.debug:
+            redirect_stdout_context = StdoutLogger(LOGGER)
+        else:
+            redirect_stdout_context = contextlib.nullcontext()
+        with LoggingContext(log_dir=log_dir), redirect_stdout_context:
             LOGGER.info(pad_string(f"Command {execution_unit.command.name()!r} started"))
             input_paramters = {
                 **execution_unit.config.__dict__,
