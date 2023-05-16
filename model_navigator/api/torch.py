@@ -67,7 +67,9 @@ def optimize(
     verify_func: Optional[VerifyFunction] = None,
     custom_configs: Optional[Sequence[CustomConfig]] = None,
 ) -> Package:
-    """Function exports PyTorch model to all supported formats.
+    """Entrypoint for Torch optimize.
+
+    Perform export, conversion, correctness testing, profiling and model verification.
 
     Args:
         model: PyTorch model object

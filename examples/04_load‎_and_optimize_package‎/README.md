@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-# Torch Linear Model
+# Load and optimize package
 
 In this example, we show how to optimize an existing `.nav` package.
 After the optimization is completed, a new package is saved.

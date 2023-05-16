@@ -14,15 +14,4 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-# Common API
-Framework indepedent definitions and enumerations.
-
-::: model_navigator.api.config.SizedIterable
-::: model_navigator.api.config.SizedDataLoader
-::: model_navigator.api.config.Format
-::: model_navigator.api.config.CustomConfig
-::: model_navigator.api.config.CustomConfigForFormat
-::: model_navigator.api.config.Sample
-::: model_navigator.api.config.VerifyFunction
-::: model_navigator.api.ProfilerConfig
-::: model_navigator.api.MeasurementMode
+::: model_navigator.api.pytriton

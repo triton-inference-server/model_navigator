@@ -14,11 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-# Optimize model and use for offline inference
+# Torch Hub NVIDIA ResNet50 Model
 
-In this example we show to obtain runner from `.nav` package and use it for inference.
+In this example we show how to optimize NVIDIA ResNet50 model from Torch Hub. We recommend running this example in NVIDIA NGC [PyTorch containter](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch).
 
-We recommend running this example in NVIDIA NGC [PyTorch containter](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch). To run the example simply run the `optimize.py` script:
+## Run optimization
 
 ```bash
 ./optimize.py

@@ -14,7 +14,4 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-::: model_navigator.api.config.JitType
-::: model_navigator.api.config.TorchConfig
-::: model_navigator.api.config.TorchTensorRTConfig
-::: model_navigator.api.torch
+::: model_navigator.api.onnx

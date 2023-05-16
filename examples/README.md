@@ -17,14 +17,14 @@ limitations under the License.
 # Examples
 
 We provide step-by-step examples that demonstrate how to use various features of Model Navigator.
-For the sake of readability and accessibility, we use a simple torch.nn.Linear model as an example.
-These examples illustrate how to optimize, test, and deploy the model on
-the [NVIDIA Triton Inference Server](https://github.com/triton-inference-server/server).
+For the sake of readability and accessibility, we use a simple `torch.nn.Linear` model as an example.
+These examples illustrate how to optimize, test and deploy the model on
+the [PyTriton](https://github.com/triton-inference-server/pytriton) and [Triton Inference Server](https://github.com/triton-inference-server/server).
 
 
 ## Step-by-step examples
 
-1. [Optimize and verify model](../examples/01_optimize_torch_linear_model/)
+1. [Optimize model](../examples/01_optimize_torch_linear_model/)
 2. [Optimize model and verify model](../examples/02_optimize_and_verify_model/)
 3. [Optimize model and save package](../examples/03_optimize_model_and_save_package/)
 4. [Load and optimize package](../examples/04_load%E2%80%8E_and_optimize_package%E2%80%8E/)

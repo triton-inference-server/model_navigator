@@ -66,7 +66,9 @@ def optimize(
     verify_func: Optional[VerifyFunction] = None,
     custom_configs: Optional[Sequence[CustomConfig]] = None,
 ) -> Package:
-    """Function exports TensorFlow2 model to all supported formats.
+    """Entrypoint for TensorFlow2 optimize.
+
+    Perform export, conversion, correctness testing, profiling and model verification.
 
     Args:
         model: TensorFlow2 model object

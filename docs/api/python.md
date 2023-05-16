@@ -14,6 +14,4 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-::: model_navigator.api.config.TensorRTPrecision
-::: model_navigator.api.config.TensorRTPrecisionMode
-::: model_navigator.api.config.TensorRTConfig
+::: model_navigator.api.python

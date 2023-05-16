@@ -61,7 +61,9 @@ def optimize(
     verify_func: Optional[VerifyFunction] = None,
     custom_configs: Optional[Sequence[CustomConfig]] = None,
 ) -> Package:
-    """Function exports ONNX model to all supported formats.
+    """Entrypoint for ONNX optimize.
+
+    Perform conversion, correctness testing, profiling and model verification.
 
     Args:
         model: ONNX model path or string

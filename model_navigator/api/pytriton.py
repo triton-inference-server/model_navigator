@@ -29,13 +29,13 @@ class TimeoutAction(enum.Enum):
     """Timeout action definition for timeout_action QueuePolicy field.
 
     Args:
-        REJECT: Reject the request and return error message accordingly.
-        DELAY: Delay the request until all other requests at the same (or higher) priority levels
-           that have not reached their timeouts are processed.
+        REJECT (str): Reject the request and return error message accordingly.
+        DELAY (str): Delay the request until all other requests at the same (or higher) priority levels
+            that have not reached their timeouts are processed.
     """
 
-    REJECT = "REJECT"
-    DELAY = "DELAY"
+    REJECT: str = "REJECT"
+    DELAY: str = "DELAY"
 
 
 @dataclass
@@ -69,7 +69,7 @@ class DynamicBatcher:
         max_queue_delay_microseconds: The maximum time, in microseconds, a request will be delayed in
                                       the scheduling queue to wait for additional requests for batching.
         preferred_batch_size: Preferred batch sizes for dynamic batching.
-        preserve_ordering : Should the dynamic batcher preserve the ordering of responses to
+        preserve_ordering: Should the dynamic batcher preserve the ordering of responses to
                             match the order of requests received by the scheduler.
         priority_levels: The number of priority levels to be enabled for the model.
         default_priority_level: The priority level used for requests that don't specify their priority.
@@ -137,18 +137,18 @@ class PyTritonAdapter:
 
     @property
     def batching(self) -> bool:
-        """Get status of batching support by the runner."""
+        """Returns status of batching support by the runner.
+
+        Returns:
+            True if runner supports batching, False otherwise.
+        """
         return self._batching
 
     @property
     def runner(self) -> NavigatorRunner:
-        """Get runner.
+        """Returns runner.
 
             Runner must be activated before use with activate() method.
-
-        Args:
-            package: A package object to prepare the package
-            strategy: Strategy for finding the best model. Defaults to `MaxThroughputAndMinLatencyStrategy`
 
         Returns:
             Model Navigator runner.
@@ -157,7 +157,7 @@ class PyTritonAdapter:
 
     @property
     def inputs(self) -> List[Tensor]:
-        """Get inputs configuration.
+        """Returns inputs configuration.
 
         Returns:
             List with Tensor objects describing inputs configuration of runner
@@ -176,7 +176,7 @@ class PyTritonAdapter:
 
     @property
     def outputs(self) -> List[Tensor]:
-        """Get outputs configuration.
+        """Returns outputs configuration.
 
         Returns:
             List with Tensor objects describing outpus configuration of runner
@@ -195,10 +195,10 @@ class PyTritonAdapter:
 
     @property
     def config(self) -> ModelConfig:
-        """Get config for pytriton.
+        """Returns config for pytriton.
 
         Returns:
-            ModelConfig with configuration for pyTrtion bind method.
+            ModelConfig with configuration for PyTrtion bind method.
 
         """
         model_status = self._package.get_best_model_status(strategy=self._strategy)

@@ -68,9 +68,9 @@ def main():
     """
     Get runner from `.nav` package.
     By default the runner with the minimal latency and maximal throughput is selected.
-    It is possible that no such runner exists, in that case exception is raised.
+    If such a runner does not exist, an exception will be raised.
 
-    In except block we select runner with maximal throughput.
+    In the `except` block, runner with maximal throughput is selected.
     """
     try:
         runner = package.get_runner()
@@ -80,10 +80,10 @@ def main():
         runner = package.get_runner(strategy=nav.MaxThroughputStrategy())
 
     """
-    Runners are impolemented as context managers, so we can use them with `with` statement.
-    By default model inputs and outputs names follows convention: `input__<index>` and `output__<index>`.
+    Runners are implemented as context managers, so they can be used with `with` statement.
+    By default model input and output names follows convention: `input__<index>` and `output__<index>`.
 
-    In this example we use `feed_dict` to specify input names and values.
+    In this example `feed_dict` is used to specify input names and values.
     """
     with runner:
         feed_dict = {"input__0": dataloader[0].cpu().detach().numpy()}

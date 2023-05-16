@@ -56,7 +56,9 @@ def optimize(
     verify_func: Optional[VerifyFunction] = None,
     custom_configs: Optional[Sequence[CustomConfig]] = None,
 ) -> Package:
-    """Function exports Python model to all supported formats.
+    """Entrypoint for Python model optimize.
+
+    Perform correctness testing, profiling and model verification.
 
     Args:
         model: Model inference function

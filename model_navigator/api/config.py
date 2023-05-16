@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Definition of enums and classes representing input configuration for Model Navigator."""
+"""Definition of enums and classes representing configuration for Model Navigator."""
 import abc
 from dataclasses import dataclass
 from enum import Enum
@@ -50,7 +50,12 @@ VerifyFunction = Callable[[Iterable[Sample], Iterable[Sample]], bool]
 
 
 class DeviceKind(Enum):
-    """Support types of devices in runners."""
+    """Supported types of devices.
+
+    Args:
+        CPU (str): Select CPU device.
+        GPU (str): Select GPU with CUDA support.
+    """
 
     CPU = "cpu"
     CUDA = "cuda"
@@ -81,7 +86,20 @@ SizedDataLoader = Union[SizedIterable, Sequence]
 
 
 class Format(Enum):
-    """All model formats supported by Model Navigator 'optimize' function."""
+    """All model formats supported by Model Navigator 'optimize' function.
+
+    Args:
+        PYTHON (str): Format indicating any model defined in Python.
+        TORCH (str): Format indicating PyTorch model.
+        TENSORFLOW (str): Format indicating TensorFlow model.
+        JAX (str): Format indicating JAX model.
+        TORCHSCRIPT (str): Format indicating TorchScript model.
+        TF_SAVEDMODEL (str): Format indicating TensorFlow SavedModel.
+        TF_TRT (str): Format indicating TensorFlow TensorRT model.
+        TORCH_TRT (str): Format indicating PyTorch TensorRT model.
+        ONNX (str): Format indicating ONNX model.
+        TENSORRT (str): Format indicating TensorRT model.
+    """
 
     PYTHON = "python"
     TORCH = "torch"
@@ -96,14 +114,27 @@ class Format(Enum):
 
 
 class JitType(Enum):
-    """TorchScript export paramter."""
+    """TorchScript export paramter.
+
+    Used for selecting the type of TorchScript export.
+
+    Args:
+        TRACE (str): Use tracing during export.
+        SCRIPT (str): Use scripting during export.
+    """
 
     SCRIPT = "script"
     TRACE = "trace"
 
 
 class TensorRTPrecision(Enum):
-    """Precisions supported during TensorRT conversions."""
+    """Precisions supported during TensorRT conversions.
+
+    Args:
+        INT8 (str): 8-bit integer precision.
+        FP16 (str): 16-bit floating point precision.
+        FP32 (str): 32-bit floating point precision.
+    """
 
     INT8 = "int8"
     FP16 = "fp16"
@@ -111,7 +142,13 @@ class TensorRTPrecision(Enum):
 
 
 class TensorRTPrecisionMode(Enum):
-    """Precision modes for TensorRT conversions."""
+    """Precision modes for TensorRT conversions.
+
+    Args:
+        HIERARCHY (str): Use TensorRT precision hierarchy starting from highest to lowest.
+        SINGLE (str): Use single precision.
+        MIXED (str): Use mixed precision.
+    """
 
     HIERARCHY = "hierarchy"
     SINGLE = "single"
@@ -121,6 +158,8 @@ class TensorRTPrecisionMode(Enum):
 @dataclass
 class ShapeTuple(DataObject):
     """Represents a set of shapes for a single binding in a profile.
+
+    Each element of the tuple represents a shape for a single dimension of the binding.
 
     Args:
         min (Tuple[int]): The minimum shape that the profile will support.
@@ -146,10 +185,11 @@ class ShapeTuple(DataObject):
 
 
 class MeasurementMode(Enum):
-    """Measurement mode.
+    """Profiler measurement mode.
 
-    `TIME_WINDOWS` mode run measurement windows with fixed time length.
-    `COUNT_WINDOWS` mode run measurement windows with fixed number of requests.
+    Args:
+        TIME_WINDOWS (str): mode run measurement windows with fixed time length.
+        COUNT_WINDOWS (str): mode run measurement windows with fixed number of requests.
     """
 
     TIME_WINDOWS = "time_windows"
@@ -420,10 +460,10 @@ class TensorFlowConfig(CustomConfigForFormat):
 
     @property
     def format(self) -> Format:
-        """Format represented by CustomConfig.
+        """Returns Format.TF_SAVEDMODEL.
 
         Returns:
-            TensorFlowConfig format
+            Format.TF_SAVEDMODEL
         """
         return Format.TF_SAVEDMODEL
 
@@ -463,10 +503,10 @@ class TensorFlowTensorRTConfig(CustomConfigForFormat):
 
     @property
     def format(self) -> Format:
-        """Format represented by CustomConfig.
+        """Returns Format.TF_TRT.
 
         Returns:
-            TensorFlowTensorRTConfig format
+            Format.TF_TRT
         """
         return Format.TF_TRT
 
@@ -492,7 +532,7 @@ class TensorFlowTensorRTConfig(CustomConfigForFormat):
 
 @dataclass
 class TorchConfig(CustomConfigForFormat):
-    """Torch custom config used for TorchScript models export.
+    """Torch custom config used for TorchScript export.
 
     Args:
         jit_type: Type of TorchScript export.
@@ -508,10 +548,10 @@ class TorchConfig(CustomConfigForFormat):
 
     @property
     def format(self) -> Format:
-        """Format represented by CustomConfig.
+        """Returns Format.TORCHSCRIPT.
 
         Returns:
-            TorchConfig format
+            Format.TORCHSCRIPT
         """
         return Format.TORCHSCRIPT
 
@@ -550,10 +590,10 @@ class TorchTensorRTConfig(CustomConfigForFormat):
 
     @property
     def format(self) -> Format:
-        """Format represented by CustomConfig.
+        """Returns Format.TORCH_TRT.
 
         Returns:
-            TorchTensorRTConfig format
+            Format.TORCH_TRT
         """
         return Format.TORCH_TRT
 
@@ -594,10 +634,10 @@ class OnnxConfig(CustomConfigForFormat):
 
     @property
     def format(self) -> Format:
-        """Format represented by CustomConfig.
+        """Returns Format.ONNX.
 
         Returns:
-            OnnxConfig format
+            Format.ONNX
         """
         return Format.ONNX
 
@@ -633,10 +673,10 @@ class TensorRTConfig(CustomConfigForFormat):
 
     @property
     def format(self) -> Format:
-        """Format represented by CustomConfig.
+        """Returns Format.TENSORRT.
 
         Returns:
-            TensorRTConfig format
+            Format.TENSORRT
         """
         return Format.TENSORRT
 

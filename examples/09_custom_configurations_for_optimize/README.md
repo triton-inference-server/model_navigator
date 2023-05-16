@@ -16,7 +16,7 @@ limitations under the License.
 
 # Custom configurations for Model Navigator optimize
 
-In this example we show how to custmize paramters of Model Navigator optimization process.
+In this example we show how to customize paramters of Model Navigator optimization process.
 User can control paramters of exported and converted models, profiling options and more.
 
 Example shows some configuration options and the rest can be found in documentation.

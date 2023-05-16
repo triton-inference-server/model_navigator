@@ -66,7 +66,9 @@ def optimize(
     verify_func: Optional[VerifyFunction] = None,
     custom_configs: Optional[Sequence[CustomConfig]] = None,
 ) -> Package:
-    """Function exports JAX model to all supported formats.
+    """Entry point for JAX optimize.
+
+    Perform export, conversion, correctness testing, profiling and model verification.
 
     Args:
         model: JAX forward function

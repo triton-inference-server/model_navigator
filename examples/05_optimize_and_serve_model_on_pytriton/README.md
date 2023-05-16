@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-# Triton Inference Server Torch linear model deployment
+# PyTriton Torch linear model deployment
 
 This example show how to optimize simple linear model and deploy it to PyTriton.
 

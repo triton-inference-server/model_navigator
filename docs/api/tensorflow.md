@@ -14,5 +14,4 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-::: model_navigator.api.config.OnnxConfig
-::: model_navigator.api.onnx
+::: model_navigator.api.tensorflow

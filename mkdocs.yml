@@ -69,15 +69,8 @@ nav:
   - Home: README.md
   - Installation: installation.md
   - Quick start: quick_start.md
+  - How it works?: how_it_works.md
   - Examples: examples.md
-  - API Reference:
-    - Common: common.md
-    - JAX: jax.md
-    - ONNX: onnx.md
-    - TensorFlow 2: tensorflow.md
-    - PyTorch: torch.md
-    - TensorRT: tensorrt.md
-    - Package: package.md
   - Triton Inference Server:
     - Deploying models: triton/triton_deployment.md
     - Python API: triton/model_store_api.md
@@ -87,6 +80,15 @@ nav:
     - Dynamic Batcher: triton/dynamic_batcher.md
     - Sequence Batcher: triton/sequence_batcher.md
     - Accelerators: triton/accelerators.md
+  - API Reference:
+    - Config: api/config.md
+    - JAX: api/jax.md
+    - ONNX: api/onnx.md
+    - TensorFlow 2: api/tensorflow.md
+    - PyTorch: api/torch.md
+    - Package: api/package.md
+    - Python: api/python.md
+    - PyTriton: api/pytriton.md
   - Changelog: CHANGELOG.md
   - Known Issues: known_issues.md
   - Contributing: CONTRIBUTING.md

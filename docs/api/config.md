@@ -14,12 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-# Optimize model and use for offline inference
+Classes, enums and types used to configure Model Navigator.
 
-In this example we show to obtain runner from `.nav` package and use it for inference.
-
-We recommend running this example in NVIDIA NGC [PyTorch containter](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch). To run the example simply run the `optimize.py` script:
-
-```bash
-./optimize.py
-```
+::: model_navigator.api.config
+::: model_navigator.api.MaxThroughputAndMinLatencyStrategy
+::: model_navigator.api.MaxThroughputStrategy
+::: model_navigator.api.MinLatencyStrategy
