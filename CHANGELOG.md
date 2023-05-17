@@ -16,7 +16,7 @@ limitations under the License.
 
 # Changelog
 
-## 0.5.4 (unreleased)
+## 0.5.4
 - new: Custom implementation for ONNX and TensorRT runners
 - new: Use CUDA 12 for JAX in unit tests and functional tests
 - new: Step-by-step examples
