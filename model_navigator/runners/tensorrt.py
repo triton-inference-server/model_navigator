@@ -22,7 +22,7 @@ import numpy as np
 
 from model_navigator.api.config import Format
 from model_navigator.exceptions import ModelNavigatorError, ModelNavigatorUserInputError
-from model_navigator.frameworks.tensorrt import cuda
+from model_navigator.frameworks.tensorrt import cuda as cuda_utils
 from model_navigator.frameworks.tensorrt import utils as trt_utils
 from model_navigator.logger import LOGGER
 from model_navigator.runners.base import DeviceKind, NavigatorRunner
@@ -74,7 +74,7 @@ def _make_output_allocator():
         def reallocate_output(self, tensor_name, memory, size, alignment):
             shape = (size,)
             if tensor_name not in self.buffers:
-                self.buffers[tensor_name] = cuda.DeviceArray.raw(shape)
+                self.buffers[tensor_name] = cuda_utils.DeviceArray.raw(shape)
             else:
                 self.buffers[tensor_name].resize(shape)
             LOGGER.debug(f"Reallocated output tensor: {tensor_name} to: {self.buffers[tensor_name]}")
@@ -107,6 +107,7 @@ class TensorRTRunner(NavigatorRunner):
         self.output_allocator = None
         self.device_buffers = None
         self.host_output_buffers = None
+        self.use_cuda_graphs = False
 
     @classmethod
     def format(cls) -> Format:
@@ -198,7 +199,7 @@ class TensorRTRunner(NavigatorRunner):
             for idx in range(trt_utils.get_bindings_per_profile(self.engine)):
                 binding = self.engine[idx]
                 dtype = trt_utils.np_dtype_from_trt(self.engine.get_binding_dtype(binding))
-                device_buffers[binding] = cuda.DeviceArray(dtype=dtype)
+                device_buffers[binding] = cuda_utils.DeviceArray(dtype=dtype)
                 if not self.engine.binding_is_input(binding):
                     host_output_buffers[binding] = np.empty(shape=(), dtype=dtype)
 
@@ -216,7 +217,7 @@ class TensorRTRunner(NavigatorRunner):
 
                 # NOTE: We use raw arrays to enable vectorized formats.
                 if self.engine.get_tensor_mode(name) == trt.TensorIOMode.INPUT:
-                    device_buffers[name] = cuda.DeviceArray.raw(shape=())
+                    device_buffers[name] = cuda_utils.DeviceArray.raw(shape=())
                 elif self.engine.get_tensor_mode(name) == trt.TensorIOMode.OUTPUT:
                     host_output_buffers[name] = np.empty(shape=(), dtype=np.byte)
                     if not self.context.set_output_allocator(name, output_allocator):
@@ -234,10 +235,11 @@ class TensorRTRunner(NavigatorRunner):
         self.device_buffers, self.host_output_buffers, self.output_allocator = (
             make_buffers() if trt_utils._should_use_v3_api() else make_buffers_legacy()
         )
-        self.stream = cuda.Stream()
+        self.stream = cuda_utils.Stream()
 
         if self.optimization_profile is not None:
             self.set_profile(self.optimization_profile)
+        self.cuda_graph = None
 
     def _set_shapes_from_feed_dict_legacy(self, feed_dict):
         """Sets context shapes according to the provided feed_dict.
@@ -262,7 +264,7 @@ class TensorRTRunner(NavigatorRunner):
             # Only set shapes if required.
             # get_shape/get_binding_shape will return what a shape input/data input is currently set to.
             if is_dynamic_shape_input(binding):  # For input shape tensors
-                if isinstance(inp, cuda.DeviceView):
+                if isinstance(inp, cuda_utils.DeviceView):
                     raise ModelNavigatorUserInputError(
                         f"A DeviceView was provided for input: {name}, but since this is a shape tensor, "
                         "it must reside in host memory. Please use a NumPy array instead. "
@@ -298,6 +300,8 @@ class TensorRTRunner(NavigatorRunner):
         return start_binding, end_binding
 
     def _infer_impl_legacy(self, feed_dict, copy_outputs_to_host):
+        if self.use_cuda_graphs:
+            LOGGER.warning("CUDA graphs are not supported in legacy mode. Ignoring use_cuda_graphs=True.")
         start_binding, end_binding = self._set_shapes_from_feed_dict_legacy(feed_dict)
 
         # Resize output device buffers - host buffers will be automatically resized by copy_to
@@ -310,7 +314,7 @@ class TensorRTRunner(NavigatorRunner):
         # Use a shallow copy in case we need to replace our allocated buffers with provided DeviceViews.
         dev_bufs = copy.copy(self.device_buffers)
         for name, buffer in feed_dict.items():
-            if isinstance(buffer, cuda.DeviceView):
+            if isinstance(buffer, cuda_utils.DeviceView):
                 dev_bufs[name] = buffer
             elif isinstance(buffer, np.ndarray):
                 dev_bufs[name].resize(buffer.shape)
@@ -340,7 +344,8 @@ class TensorRTRunner(NavigatorRunner):
         self.stream.synchronize()
         return output_buffers
 
-    def _infer_impl_v3(self, feed_dict, copy_outputs_to_host):
+    def _infer_impl_v3(self, feed_dict, copy_outputs_to_host):  # noqa: C901
+        reshape = False
         for idx in range(self.engine.num_io_tensors):
             name = self.engine.get_tensor_name(idx)
 
@@ -364,7 +369,7 @@ class TensorRTRunner(NavigatorRunner):
 
                 ptr = underlying_array.ctypes.data
             else:
-                if isinstance(underlying_array, cuda.DeviceView):
+                if isinstance(underlying_array, cuda_utils.DeviceView):
                     ptr = underlying_array.ptr
                 elif isinstance(underlying_array, np.ndarray):
                     underlying_array = utils.make_contiguous(underlying_array)
@@ -390,15 +395,45 @@ class TensorRTRunner(NavigatorRunner):
             # We retrieve the semantic shape from the FormattedArray, *not* the underlying array.
             if self.context.get_tensor_shape(name) != array.shape:
                 LOGGER.debug(f"Setting {name} input shape to: {array.shape}")
+                reshape = True
                 if not self.context.set_input_shape(name, array.shape):
                     raise ModelNavigatorError(f"For input: {name}, failed to set shape to: {array.shape}")
 
             if self.context.get_tensor_address(name) != ptr:
                 if not self.context.set_tensor_address(name, ptr):
                     raise ModelNavigatorError(f"For input: {name}, failed to set tensor address to: {ptr}")
+        # Any change in shape requires recapture of CUDA graph
+        if reshape:
+            self.cuda_graph = None
+            self.graph_exe = None
 
-        if not self.context.execute_async_v3(self.stream.ptr):
-            raise ModelNavigatorError("`execute_async_v3()` failed. Please see the logging output above for details.")
+        if self.use_cuda_graphs:
+            if self.cuda_graph is None:
+                # do inference before CUDA graph capture
+                if not self.context.execute_async_v3(self.stream.ptr):
+                    raise ModelNavigatorError(
+                        "`execute_async_v3()` failed. Please see the logging output above for details."
+                    )
+                self.stream.synchronize()  # Added just in case
+                # CUDA graph capture
+                self.stream.begin_capture()
+
+                if not self.context.execute_async_v3(self.stream.ptr):
+                    raise ModelNavigatorError(
+                        "`execute_async_v3()` failed. Please see the logging output above for details."
+                    )
+                self.cuda_graph = self.stream.end_capture()
+                self.stream.synchronize()  # Added to prevent crash
+                self.graph_exe = self.cuda_graph.instantiate()
+                self.stream.synchronize()  # Added just in case
+
+            self.graph_exe.launch(self.stream)
+            self.stream.synchronize()  # Added base on examples
+        else:
+            if not self.context.execute_async_v3(self.stream.ptr):
+                raise ModelNavigatorError(
+                    "`execute_async_v3()` failed. Please see the logging output above for details."
+                )
 
         output_buffers = OrderedDict()
         for name in self.host_output_buffers.keys():
@@ -425,7 +460,7 @@ class TensorRTRunner(NavigatorRunner):
                 if copy_outputs_to_host:
                     array = raw_array.view(dtype).reshape(shape)
                 else:
-                    array = cuda.DeviceView(raw_array.ptr, shape, dtype)
+                    array = cuda_utils.DeviceView(raw_array.ptr, shape, dtype)
             output_buffers[name] = array
 
         self.stream.synchronize()
@@ -499,6 +534,21 @@ class TensorRTRunner(NavigatorRunner):
         )
 
 
+class TensorRTCUDAGraphRunner(TensorRTRunner):
+    """TensorRT runner that uses CUDA graphs for faster inference."""
+
+    def __init__(self, *args, **kwargs):
+        """Initialization of TensorRT runner that uses CUDA graphs for faster inference."""
+        super().__init__(*args, **kwargs)
+        self.use_cuda_graphs = True
+
+    @classmethod
+    def name(cls) -> str:
+        """Returns the name of the runner."""
+        return "TensorRTCUDAGraph"
+
+
 def register_tensorrt_runners():
     """Register TensorRT runners."""
     register_runner(TensorRTRunner)
+    register_runner(TensorRTCUDAGraphRunner)

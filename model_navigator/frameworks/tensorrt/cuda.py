@@ -45,6 +45,26 @@ class MemcpyKind:
     Default = ctypes.c_int(4)
 
 
+class StreamCaptureMode:
+    """Enumerates different modes for capturing CUDA graphs."""
+
+    Global = 0
+    """Default mode: After stream capture is initiated, attempting to capture on a different stream will return an error."""
+    ThreadLocal = 1
+    """Thread-local mode: After stream capture is initiated, attempting to capture on a different stream will succeed and any captured work will go into a separate per-thread capture sequence."""
+    Relaxed = 2
+    """Relaxed mode: After stream capture is initiated, attempting to capture on a different stream will succeed and any captured work will go into the same capture sequence."""
+
+
+class GraphInstantiateFlags:
+    """Enumerates different flags for instantiating CUDA graphs."""
+
+    NoneFlag = 0
+    """No flags"""
+    AutoFreeOnLaunch = 1
+    """Auto-free mode: The graph exec object will be automatically freed after a successful launch."""
+
+
 class Cuda:
     """Wrapper that exposes low-level CUDA functionality.
 
@@ -99,23 +119,92 @@ class Cuda:
                 f"CUDA Error: {status}. To figure out what this means, refer to https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html#group__CUDART__TYPES_1g3f51e3575c2178246db0a94a430e0038"
             )
 
-    def create_stream(self):
+    # extern __host__ cudaError_t CUDARTAPI cudaStreamCreate(cudaStream_t *pStream);
+    def stream_create(self):
         """Create CUDA stream."""
         # Signature: () -> int
         ptr = void_ptr()
         self.check(self.handle.cudaStreamCreate(ctypes.byref(ptr)))
         return ptr.value
 
+    # extern __host__ cudaError_t CUDARTAPI cudaStreamSynchronize(cudaStream_t stream);
     def stream_synchronize(self, ptr):
-        """Synchornize CUDA stream."""
+        """Synchronize CUDA stream."""
         # Signature: int -> None
         self.check(self.handle.cudaStreamSynchronize(void_ptr(ptr)))
 
-    def destroy_stream(self, ptr):
+    # extern __host__ cudaError_t CUDARTAPI cudaStreamBeginCapture(cudaStream_t stream, enum cudaStreamCaptureMode mode);
+    def stream_begin_capture(self, ptr: int, mode: int = StreamCaptureMode.Global):
+        """Begin capturing a CUDA stream.
+
+        Args:
+            ptr (int): The handle to the stream to capture.
+            mode (StreamCaptureMode): The mode to use for capturing.
+        """
+        # Signature: int, int -> None
+        self.check(self.handle.cudaStreamBeginCapture(void_ptr(ptr), mode))
+
+    # extern __host__ cudaError_t CUDARTAPI cudaStreamEndCapture(cudaStream_t stream, cudaGraph_t *pGraph);
+    def stream_end_capture(self, ptr: int):
+        """End capturing a CUDA stream.
+
+        Args:
+            ptr (int): The handle to the stream to capture.
+
+        Returns:
+            int: The handle to the created graph.
+        """
+        # Signature: int, int -> None
+        graph = void_ptr()
+        self.check(self.handle.cudaStreamEndCapture(void_ptr(ptr), ctypes.byref(graph)))
+        return graph.value
+
+    # extern __host__ cudaError_t CUDARTAPI cudaGraphInstantiate(cudaGraphExec_t *pGraphExec, cudaGraph_t graph, unsigned long long flags __dv(0));
+    def graph_instantiate(self, ptr: int, flags: int = GraphInstantiateFlags.NoneFlag):
+        """Instantiate a CUDA graph.
+
+        Args:
+            ptr (int): The handle to the graph to instantiate.
+            flags (GraphInstantiateWithFlags): The flags to use for instantiation.
+
+        Returns:
+            int: The handle to the created graph execution.
+        """
+        # Signature: int, int -> None
+        graph_exec = void_ptr()
+        self.check(self.handle.cudaGraphInstantiate(ctypes.byref(graph_exec), void_ptr(ptr), ctypes.c_int(flags)))
+        return graph_exec.value
+
+    # extern __host__ cudaError_t CUDARTAPI cudaGraphLaunch(cudaGraphExec_t graphExec, cudaStream_t stream);
+    def graph_launch(self, ptr: int, stream: int):
+        """Launch a CUDA graph.
+
+        Args:
+            ptr (int): The handle to the graph execution to launch.
+            stream (int): The handle to the stream to launch the graph on.
+        """
+        # Signature: int, int -> None
+        self.check(self.handle.cudaGraphLaunch(void_ptr(ptr), void_ptr(stream)))
+
+    # extern __host__ cudaError_t CUDARTAPI cudaGraphExecDestroy(cudaGraphExec_t graphExec);
+    def graph_exec_destroy(self, ptr: int):
+        """Destroy CUDA graph execution."""
+        # Signature: int -> None
+        self.check(self.handle.cudaGraphExecDestroy(void_ptr(ptr)))
+
+    # extern __host__ cudaError_t CUDARTAPI cudaGraphDestroy(cudaGraph_t graph);
+    def graph_destroy(self, ptr: int):
+        """Destroy CUDA graph."""
+        # Signature: int -> None
+        self.check(self.handle.cudaGraphDestroy(void_ptr(ptr)))
+
+    # extern __host__ __cudart_builtin__ cudaError_t CUDARTAPI cudaStreamDestroy(cudaStream_t stream);
+    def stream_destroy(self, ptr):
         """Destroy CUDA stream."""
         # Signature: int -> None
         self.check(self.handle.cudaStreamDestroy(void_ptr(ptr)))
 
+    # extern __host__ __cudart_builtin__ cudaError_t CUDARTAPI cudaMalloc(void **devPtr, size_t size);
     def malloc(self, nbytes: int) -> int:
         """Allocates memory on the GPU.
 
@@ -130,11 +219,12 @@ class Cuda:
         self.check(self.handle.cudaMalloc(ctypes.byref(ptr), nbytes))
         return ptr.value
 
+    # extern __host__ __cudart_builtin__ cudaError_t CUDARTAPI cudaMalloc(void **devPtr, size_t size);
     def free(self, ptr: int):
         """Frees memory allocated on the GPU.
 
         Args:
-            ptr: The memory address, i.e. a device pointer.
+            ptr (int): The memory address of the allocated region, i.e. a device pointer.
         """
         self.check(self.handle.cudaFree(void_ptr(ptr)))
 
@@ -151,8 +241,10 @@ class Cuda:
         """
         nbytes = ctypes.c_size_t(nbytes)  # Required to prevent overflow
         if stream_ptr is not None:
+            # extern __host__ __cudart_builtin__ cudaError_t CUDARTAPI cudaMemcpyAsync(void *dst, const void *src, size_t count, enum cudaMemcpyKind kind, cudaStream_t stream __dv(0));
             self.check(self.handle.cudaMemcpyAsync(void_ptr(dst), void_ptr(src), nbytes, kind, void_ptr(stream_ptr)))
         else:
+            # extern __host__ cudaError_t CUDARTAPI cudaMemcpy(void *dst, const void *src, size_t count, enum cudaMemcpyKind kind);
             self.check(self.handle.cudaMemcpy(void_ptr(dst), void_ptr(src), nbytes, kind))
 
 
@@ -160,7 +252,7 @@ G_CUDA = None
 
 
 def wrapper():
-    """Returns the global CUDA wrapper.
+    """Returns the global Polygraphy CUDA wrapper.
 
     Returns:
         Cuda: The global CUDA wrapper.
@@ -171,12 +263,97 @@ def wrapper():
     return G_CUDA
 
 
+class GraphExec:
+    """High-level wrapper for CUDA graph execution.
+
+    GraphExec is a context manager, so it can be used with the `with` statement. When the context
+    is exited, the underlying CUDA graph is freed. For example:
+
+    .. code-block:: python
+
+        with Graph.launch(graph) as graph_exec:
+            graph_exec.launch(stream)
+    GraphExec can also be used without the `with` statement, but in that case, the user is responsible
+    for freeing the underlying CUDA graph.
+
+    GraphExec is instantiated by calling `Graph.launch`.
+
+    """
+
+    def __init__(self, ptr):
+        """Creates a new CUDA graph execution wrapper. Never call this directly - use `Grap.launch` instead.
+
+        Args:
+            ptr (int): The memory address of the CUDA graph execution, i.e. a pointer.
+        """
+        self.ptr = ptr
+
+    def __enter__(self):
+        """Returns this object."""
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """Frees the underlying CUDA graph."""
+        self.free()
+
+    def free(self):
+        """Frees the underlying CUDA graph."""
+        wrapper().graph_exec_destroy(self.ptr)
+        self.ptr = ctypes.c_void_p(None)
+
+    def launch(self, stream):
+        """Launches the CUDA graph.
+
+        Args:
+            stream (Stream): The CUDA stream to use for execution.
+        """
+        if not isinstance(stream, Stream):
+            raise TypeError(f"Expected stream to be a Stream, but got: {type(stream)}")
+        wrapper().graph_launch(self.ptr, stream.ptr)
+
+
+class Graph:
+    """High-level wrapper for CUDA graphs.
+
+    Graph is instantiated by calling `Stream.end_capture`.
+    """
+
+    def __init__(self, ptr):
+        """Creates a new CUDA graph wrapper. Never call this directly - use `Stream.end_capture` instead.
+
+        Args:
+            ptr (int): The memory address of the CUDA graph, i.e. a pointer.
+        """
+        self.ptr = ptr
+
+    def __enter__(self):
+        """Returns this object."""
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """Frees the underlying CUDA graph."""
+        self.free()
+
+    def free(self):
+        """Frees the underlying CUDA graph."""
+        wrapper().graph_destroy(self.ptr)
+        self.ptr = ctypes.c_void_p(None)
+
+    def instantiate(self, flags=GraphInstantiateFlags.NoneFlag):
+        """Instantiates the CUDA exec graph.
+
+        Returns:
+            GraphExec: A handle to the instantiated CUDA graph.
+        """
+        return GraphExec(wrapper().graph_instantiate(self.ptr, flags))
+
+
 class Stream:
     """High-level wrapper for a CUDA stream."""
 
     def __init__(self):
         """Initializes CUDA stream."""
-        self.ptr = wrapper().create_stream()
+        self.ptr = wrapper().stream_create()
         """int: The memory address of the underlying CUDA stream"""
 
     def __enter__(self):
@@ -192,12 +369,28 @@ class Stream:
 
         You can also use a context manager to manage the stream lifetime.
         """
-        wrapper().destroy_stream(self.ptr)
-        self.handle = ctypes.c_void_p(None)
+        wrapper().stream_destroy(self.ptr)
+        self.ptr = ctypes.c_void_p(None)
 
     def synchronize(self):
         """Synchronizes the stream."""
         wrapper().stream_synchronize(self.ptr)
+
+    def begin_capture(self, mode=StreamCaptureMode.Global):
+        """Begins capturing graph on the stream.
+
+        Args:
+            mode (StreamCaptureMode): The capture mode to use.
+        """
+        wrapper().stream_begin_capture(self.ptr, mode)
+
+    def end_capture(self):
+        """Ends capturing graph on the stream.
+
+        Returns:
+            Graph: A handle to the captured CUDA graph.
+        """
+        return Graph(wrapper().stream_end_capture(self.ptr))
 
 
 class DeviceView:
