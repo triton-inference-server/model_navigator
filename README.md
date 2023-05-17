@@ -46,6 +46,7 @@ flowchart LR
     src[Model with weights] --> nav["Optimization <br/> (Model Navigator)"]  -->  opt_models["Optimized model <br/> (ONNX, TensoRT, etc.)"] --> deployment["Inference Deployment <br/> (Triton, PyTriton)"]
 
     style nav fill:#76b900
+    style nav color:#ffffff
 ```
 
 The Model Navigator generates multiple optimized and production-ready models. The table below illustrates the model formats that can be obtained by using the Model Navigator with various frameworks.
