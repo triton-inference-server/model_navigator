@@ -100,7 +100,8 @@ def get_trt_profile_with_new_max_batch_size(
 
 
 def _opt_batch_size(max_batch_size):
-    opt_batch_size = 2 ** int(math.ceil(math.log2(max_batch_size) * OPT_MAX_SHAPE_RATIO))
+    magnitude = math.floor(math.log2(max_batch_size))
+    opt_batch_size = 2 ** int(math.ceil(magnitude * OPT_MAX_SHAPE_RATIO))
 
     return opt_batch_size
 

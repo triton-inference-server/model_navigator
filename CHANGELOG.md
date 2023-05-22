@@ -16,6 +16,24 @@ limitations under the License.
 
 # Changelog
 
+## 0.5.5
+- fix: Invalid optimal shape calculation for odd values in max batch size
+
+[//]: <> (put here on external component update with short summary what change or link to changelog)
+
+- Version of external components used during testing:
+  - [PyTorch 2.1.0a0+fe05266f](https://github.com/pytorch/pytorch/commit/fe05266f)
+  - [TensorFlow 2.12.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.12.0)
+  - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+  - [ONNX Runtime 1.14.1](https://github.com/microsoft/onnxruntime/tree/v1.14.1)
+  - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.47.1
+  - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.26
+  - [tf2onnx v1.14.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0)
+  - Other component versions depend on the used framework containers versions.
+    See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+    for a detailed summary.
+
+
 ## 0.5.4
 - new: Custom implementation for ONNX and TensorRT runners
 - new: Use CUDA 12 for JAX in unit tests and functional tests
