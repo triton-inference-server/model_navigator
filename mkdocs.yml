@@ -89,6 +89,7 @@ nav:
     - Package: api/package.md
     - Python: api/python.md
     - PyTriton: api/pytriton.md
+    - PyTriton: api/utilities.md
   - Changelog: CHANGELOG.md
   - Known Issues: known_issues.md
   - Contributing: CONTRIBUTING.md

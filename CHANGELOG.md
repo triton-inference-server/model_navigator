@@ -17,6 +17,7 @@ limitations under the License.
 # Changelog
 
 ## 0.5.5
+- new: Public nav.utilities module with UnpackedDataloader wrapper
 - fix: Invalid optimal shape calculation for odd values in max batch size
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
