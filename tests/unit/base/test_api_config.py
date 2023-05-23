@@ -19,6 +19,7 @@ from model_navigator.api.config import (
     DEFAULT_TENSORRT_PRECISION_MODE,
     CustomConfigForFormat,
     Format,
+    JitType,
     OnnxConfig,
     TensorFlowConfig,
     TensorFlowTensorRTConfig,
@@ -54,6 +55,18 @@ def test_torch_config_has_valid_name_and_format():
     config = TorchConfig()
     assert config.name() == "Torch"
     assert config.format == Format.TORCHSCRIPT
+
+
+def test_torch_config_has_strict_true_by_default():
+    config = TorchConfig()
+    assert config.strict is True
+
+
+def test_torch_config_defaults_reset_values_to_initial():
+    config = TorchConfig(strict=False, jit_type=(JitType.TRACE,))
+    config.defaults()
+    assert config.strict is True
+    assert config.jit_type == (JitType.SCRIPT, JitType.TRACE)
 
 
 def test_torch_tensorrt_config_has_valid_name_and_format():

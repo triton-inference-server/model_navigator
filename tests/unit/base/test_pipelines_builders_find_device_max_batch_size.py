@@ -236,6 +236,7 @@ def test_find_device_max_batch_size_builder_return_execution_unit_when_torch_fra
         Format.TORCHSCRIPT: [
             TorchScriptConfig(
                 jit_type=JitType.TRACE,
+                strict=True,
             )
         ],
         Format.ONNX: [ONNXConfig(opset=17, dynamic_axes={})],

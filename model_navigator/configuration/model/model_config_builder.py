@@ -166,7 +166,9 @@ class ModelConfigBuilder:
         """
         torch_config = _get_custom_config(custom_configs=custom_configs, custom_config_cls=config_api.TorchConfig)
         for jit_type in torch_config.jit_type:
-            model_configs[Format.TORCHSCRIPT].append(model_config.TorchScriptConfig(jit_type=jit_type))
+            model_configs[Format.TORCHSCRIPT].append(
+                model_config.TorchScriptConfig(jit_type=jit_type, strict=torch_config.strict)
+            )
 
     @staticmethod
     def get_torch_trt_config(

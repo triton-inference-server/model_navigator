@@ -536,10 +536,12 @@ class TorchConfig(CustomConfigForFormat):
 
     Args:
         jit_type: Type of TorchScript export.
+        strict: Enable or Disable strict flag for tracer used in TorchScript export, default: True.
 
     """
 
     jit_type: Union[Union[str, JitType], Tuple[Union[str, JitType], ...]] = (JitType.SCRIPT, JitType.TRACE)
+    strict: bool = True
 
     def __post_init__(self) -> None:
         """Parse dataclass enums."""
@@ -563,6 +565,7 @@ class TorchConfig(CustomConfigForFormat):
     def defaults(self) -> None:
         """Update parameters to defaults."""
         self.jit_type = (JitType.SCRIPT, JitType.TRACE)
+        self.strict = True
 
 
 @dataclass

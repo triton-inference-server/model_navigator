@@ -273,23 +273,29 @@ class TorchScriptConfig(_SerializedModelConfig, format=Format.TORCHSCRIPT):
     def __init__(
         self,
         jit_type: JitType,
+        strict: bool,
         parent: Optional[ModelConfig] = None,
     ) -> None:
         """Initializes TorchScript model configuration class.
 
         Args:
             jit_type: TorchScript export method
+            strict: Enable or Disable strict flag for tracer used in TorchScript export
             parent: Parent model configuration
         """
         super().__init__(parent=parent)
         self.jit_type = jit_type
+        self.strict = strict
 
     def _get_path_params_as_array_of_strings(self) -> List[str]:
         return [self.jit_type.value] if self.jit_type else []
 
     @classmethod
     def _from_dict(cls, data_dict: Dict):
-        return cls(jit_type=cls._parse_string(JitType, data_dict.get("jit_type")))
+        return cls(
+            jit_type=cls._parse_string(JitType, data_dict.get("jit_type")),
+            strict=cls._parse_string(bool, data_dict.get("strict")),
+        )
 
 
 class ONNXConfig(_SerializedModelConfig, format=Format.ONNX):
