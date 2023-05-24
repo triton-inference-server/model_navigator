@@ -56,6 +56,27 @@ def test_cast_tensor_is_changed_when_tensor_cast_type():
         assert modified_tensor.name == tensor.name
 
 
+def test_opt_batch_size_return_valid_result_when_various_max_bs_passed():
+    pairs = [
+        (1, 1),
+        (2, 2),
+        (3, 2),
+        (5, 4),
+        (16, 16),
+        (31, 16),
+        (32, 16),
+        (35, 16),
+        (63, 16),
+        (512, 256),
+        (4096, 1024),
+        (16348, 2048),
+        (65536, 8192),
+    ]
+    for max_bs, opt_bs in pairs:
+        result = _opt_batch_size(max_batch_size=max_bs)
+        assert result == opt_bs
+
+
 def test_get_trt_profile_return_updates_batch_size_when_max_bs_equal_to_1():
     batch_dim = 0
     ref_profile = TensorRTProfile(

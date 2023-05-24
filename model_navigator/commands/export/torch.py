@@ -50,6 +50,7 @@ class ExportTorch2TorchScript(Command):
         target_device: DeviceKind,
         jit_type: JitType,
         verbose: bool,
+        strict: bool,
         model: Optional[Any] = None,
         batch_dim: Optional[int] = None,
     ) -> CommandOutput:
@@ -57,10 +58,11 @@ class ExportTorch2TorchScript(Command):
 
         Args:
             workspace: Workspace where the files are stored.
-            path: Path inside the workspace where exported model is stored
-            verbose: Enable verbose logging
-            model: The model that has to be exported
-            batch_dim: Location of batch position in shapes
+            path: Path inside the workspace where exported model is stored.
+            verbose: Enable verbose logging.
+            strict: Enable or Disable strict flag for tracer used in TorchScript export.
+            model: The model that has to be exported.
+            batch_dim: Location of batch position in shapes.
 
         Returns:
             CommandOutput object with status
@@ -98,6 +100,7 @@ class ExportTorch2TorchScript(Command):
                 "target_jit_type": jit_type.value,
                 "batch_dim": batch_dim,
                 "target_device": target_device.value,
+                "strict": strict,
                 "navigator_workspace": workspace.as_posix(),
             }
 

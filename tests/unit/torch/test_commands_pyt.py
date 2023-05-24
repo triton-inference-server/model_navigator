@@ -169,6 +169,7 @@ def test_pyt_export_torchscript():
             path=model_relative_path,
             jit_type=JitType.SCRIPT,
             target_device=DeviceKind.CPU,
+            strict=True,
             verbose=False,
         )
         assert command_output.status == CommandStatus.OK

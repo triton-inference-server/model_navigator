@@ -63,6 +63,8 @@ def test_do_run_max_batch_size_search_return_false_when_batch_dim_is_none():
         precision_mode=TensorRTPrecisionMode.HIERARCHY,
         max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
         trt_profile=TensorRTProfile(),
+        optimization_level=None,
+        compatibility_level=None,
     )
     assert do_run_max_batch_size_search(config=config, model_cfg=model_cfg) is False
 
@@ -86,6 +88,8 @@ def test_do_run_max_batch_size_search_return_false_when_tensorrt_model_config_an
         precision_mode=TensorRTPrecisionMode.HIERARCHY,
         max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
         trt_profile=TensorRTProfile().add("x", (1,), (2,), (3,)),
+        optimization_level=None,
+        compatibility_level=None,
     )
     assert do_run_max_batch_size_search(config=config, model_cfg=model_cfg) is False
 
@@ -157,6 +161,8 @@ def test_find_device_max_batch_size_builder_return_empty_execution_unit_when_no_
                 precision_mode=TensorRTPrecisionMode.HIERARCHY,
                 max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
                 trt_profile=TensorRTProfile(),
+                optimization_level=None,
+                compatibility_level=None,
             )
         ],
     }
@@ -210,6 +216,8 @@ def test_find_device_max_batch_size_builder_return_empty_execution_unit_when_no_
                 precision_mode=TensorRTPrecisionMode.HIERARCHY,
                 max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
                 trt_profile=TensorRTProfile().add("x", (1,), (2,), (3,)),
+                optimization_level=None,
+                compatibility_level=None,
             )
         ],
     }
@@ -236,6 +244,7 @@ def test_find_device_max_batch_size_builder_return_execution_unit_when_torch_fra
         Format.TORCHSCRIPT: [
             TorchScriptConfig(
                 jit_type=JitType.TRACE,
+                strict=True,
             )
         ],
         Format.ONNX: [ONNXConfig(opset=17, dynamic_axes={})],
@@ -245,6 +254,8 @@ def test_find_device_max_batch_size_builder_return_execution_unit_when_torch_fra
                 precision_mode=TensorRTPrecisionMode.HIERARCHY,
                 max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
                 trt_profile=TensorRTProfile(),
+                optimization_level=None,
+                compatibility_level=None,
             )
         ],
     }
@@ -285,6 +296,8 @@ def test_find_device_max_batch_size_builder_return_execution_unit_when_tensorflo
                 precision_mode=TensorRTPrecisionMode.HIERARCHY,
                 max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
                 trt_profile=TensorRTProfile(),
+                optimization_level=None,
+                compatibility_level=None,
             )
         ],
     }
@@ -322,6 +335,8 @@ def test_find_device_max_batch_size_builder_return_execution_unit_when_jax_frame
                 precision_mode=TensorRTPrecisionMode.HIERARCHY,
                 max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
                 trt_profile=TensorRTProfile(),
+                optimization_level=None,
+                compatibility_level=None,
             )
         ],
     }
@@ -358,6 +373,8 @@ def test_find_device_max_batch_size_builder_return_execution_unit_when_onnx_fram
                 precision_mode=TensorRTPrecisionMode.HIERARCHY,
                 max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
                 trt_profile=TensorRTProfile(),
+                optimization_level=None,
+                compatibility_level=None,
             )
         ],
     }

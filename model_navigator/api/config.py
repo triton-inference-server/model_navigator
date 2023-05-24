@@ -40,6 +40,7 @@ from model_navigator.core.constants import (
     DEFAULT_ONNX_OPSET,
     DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD,
 )
+from model_navigator.exceptions import ModelNavigatorConfigurationError
 from model_navigator.frameworks import Framework
 from model_navigator.logger import LOGGER
 from model_navigator.utils.common import DataObject
@@ -153,6 +154,16 @@ class TensorRTPrecisionMode(Enum):
     HIERARCHY = "hierarchy"
     SINGLE = "single"
     MIXED = "mixed"
+
+
+class TensorRTCompatibilityLevel(Enum):
+    """Compatibility level for TensorRT.
+
+    Args:
+        AMPERE_PLUS (str): Support AMPERE plus architecture
+    """
+
+    AMPERE_PLUS = "ampere_plus"
 
 
 @dataclass
@@ -536,10 +547,12 @@ class TorchConfig(CustomConfigForFormat):
 
     Args:
         jit_type: Type of TorchScript export.
+        strict: Enable or Disable strict flag for tracer used in TorchScript export, default: True.
 
     """
 
     jit_type: Union[Union[str, JitType], Tuple[Union[str, JitType], ...]] = (JitType.SCRIPT, JitType.TRACE)
+    strict: bool = True
 
     def __post_init__(self) -> None:
         """Parse dataclass enums."""
@@ -563,6 +576,7 @@ class TorchConfig(CustomConfigForFormat):
     def defaults(self) -> None:
         """Update parameters to defaults."""
         self.jit_type = (JitType.SCRIPT, JitType.TRACE)
+        self.strict = True
 
 
 @dataclass
@@ -655,7 +669,8 @@ class TensorRTConfig(CustomConfigForFormat):
         precision: TensorRT precision.
         max_workspace_size: Max workspace size used by converter.
         trt_profile: TensorRT profile.
-
+        optimization_level: Optimization level for TensorRT conversion. Allowed values are fom 0 to 5. Where default is
+                            3 based on TensorRT API documentation.
     """
 
     precision: Union[
@@ -664,12 +679,19 @@ class TensorRTConfig(CustomConfigForFormat):
     precision_mode: Union[str, TensorRTPrecisionMode] = TensorRTPrecisionMode.HIERARCHY
     trt_profile: Optional[TensorRTProfile] = None
     max_workspace_size: Optional[int] = DEFAULT_MAX_WORKSPACE_SIZE
+    optimization_level: Optional[int] = None
+    compatibility_level: Optional[TensorRTCompatibilityLevel] = None
 
     def __post_init__(self) -> None:
         """Parse dataclass enums."""
         self.precision_mode = TensorRTPrecisionMode(self.precision_mode)
         precision = (self.precision,) if not isinstance(self.precision, (list, tuple)) else self.precision
         self.precision = tuple(TensorRTPrecision(p) for p in precision)
+
+        if self.optimization_level is not None and (self.optimization_level < 0 or self.optimization_level > 5):
+            raise ModelNavigatorConfigurationError(
+                f"TensorRT `optimization_level` must be between 0 and 5. Provided value: {self.optimization_level}."
+            )
 
     @property
     def format(self) -> Format:
@@ -691,6 +713,8 @@ class TensorRTConfig(CustomConfigForFormat):
         self.precision_mode = DEFAULT_TENSORRT_PRECISION_MODE
         self.trt_profile = None
         self.max_workspace_size = DEFAULT_MAX_WORKSPACE_SIZE
+        self.optimization_level = None
+        self.compatibility_level = None
 
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "TensorRTConfig":

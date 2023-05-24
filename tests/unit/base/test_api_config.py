@@ -19,6 +19,7 @@ from model_navigator.api.config import (
     DEFAULT_TENSORRT_PRECISION_MODE,
     CustomConfigForFormat,
     Format,
+    JitType,
     OnnxConfig,
     TensorFlowConfig,
     TensorFlowTensorRTConfig,
@@ -30,6 +31,7 @@ from model_navigator.api.config import (
     _custom_configs,
     map_custom_configs,
 )
+from model_navigator.exceptions import ModelNavigatorConfigurationError
 
 
 def test_tensorflow_config_has_valid_name_and_format():
@@ -54,6 +56,18 @@ def test_torch_config_has_valid_name_and_format():
     config = TorchConfig()
     assert config.name() == "Torch"
     assert config.format == Format.TORCHSCRIPT
+
+
+def test_torch_config_has_strict_true_by_default():
+    config = TorchConfig()
+    assert config.strict is True
+
+
+def test_torch_config_defaults_reset_values_to_initial():
+    config = TorchConfig(strict=False, jit_type=(JitType.TRACE,))
+    config.defaults()
+    assert config.strict is True
+    assert config.jit_type == (JitType.SCRIPT, JitType.TRACE)
 
 
 def test_torch_tensorrt_config_has_valid_name_and_format():
@@ -118,6 +132,23 @@ def test_map_custom_configs_return_dict_when_passed_list_of_configs():
     assert len(data) == 2
     assert data[tensorrt_config.name()] == tensorrt_config
     assert data[torch_tensorrt_config.name()] == torch_tensorrt_config
+
+
+def test_tensorrt_config_raise_error_when_invalid_optimization_level_provided():
+    with pytest.raises(
+        ModelNavigatorConfigurationError,
+        match="TensorRT `optimization_level` must be between 0 and 5. Provided value: 6.",
+    ):
+        TensorRTConfig(optimization_level=6)
+
+    with pytest.raises(
+        ModelNavigatorConfigurationError,
+        match="TensorRT `optimization_level` must be between 0 and 5. Provided value: -1.",
+    ):
+        TensorRTConfig(optimization_level=-1)
+
+    config = TensorRTConfig(optimization_level=2)
+    assert config.optimization_level == 2
 
 
 def test_custom_configs_raise_error_when_config_with_duplicated_name_defined():

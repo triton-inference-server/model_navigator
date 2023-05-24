@@ -34,6 +34,8 @@ tensorrt_config = TensorRTConfig(
     precision_mode=TensorRTPrecisionMode.HIERARCHY,
     max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
     trt_profile=None,
+    optimization_level=None,
+    compatibility_level=None,
 )
 
 model_statuses1 = {
@@ -161,7 +163,7 @@ model_statuses2 = {
     ),
 }
 
-torchscript_config = TorchScriptConfig(jit_type=JitType.TRACE)
+torchscript_config = TorchScriptConfig(jit_type=JitType.TRACE, strict=True)
 model_statuses3 = {
     torchscript_config.key: ModelStatus(
         model_config=torchscript_config,

@@ -37,6 +37,7 @@ def export(
     target_jit_type: str,
     batch_dim: Optional[int],
     target_device: str,
+    strict: bool,
     navigator_workspace: Optional[str] = None,
 ):
     """Export Torch model to ONNX model.
@@ -46,6 +47,7 @@ def export(
         target_jit_type (str): TorchScript jit type. Could be "trace" or "script".
         batch_dim (Optional[int]): Batch dimension.
         target_device (str): Device to load TorchScript model on.
+        strict (bool): Enable or Disable strict flag for tracer used in TorchScript export.
         navigator_workspace (Optional[str], optional): Model Navigator workspace path.
             When None use current workdir. Defaults to None.
     """
@@ -62,7 +64,7 @@ def export(
         script_module = torch.jit.script(model)
     else:
         dummy_input = tuple(torch.from_numpy(val).to(target_device) for val in profiling_sample.values())
-        script_module = torch.jit.trace(model, dummy_input)
+        script_module = torch.jit.trace(model, dummy_input, strict=strict)
 
     exported_model_path = pathlib.Path(exported_model_path)
     if not exported_model_path.is_absolute():
