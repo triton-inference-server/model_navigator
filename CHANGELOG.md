@@ -19,6 +19,7 @@ limitations under the License.
 ## 0.5.5
 - new: Public nav.utilities module with UnpackedDataloader wrapper
 - new: Added support for strict flag in Torch custom config
+- new: Extended TensorRT custom config to support builder optimization level and hardware compatibility flags
 - fix: Invalid optimal shape calculation for odd values in max batch size
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)

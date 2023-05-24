@@ -1287,6 +1287,8 @@ def onnx_package(workspace) -> Package:
         precision_mode=TensorRTPrecisionMode.HIERARCHY,
         max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
         trt_profile=None,
+        optimization_level=None,
+        compatibility_level=None,
     )
     package = Package(
         status=Status(
@@ -1407,6 +1409,8 @@ def tensorrt_package(workspace) -> Package:
         precision_mode=TensorRTPrecisionMode.HIERARCHY,
         max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
         trt_profile=None,
+        optimization_level=None,
+        compatibility_level=None,
     )
     package = Package(
         status=Status(

@@ -12,13 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This module contains classes represnting model configurations."""
+"""This module contains classes representing model configurations."""
 
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Union
 
-from model_navigator.api.config import Format, JitType, TensorRTPrecision, TensorRTPrecisionMode, TensorRTProfile
+from model_navigator.api.config import (
+    Format,
+    JitType,
+    TensorRTCompatibilityLevel,
+    TensorRTPrecision,
+    TensorRTPrecisionMode,
+    TensorRTProfile,
+)
 from model_navigator.utils.common import DataObject
 from model_navigator.utils.format_helpers import FORMAT2SUFFIX, is_source_format
 
@@ -335,6 +342,8 @@ class TensorRTConfig(_SerializedModelConfig, format=Format.TENSORRT):
         precision_mode: TensorRTPrecisionMode,
         max_workspace_size: int,
         trt_profile: Optional[TensorRTProfile],
+        optimization_level: Optional[int],
+        compatibility_level: Optional[TensorRTCompatibilityLevel],
         parent: Optional[ModelConfig] = None,
     ) -> None:
         """Initializes TensorRT (plan) model configuration class.
@@ -345,12 +354,16 @@ class TensorRTConfig(_SerializedModelConfig, format=Format.TENSORRT):
             precision_mode: Mode how the precision flags are combined
             max_workspace_size: The maximum GPU memory the model can use temporarily during execution
             trt_profile: TensorRT profile
+            optimization_level: Level of TensorRT engine optimization
+            compatibility_level: Hardware compatibility level
         """
         super().__init__(parent=parent)
         self.precision = precision
         self.precision_mode = precision_mode
         self.max_workspace_size = max_workspace_size
         self.trt_profile = trt_profile
+        self.optimization_level = optimization_level
+        self.compatibility_level = compatibility_level
 
     def _get_path_params_as_array_of_strings(self) -> List[str]:
         return [self.precision.value] if self.precision else []
@@ -365,6 +378,8 @@ class TensorRTConfig(_SerializedModelConfig, format=Format.TENSORRT):
             precision_mode=cls._parse_string(TensorRTPrecisionMode, data_dict.get("precision_mode")),
             max_workspace_size=cls._parse_string(int, data_dict.get("max_workspace_size")),
             trt_profile=trt_profile,
+            optimization_level=cls._parse_string(int, data_dict.get("optimization_level")),
+            compatibility_level=cls._parse_string(TensorRTCompatibilityLevel, data_dict.get("compatibility_level")),
         )
 
 

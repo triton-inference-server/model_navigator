@@ -20,7 +20,12 @@ from distutils.version import LooseVersion
 from pathlib import Path
 from typing import Optional
 
-from model_navigator.api.config import TensorRTPrecision, TensorRTPrecisionMode, TensorRTProfile
+from model_navigator.api.config import (
+    TensorRTCompatibilityLevel,
+    TensorRTPrecision,
+    TensorRTPrecisionMode,
+    TensorRTProfile,
+)
 from model_navigator.commands.base import CommandOutput, CommandStatus
 from model_navigator.commands.convert.base import Convert2TensorRTWithMaxBatchSizeSearch
 from model_navigator.core.tensor import TensorMetadata
@@ -50,26 +55,30 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
         dataloader_max_batch_size: Optional[int] = None,
         device_max_batch_size: Optional[int] = None,
         trt_profile: Optional[TensorRTProfile] = None,
+        optimization_level: Optional[int] = None,
+        compatibility_level: Optional[TensorRTCompatibilityLevel] = None,
         verbose: bool = False,
     ) -> CommandOutput:
         """Run the ConvertONNX2TRT Command.
 
         Args:
-            workspace (Path): Model Navigator working directory.
-            path (Path): ONNX checkpoint path, relative to workspace.
-            parent_path (Path): Path of ONNX parent model, relative to workspace.
-            input_metadata (TensorMetadata): Model input metadata.
-            output_metadata (TensorMetadata): Model output metadata.
-            precision (TensorRTPrecision): TensoRT precision.
-            precision_mode (TensorRTPrecisionMode): TensorRT precision mode.
-            dataloader_trt_profile (TensorRTProfile): Dataloader TensorRT profile.
-            max_workspace_size (Optional[int], optional): Maximum TensoRT workspace size, in bytes. Defaults to None.
-            batch_dim (Optional[int], optional): Dimension of the batching, None if model does not support batching.
+            workspace: Model Navigator working directory.
+            path: ONNX checkpoint path, relative to workspace.
+            parent_path: Path of ONNX parent model, relative to workspace.
+            input_metadata: Model input metadata.
+            output_metadata: Model output metadata.
+            precision: TensorRT precision.
+            precision_mode: TensorRT precision mode.
+            dataloader_trt_profile: Dataloader TensorRT profile.
+            max_workspace_size: Maximum TensorRT workspace size, in bytes. Defaults to None.
+            batch_dim: Dimension of the batching, None if model does not support batching.
                 Defaults to None.
             dataloader_max_batch_size (Optional[int], optional): Maximum batch size in the dataloader. Defaults to None.
-            device_max_batch_size (Optional[int], optional): Maximum batch size that fits on the device.
+            device_max_batch_size: Maximum batch size that fits on the device.
                 Defaults to None.
-            trt_profile (Optional[TensorRTProfile], optional): User specified TensorRT profile. Defaults to None.
+            trt_profile: User specified TensorRT profile. Defaults to None.
+            optimization_level: Optimization level for TensorRT engine
+            compatibility_level: Hardware compatibility level for generated engine
             verbose: enable verbose logging for command
 
         Returns:
@@ -107,6 +116,12 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
         convert_cmd = ["polygraphy", "convert", input_model_path.relative_to(workspace).as_posix()]
         convert_cmd.extend(["--convert-to", "trt"])
         convert_cmd.extend(["-o", converted_model_path.relative_to(workspace).as_posix()])
+
+        if optimization_level is not None:
+            convert_cmd.extend(["--builder-optimization-level", optimization_level])
+
+        if compatibility_level is not None:
+            convert_cmd.extend(["--hardware-compatibility-level", compatibility_level.value])
 
         if precision_mode == TensorRTPrecisionMode.HIERARCHY:
             trt_precision_flags = {

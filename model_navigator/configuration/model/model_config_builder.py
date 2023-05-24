@@ -302,5 +302,7 @@ class ModelConfigBuilder:
                     precision_mode=trt_config.precision_mode,
                     max_workspace_size=trt_config.max_workspace_size,
                     trt_profile=trt_config.trt_profile,
+                    optimization_level=trt_config.optimization_level,
+                    compatibility_level=trt_config.compatibility_level,
                 )
             )

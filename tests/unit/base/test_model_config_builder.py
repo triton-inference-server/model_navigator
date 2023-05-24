@@ -19,6 +19,7 @@ from model_navigator.api.config import (
     OnnxConfig,
     TensorFlowConfig,
     TensorFlowTensorRTConfig,
+    TensorRTCompatibilityLevel,
     TensorRTConfig,
     TensorRTPrecision,
     TensorRTPrecisionMode,
@@ -255,6 +256,8 @@ def test_get_trt_config_returns_model_configs_matching_custom_config():
         precision_mode=TensorRTPrecisionMode.MIXED,
         max_workspace_size=10,
         trt_profile=TensorRTProfile().add("x", (1,), (2,), (3,)),
+        optimization_level=1,
+        compatibility_level=TensorRTCompatibilityLevel.AMPERE_PLUS,
     )
 
     custom_configs = [onnx_config, trt_config]
@@ -274,3 +277,5 @@ def test_get_trt_config_returns_model_configs_matching_custom_config():
         assert trt_model_configuration.format == trt_config.format
         assert trt_model_configuration.trt_profile == trt_config.trt_profile
         assert trt_model_configuration.parent_key == onnx_model_configuration.key
+        assert trt_model_configuration.optimization_level == 1
+        assert trt_model_configuration.compatibility_level == TensorRTCompatibilityLevel.AMPERE_PLUS
