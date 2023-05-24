@@ -18,18 +18,20 @@ import math
 import os
 import signal
 from distutils.version import LooseVersion
-from typing import Callable, Union
+from typing import Callable, Optional, TypeVar, Union
 
 import numpy as np
 
 from model_navigator.api.config import ShapeTuple, TensorRTProfile
 from model_navigator.core.constants import OPT_MAX_SHAPE_RATIO
-from model_navigator.core.tensor import TensorMetadata, TensorSpec
+from model_navigator.core.tensor import TensorMetadata
 from model_navigator.exceptions import ModelNavigatorNotFoundError
 from model_navigator.utils import module
-from model_navigator.utils.common import invoke_if_callable
+from model_navigator.utils.common import invoke_if_callable, numpy_to_torch_dtype
 
 trt = module.lazy_import("tensorrt")
+
+T = TypeVar("T")
 
 LOGGER = logging.getLogger(__name__)
 _TYPE_CASTS = {
@@ -64,12 +66,15 @@ def cast_type(dtype: np.dtype) -> np.dtype:
     return dtype
 
 
-def cast_tensor(tensor: TensorSpec) -> TensorSpec:
+def cast_tensor(tensor: T, dtype: Optional[np.dtype] = None) -> T:
     """Cast type and return new dtype."""
-    if tensor.dtype in _TYPE_CASTS:
-        target_dtype = _TYPE_CASTS[tensor.dtype]
-        LOGGER.debug(f"Casting {tensor.dtype} tensor to {target_dtype.type}.")
-        return tensor.astype(target_dtype.type)
+    target_dtype = dtype or _TYPE_CASTS.get(tensor.dtype)
+    if target_dtype:
+        LOGGER.debug(f"Casting {dtype} tensor to {target_dtype}.")
+        if isinstance(tensor, np.ndarray):
+            return tensor.astype(target_dtype.type)
+        else:
+            return tensor.to(numpy_to_torch_dtype(target_dtype))
 
     return tensor
 

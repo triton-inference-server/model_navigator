@@ -16,10 +16,11 @@ from collections import OrderedDict
 from typing import List, Optional, Sequence, Union
 
 import model_navigator.utils.common as utils
-from model_navigator.api.config import Format
-from model_navigator.core.tensor import TensorMetadata
+from model_navigator.api.config import Format, TensorType
+from model_navigator.core.tensor import TensorMetadata, get_tensor_type
 from model_navigator.exceptions import ModelNavigatorNotFoundError
 from model_navigator.frameworks.onnx.utils import ONNX_RT_TYPE_TO_NP
+from model_navigator.frameworks.tensorrt.cuda import DeviceView
 from model_navigator.logger import LOGGER
 from model_navigator.runners.base import DeviceKind, NavigatorRunner
 from model_navigator.runners.registry import register_runner
@@ -102,7 +103,7 @@ class _BaseOnnxrtRunner(NavigatorRunner):
         return meta
 
     def get_onnx_input_metadata(self):
-        assert self.is_active, "Runner must be activated."
+        assert self.is_active and hasattr(self, "sess"), "Runner must be activated."
 
         input_metadata = TensorMetadata()
         for node in self.sess.get_inputs():
@@ -126,19 +127,14 @@ class _BaseOnnxrtRunner(NavigatorRunner):
             if self._provider not in active_providers:
                 raise RuntimeError(f"Unable to initialize defined provider: {self._provider}.")
 
-    def infer_impl(self, feed_dict):
-        input_metadata = self.get_onnx_input_metadata()
-        feed_dict = {name: tensor for name, tensor in feed_dict.items() if name in input_metadata}
-
-        inference_outputs = self.sess.run(None, feed_dict)
-        out_dict = OrderedDict()
-        for node, out in zip(self.sess.get_outputs(), inference_outputs):
-            out_dict[node.name] = out
-        out_dict = {k: v for k, v in out_dict.items() if k in self.output_metadata}
-        return out_dict
-
     def deactivate_impl(self):
         del self.sess
+
+    def get_available_input_types(self) -> List[TensorType]:
+        return [TensorType.NUMPY, TensorType.TORCH]
+
+    def get_available_return_types_impl(self) -> List[TensorType]:
+        return [TensorType.NUMPY, TensorType.TORCH]
 
 
 class OnnxrtCPURunner(_BaseOnnxrtRunner):
@@ -156,6 +152,30 @@ class OnnxrtCPURunner(_BaseOnnxrtRunner):
         """Return supported devices for runner."""
         return [DeviceKind.CPU]
 
+    def infer_impl(self, feed_dict):
+        """Run inference."""
+        assert self.is_active and hasattr(self, "sess"), "Runner must be activated."
+
+        input_metadata = self.get_onnx_input_metadata()
+        feed_dict = {name: self._to_numpy(tensor) for name, tensor in feed_dict.items() if name in input_metadata}
+
+        inference_outputs = self.sess.run(None, feed_dict)
+        out_dict = OrderedDict()
+        for node, out in zip(self.sess.get_outputs(), inference_outputs):
+            out_dict[node.name] = out
+        out_dict = {k: v for k, v in out_dict.items() if k in self.output_metadata}
+        return out_dict
+
+    @staticmethod
+    def _to_numpy(tensor):
+        tensor_type = get_tensor_type(tensor)
+        if tensor_type == TensorType.NUMPY:
+            return tensor
+        elif tensor_type == TensorType.TORCH:
+            return tensor.detach().cpu().numpy()
+        else:
+            raise ValueError(f"Unsupported tensor type: {tensor_type}")
+
 
 class OnnxrtCUDARunner(_BaseOnnxrtRunner):
     """ONNX runner for CUDA runtime provider."""
@@ -172,8 +192,53 @@ class OnnxrtCUDARunner(_BaseOnnxrtRunner):
         """Return supported devices for runner."""
         return [DeviceKind.CUDA]
 
+    def infer_impl(self, feed_dict):
+        """Run inference."""
+        assert self.is_active and hasattr(self, "sess"), "Runner must be activated."
 
-class OnnxrtTensorRTRunner(_BaseOnnxrtRunner):
+        input_metadata = self.get_onnx_input_metadata()
+        feed_dict = {name: tensor for name, tensor in feed_dict.items() if name in input_metadata}
+
+        io_binding = self._get_io_bindings(feed_dict)
+        self.sess.run_with_iobinding(io_binding)
+        io_binding.synchronize_outputs()
+
+        out_dict = OrderedDict()
+        for node, out in zip(self.sess.get_outputs(), io_binding.get_outputs()):
+            device_view = DeviceView(out.data_ptr(), out.shape(), ONNX_RT_TYPE_TO_NP[out.data_type()])
+            out_dict[node.name] = device_view.torch() if self.return_type == TensorType.TORCH else device_view.numpy()
+
+        out_dict = {k: v for k, v in out_dict.items() if k in self.output_metadata}
+        return out_dict
+
+    def _get_io_bindings(self, feed_dict):
+        assert self.is_active and hasattr(self, "sess"), "Runner must be activated."
+
+        io_binding = self.sess.io_binding()
+        for name, tensor in feed_dict.items():
+            tensor_type = get_tensor_type(tensor)
+            if tensor_type == TensorType.TORCH:
+                tensor = tensor.to(DeviceKind.CUDA.value)
+                io_binding.bind_input(
+                    name,
+                    DeviceKind.CUDA.value,
+                    0,
+                    utils.torch_to_numpy_dtype(tensor.dtype),
+                    tensor.shape,
+                    tensor.data_ptr(),
+                )
+            else:
+                assert tensor_type == TensorType.NUMPY
+                io_binding.bind_cpu_input(name, tensor)
+        io_binding.synchronize_inputs()
+
+        for name in self.output_metadata:
+            io_binding.bind_output(name, DeviceKind.CUDA.value, 0)
+
+        return io_binding
+
+
+class OnnxrtTensorRTRunner(OnnxrtCUDARunner):
     """ONNX runner for TensorRT runtime provider."""
 
     _provider = "TensorrtExecutionProvider"

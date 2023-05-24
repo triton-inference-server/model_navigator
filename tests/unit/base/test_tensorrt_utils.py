@@ -14,7 +14,6 @@
 import numpy as np
 
 from model_navigator.api.config import ShapeTuple, TensorRTProfile
-from model_navigator.core.tensor import TensorSpec
 from model_navigator.frameworks.tensorrt import utils as tensorrt_utils
 from model_navigator.frameworks.tensorrt.utils import _opt_batch_size
 
@@ -32,12 +31,11 @@ def test_cast_type_return_new_type_when_has_cast():
 
 
 def test_cast_tensor_is_not_changed_when_tensor_has_no_cast_type():
-    tensor = TensorSpec(name="Tensor", shape=(-1,), dtype=np.dtype("int32"))
+    tensor = np.zeros(shape=(1,), dtype=np.dtype("int32"))
     modified_tensor = tensorrt_utils.cast_tensor(tensor)
 
     assert modified_tensor.dtype == tensor.dtype
     assert modified_tensor.shape == tensor.shape
-    assert modified_tensor.name == tensor.name
 
 
 def test_cast_tensor_is_changed_when_tensor_cast_type():
@@ -48,12 +46,11 @@ def test_cast_tensor_is_changed_when_tensor_cast_type():
     ]
     for input_type, expected_type in test_cases:
 
-        tensor = TensorSpec(name="Tensor", shape=(-1,), dtype=np.dtype(input_type))
+        tensor = np.zeros(shape=(1,), dtype=np.dtype(input_type))
         modified_tensor = tensorrt_utils.cast_tensor(tensor)
 
         assert modified_tensor.dtype == np.dtype(expected_type)
         assert modified_tensor.shape == tensor.shape
-        assert modified_tensor.name == tensor.name
 
 
 def test_opt_batch_size_return_valid_result_when_various_max_bs_passed():

@@ -20,7 +20,8 @@ from typing import List, Optional, Sequence
 
 import numpy as np
 
-from model_navigator.api.config import Format
+from model_navigator.api.config import Format, TensorType
+from model_navigator.core.tensor import get_tensor_type
 from model_navigator.exceptions import ModelNavigatorError, ModelNavigatorUserInputError
 from model_navigator.frameworks.tensorrt import cuda as cuda_utils
 from model_navigator.frameworks.tensorrt import utils as trt_utils
@@ -31,6 +32,7 @@ from model_navigator.utils import common as utils
 from model_navigator.utils import module
 
 trt = module.lazy_import("tensorrt")
+torch = module.lazy_import("torch")
 
 
 class FormattedArray:
@@ -150,6 +152,20 @@ class TensorRTRunner(NavigatorRunner):
         else:
             if not self.context.set_optimization_profile_async(index, self.stream.ptr):
                 raise ModelNavigatorError(f"Failed to set optimization profile to: {index}")
+
+    def get_available_return_types_impl(self) -> List[TensorType]:
+        """Implementation of get_available_return_types method."""
+        if trt_utils._should_use_v3_api():
+            return [TensorType.NUMPY, TensorType.TORCH]
+        else:
+            return [TensorType.NUMPY]
+
+    def get_available_input_types(self) -> List[TensorType]:
+        """Implementation of get_available_return_types method."""
+        if trt_utils._should_use_v3_api():
+            return [TensorType.NUMPY, TensorType.TORCH]
+        else:
+            return [TensorType.NUMPY]
 
     def get_input_metadata_impl(self):
         """Implementation of get_input_metadata method.
@@ -344,7 +360,7 @@ class TensorRTRunner(NavigatorRunner):
         self.stream.synchronize()
         return output_buffers
 
-    def _infer_impl_v3(self, feed_dict, copy_outputs_to_host):  # noqa: C901
+    def _infer_impl_v3(self, feed_dict):  # noqa C901
         reshape = False
         for idx in range(self.engine.num_io_tensors):
             name = self.engine.get_tensor_name(idx)
@@ -353,9 +369,7 @@ class TensorRTRunner(NavigatorRunner):
                 continue
 
             # Set up input tensor shapes and copy from host memory if needed
-            array = feed_dict[name]
-            if not isinstance(array, FormattedArray):
-                array = FormattedArray(array, shape=array.shape, dtype=array.dtype)  # pytype: disable=wrong-arg-types
+            array = self._input_tensor_view(feed_dict, name)
 
             underlying_array = array.array
 
@@ -437,36 +451,56 @@ class TensorRTRunner(NavigatorRunner):
 
         output_buffers = OrderedDict()
         for name in self.host_output_buffers.keys():
-            # If we're dealing with vectorized formats, we need to return a FormattedArray.
-            # Otherwise, we create a view instead with the correct shape/dtype.
-            raw_array = self.output_allocator.buffers[name]
-            shape = self.output_allocator.shapes[name]
-            dtype = np.dtype(trt.nptype(self.engine.get_tensor_dtype(name)))
-
-            using_nonlinear_format = self.engine.get_tensor_format(name) != trt.TensorFormat.LINEAR
-            # The memory allocated by the output allocator may be larger than actually required.
-            # If we're using a vectorized format, then we need to copy the whole thing.
-            # Otherwise, we can determine how much we actually need.
-            nbytes = raw_array.nbytes if using_nonlinear_format else (utils.volume(shape) * dtype.itemsize)
-
-            if copy_outputs_to_host:
-                self.host_output_buffers[name] = utils.resize_buffer(self.host_output_buffers[name], (nbytes,))
-                raw_array.view(shape=(nbytes,)).copy_to(self.host_output_buffers[name], stream=self.stream)
-                raw_array = self.host_output_buffers[name]
-
-            if using_nonlinear_format:
-                array = FormattedArray(raw_array, shape=shape, dtype=dtype)
-            else:
-                if copy_outputs_to_host:
-                    array = raw_array.view(dtype).reshape(shape)
-                else:
-                    array = cuda_utils.DeviceView(raw_array.ptr, shape, dtype)
-            output_buffers[name] = array
+            output_buffers[name] = self._output_tensor_view(name, self.return_type)
 
         self.stream.synchronize()
         return output_buffers
 
-    def infer_impl(self, feed_dict, copy_outputs_to_host=None):
+    def _input_tensor_view(self, feed_dict, name) -> FormattedArray:
+        # Set up input tensor shapes and copy from host memory if needed
+        array = feed_dict[name]
+        tensor_type = get_tensor_type(array)
+        if tensor_type == TensorType.TORCH:
+            if not array.is_cuda:
+                array = array.cuda()
+            array = cuda_utils.DeviceView(
+                ptr=array.data_ptr(), shape=array.shape, dtype=utils.torch_to_numpy_dtype(array.dtype)
+            )
+        array = FormattedArray(array, shape=array.shape, dtype=array.dtype)  # pytype: disable=wrong-arg-types
+        return array
+
+    def _output_tensor_view(self, name, return_type):
+        # If we're dealing with vectorized formats, we need to return a FormattedArray.
+        # Otherwise, we create a view instead with the correct shape/dtype.
+        raw_array = self.output_allocator.buffers[name]
+        shape = self.output_allocator.shapes[name]
+        dtype = np.dtype(trt.nptype(self.engine.get_tensor_dtype(name)))
+
+        using_nonlinear_format = self.engine.get_tensor_format(name) != trt.TensorFormat.LINEAR
+        if using_nonlinear_format:
+            raise NotImplementedError("Nonlinear formats are not yet supported.")
+        # The memory allocated by the output allocator may be larger than actually required.
+        # If we're using a vectorized format, then we need to copy the whole thing.
+        # Otherwise, we can determine how much we actually need.
+        nbytes = raw_array.nbytes if using_nonlinear_format else (utils.volume(shape) * dtype.itemsize)
+
+        if return_type == TensorType.NUMPY:
+            self.host_output_buffers[name] = utils.resize_buffer(self.host_output_buffers[name], (nbytes,))
+            raw_array.view(shape=(nbytes,)).copy_to(self.host_output_buffers[name], stream=self.stream)
+            raw_array = self.host_output_buffers[name]
+
+            array = FormattedArray(raw_array, shape=shape, dtype=dtype)
+            array = raw_array.view(dtype).reshape(shape)
+        else:
+            assert return_type == TensorType.TORCH
+            array = cuda_utils.DeviceView(raw_array.ptr, shape, dtype).torch(stream=self.stream)
+
+        return array
+
+    def infer_impl(
+        self,
+        feed_dict,
+    ):
         """Implementation for running inference with TensorRT.
 
         Do not call this method directly - use ``infer()`` instead,
@@ -493,15 +527,15 @@ class TensorRTRunner(NavigatorRunner):
         """
         input_metadata = self.get_input_metadata_impl()
         feed_dict = {
-            name: trt_utils.cast_tensor(tensor) for name, tensor in feed_dict.items() if name in input_metadata
+            name: trt_utils.cast_tensor(tensor, dtype=input_metadata[name].dtype)
+            for name, tensor in feed_dict.items()
+            if name in input_metadata
         }
 
-        copy_outputs_to_host = utils.default(copy_outputs_to_host, True)
-
         if trt_utils._should_use_v3_api():
-            output_buffers = self._infer_impl_v3(feed_dict, copy_outputs_to_host)
+            output_buffers = self._infer_impl_v3(feed_dict)
         else:
-            output_buffers = self._infer_impl_legacy(feed_dict, copy_outputs_to_host)
+            output_buffers = self._infer_impl_legacy(feed_dict, True)
         out_dict = {k: v for k, v in output_buffers.items() if k in self.output_metadata}
 
         return out_dict

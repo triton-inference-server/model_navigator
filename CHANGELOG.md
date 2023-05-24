@@ -16,6 +16,10 @@ limitations under the License.
 
 # Changelog
 
+## 0.6.0 (unreleased)
+- new: Zero-copy runners for Torch, ONNX and TensorRT
+
+
 ## 0.5.5
 - new: Public nav.utilities module with UnpackedDataloader wrapper
 - new: Added support for strict flag in Torch custom config

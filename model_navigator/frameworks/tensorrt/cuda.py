@@ -24,6 +24,9 @@ import numpy as np
 import model_navigator.utils.common as utils
 from model_navigator.exceptions import ModelNavigatorError, ModelNavigatorUserInputError
 from model_navigator.logger import LOGGER
+from model_navigator.utils import module
+
+torch = module.lazy_import("torch")
 
 
 def void_ptr(val=None):
@@ -491,6 +494,22 @@ class DeviceView:
         """
         arr = np.empty(self.shape, dtype=self.dtype)
         self.copy_to(arr)
+        return arr
+
+    def torch(self, stream=None):
+        """Create a new NumPy array containing the contents of this device buffer.
+
+        Returns:
+            The newly created NumPy array.
+        """
+        arr = torch.empty(self.shape, dtype=utils.numpy_to_torch_dtype(self.dtype), device="cuda")
+        wrapper().memcpy(
+            dst=arr.data_ptr(),
+            src=self.ptr,
+            nbytes=self.nbytes,
+            kind=MemcpyKind.DeviceToDevice,
+            stream_ptr=try_get_stream_handle(stream),
+        )
         return arr
 
     def __str__(self):

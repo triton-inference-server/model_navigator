@@ -19,7 +19,7 @@ import numpy as np
 
 from model_navigator.api.config import Sample, SizedDataLoader, SizedIterable, TensorRTProfile
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
-from model_navigator.core.tensor import TensorMetadata, TensorSpec
+from model_navigator.core.tensor import FRAMEWORK_TO_TENSOR_TYPE, TensorMetadata, TensorSpec
 from model_navigator.exceptions import ModelNavigatorUserInputError
 from model_navigator.execution_context import ExecutionContext
 from model_navigator.frameworks import Framework
@@ -47,7 +47,7 @@ def _extract_axes_shapes(
         if i >= num_samples:
             LOGGER.warning(f"{len(dataloader)=}, but more samples found.")
             break
-        validate_sample_input(sample, framework)
+        validate_sample_input(sample, FRAMEWORK_TO_TENSOR_TYPE[framework])
         sample = extract_sample(sample, input_names, framework)
         for name, tensor in sample.items():
             for k, dim in enumerate(tensor.shape):
@@ -122,7 +122,7 @@ class InferInputMetadata(Command, is_required=True):
             CommandOutput object
         """
         sample = next(iter(dataloader))
-        validate_sample_input(sample, framework)
+        validate_sample_input(sample, FRAMEWORK_TO_TENSOR_TYPE[framework])
         input_names = _input_names
         if input_names is None:
             input_names = self._get_default_input_names(model, sample, framework)

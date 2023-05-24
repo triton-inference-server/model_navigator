@@ -15,7 +15,8 @@
 import numpy as np
 import pytest
 
-from model_navigator.core.tensor import TensorSpec, TensorUtils
+from model_navigator.api.config import TensorType
+from model_navigator.core.tensor import TensorSpec, TensorUtils, get_tensor_type
 
 
 def test_numpy_eq():
@@ -79,3 +80,8 @@ def test_tensorspec_without_dtype():
 def test_tensorspec_optional():
     spec = TensorSpec("name", shape=(-1, 224, 224, 3))
     assert not spec.optional
+
+
+def test_get_tensor_type_numpy():
+    a = np.ones((8, 64), dtype=np.float32)
+    assert get_tensor_type(a) == TensorType.NUMPY

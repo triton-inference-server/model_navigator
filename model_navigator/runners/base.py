@@ -19,8 +19,8 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 
-from model_navigator.api.config import DeviceKind, Format
-from model_navigator.core.tensor import TensorMetadata
+from model_navigator.api.config import DeviceKind, Format, TensorType
+from model_navigator.core.tensor import TensorMetadata, TensorSpec, get_tensor_type
 from model_navigator.logger import LOGGER
 from model_navigator.utils.dataloader import validate_sample_output
 
@@ -40,6 +40,7 @@ class NavigatorRunner(abc.ABC):
         input_metadata: TensorMetadata,
         output_metadata: TensorMetadata,
         input_metadata_mapping: Optional[Dict[str, str]] = None,
+        return_type: TensorType = TensorType.NUMPY,
         *args,
         **kwargs,
     ) -> None:
@@ -50,11 +51,15 @@ class NavigatorRunner(abc.ABC):
             input_metadata: A model inputs metadata
             output_metadata: A model outputs metadata
             input_metadata_mapping: Optional mapping for input metadata
+            return_type: A type of return value
         """
         self._model = model
         self._input_metadata = input_metadata
         self._output_metadata = output_metadata
         self._input_metadata_mapping = input_metadata_mapping
+
+        self._check_return_type(return_type)
+        self._return_type = return_type
 
         self.inference_time = None
         self.is_active = False
@@ -80,6 +85,11 @@ class NavigatorRunner(abc.ABC):
     def input_metadata_mapping(self) -> Optional[Dict[str, str]]:
         """Property for obtaining model input metadata mapping."""
         return self._input_metadata_mapping
+
+    @property
+    def return_type(self) -> TensorType:
+        """Property for obtaining runner return type."""
+        return self._return_type
 
     @classmethod
     def name(cls) -> str:
@@ -182,9 +192,7 @@ class NavigatorRunner(abc.ABC):
         self.activate_impl()
         self.is_active = True
 
-    def infer(
-        self, feed_dict: Dict[str, np.ndarray], check_inputs: bool = True, *args: Any, **kwargs: Any
-    ) -> Dict[str, np.ndarray]:
+    def infer(self, feed_dict: Dict[str, Any], check_inputs: bool = True, *args: Any, **kwargs: Any) -> Dict[str, Any]:
         """Runs inference using the provided feed_dict.
 
         Must be called only after ``activate()`` and before ``deactivate()``.
@@ -194,8 +202,9 @@ class NavigatorRunner(abc.ABC):
 
         Args:
             feed_dict: A mapping of input tensor names to corresponding input NumPy arrays.
-            check_inputs: Whether to check that the provided ``feed_dict`` includes the expected inputs with the
-                    expected data types and shapes. Disabling this may improve performance. Defaults to True.
+            check_inputs: Whether to check that the provided ``feed_dict`` and generated outputs includes the expected
+                inputs / outputs with the expected data types and shapes. Disabling this may improve performance.
+                Defaults to True.
 
         Returns:
             A dictionary with mapping of output tensor names to their corresponding NumPy arrays.
@@ -215,16 +224,23 @@ class NavigatorRunner(abc.ABC):
                     LOGGER.warning("Input tensor: {name} | Missing input in `feed_dict`: {name}.")
 
             for name, inp in feed_dict.items():
-                meta = input_metadata[name]
-                if not meta.is_dtype_compatible(inp):
+                if get_tensor_type(inp) not in self.get_available_input_types():
                     LOGGER.warning(
-                        f"Input tensor: {name} | Received unexpected dtype: {inp.dtype}.\n"
+                        f"Input tensor: {name} | Received unexpected type: {get_tensor_type(inp)}.\n"
+                        f"Note: Expected one of: {self.get_available_input_types()}"
+                    )
+
+                meta = input_metadata[name]
+                inp_spec = TensorSpec.from_tensor(inp, name)
+                if not meta.is_dtype_compatible(inp_spec):
+                    LOGGER.warning(
+                        f"Input tensor: {name} | Received unexpected dtype: {inp_spec.dtype}.\n"
                         f"Note: Expected type: {meta.dtype}"
                     )
 
-                if not meta.is_shape_compatible(inp):
+                if not meta.is_shape_compatible(inp_spec):
                     LOGGER.warning(
-                        f"Input tensor: {name} | Received incompatible shape: {inp.shape}.\n"
+                        f"Input tensor: {name} | Received incompatible shape: {inp_spec.shape}.\n"
                         f"Note: Expected a shape compatible with: {meta.shape}"
                     )
 
@@ -232,7 +248,8 @@ class NavigatorRunner(abc.ABC):
         output = self.infer_impl(feed_dict, *args, **kwargs)
         end_time = time.monotonic()
 
-        validate_sample_output(output)
+        if check_inputs:
+            validate_sample_output(output, self.return_type)
 
         self.inference_time = end_time - start_time
         return output
@@ -269,11 +286,56 @@ class NavigatorRunner(abc.ABC):
         self.deactivate_impl()
         self.is_active = False
 
+    def get_available_return_types(self) -> List[TensorType]:
+        """Returns a list of available return types.
+
+        Returns:
+            A list of available return types.
+        """
+        return self.get_available_return_types_impl()
+
+    def get_available_return_types_impl(self) -> List[TensorType]:
+        """Implementation for getting available return types.
+
+        Derived classes should override this function rather than ``get_available_return_types()``.
+        """
+        return [TensorType.NUMPY]
+
+    def get_available_input_types(self) -> List[TensorType]:
+        """Returns a list of available input types.
+
+        Returns:
+            A list of available input types.
+        """
+        return self.get_available_input_types_impl()
+
+    def get_available_input_types_impl(self) -> List[TensorType]:
+        """Implementation for getting available input types.
+
+        Derived classes should override this function rather than ``get_available_input_types()``.
+        """
+        return [TensorType.NUMPY]
+
     def __del__(self):
         """Cleanup of object removal. Log warning when `deactivate` was not called before runner was removed."""
         if self.is_active:
             # __del__ is not guaranteed to be called, but when it is, this could be a useful warning.
             LOGGER.warning(f"{self.name()} | Was activated but never deactivated. This could cause a memory leak!")
+
+    def _check_return_type(self, return_type: TensorType) -> None:
+        """Check if return type is available.
+
+        Args:
+            return_type: TensorType to check.
+
+        Raises:
+            ValueError: If return_type is not available.
+        """
+        available_return_types = self.get_available_return_types()
+        if return_type not in available_return_types:
+            raise ValueError(
+                f"{self.name()} | `return_type` must be one of {available_return_types}, but got: {return_type}"
+            )
 
 
 class NavigatorStabilizedRunner(NavigatorRunner):

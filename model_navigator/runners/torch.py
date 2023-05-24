@@ -15,11 +15,13 @@
 from collections import OrderedDict
 from typing import List, Mapping
 
-from model_navigator.api.config import Format
+from model_navigator.api.config import Format, TensorType
+from model_navigator.core.tensor import get_tensor_type
 from model_navigator.frameworks.tensorrt import utils as tensorrt_utils
 from model_navigator.runners.base import DeviceKind, NavigatorRunner
 from model_navigator.runners.registry import register_runner
 from model_navigator.utils import module
+from model_navigator.utils.common import numpy_to_torch_dtype
 from model_navigator.utils.dataloader import get_default_output_names
 
 torch = module.lazy_import("torch")
@@ -52,10 +54,7 @@ class _BaseTorchRunner(NavigatorRunner):
     def infer_impl(self, feed_dict):
         """Inference handler implementation."""
         with torch.no_grad():
-            inputs = [
-                torch.from_numpy(self._cast_value(feed_dict[input_name], spec.dtype)).to(self._target_device)
-                for (input_name, spec) in self.input_metadata.items()
-            ]
+            inputs = self._prepare_inputs(feed_dict)
             if self.input_metadata_mapping is None:
                 outputs = self._loaded_model(*inputs)
             else:
@@ -72,13 +71,45 @@ class _BaseTorchRunner(NavigatorRunner):
             output_names = self.output_metadata.keys()
         else:
             output_names = outputs.keys() if isinstance(outputs, Mapping) else get_default_output_names(len(outputs))
+
         for name, output in zip(output_names, outputs):
-            out_dict[name] = output.cpu().numpy()
+            out_dict[name] = output
+        out_dict = self._prepare_outputs(out_dict)
+
         return out_dict
 
-    def _cast_value(self, value, dtype):
-        value = value.astype(dtype)
-        return value
+    def get_available_input_types(self) -> List[TensorType]:
+        return [TensorType.NUMPY, TensorType.TORCH]
+
+    def get_available_return_types_impl(self) -> List[TensorType]:
+        return [TensorType.NUMPY, TensorType.TORCH]
+
+    def _to_torch_tensor(self, value, dtype):
+        tensor_type = get_tensor_type(value)
+        if tensor_type == TensorType.TORCH:
+            value = value.to(numpy_to_torch_dtype(dtype))
+        elif tensor_type == TensorType.NUMPY:
+            value = value.astype(dtype)
+            value = torch.from_numpy(value)
+        else:
+            raise ValueError(f"Unsupported type {type(value)}")
+        return value.to(self._target_device)
+
+    def _prepare_inputs(self, feed_dict):
+        """Prepare inputs for inference."""
+        inputs = []
+        for input_name, spec in self.input_metadata.items():
+            value = feed_dict[input_name]
+            value = self._to_torch_tensor(value, spec.dtype)
+            inputs.append(value)
+        return inputs
+
+    def _prepare_outputs(self, out_dict):
+        """Prepare outputs for inference."""
+        for name, outputs in out_dict.items():
+            if self.return_type == TensorType.NUMPY:
+                out_dict[name] = outputs.cpu().numpy()
+        return out_dict
 
 
 class _BaseTorchScriptRunner(_BaseTorchRunner):

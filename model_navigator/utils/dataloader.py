@@ -18,7 +18,7 @@ from typing import Any, Iterable, List, Mapping, Optional, Sequence, Tuple, Unio
 
 import numpy as np
 
-from model_navigator.api.config import Sample
+from model_navigator.api.config import Sample, TensorType
 from model_navigator.exceptions import ModelNavigatorUserInputError
 from model_navigator.frameworks import Framework
 
@@ -88,7 +88,7 @@ def extract_bs1(sample: Sample, batch_dim: Optional[int]) -> Sample:
     return sample
 
 
-def is_tensor(tensor: Any, framework: Framework) -> bool:
+def is_tensor(tensor: Any, tensor_type: TensorType) -> bool:
     """Validate if provided object is a valid tensor.
 
     Args:
@@ -98,11 +98,11 @@ def is_tensor(tensor: Any, framework: Framework) -> bool:
     Returns:
         True if object is a valid tensor, False otherwise
     """
-    if framework == Framework.TORCH:
+    if tensor_type == TensorType.TORCH:
         import torch  # pytype: disable=import-error
 
         return torch.is_tensor(tensor) or isinstance(tensor, np.ndarray)
-    elif framework == Framework.TENSORFLOW:
+    elif tensor_type == TensorType.TENSORFLOW:
         import tensorflow  # pytype: disable=import-error
 
         return tensorflow.is_tensor(tensor) or isinstance(tensor, np.ndarray)
@@ -110,7 +110,7 @@ def is_tensor(tensor: Any, framework: Framework) -> bool:
         return isinstance(tensor, np.ndarray)
 
 
-def get_tensor_type_name(framework: Optional[Framework] = None) -> str:
+def get_tensor_type_name(tensor_type: TensorType) -> str:
     """Obtain name of tensor type for given framework.
 
     Args:
@@ -119,15 +119,17 @@ def get_tensor_type_name(framework: Optional[Framework] = None) -> str:
     Returns:
         Name of tensor type in form o string
     """
-    if framework == Framework.TORCH:
+    if tensor_type == TensorType.TORCH:
         return "Union[torch.Tensor, numpy.ndarray]"
-    elif framework == Framework.TENSORFLOW:
+    elif tensor_type == TensorType.TENSORFLOW:
         return "Union[tensorflow.Tensor, numpy.ndarray]"
-    else:
+    elif tensor_type == TensorType.NUMPY:
         return "numpy.ndarray"
+    else:
+        raise ValueError(f"Unknown tensor type {tensor_type}")
 
 
-def _is_valid_io(sample: Any, framework: Framework) -> bool:
+def _is_valid_io(sample: Any, tensor_type: TensorType) -> bool:
     """Validate if provided sample is correct I/O object.
 
     Args:
@@ -137,22 +139,22 @@ def _is_valid_io(sample: Any, framework: Framework) -> bool:
     Returns:
         True if sample is valid I/O, False otherwise
     """
-    if is_tensor(sample, framework):
+    if is_tensor(sample, tensor_type):
         return True
     if isinstance(sample, Mapping):
         for tensor in sample.values():
-            if not is_tensor(tensor, framework):
+            if not is_tensor(tensor, tensor_type):
                 return False
         return True
     elif isinstance(sample, Iterable):
         for tensor in sample:
-            if not is_tensor(tensor, framework):
+            if not is_tensor(tensor, tensor_type):
                 return False
         return True
     return False
 
 
-def validate_sample_input(sample: Any, framework: Optional[Framework] = None) -> None:
+def validate_sample_input(sample: Any, tensor_type: TensorType = TensorType.NUMPY) -> None:
     """Validate if sample input is correct input object.
 
     Args:
@@ -163,15 +165,15 @@ def validate_sample_input(sample: Any, framework: Optional[Framework] = None) ->
         ModelNavigatorUserInputError when provided sample if not a valid input object
 
     """
-    if not _is_valid_io(sample, framework):
-        tensor_type = get_tensor_type_name(framework)
+    if not _is_valid_io(sample, tensor_type):
+        tensor_type = get_tensor_type_name(tensor_type)
         raise ModelNavigatorUserInputError(
             f"Invalid sample type. Sample must be of type Union[{tensor_type}, "
             f"Iterable[{tensor_type}], Mapping[str, {tensor_type}]]. Dataloader returned {sample}."
         )
 
 
-def validate_sample_output(sample, framework: Optional[Framework] = None):
+def validate_sample_output(sample, tensor_type: TensorType = TensorType.NUMPY):
     """Validate if sample output is correct output object.
 
     Args:
@@ -182,8 +184,8 @@ def validate_sample_output(sample, framework: Optional[Framework] = None):
         ModelNavigatorUserInputError when provided sample if not a valid output object
 
     """
-    if not _is_valid_io(sample, framework):
-        tensor_type = get_tensor_type_name(framework)
+    if not _is_valid_io(sample, tensor_type):
+        tensor_type = get_tensor_type_name(tensor_type)
         raise ModelNavigatorUserInputError(
             f"Invalid model output type. Output must be of type Union[{tensor_type}, "
             f"Iterable[{tensor_type}]], Mapping[str, {tensor_type}]]. Model returned {sample}."

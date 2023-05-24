@@ -19,16 +19,16 @@ import os
 import pathlib
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Type, TypeVar, Union
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Type, TypeVar, Union
 
 import dacite
 import numpy
 from polygraphy.backend.trt.profile import Profile, ShapeTuple
 
 from model_navigator.logger import LOGGER
+from model_navigator.utils import module
 
-if TYPE_CHECKING:
-    import torch  # pytype: disable=import-error
+torch = module.lazy_import("torch")
 
 T = TypeVar("T")
 
@@ -177,18 +177,7 @@ def parse_enum(value: Union[Union[str, T], Sequence[Union[str, T]]], enum_type: 
     return ()
 
 
-def numpy_to_torch_dtype(np_dtype: numpy.dtype) -> "torch.dtype":
-    """Cast numpy dtype to torch dtype.
-
-    Args:
-        np_dtype (numpy.dtype): numpy dtype.
-
-    Returns:
-        torch.dtype: torch dtype.
-    """
-    np_dtype = numpy.dtype(np_dtype).type
-    import torch  # pytype: disable=import-error
-
+def _get_numpy_to_torch_dtype_dict():
     return {
         numpy.bool_: torch.bool,
         numpy.uint8: torch.uint8,
@@ -201,7 +190,35 @@ def numpy_to_torch_dtype(np_dtype: numpy.dtype) -> "torch.dtype":
         numpy.float64: torch.float64,
         numpy.complex64: torch.complex64,
         numpy.complex128: torch.complex128,
-    }[np_dtype]
+    }
+
+
+def numpy_to_torch_dtype(np_dtype: numpy.dtype) -> "torch.dtype":
+    """Cast numpy dtype to torch dtype.
+
+    Args:
+        np_dtype (numpy.dtype): numpy dtype.
+
+    Returns:
+        torch.dtype: torch dtype.
+    """
+    np_dtype = numpy.dtype(np_dtype).type
+    numpy_to_torch_dtype_dict = _get_numpy_to_torch_dtype_dict()
+    return numpy_to_torch_dtype_dict[np_dtype]
+
+
+def torch_to_numpy_dtype(torch_dtype: "torch.dtype") -> numpy.dtype:
+    """Cast torch dtype to numpy dtype.
+
+    Args:
+        np_dtype (torch.dtype): torch dtype.
+
+    Returns:
+        numpy.dtype: numpy dtype.
+    """
+    numpy_to_torch_dtype_dict = _get_numpy_to_torch_dtype_dict()
+    torch_to_numpy_dtype_dict = {v: k for k, v in numpy_to_torch_dtype_dict.items()}
+    return torch_to_numpy_dtype_dict[torch_dtype]
 
 
 def get_default_status_filename() -> str:

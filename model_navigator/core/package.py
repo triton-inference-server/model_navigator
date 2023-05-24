@@ -22,7 +22,14 @@ from typing import Dict, List, Optional, Set, Union
 import yaml
 from packaging import version
 
-from model_navigator.api.config import CUSTOM_CONFIGS_MAPPING, SERIALIZED_FORMATS, DeviceKind, Format, ProfilerConfig
+from model_navigator.api.config import (
+    CUSTOM_CONFIGS_MAPPING,
+    SERIALIZED_FORMATS,
+    DeviceKind,
+    Format,
+    ProfilerConfig,
+    TensorType,
+)
 from model_navigator.commands.base import CommandOutput, CommandStatus, ExecutionUnit
 from model_navigator.commands.correctness.correctness import Correctness
 from model_navigator.commands.performance.performance import Performance
@@ -251,12 +258,16 @@ class Package:
         self,
         strategy: Optional[RuntimeSearchStrategy] = None,
         include_source: bool = True,
+        return_type: TensorType = TensorType.NUMPY,
     ) -> NavigatorRunner:
         """Get the runner according to the strategy.
 
         Args:
             strategy: Strategy for finding the best runtime. Defaults to `MaxThroughputAndMinLatencyStrategy`.
             include_source: Flag if Python based model has to be included in analysis
+            return_type: The type of the output tensor. Defaults to `TensorType.NUMPY`.
+                If the return_type supports CUDA tensors (e.g. TensorType.TORCH) and the input tensors are on CUDA,
+                there will be no additional data transfer between CPU and GPU.
 
         Returns:
             The optimal runner for the optimized model.
@@ -280,7 +291,7 @@ class Package:
                 "with `package.get_runner(include_source=False)`."
             )
 
-        return self._get_runner(model_config.key, runner_status.runner_name)
+        return self._get_runner(model_config.key, runner_status.runner_name, return_type=return_type)
 
     def is_empty(self) -> bool:
         """Validate if package is empty - no models were produced.
@@ -303,12 +314,14 @@ class Package:
         self,
         model_key: str,
         runner_name: str,
+        return_type: TensorType = TensorType.NUMPY,
     ) -> NavigatorRunner:
         """Load runner.
 
         Args:
             model_key (str): Unique key of the model.
             runner_name (str): Name of the runner.
+            return_type (TensorType): Type of the runner output.
 
         Raises:
             ModelNavigatorNotFoundError when no runner found for provided constraints.
@@ -329,6 +342,7 @@ class Package:
             model=model,
             input_metadata=self.status.input_metadata,
             output_metadata=self.status.output_metadata,
+            return_type=return_type,
         )  # pytype: disable=not-instantiable
 
     def _create_status_file(self) -> None:

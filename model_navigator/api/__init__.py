@@ -33,6 +33,7 @@ from .config import (  # noqa: F401
     TensorRTPrecision,
     TensorRTPrecisionMode,
     TensorRTProfile,
+    TensorType,
     TorchConfig,
     TorchTensorRTConfig,
 )

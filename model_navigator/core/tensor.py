@@ -15,9 +15,17 @@
 import abc
 import dataclasses
 from collections import defaultdict
-from typing import Dict, List, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Type, Union
 
 import numpy as np
+
+from model_navigator.api.config import TensorType
+from model_navigator.frameworks import Framework, is_jax_available, is_tf_available, is_torch_available
+from model_navigator.utils import common, module
+
+torch = module.lazy_import("torch")
+tf = module.lazy_import("tensorflow")
+jax = module.lazy_import("jax")
 
 # pytype: disable=annotation-type-mismatch
 # pytype: disable=wrong-keyword-args
@@ -69,18 +77,39 @@ class TensorSpec:
         tensor = TensorSpec(name=self.name, shape=self.shape, dtype=np.dtype(dtype), optional=self.optional)
         return tensor
 
-    def is_dtype_compatible(self, tensor: np.ndarray) -> bool:
+    def is_dtype_compatible(self, spec: "TensorSpec") -> bool:
         """Check if `tensor` has dtype compatible with `self`. E.g. dtype of `tensor` is subtype of `self`."""
-        return np.issubdtype(tensor.dtype, self.dtype)
+        return np.issubdtype(spec.dtype, self.dtype)
 
-    def is_shape_compatible(self, tensor: np.ndarray) -> bool:
+    def is_shape_compatible(self, spec: "TensorSpec") -> bool:
         """Check if `tensor` has shape compatible with `self`. E.g. `tensor` has shape (3, 1) and `self` has (-1, 1)."""
-        if len(self.shape) != len(tensor.shape):
+        if len(self.shape) != len(spec.shape):
             return False
-        for self_dim, spec_dim in zip(self.shape, tensor.shape):
+        for self_dim, spec_dim in zip(self.shape, spec.shape):
             if self_dim != spec_dim and self_dim != -1:
                 return False
         return True
+
+    @classmethod
+    def from_numpy_tensor(cls, tensor: np.ndarray, name: str) -> "TensorSpec":
+        """Create TensorSpec from numpy array."""
+        return cls(name=name, shape=tensor.shape, dtype=np.dtype(tensor.dtype))
+
+    @classmethod
+    def from_torch_tensor(cls, tensor: "torch.Tensor", name: str) -> "TensorSpec":
+        """Create TensorSpec from torch tensor."""
+        return cls(name=name, shape=tensor.shape, dtype=np.dtype(common.torch_to_numpy_dtype(tensor.dtype)))
+
+    @classmethod
+    def from_tensor(cls, tensor, name: str) -> "TensorSpec":
+        """Create TensorSpec from tensor."""
+        tensor_type = get_tensor_type(tensor)
+        if tensor_type == TensorType.NUMPY:
+            return cls.from_numpy_tensor(tensor, name)
+        elif tensor_type == TensorType.TORCH:
+            return cls.from_torch_tensor(tensor, name)
+        else:
+            raise TypeError(f"Unsupported tensor type: {type(tensor)}")
 
 
 class TensorUtils(abc.ABC):
@@ -128,8 +157,6 @@ class PyTorchTensorUtils(TensorUtils):
     @staticmethod
     def eq(a, b):
         """Comparison of two tensors."""
-        import torch  # pytype: disable=import-error
-
         return a.device == b.device and a.dtype == b.dtype and a.shape == b.shape and torch.all(torch.eq(a, b))
 
     @staticmethod
@@ -144,8 +171,6 @@ class TensorFlowTensorUtils(TensorUtils):
     @staticmethod
     def eq(a, b):
         """Comparison of two tensors."""
-        import tensorflow as tf  # pytype: disable=import-error
-
         return a.device == b.device and a.dtype == b.dtype and a.shape == b.shape and tf.reduce_all(a == b)
 
     @staticmethod
@@ -236,3 +261,26 @@ class TensorMetadata(Dict[str, TensorSpec]):
     @staticmethod
     def _parse_tensorspec(spec: TensorSpec):
         return {"name": spec.name, "shape": spec.shape, "dtype": str(spec.dtype)}
+
+
+def get_tensor_type(tensor: Any) -> TensorType:
+    """Get tensor type from tensor."""
+    if isinstance(tensor, np.ndarray):
+        return TensorType.NUMPY
+    elif is_torch_available() and torch.is_tensor(tensor):
+        return TensorType.TORCH
+    elif is_tf_available() and tf.is_tensor(tensor):
+        return TensorType.TENSORFLOW
+    elif is_jax_available() and isinstance(tensor, jax.numpy.ndarray):
+        return TensorType.JAX
+    else:
+        raise TypeError(f"Unsupported tensor type: {type(tensor)}")
+
+
+FRAMEWORK_TO_TENSOR_TYPE = {
+    Framework.TORCH: TensorType.TORCH,
+    Framework.TENSORFLOW: TensorType.TENSORFLOW,
+    Framework.JAX: TensorType.NUMPY,
+    Framework.ONNX: TensorType.NUMPY,
+    Framework.NONE: TensorType.NUMPY,
+}

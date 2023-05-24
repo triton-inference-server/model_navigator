@@ -156,6 +156,15 @@ class TensorRTPrecisionMode(Enum):
     MIXED = "mixed"
 
 
+class TensorType(Enum):
+    """All model formats supported by Model Navigator 'optimize' function."""
+
+    NUMPY = "numpy"
+    TORCH = "torch"
+    TENSORFLOW = "tensorflow"
+    JAX = "jax"
+
+
 class TensorRTCompatibilityLevel(Enum):
     """Compatibility level for TensorRT.
 
