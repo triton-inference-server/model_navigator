@@ -22,7 +22,7 @@ from model_navigator.api.config import (
     CustomConfig,
     DeviceKind,
     Format,
-    ProfilerConfig,
+    OptimizationProfile,
     SizedDataLoader,
     VerifyFunction,
     map_custom_configs,
@@ -60,7 +60,7 @@ def optimize(
     target_formats: Optional[Union[Union[str, Format], Tuple[Union[str, Format], ...]]] = None,
     target_device: Optional[DeviceKind] = DeviceKind.CUDA,
     runners: Optional[Union[Union[str, Type[NavigatorRunner]], Tuple[Union[str, Type[NavigatorRunner]], ...]]] = None,
-    profiler_config: Optional[ProfilerConfig] = None,
+    optimization_profile: Optional[OptimizationProfile] = None,
     workspace: Optional[Path] = None,
     verbose: Optional[bool] = False,
     debug: Optional[bool] = False,
@@ -81,7 +81,7 @@ def optimize(
         target_formats: Target model formats for optimize process
         target_device: Target device for optimize process, default is CUDA
         runners: Use only runners provided as parameter
-        profiler_config: Profiling config
+        optimization_profile: Optimization profile for conversion and profiling
         workspace: Workspace where packages will be extracted
         verbose: Enable verbose logging
         debug: Enable debug logging from commands
@@ -114,8 +114,8 @@ def optimize(
     target_formats = enums.parse(target_formats, Format)
     runner_names = enums.parse(runners, lambda runner: runner if isinstance(runner, str) else runner.name())
 
-    if profiler_config is None:
-        profiler_config = ProfilerConfig()
+    if optimization_profile is None:
+        optimization_profile = OptimizationProfile()
 
     if Format.TORCH not in target_formats:
         target_formats = (Format.TORCH,) + target_formats
@@ -133,7 +133,7 @@ def optimize(
         forward_kw_names=forward_kw_names,
         batch_dim=0 if batching else None,
         runner_names=runner_names,
-        profiler_config=profiler_config,
+        optimization_profile=optimization_profile,
         verbose=verbose,
         debug=debug,
         verify_func=verify_func,
@@ -152,9 +152,9 @@ def optimize(
         find_device_max_batch_size_builder,
         torch_conversion_builder,
         correctness_builder,
+        profiling_builder,
     ]
-    if profiler_config.run_profiling:
-        builders.append(profiling_builder)
+
     builders.append(verify_builder)
 
     package = PipelineManager.run(

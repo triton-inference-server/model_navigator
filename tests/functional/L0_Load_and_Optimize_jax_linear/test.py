@@ -87,7 +87,7 @@ def main():
     new_package = nav.package.optimize(
         package,
         verbose=True,
-        profiler_config=nav.ProfilerConfig(stability_percentage=100),
+        optimization_profile=nav.OptimizationProfile(stability_percentage=100),
     )
 
     status_file = args.status

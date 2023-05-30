@@ -74,7 +74,7 @@ def main():
         dataloader=dataloader,
         verify_func=verify_func,
         verbose=True,
-        profiler_config=nav.ProfilerConfig(batch_sizes=[1, 8, 16], stability_percentage=100),
+        optimization_profile=nav.OptimizationProfile(batch_sizes=[1, 8, 16], stability_percentage=100),
         target_formats=(nav.Format.ONNX, nav.Format.TENSORRT),
         runners=(
             "TorchCUDA",

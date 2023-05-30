@@ -65,6 +65,7 @@ def find_device_max_batch_size_builder(
     model_formats = models_config.keys()
     adaptive_formats = {Format.TORCH_TRT, Format.TENSORRT, Format.TF_TRT}
     matching_formats = adaptive_formats.intersection(set(model_formats))
+
     if len(matching_formats) == 0 or config.target_device != DeviceKind.CUDA:
         LOGGER.debug("No matching formats found")
         return Pipeline(name=pipeline_name, execution_units=execution_units)

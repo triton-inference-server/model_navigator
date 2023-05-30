@@ -27,7 +27,7 @@ from packaging import version
 from model_navigator.api.config import (
     Format,
     OnnxConfig,
-    ProfilerConfig,
+    OptimizationProfile,
     TensorFlowTensorRTConfig,
     TensorRTConfig,
     TensorRTPrecisionMode,
@@ -157,7 +157,7 @@ class Status(DataObject):
 
         def _extract_format_version(status_dict):
             format_version = status_dict.get("format_version", "0.1.0")
-            if format_version == "0.1.0" and "profiler_config" in status_dict["export_config"]:
+            if format_version == "0.1.0" and "optimization_profile" in status_dict["export_config"]:
                 format_version = "0.1.1"
             return version.parse(format_version)
 
@@ -220,6 +220,7 @@ class StatusDictUpdater:
             version.parse("0.1.2"): self._update_from_v0_1_2,
             version.parse("0.1.3"): self._update_from_v0_1_3,
             version.parse("0.1.4"): self._update_from_v0_1_4,
+            version.parse("0.2.1"): self._update_from_v0_2_1,
         }
 
     def update(self, data_dict: Dict, format_version: version.Version):
@@ -261,10 +262,10 @@ class StatusDictUpdater:
             default_val = TensorRTPrecisionMode.SINGLE.value
             LOGGER.info(f"Using default `precision_mode`: {default_val}")
             data_dict["export_config"]["precision_mode"] = default_val
-        if "profiler_config" not in data_dict["export_config"]:
-            default_val = ProfilerConfig().to_dict()
-            LOGGER.info(f"Using default `profiler_config`: {default_val}")
-            data_dict["export_config"]["profiler_config"] = default_val
+        if "optimization_profile" not in data_dict["export_config"]:
+            default_val = OptimizationProfile().to_dict()
+            LOGGER.info(f"Using default `optimization_profile`: {default_val}")
+            data_dict["export_config"]["optimization_profile"] = default_val
         if (
             "git_info" not in data_dict
         ):  # FIXME problably git_info should be removed from package updater - git_info no longer saved in status.yaml
@@ -460,7 +461,7 @@ class StatusDictUpdater:
             "batch_dim",
             "_input_names",
             "_output_names",
-            "profiler_config",
+            "optimization_profile",
             "forward_kw_names",
             "target_device",
             "dynamic_axes",
@@ -503,3 +504,17 @@ class StatusDictUpdater:
             config["runner_names"] = export_config["runtimes"]
 
         return config
+
+    def _update_from_v0_2_1(self, data_dict: Dict):
+        config = data_dict["config"]
+        optimization_profile = {}
+        if "profiler_config" in config:
+            profiler_config = config.pop("profiler_config")
+
+            if "run_profiling" in profiler_config:
+                profiler_config.pop("run_profiling")
+
+            optimization_profile = profiler_config
+
+        if optimization_profile:
+            config["optimization_profile"] = optimization_profile

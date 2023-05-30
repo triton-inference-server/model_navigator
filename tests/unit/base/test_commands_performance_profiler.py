@@ -19,16 +19,16 @@ import pytest
 from jsonlines import jsonlines
 
 import model_navigator as nav
-from model_navigator.api.config import ProfilerConfig
+from model_navigator.api.config import OptimizationProfile
 from model_navigator.commands.performance import Performance, Profiler
 from model_navigator.commands.performance.performance import ProfilingResults
 from model_navigator.exceptions import ModelNavigatorProfilingError
 
 
 def test_is_measurement_stable_return_false_when_window_is_empty():
-    profiler_config = ProfilerConfig(batch_sizes=[1])
+    optimization_profile = OptimizationProfile(batch_sizes=[1])
     profiler = Profiler(
-        config=profiler_config,
+        profile=optimization_profile,
         results_path=MagicMock(),
     )
 
@@ -36,9 +36,9 @@ def test_is_measurement_stable_return_false_when_window_is_empty():
 
 
 def test_is_measurement_stable_return_false_when_window_size_less_than_count():
-    profiler_config = ProfilerConfig(batch_sizes=[1])
+    optimization_profile = OptimizationProfile(batch_sizes=[1])
     profiler = Profiler(
-        config=profiler_config,
+        profile=optimization_profile,
         results_path=MagicMock(),
     )
 
@@ -53,9 +53,9 @@ def test_is_measurement_stable_return_false_when_window_size_less_than_count():
 
 
 def test_is_measurement_stable_return_false_when_avg_latencies_are_out_of_stability_range():
-    profiler_config = ProfilerConfig(batch_sizes=[1])
+    optimization_profile = OptimizationProfile(batch_sizes=[1])
     profiler = Profiler(
-        config=profiler_config,
+        profile=optimization_profile,
         results_path=MagicMock(),
     )
 
@@ -70,9 +70,9 @@ def test_is_measurement_stable_return_false_when_avg_latencies_are_out_of_stabil
 
 
 def test_is_measurement_stable_return_true_when_avg_latencies_are_in_stability_range():
-    profiler_config = ProfilerConfig(batch_sizes=[1])
+    optimization_profile = OptimizationProfile(batch_sizes=[1])
     profiler = Profiler(
-        config=profiler_config,
+        profile=optimization_profile,
         results_path=MagicMock(),
     )
 
@@ -100,10 +100,10 @@ def test_profiler_run_return_batch_sizes_upto_4_when_batch_size_4_saturates_thro
         ],
     )
 
-    profiler_config = ProfilerConfig()
+    optimization_profile = OptimizationProfile()
     with tempfile.NamedTemporaryFile() as temp:
         profiler = Profiler(
-            config=profiler_config,
+            profile=optimization_profile,
             results_path=pathlib.Path(temp.name),
         )
 
@@ -135,7 +135,7 @@ def test_performance_command_returns_status_ok_when_profiling_results_found_and_
                 workspace=workspace,
                 path=model_file,
                 format=nav.Format.TORCHSCRIPT,
-                profiler_config=ProfilerConfig(),
+                optimization_profile=OptimizationProfile(),
                 input_metadata=MagicMock(),
                 output_metadata=MagicMock(),
                 batch_dim=0,
@@ -166,7 +166,7 @@ def test_performance_command_returns_status_ok_when_profiling_results_found_and_
                 workspace=workspace,
                 path=model_file,
                 format=nav.Format.TORCHSCRIPT,
-                profiler_config=ProfilerConfig(),
+                optimization_profile=OptimizationProfile(),
                 input_metadata=MagicMock(),
                 output_metadata=MagicMock(),
                 batch_dim=0,
@@ -192,7 +192,7 @@ def test_performance_command_raises_error_when_no_profiling_results_and_profiler
                 workspace=workspace,
                 path=model_file,
                 format=nav.Format.TORCHSCRIPT,
-                profiler_config=ProfilerConfig(),
+                optimization_profile=OptimizationProfile(),
                 input_metadata=MagicMock(),
                 output_metadata=MagicMock(),
                 batch_dim=0,

@@ -16,7 +16,7 @@ limitations under the License.
 
 # Additional verification with verify_func
 
-In this example we show to use verify_func for additional model verifcation.
+In this example we show to use verify_func for additional model verification.
 verify_func can be used to check the exported and converted models against custom metrics.
 
 We recommend running this example in NVIDIA NGC [PyTorch containter](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch). To run the example simply run the `optimize.py` script:

@@ -21,7 +21,7 @@ from typing import List, Optional, Type, Union
 
 import jsonlines
 
-from model_navigator.api.config import ProfilerConfig
+from model_navigator.api.config import OptimizationProfile
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.performance.performance import Profiler, ProfilingResults
 from model_navigator.core.constants import DEFAULT_MAX_BATCH_SIZE_THRESHOLD
@@ -58,6 +58,7 @@ class FindMaxBatchSize(Command):
         input_metadata: TensorMetadata,
         output_metadata: TensorMetadata,
         batch_dim: Optional[int],
+        optimization_profile: OptimizationProfile,
         verbose: bool,
         reproduce_script_dir: Optional[Path] = None,
     ) -> CommandOutput:
@@ -69,6 +70,7 @@ class FindMaxBatchSize(Command):
             input_metadata: Information about model inputs
             output_metadata: Information about model outputs
             batch_dim: Place where batch dimension is located in shape
+            optimization_profile: Configuration for performance measurement
             verbose: Flag to enable/disable verbose logging for command
             reproduce_script_dir: Script where reproduction of command is saved
 
@@ -83,6 +85,7 @@ class FindMaxBatchSize(Command):
                 input_metadata=input_metadata,
                 output_metadata=output_metadata,
                 batch_dim=batch_dim,
+                optimization_profile=optimization_profile,
                 verbose=verbose,
                 runner_cls=configuration.runner_cls,
                 reproduce_script_dir=reproduce_script_dir,
@@ -103,6 +106,7 @@ class FindMaxBatchSize(Command):
         input_metadata: TensorMetadata,
         output_metadata: TensorMetadata,
         batch_dim: Optional[int],
+        optimization_profile: OptimizationProfile,
         verbose: bool,
         runner_cls: Type[NavigatorRunner],
         reproduce_script_dir: Optional[Path] = None,
@@ -120,7 +124,15 @@ class FindMaxBatchSize(Command):
             LOGGER.info("Model does not support batching.")
             return device_max_batch_size
 
-        profiler_config = ProfilerConfig(
+        if optimization_profile.max_batch_size or optimization_profile.batch_sizes:
+            if optimization_profile.max_batch_size:
+                device_max_batch_size = optimization_profile.max_batch_size
+            else:
+                device_max_batch_size = max(optimization_profile.batch_sizes)
+            LOGGER.info(f"Using maximal batch size provided in optimization profile: {device_max_batch_size}")
+            return device_max_batch_size
+
+        optimization_profile = OptimizationProfile(
             max_trials=1,
             measurement_request_count=1,
             throughput_cutoff_threshold=-2,
@@ -136,7 +148,7 @@ class FindMaxBatchSize(Command):
                 "navigator_workspace": workspace.as_posix(),
                 "batch_dim": batch_dim,
                 "results_path": temp_file.name,
-                "profiler_config": profiler_config.to_dict(parse=True),
+                "optimization_profile": optimization_profile.to_dict(parse=True),
                 "model_path": path,
                 "runner_name": runner_cls.name(),
                 "input_metadata": input_metadata.to_json(),

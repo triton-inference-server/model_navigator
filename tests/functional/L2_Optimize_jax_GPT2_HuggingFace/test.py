@@ -70,7 +70,7 @@ def main():
         model_params=model._params,
         dataloader=dataloader,
         verbose=True,
-        profiler_config=nav.ProfilerConfig(batch_sizes=[2**n for n in range(12)]),
+        optimization_profile=nav.OptimizationProfile(batch_sizes=[2**n for n in range(12)]),
     )
 
     status_file = args.status

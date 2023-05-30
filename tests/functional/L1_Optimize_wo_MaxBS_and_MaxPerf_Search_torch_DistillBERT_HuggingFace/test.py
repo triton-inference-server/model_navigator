@@ -111,7 +111,7 @@ def main():
             nav.TensorRTConfig(trt_profile=trt_profile),
             nav.TorchTensorRTConfig(trt_profile=trt_profile),
         ),
-        profiler_config=nav.ProfilerConfig(batch_sizes=[1, 2, 4, 8, 16]),
+        optimization_profile=nav.OptimizationProfile(batch_sizes=[1, 2, 4, 8, 16]),
     )
 
     status_file = args.status

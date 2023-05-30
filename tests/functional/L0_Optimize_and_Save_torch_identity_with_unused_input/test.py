@@ -81,7 +81,7 @@ def main():
         verify_func=verify_func,
         input_names=("input_0", "input_1"),
         verbose=True,
-        profiler_config=nav.ProfilerConfig(batch_sizes=[1, 8, 16], stability_percentage=100),
+        optimization_profile=nav.OptimizationProfile(batch_sizes=[1, 8, 16], stability_percentage=100),
         custom_configs=[nav.OnnxConfig(opset=14)],
     )
     package_path = pathlib.Path("package.nav")

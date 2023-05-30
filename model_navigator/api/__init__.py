@@ -26,7 +26,7 @@ from .config import (  # noqa: F401
     JitType,
     MeasurementMode,
     OnnxConfig,
-    ProfilerConfig,
+    OptimizationProfile,
     TensorFlowConfig,
     TensorFlowTensorRTConfig,
     TensorRTConfig,

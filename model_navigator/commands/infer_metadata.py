@@ -17,7 +17,7 @@ from typing import Dict, Iterator, List, Mapping, Optional, Sequence, Tuple, Uni
 
 import numpy as np
 
-from model_navigator.api.config import Sample, SizedDataLoader, SizedIterable, TensorRTProfile
+from model_navigator.api.config import OptimizationProfile, Sample, SizedDataLoader, SizedIterable, TensorRTProfile
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.core.tensor import FRAMEWORK_TO_TENSOR_TYPE, TensorMetadata, TensorSpec
 from model_navigator.exceptions import ModelNavigatorUserInputError
@@ -106,6 +106,7 @@ class InferInputMetadata(Command, is_required=True):
         model: Union[object, Path],
         framework: Framework,
         dataloader: SizedDataLoader,
+        optimization_profile: OptimizationProfile,
         _input_names: Optional[Tuple[str, ...]] = None,
         batch_dim: Optional[int] = None,
     ) -> CommandOutput:
@@ -134,8 +135,33 @@ class InferInputMetadata(Command, is_required=True):
         axes_shapes = _extract_axes_shapes(dataloader, input_names, input_ndims, num_samples, framework)
         dataloader_max_batch_size = _extract_max_batch_size(axes_shapes, batch_dim)
         dataloader_trt_profile = _get_trt_profile_from_axes_shapes(axes_shapes, batch_dim)
-
         input_metadata = _get_metadata_from_axes_shapes(axes_shapes, batch_dim, input_dtypes)
+
+        if optimization_profile.dataloader:
+            pd_sample = next(iter(optimization_profile.dataloader))
+            pd_input_sample = extract_sample(pd_sample, input_names, framework)
+            pd_input_ndims = [t.ndim for t in pd_input_sample.values()]
+            pd_input_dtypes = {n: t.dtype for n, t in pd_input_sample.items()}
+
+            if pd_input_ndims != input_ndims:
+                raise ModelNavigatorUserInputError(
+                    "Provided performance dataloader does not match dataset dataloader size."
+                )
+
+            if pd_input_dtypes != input_dtypes:
+                raise ModelNavigatorUserInputError(
+                    "Provided performance dataloader does not match dataset dataloader data types."
+                )
+
+            self._validate_performance_dataloader_trt_profiles(
+                optimization_profile=optimization_profile,
+                input_names=input_names,
+                input_ndims=pd_input_ndims,
+                framework=framework,
+                batch_dim=batch_dim,
+                dataloader_trt_profile=dataloader_trt_profile,
+            )
+
         return CommandOutput(
             status=CommandStatus.OK,
             output={
@@ -145,12 +171,7 @@ class InferInputMetadata(Command, is_required=True):
             },
         )
 
-    @staticmethod
-    def _get_default_input_names(
-        model,
-        sample,
-        framework,
-    ):
+    def _get_default_input_names(self, model, sample, framework):
         input_tuple = sample_to_tuple(sample)
         if framework == Framework.ONNX:
             from model_navigator.runners.onnx import OnnxrtCPURunner, OnnxrtCUDARunner
@@ -172,6 +193,33 @@ class InferInputMetadata(Command, is_required=True):
         else:
             input_names = tuple(f"input__{i}" for i in range(len(input_tuple)))
         return input_names
+
+    def _validate_performance_dataloader_trt_profiles(
+        self,
+        optimization_profile: OptimizationProfile,
+        input_names,
+        input_ndims,
+        framework,
+        batch_dim,
+        dataloader_trt_profile,
+    ):
+        axes_shapes = _extract_axes_shapes(
+            dataloader=optimization_profile.dataloader,
+            input_names=input_names,
+            input_ndims=input_ndims,
+            num_samples=1,
+            framework=framework,
+            check_len=False,
+        )
+        performance_dataloader_trt_profile = _get_trt_profile_from_axes_shapes(axes_shapes, batch_dim)
+        for name, shape in performance_dataloader_trt_profile.items():
+            dshape = dataloader_trt_profile[name]
+            if shape.min < dshape.min or shape.max > dshape.max:
+                raise ModelNavigatorUserInputError(
+                    """Provided performance dataloader has invalid shape against the dataset dataloader."""
+                    f""" Performance dataloader shape for input `{name}` is min: {shape.min}, max: {shape.max}."""
+                    f""" Dataset dataloader shape for input `{name}` is min: {dshape.min}, max: {dshape.max}."""
+                )
 
 
 class InferOutputMetadata(Command, is_required=True):

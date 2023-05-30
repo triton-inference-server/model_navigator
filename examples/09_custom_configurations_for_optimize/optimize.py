@@ -46,9 +46,8 @@ def get_verify_function():
     return verify_func
 
 
-def get_profiler_config():
-    return nav.torch.ProfilerConfig(
-        run_profiling=True,
+def get_optimization_profile():
+    return nav.torch.OptimizationProfile(
         batch_sizes=[1, 2, 4],
         measurement_mode=nav.MeasurementMode.TIME_WINDOWS,
         measurement_interval=2500,  # ms
@@ -92,7 +91,7 @@ def main():
     model = get_model()
     dataloader = get_dataloader()
     verify_func = get_verify_function()
-    profiler_config = get_profiler_config()
+    optimization_profile = get_optimization_profile()
     onnx_config = get_onnx_config()
     tensortrt_config = get_tensortrt_config()
     """
@@ -100,7 +99,7 @@ def main():
     profiling and additional verification.
 
     Convert only to ONNX and TensorRT formats. TorchTensorRT will be omitted.
-    Use custom ONNX and TensorRT configurations and custom profiler configuration.
+    Use custom ONNX and TensorRT configurations and custom optimization profile.
     Set custom input names for the model.
 
     """
@@ -110,7 +109,7 @@ def main():
         target_formats=(nav.Format.ONNX, nav.Format.TENSORRT),
         input_names=("model_input_0",),
         verify_func=verify_func,  # verify_func is optional but recommended.
-        profiler_config=profiler_config,
+        optimization_profile=optimization_profile,
         custom_configs=(
             onnx_config,
             tensortrt_config,

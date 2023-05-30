@@ -18,7 +18,10 @@ limitations under the License.
 
 ## 0.6.0 (unreleased)
 - new: Zero-copy runners for Torch, ONNX and TensorRT
-
+- change: ProfilerConfig replaced with OptimizationProfile:
+  - new: OptimizationProfile impact the conversion for TensorRT
+  - new: `batch_sizes` and `max_batch_size` limit the max profile in TensorRT conversion
+  - new: Allow to provide separate dataloader for profiling - first sample used only
 
 ## 0.5.5
 - new: Public nav.utilities module with UnpackedDataloader wrapper

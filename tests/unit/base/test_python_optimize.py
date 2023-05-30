@@ -53,7 +53,7 @@ def test_python_package_return_valid_runner():
             model=infer_func,
             dataloader=dataloader,
             verify_func=verify_func,
-            profiler_config=nav.ProfilerConfig(
+            optimization_profile=nav.OptimizationProfile(
                 batch_sizes=[1, 2, 4],
             ),
             workspace=workspace,

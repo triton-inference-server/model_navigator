@@ -19,7 +19,7 @@ from typing import Any, List, Optional, Tuple
 import numpy
 import numpy as np
 
-from model_navigator.api.config import Sample, SizedDataLoader, TensorRTProfile
+from model_navigator.api.config import OptimizationProfile, Sample, SizedDataLoader, TensorRTProfile
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.core.tensor import TensorMetadata
 from model_navigator.exceptions import ModelNavigatorUserInputError
@@ -81,13 +81,14 @@ class FetchInputModelData(Command, is_required=True):
         batch_dim: Optional[int],
         seed: int,
         dataloader_trt_profile: TensorRTProfile,
+        optimization_profile: OptimizationProfile,
     ) -> CommandOutput:
         """Run the command.
 
         There are three types of samples that are fetched form the dataloader:
             1) profiling sample - one sample for profiling,
             2) conversion samples - samples spanning all dimensions sizes from min to max,
-            3) correctness samples - `sample_count` samples for veryfing correctness.
+            3) correctness samples - `sample_count` samples for verifying correctness.
 
         Args:
             framework (Framework): Model framework.
@@ -96,7 +97,8 @@ class FetchInputModelData(Command, is_required=True):
             input_metadata (TensorMetadata): Input metadata.
             batch_dim (Optional[int]): Batch dimension.
             seed (int): Random seed.
-            trt_profile (Profile): Model TensorRT Profile.
+            dataloader_trt_profile (Profile): Model TensorRT Profile.
+            optimization_profile (OptimizationProfile): Performance configuration with dataloader override
 
         Returns:
             CommandOutput: Fetched samples.
@@ -112,7 +114,13 @@ class FetchInputModelData(Command, is_required=True):
         numpy.random.seed(seed)
         correctness_samples_ind = set(numpy.random.choice(num_samples, size=sample_count, replace=False))
         profiling_sample, correctness_samples, conversion_samples = self._collect_samples(
-            dataloader, input_metadata, dataloader_trt_profile, framework, batch_dim, correctness_samples_ind
+            dataloader,
+            input_metadata,
+            dataloader_trt_profile,
+            framework,
+            batch_dim,
+            correctness_samples_ind,
+            optimization_profile.dataloader,
         )
         return CommandOutput(
             status=CommandStatus.OK,
@@ -124,7 +132,9 @@ class FetchInputModelData(Command, is_required=True):
         )
 
     @staticmethod
-    def _collect_samples(dataloader, input_metadata, trt_profile, framework, batch_dim, correctness_samples_ind):
+    def _collect_samples(
+        dataloader, input_metadata, trt_profile, framework, batch_dim, correctness_samples_ind, performance_dataloader
+    ):
         profiling_sample = None
         correctness_samples = []
         conversion_samples = []
@@ -159,6 +169,12 @@ class FetchInputModelData(Command, is_required=True):
             if do_sample_profiling:
                 profiling_sample = extract_bs1(sample, batch_dim)
 
+        if performance_dataloader:
+            LOGGER.info("Using performance dataloader for profiling sample. Collecting first item only.")
+            sample = next(iter(performance_dataloader))
+            sample = extract_sample(sample, input_metadata, framework)
+            profiling_sample = extract_bs1(sample, batch_dim)
+
         if not conversion_samples:
             conversion_samples = correctness_samples[:1]
         if profiling_sample is None:
@@ -168,7 +184,7 @@ class FetchInputModelData(Command, is_required=True):
 
 
 class DumpInputModelData(Command, is_required=True):
-    """Comand for saving input samples."""
+    """Command for saving input samples."""
 
     def _run(
         self,

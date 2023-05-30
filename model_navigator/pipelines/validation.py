@@ -54,7 +54,7 @@ class PipelineManagerConfigurationValidator:
         cls._validate_config_types(config)
         cls._validate_if_custom_configs_match_target_formats(config)
         cls._validate_if_target_formats_match_framework(config)
-        cls._validate_profiler_config_batch_sizes_when_batching_is_disabled(config)
+        cls._validate_optimization_profile_batch_sizes_when_batching_is_disabled(config)
         for custom_config in config.custom_configs.values():
             if isinstance(custom_config, (TensorRTConfig, TorchTensorRTConfig, TensorFlowTensorRTConfig)):
                 cls._validate_trt_profile_input_names(custom_config.trt_profile, config._input_names)
@@ -101,10 +101,10 @@ class PipelineManagerConfigurationValidator:
                 )
 
     @classmethod
-    def _validate_profiler_config_batch_sizes_when_batching_is_disabled(cls, config: CommonConfig):
-        if config.batch_dim is None and config.profiler_config.batch_sizes:
+    def _validate_optimization_profile_batch_sizes_when_batching_is_disabled(cls, config: CommonConfig):
+        if config.batch_dim is None and config.optimization_profile.batch_sizes:
             raise ModelNavigatorConfigurationError(
-                f"Model does not support batching, but profiling batch sizes are {config.profiler_config.batch_sizes}."
+                f"Model does not support batching, but profiling batch sizes are {config.optimization_profile.batch_sizes}."
             )
 
     @classmethod

@@ -25,6 +25,8 @@ from tests.unit.base.mocks.statuses import (  # status_dict_v0_1_2, status_dict_
     status_dict_v0_1_0,
     status_dict_v0_1_4,
     status_dict_v0_2_0,
+    status_dict_v0_2_1,
+    status_dict_v0_2_2,
 )
 
 
@@ -107,6 +109,44 @@ def test_from_dict_returns_status_when_input_is_0_1_4_status_dict(mocker):
 
 def test_from_dict_returns_status_when_input_is_0_2_0_status_dict(mocker):
     status_dict = status_dict_v0_2_0()
+    status = Status.from_dict(status_dict)
+
+    with tempfile.TemporaryDirectory() as tempdir:
+        tempdir = pathlib.Path(tempdir)
+        workspace = tempdir / "navigator_workspace"
+        workspace.mkdir()
+
+        for model_status in status.models_status.values():
+            (workspace / model_status.model_config.path.parent).mkdir()
+
+        package = Package(status=status, workspace=workspace)
+        package.save_status_file()
+
+        with mocker.patch.object(PipelineManager, "run"), mocker.patch("model_navigator.api.package._get_builders"):
+            optimize(package=package)
+
+
+def test_from_dict_returns_status_when_input_is_0_2_1_status_dict(mocker):
+    status_dict = status_dict_v0_2_1()
+    status = Status.from_dict(status_dict)
+
+    with tempfile.TemporaryDirectory() as tempdir:
+        tempdir = pathlib.Path(tempdir)
+        workspace = tempdir / "navigator_workspace"
+        workspace.mkdir()
+
+        for model_status in status.models_status.values():
+            (workspace / model_status.model_config.path.parent).mkdir()
+
+        package = Package(status=status, workspace=workspace)
+        package.save_status_file()
+
+        with mocker.patch.object(PipelineManager, "run"), mocker.patch("model_navigator.api.package._get_builders"):
+            optimize(package=package)
+
+
+def test_from_dict_returns_status_when_input_is_0_2_2_status_dict(mocker):
+    status_dict = status_dict_v0_2_2()
     status = Status.from_dict(status_dict)
 
     with tempfile.TemporaryDirectory() as tempdir:

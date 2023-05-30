@@ -14,7 +14,7 @@
 import pathlib
 import tempfile
 
-from model_navigator.api.config import DeviceKind, ProfilerConfig
+from model_navigator.api.config import DeviceKind, OptimizationProfile
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.core.constants import NAVIGATOR_PACKAGE_VERSION, NAVIGATOR_VERSION
 from model_navigator.frameworks import Framework
@@ -30,7 +30,7 @@ def test_prepare_package_create_new_package_when_no_package_provided(mocker):
             dataloader=[{"input_name": [idx]} for idx in range(10)],
             workspace=workspace,
             model=None,
-            profiler_config=ProfilerConfig(),
+            optimization_profile=OptimizationProfile(),
             runner_names=(),
             sample_count=10,
             target_formats=(),
@@ -57,7 +57,7 @@ def test_prepare_package_update_status_when_existing_package_provided(mocker):
             dataloader=[{"input_name": [idx]} for idx in range(10)],
             workspace=workspace,
             model=None,
-            profiler_config=ProfilerConfig(),
+            optimization_profile=OptimizationProfile(),
             runner_names=(),
             sample_count=10,
             target_formats=(),

@@ -18,7 +18,7 @@ import tempfile
 
 import pytest
 
-from model_navigator.api.config import Format, JitType, ProfilerConfig, TorchConfig
+from model_navigator.api.config import Format, JitType, OptimizationProfile, TorchConfig
 from model_navigator.api.package import _get_model_configs, _update_config, optimize
 from model_navigator.exceptions import ModelNavigatorEmptyPackageError, ModelNavigatorMissingSourceModelError
 from model_navigator.runners.registry import runner_registry
@@ -100,7 +100,7 @@ def test_update_config_returns_original_config_when_no_parameters_passed_and_sou
             "target_device",
             "target_formats",
             "runner_names",
-            "profiler_config",
+            "optimization_profile",
             "from_source",
             "timestamp",
         ]
@@ -110,7 +110,7 @@ def test_update_config_returns_original_config_when_no_parameters_passed_and_sou
 
         assert config.target_formats == (Format.TORCH, Format.TORCHSCRIPT)
         assert config.runner_names == runner_names
-        assert config.profiler_config == ProfilerConfig()
+        assert config.optimization_profile == OptimizationProfile()
         assert config.from_source is False
 
         for key, value in config.to_dict().items():
@@ -131,7 +131,7 @@ def test_update_config_returns_config_wo_source_when_serialized_target_format_pa
             "target_device",
             "target_formats",
             "runner_names",
-            "profiler_config",
+            "optimization_profile",
             "from_source",
             "timestamp",
         ]
@@ -141,7 +141,7 @@ def test_update_config_returns_config_wo_source_when_serialized_target_format_pa
 
         assert config.target_formats == (Format.TORCHSCRIPT,)
         assert config.runner_names == runner_names
-        assert config.profiler_config == ProfilerConfig()
+        assert config.optimization_profile == OptimizationProfile()
         assert config.from_source is False
 
         for key, value in config.to_dict().items():
@@ -158,7 +158,7 @@ def test_update_config_returns_updated_config_when_parameters_passed():
         config = package.config
         kwargs = {
             "runners": ("CustomRunner1", "CustomRunner2"),
-            "profiler_config": "config",
+            "optimization_profile": "config",
             "verify_func": "verify_func",
         }
         _update_config(

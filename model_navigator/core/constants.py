@@ -16,7 +16,7 @@ from model_navigator.__version__ import __version__  # noqa: F401
 
 # Version
 NAVIGATOR_VERSION = __version__
-NAVIGATOR_PACKAGE_VERSION = "0.2.1"
+NAVIGATOR_PACKAGE_VERSION = "0.2.2"
 
 # Profiling related
 DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD = 0.05

@@ -22,7 +22,7 @@ from model_navigator.api.config import (
     CustomConfig,
     DeviceKind,
     Format,
-    ProfilerConfig,
+    OptimizationProfile,
     SizedDataLoader,
     VerifyFunction,
     map_custom_configs,
@@ -59,7 +59,7 @@ def optimize(
     target_formats: Optional[Union[Union[str, Format], Tuple[Union[str, Format], ...]]] = None,
     target_device: Optional[DeviceKind] = DeviceKind.CUDA,
     runners: Optional[Union[Union[str, Type[NavigatorRunner]], Tuple[Union[str, Type[NavigatorRunner]], ...]]] = None,
-    profiler_config: Optional[ProfilerConfig] = None,
+    optimization_profile: Optional[OptimizationProfile] = None,
     workspace: Optional[Path] = None,
     verbose: bool = False,
     debug: bool = False,
@@ -78,12 +78,12 @@ def optimize(
         batching: Enable or disable batching on first (index 0) dimension of the model
         target_formats: Target model formats for optimize process
         target_device: Target device for optimize process, default is CUDA
-        runners: Use only runners provided as paramter
-        profiler_config: Profiling config
+        runners: Use only runners provided as parameter
+        optimization_profile: Optimization profile for conversion and profiling
         workspace: Workspace where packages will be extracted
         verbose: Enable verbose logging
         debug: Enable debug logging from commands
-        verify_func: Function for additional model verifcation
+        verify_func: Function for additional model verification
         custom_configs: Sequence of CustomConfigs used to control produced artifacts
 
     Returns:
@@ -112,8 +112,8 @@ def optimize(
     if runners is None:
         runners = default_runners(device_kind=target_device)
 
-    if profiler_config is None:
-        profiler_config = ProfilerConfig()
+    if optimization_profile is None:
+        optimization_profile = OptimizationProfile()
 
     target_formats_enums = enums.parse(target_formats, Format)
     runner_names = enums.parse(runners, lambda runner: runner if isinstance(runner, str) else runner.name())
@@ -132,7 +132,7 @@ def optimize(
         sample_count=sample_count,
         batch_dim=0 if batching else None,
         runner_names=runner_names,
-        profiler_config=profiler_config,
+        optimization_profile=optimization_profile,
         verbose=verbose,
         debug=debug,
         verify_func=verify_func,
@@ -151,9 +151,8 @@ def optimize(
         find_device_max_batch_size_builder,
         tensorflow_conversion_builder,
         correctness_builder,
+        profiling_builder,
     ]
-    if profiler_config.run_profiling:
-        builders.append(profiling_builder)
     builders.append(verify_builder)
 
     package = PipelineManager.run(

@@ -41,7 +41,7 @@ def dle_convnets_pyt(model_name: str, dataloader: List, max_batch_size: Optional
         model=model,
         dataloader=dataloader,
         verbose=True,
-        profiler_config=nav.ProfilerConfig(batch_sizes=batch_sizes),
+        optimization_profile=nav.OptimizationProfile(batch_sizes=batch_sizes),
         **kwargs,
     )
     return package

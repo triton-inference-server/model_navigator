@@ -86,7 +86,7 @@ def test_validator_raises_error_when_batching_is_disabled_and_profiler_specify_b
         package = onnx_package_with_cpu_runner_only(workspace)
         config = package.config
         config.batch_dim = None
-        config.profiler_config.batch_sizes = [1]
+        config.optimization_profile.batch_sizes = [1]
         with pytest.raises(ModelNavigatorConfigurationError):
             PipelineManagerConfigurationValidator.run(config, None)
 

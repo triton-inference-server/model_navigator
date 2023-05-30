@@ -14,6 +14,7 @@
 """Runners profiling."""
 
 import logging
+import math
 import tempfile
 import time
 from dataclasses import dataclass
@@ -23,7 +24,7 @@ from typing import Any, List, Mapping, Optional, Type
 import numpy as np
 from jsonlines import jsonlines
 
-from model_navigator.api.config import Format, MeasurementMode, ProfilerConfig, Sample
+from model_navigator.api.config import Format, MeasurementMode, OptimizationProfile, Sample
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.core.tensor import TensorMetadata
 from model_navigator.exceptions import ModelNavigatorError, ModelNavigatorProfilingError
@@ -148,11 +149,11 @@ class ProfilingResults(DataObject):
 
 
 class Profiler:
-    """Runs profiling on a runner an profiling sample.
+    """Runs profiling on a runner a profiling sample.
 
     Example:
         Profiler(
-            config=ProfilerConfig(),
+            profile=OptimizationProfile(),
             results_path="results.jsonl",
         ).run(
             runner=runner,
@@ -162,30 +163,33 @@ class Profiler:
 
     def __init__(
         self,
-        config: ProfilerConfig,
+        profile: OptimizationProfile,
         results_path: Path,
         batch_dim: Optional[int] = 0,
     ) -> None:
         """Initialize the Profiler.
 
         Args:
-            config (ProfilerConfig): Profiler configuration.
+            profile (OptimizationProfile): Optimization profile used during conversion and profiling.
             results_path (Path): Jsonlines path to store the results in.
             batch_dim (Optional[int], optional): Batch dimension. Defaults to 0.
 
         Raises:
-            ValueError: When batch_dim is None, but config.batch_sizes is not None.
+            ValueError: When batch_dim is None, but profile.batch_sizes is not None.
         """
-        self._config = config
+        self._profile = profile
         self._batch_dim = batch_dim
         self._results_path = results_path
 
         if self._batch_dim is None:
             self._batch_sizes = [None]
+        elif self._profile.max_batch_size:
+            magnitude = math.floor(math.log2(self._profile.max_batch_size))
+            self._batch_sizes = (2 ** np.arange(magnitude, dtype=np.int32)).tolist()
+        elif self._profile.batch_sizes:
+            self._batch_sizes = self._profile.batch_sizes
         else:
-            self._batch_sizes = (
-                self._config.batch_sizes if self._config.batch_sizes else (2 ** np.arange(31, dtype=np.int32)).tolist()
-            )
+            self._batch_sizes = (2 ** np.arange(31, dtype=np.int32)).tolist()
 
     @property
     def _profiling_results_logging_level(self):
@@ -196,7 +200,7 @@ class Profiler:
     ) -> ProfilingResults:
         measurements = []
         start = time.monotonic()
-        while (time.monotonic() - start) * 1000 < self._config.measurement_interval:
+        while (time.monotonic() - start) * 1000 < self._profile.measurement_interval:
             runner.infer(sample)
             measurements.append(runner.last_inference_time() * 1000)
 
@@ -206,7 +210,7 @@ class Profiler:
         self, runner: NavigatorRunner, sample: Sample, batch_size: Optional[int]
     ) -> ProfilingResults:
         measurements = []
-        for _ in range(self._config.measurement_request_count):
+        for _ in range(self._profile.measurement_request_count):
             runner.infer(sample)
             measurements.append(runner.last_inference_time() * 1000)
 
@@ -221,7 +225,7 @@ class Profiler:
         avg_latency = np.mean(avg_latencies)
         deviation_perc = np.abs((avg_latencies - avg_latency) / avg_latency * 100)
 
-        return np.all(deviation_perc < self._config.stability_percentage)
+        return np.all(deviation_perc < self._profile.stability_percentage)
 
     def _measurements_result(self, profiling_results: List[ProfilingResults], count: int = 3) -> ProfilingResults:
         if len(profiling_results) < count:
@@ -238,7 +242,7 @@ class Profiler:
         measurement_fn = {
             MeasurementMode.TIME_WINDOWS: self._run_time_window_measurement,
             MeasurementMode.COUNT_WINDOWS: self._run_count_window_measurement,
-        }[self._config.measurement_mode]
+        }[self._profile.measurement_mode]
 
         if runner.is_stabilized():
             assert isinstance(runner, NavigatorStabilizedRunner)
@@ -246,18 +250,18 @@ class Profiler:
             profiling_result = ProfilingResults.from_stable_runner(runner, batch_size)
             return profiling_result
         else:
-            for idx in range(self._config.max_trials):
+            for idx in range(self._profile.max_trials):
                 profiling_result = measurement_fn(runner, sample, batch_size)
                 profiling_results.append(profiling_result)
                 LOGGER.debug(
                     f"Measurement [{idx}]: {profiling_result.throughput} infer/sec, {profiling_result.avg_latency} ms"
                 )
-                if self._is_measurement_stable(profiling_results, count=min(3, self._config.max_trials)):
-                    return self._measurements_result(profiling_results, count=min(3, self._config.max_trials))
+                if self._is_measurement_stable(profiling_results, count=min(3, self._profile.max_trials)):
+                    return self._measurements_result(profiling_results, count=min(3, self._profile.max_trials))
 
         raise RuntimeError(
             "Unable to get stable performance results. Consider increasing "
-            "measurement_interval | measurement_request_count | stability_percentage | max_trials in ProfilerConfig."
+            "measurement_interval | measurement_request_count | stability_percentage | max_trials in OptimizationProfile."
         )
 
     def run(
@@ -294,7 +298,7 @@ class Profiler:
 
                 results.append(profiling_result)
                 if prev_result is not None and profiling_result.throughput < prev_result.throughput * (
-                    1 + self._config.throughput_cutoff_threshold
+                    1 + self._profile.throughput_cutoff_threshold
                 ):
                     break
                 prev_result = profiling_result
@@ -310,7 +314,7 @@ class Performance(Command):
         workspace: Path,
         path: Path,
         format: Format,
-        profiler_config: ProfilerConfig,
+        optimization_profile: OptimizationProfile,
         input_metadata: TensorMetadata,
         output_metadata: TensorMetadata,
         batch_dim: Optional[int],
@@ -325,7 +329,7 @@ class Performance(Command):
             workspace (Path): Model Navigator workspace path.
             path (Path): Model path, relative to the workspace.
             format (Format): Model format.
-            profiler_config (ProfilerConfig): Profiler configuration.
+            optimization_profile (OptimizationProfile): Optimization profile used during conversion and profiling.
             input_metadata (TensorMetadata): Input metadata.
             output_metadata (TensorMetadata): Output metadata.
             batch_dim (Optional[int]): Batch dimension.
@@ -357,12 +361,10 @@ class Performance(Command):
                 "batch_dim": batch_dim,
                 "results_path": temp_file.name,
                 "runner_name": runner_cls.name(),
-                "profiler_config": profiler_config.to_dict(parse=True),
+                "optimization_profile": optimization_profile.to_dict(parse=True),
                 "input_metadata": input_metadata.to_json(),
                 "output_metadata": output_metadata.to_json(),
             }
-
-            args = parse_kwargs_to_cmd(kwargs)
 
             from model_navigator.commands.performance import performance_script
 

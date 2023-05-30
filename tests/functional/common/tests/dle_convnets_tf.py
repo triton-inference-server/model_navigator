@@ -77,6 +77,6 @@ def dle_convnets_tf(
         dataloader=dataloader,
         verbose=True,
         custom_configs=custom_configs,
-        profiler_config=nav.ProfilerConfig(batch_sizes=batch_sizes),
+        optimization_profile=nav.OptimizationProfile(batch_sizes=batch_sizes),
     )
     return package

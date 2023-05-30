@@ -27,7 +27,7 @@ from model_navigator.api.config import (
     SERIALIZED_FORMATS,
     DeviceKind,
     Format,
-    ProfilerConfig,
+    OptimizationProfile,
     TensorType,
 )
 from model_navigator.commands.base import CommandOutput, CommandStatus, ExecutionUnit
@@ -216,7 +216,7 @@ class Package:
         config_dict["framework"] = self.framework
         config_dict["target_formats"] = self._target_formats
         config_dict["runner_names"] = tuple(config_dict["runner_names"])
-        config_dict["profiler_config"] = ProfilerConfig.from_dict(config_dict.get("profiler_config", {}))
+        config_dict["optimization_profile"] = OptimizationProfile.from_dict(config_dict.get("optimization_profile", {}))
         if "batch_dim" not in config_dict:
             config_dict["batch_dim"] = None
 

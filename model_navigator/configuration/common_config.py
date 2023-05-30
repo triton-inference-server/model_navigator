@@ -19,7 +19,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Optional, Tuple
 
-from model_navigator.api.config import CustomConfig, DeviceKind, Format, ProfilerConfig, SizedDataLoader, VerifyFunction
+from model_navigator.api.config import (
+    CustomConfig,
+    DeviceKind,
+    Format,
+    OptimizationProfile,
+    SizedDataLoader,
+    VerifyFunction,
+)
 from model_navigator.frameworks import Framework
 from model_navigator.logger import LOGGER
 from model_navigator.utils.common import DataObject, pad_string
@@ -36,7 +43,7 @@ class CommonConfig(DataObject):
     target_formats: Tuple[Format, ...]
     target_device: DeviceKind
     sample_count: int
-    profiler_config: ProfilerConfig
+    optimization_profile: OptimizationProfile
     runner_names: Tuple[str, ...]
     batch_dim: Optional[int] = 0
     seed: int = 0

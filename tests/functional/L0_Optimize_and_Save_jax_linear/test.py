@@ -103,7 +103,7 @@ def main():
         verify_func=verify_func,
         batching=False,
         verbose=True,
-        profiler_config=nav.ProfilerConfig(stability_percentage=100),
+        optimization_profile=nav.OptimizationProfile(stability_percentage=100),
     )
     package_path = pathlib.Path("package.nav")
     nav.package.save(package, package_path)

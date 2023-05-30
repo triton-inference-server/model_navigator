@@ -134,7 +134,7 @@ def _dle_bert_tf_test(
         model=squad_model,
         dataloader=dataloader,
         verbose=True,
-        profiler_config=nav.ProfilerConfig(batch_sizes=batch_sizes),
+        optimization_profile=nav.OptimizationProfile(batch_sizes=batch_sizes),
         input_names=input_names,
         custom_configs=(
             nav.OnnxConfig(opset=13),

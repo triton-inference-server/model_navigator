@@ -64,7 +64,7 @@ def main():
     package = nav.python.optimize(
         model=model,
         dataloader=dataloader,
-        profiler_config=nav.ProfilerConfig(
+        optimization_profile=nav.OptimizationProfile(
             batch_sizes=[1, 2, 4],
         ),
         verify_func=verify_func,

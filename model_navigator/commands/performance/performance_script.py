@@ -18,7 +18,7 @@ from typing import Dict, List, Optional
 
 import fire
 
-from model_navigator.api.config import ProfilerConfig
+from model_navigator.api.config import OptimizationProfile
 from model_navigator.commands.performance import Profiler
 from model_navigator.core.tensor import TensorMetadata
 from model_navigator.runners.registry import get_runner
@@ -40,7 +40,7 @@ def profile(
     batch_dim: int,
     results_path: str,
     runner_name: str,
-    profiler_config: Dict,
+    optimization_profile: Dict,
     input_metadata: List,
     output_metadata: List,
     navigator_workspace: Optional[str] = None,
@@ -52,7 +52,7 @@ def profile(
         batch_dim (int): Batch dimension.
         results_path (str): Path to store the profiling results in.
         runner_name (str): Name of the runner to profile.
-        profiler_config (Dict): Profiler configuration.
+        optimization_profile (Dict): Optimization profile used during conversion and profiling.
         input_metadata (List): Input metadata.
         output_metadata (List): Output metadata.
         navigator_workspace (Optional[str], optional): Path of the Model Navigator workspace.
@@ -78,7 +78,7 @@ def profile(
     )  # pytype: disable=not-instantiable
 
     Profiler(
-        config=ProfilerConfig.from_dict(profiler_config),
+        profile=OptimizationProfile.from_dict(optimization_profile),
         batch_dim=batch_dim,
         results_path=pathlib.Path(results_path),
     ).run(

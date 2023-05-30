@@ -115,7 +115,7 @@ class Format(Enum):
 
 
 class JitType(Enum):
-    """TorchScript export paramter.
+    """TorchScript export parameter.
 
     Used for selecting the type of TorchScript export.
 
@@ -217,10 +217,10 @@ class MeasurementMode(Enum):
 
 
 @dataclass
-class ProfilerConfig(DataObject):
-    """Profiler configuration.
+class OptimizationProfile(DataObject):
+    """Profiling configuration.
 
-    For each batch size profiler will run measurments in windows. Depending on the measurement mode,
+    For each batch size profiler will run measurements in windows. Depending on the measurement mode,
     each window will have fixed time length (MeasurementMode.TIME_WINDOWS)
     or fixed number of requests (MeasurementMode.COUNT_WINDOWS).
     Batch sizes are profiled in the ascending order.
@@ -232,7 +232,6 @@ class ProfilerConfig(DataObject):
 
 
     Args:
-        run_profiling (bool): If True, run profiling, otherwise skip profiling.
         batch_sizes (Optional[List[Union[int, None]]]): List of batch sizes to profile.
             None means that the model does not support batching.
         measurement_mode (MeasurementMode): Measurement mode.
@@ -243,38 +242,60 @@ class ProfilerConfig(DataObject):
         stability_percentage (float): Allowed percentage of variation from the mean in three consecutive windows.
         max_trials (int): Maximum number of window trials.
         throughput_cutoff_threshold (float): Minimum throughput increase to continue profiling.
+        dataloader (SizedDataLoader): Optional dataloader for profiling. Use only 1 sample.
     """
 
-    run_profiling: bool = True
     batch_sizes: Optional[List[Union[int, None]]] = None
+    max_batch_size: Optional[int] = None
     measurement_mode: MeasurementMode = MeasurementMode.COUNT_WINDOWS
     measurement_interval: Optional[float] = 5000  # ms
     measurement_request_count: Optional[int] = 50
     stability_percentage: float = 10.0
     max_trials: int = 10
     throughput_cutoff_threshold: float = DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD
+    dataloader: Optional[SizedDataLoader] = None
 
-    @classmethod
-    def from_dict(cls, profiler_config_dict: Mapping) -> "ProfilerConfig":
-        """Instantiate ProfilerConfig class from a dictionary.
+    def to_dict(self, filter_fields: Optional[List[str]] = None, parse: bool = False) -> Dict:
+        """Serialize to a dictionary.
+
+        Append `dataloader` field to filtered fields during dump.
 
         Args:
-            profiler_config_dict (Mapping): Data dictionary.
+            filter_fields (Optional[List[str]], optional): List of fields to filter out.
+                Defaults to None.
+            parse (bool, optional): If True recursively parse field values to jsonable representation.
+                Defaults to False.
 
         Returns:
-            ProfilerConfig
+            Dict: Data serialized to a dictionary.
+        """
+        if not filter_fields:
+            filter_fields = []
+
+        filter_fields += ["dataloader"]
+        return super().to_dict(filter_fields=filter_fields, parse=parse)
+
+    @classmethod
+    def from_dict(cls, optimization_profile_dict: Mapping) -> "OptimizationProfile":
+        """Instantiate OptimizationProfile class from a dictionary.
+
+        Args:
+            optimization_profile_dict (Mapping): Data dictionary.
+
+        Returns:
+            OptimizationProfile
         """
         return cls(
-            run_profiling=profiler_config_dict.get("run_profiling", True),
-            batch_sizes=profiler_config_dict.get("batch_sizes"),
-            measurement_interval=profiler_config_dict.get("measurement_interval"),
+            batch_sizes=optimization_profile_dict.get("batch_sizes"),
+            max_batch_size=optimization_profile_dict.get("max_batch_size"),
+            measurement_interval=optimization_profile_dict.get("measurement_interval"),
             measurement_mode=MeasurementMode(
-                profiler_config_dict.get("measurement_mode", MeasurementMode.TIME_WINDOWS)
+                optimization_profile_dict.get("measurement_mode", MeasurementMode.TIME_WINDOWS)
             ),
-            measurement_request_count=profiler_config_dict.get("measurement_request_count"),
-            stability_percentage=profiler_config_dict.get("stability_percentage", 10.0),
-            max_trials=profiler_config_dict.get("max_trials", 10),
-            throughput_cutoff_threshold=profiler_config_dict.get("throughput_cutoff_threshold", -2),
+            measurement_request_count=optimization_profile_dict.get("measurement_request_count"),
+            stability_percentage=optimization_profile_dict.get("stability_percentage", 10.0),
+            max_trials=optimization_profile_dict.get("max_trials", 10),
+            throughput_cutoff_threshold=optimization_profile_dict.get("throughput_cutoff_threshold", -2),
         )
 
 

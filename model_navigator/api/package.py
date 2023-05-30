@@ -23,7 +23,7 @@ from model_navigator.api.config import (
     CustomConfig,
     DeviceKind,
     Format,
-    ProfilerConfig,
+    OptimizationProfile,
     VerifyFunction,
     map_custom_configs,
 )
@@ -124,7 +124,7 @@ def optimize(
     target_formats: Optional[Union[Union[str, Format], Tuple[Union[str, Format], ...]]] = None,
     target_device: Optional[DeviceKind] = DeviceKind.CUDA,
     runners: Optional[Union[Union[str, Type[NavigatorRunner]], Tuple[Union[str, Type[NavigatorRunner]], ...]]] = None,
-    profiler_config: Optional[ProfilerConfig] = None,
+    optimization_profile: Optional[OptimizationProfile] = None,
     verbose: bool = False,
     debug: bool = False,
     verify_func: Optional[VerifyFunction] = None,
@@ -138,7 +138,7 @@ def optimize(
         target_formats: Formats to generate and profile. Defaults to target formats from the package.
         target_device: Target device for optimize process, default is CUDA
         runners: Runners to run correctness tests and profiling on. Defaults to runners from the package.
-        profiler_config: Configuration of the profiler. Defaults to config from the package.
+        optimization_profile: Optimization profile used for conversion and profiling.
         verbose: If True enable verbose logging. Defaults to False.
         debug: If True print debugging logs. Defaults to False.
         verify_func: Function used for verifying generated models. Defaults to None.
@@ -165,8 +165,8 @@ def optimize(
     if runners is None:
         runners = default_runners(device_kind=target_device)
 
-    if profiler_config is None:
-        profiler_config = ProfilerConfig()
+    if optimization_profile is None:
+        optimization_profile = OptimizationProfile()
 
     is_source_available = package.model is not None
     _update_config(
@@ -174,7 +174,7 @@ def optimize(
         is_source_available=is_source_available,
         target_formats=target_formats,
         runners=runners,
-        profiler_config=profiler_config,
+        optimization_profile=optimization_profile,
         verbose=verbose,
         debug=debug,
         verify_func=verify_func,
@@ -185,7 +185,6 @@ def optimize(
 
     builders = _get_builders(
         framework=package.framework,
-        run_profiling=config.profiler_config.run_profiling,
     )
 
     model_configs = _get_model_configs(
@@ -225,12 +224,11 @@ def set_verified(
     runner_results.status[VerifyModel.__name__] = CommandStatus.OK
 
 
-def _get_builders(framework: Framework, run_profiling: bool) -> List[PipelineBuilder]:
+def _get_builders(framework: Framework) -> List[PipelineBuilder]:
     """Build list of pipeline builders for nav.package.optimize.
 
     Args:
         framework (Framework): Package framework.
-        run_profiling (bool): If True attach profiling pipeline builder.
     """
     if framework == Framework.TORCH:
         from model_navigator.pipelines.builders import torch_conversion_builder as conversion_builder
@@ -245,9 +243,8 @@ def _get_builders(framework: Framework, run_profiling: bool) -> List[PipelineBui
         find_device_max_batch_size_builder,
         conversion_builder,
         correctness_builder,
+        profiling_builder,
     ]
-    if run_profiling:
-        builders.append(profiling_builder)
     builders.append(verify_builder)
     return builders
 
@@ -273,7 +270,7 @@ def _update_config(
     target_formats: Optional[Union[Union[str, Format], Tuple[Union[str, Format], ...]]],
     *,
     runners: Optional[Union[Union[str, Type[NavigatorRunner]], Tuple[Union[str, Type[NavigatorRunner]], ...]]] = None,
-    profiler_config: Optional[ProfilerConfig] = None,
+    optimization_profile: Optional[OptimizationProfile] = None,
     verbose: bool = False,
     debug: bool = False,
     verify_func: Optional[VerifyFunction] = None,
@@ -294,10 +291,10 @@ def _update_config(
     config.target_formats = target_formats_enums
 
     # Reset profiling config
-    if profiler_config is None:
-        profiler_config = ProfilerConfig()
+    if optimization_profile is None:
+        optimization_profile = OptimizationProfile()
 
-    config.profiler_config = profiler_config
+    config.optimization_profile = optimization_profile
 
     # Reset runner names
     if runners is None:

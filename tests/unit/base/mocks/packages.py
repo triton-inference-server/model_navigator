@@ -64,7 +64,7 @@ def empty_package(workspace) -> Package:
                         "opset": 13,
                     },
                 },
-                "profiler_config": {
+                "optimization_profile": {
                     "batch_sizes": [1, 32],
                 },
             },
@@ -137,7 +137,7 @@ def custom_runner_package(workspace) -> Package:
                         "opset": 13,
                     },
                 },
-                "profiler_config": {
+                "optimization_profile": {
                     "batch_sizes": [1, 32],
                 },
             },
@@ -293,7 +293,7 @@ def trochscript_package_with_source(workspace) -> Package:
                         "trt_profile": {"input__0": {"min": (1, 3), "opt": (3, 3), "max": (4, 3)}},
                     },
                 },
-                "profiler_config": {
+                "optimization_profile": {
                     "batch_sizes": [1, 32],
                 },
             },
@@ -403,7 +403,7 @@ def onnx_package_with_tensorrt_runner(workspace) -> Package:
                         "opset": 13,
                     },
                 },
-                "profiler_config": {
+                "optimization_profile": {
                     "batch_sizes": [1, 32],
                 },
             },
@@ -511,7 +511,7 @@ def onnx_package_with_cuda_runner(workspace) -> Package:
                         "opset": 13,
                     },
                 },
-                "profiler_config": {
+                "optimization_profile": {
                     "batch_sizes": [1, 32],
                 },
             },
@@ -619,7 +619,7 @@ def onnx_package_with_cpu_runner_only(workspace) -> Package:
                         "opset": 13,
                     },
                 },
-                "profiler_config": {
+                "optimization_profile": {
                     "batch_sizes": [1, 32],
                 },
             },
@@ -696,7 +696,7 @@ def tensorflow_package_with_tensorflow_only(workspace) -> Package:
                 "sample_count": 1,
                 "batch_dim": 0,
                 "custom_configs": {},
-                "profiler_config": {
+                "optimization_profile": {
                     "batch_sizes": [1, 32],
                 },
             },
@@ -776,7 +776,7 @@ def tensorflow_package_with_tensorflow_tensorrt(workspace) -> Package:
                 "sample_count": 1,
                 "batch_dim": 0,
                 "custom_configs": {},
-                "profiler_config": {
+                "optimization_profile": {
                     "batch_sizes": [1, 32],
                 },
             },
@@ -888,7 +888,7 @@ def tensorflow_package_with_optimal_model_tensorflow_tensorrt_and_dummy_navigato
                 "sample_count": 1,
                 "batch_dim": 0,
                 "custom_configs": {},
-                "profiler_config": {
+                "optimization_profile": {
                     "batch_sizes": [1, 32],
                 },
             },
@@ -1003,7 +1003,7 @@ def torchscript_package_with_cpu_only(workspace) -> Package:
                         "opset": 13,
                     },
                 },
-                "profiler_config": {
+                "optimization_profile": {
                     "batch_sizes": [1, 32],
                 },
             },
@@ -1084,7 +1084,7 @@ def torchscript_package_with_cuda(workspace) -> Package:
                         "trt_profile": {"input__0": {"min": (1, 3), "opt": (3, 3), "max": (4, 3)}},
                     },
                 },
-                "profiler_config": {
+                "optimization_profile": {
                     "batch_sizes": [1, 32],
                 },
             },
@@ -1197,7 +1197,7 @@ def torchscript_package_with_torch_tensorrt(workspace) -> Package:
                         "trt_profile": {"input__0": {"min": (1, 3), "opt": (3, 3), "max": (4, 3)}},
                     },
                 },
-                "profiler_config": {
+                "optimization_profile": {
                     "batch_sizes": [1, 32],
                 },
             },
@@ -1320,7 +1320,7 @@ def onnx_package(workspace) -> Package:
                         "trt_profile": {"input__0": {"min": (1, 3), "opt": (3, 3), "max": (4, 3)}},
                     },
                 },
-                "profiler_config": {
+                "optimization_profile": {
                     "batch_sizes": [1, 32],
                 },
             },
@@ -1436,7 +1436,7 @@ def tensorrt_package(workspace) -> Package:
                         "trt_profile": {"input__0": {"min": (1, 3), "opt": (3, 3), "max": (4, 3)}},
                     },
                 },
-                "profiler_config": {
+                "optimization_profile": {
                     "batch_sizes": [1, 32],
                 },
             },
