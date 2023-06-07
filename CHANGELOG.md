@@ -17,7 +17,7 @@ limitations under the License.
 # Changelog
 
 ## 0.5.6
--
+- fix: Load samples as sorted to keep valid order
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 

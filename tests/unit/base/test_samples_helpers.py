@@ -20,6 +20,7 @@ import pytest
 
 from model_navigator.commands.data_dump.samples import _validate_tensor, samples_to_npz
 from model_navigator.exceptions import ModelNavigatorUserInputError
+from model_navigator.utils.dataloader import load_samples
 
 
 def test_validate_tensor_raise_exception_when_values_are_nan():
@@ -69,6 +70,27 @@ def test_samples_to_npz_create_file_with_valid_samples_when_valid_tensors_passed
                     v = numpy.expand_dims(v, batch_dim)
                     loaded_sample[k] = v
             loaded_samples.append(loaded_sample)
+
+        assert len(samples) == len(loaded_samples)
+        for s, l_s in zip(samples, loaded_samples):
+            assert len(s) == len(l_s)
+            for (k1, v1), (k2, v2) in zip(s.items(), l_s.items()):
+                assert k1 == k2
+                assert (v1 == v2).all()
+
+
+def test_samples_are_saved_and_loaded_in_the_same_order():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        sample_filepath = pathlib.Path(tmpdir) / "model_input" / "correctness"
+
+        input_name = "input_0"
+        batch_dim = 0
+        samples = []
+        for fill_value in range(0, 10):
+            sample = {input_name: numpy.full(shape=(1, 3), fill_value=fill_value)}
+            samples.append(sample)
+        samples_to_npz(samples=samples, path=sample_filepath, batch_dim=batch_dim)
+        loaded_samples = load_samples(samples_name="correctness_samples", workspace=tmpdir, batch_dim=batch_dim)
 
         assert len(samples) == len(loaded_samples)
         for s, l_s in zip(samples, loaded_samples):
