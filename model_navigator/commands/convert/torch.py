@@ -65,10 +65,6 @@ class ConvertTorchScript2ONNX(Command):
         LOGGER.info("TorchScript to ONNX conversion started")
         exported_model_path = workspace / parent_path
         converted_model_path = workspace / path
-        if converted_model_path.exists():
-            LOGGER.info("Model already exists. Skipping export.")
-            return CommandOutput(status=CommandStatus.SKIPPED)
-
         converted_model_path.parent.mkdir(parents=True, exist_ok=True)
 
         with ExecutionContext(
@@ -120,7 +116,7 @@ class ConvertTorchScript2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearch):
     ) -> CommandOutput:
         """Run Torchscript ot Torch-TensorRT conversion.
 
-        For detaild explenation of TensorRT parameters please refer to [documentation]
+        For detailed explanation of TensorRT parameters please refer to [documentation]
         [documentation]: https://pytorch.org/TensorRT/
 
         Args:
@@ -154,9 +150,7 @@ class ConvertTorchScript2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearch):
             raise RuntimeError("No GPUs available.")
         exported_model_path = workspace / parent_path
         converted_model_path = workspace / path
-        if converted_model_path.exists():
-            LOGGER.info("Model already exists. Skipping conversion.")
-            return CommandOutput(status=CommandStatus.SKIPPED)
+
         if not exported_model_path.exists():
             LOGGER.warning(f"Exported TorchScript model not found at {exported_model_path}. Skipping conversion.")
             return CommandOutput(status=CommandStatus.SKIPPED)

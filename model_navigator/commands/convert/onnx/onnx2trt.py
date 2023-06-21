@@ -90,9 +90,6 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
 
         input_model_path = workspace / parent_path
         converted_model_path = workspace / path
-        if converted_model_path.exists():
-            LOGGER.info("Model already exists. Skipping conversion.")
-            return CommandOutput(status=CommandStatus.SKIPPED)
 
         if not input_model_path.exists():
             LOGGER.warning(f"Exported ONNX model not found at {input_model_path}. Skipping conversion.")

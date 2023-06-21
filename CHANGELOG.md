@@ -18,6 +18,7 @@ limitations under the License.
 
 ## 0.5.6
 - fix: Load samples as sorted to keep valid order
+- fix: Execute conversion when model already exists in path
 - Other minor fixes and improvements
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)

@@ -53,9 +53,7 @@ class ConvertSavedModel2ONNX(Command):
         exported_model_path = workspace / parent_path
         converted_model_path = workspace / path
         converted_model_path.parent.mkdir(parents=True, exist_ok=True)
-        if converted_model_path.exists():
-            LOGGER.info("Model already exists. Skipping conversion.")
-            return CommandOutput(status=CommandStatus.SKIPPED)
+
         if not exported_model_path.exists():
             LOGGER.warning(f"Exported SavedModel model not found at {exported_model_path}. Skipping conversion")
             return CommandOutput(status=CommandStatus.SKIPPED)
@@ -132,9 +130,6 @@ class ConvertSavedModel2TFTRT(Convert2TensorRTWithMaxBatchSizeSearch):
         converted_model_path = workspace / path
         converted_model_path.parent.mkdir(parents=True, exist_ok=True)
 
-        if converted_model_path.exists():
-            LOGGER.info("Model already exists. Skipping conversion.")
-            return CommandOutput(status=CommandStatus.SKIPPED)
         if not exported_model_path.exists():
             LOGGER.warning(f"Exported SavedModel model not found at {exported_model_path}. Skipping conversion")
             return CommandOutput(status=CommandStatus.SKIPPED)
