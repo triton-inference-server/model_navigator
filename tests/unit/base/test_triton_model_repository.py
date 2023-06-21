@@ -210,6 +210,27 @@ def test_add_model_create_catalog_in_repository_when_tensorrt_model_passed():
         assert (model_repository_path / "TestModel" / "1" / "model.plan").exists()
 
 
+def test_add_model_create_catalog_in_repository_when_string_path_passed():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir = pathlib.Path(tmpdir)
+        model_repository_path = tmpdir / "model-repository"
+        model_repository_path.mkdir()
+
+        model_path = tmpdir / "model"
+        model_path.touch()
+
+        add_model(
+            model_repository_path=model_repository_path.as_posix(),
+            model_name="TestModel",
+            model_version=1,
+            model_path=model_path.as_posix(),
+            config=TensorRTModelConfig(),
+        )
+
+        assert (model_repository_path / "TestModel" / "config.pbtxt").exists()
+        assert (model_repository_path / "TestModel" / "1" / "model.plan").exists()
+
+
 def test_add_model_from_package_raise_error_when_unsupported_triton_runner_in_package():
     with tempfile.TemporaryDirectory() as tmp_dir:
         model_repository_path = pathlib.Path(tmp_dir) / "model_repository"
@@ -567,6 +588,36 @@ def test_add_model_from_package_select_tensorrt_when_tensorrt_package_provided(m
 
         add_model_from_package(
             model_repository_path,
+            model_name=model_name,
+            model_version=model_version,
+            package=package,
+        )
+
+        config = spy_add_model.call_args.kwargs["config"]
+
+        assert isinstance(config, TensorRTModelConfig) is True
+
+        assert len(config.instance_groups) == 1
+        assert config.instance_groups[0].kind == DeviceKind.KIND_GPU
+
+        assert (model_repository_path / "Model" / "config.pbtxt").exists()
+        assert (model_repository_path / "Model" / "1" / "model.plan").exists()
+
+
+def test_add_model_from_package_create_model_when_string_path_provided(mocker):
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        workspace_path = pathlib.Path(tmp_dir) / "workspace"
+        model_repository_path = pathlib.Path(tmp_dir) / "model_repository"
+
+        model_name = "Model"
+        model_version = 1
+
+        package = tensorrt_package(workspace_path)
+
+        spy_add_model = mocker.spy(model_repository, "add_model")
+
+        add_model_from_package(
+            model_repository_path=model_repository_path.as_posix(),
             model_name=model_name,
             model_version=model_version,
             package=package,
