@@ -84,17 +84,6 @@ class _BaseTorchRunner(NavigatorRunner):
     def get_available_return_types_impl(self) -> List[TensorType]:
         return [TensorType.NUMPY, TensorType.TORCH]
 
-    def _to_torch_tensor(self, value, dtype):
-        tensor_type = get_tensor_type(value)
-        if tensor_type == TensorType.TORCH:
-            value = value.to(numpy_to_torch_dtype(dtype))
-        elif tensor_type == TensorType.NUMPY:
-            value = value.astype(dtype)
-            value = torch.from_numpy(value)
-        else:
-            raise ValueError(f"Unsupported type {type(value)}")
-        return value.to(self._target_device)
-
     def _prepare_inputs(self, feed_dict):
         """Prepare inputs for inference."""
         inputs = []
@@ -110,6 +99,18 @@ class _BaseTorchRunner(NavigatorRunner):
             if self.return_type == TensorType.NUMPY:
                 out_dict[name] = outputs.cpu().numpy()
         return out_dict
+
+    @classmethod
+    def _to_torch_tensor(cls, value, dtype):
+        tensor_type = get_tensor_type(value)
+        if tensor_type == TensorType.TORCH:
+            value = value.to(numpy_to_torch_dtype(dtype))
+        elif tensor_type == TensorType.NUMPY:
+            value = value.astype(dtype)
+            value = torch.from_numpy(value)
+        else:
+            raise ValueError(f"Unsupported type {type(value)}")
+        return value.to(cls._target_device)
 
 
 class _BaseTorchScriptRunner(_BaseTorchRunner):
@@ -219,8 +220,9 @@ class TorchTensorRTRunner(_BaseTorchScriptRunner):
         """Initialization implementation."""
         import torch_tensorrt  # pytype: disable=import-error # noqa: F401
 
-    def _cast_value(self, value, dtype):
-        value = value.astype(dtype)
+    @classmethod
+    def _to_torch_tensor(cls, value, dtype):
+        value = super()._to_torch_tensor(value, dtype)
         value = tensorrt_utils.cast_tensor(value)
         return value
 

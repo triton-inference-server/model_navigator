@@ -22,12 +22,12 @@ from typing import Callable, Optional, TypeVar, Union
 
 import numpy as np
 
-from model_navigator.api.config import ShapeTuple, TensorRTProfile
+from model_navigator.api.config import ShapeTuple, TensorRTProfile, TensorType
 from model_navigator.core.constants import OPT_MAX_SHAPE_RATIO
-from model_navigator.core.tensor import TensorMetadata
+from model_navigator.core.tensor import TensorMetadata, get_tensor_type
 from model_navigator.exceptions import ModelNavigatorNotFoundError
 from model_navigator.utils import module
-from model_navigator.utils.common import invoke_if_callable, numpy_to_torch_dtype
+from model_navigator.utils.common import invoke_if_callable, numpy_to_torch_dtype, torch_to_numpy_dtype
 
 trt = module.lazy_import("tensorrt")
 
@@ -66,17 +66,33 @@ def cast_type(dtype: np.dtype) -> np.dtype:
     return dtype
 
 
-def cast_tensor(tensor: T, dtype: Optional[np.dtype] = None) -> T:
-    """Cast type and return new dtype."""
+def _cast_torch_tensor(tensor, dtype):
+    target_dtype = dtype or _TYPE_CASTS.get(np.dtype(torch_to_numpy_dtype(tensor.dtype)))
+    if target_dtype:
+        LOGGER.debug(f"Casting {dtype} tensor to {target_dtype}.")
+        return tensor.to(numpy_to_torch_dtype(target_dtype))
+    return tensor
+
+
+def _cast_numpy_tensor(tensor, dtype):
     target_dtype = dtype or _TYPE_CASTS.get(tensor.dtype)
     if target_dtype:
         LOGGER.debug(f"Casting {dtype} tensor to {target_dtype}.")
-        if isinstance(tensor, np.ndarray):
-            return tensor.astype(target_dtype.type)
-        else:
-            return tensor.to(numpy_to_torch_dtype(target_dtype))
-
+        return tensor.astype(target_dtype.type)
     return tensor
+
+
+def cast_tensor(tensor: T, dtype: Optional[np.dtype] = None) -> T:
+    """Cast type and return tensor with new dtype."""
+    if dtype is not None:
+        assert isinstance(dtype, np.dtype)
+
+    tensor_type = get_tensor_type(tensor)
+    if tensor_type == TensorType.TORCH:
+        return _cast_torch_tensor(tensor, dtype)
+    else:
+        assert tensor_type == TensorType.NUMPY
+        return _cast_numpy_tensor(tensor, dtype)
 
 
 def get_trt_profile_with_new_max_batch_size(
