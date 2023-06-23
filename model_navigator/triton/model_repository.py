@@ -105,7 +105,7 @@ TRITON_RUNNERS = (
 def add_model(
     model_repository_path: Union[str, pathlib.Path],
     model_name: str,
-    model_path: pathlib.Path,
+    model_path: Union[str, pathlib.Path],
     config: Union[
         ONNXModelConfig,
         TensorRTModelConfig,
@@ -167,15 +167,15 @@ def add_model(
     else:
         raise ModelNavigatorWrongParameterError(f"Unsupported model config provided: {config.__class__}")
 
-    triton_model_repository = _TritonModelRepository(model_repository_path=model_repository_path)
+    triton_model_repository = _TritonModelRepository(model_repository_path=pathlib.Path(model_repository_path))
     return triton_model_repository.deploy_model(
-        model_path=model_path,
+        model_path=pathlib.Path(model_path),
         model_config=model_config,
     )
 
 
 def add_model_from_package(
-    model_repository_path: pathlib.Path,
+    model_repository_path: Union[str, pathlib.Path],
     model_name: str,
     package: Package,
     model_version: int = 1,

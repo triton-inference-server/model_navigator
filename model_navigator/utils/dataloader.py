@@ -209,7 +209,7 @@ def load_samples(samples_name: str, workspace: Union[pathlib.Path, str], batch_d
     samples_dirname = "model_output" if samples_name.split("_")[-1] == "output" else "model_input"
     samples_dirpath = workspace / samples_dirname / samples_type
     samples = []
-    for sample_filepath in samples_dirpath.iterdir():
+    for sample_filepath in sorted(samples_dirpath.iterdir()):
         sample = {}
         with np.load(sample_filepath.as_posix()) as data:
             for k, v in data.items():
