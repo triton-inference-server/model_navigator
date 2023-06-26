@@ -130,6 +130,7 @@ def optimize(
     verify_func: Optional[VerifyFunction] = None,
     custom_configs: Optional[List[CustomConfig]] = None,
     defaults: bool = True,
+    fail_on_empty: bool = True,
 ) -> Package:
     """Generate target formats and run correctness and profiling tests for available runners.
 
@@ -144,11 +145,12 @@ def optimize(
         verify_func: Function used for verifying generated models. Defaults to None.
         custom_configs: Custom formats configuration. Defaults to None.
         defaults: reset configuration of custom configs to defaults
+        fail_on_empty: Fail optimization when empty (no model or base exported model) package provided
 
     Returns:
         Optimized package
     """
-    if package.is_empty() and package.model is None:
+    if fail_on_empty and package.is_empty() and package.model is None:
         raise ModelNavigatorEmptyPackageError(
             "Package is empty and source model is not loaded. Unable to run optimize."
         )

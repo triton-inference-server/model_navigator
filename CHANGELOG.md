@@ -22,6 +22,7 @@ limitations under the License.
   - new: OptimizationProfile impact the conversion for TensorRT
   - new: `batch_sizes` and `max_batch_size` limit the max profile in TensorRT conversion
   - new: Allow to provide separate dataloader for profiling - first sample used only
+- new: allow to run `nav.package.optimize` on empty package - status generation only
 
 
 ## 0.5.6
