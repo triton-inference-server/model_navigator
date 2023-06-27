@@ -39,7 +39,7 @@ def main():
     import model_navigator as nav
     from model_navigator.commands.base import CommandStatus
     from tests import utils
-    from tests.functional.common.utils import collect_status, validate_status
+    from tests.functional.common.utils import collect_optimize_status, validate_status
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -86,7 +86,7 @@ def main():
     )
 
     status_file = args.status
-    status = collect_status(package.status)
+    status = collect_optimize_status(package.status)
     validate_status(status, expected_statuses=EXPECTED_STATUES)
 
     numpy_input = {k: v.numpy() for k, v in dataloader[0].items()}

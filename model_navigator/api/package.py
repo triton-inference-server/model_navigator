@@ -14,16 +14,16 @@
 """Package operations related API."""
 
 
-from pathlib import Path
+import pathlib
 from typing import Dict, List, Optional, Tuple, Type, Union
 
 from model_navigator.api.config import (
-    DEFAULT_TARGET_FORMATS,
     SOURCE_FORMATS,
     CustomConfig,
     DeviceKind,
     Format,
     OptimizationProfile,
+    SizedDataLoader,
     VerifyFunction,
     map_custom_configs,
 )
@@ -32,8 +32,9 @@ from model_navigator.commands.verification.verify import VerifyModel
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig
 from model_navigator.configuration.model.model_config_builder import ModelConfigBuilder
-from model_navigator.core.package import Package
-from model_navigator.core.status import ModelStatus
+from model_navigator.core.constants import DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD
+from model_navigator.core.logger import LOGGER
+from model_navigator.core.workspace import Workspace
 from model_navigator.exceptions import (
     ModelNavigatorEmptyPackageError,
     ModelNavigatorMissingSourceModelError,
@@ -41,26 +42,32 @@ from model_navigator.exceptions import (
 )
 from model_navigator.frameworks import Framework
 from model_navigator.frameworks.torch.utils import update_allowed_batching_parameters
+from model_navigator.package.builder import PackageBuilder
+from model_navigator.package.loader import PackageLoader
+from model_navigator.package.package import Package
+from model_navigator.package.status import ModelStatus
 from model_navigator.pipelines.builders import (
     PipelineBuilder,
     correctness_builder,
+    performance_builder,
     preprocessing_builder,
-    profiling_builder,
 )
 from model_navigator.pipelines.builders.find_device_max_batch_size import find_device_max_batch_size_builder
+from model_navigator.pipelines.builders.profiling import profiling_builder
 from model_navigator.pipelines.builders.verify import verify_builder
-from model_navigator.pipelines.pipeline_manager import PipelineManager
+from model_navigator.pipelines.wrappers.optimize import optimize_pipeline
+from model_navigator.pipelines.wrappers.profile import ProfilingResults, profile_pipeline
 from model_navigator.runners.base import NavigatorRunner
 from model_navigator.runners.registry import runner_registry
 from model_navigator.runners.utils import default_runners
 from model_navigator.runtime_analyzer.strategy import RuntimeSearchStrategy
 from model_navigator.utils import enums
-from model_navigator.utils.format_helpers import FRAMEWORK2BASE_FORMAT
+from model_navigator.utils.format_helpers import FRAMEWORK2BASE_FORMAT, get_target_formats
 
 
 def load(
-    path: Union[str, Path],
-    workspace: Optional[Union[str, Path]] = None,
+    path: Union[str, pathlib.Path],
+    workspace: Optional[Union[str, pathlib.Path]] = None,
 ) -> Package:
     """Load package from provided path.
 
@@ -71,13 +78,21 @@ def load(
     Returns:
         Package.
     """
-    return Package.load(path=path, workspace=workspace)
+    LOGGER.info(f"Loading package from {path} to {workspace}.")
+
+    workspace = Workspace(workspace)
+    workspace.initialize()
+
+    loader = PackageLoader()
+    package = loader.from_file(path=path, workspace=workspace)
+    LOGGER.info(f"Package loaded and unpacked {workspace}.")
+
+    return package
 
 
 def save(
     package: Package,
-    path: Union[str, Path],
-    keep_workspace: bool = True,
+    path: Union[str, pathlib.Path],
     override: bool = False,
     save_data: bool = True,
 ) -> None:
@@ -86,13 +101,13 @@ def save(
     Args:
         package: A package object to prepare the package
         path: A path to file where the package has to be saved
-        keep_workspace: flag to remove the working directory after saving the package
         override: flag to override existing package in provided path
         save_data: disable saving samples from the dataloader
     """
-    package.save(
+    builder = PackageBuilder()
+    builder.save(
+        package=package,
         path=path,
-        keep_workspace=keep_workspace,
         override=override,
         save_data=save_data,
     )
@@ -121,9 +136,9 @@ def get_best_model_status(
 
 def optimize(
     package: Package,
-    target_formats: Optional[Union[Union[str, Format], Tuple[Union[str, Format], ...]]] = None,
+    target_formats: Optional[Tuple[Union[str, Format], ...]] = None,
     target_device: Optional[DeviceKind] = DeviceKind.CUDA,
-    runners: Optional[Union[Union[str, Type[NavigatorRunner]], Tuple[Union[str, Type[NavigatorRunner]], ...]]] = None,
+    runners: Optional[Tuple[Union[str, Type[NavigatorRunner]], ...]] = None,
     optimization_profile: Optional[OptimizationProfile] = None,
     verbose: bool = False,
     debug: bool = False,
@@ -156,8 +171,9 @@ def optimize(
         )
     config = package.config
 
+    is_source_available = package.model is not None
     if target_formats is None:
-        target_formats = DEFAULT_TARGET_FORMATS[package.framework]
+        target_formats = get_target_formats(framework=package.framework, is_source_available=is_source_available)
         if package.framework == Framework.TORCH and config.batch_dim is not None:
             target_formats, custom_configs = update_allowed_batching_parameters(
                 target_formats=target_formats,
@@ -170,7 +186,6 @@ def optimize(
     if optimization_profile is None:
         optimization_profile = OptimizationProfile()
 
-    is_source_available = package.model is not None
     _update_config(
         config=config,
         is_source_available=is_source_available,
@@ -189,19 +204,119 @@ def optimize(
         framework=package.framework,
     )
 
-    model_configs = _get_model_configs(
+    models_config = _get_model_configs(
         config=config,
         custom_configs=list(config.custom_configs.values()),
     )
 
-    optimized_package = PipelineManager.run(
-        pipeline_builders=builders,
-        config=config,
-        models_config=model_configs,
+    optimized_package = optimize_pipeline(
         package=package,
+        workspace=package.workspace.path,
+        builders=builders,
+        config=config,
+        models_config=models_config,
     )
 
     return optimized_package
+
+
+def profile(
+    package: Package,
+    dataloader: Optional[SizedDataLoader] = None,
+    target_formats: Optional[Tuple[Union[str, Format], ...]] = None,
+    target_device: Optional[DeviceKind] = DeviceKind.CUDA,
+    runners: Optional[Tuple[Union[str, Type[NavigatorRunner]], ...]] = None,
+    max_batch_size: Optional[int] = None,
+    batch_sizes: Optional[List[int]] = None,
+    window_size: int = 50,
+    stability_percentage: float = 10.0,
+    max_trials: int = 10,
+    throughput_cutoff_threshold: float = DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD,
+    verbose: bool = False,
+) -> ProfilingResults:
+    """Profile provided package.
+
+    When `dataloader` is provided, use all samples obtained from dataloader per-each batch size to perform profiling.
+    The profiling result return the min, max and average results per batch size from all samples.
+
+    When no `dataloader` provided, the profiling sample from package is used.
+
+    Args:
+        package: Package to profile.
+        dataloader: Sized iterable with data that will be feed to the model
+        target_formats: Formats to profile. Defaults to target formats from the package.
+        target_device: Target device to run profiling on.
+        runners: Runners to run profiling on. Defaults to runners from the package.
+        max_batch_size: Maximal batch size used for profiling. Default: None
+        batch_sizes: List of batch sizes to profile. Default: None
+        window_size: Number of inference queries performed in measurement window
+        stability_percentage: Allowed percentage of variation from the mean in three consecutive windows.
+        max_trials: Maximum number of window trials.
+        throughput_cutoff_threshold: Minimum throughput increase to continue profiling.
+        verbose: If True enable verbose logging. Defaults to False.
+
+    Returns:
+        Profiling results
+    """
+    if package.is_empty() and package.model is None:
+        raise ModelNavigatorEmptyPackageError(
+            "Package is empty and source model is not loaded. Unable to run optimize."
+        )
+
+    config = package.config
+    is_source_available = package.model is not None
+
+    if target_formats is None:
+        target_formats = get_target_formats(framework=package.framework, is_source_available=is_source_available)
+        if package.framework == Framework.TORCH and config.batch_dim is not None:
+            target_formats, custom_configs = update_allowed_batching_parameters(
+                target_formats=target_formats,
+                custom_configs=(),
+            )
+
+    if runners is None:
+        runners = default_runners(device_kind=target_device)
+
+    if dataloader is None:
+        dataloader = []
+
+    optimization_profile = OptimizationProfile(
+        max_batch_size=max_batch_size,
+        batch_sizes=batch_sizes,
+        window_size=window_size,
+        stability_percentage=stability_percentage,
+        max_trials=max_trials,
+        throughput_cutoff_threshold=throughput_cutoff_threshold,
+    )
+
+    _update_config(
+        config=config,
+        dataloader=dataloader,
+        is_source_available=is_source_available,
+        target_formats=target_formats,
+        runners=runners,
+        optimization_profile=optimization_profile,
+        verbose=verbose,
+        target_device=target_device,
+    )
+
+    builders = [
+        preprocessing_builder,
+        profiling_builder,
+    ]
+
+    model_configs = _get_model_configs(
+        config=config,
+        custom_configs=[],
+    )
+    profiling_results = profile_pipeline(
+        package=package,
+        config=config,
+        builders=builders,
+        models_config=model_configs,
+    )
+
+    return profiling_results
 
 
 def set_verified(
@@ -245,9 +360,10 @@ def _get_builders(framework: Framework) -> List[PipelineBuilder]:
         find_device_max_batch_size_builder,
         conversion_builder,
         correctness_builder,
-        profiling_builder,
+        performance_builder,
+        verify_builder,
     ]
-    builders.append(verify_builder)
+
     return builders
 
 
@@ -269,9 +385,10 @@ def _get_model_configs(config: CommonConfig, custom_configs: List[CustomConfig])
 def _update_config(
     config: CommonConfig,
     is_source_available: bool,
-    target_formats: Optional[Union[Union[str, Format], Tuple[Union[str, Format], ...]]],
+    target_formats: Optional[Tuple[Union[str, Format], ...]],
     *,
-    runners: Optional[Union[Union[str, Type[NavigatorRunner]], Tuple[Union[str, Type[NavigatorRunner]], ...]]] = None,
+    dataloader: Optional[SizedDataLoader] = None,
+    runners: Optional[Tuple[Union[str, Type[NavigatorRunner]], ...]] = None,
     optimization_profile: Optional[OptimizationProfile] = None,
     verbose: bool = False,
     debug: bool = False,
@@ -291,6 +408,8 @@ def _update_config(
             f"or remove {base_format} from target_formats."
         )
     config.target_formats = target_formats_enums
+    if dataloader is not None:
+        config.dataloader = dataloader
 
     # Reset profiling config
     if optimization_profile is None:

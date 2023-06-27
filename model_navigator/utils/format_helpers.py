@@ -15,7 +15,7 @@
 
 from typing import Optional, Set
 
-from model_navigator.api.config import Format
+from model_navigator.api.config import AVAILABLE_TARGET_FORMATS, DEFAULT_TARGET_FORMATS, Format
 from model_navigator.frameworks import Framework
 
 
@@ -34,6 +34,24 @@ def is_source_format(format: Format) -> bool:
         Format.TORCH,
         Format.PYTHON,
     )
+
+
+def get_target_formats(framework: Framework, is_source_available: bool):
+    """Obtain available target formats for framework.
+
+    Args:
+        framework: Framework for which target format has to be prepared
+        is_source_available: Flag indicating if source is available
+
+    Returns:
+        List of target formats
+    """
+    if is_source_available:
+        target_formats = AVAILABLE_TARGET_FORMATS[framework]
+    else:
+        target_formats = DEFAULT_TARGET_FORMATS[framework]
+
+    return target_formats
 
 
 def get_framework_export_formats(framework: Framework) -> Set[Optional[Format]]:

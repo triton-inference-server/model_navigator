@@ -18,8 +18,8 @@ from model_navigator.commands.correctness.correctness import Tolerance
 from model_navigator.commands.performance.performance import ProfilingResults
 from model_navigator.configuration.model.model_config import ONNXConfig, TensorRTConfig, TorchScriptConfig
 from model_navigator.core.constants import DEFAULT_MAX_WORKSPACE_SIZE
-from model_navigator.core.status import CommandStatus, ModelStatus, RunnerStatus
 from model_navigator.exceptions import ModelNavigatorRuntimeAnalyzerError, ModelNavigatorUserInputError
+from model_navigator.package.status import CommandStatus, ModelStatus, RunnerStatus
 from model_navigator.runtime_analyzer import (
     MaxThroughputAndMinLatencyStrategy,
     MaxThroughputStrategy,
@@ -54,6 +54,7 @@ model_statuses1 = {
                     "Performance": {
                         "profiling_results": [
                             ProfilingResults(
+                                sample_id=0,
                                 batch_size=1,
                                 avg_latency=2.0,
                                 std_latency=0.0,
@@ -85,6 +86,7 @@ model_statuses1 = {
                     "Performance": {
                         "profiling_results": [
                             ProfilingResults(
+                                sample_id=0,
                                 batch_size=1,
                                 avg_latency=1.0,
                                 std_latency=0.0,
@@ -119,6 +121,7 @@ model_statuses2 = {
                     "Performance": {
                         "profiling_results": [
                             ProfilingResults(
+                                sample_id=0,
                                 batch_size=1,
                                 avg_latency=2.0,
                                 std_latency=0.0,
@@ -145,6 +148,7 @@ model_statuses2 = {
                     "Performance": {
                         "profiling_results": [
                             ProfilingResults(
+                                sample_id=0,
                                 batch_size=1,
                                 avg_latency=1.0,
                                 std_latency=0.0,
@@ -180,6 +184,7 @@ model_statuses3 = {
                     "Performance": {
                         "profiling_results": [
                             ProfilingResults(
+                                sample_id=0,
                                 batch_size=1,
                                 avg_latency=1.0,
                                 std_latency=0.0,
@@ -206,6 +211,7 @@ model_statuses3 = {
                     "Performance": {
                         "profiling_results": [
                             ProfilingResults(
+                                sample_id=0,
                                 batch_size=1,
                                 avg_latency=2.0,
                                 std_latency=0.0,

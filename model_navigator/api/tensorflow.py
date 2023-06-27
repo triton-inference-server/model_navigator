@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """TensorFlow optimize API."""
-from pathlib import Path
+import pathlib
 from typing import Mapping, Optional, Sequence, Tuple, Type, Union
 
 import tensorflow  # pytype: disable=import-error
@@ -30,23 +30,22 @@ from model_navigator.api.config import (
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config_builder import ModelConfigBuilder
 from model_navigator.core.constants import DEFAULT_SAMPLE_COUNT
-from model_navigator.core.package import Package
 from model_navigator.exceptions import ModelNavigatorConfigurationError
 from model_navigator.frameworks import Framework
+from model_navigator.package.package import Package
 from model_navigator.pipelines.builders import (
     correctness_builder,
+    performance_builder,
     preprocessing_builder,
-    profiling_builder,
     tensorflow_conversion_builder,
     tensorflow_export_builder,
     verify_builder,
 )
 from model_navigator.pipelines.builders.find_device_max_batch_size import find_device_max_batch_size_builder
-from model_navigator.pipelines.pipeline_manager import PipelineManager
+from model_navigator.pipelines.wrappers.optimize import optimize_pipeline
 from model_navigator.runners.base import NavigatorRunner
 from model_navigator.runners.utils import default_runners
 from model_navigator.utils import enums
-from model_navigator.utils.common import get_default_workspace
 
 
 def optimize(
@@ -56,11 +55,11 @@ def optimize(
     batching: Optional[bool] = True,
     input_names: Optional[Tuple[str, ...]] = None,
     output_names: Optional[Tuple[str, ...]] = None,
-    target_formats: Optional[Union[Union[str, Format], Tuple[Union[str, Format], ...]]] = None,
+    target_formats: Optional[Tuple[Union[str, Format], ...]] = None,
     target_device: Optional[DeviceKind] = DeviceKind.CUDA,
-    runners: Optional[Union[Union[str, Type[NavigatorRunner]], Tuple[Union[str, Type[NavigatorRunner]], ...]]] = None,
+    runners: Optional[Tuple[Union[str, Type[NavigatorRunner]], ...]] = None,
     optimization_profile: Optional[OptimizationProfile] = None,
-    workspace: Optional[Path] = None,
+    workspace: Optional[pathlib.Path] = None,
     verbose: bool = False,
     debug: bool = False,
     verify_func: Optional[VerifyFunction] = None,
@@ -99,8 +98,7 @@ def optimize(
             "    To optimize model for CPU, disable GPU with: "
             "'tf.config.set_visible_devices([], 'GPU')' directly after importing TensorFlow.\n"
         )
-    if workspace is None:
-        workspace = get_default_workspace()
+
     if target_formats is None:
         target_formats = DEFAULT_TENSORFLOW_TARGET_FORMATS
 
@@ -127,7 +125,6 @@ def optimize(
         dataloader=dataloader,
         target_formats=target_formats_enums,
         target_device=target_device,
-        workspace=workspace,
         sample_count=sample_count,
         _input_names=input_names,
         _output_names=output_names,
@@ -153,12 +150,14 @@ def optimize(
         find_device_max_batch_size_builder,
         tensorflow_conversion_builder,
         correctness_builder,
-        profiling_builder,
+        performance_builder,
+        verify_builder,
     ]
-    builders.append(verify_builder)
 
-    package = PipelineManager.run(
-        pipeline_builders=builders,
+    package = optimize_pipeline(
+        model=model,
+        workspace=workspace,
+        builders=builders,
         config=config,
         models_config=models_config,
     )

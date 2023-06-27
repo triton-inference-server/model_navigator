@@ -18,8 +18,7 @@ from typing import Dict, List
 
 from model_navigator.api.config import Format
 from model_navigator.commands.base import ExecutionUnit
-from model_navigator.commands.load import LoadMetadata, LoadSamples
-from model_navigator.commands.performance import Performance
+from model_navigator.commands.performance import Profile
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig
 from model_navigator.pipelines.pipeline import Pipeline
@@ -38,12 +37,12 @@ def profiling_builder(config: CommonConfig, models_config: Dict[Format, List[Mod
         Pipeline with steps for profiling.
     """
     execution_units: List[ExecutionUnit] = []
-    execution_units.extend([ExecutionUnit(LoadMetadata, config), ExecutionUnit(LoadSamples, config)])
 
     source_last_formats = [
         *[model_format for model_format in models_config.keys() if not is_source_format(model_format)],
         *[model_format for model_format in models_config.keys() if is_source_format(model_format)],
     ]
+
     for model_format in source_last_formats:
         for model_config in models_config[model_format]:
             for runner in runner_registry.values():
@@ -54,10 +53,9 @@ def profiling_builder(config: CommonConfig, models_config: Dict[Format, List[Mod
                 ):
                     execution_units.append(
                         ExecutionUnit(
-                            Performance,
-                            config,
-                            model_config,
-                            runner,
+                            command=Profile,
+                            model_config=model_config,
+                            runner_cls=runner,
                         )
                     )
     return Pipeline(name="Profiling", execution_units=execution_units)

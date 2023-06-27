@@ -10,8 +10,6 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitations under the License.
-import pathlib
 
 from model_navigator.api.config import (
     DeviceKind,
@@ -44,11 +42,10 @@ from model_navigator.runners.torch import TorchScriptCUDARunner
 
 
 def test_do_run_max_batch_size_search_return_false_when_batch_dim_is_none():
-    workspace = pathlib.Path("tmp/navigator_workspace")
+
     config = CommonConfig(
         framework=Framework.TORCH,
         dataloader=[{"input_name": [idx]} for idx in range(10)],
-        workspace=workspace,
         model=None,
         optimization_profile=OptimizationProfile(),
         runner_names=(),
@@ -70,11 +67,10 @@ def test_do_run_max_batch_size_search_return_false_when_batch_dim_is_none():
 
 
 def test_do_run_max_batch_size_search_return_false_when_tensorrt_model_config_and_trt_profile_set():
-    workspace = pathlib.Path("tmp/navigator_workspace")
+
     config = CommonConfig(
         framework=Framework.TORCH,
         dataloader=[{"input_name": [idx]} for idx in range(10)],
-        workspace=workspace,
         model=None,
         optimization_profile=OptimizationProfile(),
         runner_names=(),
@@ -95,11 +91,10 @@ def test_do_run_max_batch_size_search_return_false_when_tensorrt_model_config_an
 
 
 def test_do_run_max_batch_size_search_return_false_when_tftrt_model_config_and_trt_profile_set():
-    workspace = pathlib.Path("tmp/navigator_workspace")
+
     config = CommonConfig(
         framework=Framework.TORCH,
         dataloader=[{"input_name": [idx]} for idx in range(10)],
-        workspace=workspace,
         model=None,
         optimization_profile=OptimizationProfile(),
         runner_names=(),
@@ -118,11 +113,10 @@ def test_do_run_max_batch_size_search_return_false_when_tftrt_model_config_and_t
 
 
 def test_do_run_max_batch_size_search_return_false_when_torchtrt_model_config_and_trt_profile_set():
-    workspace = pathlib.Path("tmp/navigator_workspace")
+
     config = CommonConfig(
         framework=Framework.TORCH,
         dataloader=[{"input_name": [idx]} for idx in range(10)],
-        workspace=workspace,
         model=None,
         optimization_profile=OptimizationProfile(),
         runner_names=(),
@@ -141,11 +135,10 @@ def test_do_run_max_batch_size_search_return_false_when_torchtrt_model_config_an
 
 
 def test_find_device_max_batch_size_builder_return_empty_execution_unit_when_no_cuda_device():
-    workspace = pathlib.Path("tmp/navigator_workspace")
+
     config = CommonConfig(
         framework=Framework.TORCH,
         dataloader=[{"input_name": [idx]} for idx in range(10)],
-        workspace=workspace,
         model=None,
         optimization_profile=OptimizationProfile(),
         runner_names=(),
@@ -173,11 +166,10 @@ def test_find_device_max_batch_size_builder_return_empty_execution_unit_when_no_
 
 
 def test_find_device_max_batch_size_builder_return_empty_execution_unit_when_no_adaptive_formats():
-    workspace = pathlib.Path("tmp/navigator_workspace")
+
     config = CommonConfig(
         framework=Framework.TORCH,
         dataloader=[{"input_name": [idx]} for idx in range(10)],
-        workspace=workspace,
         model=None,
         optimization_profile=OptimizationProfile(),
         runner_names=(),
@@ -196,11 +188,10 @@ def test_find_device_max_batch_size_builder_return_empty_execution_unit_when_no_
 
 
 def test_find_device_max_batch_size_builder_return_empty_execution_unit_when_no_adaptive_conversion_needed():
-    workspace = pathlib.Path("tmp/navigator_workspace")
+
     config = CommonConfig(
         framework=Framework.TORCH,
         dataloader=[{"input_name": [idx]} for idx in range(10)],
-        workspace=workspace,
         model=None,
         optimization_profile=OptimizationProfile(),
         runner_names=(),
@@ -227,11 +218,10 @@ def test_find_device_max_batch_size_builder_return_empty_execution_unit_when_no_
 
 
 def test_find_device_max_batch_size_builder_return_execution_unit_when_torch_framework_is_used():
-    workspace = pathlib.Path("tmp/navigator_workspace")
+
     config = CommonConfig(
         framework=Framework.TORCH,
         dataloader=[{"input_name": [idx]} for idx in range(10)],
-        workspace=workspace,
         model=None,
         optimization_profile=OptimizationProfile(),
         runner_names=(),
@@ -274,11 +264,10 @@ def test_find_device_max_batch_size_builder_return_execution_unit_when_torch_fra
 
 
 def test_find_device_max_batch_size_builder_return_execution_unit_when_tensorflow_framework_is_used():
-    workspace = pathlib.Path("tmp/navigator_workspace")
+
     config = CommonConfig(
         framework=Framework.TENSORFLOW,
         dataloader=[{"input_name": [idx]} for idx in range(10)],
-        workspace=workspace,
         model=None,
         optimization_profile=OptimizationProfile(),
         runner_names=(),
@@ -313,11 +302,10 @@ def test_find_device_max_batch_size_builder_return_execution_unit_when_tensorflo
 
 
 def test_find_device_max_batch_size_builder_return_execution_unit_when_jax_framework_is_used():
-    workspace = pathlib.Path("tmp/navigator_workspace")
+
     config = CommonConfig(
         framework=Framework.JAX,
         dataloader=[{"input_name": [idx]} for idx in range(10)],
-        workspace=workspace,
         model=None,
         optimization_profile=OptimizationProfile(),
         runner_names=(),
@@ -352,11 +340,10 @@ def test_find_device_max_batch_size_builder_return_execution_unit_when_jax_frame
 
 
 def test_find_device_max_batch_size_builder_return_execution_unit_when_onnx_framework_is_used():
-    workspace = pathlib.Path("tmp/navigator_workspace")
+
     config = CommonConfig(
         framework=Framework.ONNX,
         dataloader=[{"input_name": [idx]} for idx in range(10)],
-        workspace=workspace,
         model=None,
         optimization_profile=OptimizationProfile(),
         runner_names=(),

@@ -12,20 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Inputs and outputs metadata commands."""
-from pathlib import Path
+import pathlib
 from typing import Dict, Iterator, List, Mapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
 
-from model_navigator.api.config import OptimizationProfile, Sample, SizedDataLoader, SizedIterable, TensorRTProfile
+from model_navigator.api.config import OptimizationProfile, SizedDataLoader, SizedIterable, TensorRTProfile
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
+from model_navigator.commands.execution_context import ExecutionContext
+from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import FRAMEWORK_TO_TENSOR_TYPE, TensorMetadata, TensorSpec
+from model_navigator.core.workspace import Workspace
 from model_navigator.exceptions import ModelNavigatorUserInputError
-from model_navigator.execution_context import ExecutionContext
 from model_navigator.frameworks import Framework
-from model_navigator.logger import LOGGER
 from model_navigator.runners.utils import get_format_default_runners
-from model_navigator.utils.dataloader import extract_sample, sample_to_tuple, validate_sample_input
+from model_navigator.utils.dataloader import extract_sample, load_samples, sample_to_tuple, validate_sample_input
 from model_navigator.utils.devices import is_cuda_available
 from model_navigator.utils.format_helpers import FRAMEWORK2BASE_FORMAT
 
@@ -59,6 +60,19 @@ def _extract_axes_shapes(
     return axes_shapes
 
 
+def _get_metadata_from_axes_shapes(axes_shapes, batch_dim, dtypes):
+    metadata = TensorMetadata()
+    for name, axes in axes_shapes.items():
+        tensor_shape = []
+        for ax, shapes in axes.items():
+            if ax == batch_dim or min(shapes) != max(shapes):
+                tensor_shape.append(-1)
+            else:
+                tensor_shape.append(shapes[0])
+        metadata.add(name, tuple(tensor_shape), dtypes[name])
+    return metadata
+
+
 def _extract_max_batch_size(axes_shapes: Dict[str, Dict[int, List[int]]], batch_dim: Optional[int]) -> int:
     if batch_dim is not None:
         return max(list(axes_shapes.values())[0][batch_dim])
@@ -85,25 +99,12 @@ def _get_trt_profile_from_axes_shapes(axes_shapes, batch_dim):
     return trt_profile
 
 
-def _get_metadata_from_axes_shapes(axes_shapes, batch_dim, dtypes):
-    metadata = TensorMetadata()
-    for name, axes in axes_shapes.items():
-        tensor_shape = []
-        for ax, shapes in axes.items():
-            if ax == batch_dim or min(shapes) != max(shapes):
-                tensor_shape.append(-1)
-            else:
-                tensor_shape.append(shapes[0])
-        metadata.add(name, tuple(tensor_shape), dtypes[name])
-    return metadata
-
-
 class InferInputMetadata(Command, is_required=True):
     """Command to collect model inputs metadata."""
 
     def _run(
         self,
-        model: Union[object, Path],
+        model: Union[object, pathlib.Path],
         framework: Framework,
         dataloader: SizedDataLoader,
         optimization_profile: OptimizationProfile,
@@ -176,7 +177,7 @@ class InferInputMetadata(Command, is_required=True):
         if framework == Framework.ONNX:
             from model_navigator.runners.onnx import OnnxrtCPURunner, OnnxrtCUDARunner
 
-            assert isinstance(model, Path), "ONNX model must be a pathlib.Path"
+            assert isinstance(model, pathlib.Path), "ONNX model must be a pathlib.Path"
 
             onnxrt_runner_cls = OnnxrtCUDARunner if is_cuda_available() else OnnxrtCPURunner
             onnx_runner = onnxrt_runner_cls(
@@ -228,12 +229,12 @@ class InferOutputMetadata(Command, is_required=True):
     def _run(
         self,
         framework: Framework,
-        model: Union[object, Path],
+        model: Union[object, pathlib.Path],
         dataloader: SizedDataLoader,
-        profiling_sample: Sample,
-        conversion_samples: List[Sample],
+        profiling_sample: pathlib.Path,
+        conversion_samples: pathlib.Path,
         input_metadata: TensorMetadata,
-        workspace: Path,
+        workspace: Workspace,
         verbose: bool,
         _output_names: Optional[Tuple[str, ...]] = None,
         dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None,
@@ -271,6 +272,9 @@ class InferOutputMetadata(Command, is_required=True):
             input_metadata_mapping=forward_kw_names,
             disable_fallback=False,
         )  # pytype: disable=not-instantiable
+
+        profiling_sample = load_samples("profiling_sample", workspace.path, batch_dim)[0]
+        conversion_samples = load_samples("conversion_sample", workspace.path, batch_dim)
 
         with runner, ExecutionContext(workspace=workspace, verbose=verbose):
             output_sample = runner.infer(profiling_sample)

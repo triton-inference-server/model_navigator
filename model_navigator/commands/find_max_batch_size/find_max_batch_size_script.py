@@ -20,8 +20,8 @@ import fire
 
 from model_navigator.api.config import OptimizationProfile
 from model_navigator.commands.find_max_batch_size.find_max_batch_size import MaxBatchSizeFinder
+from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata
-from model_navigator.logger import LOGGER
 from model_navigator.runners.registry import get_runner
 from model_navigator.utils.dataloader import load_samples
 
@@ -70,6 +70,7 @@ def find_max_batch_size(
         ).run(
             runner=runner,
             profiling_sample=profiling_sample,
+            sample_id=0,
         )
     except Exception as e:
         if results_path.is_file():

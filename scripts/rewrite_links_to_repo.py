@@ -55,5 +55,5 @@ def _get_current_ref():
 
 
 def _extract_external_link(markdown):
-    external_paths = [path_with_brackets[1:-1] for path_with_brackets in re.findall(r"\(\.\.\/.*\)", markdown)]
+    external_paths = [path_with_brackets[1:-1] for path_with_brackets in re.findall(r"\(\.\.\/examples.*\)", markdown)]
     return list(set(external_paths))

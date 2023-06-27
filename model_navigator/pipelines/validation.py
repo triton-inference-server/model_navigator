@@ -13,8 +13,7 @@
 # limitations under the License.
 """Pipeline manager submodule."""
 import warnings
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union, get_args, get_origin
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union, get_args, get_origin
 
 from model_navigator.api.config import (
     AVAILABLE_TARGET_FORMATS,
@@ -28,9 +27,9 @@ from model_navigator.api.config import (
     TorchTensorRTConfig,
 )
 from model_navigator.configuration.common_config import CommonConfig
-from model_navigator.core.package import Package
 from model_navigator.exceptions import ModelNavigatorConfigurationError, ModelNavigatorConfigurationWarning
 from model_navigator.frameworks import Framework
+from model_navigator.package.package import Package
 from model_navigator.runners.registry import get_runner
 from model_navigator.utils.format_helpers import get_base_format, get_framework_export_formats
 
@@ -48,7 +47,7 @@ class PipelineManagerConfigurationValidator:
 
         Args:
             config: A configuration object
-            package: Package to be optimized, if None package is yet to be build. Defaults to None.
+            package: Package to be optimized, if None package is yet to be built. Defaults to None.
         """
         cls._validate_if_runners_match_target_device(config)
         cls._validate_config_types(config)
@@ -135,7 +134,7 @@ class PipelineManagerConfigurationValidator:
 
     @classmethod
     def _validate_if_target_formats_sources_are_available_in_package(
-        cls, package: Package, target_formats: Tuple[Format, ...], framework: Framework
+        cls, package: Package, target_formats: Sequence[Format], framework: Framework
     ):
         for target_format in target_formats:
             base_format = (
@@ -146,7 +145,7 @@ class PipelineManagerConfigurationValidator:
             base_format_available = False
             for model_status in package.status.models_status.values():
                 if model_status.model_config.format == base_format and (
-                    package.workspace / model_status.model_config.path
+                    package.workspace.path / model_status.model_config.path
                 ):
                     base_format_available = True
                     break
@@ -177,9 +176,6 @@ class PipelineManagerConfigurationValidator:
                 raise ModelNavigatorConfigurationError(
                     f"Incorrect type for {field_name}. Expected type {expected_type} got {type(value)} instead."
                 )
-
-        if isinstance(config.workspace, str):
-            object.__setattr__(config, "workspace", Path(config.workspace))
 
         if config.from_source:
             try:

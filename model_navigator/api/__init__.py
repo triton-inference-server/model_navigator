@@ -24,7 +24,6 @@ from .config import (  # noqa: F401
     DeviceKind,
     Format,
     JitType,
-    MeasurementMode,
     OnnxConfig,
     OptimizationProfile,
     TensorFlowConfig,

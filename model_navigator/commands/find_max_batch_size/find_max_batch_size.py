@@ -16,18 +16,18 @@ import dataclasses
 import logging
 import pathlib
 import tempfile
-from pathlib import Path
 from typing import List, Optional, Type, Union
 
 import jsonlines
 
 from model_navigator.api.config import OptimizationProfile
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
-from model_navigator.commands.performance.performance import Profiler, ProfilingResults
+from model_navigator.commands.execution_context import ExecutionContext
+from model_navigator.commands.performance import Profiler, ProfilingResults
 from model_navigator.core.constants import DEFAULT_MAX_BATCH_SIZE_THRESHOLD
+from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata
-from model_navigator.execution_context import ExecutionContext
-from model_navigator.logger import LOGGER
+from model_navigator.core.workspace import Workspace
 from model_navigator.runners.base import NavigatorRunner
 from model_navigator.utils.common import parse_kwargs_to_cmd
 
@@ -54,13 +54,13 @@ class FindMaxBatchSize(Command):
     def _run(
         self,
         configurations: List[FindMaxBatchSizeConfig],
-        workspace: Path,
+        workspace: Workspace,
         input_metadata: TensorMetadata,
         output_metadata: TensorMetadata,
         batch_dim: Optional[int],
         optimization_profile: OptimizationProfile,
         verbose: bool,
-        reproduce_script_dir: Optional[Path] = None,
+        reproduce_script_dir: Optional[pathlib.Path] = None,
     ) -> CommandOutput:
         """Execute command.
 
@@ -96,22 +96,21 @@ class FindMaxBatchSize(Command):
         return CommandOutput(
             status=CommandStatus.OK,
             output={"device_max_batch_size": device_max_batch_size},
-            save=True,
         )
 
     def _execute_configuration(
         self,
-        workspace: Path,
-        path: Path,
+        workspace: Workspace,
+        path: pathlib.Path,
         input_metadata: TensorMetadata,
         output_metadata: TensorMetadata,
         batch_dim: Optional[int],
         optimization_profile: OptimizationProfile,
         verbose: bool,
         runner_cls: Type[NavigatorRunner],
-        reproduce_script_dir: Optional[Path] = None,
+        reproduce_script_dir: Optional[pathlib.Path] = None,
     ):
-        model_path = workspace / path
+        model_path = workspace.path / path
         model_dir = model_path.parent
         reproduce_script_dir = reproduce_script_dir or model_dir
         device_max_batch_size = None
@@ -134,7 +133,7 @@ class FindMaxBatchSize(Command):
 
         optimization_profile = OptimizationProfile(
             max_trials=1,
-            measurement_request_count=1,
+            window_size=1,
             throughput_cutoff_threshold=-2,
         )
 
@@ -145,7 +144,7 @@ class FindMaxBatchSize(Command):
             verbose=verbose,
         ) as context, tempfile.NamedTemporaryFile() as temp_file:
             kwargs = {
-                "navigator_workspace": workspace.as_posix(),
+                "navigator_workspace": workspace.path.as_posix(),
                 "batch_dim": batch_dim,
                 "results_path": temp_file.name,
                 "optimization_profile": optimization_profile.to_dict(parse=True),

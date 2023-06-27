@@ -21,11 +21,11 @@ from typing import List, Optional, Sequence
 import numpy as np
 
 from model_navigator.api.config import Format, TensorType
+from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import get_tensor_type
 from model_navigator.exceptions import ModelNavigatorError, ModelNavigatorUserInputError
 from model_navigator.frameworks.tensorrt import cuda as cuda_utils
 from model_navigator.frameworks.tensorrt import utils as trt_utils
-from model_navigator.logger import LOGGER
 from model_navigator.runners.base import DeviceKind, NavigatorRunner
 from model_navigator.runners.registry import register_runner
 from model_navigator.utils import common as utils

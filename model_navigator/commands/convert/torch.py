@@ -13,17 +13,18 @@
 # limitations under the License.
 """TorchScript conversions."""
 
-from pathlib import Path
+import pathlib
 from typing import Optional, Tuple
 
 from model_navigator.api.config import DeviceKind, TensorRTPrecision, TensorRTPrecisionMode, TensorRTProfile
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.convert.base import Convert2TensorRTWithMaxBatchSizeSearch
 from model_navigator.commands.convert.converters import ts2onnx, ts2torchtrt
+from model_navigator.commands.execution_context import ExecutionContext
+from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata
-from model_navigator.execution_context import ExecutionContext
+from model_navigator.core.workspace import Workspace
 from model_navigator.frameworks.tensorrt import utils as tensorrt_utils
-from model_navigator.logger import LOGGER
 from model_navigator.utils import devices
 from model_navigator.utils.common import parse_kwargs_to_cmd
 
@@ -33,9 +34,9 @@ class ConvertTorchScript2ONNX(Command):
 
     def _run(
         self,
-        workspace: Path,
-        path: Path,
-        parent_path: Path,
+        workspace: Workspace,
+        path: pathlib.Path,
+        parent_path: pathlib.Path,
         opset: int,
         input_metadata: TensorMetadata,
         output_metadata: TensorMetadata,
@@ -63,8 +64,8 @@ class ConvertTorchScript2ONNX(Command):
             CommandOutput: Status OK.
         """
         LOGGER.info("TorchScript to ONNX conversion started")
-        exported_model_path = workspace / parent_path
-        converted_model_path = workspace / path
+        exported_model_path = workspace.path / parent_path
+        converted_model_path = workspace.path / path
         converted_model_path.parent.mkdir(parents=True, exist_ok=True)
 
         with ExecutionContext(
@@ -74,9 +75,9 @@ class ConvertTorchScript2ONNX(Command):
             verbose=verbose,
         ) as context:
             kwargs = {
-                "workspace": workspace.as_posix(),
-                "exported_model_path": exported_model_path.relative_to(workspace).as_posix(),
-                "converted_model_path": converted_model_path.relative_to(workspace).as_posix(),
+                "workspace": workspace.path.as_posix(),
+                "exported_model_path": exported_model_path.relative_to(workspace.path).as_posix(),
+                "converted_model_path": converted_model_path.relative_to(workspace.path).as_posix(),
                 "opset": opset,
                 "input_names": list(input_metadata.keys()),
                 "output_names": list(output_metadata.keys()),
@@ -98,9 +99,9 @@ class ConvertTorchScript2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearch):
 
     def _run(
         self,
-        workspace: Path,
-        path: Path,
-        parent_path: Path,
+        workspace: Workspace,
+        path: pathlib.Path,
+        parent_path: pathlib.Path,
         precision: TensorRTPrecision,
         input_metadata: TensorMetadata,
         precision_mode: TensorRTPrecisionMode,
@@ -148,8 +149,9 @@ class ConvertTorchScript2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearch):
         LOGGER.info("Conversion TorchScript to TorchTensorRT started")
         if not devices.get_available_gpus():
             raise RuntimeError("No GPUs available.")
-        exported_model_path = workspace / parent_path
-        converted_model_path = workspace / path
+
+        exported_model_path = workspace.path / parent_path
+        converted_model_path = workspace.path / path
 
         if not exported_model_path.exists():
             LOGGER.warning(f"Exported TorchScript model not found at {exported_model_path}. Skipping conversion.")
@@ -167,15 +169,15 @@ class ConvertTorchScript2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearch):
         def get_args(max_batch_size=None):
             shapes = self._get_shape_args(trt_profile=trt_profile, batch_dim=batch_dim, max_batch_size=max_batch_size)
             kwargs = {
-                "exported_model_path": exported_model_path.relative_to(workspace).as_posix(),
-                "converted_model_path": converted_model_path.relative_to(workspace).as_posix(),
+                "exported_model_path": exported_model_path.relative_to(workspace.path).as_posix(),
+                "converted_model_path": converted_model_path.relative_to(workspace.path).as_posix(),
                 "shapes": shapes,
                 "input_dtypes": input_dtypes_str,
                 "max_workspace_size": max_workspace_size,
                 "precision": precision.value,
                 "precision_mode": precision_mode.value,
                 "target_device": target_device.value,
-                "navigator_workspace": workspace.as_posix(),
+                "navigator_workspace": workspace.path.as_posix(),
                 "debug": debug,
             }
             args = parse_kwargs_to_cmd(kwargs)

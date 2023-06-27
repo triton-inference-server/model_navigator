@@ -16,7 +16,7 @@ from typing import Dict, Type, Union
 
 import pkg_resources
 
-from model_navigator.logger import LOGGER
+from model_navigator.core.logger import LOGGER
 from model_navigator.runners.base import NavigatorRunner
 
 runner_registry: Dict[str, Type[NavigatorRunner]] = {}

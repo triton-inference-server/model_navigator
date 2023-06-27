@@ -44,5 +44,7 @@ def correctness_builder(config: CommonConfig, models_config: Dict[Format, List[M
                     and runner.name() in config.runner_names
                     and config.target_device in runner.devices_kind()
                 ):
-                    execution_units.append(ExecutionUnit(Correctness, config, model_config, runner))
+                    execution_units.append(
+                        ExecutionUnit(command=Correctness, model_config=model_config, runner_cls=runner)
+                    )
     return Pipeline(name="Correctness", execution_units=execution_units)

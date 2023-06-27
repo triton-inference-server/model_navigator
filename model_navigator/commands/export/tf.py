@@ -13,16 +13,17 @@
 # limitations under the License.
 """Commands for exporting Tensorflow models."""
 
-from pathlib import Path
+import pathlib
 from typing import Optional, Tuple
 
 import tensorflow as tf  # pytype: disable=import-error
 
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
+from model_navigator.commands.execution_context import ExecutionContext
 from model_navigator.commands.export import exporters
+from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata
-from model_navigator.execution_context import ExecutionContext
-from model_navigator.logger import LOGGER
+from model_navigator.core.workspace import Workspace
 from model_navigator.utils.common import parse_kwargs_to_cmd
 
 
@@ -34,8 +35,8 @@ class ExportTF2SavedModel(Command):
         model: tf.keras.Model,
         input_metadata: TensorMetadata,
         output_metadata: TensorMetadata,
-        workspace: Path,
-        path: Path,
+        workspace: Workspace,
+        path: pathlib.Path,
         verbose: bool,
         forward_kw_names: Optional[Tuple[str, ...]] = None,
     ) -> CommandOutput:
@@ -56,7 +57,7 @@ class ExportTF2SavedModel(Command):
         """
         LOGGER.info("TensorFlow2 to SavedModel export started")
 
-        exported_model_path = workspace / path
+        exported_model_path = workspace.path / path
         if exported_model_path.exists():
             LOGGER.info("Model already exists. Skipping export.")
             return CommandOutput(status=CommandStatus.SKIPPED)
@@ -73,11 +74,11 @@ class ExportTF2SavedModel(Command):
         ) as context:
 
             kwargs = {
-                "exported_model_path": exported_model_path.relative_to(workspace).as_posix(),
+                "exported_model_path": exported_model_path.relative_to(workspace.path).as_posix(),
                 "input_metadata": input_metadata.to_json(),
                 "output_names": list(output_metadata.keys()),
                 "keras_input_names": list(forward_kw_names) if forward_kw_names else None,
-                "navigator_workspace": workspace.as_posix(),
+                "navigator_workspace": workspace.path.as_posix(),
             }
 
             args = parse_kwargs_to_cmd(kwargs)
@@ -94,10 +95,10 @@ class UpdateSavedModelSignature(Command):
 
     def _run(
         self,
-        path: Path,
+        path: pathlib.Path,
         input_metadata: TensorMetadata,
         output_metadata: TensorMetadata,
-        workspace: Path,
+        workspace: Workspace,
         verbose: bool,
     ) -> CommandOutput:
         """Update SavedModel signature so it matches IO metadata.
@@ -114,7 +115,7 @@ class UpdateSavedModelSignature(Command):
         """
         LOGGER.info("TensorFlow2 to SavedModel export started")
 
-        exported_model_path = workspace / path
+        exported_model_path = workspace.path / path
         assert exported_model_path.exists()
         exported_model_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -128,10 +129,10 @@ class UpdateSavedModelSignature(Command):
         ) as context:
 
             kwargs = {
-                "exported_model_path": exported_model_path.relative_to(workspace).as_posix(),
+                "exported_model_path": exported_model_path.relative_to(workspace.path).as_posix(),
                 "input_metadata": input_metadata.to_json(),
                 "output_names": list(output_metadata.keys()),
-                "navigator_workspace": workspace.as_posix(),
+                "navigator_workspace": workspace.path.as_posix(),
             }
 
             args = parse_kwargs_to_cmd(kwargs)

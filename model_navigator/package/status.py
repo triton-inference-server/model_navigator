@@ -40,10 +40,10 @@ from model_navigator.commands.performance.performance import Performance, Profil
 from model_navigator.commands.verification.verify import VerifyModel
 from model_navigator.configuration.model.model_config import ModelConfig
 from model_navigator.core.constants import NAVIGATOR_PACKAGE_VERSION, NAVIGATOR_VERSION
+from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata
 from model_navigator.frameworks import Framework
 from model_navigator.frameworks.tensorrt.utils import get_trt_profile_from_trt_dynamic_axes
-from model_navigator.logger import LOGGER
 from model_navigator.utils.common import DataObject
 
 
@@ -68,26 +68,23 @@ class RunnerStatus(DataObject):
         status = {k: CommandStatus(v) for k, v in data_dict["status"].items()}
         result = {}
 
-        if (
-            Correctness.__name__ in data_dict["result"]
-            and data_dict["result"][Correctness.__name__]["per_output_tolerance"] is not None
-        ):
-            result[Correctness.__name__] = {
-                "per_output_tolerance": TolerancePerOutputName.from_json(
-                    data_dict["result"][Correctness.__name__]["per_output_tolerance"]
-                )
-            }
+        for c, s in status.items():
+            if s != CommandStatus.OK:
+                continue
 
-        if (
-            Performance.__name__ in data_dict["result"]
-            and data_dict["result"][Performance.__name__]["profiling_results"] is not None
-        ):
-            result[Performance.__name__] = {
-                "profiling_results": [
-                    ProfilingResults.from_dict(profiling_results_dict)
-                    for profiling_results_dict in data_dict["result"][Performance.__name__]["profiling_results"]
-                ]
-            }
+            if c == Correctness.name:
+                result[c] = {
+                    "per_output_tolerance": TolerancePerOutputName.from_json(
+                        data_dict["result"][Correctness.__name__]["per_output_tolerance"]
+                    )
+                }
+            elif c == Performance.name:
+                result[c] = {
+                    "profiling_results": [
+                        ProfilingResults.from_dict(profiling_results_dict)
+                        for profiling_results_dict in data_dict["result"][Performance.__name__]["profiling_results"]
+                    ]
+                }
 
         return cls(
             runner_name=data_dict["runner_name"],
@@ -514,7 +511,13 @@ class StatusDictUpdater:
             if "run_profiling" in profiler_config:
                 profiler_config.pop("run_profiling")
 
-            optimization_profile = profiler_config
+            optimization_profile = {
+                "batch_sizes": profiler_config["batch_sizes"],
+                "window_size": profiler_config["measurement_request_count"],
+                "stability_percentage": profiler_config["stability_percentage"],
+                "max_trials": profiler_config["max_trials"],
+                "throughput_cutoff_threshold": profiler_config["throughput_cutoff_threshold"],
+            }
 
         if optimization_profile:
             config["optimization_profile"] = optimization_profile

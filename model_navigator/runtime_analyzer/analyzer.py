@@ -18,9 +18,9 @@ from typing import Dict, Optional, Sequence
 
 from model_navigator.commands.correctness.correctness import Correctness
 from model_navigator.commands.performance.performance import Performance
-from model_navigator.core.status import CommandStatus, ModelStatus, RunnerStatus
+from model_navigator.core.logger import LOGGER
 from model_navigator.exceptions import ModelNavigatorRuntimeAnalyzerError, ModelNavigatorUserInputError
-from model_navigator.logger import LOGGER
+from model_navigator.package.status import CommandStatus, ModelStatus, RunnerStatus
 from model_navigator.runtime_analyzer.strategy import (
     MaxThroughputAndMinLatencyStrategy,
     MaxThroughputStrategy,

@@ -14,16 +14,17 @@
 """Runtime verification command."""
 
 
-from pathlib import Path
+import pathlib
 from typing import Any, Optional, Type
 
 from model_navigator.api.config import Format, SizedDataLoader, VerifyFunction
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.correctness import Correctness
 from model_navigator.commands.performance import Performance
+from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata
+from model_navigator.core.workspace import Workspace
 from model_navigator.frameworks import Framework
-from model_navigator.logger import LOGGER
 from model_navigator.runners.base import NavigatorRunner
 from model_navigator.runners.registry import get_runner
 from model_navigator.runners.utils import get_source_default_runners
@@ -31,42 +32,23 @@ from model_navigator.utils.dataloader import extract_sample
 from model_navigator.utils.format_helpers import FRAMEWORK2BASE_FORMAT
 
 
-class VerifyModel(Command):
+class VerifyModel(Command, requires=[Correctness.name, Performance.name]):
     """Verify model with a runner."""
 
     def _pre_run(
         self,
         verify_func: VerifyFunction,
-        key: str,
-        runner_cls: Type[NavigatorRunner],
     ) -> bool:
         """Check if command should be run.
 
         Args:
             verify_func (VerifyFunction): verification function.
-            key (str): Modek key.
-            runner_cls (Type[NavigatorRunner]): Runner class to be verified.
 
         Returns:
             bool: True if command should be run, False otherwise.
         """
-        if self.status is None:
-            raise ValueError("Status must be set before running command.")
-
         if verify_func is None:
             LOGGER.info("verify_function not provided - SKIPPED")
-            return False
-
-        runner_status = self.status.models_status[key].runners_status[runner_cls.name()]
-
-        correctness_status = runner_status.status.get(Correctness.name())
-        if correctness_status != CommandStatus.OK:
-            LOGGER.info(f"Runner {runner_cls.name()} correctness results is not OK - SKIPPED")
-            return False
-
-        performance_status = runner_status.status.get(Performance.name())
-        if performance_status is not None and performance_status != CommandStatus.OK:
-            LOGGER.info(f"Runner {runner_cls.name()} performance results is not OK - SKIPPED")
             return False
 
         return True
@@ -75,8 +57,8 @@ class VerifyModel(Command):
         self,
         framework: Framework,
         format: Format,
-        workspace: Path,
-        path: Path,
+        workspace: Workspace,
+        path: pathlib.Path,
         dataloader: SizedDataLoader,
         verify_func: VerifyFunction,
         runner_cls: Type[NavigatorRunner],
@@ -119,7 +101,7 @@ class VerifyModel(Command):
                     yield output
 
         runner = get_runner(runner_cls)(
-            model=model if format == source_format else workspace / path,
+            model=model if format == source_format else workspace.path / path,
             input_metadata=input_metadata,
             output_metadata=output_metadata,
         )

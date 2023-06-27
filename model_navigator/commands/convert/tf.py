@@ -12,15 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Saved Model conversions."""
-from pathlib import Path
+import pathlib
 from typing import Optional
 
 from model_navigator.api.config import TensorRTPrecision, TensorRTProfile
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.convert.base import Convert2TensorRTWithMaxBatchSizeSearch
 from model_navigator.commands.convert.converters import sm2tftrt
-from model_navigator.execution_context import ExecutionContext
-from model_navigator.logger import LOGGER
+from model_navigator.commands.execution_context import ExecutionContext
+from model_navigator.core.logger import LOGGER
+from model_navigator.core.workspace import Workspace
 from model_navigator.utils import devices
 from model_navigator.utils.common import parse_kwargs_to_cmd
 
@@ -30,9 +31,9 @@ class ConvertSavedModel2ONNX(Command):
 
     def _run(
         self,
-        workspace: Path,
-        path: Path,
-        parent_path: Path,
+        workspace: Workspace,
+        path: pathlib.Path,
+        parent_path: pathlib.Path,
         opset: int,
         verbose: bool,
     ) -> CommandOutput:
@@ -50,8 +51,8 @@ class ConvertSavedModel2ONNX(Command):
         """
         LOGGER.info("SavedModel to ONNX conversion started")
 
-        exported_model_path = workspace / parent_path
-        converted_model_path = workspace / path
+        exported_model_path = workspace.path / parent_path
+        converted_model_path = workspace.path / path
         converted_model_path.parent.mkdir(parents=True, exist_ok=True)
 
         if not exported_model_path.exists():
@@ -63,9 +64,9 @@ class ConvertSavedModel2ONNX(Command):
             "-m",
             "tf2onnx.convert",
             "--saved-model",
-            exported_model_path.relative_to(workspace).as_posix(),
+            exported_model_path.relative_to(workspace.path).as_posix(),
             "--output",
-            converted_model_path.relative_to(workspace).as_posix(),
+            converted_model_path.relative_to(workspace.path).as_posix(),
             "--opset",
             str(opset),
         ]
@@ -87,9 +88,9 @@ class ConvertSavedModel2TFTRT(Convert2TensorRTWithMaxBatchSizeSearch):
         self,
         max_workspace_size: int,
         minimum_segment_size: int,
-        workspace: Path,
-        path: Path,
-        parent_path: Path,
+        workspace: Workspace,
+        path: pathlib.Path,
+        parent_path: pathlib.Path,
         precision: TensorRTPrecision,
         verbose: bool,
         dataloader_trt_profile: TensorRTProfile,
@@ -126,8 +127,8 @@ class ConvertSavedModel2TFTRT(Convert2TensorRTWithMaxBatchSizeSearch):
         if not devices.get_available_gpus():
             raise RuntimeError("No GPUs available.")
 
-        exported_model_path = workspace / parent_path
-        converted_model_path = workspace / path
+        exported_model_path = workspace.path / parent_path
+        converted_model_path = workspace.path / path
         converted_model_path.parent.mkdir(parents=True, exist_ok=True)
 
         if not exported_model_path.exists():
@@ -149,13 +150,13 @@ class ConvertSavedModel2TFTRT(Convert2TensorRTWithMaxBatchSizeSearch):
 
         def get_args(max_batch_size: int = max_batch_size):
             kwargs = {
-                "exported_model_path": exported_model_path.relative_to(workspace).as_posix(),
-                "converted_model_path": converted_model_path.relative_to(workspace).as_posix(),
+                "exported_model_path": exported_model_path.relative_to(workspace.path).as_posix(),
+                "converted_model_path": converted_model_path.relative_to(workspace.path).as_posix(),
                 "max_workspace_size": max_workspace_size,
                 "target_precision": precision.value,
                 "minimum_segment_size": minimum_segment_size,
                 "batch_dim": batch_dim,
-                "navigator_workspace": workspace.as_posix(),
+                "navigator_workspace": workspace.path.as_posix(),
                 "max_batch_size": max_batch_size,
             }
 

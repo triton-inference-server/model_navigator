@@ -15,16 +15,17 @@
 
 The module provide functionality to export model to TorchScript and/or ONNX.
 """
-from pathlib import Path
+import pathlib
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from model_navigator.api.config import DeviceKind, JitType
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
+from model_navigator.commands.execution_context import ExecutionContext
 from model_navigator.commands.export import exporters
+from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata
+from model_navigator.core.workspace import Workspace
 from model_navigator.exceptions import ModelNavigatorConfigurationError
-from model_navigator.execution_context import ExecutionContext
-from model_navigator.logger import LOGGER
 from model_navigator.utils.common import parse_kwargs_to_cmd
 
 
@@ -45,8 +46,8 @@ class ExportTorch2TorchScript(Command):
 
     def _run(
         self,
-        workspace: Path,
-        path: Path,
+        workspace: Workspace,
+        path: pathlib.Path,
         target_device: DeviceKind,
         jit_type: JitType,
         verbose: bool,
@@ -69,7 +70,7 @@ class ExportTorch2TorchScript(Command):
         """
         LOGGER.info("TorchScrip export started")
 
-        exported_model_path = workspace / path
+        exported_model_path = workspace.path / path
         if exported_model_path.is_file() or exported_model_path.is_dir():
             LOGGER.info("Model already exists. Skipping export.")
             return CommandOutput(status=CommandStatus.SKIPPED)
@@ -96,12 +97,12 @@ class ExportTorch2TorchScript(Command):
         ) as context:
 
             kwargs = {
-                "exported_model_path": exported_model_path.relative_to(workspace).as_posix(),
+                "exported_model_path": exported_model_path.relative_to(workspace.path).as_posix(),
                 "target_jit_type": jit_type.value,
                 "batch_dim": batch_dim,
                 "target_device": target_device.value,
                 "strict": strict,
-                "navigator_workspace": workspace.as_posix(),
+                "navigator_workspace": workspace.path.as_posix(),
             }
 
             args = parse_kwargs_to_cmd(kwargs)
@@ -134,8 +135,8 @@ class ExportTorch2ONNX(Command):
 
     def _run(
         self,
-        workspace: Path,
-        path: Path,
+        workspace: Workspace,
+        path: pathlib.Path,
         opset: int,
         input_metadata: TensorMetadata,
         output_metadata: TensorMetadata,
@@ -165,7 +166,7 @@ class ExportTorch2ONNX(Command):
             CommandOutput object with status
         """
         LOGGER.info("PyTorch to ONNX export started")
-        exported_model_path = workspace / path
+        exported_model_path = workspace.path / path
         if exported_model_path.exists():
             LOGGER.info("Model already exists. Skipping export.")
             return CommandOutput(status=CommandStatus.SKIPPED)
@@ -198,8 +199,8 @@ class ExportTorch2ONNX(Command):
         ) as context:
 
             kwargs = {
-                "navigator_workspace": workspace.as_posix(),
-                "exported_model_path": exported_model_path.relative_to(workspace).as_posix(),
+                "navigator_workspace": workspace.path.as_posix(),
+                "exported_model_path": exported_model_path.relative_to(workspace.path).as_posix(),
                 "opset": opset,
                 "input_names": list(input_metadata.keys()),
                 "output_names": list(output_metadata.keys()),

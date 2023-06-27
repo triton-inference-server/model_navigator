@@ -13,15 +13,16 @@
 # limitations under the License.
 """JAX export."""
 
-from pathlib import Path
+import pathlib
 from typing import Optional
 
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
+from model_navigator.commands.execution_context import ExecutionContext
 from model_navigator.commands.export import exporters
+from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata
-from model_navigator.execution_context import ExecutionContext
+from model_navigator.core.workspace import Workspace
 from model_navigator.frameworks.jax import JaxModel
-from model_navigator.logger import LOGGER
 from model_navigator.utils.common import parse_kwargs_to_cmd
 
 
@@ -30,8 +31,8 @@ class ExportJAX2SavedModel(Command):
 
     def _run(
         self,
-        workspace: Path,
-        path: Path,
+        workspace: Workspace,
+        path: pathlib.Path,
         jit_compile: bool,
         enable_xla: bool,
         input_metadata: TensorMetadata,
@@ -57,7 +58,7 @@ class ExportJAX2SavedModel(Command):
         """
         LOGGER.info(f"JAX to SavedModel export started {jit_compile=}, {enable_xla=}")
 
-        exported_model_path = workspace / path
+        exported_model_path = workspace.path / path
         if exported_model_path.is_file() or exported_model_path.is_dir():
             return CommandOutput(status=CommandStatus.SKIPPED)
         assert model is not None
@@ -77,7 +78,7 @@ class ExportJAX2SavedModel(Command):
                 "jit_compile": jit_compile,
                 "enable_xla": enable_xla,
                 "input_metadata": input_metadata.to_json(),
-                "navigator_workspace": workspace.as_posix(),
+                "navigator_workspace": workspace.path.as_posix(),
             }
 
             args = parse_kwargs_to_cmd(kwargs)

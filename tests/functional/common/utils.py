@@ -16,10 +16,12 @@ import pathlib
 import zipfile
 from typing import Dict, List, Union
 
+from model_navigator import CommandStatus
 from model_navigator.api.config import EXPORT_FORMATS, INPUT_FORMATS, Format
 from model_navigator.commands.performance.performance import Performance
-from model_navigator.core.status import ModelStatus, Status
 from model_navigator.frameworks import Framework
+from model_navigator.package.status import ModelStatus, Status
+from model_navigator.pipelines.wrappers.profile import ProfilingResults
 
 FORMAT_FILES = [
     "format.log",
@@ -128,12 +130,32 @@ def collect_expected_files(package_path: pathlib.Path, status: Status) -> List[s
     return files
 
 
-def collect_status(status: Status) -> Dict:
+def collect_optimize_status(status: Status) -> Dict:
     test_status = {}
     for model_key, models_status in status.models_status.items():
         for runner_name, runner_status in models_status.runners_status.items():
             key = f"{model_key}.{runner_name}"
             test_status[key] = runner_status.status[Performance.__name__].name
+
+    return test_status
+
+
+def collect_profile_results(results: ProfilingResults, sample_count: int = 1) -> Dict:
+    test_status = {}
+    for model_key, runner_results in results.models.items():
+        for runner_name, runner_status in runner_results.runners.items():
+            key = f"{model_key}.{runner_name}"
+            number_of_keys = len(runner_status.detailed.keys())
+            expected_value = 0 if runner_status.status != CommandStatus.OK else sample_count
+
+            if number_of_keys != expected_value:
+                raise ValueError(
+                    f"""Number of keys {number_of_keys} for {key} """
+                    f"""is not equal expected value: {expected_value}. """
+                    f"""Collected data: {runner_status.detailed}."""
+                )
+
+            test_status[key] = runner_status.status.value
 
     return test_status
 

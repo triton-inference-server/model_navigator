@@ -13,7 +13,6 @@
 # limitations under the License.
 """Dataloader definition and helpers module."""
 import pathlib
-from pathlib import Path
 from typing import Any, Iterable, List, Mapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
@@ -204,7 +203,7 @@ def load_samples(samples_name: str, workspace: Union[pathlib.Path, str], batch_d
         List of data samples
     """
     if isinstance(workspace, str):
-        workspace = Path(workspace)
+        workspace = pathlib.Path(workspace)
     samples_type = samples_name.split("_")[0]
     samples_dirname = "model_output" if samples_name.split("_")[-1] == "output" else "model_input"
     samples_dirpath = workspace / samples_dirname / samples_type

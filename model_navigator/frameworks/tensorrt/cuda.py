@@ -22,8 +22,8 @@ from typing import Optional, Sequence, Tuple
 import numpy as np
 
 import model_navigator.utils.common as utils
+from model_navigator.core.logger import LOGGER
 from model_navigator.exceptions import ModelNavigatorError, ModelNavigatorUserInputError
-from model_navigator.logger import LOGGER
 from model_navigator.utils import module
 
 torch = module.lazy_import("torch")

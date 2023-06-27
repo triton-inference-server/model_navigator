@@ -37,7 +37,7 @@ def tensorflow_export_builder(config: CommonConfig, models_config: Dict[Format, 
     """
     execution_units: List[ExecutionUnit] = []
     for model_cfg in models_config.get(Format.TF_SAVEDMODEL, []):
-        execution_units.append(ExecutionUnit(ExportTF2SavedModel, config, model_cfg))
+        execution_units.append(ExecutionUnit(command=ExportTF2SavedModel, model_config=model_cfg))
     return Pipeline(name="TensorFlow2 Export", execution_units=execution_units)
 
 
@@ -53,11 +53,11 @@ def tensorflow_conversion_builder(config: CommonConfig, models_config: Dict[Form
     """
     execution_units: List[ExecutionUnit] = []
     for model_cfg in models_config.get(Format.ONNX, []):
-        execution_units.append(ExecutionUnit(ConvertSavedModel2ONNX, config, model_cfg))
+        execution_units.append(ExecutionUnit(command=ConvertSavedModel2ONNX, model_config=model_cfg))
     if config.target_device == DeviceKind.CUDA:
         for model_cfg in models_config.get(Format.TF_TRT, []):
-            execution_units.append(ExecutionUnit(ConvertSavedModel2TFTRT, config, model_cfg))
+            execution_units.append(ExecutionUnit(command=ConvertSavedModel2TFTRT, model_config=model_cfg))
         for model_cfg in models_config.get(Format.TENSORRT, []):
-            execution_units.append(ExecutionUnit(ConvertONNX2TRT, config, model_cfg))
+            execution_units.append(ExecutionUnit(command=ConvertONNX2TRT, model_config=model_cfg))
 
     return Pipeline(name="TensorFlow2 Conversion", execution_units=execution_units)

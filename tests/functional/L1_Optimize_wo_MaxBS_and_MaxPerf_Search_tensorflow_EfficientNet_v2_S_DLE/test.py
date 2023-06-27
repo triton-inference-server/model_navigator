@@ -36,7 +36,7 @@ def main():
     import model_navigator as nav
     from tests import utils
     from tests.functional.common.tests.dle_convnets_tf import dle_convnets_tf
-    from tests.functional.common.utils import collect_status
+    from tests.functional.common.utils import collect_optimize_status
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -77,7 +77,7 @@ def main():
             trt_profile=trt_profile,
         )
         status_file = args.status
-        status = collect_status(package.status)
+        status = collect_optimize_status(package.status)
         with status_file.open("w") as fp:
             yaml.safe_dump(status, fp)
 

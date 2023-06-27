@@ -16,7 +16,7 @@ import importlib
 from types import ModuleType
 from typing import Any, Optional
 
-from model_navigator.logger import LOGGER
+from model_navigator.core.logger import LOGGER
 
 MODULE_VAR_NAME = "module"
 

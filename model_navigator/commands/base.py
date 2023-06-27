@@ -16,14 +16,12 @@ import abc
 from dataclasses import dataclass
 from enum import Enum
 from inspect import getfullargspec
-from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Type
+from typing import Any, Callable, Dict, List, Optional, Type
 
-from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig
+from model_navigator.exceptions import ModelNavigatorWrongParameterError
 from model_navigator.runners.base import NavigatorRunner
-
-if TYPE_CHECKING:
-    from model_navigator.core.status import Status
+from model_navigator.utils.common import DataObject
 
 
 class CommandStatus(str, Enum):
@@ -37,27 +35,67 @@ class CommandStatus(str, Enum):
 
 
 @dataclass
-class CommandOutput:
+class CommandOutput(DataObject):
     """Command output dataclass structure."""
 
     status: CommandStatus
     output: Optional[Dict[str, Any]] = None
-    save: bool = False
+
+    @classmethod
+    def from_dict(cls, data_dict: Dict) -> "CommandOutput":
+        """Create CommandOutput from the dictionary.
+
+        Args:
+            data_dict (Dict): dictionary with command output data.
+
+        Returns:
+            CommandOutput
+        """
+        return cls(status=CommandStatus(data_dict["status"]), output=data_dict["output"])
 
 
-class Command(abc.ABC):
+class CommandMeta(abc.ABCMeta):  # noqa: B024
+    """Metaclass for command."""
+
+    @property
+    def name(cls):
+        """Return name of the command.
+
+        Return:
+            Name of command as a string
+        """
+        return cls.__name__
+
+
+class Command(metaclass=CommandMeta):
     """Base class for command definition."""
 
     _is_required: bool = False
+    _requires: Optional[List[str]] = None
 
-    def __init_subclass__(cls, is_required: bool = False, **kwargs):
+    def __init_subclass__(cls, is_required: bool = False, requires: Optional[List[str]] = None, **kwargs):
         """Initialization of a command subclass."""
         super().__init_subclass__(**kwargs)
         cls._is_required = is_required
+        cls._requires = requires if requires is not None else []
 
-    def __init__(self, status: Optional["Status"] = None) -> None:
-        """Initialization of a command."""
-        self._status = status
+    @classmethod
+    def is_required(cls):
+        """Indicates if Command should be considered as required.
+
+        Returns:
+            True if required, False otherwise
+        """
+        return cls._is_required
+
+    @classmethod
+    def requires(cls):
+        """Return required commands to execute current command.
+
+        Returns:
+            List of required commands
+        """
+        return cls._requires
 
     def run(self, *args, **kwargs) -> CommandOutput:
         """Run command execution.
@@ -116,37 +154,14 @@ class Command(abc.ABC):
         """
         pass
 
-    @classmethod
-    def is_required(cls):
-        """Indicates if Command should be considered as required.
-
-        Returns:
-            True if required, False otherwise
-        """
-        return cls._is_required
-
-    @classmethod
-    def name(cls) -> str:
-        """Return name of the command.
-
-        Return:
-            Name of command as a string
-        """
-        return cls.__name__
-
-    @property
-    def status(self) -> Optional["Status"]:
-        """Return navigator status."""
-        return self._status
-
 
 class ExecutionUnit:
     """Command along with configuration and runner."""
 
     def __init__(
         self,
+        *,
         command: Type[Command],
-        config: CommonConfig,
         model_config: Optional[ModelConfig] = None,
         runner_cls: Optional[Type[NavigatorRunner]] = None,
         **kwargs,
@@ -160,7 +175,9 @@ class ExecutionUnit:
             runner_cls: Optional runner for correctness or performance evaluation
         """
         self.command = command
-        self.config = config
         self.model_config = model_config
         self.runner_cls = runner_cls
         self.kwargs = kwargs
+
+        if self.runner_cls and not self.model_config:
+            raise ModelNavigatorWrongParameterError("Unable to execute unit with runner without a model.")

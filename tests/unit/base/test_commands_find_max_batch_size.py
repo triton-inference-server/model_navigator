@@ -26,9 +26,10 @@ import numpy as np
 
 from model_navigator import OptimizationProfile
 from model_navigator.commands.base import CommandStatus
+from model_navigator.commands.execution_context import ExecutionContext
 from model_navigator.commands.find_max_batch_size import FindMaxBatchSize, FindMaxBatchSizeConfig
 from model_navigator.core.tensor import TensorMetadata, TensorSpec
-from model_navigator.execution_context import ExecutionContext
+from model_navigator.core.workspace import Workspace
 from model_navigator.runners.onnx import OnnxrtCPURunner
 
 
@@ -44,7 +45,7 @@ def test_find_max_batch_size_return_none_when_model_not_support_batching(mocker)
         with mocker.patch.object(ExecutionContext, "execute_external_runtime_script"):
             result = FindMaxBatchSize().run(
                 configurations=[FindMaxBatchSizeConfig(model_path=model_path, runner_cls=OnnxrtCPURunner)],
-                workspace=workspace,
+                workspace=Workspace(workspace),
                 input_metadata=TensorMetadata(
                     {"input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))}
                 ),
@@ -120,7 +121,7 @@ def test_find_max_batch_size_return_max_batch_when_model_support_batching(mocker
         ), mocker.patch("tempfile.NamedTemporaryFile", return_value=mock):
             result = FindMaxBatchSize().run(
                 configurations=[FindMaxBatchSizeConfig(model_path=model_path, runner_cls=OnnxrtCPURunner)],
-                workspace=workspace,
+                workspace=Workspace(workspace),
                 input_metadata=TensorMetadata(
                     {"input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))}
                 ),
@@ -152,7 +153,7 @@ def test_find_max_batch_size_return_none_when_batch_dim_none_and_max_batch_size_
         with mocker.patch.object(ExecutionContext, "execute_external_runtime_script"):
             result = FindMaxBatchSize().run(
                 configurations=[FindMaxBatchSizeConfig(model_path=model_path, runner_cls=OnnxrtCPURunner)],
-                workspace=workspace,
+                workspace=Workspace(workspace),
                 input_metadata=TensorMetadata(
                     {"input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))}
                 ),
@@ -182,7 +183,7 @@ def test_find_max_batch_size_return_max_batch_when_max_batch_size_provided_in_op
         with mocker.patch.object(ExecutionContext, "execute_external_runtime_script"):
             result = FindMaxBatchSize().run(
                 configurations=[FindMaxBatchSizeConfig(model_path=model_path, runner_cls=OnnxrtCPURunner)],
-                workspace=workspace,
+                workspace=Workspace(workspace),
                 input_metadata=TensorMetadata(
                     {"input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))}
                 ),
@@ -212,7 +213,7 @@ def test_find_max_batch_size_return_max_batch_when_batch_sizes_provided_in_optim
         with mocker.patch.object(ExecutionContext, "execute_external_runtime_script"):
             result = FindMaxBatchSize().run(
                 configurations=[FindMaxBatchSizeConfig(model_path=model_path, runner_cls=OnnxrtCPURunner)],
-                workspace=workspace,
+                workspace=Workspace(workspace),
                 input_metadata=TensorMetadata(
                     {"input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))}
                 ),

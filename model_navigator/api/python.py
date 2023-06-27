@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Python optimize API."""
-from pathlib import Path
+import pathlib
 from typing import Callable, Mapping, Optional, Sequence, Tuple, Type, Union
 
 from model_navigator.api.config import (
@@ -27,19 +27,18 @@ from model_navigator.api.config import (
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config_builder import ModelConfigBuilder
 from model_navigator.core.constants import DEFAULT_SAMPLE_COUNT
-from model_navigator.core.package import Package
 from model_navigator.frameworks import Framework
+from model_navigator.package.package import Package
 from model_navigator.pipelines.builders import (
     correctness_builder,
+    performance_builder,
     preprocessing_builder,
-    profiling_builder,
     verify_builder,
 )
-from model_navigator.pipelines.pipeline_manager import PipelineManager
+from model_navigator.pipelines.wrappers.optimize import optimize_pipeline
 from model_navigator.runners.base import NavigatorRunner
 from model_navigator.runners.utils import default_runners
 from model_navigator.utils import enums
-from model_navigator.utils.common import get_default_workspace
 
 
 def optimize(
@@ -48,9 +47,9 @@ def optimize(
     sample_count: int = DEFAULT_SAMPLE_COUNT,
     batching: Optional[bool] = True,
     target_device: Optional[DeviceKind] = DeviceKind.CPU,
-    runners: Optional[Union[Union[str, Type[NavigatorRunner]], Tuple[Union[str, Type[NavigatorRunner]], ...]]] = None,
+    runners: Optional[Tuple[Union[str, Type[NavigatorRunner]], ...]] = None,
     optimization_profile: Optional[OptimizationProfile] = None,
-    workspace: Optional[Path] = None,
+    workspace: Optional[pathlib.Path] = None,
     verbose: bool = False,
     debug: bool = False,
     verify_func: Optional[VerifyFunction] = None,
@@ -78,9 +77,7 @@ def optimize(
         Package descriptor representing created package.
     """
     if isinstance(model, str):
-        model = Path(model)
-    if workspace is None:
-        workspace = get_default_workspace()
+        model = pathlib.Path(model)
 
     sample = next(iter(dataloader))
     forward_kw_names = tuple(sample.keys()) if isinstance(sample, Mapping) else None
@@ -94,12 +91,12 @@ def optimize(
     runner_names = enums.parse(runners, lambda runner: runner if isinstance(runner, str) else runner.name())
 
     target_formats = DEFAULT_NONE_FRAMEWORK_TARGET_FORMATS
+
     config = CommonConfig(
         Framework.NONE,
         model=model,
         dataloader=dataloader,
         forward_kw_names=forward_kw_names,
-        workspace=workspace,
         target_formats=target_formats,
         target_device=target_device,
         sample_count=sample_count,
@@ -118,11 +115,17 @@ def optimize(
         custom_configs=[],
     )
 
-    builders = [preprocessing_builder, correctness_builder, profiling_builder]
-    builders.append(verify_builder)
+    builders = [
+        preprocessing_builder,
+        correctness_builder,
+        performance_builder,
+        verify_builder,
+    ]
 
-    package = PipelineManager.run(
-        pipeline_builders=builders,
+    package = optimize_pipeline(
+        model=model,
+        workspace=workspace,
+        builders=builders,
         config=config,
         models_config=models_config,
     )

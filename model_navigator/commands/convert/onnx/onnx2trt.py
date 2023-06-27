@@ -17,7 +17,6 @@ import pathlib
 import sys
 import tempfile
 from distutils.version import LooseVersion
-from pathlib import Path
 from typing import Optional
 
 from model_navigator.api.config import (
@@ -28,10 +27,11 @@ from model_navigator.api.config import (
 )
 from model_navigator.commands.base import CommandOutput, CommandStatus
 from model_navigator.commands.convert.base import Convert2TensorRTWithMaxBatchSizeSearch
+from model_navigator.commands.execution_context import ExecutionContext
+from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata
-from model_navigator.execution_context import ExecutionContext
+from model_navigator.core.workspace import Workspace
 from model_navigator.frameworks.tensorrt import utils as tensorrt_utils
-from model_navigator.logger import LOGGER
 from model_navigator.runners.tensorrt import TensorRTRunner
 from model_navigator.utils import devices
 from model_navigator.utils.common import parse_kwargs_to_cmd
@@ -42,9 +42,9 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
 
     def _run(
         self,
-        workspace: Path,
-        path: Path,
-        parent_path: Path,
+        workspace: Workspace,
+        path: pathlib.Path,
+        parent_path: pathlib.Path,
         input_metadata: TensorMetadata,
         output_metadata: TensorMetadata,
         precision: TensorRTPrecision,
@@ -88,8 +88,8 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
         if not devices.get_available_gpus():
             raise RuntimeError("No GPUs available.")
 
-        input_model_path = workspace / parent_path
-        converted_model_path = workspace / path
+        input_model_path = workspace.path / parent_path
+        converted_model_path = workspace.path / path
 
         if not input_model_path.exists():
             LOGGER.warning(f"Exported ONNX model not found at {input_model_path}. Skipping conversion.")
@@ -110,9 +110,9 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
             verbose=verbose,
         )
 
-        convert_cmd = ["polygraphy", "convert", input_model_path.relative_to(workspace).as_posix()]
+        convert_cmd = ["polygraphy", "convert", input_model_path.relative_to(workspace.path).as_posix()]
         convert_cmd.extend(["--convert-to", "trt"])
-        convert_cmd.extend(["-o", converted_model_path.relative_to(workspace).as_posix()])
+        convert_cmd.extend(["-o", converted_model_path.relative_to(workspace.path).as_posix()])
 
         if optimization_level is not None:
             convert_cmd.extend(["--builder-optimization-level", optimization_level])
@@ -159,7 +159,7 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
         ) as context:
             kwargs = {
                 "batch_dim": batch_dim,
-                "model_path": converted_model_path.relative_to(workspace).as_posix(),
+                "model_path": converted_model_path.relative_to(workspace.path).as_posix(),
                 "runner_name": TensorRTRunner.name(),
                 "input_metadata": input_metadata.to_json(),
                 "output_metadata": output_metadata.to_json(),
@@ -212,7 +212,7 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
 
     def _get_onnx_input_metadata(
         self,
-        workspace: pathlib.Path,
+        workspace: Workspace,
         input_model_path: pathlib.Path,
         input_metadata: TensorMetadata,
         output_metadata: TensorMetadata,
@@ -226,7 +226,7 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
             verbose=verbose,
         ) as context, tempfile.NamedTemporaryFile() as temp_file:
             kwargs = {
-                "model_path": input_model_path.relative_to(workspace).as_posix(),
+                "model_path": input_model_path.relative_to(workspace.path).as_posix(),
                 "input_metadata": input_metadata.to_json(),
                 "output_metadata": output_metadata.to_json(),
                 "results_path": temp_file.name,

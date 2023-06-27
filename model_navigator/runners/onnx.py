@@ -17,11 +17,11 @@ from typing import List, Optional, Sequence, Union
 
 import model_navigator.utils.common as utils
 from model_navigator.api.config import Format, TensorType
+from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata, get_tensor_type
 from model_navigator.exceptions import ModelNavigatorNotFoundError
 from model_navigator.frameworks.onnx.utils import ONNX_RT_TYPE_TO_NP
 from model_navigator.frameworks.tensorrt.cuda import DeviceView
-from model_navigator.logger import LOGGER
 from model_navigator.runners.base import DeviceKind, NavigatorRunner
 from model_navigator.runners.registry import register_runner
 from model_navigator.utils import module

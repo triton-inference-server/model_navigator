@@ -13,11 +13,12 @@
 # limitations under the License.
 """Command for copying ONNX model."""
 
+import pathlib
 import shutil
-from pathlib import Path
 from typing import Optional
 
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
+from model_navigator.core.workspace import Workspace
 
 
 class CopyONNX(Command):
@@ -25,9 +26,9 @@ class CopyONNX(Command):
 
     def _run(
         self,
-        workspace: Path,
-        path: Path,
-        model: Optional[Path] = None,
+        workspace: Workspace,
+        path: pathlib.Path,
+        model: Optional[pathlib.Path] = None,
     ) -> CommandOutput:
         """Run copy of the ONNX model.
 
@@ -39,7 +40,7 @@ class CopyONNX(Command):
         Returns:
             CommandOutput: Status OK.
         """
-        destination_model_path = workspace / path
+        destination_model_path = workspace.path / path
         if destination_model_path.exists():
             return CommandOutput(status=CommandStatus.SKIPPED)
         assert model is not None

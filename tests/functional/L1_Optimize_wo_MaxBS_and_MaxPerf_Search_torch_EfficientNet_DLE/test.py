@@ -38,7 +38,7 @@ def main():
 
     from tests import utils
     from tests.functional.common.tests.dle_convnets_pyt import dle_convnets_pyt
-    from tests.functional.common.utils import collect_status
+    from tests.functional.common.utils import collect_optimize_status
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -86,7 +86,7 @@ def main():
             ),
         )
         status_file = args.status
-        status = collect_status(package.status)
+        status = collect_optimize_status(package.status)
         with status_file.open("w") as fp:
             yaml.safe_dump(status, fp)
 

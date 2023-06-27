@@ -1453,6 +1453,10 @@ def status_dict_v0_2_1():
             "profiler_config": {
                 "run_profiling": False,
                 "batch_sizes": [1, 2, 4, 8, 16],
+                "measurement_request_count": 50,
+                "max_trials": 10,
+                "stability_percentage": 10,
+                "throughput_cutoff_threshold": 0.05,
             },
         },
         "models_status": {
@@ -1668,7 +1672,13 @@ def status_dict_v0_2_2():
                     "opset": 13,
                 },
             },
-            "optimization_profile": {"max_batch_size": 16},
+            "optimization_profile": {
+                "batch_sizes": [16],
+                "window_size": 50,
+                "max_trials": 10,
+                "stability_percentage": 10,
+                "throughput_cutoff_threshold": 0.05,
+            },
         },
         "models_status": {
             "torch": {

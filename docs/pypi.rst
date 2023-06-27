@@ -16,40 +16,36 @@
 Triton Model Navigator
 ========================
 
-Model conversion plays a crucial role in unlocking the maximum performance capabilities of the underlying hardware.
-By applying these transformation techniques, models can be optimized to fully utilize the specific features and optimizations offered by the hardware architecture.
-Furthermore, conversions allow for serialization of models, separating them from the source code.
-This serialization process enhances portability, allowing the models to be seamlessly deployed in production environments.
-The decoupling of models from the source code also facilitates maintenance, updates, and collaboration among developers.
+Model optimization plays a crucial role in unlocking the maximum performance capabilities of the underlying hardware. By
+applying various transformation techniques, models can be optimized to fully utilize the specific features offered by
+the hardware architecture to improve the inference performance and cost. Furthermore, in many cases allow for
+serialization of models, separating them from the source code. The serialization process enhances portability, allowing
+the models to be seamlessly deployed in production environments. The decoupling of models from the source code also
+facilitates maintenance, updates, and collaboration among developers. However, this process comprises multiple steps and
+offers various potential paths, making manual execution complicated and time-consuming.
 
-However, this process comprises multiple steps and offers various potential paths,
-making manual execution complicated and time-consuming. The `Triton Model Navigator`_ offers a user-friendly and automatic solution for converting,
-optimizing and deploying machine learning models. It offers a single entry point for various supported frameworks,
-allowing users to start the process of searching for the best deployment option with a single call to the dedicated `optimize` function.
-Model Navigator handles model export, conversion, correctness testing, and performance profiling, saving all generated artifacts.
-
-Throughout the optimize process, the Model Navigator considers multiple factors, including different precisions,
-runtimes, and data shapes. This careful consideration allows for the adjustment of the model's configuration to achieve improved performance,
-effectively minimizing the costs associated with serving the model.
-
-Converted models can be easily deployed on the `PyTriton`_ or `Triton Inference Server`_ .
-
+The `Triton Model Navigator` offers a user-friendly and
+automated solution for optimizing and deploying machine learning models. Using a single entry point for
+various supported frameworks, allowing users to start the process of searching for the best deployment option with a
+single call to the dedicated `optimize` function. Model Navigator handles model export, conversion, correctness testing,
+and profiling to select optimal model format and save generated artifacts for inference deployment on the
+`PyTriton`_ or `Triton Inference Server`_ .
 
 The Model Navigator generates multiple optimized and production-ready models.
 The table below illustrates the model formats that can be obtained by using the Model Navigator with various frameworks.
 
 **Table:** Supported conversion target formats per each supported Python framework or file.
 
-+--------------------+--------------------+--------------------+----------+
-| PyTorch            | TensorFlow 2       | JAX                | ONNX     |
-+====================+====================+====================+==========+
-| Torch 2 Compile    | SavedModel         | SavedModel         | TensorRT |
-| TorchScript Trace  | TensorFlowTensorRT | TensorFlowTensorRT |          |
-| TorchScript Script | ONNX               | ONNX               |          |
-| TorchTensorRT      | TensorRT           | TensorRT           |          |
-| ONNX               |                    |                    |          |
-| TensorRT           |                    |                    |          |
-+--------------------+--------------------+--------------------+----------+
++--------------------+------------------------+------------------------+----------+
+| PyTorch            | TensorFlow 2           | JAX                    | ONNX     |
++====================+========================+========================+==========+
+| Torch 2 Compile    | SavedModel             | SavedModel             | TensorRT |
+| TorchScript Trace  | TensorRT in TensorFlow | TensorRT in TensorFlow |          |
+| TorchScript Script | ONNX                   | ONNX                   |          |
+| TorchTensorRT      | TensorRT               | TensorRT               |          |
+| ONNX               |                        |                        |          |
+| TensorRT           |                        |                        |          |
++--------------------+------------------------+------------------------+----------+
 
 **Note:** The Model Navigator has the capability to support any Python function as input.
 However, in this particular case, its role is limited to profiling the function without generating any serialized models.
@@ -64,13 +60,13 @@ This package also includes base formats that can be used to regenerate the `Tens
 |   From model source    |   From Navigator Package    |
 +========================+=============================+
 | SavedModel             | TorchTensorRT               |
-| TensorFlowTensorRT     | TensorFlowTensorRT          |
+| TensorRT in TensorFlow | TensorRT in TensorFlow      |
 | TorchScript Trace      | ONNX                        |
 | TorchScript Script     | TensorRT                    |
 | Torch 2 Compile        |                             |
 | TorchTensorRT          |                             |
 | ONNX                   |                             |
-| TensoRT                |                             |
+| TensorRT               |                             |
 +------------------------+-----------------------------+
 
 Installation
@@ -102,12 +98,14 @@ For using with PyTorch no extras are needed.
 Quick Start
 -------------
 
-Using Model Navigator is as simply as calling `optimize` with `model` and `dataloader`:
-The `optimize` function will save all the artifacts it generates in the `navigator_workspace`.
+Optimizing models using Model Navigator is as simply as calling `optimize` function. The optimization process requires
+at least:
 
-**Note:** The `dataloader` is utilized to determine the maximum and minimum shapes of the inputs utilized during model conversions.
-The `Model Navigator` employs a single sample from the `dataloader`, which is then repeated to generate synthetic batches for profiling purposes.
-Correctness tests are conducted on a subset of the `dataloader` samples, while verification tests are executed on the entire `dataloader`.
+- `model` - a Python object, callable or file path with model to optimize.
+- `dataloader` - a method or class generating input data. The data is utilized to determine the maximum and minimum
+  shapes of the model inputs and create output samples that are used during the optimization process.
+
+Here is an example of running `optimize` on Torch Hub ResNet50 model:
 
 .. code-block:: python
 
@@ -121,43 +119,9 @@ Correctness tests are conducted on a subset of the `dataloader` samples, while v
         dataloader=[torch.randn(1, 3, 256, 256) for _ in range(10)],
     )
 
-The code snippet below demonstrates the usage of the `PyTritonAdapter` to retrieve the `runner` and other necessary information.
-The `runner` serves as an abstraction that connects the model checkpoint with its runtime, making the inference process more accessible and straightforward.
-Following that, it initiates the `PyTriton`_  server using the provided parameters.
-
-.. code-block:: python
-
-    pytriton_adapter = nav.pytriton.PyTritonAdapter(package=package, strategy=nav.MaxThroughputStrategy())
-    runner = pytriton_adapter.runner
-
-    runner.activate()
-
-    @batch
-    def infer_func(**inputs):
-        return runner.infer(inputs)
-
-    with Triton() as triton:
-        triton.bind(
-            model_name="resnet50",
-            infer_func=infer_func,
-            inputs=pytriton_adapter.inputs,
-            outputs=pytriton_adapter.outputs,
-            config=pytriton_adapter.config,
-        )
-        triton.serve()
-
-Alternatively, Model Navigator can generate `model_repository` that can be served on the `Triton Inference Server`_:
-
-
-.. code-block:: python
-
-    nav.triton.model_repository.add_model_from_package(
-        model_repository_path=pathlib.Path("model_repository"),
-        model_name="resnet50",
-        package=package,
-        strategy=nav.MaxThroughputStrategy(),
-    )
-
+Once the model has been optimized the created artifacts are stored in `navigator_workspace` and a Package object is
+returned from the function. The returned object can be used to create `Navigator Package` or deploy model on `PyTriton`_
+or `Triton Inference Server`_. Read more about it in `documentation`_
 
 Examples
 ----------
@@ -167,7 +131,7 @@ For the sake of readability and accessibility, we use a simple `torch.nn.Linear`
 These examples illustrate how to optimize, test and deploy the model on
 the PyTriton and Triton Inference Server.
 
-https://github.com/triton-inference-server/model_navigator/tree/main/examples.
+Examples: https://github.com/triton-inference-server/model_navigator/tree/main/examples.
 
 Links
 -------
@@ -183,3 +147,4 @@ Links
 .. _Triton Inference Server: https://github.com/triton-inference-server/server
 .. _TensorRT: https://github.com/NVIDIA/TensorRT
 .. _PyTriton: https://github.com/triton-inference-server/pytriton
+.. _documentation: https://triton-inference-server.github.io/model_navigator

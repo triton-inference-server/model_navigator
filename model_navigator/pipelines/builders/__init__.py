@@ -19,8 +19,8 @@ from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig
 from model_navigator.frameworks import is_jax_available, is_tf_available, is_torch_available
 from model_navigator.pipelines.builders.correctness import correctness_builder  # noqa: F401
+from model_navigator.pipelines.builders.performance import performance_builder  # noqa: F401
 from model_navigator.pipelines.builders.preprocessing import preprocessing_builder  # noqa: F401
-from model_navigator.pipelines.builders.profiling import profiling_builder  # noqa: F401
 from model_navigator.pipelines.builders.verify import verify_builder  # noqa: F401
 from model_navigator.pipelines.pipeline import Pipeline  # noqa: F401
 

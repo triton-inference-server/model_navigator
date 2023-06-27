@@ -29,8 +29,9 @@ from model_navigator import TensorRTPrecision, TensorRTPrecisionMode
 from model_navigator.api.config import TensorRTProfile
 from model_navigator.commands.base import CommandStatus
 from model_navigator.commands.convert.onnx import ConvertONNX2TRT
+from model_navigator.commands.execution_context import ExecutionContext
 from model_navigator.core.tensor import TensorMetadata, TensorSpec
-from model_navigator.execution_context import ExecutionContext
+from model_navigator.core.workspace import Workspace
 from tests.utils import get_assets_path
 
 
@@ -50,7 +51,7 @@ def test_run_execute_conversion_when_model_not_support_batching(mocker):
             ConvertONNX2TRT, "_get_onnx_input_metadata"
         ), mocker.patch("model_navigator.utils.devices.get_available_gpus", return_value=[0]):
             result = ConvertONNX2TRT().run(
-                workspace=workspace,
+                workspace=Workspace(workspace),
                 parent_path=input_model_path,
                 path=output_model_path,
                 input_metadata=TensorMetadata(
@@ -86,7 +87,7 @@ def test_run_execute_conversion_when_trt_profile_provided(mocker):
             ConvertONNX2TRT, "_get_onnx_input_metadata"
         ), mocker.patch("model_navigator.utils.devices.get_available_gpus", return_value=[0]):
             result = ConvertONNX2TRT().run(
-                workspace=workspace,
+                workspace=Workspace(workspace),
                 parent_path=input_model_path,
                 path=output_model_path,
                 input_metadata=TensorMetadata(
@@ -123,7 +124,7 @@ def test_run_execute_conversion_when_dataloader_and_device_max_batch_size_is_inv
             ConvertONNX2TRT, "_get_onnx_input_metadata"
         ), mocker.patch("model_navigator.utils.devices.get_available_gpus", return_value=[0]):
             result = ConvertONNX2TRT().run(
-                workspace=workspace,
+                workspace=Workspace(workspace),
                 parent_path=input_model_path,
                 path=output_model_path,
                 input_metadata=TensorMetadata(
@@ -163,7 +164,7 @@ def test_run_execute_conversion_with_max_batch_size_search_when_dataloader_max_b
             "model_navigator.utils.devices.get_available_gpus", return_value=[0]
         ):
             result = ConvertONNX2TRT().run(
-                workspace=workspace,
+                workspace=Workspace(workspace),
                 parent_path=input_model_path,
                 path=output_model_path,
                 input_metadata=TensorMetadata(
@@ -205,7 +206,7 @@ def test_run_execute_conversion_with_max_batch_size_search_when_device_max_batch
             "model_navigator.utils.devices.get_available_gpus", return_value=[0]
         ):
             result = ConvertONNX2TRT().run(
-                workspace=workspace,
+                workspace=Workspace(workspace),
                 parent_path=input_model_path,
                 path=output_model_path,
                 input_metadata=TensorMetadata(
@@ -247,7 +248,7 @@ def test_run_execute_conversion_with_max_batch_size_search_when_both_max_batch_s
             "model_navigator.utils.devices.get_available_gpus", return_value=[0]
         ):
             result = ConvertONNX2TRT().run(
-                workspace=workspace,
+                workspace=Workspace(workspace),
                 parent_path=input_model_path,
                 path=output_model_path,
                 input_metadata=TensorMetadata(
@@ -391,7 +392,7 @@ def test_get_onnx_input_metadata_return_filled_metadata_when_successfully_read_f
             json.dump(data, fp)
 
         metadata = ConvertONNX2TRT()._get_onnx_input_metadata(
-            workspace=workspace,
+            workspace=Workspace(workspace),
             input_model_path=onnx_model_path,
             input_metadata=input_metadata,
             output_metadata=output_metadata,
@@ -424,7 +425,7 @@ def test_get_onnx_input_metadata_return_empty_metadata_when_no_file(mocker):
         output_metadata.add(name="Y", shape=(-1, 3, 8, 8), dtype=np.float32())
 
         metadata = ConvertONNX2TRT()._get_onnx_input_metadata(
-            workspace=workspace,
+            workspace=Workspace(workspace),
             input_model_path=onnx_model_path,
             input_metadata=input_metadata,
             output_metadata=output_metadata,

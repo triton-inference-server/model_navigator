@@ -14,8 +14,8 @@
 
 """This module contains classes representing model configurations."""
 
+import pathlib
 from abc import ABC, abstractmethod
-from pathlib import Path
 from typing import Callable, Dict, List, Optional, Union
 
 from model_navigator.api.config import (
@@ -143,24 +143,24 @@ class ModelConfig(ABC, DataObject):
         return key
 
     @property
-    def path(self) -> Path:
+    def path(self) -> pathlib.Path:
         """Get path to model checkpoint."""
         path_str = self.key
 
         if is_source_format(self.format):
-            path = Path(path_str) / "----"
+            path = pathlib.Path(path_str) / "----"
         else:
-            path = Path(path_str) / f"model{FORMAT2SUFFIX[self.format]}"
+            path = pathlib.Path(path_str) / f"model{FORMAT2SUFFIX[self.format]}"
 
         return path
 
     @property
-    def log_path(self) -> Path:
+    def log_path(self) -> pathlib.Path:
         """Get path to log file."""
         return self.path.parent / "format.log"
 
     @property
-    def parent_path(self) -> Optional[Path]:
+    def parent_path(self) -> Optional[pathlib.Path]:
         """Get path to parent model checkpoint."""
         if self.parent:
             return self.parent.path

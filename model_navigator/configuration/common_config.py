@@ -14,10 +14,8 @@
 """Config object to handle user inputs and define the execution of commands."""
 
 import dataclasses
-import json
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Sequence
 
 from model_navigator.api.config import (
     CustomConfig,
@@ -28,29 +26,27 @@ from model_navigator.api.config import (
     VerifyFunction,
 )
 from model_navigator.frameworks import Framework
-from model_navigator.logger import LOGGER
-from model_navigator.utils.common import DataObject, pad_string
+from model_navigator.utils.common import DataObject
 
 
 @dataclass
 class CommonConfig(DataObject):
-    """Command conxtext stores paramters used during commands execution not related to any particular model format."""
+    """Command context stores parameters used during commands execution not related to any particular model format."""
 
     framework: Framework
     model: object
     dataloader: SizedDataLoader
-    workspace: Path
-    target_formats: Tuple[Format, ...]
+    target_formats: Sequence[Format]
     target_device: DeviceKind
     sample_count: int
     optimization_profile: OptimizationProfile
-    runner_names: Tuple[str, ...]
+    runner_names: Sequence[str]
     batch_dim: Optional[int] = 0
     seed: int = 0
-    _input_names: Optional[Tuple[str, ...]] = None
-    _output_names: Optional[Tuple[str, ...]] = None
+    _input_names: Optional[Sequence[str]] = None
+    _output_names: Optional[Sequence[str]] = None
     from_source: bool = True
-    forward_kw_names: Optional[Tuple[str, ...]] = None
+    forward_kw_names: Optional[Sequence[str]] = None
     verify_func: Optional[VerifyFunction] = None
     custom_configs: Dict[str, CustomConfig] = dataclasses.field(default_factory=lambda: {})
 
@@ -59,16 +55,3 @@ class CommonConfig(DataObject):
 
     # Debug - enabled debug mode for converters
     debug: bool = False
-
-    def log(self) -> None:
-        """Display the configuration as formatted string."""
-        LOGGER.info(pad_string("Common config parameters"))
-        log_dict = self.to_dict(
-            filter_fields=[
-                "model",
-                "dataloader",
-                "verify_func",
-            ],
-            parse=True,
-        )
-        LOGGER.info(json.dumps(log_dict, indent=4))

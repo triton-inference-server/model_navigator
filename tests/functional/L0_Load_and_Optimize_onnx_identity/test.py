@@ -35,7 +35,7 @@ EXPECTED_STATUES = [
 def main():
     import model_navigator as nav
     from tests import utils
-    from tests.functional.common.utils import collect_status, validate_status
+    from tests.functional.common.utils import collect_optimize_status, validate_status
     from tests.utils import get_assets_path
 
     parser = argparse.ArgumentParser()
@@ -67,7 +67,7 @@ def main():
     )
 
     status_file = args.status
-    status = collect_status(new_package.status)
+    status = collect_optimize_status(new_package.status)
 
     validate_status(status, expected_statuses=EXPECTED_STATUES)
 

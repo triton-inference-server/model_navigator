@@ -62,6 +62,12 @@ class ModelNavigatorWarning(ModelNavigatorError, Warning):
     pass
 
 
+class ModelNavigatorRuntimeError(ModelNavigatorError):
+    """ModelNavigatorRuntimeError exception."""
+
+    pass
+
+
 class ModelNavigatorUserInputError(ModelNavigatorError):
     """ModelNavigatorUserInputError exceptions.
 
@@ -139,5 +145,11 @@ class ModelNavigatorConfigurationError(ModelNavigatorError):
 
 class ModelNavigatorConfigurationWarning(ModelNavigatorWarning):
     """Raised when the configuration is not valid, but the optimize command can still be run without ambiguity."""
+
+    pass
+
+
+class ModelNavigatorCommandNotExecutable(ModelNavigatorError):
+    """Raised when command execution is not possible."""
 
     pass

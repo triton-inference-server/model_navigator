@@ -21,13 +21,13 @@ import shutil
 import subprocess
 import sys
 import textwrap
-from pathlib import Path
 from typing import Callable, List, Optional, Union
 
 import fire
 
+from model_navigator.core.logger import LOGGER
+from model_navigator.core.workspace import Workspace
 from model_navigator.exceptions import ModelNavigatorUserInputError
-from model_navigator.logger import LOGGER
 
 
 class FileHandlersLogging:
@@ -87,9 +87,9 @@ class ExecutionContext(contextlib.AbstractContextManager):
     def __init__(
         self,
         *,
-        workspace: Path,
-        script_path: Optional[Path] = None,
-        cmd_path: Optional[Path] = None,
+        workspace: Workspace,
+        script_path: Optional[pathlib.Path] = None,
+        cmd_path: Optional[pathlib.Path] = None,
         verbose: bool = False,
         on_exit: Optional[Callable] = None,
     ):
@@ -104,9 +104,8 @@ class ExecutionContext(contextlib.AbstractContextManager):
         """
         super().__init__()
         self._workspace = workspace
-        self._script_path = Path(script_path) if script_path else script_path
-        self._script_path = Path(script_path) if script_path else script_path
-        self._cmd_path = Path(cmd_path) if cmd_path else cmd_path
+        self._script_path = pathlib.Path(script_path) if script_path else script_path
+        self._cmd_path = pathlib.Path(cmd_path) if cmd_path else cmd_path
         self._cache = {}
         self._output = None
         self._verbose = verbose
@@ -160,7 +159,7 @@ class ExecutionContext(contextlib.AbstractContextManager):
             ModelNavigatorUserInputError when command execution failed
         """
         shutil.copy(path, self._script_path)
-        script_path_relative = self._script_path.relative_to(self._workspace)
+        script_path_relative = self._script_path.relative_to(self._workspace.path)
 
         filtered_args = self._filter_workspace_args(args)
         cmd = self._bake_command([sys.executable, script_path_relative.as_posix()] + filtered_args)
@@ -182,7 +181,7 @@ class ExecutionContext(contextlib.AbstractContextManager):
             allow_failure: if True, do not raise exception when command execution failed
         """
         shutil.copy(path, self._script_path)
-        script_path_relative = self._script_path.relative_to(self._workspace)
+        script_path_relative = self._script_path.relative_to(self._workspace.path)
 
         filtered_args = self._filter_workspace_args(args)
         cmd = [sys.executable, script_path_relative.as_posix()] + filtered_args
@@ -209,7 +208,7 @@ class ExecutionContext(contextlib.AbstractContextManager):
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             encoding="utf-8",
-            cwd=self._workspace,
+            cwd=self._workspace.path,
         )
 
         if self._verbose:
@@ -246,7 +245,7 @@ class ExecutionContext(contextlib.AbstractContextManager):
         with self._cmd_path.open("w") as f:
             f.write(" ".join(cmd))
 
-        cmd_path_relative = self._cmd_path.relative_to(self._workspace)
+        cmd_path_relative = self._cmd_path.relative_to(self._workspace.path)
         run_cmd = [os.environ.get("SHELL", "bash"), cmd_path_relative.as_posix()]
 
         return run_cmd

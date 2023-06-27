@@ -19,7 +19,7 @@ from typing import Dict, List, Optional
 import fire
 
 from model_navigator.api.config import OptimizationProfile
-from model_navigator.commands.performance import Profiler
+from model_navigator.commands.performance.profiler import Profiler
 from model_navigator.core.tensor import TensorMetadata
 from model_navigator.runners.registry import get_runner
 from model_navigator.utils.dataloader import load_samples
@@ -43,28 +43,30 @@ def profile(
     optimization_profile: Dict,
     input_metadata: List,
     output_metadata: List,
+    sample_id: int = 0,
     navigator_workspace: Optional[str] = None,
     model_path: Optional[str] = None,
 ) -> None:
     """Run profiling.
 
     Args:
-        batch_dim (int): Batch dimension.
-        results_path (str): Path to store the profiling results in.
-        runner_name (str): Name of the runner to profile.
-        optimization_profile (Dict): Optimization profile used during conversion and profiling.
-        input_metadata (List): Input metadata.
-        output_metadata (List): Output metadata.
-        navigator_workspace (Optional[str], optional): Path of the Model Navigator workspace.
+        batch_dim: Batch dimension.
+        results_path: Path to store the profiling results in.
+        runner_name: Name of the runner to profile.
+        optimization_profile: Optimization profile used for configuration.
+        input_metadata: Input metadata.
+        output_metadata: Output metadata.
+        sample_id: Identifier of profiled sample.
+        navigator_workspace: Path of the Model Navigator workspace.
             When None use current workdir. Defaults to None.
-        model_path (Optional[str], optional): Path to the model.
+        model_path: Path to the model.
             When None use `get_model()` to load the model. Defaults to None.
     """
     if not navigator_workspace:
         navigator_workspace = pathlib.Path.cwd()
     navigator_workspace = pathlib.Path(navigator_workspace)
 
-    profiling_sample = load_samples("profiling_sample", navigator_workspace, batch_dim)[0]
+    profiling_sample = load_samples("profiler_sample", navigator_workspace, batch_dim)[0]
 
     if model_path:
         model = navigator_workspace / model_path
@@ -84,6 +86,7 @@ def profile(
     ).run(
         runner=runner,
         profiling_sample=profiling_sample,
+        sample_id=sample_id,
     )
 
 

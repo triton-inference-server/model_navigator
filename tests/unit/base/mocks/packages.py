@@ -27,10 +27,11 @@ from model_navigator.configuration.model.model_config import (
     TorchTensorRTConfig,
 )
 from model_navigator.core.constants import DEFAULT_MAX_WORKSPACE_SIZE, NAVIGATOR_PACKAGE_VERSION, NAVIGATOR_VERSION
-from model_navigator.core.package import Package
-from model_navigator.core.status import CommandStatus, ModelStatus, RunnerStatus, Status
 from model_navigator.core.tensor import TensorMetadata, TensorSpec
+from model_navigator.core.workspace import Workspace
 from model_navigator.frameworks import Framework
+from model_navigator.package.package import Package
+from model_navigator.package.status import CommandStatus, ModelStatus, RunnerStatus, Status
 from model_navigator.runners.base import NavigatorRunner
 
 
@@ -88,6 +89,7 @@ def empty_package(workspace) -> Package:
                                 "Performance": {
                                     "profiling_results": [
                                         ProfilingResults(
+                                            sample_id=0,
                                             batch_size=1,
                                             avg_latency=2.0,
                                             std_latency=0.0,
@@ -110,7 +112,7 @@ def empty_package(workspace) -> Package:
             dataloader_trt_profile=TensorRTProfile(),
             dataloader_max_batch_size=2,
         ),
-        workspace=workspace,
+        workspace=Workspace(workspace),
         model=None,
     )
 
@@ -157,6 +159,7 @@ def custom_runner_package(workspace) -> Package:
                                 "Performance": {
                                     "profiling_results": [
                                         ProfilingResults(
+                                            sample_id=0,
                                             batch_size=1,
                                             avg_latency=1.0,
                                             std_latency=0.0,
@@ -179,7 +182,7 @@ def custom_runner_package(workspace) -> Package:
             dataloader_trt_profile=TensorRTProfile(),
             dataloader_max_batch_size=2,
         ),
-        workspace=workspace,
+        workspace=Workspace(workspace),
         model=None,
     )
     for models_status in package.status.models_status.values():
@@ -228,6 +231,7 @@ def trochscript_package_without_source(workspace) -> Package:
                                 "Performance": {
                                     "profiling_results": [
                                         ProfilingResults(
+                                            sample_id=0,
                                             batch_size=1,
                                             avg_latency=1.0,
                                             std_latency=0.0,
@@ -250,7 +254,7 @@ def trochscript_package_without_source(workspace) -> Package:
             dataloader_trt_profile=TensorRTProfile(),
             dataloader_max_batch_size=2,
         ),
-        workspace=workspace,
+        workspace=Workspace(workspace),
         model=None,
     )
 
@@ -313,6 +317,7 @@ def trochscript_package_with_source(workspace) -> Package:
                                 "Performance": {
                                     "profiling_results": [
                                         ProfilingResults(
+                                            sample_id=0,
                                             batch_size=1,
                                             avg_latency=2.0,
                                             std_latency=0.0,
@@ -348,6 +353,7 @@ def trochscript_package_with_source(workspace) -> Package:
                                 "Performance": {
                                     "profiling_results": [
                                         ProfilingResults(
+                                            sample_id=0,
                                             batch_size=1,
                                             avg_latency=1.0,
                                             std_latency=0.0,
@@ -370,7 +376,7 @@ def trochscript_package_with_source(workspace) -> Package:
             dataloader_trt_profile=TensorRTProfile(),
             dataloader_max_batch_size=2,
         ),
-        workspace=workspace,
+        workspace=Workspace(workspace),
         model=None,
     )
 
@@ -427,6 +433,7 @@ def onnx_package_with_tensorrt_runner(workspace) -> Package:
                                 "Performance": {
                                     "profiling_results": [
                                         ProfilingResults(
+                                            sample_id=0,
                                             batch_size=1,
                                             avg_latency=2.0,
                                             std_latency=0.0,
@@ -457,6 +464,7 @@ def onnx_package_with_tensorrt_runner(workspace) -> Package:
                                 "Performance": {
                                     "profiling_results": [
                                         ProfilingResults(
+                                            sample_id=0,
                                             batch_size=1,
                                             avg_latency=1.0,
                                             std_latency=0.0,
@@ -479,7 +487,7 @@ def onnx_package_with_tensorrt_runner(workspace) -> Package:
             dataloader_trt_profile=TensorRTProfile(),
             dataloader_max_batch_size=2,
         ),
-        workspace=workspace,
+        workspace=Workspace(workspace),
         model=None,
     )
     for models_status in package.status.models_status.values():
@@ -535,6 +543,7 @@ def onnx_package_with_cuda_runner(workspace) -> Package:
                                 "Performance": {
                                     "profiling_results": [
                                         ProfilingResults(
+                                            sample_id=0,
                                             batch_size=1,
                                             avg_latency=2.0,
                                             std_latency=0.0,
@@ -565,6 +574,7 @@ def onnx_package_with_cuda_runner(workspace) -> Package:
                                 "Performance": {
                                     "profiling_results": [
                                         ProfilingResults(
+                                            sample_id=0,
                                             batch_size=1,
                                             avg_latency=1.0,
                                             std_latency=0.0,
@@ -587,7 +597,7 @@ def onnx_package_with_cuda_runner(workspace) -> Package:
             dataloader_trt_profile=TensorRTProfile(),
             dataloader_max_batch_size=2,
         ),
-        workspace=workspace,
+        workspace=Workspace(workspace),
         model=None,
     )
     for models_status in package.status.models_status.values():
@@ -643,6 +653,7 @@ def onnx_package_with_cpu_runner_only(workspace) -> Package:
                                 "Performance": {
                                     "profiling_results": [
                                         ProfilingResults(
+                                            sample_id=0,
                                             batch_size=1,
                                             avg_latency=2.0,
                                             std_latency=0.0,
@@ -665,7 +676,7 @@ def onnx_package_with_cpu_runner_only(workspace) -> Package:
             dataloader_trt_profile=TensorRTProfile(),
             dataloader_max_batch_size=2,
         ),
-        workspace=workspace,
+        workspace=Workspace(workspace),
         model=None,
     )
     for models_status in package.status.models_status.values():
@@ -716,6 +727,7 @@ def tensorflow_package_with_tensorflow_only(workspace) -> Package:
                                 "Performance": {
                                     "profiling_results": [
                                         ProfilingResults(
+                                            sample_id=0,
                                             batch_size=1,
                                             avg_latency=2.0,
                                             std_latency=0.0,
@@ -738,7 +750,7 @@ def tensorflow_package_with_tensorflow_only(workspace) -> Package:
             dataloader_trt_profile=TensorRTProfile(),
             dataloader_max_batch_size=2,
         ),
-        workspace=workspace,
+        workspace=Workspace(workspace),
         model=None,
     )
     for models_status in package.status.models_status.values():
@@ -796,6 +808,7 @@ def tensorflow_package_with_tensorflow_tensorrt(workspace) -> Package:
                                 "Performance": {
                                     "profiling_results": [
                                         ProfilingResults(
+                                            sample_id=0,
                                             batch_size=1,
                                             avg_latency=2.0,
                                             std_latency=0.0,
@@ -827,6 +840,7 @@ def tensorflow_package_with_tensorflow_tensorrt(workspace) -> Package:
                                 "Performance": {
                                     "profiling_results": [
                                         ProfilingResults(
+                                            sample_id=0,
                                             batch_size=1,
                                             avg_latency=1.0,
                                             std_latency=0.0,
@@ -849,7 +863,7 @@ def tensorflow_package_with_tensorflow_tensorrt(workspace) -> Package:
             dataloader_trt_profile=TensorRTProfile(),
             dataloader_max_batch_size=2,
         ),
-        workspace=workspace,
+        workspace=Workspace(workspace),
         model=None,
     )
     for models_status in package.status.models_status.values():
@@ -908,6 +922,7 @@ def tensorflow_package_with_optimal_model_tensorflow_tensorrt_and_dummy_navigato
                                 "Performance": {
                                     "profiling_results": [
                                         ProfilingResults(
+                                            sample_id=0,
                                             batch_size=1,
                                             avg_latency=2.0,
                                             std_latency=0.0,
@@ -939,6 +954,7 @@ def tensorflow_package_with_optimal_model_tensorflow_tensorrt_and_dummy_navigato
                                 "Performance": {
                                     "profiling_results": [
                                         ProfilingResults(
+                                            sample_id=0,
                                             batch_size=1,
                                             avg_latency=1.0,
                                             std_latency=0.0,
@@ -961,7 +977,7 @@ def tensorflow_package_with_optimal_model_tensorflow_tensorrt_and_dummy_navigato
             dataloader_trt_profile=TensorRTProfile(),
             dataloader_max_batch_size=2,
         ),
-        workspace=workspace,
+        workspace=Workspace(workspace),
         model=None,
     )
     for models_status in package.status.models_status.values():
@@ -1023,6 +1039,7 @@ def torchscript_package_with_cpu_only(workspace) -> Package:
                                 "Performance": {
                                     "profiling_results": [
                                         ProfilingResults(
+                                            sample_id=0,
                                             batch_size=1,
                                             avg_latency=2.0,
                                             std_latency=0.0,
@@ -1045,7 +1062,7 @@ def torchscript_package_with_cpu_only(workspace) -> Package:
             dataloader_trt_profile=TensorRTProfile(),
             dataloader_max_batch_size=2,
         ),
-        workspace=workspace,
+        workspace=Workspace(workspace),
         model=None,
     )
     for models_status in package.status.models_status.values():
@@ -1104,6 +1121,7 @@ def torchscript_package_with_cuda(workspace) -> Package:
                                 "Performance": {
                                     "profiling_results": [
                                         ProfilingResults(
+                                            sample_id=0,
                                             batch_size=1,
                                             avg_latency=1.0,
                                             std_latency=0.0,
@@ -1130,6 +1148,7 @@ def torchscript_package_with_cuda(workspace) -> Package:
                                 "Performance": {
                                     "profiling_results": [
                                         ProfilingResults(
+                                            sample_id=0,
                                             batch_size=1,
                                             avg_latency=2.0,
                                             std_latency=0.0,
@@ -1152,7 +1171,7 @@ def torchscript_package_with_cuda(workspace) -> Package:
             dataloader_trt_profile=TensorRTProfile(),
             dataloader_max_batch_size=2,
         ),
-        workspace=workspace,
+        workspace=Workspace(workspace),
         model=None,
     )
     for models_status in package.status.models_status.values():
@@ -1217,6 +1236,7 @@ def torchscript_package_with_torch_tensorrt(workspace) -> Package:
                                 "Performance": {
                                     "profiling_results": [
                                         ProfilingResults(
+                                            sample_id=0,
                                             batch_size=1,
                                             avg_latency=1.0,
                                             std_latency=0.0,
@@ -1248,6 +1268,7 @@ def torchscript_package_with_torch_tensorrt(workspace) -> Package:
                                 "Performance": {
                                     "profiling_results": [
                                         ProfilingResults(
+                                            sample_id=0,
                                             batch_size=1,
                                             avg_latency=2.0,
                                             std_latency=0.0,
@@ -1270,7 +1291,7 @@ def torchscript_package_with_torch_tensorrt(workspace) -> Package:
             dataloader_trt_profile=TensorRTProfile(),
             dataloader_max_batch_size=2,
         ),
-        workspace=workspace,
+        workspace=Workspace(workspace),
         model=None,
     )
     for models_status in package.status.models_status.values():
@@ -1340,6 +1361,7 @@ def onnx_package(workspace) -> Package:
                                 "Performance": {
                                     "profiling_results": [
                                         ProfilingResults(
+                                            sample_id=0,
                                             batch_size=1,
                                             avg_latency=1.0,
                                             std_latency=0.0,
@@ -1371,6 +1393,7 @@ def onnx_package(workspace) -> Package:
                                 "Performance": {
                                     "profiling_results": [
                                         ProfilingResults(
+                                            sample_id=0,
                                             batch_size=1,
                                             avg_latency=1.0,
                                             std_latency=0.0,
@@ -1393,7 +1416,7 @@ def onnx_package(workspace) -> Package:
             dataloader_trt_profile=TensorRTProfile(),
             dataloader_max_batch_size=2,
         ),
-        workspace=workspace,
+        workspace=Workspace(workspace),
         model=None,
     )
     for models_status in package.status.models_status.values():
@@ -1456,6 +1479,7 @@ def tensorrt_package(workspace) -> Package:
                                 "Performance": {
                                     "profiling_results": [
                                         ProfilingResults(
+                                            sample_id=0,
                                             batch_size=1,
                                             avg_latency=1.0,
                                             std_latency=0.0,
@@ -1478,7 +1502,7 @@ def tensorrt_package(workspace) -> Package:
             dataloader_trt_profile=TensorRTProfile(),
             dataloader_max_batch_size=2,
         ),
-        workspace=workspace,
+        workspace=Workspace(workspace),
         model=None,
     )
     for models_status in package.status.models_status.values():

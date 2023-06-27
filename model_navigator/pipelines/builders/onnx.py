@@ -36,7 +36,7 @@ def onnx_export_builder(config: CommonConfig, models_config: Dict[Format, List[M
     """
     execution_units: List[ExecutionUnit] = []
     for model_cfg in models_config.get(Format.ONNX, []):
-        execution_units.append(ExecutionUnit(CopyONNX, config, model_cfg))
+        execution_units.append(ExecutionUnit(command=CopyONNX, model_config=model_cfg))
 
     return Pipeline(name="ONNX Export", execution_units=execution_units)
 
@@ -56,5 +56,5 @@ def onnx_conversion_builder(config: CommonConfig, models_config: Dict[Format, Li
         from model_navigator.commands.convert.onnx import ConvertONNX2TRT
 
         for model_cfg in models_config.get(Format.TENSORRT, []):
-            execution_units.append(ExecutionUnit(ConvertONNX2TRT, config, model_cfg))
+            execution_units.append(ExecutionUnit(command=ConvertONNX2TRT, model_config=model_cfg))
     return Pipeline(name="ONNX Conversion", execution_units=execution_units)

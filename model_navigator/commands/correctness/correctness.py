@@ -14,16 +14,17 @@
 """Correctness command and it's results."""
 
 import json
+import pathlib
 import tempfile
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any, Dict, List, Optional, Type
 
 from model_navigator.api.config import Format
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
+from model_navigator.commands.execution_context import ExecutionContext
+from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata
-from model_navigator.execution_context import ExecutionContext
-from model_navigator.logger import LOGGER
+from model_navigator.core.workspace import Workspace
 from model_navigator.runners.base import NavigatorRunner
 from model_navigator.utils.common import DataObject, parse_kwargs_to_cmd
 from model_navigator.utils.format_helpers import is_source_format
@@ -84,13 +85,13 @@ class Correctness(Command):
 
     def _run(
         self,
-        workspace: Path,
+        workspace: Workspace,
         format: Format,
         runner_cls: Type[NavigatorRunner],
         input_metadata: TensorMetadata,
         output_metadata: TensorMetadata,
         batch_dim: Optional[int],
-        path: Path,
+        path: pathlib.Path,
         verbose: bool,
         model: Optional[Any] = None,
     ) -> CommandOutput:
@@ -113,7 +114,7 @@ class Correctness(Command):
         """
         per_output_tolerance = None
         LOGGER.info(f"Correctness test for: {format} {runner_cls} started.")
-        model_path = workspace / path
+        model_path = workspace.path / path
         model_dir = model_path.parent
 
         if not is_source_format(format) and not model_path.exists():
@@ -127,7 +128,7 @@ class Correctness(Command):
             verbose=verbose,
         ) as context, tempfile.NamedTemporaryFile() as temp_file:
             kwargs = {
-                "navigator_workspace": workspace.as_posix(),
+                "navigator_workspace": workspace.path.as_posix(),
                 "batch_dim": batch_dim,
                 "results_path": temp_file.name,
                 "runner_name": runner_cls.name(),

@@ -41,7 +41,12 @@ def main():
 
     import model_navigator as nav
     from tests import utils
-    from tests.functional.common.utils import collect_expected_files, collect_status, validate_package, validate_status
+    from tests.functional.common.utils import (
+        collect_expected_files,
+        collect_optimize_status,
+        validate_package,
+        validate_status,
+    )
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -91,7 +96,7 @@ def main():
     nav.package.save(package, package_path)
 
     status_file = args.status
-    status = collect_status(package.status)
+    status = collect_optimize_status(package.status)
 
     validate_status(status, expected_statuses=EXPECTED_STATUES)
 

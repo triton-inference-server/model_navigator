@@ -40,8 +40,9 @@ plugins:
             show_root_heading: true
             heading_level: 2
             line_length: 120
-            docstring_section_style: table
+            docstring_section_style: list
             merge_init_into_class: true
+            separate_signature: true
   - search
 watch:
   - model_navigator
@@ -69,27 +70,38 @@ nav:
   - Home: README.md
   - Installation: installation.md
   - Quick start: quick_start.md
-  - How it works?: how_it_works.md
+  - Optimize Model:
+    - Using optimize: optimize/optimize.md
+    - Optimize API:
+      -   Config: optimize/config.md
+      -   JAX: optimize/jax.md
+      -   ONNX: optimize/onnx.md
+      -   TensorFlow 2: optimize/tensorflow.md
+      -   PyTorch: optimize/torch.md
+      -   Python: optimize/python.md
+  - Navigator Package:
+    - Using package: package/package.md
+    - Package API:
+      - Package: package/package_api.md
+      - Load: package/package_load_api.md
+      - Save: package/package_save_api.md
+      - Optimize: package/package_optimize_api.md
+      - Profile: package/package_profile_api.md
+  - Inference Deployment:
+    - PyTriton:
+        - Deploying models: pytriton/pytriton_deployment.md
+        - PyTritonAdapter API: pytriton/pytriton_adapter.md
+    - Triton Inference Server:
+        - Deploying models: triton/triton_deployment.md
+        - Model Store API:
+            - Adding Model: triton/model_store_api.md
+            - Specialized Configs: triton/specialized_configs.md
+            - Instance Group: triton/instance_groups.md
+            - Inputs and Outputs: triton/inputs_and_outputs.md
+            - Dynamic Batcher: triton/dynamic_batcher.md
+            - Sequence Batcher: triton/sequence_batcher.md
+            - Accelerators: triton/accelerators.md
   - Examples: examples.md
-  - Triton Inference Server:
-    - Deploying models: triton/triton_deployment.md
-    - Python API: triton/model_store_api.md
-    - Specialized Configs: triton/specialized_configs.md
-    - Instance Group: triton/instance_groups.md
-    - Inputs and Outputs: triton/inputs_and_outputs.md
-    - Dynamic Batcher: triton/dynamic_batcher.md
-    - Sequence Batcher: triton/sequence_batcher.md
-    - Accelerators: triton/accelerators.md
-  - API Reference:
-    - Config: api/config.md
-    - JAX: api/jax.md
-    - ONNX: api/onnx.md
-    - TensorFlow 2: api/tensorflow.md
-    - PyTorch: api/torch.md
-    - Package: api/package.md
-    - Python: api/python.md
-    - PyTriton: api/pytriton.md
-    - PyTriton: api/utilities.md
   - Changelog: CHANGELOG.md
   - Known Issues: known_issues.md
   - Contributing: CONTRIBUTING.md

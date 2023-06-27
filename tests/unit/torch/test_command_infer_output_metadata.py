@@ -19,8 +19,10 @@ import pytest
 import torch  # pytype: disable=import-error
 
 from model_navigator.commands.base import CommandStatus
+from model_navigator.commands.data_dump.samples import samples_to_npz
 from model_navigator.commands.infer_metadata import InferOutputMetadata
 from model_navigator.core.tensor import TensorMetadata
+from model_navigator.core.workspace import Workspace
 from model_navigator.exceptions import ModelNavigatorUserInputError
 from model_navigator.frameworks import Framework
 
@@ -35,7 +37,7 @@ def test_infer_output_metadata_return_fails_status_when_invalid_model_used():
 
     dataloader = [torch.randn(1) for _ in range(5)]
 
-    profiling_sample = {"input_0": np.random.randint(1, 10, 1, dtype=np.int32)}
+    profiling_sample = [{"input_0": np.random.randint(1, 10, 1, dtype=np.int32)}]
 
     conversion_samples = []
     for _ in range(5):
@@ -45,6 +47,9 @@ def test_infer_output_metadata_return_fails_status_when_invalid_model_used():
     with tempfile.TemporaryDirectory() as tmpdir:
         workspace = pathlib.Path(tmpdir)
 
+        samples_to_npz(samples=profiling_sample, path=workspace / "model_input" / "profiling", batch_dim=0)
+        samples_to_npz(samples=conversion_samples, path=workspace / "model_input" / "conversion", batch_dim=0)
+
         with pytest.raises(ModelNavigatorUserInputError):
             InferOutputMetadata().run(
                 framework=Framework.TORCH,
@@ -53,7 +58,7 @@ def test_infer_output_metadata_return_fails_status_when_invalid_model_used():
                 profiling_sample=profiling_sample,
                 conversion_samples=conversion_samples,
                 input_metadata=input_metadata,
-                workspace=workspace,
+                workspace=Workspace(workspace),
                 verbose=True,
             )
 
@@ -68,7 +73,7 @@ def test_infer_output_metadata_return_success_status_when_valid_model_used():
 
     dataloader = [torch.randn(1) for _ in range(5)]
 
-    profiling_sample = {"input_0": np.random.randint(1, 10, 1, dtype=np.int32)}
+    profiling_sample = [{"input_0": np.random.randint(1, 10, 1, dtype=np.int32)}]
 
     conversion_samples = []
     for _ in range(5):
@@ -77,6 +82,10 @@ def test_infer_output_metadata_return_success_status_when_valid_model_used():
 
     with tempfile.TemporaryDirectory() as tmpdir:
         workspace = pathlib.Path(tmpdir)
+
+        samples_to_npz(samples=profiling_sample, path=workspace / "model_input" / "profiling", batch_dim=0)
+        samples_to_npz(samples=conversion_samples, path=workspace / "model_input" / "conversion", batch_dim=0)
+
         status = InferOutputMetadata().run(
             framework=Framework.TORCH,
             model=Model(),
@@ -84,7 +93,7 @@ def test_infer_output_metadata_return_success_status_when_valid_model_used():
             profiling_sample=profiling_sample,
             conversion_samples=conversion_samples,
             input_metadata=input_metadata,
-            workspace=workspace,
+            workspace=Workspace(workspace),
             verbose=True,
         )
 

@@ -44,5 +44,7 @@ def verify_builder(config: CommonConfig, models_config: Dict[Format, List[ModelC
                     and runner.name() in config.runner_names
                     and config.target_device in runner.devices_kind()
                 ):
-                    execution_units.append(ExecutionUnit(VerifyModel, config, model_config, runner))
-    return Pipeline(name="Verfiy Models", execution_units=execution_units)
+                    execution_units.append(
+                        ExecutionUnit(command=VerifyModel, model_config=model_config, runner_cls=runner)
+                    )
+    return Pipeline(name="Verify Models", execution_units=execution_units)

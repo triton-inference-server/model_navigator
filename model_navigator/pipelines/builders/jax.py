@@ -35,5 +35,5 @@ def jax_export_builder(config: CommonConfig, models_config: Dict[Format, List[Mo
     """
     execution_units: List[ExecutionUnit] = []
     for model_cfg in models_config.get(Format.TF_SAVEDMODEL, []):
-        execution_units.append(ExecutionUnit(ExportJAX2SavedModel, config, model_cfg))
+        execution_units.append(ExecutionUnit(command=ExportJAX2SavedModel, model_config=model_cfg))
     return Pipeline(name="JAX Export", execution_units=execution_units)

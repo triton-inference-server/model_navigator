@@ -17,12 +17,14 @@ import pathlib
 import tempfile
 
 from model_navigator.api.package import optimize
-from model_navigator.core.package import Package
-from model_navigator.core.status import Status
-from model_navigator.pipelines.pipeline_manager import PipelineManager
+from model_navigator.core.workspace import Workspace
+from model_navigator.package.package import Package
+from model_navigator.package.status import Status
 from tests.unit.base.mocks.packages import empty_package
-from tests.unit.base.mocks.statuses import (  # status_dict_v0_1_2, status_dict_v0_1_3,
+from tests.unit.base.mocks.statuses import (
     status_dict_v0_1_0,
+    status_dict_v0_1_2,
+    status_dict_v0_1_3,
     status_dict_v0_1_4,
     status_dict_v0_2_0,
     status_dict_v0_2_1,
@@ -40,52 +42,57 @@ def test_from_dict_returns_status_when_input_is_0_1_0_status_dict(mocker):
         workspace.mkdir()
 
         for model_status in status.models_status.values():
-            (workspace / model_status.model_config.path.parent).mkdir()
+            (workspace / model_status.model_config.path.parent).mkdir(exist_ok=True)
 
-        package = Package(status=status, workspace=workspace)
+        package = Package(status=status, workspace=Workspace(workspace))
         package.save_status_file()
 
-        with mocker.patch.object(PipelineManager, "run"), mocker.patch("model_navigator.api.package._get_builders"):
+        with mocker.patch("model_navigator.api.package.optimize_pipeline"), mocker.patch(
+            "model_navigator.api.package._get_builders"
+        ):
             optimize(package=package)
 
 
-# TODO Temporarilty disabled because of missing parent information in old package.
-# def test_from_dict_returns_status_when_input_is_0_1_2_status_dict(mocker):
-#     status_dict = status_dict_v0_1_2()
-#     status = Status.from_dict(status_dict)
+def test_from_dict_returns_status_when_input_is_0_1_2_status_dict(mocker):
+    status_dict = status_dict_v0_1_2()
+    status = Status.from_dict(status_dict)
 
-#     with tempfile.TemporaryDirectory() as tempdir:
-#         tempdir = pathlib.Path(tempdir)
-#         workspace = tempdir / "navigator_workspace"
-#         workspace.mkdir()
+    with tempfile.TemporaryDirectory() as tempdir:
+        tempdir = pathlib.Path(tempdir)
+        workspace = tempdir / "navigator_workspace"
+        workspace.mkdir()
 
-#         for model_status in status.models_status.values():
-#             (workspace / model_status.model_config.path.parent).mkdir()
+        for model_status in status.models_status.values():
+            (workspace / model_status.model_config.path.parent).mkdir(exist_ok=True)
 
-#         package = Package(status=status, workspace=workspace)
-#         package.save_status_file()
+        package = Package(status=status, workspace=Workspace(workspace))
+        package.save_status_file()
 
-#         with mocker.patch.object(PipelineManager, "run"), mocker.patch("model_navigator.api.package._get_builders"):
-#             optimize(package=package)
+        with mocker.patch("model_navigator.api.package.optimize_pipeline"), mocker.patch(
+            "model_navigator.api.package._get_builders"
+        ):
+            optimize(package=package)
 
-# TODO Temporarilty disabled because of missing parent information in old package.
-# def test_from_dict_returns_status_when_input_is_0_1_3_status_dict(mocker):
-#     status_dict = status_dict_v0_1_3()
-#     status = Status.from_dict(status_dict)
 
-#     with tempfile.TemporaryDirectory() as tempdir:
-#         tempdir = pathlib.Path(tempdir)
-#         workspace = tempdir / "navigator_workspace"
-#         workspace.mkdir()
+def test_from_dict_returns_status_when_input_is_0_1_3_status_dict(mocker):
+    status_dict = status_dict_v0_1_3()
+    status = Status.from_dict(status_dict)
 
-#         for model_status in status.models_status.values():
-#             (workspace / model_status.model_config.path.parent).mkdir()
+    with tempfile.TemporaryDirectory() as tempdir:
+        tempdir = pathlib.Path(tempdir)
+        workspace = tempdir / "navigator_workspace"
+        workspace.mkdir()
 
-#         package = Package(status=status, workspace=workspace)
-#         package.save_status_file()
+        for model_status in status.models_status.values():
+            (workspace / model_status.model_config.path.parent).mkdir(exist_ok=True)
 
-#         with mocker.patch.object(PipelineManager, "run"), mocker.patch("model_navigator.api.package._get_builders"):
-#             optimize(package=package)
+        package = Package(status=status, workspace=Workspace(workspace))
+        package.save_status_file()
+
+        with mocker.patch("model_navigator.api.package.optimize_pipeline"), mocker.patch(
+            "model_navigator.api.package._get_builders"
+        ):
+            optimize(package=package)
 
 
 def test_from_dict_returns_status_when_input_is_0_1_4_status_dict(mocker):
@@ -100,10 +107,12 @@ def test_from_dict_returns_status_when_input_is_0_1_4_status_dict(mocker):
         for model_status in status.models_status.values():
             (workspace / model_status.model_config.path.parent).mkdir()
 
-        package = Package(status=status, workspace=workspace)
+        package = Package(status=status, workspace=Workspace(workspace))
         package.save_status_file()
 
-        with mocker.patch.object(PipelineManager, "run"), mocker.patch("model_navigator.api.package._get_builders"):
+        with mocker.patch("model_navigator.api.package.optimize_pipeline"), mocker.patch(
+            "model_navigator.api.package._get_builders"
+        ):
             optimize(package=package)
 
 
@@ -119,10 +128,12 @@ def test_from_dict_returns_status_when_input_is_0_2_0_status_dict(mocker):
         for model_status in status.models_status.values():
             (workspace / model_status.model_config.path.parent).mkdir()
 
-        package = Package(status=status, workspace=workspace)
+        package = Package(status=status, workspace=Workspace(workspace))
         package.save_status_file()
 
-        with mocker.patch.object(PipelineManager, "run"), mocker.patch("model_navigator.api.package._get_builders"):
+        with mocker.patch("model_navigator.api.package.optimize_pipeline"), mocker.patch(
+            "model_navigator.api.package._get_builders"
+        ):
             optimize(package=package)
 
 
@@ -138,10 +149,12 @@ def test_from_dict_returns_status_when_input_is_0_2_1_status_dict(mocker):
         for model_status in status.models_status.values():
             (workspace / model_status.model_config.path.parent).mkdir()
 
-        package = Package(status=status, workspace=workspace)
+        package = Package(status=status, workspace=Workspace(workspace))
         package.save_status_file()
 
-        with mocker.patch.object(PipelineManager, "run"), mocker.patch("model_navigator.api.package._get_builders"):
+        with mocker.patch("model_navigator.api.package.optimize_pipeline"), mocker.patch(
+            "model_navigator.api.package._get_builders"
+        ):
             optimize(package=package)
 
 
@@ -157,10 +170,12 @@ def test_from_dict_returns_status_when_input_is_0_2_2_status_dict(mocker):
         for model_status in status.models_status.values():
             (workspace / model_status.model_config.path.parent).mkdir()
 
-        package = Package(status=status, workspace=workspace)
+        package = Package(status=status, workspace=Workspace(workspace))
         package.save_status_file()
 
-        with mocker.patch.object(PipelineManager, "run"), mocker.patch("model_navigator.api.package._get_builders"):
+        with mocker.patch("model_navigator.api.package.optimize_pipeline"), mocker.patch(
+            "model_navigator.api.package._get_builders"
+        ):
             optimize(package=package)
 
 

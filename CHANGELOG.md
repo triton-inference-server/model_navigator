@@ -17,12 +17,14 @@ limitations under the License.
 # Changelog
 
 ## 0.6.0 (unreleased)
-- new: Zero-copy runners for Torch, ONNX and TensorRT
+- new: Zero-copy runners for Torch, ONNX and TensorRT - omit H2D and D2H memory copy between runners execution
+- new: `nav.pacakge.profile` API method to profile generated models on provided dataloader
 - change: ProfilerConfig replaced with OptimizationProfile:
   - new: OptimizationProfile impact the conversion for TensorRT
   - new: `batch_sizes` and `max_batch_size` limit the max profile in TensorRT conversion
   - new: Allow to provide separate dataloader for profiling - first sample used only
 - new: allow to run `nav.package.optimize` on empty package - status generation only
+- fix: Missing `model` in config when passing package generated during `nav.{framework}.optimize` directly to `nav.package.optimize` command
 
 
 ## 0.5.6
@@ -46,7 +48,7 @@ limitations under the License.
 
 
 ## 0.5.5
-- new: Public nav.utilities module with UnpackedDataloader wrapper
+- new: Public `nav.utilities` module with UnpackedDataloader wrapper
 - new: Added support for strict flag in Torch custom config
 - new: Extended TensorRT custom config to support builder optimization level and hardware compatibility flags
 - fix: Invalid optimal shape calculation for odd values in max batch size

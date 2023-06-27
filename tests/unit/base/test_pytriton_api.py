@@ -13,8 +13,8 @@
 # limitations under the License.
 
 import os
+import pathlib
 import tempfile
-from pathlib import Path
 
 import numpy as np
 import pytest
@@ -26,7 +26,7 @@ from tests.unit.base.mocks.packages import empty_package, onnx_package_with_cuda
 
 def test_pytriton_adapter_returns_valid_model_config():
     with tempfile.TemporaryDirectory() as tmp_dir:
-        workspace = Path(tmp_dir) / "navigator_workspace"
+        workspace = pathlib.Path(tmp_dir) / "navigator_workspace"
 
         package = onnx_package_with_cuda_runner(workspace)
         adapter = PyTritonAdapter(package)
@@ -39,7 +39,7 @@ def test_pytriton_adapter_returns_valid_model_config():
 
 def test_pytriton_adapter_returns_valid_inputs():
     with tempfile.TemporaryDirectory() as tmp_dir:
-        workspace = Path(tmp_dir) / "navigator_workspace"
+        workspace = pathlib.Path(tmp_dir) / "navigator_workspace"
 
         package = onnx_package_with_cuda_runner(workspace)
         adapter = PyTritonAdapter(package)
@@ -53,7 +53,7 @@ def test_pytriton_adapter_returns_valid_inputs():
 
 def test_pytriton_adapter_returns_valid_outputs():
     with tempfile.TemporaryDirectory() as tmp_dir:
-        workspace = Path(tmp_dir) / "navigator_workspace"
+        workspace = pathlib.Path(tmp_dir) / "navigator_workspace"
 
         package = onnx_package_with_cuda_runner(workspace)
         adapter = PyTritonAdapter(package)
@@ -67,7 +67,7 @@ def test_pytriton_adapter_returns_valid_outputs():
 
 def test_pytriton_adapter_returns_valid_batching():
     with tempfile.TemporaryDirectory() as tmp_dir:
-        workspace = Path(tmp_dir) / "navigator_workspace"
+        workspace = pathlib.Path(tmp_dir) / "navigator_workspace"
 
         package = onnx_package_with_cuda_runner(workspace)
         adapter = PyTritonAdapter(package)
@@ -76,7 +76,7 @@ def test_pytriton_adapter_returns_valid_batching():
 
 def test_pytriton_adapter_selects_valid_runner():
     with tempfile.TemporaryDirectory() as tmp_dir:
-        workspace = Path(tmp_dir) / "navigator_workspace"
+        workspace = pathlib.Path(tmp_dir) / "navigator_workspace"
 
         package = onnx_package_with_cuda_runner(workspace)
         adapter = PyTritonAdapter(package)
@@ -87,7 +87,7 @@ def test_pytriton_adapter_selects_valid_runner():
 
 def test_pytriton_adapter_with_empty_package():
     with tempfile.TemporaryDirectory() as tmp_dir:
-        workspace = Path(tmp_dir) / "navigator_workspace"
+        workspace = pathlib.Path(tmp_dir) / "navigator_workspace"
 
         package = empty_package(workspace)
         with pytest.raises(ModelNavigatorNotFoundError):

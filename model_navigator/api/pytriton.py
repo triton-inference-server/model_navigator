@@ -19,8 +19,8 @@ from typing import Dict, List, Optional, Type, Union
 
 import numpy as np
 
-from model_navigator.core.package import Package
 from model_navigator.exceptions import ModelNavigatorNotFoundError
+from model_navigator.package.package import Package
 from model_navigator.runners.base import NavigatorRunner
 from model_navigator.runtime_analyzer.strategy import MaxThroughputAndMinLatencyStrategy, RuntimeSearchStrategy
 

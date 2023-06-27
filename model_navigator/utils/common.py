@@ -18,14 +18,13 @@ import glob
 import os
 import pathlib
 from enum import Enum
-from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Type, TypeVar, Union
 
 import dacite
 import numpy
 from polygraphy.backend.trt.profile import Profile, ShapeTuple
 
-from model_navigator.logger import LOGGER
+from model_navigator.core.logger import LOGGER
 from model_navigator.utils import module
 
 torch = module.lazy_import("torch")
@@ -52,7 +51,7 @@ def dataclass2dict(config: Any) -> Dict:
 
             if isinstance(value_, Enum):
                 value_ = value_.value
-            elif isinstance(value_, Path):
+            elif isinstance(value_, pathlib.Path):
                 value_ = value_.as_posix()
             elif isinstance(value_, numpy.dtype):
                 value_ = str(value_)
@@ -80,7 +79,7 @@ def dict2dataclass(cls: Type[T], data: Dict) -> T:
     Returns:
         T: Dataclass.
     """
-    dataclass = dacite.from_dict(cls, data, config=dacite.Config(cast=[Enum, Path, tuple, numpy.dtype]))
+    dataclass = dacite.from_dict(cls, data, config=dacite.Config(cast=[Enum, pathlib.Path, tuple, numpy.dtype]))
     assert isinstance(dataclass, cls)
     assert dataclasses.is_dataclass(dataclass)
     return dataclass
@@ -104,17 +103,49 @@ class DataObject:
         data = {}
 
         if filter_fields:
-            filtered_data = {key: value for key, value in self.__dict__.items() if key not in filter_fields}
+            filtered_data = DataObject.filter_data(
+                data=self.__dict__,
+                filter_fields=filter_fields,
+            )
         else:
             filtered_data = self.__dict__
 
         if parse:
-            for key, value in filtered_data.items():
-                data[key] = self.parse_value(value)
+            data = DataObject.parse_data(filtered_data)
         else:
             data = filtered_data
 
         return data
+
+    @staticmethod
+    def filter_data(data: Dict, filter_fields: List[str]):
+        """Filter fields in dictionary.
+
+        Args:
+            data: Dictionary with data to filter
+            filter_fields: Fields to filter
+
+        Returns:
+            Filtered dictionary
+        """
+        filtered_data = {key: value for key, value in data.items() if key not in filter_fields}
+        return filtered_data
+
+    @staticmethod
+    def parse_data(data: Dict):
+        """Parse values in provided data.
+
+        Args:
+            data: Dictionary with data to parse
+
+        Returns:
+            Parsed dictionary
+        """
+        parsed_data = {}
+        for key, value in data.items():
+            parsed_data[key] = DataObject.parse_value(value)
+
+        return parsed_data
 
     @staticmethod
     def parse_value(value: Any) -> Union[str, Dict, List]:
@@ -140,6 +171,7 @@ class DataObject:
             value = str(value)
         elif isinstance(value, ShapeTuple):
             value = vars(value)
+
         return value
 
     @staticmethod
@@ -228,29 +260,6 @@ def get_default_status_filename() -> str:
         str: Filename.
     """
     return "status.yaml"
-
-
-def get_default_workspace() -> Path:
-    """Get default workspace path.
-
-    Returns:
-        Path: Worskspace path.
-    """
-    return Path.cwd() / "navigator_workspace"
-
-
-def pad_string(s: str) -> str:
-    """Pad string with `=` signs.
-
-    Args:
-        s (str): String.
-
-    Returns:
-        str: Padded string.
-    """
-    s = f"{30 * '='} {s} "
-    s = s.ljust(100, "=")
-    return s
 
 
 def parse_kwargs_to_cmd(kwargs: Dict[str, Any]) -> List[str]:
@@ -373,7 +382,9 @@ def is_file_like(obj):
         return True
 
 
-def load_file(src: Union[str, Path], mode: str = "rb", description: Optional[str] = None) -> Union[str, bytes, None]:
+def load_file(
+    src: Union[str, pathlib.Path], mode: str = "rb", description: Optional[str] = None
+) -> Union[str, bytes, None]:
     """Reads from the specified source path or file-like object.
 
     Args:

@@ -13,25 +13,20 @@
 # limitations under the License.
 from unittest.mock import MagicMock
 
-import model_navigator as nav
 from model_navigator.commands.verification.verify import VerifyModel
-from tests.unit.base.mocks.packages import trochscript_package_with_source
 
 
-def test_verify_model_pre_run_returns_true_when_correctness_and_performance_are_ok():
-    status = trochscript_package_with_source(MagicMock()).status
-    verify_model = VerifyModel(status)
+def test_verify_model_pre_run_returns_true_when_verify_function_is_passed():
+    verify_model = VerifyModel()
 
     runner_mock = MagicMock()
     runner_mock.name = MagicMock(return_value="TorchCPU")
-    assert verify_model._pre_run(verify_func=MagicMock(), key="torch", runner_cls=runner_mock) is True
+    assert verify_model._pre_run(verify_func=MagicMock()) is True  # pytype: disable=wrong-arg-types
 
 
-def test_verify_model_pre_run_returns_false_when_correctness_and_performance_are_not_ok():
-    status = trochscript_package_with_source(MagicMock()).status
-    status.models_status["torch"].runners_status["TorchCPU"].status["Correctness"] = nav.CommandStatus.FAIL
-    verify_model = VerifyModel(status)
+def test_verify_model_pre_run_returns_false_when_verify_function_is_none():
+    verify_model = VerifyModel()
 
     runner_mock = MagicMock()
     runner_mock.name = MagicMock(return_value="TorchCPU")
-    assert verify_model._pre_run(verify_func=MagicMock(), key="torch", runner_cls=runner_mock) is False
+    assert verify_model._pre_run(verify_func=None) is False  # pytype: disable=wrong-arg-types

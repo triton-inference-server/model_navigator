@@ -40,9 +40,9 @@ from model_navigator.core.constants import (
     DEFAULT_ONNX_OPSET,
     DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD,
 )
+from model_navigator.core.logger import LOGGER
 from model_navigator.exceptions import ModelNavigatorConfigurationError
 from model_navigator.frameworks import Framework
-from model_navigator.logger import LOGGER
 from model_navigator.utils.common import DataObject
 
 Sample = Dict[str, numpy.ndarray]
@@ -204,25 +204,11 @@ class ShapeTuple(DataObject):
         yield from [self.min, self.opt, self.max]
 
 
-class MeasurementMode(Enum):
-    """Profiler measurement mode.
-
-    Args:
-        TIME_WINDOWS (str): mode run measurement windows with fixed time length.
-        COUNT_WINDOWS (str): mode run measurement windows with fixed number of requests.
-    """
-
-    TIME_WINDOWS = "time_windows"
-    COUNT_WINDOWS = "count_windows"
-
-
 @dataclass
 class OptimizationProfile(DataObject):
-    """Profiling configuration.
+    """Optimization profile configuration.
 
-    For each batch size profiler will run measurements in windows. Depending on the measurement mode,
-    each window will have fixed time length (MeasurementMode.TIME_WINDOWS)
-    or fixed number of requests (MeasurementMode.COUNT_WINDOWS).
+    For each batch size profiler will run measurements in windows of fixed number of queries.
     Batch sizes are profiled in the ascending order.
 
     Profiler will run multiple trials and will stop when the measurements
@@ -232,24 +218,18 @@ class OptimizationProfile(DataObject):
 
 
     Args:
-        batch_sizes (Optional[List[Union[int, None]]]): List of batch sizes to profile.
-            None means that the model does not support batching.
-        measurement_mode (MeasurementMode): Measurement mode.
-        measurement_interval (Optional[float]): Measurement interval in milliseconds.
-            Used only in MeasurementMode.TIME_WINDOWS mode.
-        measurement_request_count (Optional[int]): Number of requests to measure in each window.
-            Used only in MeasurementMode.COUNT_WINDOWS mode.
-        stability_percentage (float): Allowed percentage of variation from the mean in three consecutive windows.
-        max_trials (int): Maximum number of window trials.
-        throughput_cutoff_threshold (float): Minimum throughput increase to continue profiling.
-        dataloader (SizedDataLoader): Optional dataloader for profiling. Use only 1 sample.
+        max_batch_size: Maximal batch size used during conversion and profiling. None mean automatic search is enabled.
+        batch_sizes : List of batch sizes to profile. None mean automatic search is enabled.
+        window_size: Number of requests to measure in each window.
+        stability_percentage: Allowed percentage of variation from the mean in three consecutive windows.
+        max_trials: Maximum number of window trials.
+        throughput_cutoff_threshold: Minimum throughput increase to continue profiling.
+        dataloader: Optional dataloader for profiling. Use only 1 sample.
     """
 
-    batch_sizes: Optional[List[Union[int, None]]] = None
     max_batch_size: Optional[int] = None
-    measurement_mode: MeasurementMode = MeasurementMode.COUNT_WINDOWS
-    measurement_interval: Optional[float] = 5000  # ms
-    measurement_request_count: Optional[int] = 50
+    batch_sizes: Optional[List[Union[int, None]]] = None
+    window_size: Optional[int] = 50
     stability_percentage: float = 10.0
     max_trials: int = 10
     throughput_cutoff_threshold: float = DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD
@@ -286,13 +266,9 @@ class OptimizationProfile(DataObject):
             OptimizationProfile
         """
         return cls(
-            batch_sizes=optimization_profile_dict.get("batch_sizes"),
             max_batch_size=optimization_profile_dict.get("max_batch_size"),
-            measurement_interval=optimization_profile_dict.get("measurement_interval"),
-            measurement_mode=MeasurementMode(
-                optimization_profile_dict.get("measurement_mode", MeasurementMode.TIME_WINDOWS)
-            ),
-            measurement_request_count=optimization_profile_dict.get("measurement_request_count"),
+            batch_sizes=optimization_profile_dict.get("batch_sizes"),
+            window_size=optimization_profile_dict.get("window_size"),
             stability_percentage=optimization_profile_dict.get("stability_percentage", 10.0),
             max_trials=optimization_profile_dict.get("max_trials", 10),
             throughput_cutoff_threshold=optimization_profile_dict.get("throughput_cutoff_threshold", -2),

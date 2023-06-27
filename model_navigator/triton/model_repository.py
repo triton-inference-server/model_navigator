@@ -27,18 +27,17 @@ Example of use:
 import logging
 import pathlib
 import shutil
-from pathlib import Path
 from typing import List, Optional, Union
 
 from model_navigator.api.config import Format
 from model_navigator.commands.performance import Performance
-from model_navigator.core.package import Package
 from model_navigator.exceptions import (
     ModelNavigatorEmptyPackageError,
     ModelNavigatorError,
     ModelNavigatorWrongParameterError,
 )
 from model_navigator.frameworks import is_tf_available, is_torch_available  # noqa: F401
+from model_navigator.package.package import Package
 from model_navigator.runners.onnx import OnnxrtCPURunner, OnnxrtCUDARunner, OnnxrtTensorRTRunner
 from model_navigator.runners.tensorflow import (
     TensorFlowSavedModelCPURunner,
@@ -217,7 +216,7 @@ def add_model_from_package(
     )
     max_batch_size = max(
         profiling_results.batch_size
-        for profiling_results in runtime_result.runner_status.result[Performance.name()]["profiling_results"]
+        for profiling_results in runtime_result.runner_status.result[Performance.name]["profiling_results"]
     )
 
     if runtime_result.model_status.model_config.format == Format.ONNX:
@@ -268,7 +267,7 @@ def add_model_from_package(
         model_repository_path=model_repository_path,
         model_name=model_name,
         model_version=model_version,
-        model_path=package.workspace / runtime_result.model_status.model_config.path,
+        model_path=package.workspace.path / runtime_result.model_status.model_config.path,
         config=config,
     )
 
@@ -324,7 +323,7 @@ class _TritonModelRepository:
         backend: Backend,
         model_name: str,
         version: int,
-    ) -> Path:
+    ) -> pathlib.Path:
         dst_path = self._get_model_path(
             model_name=model_name,
             version=version,
@@ -350,7 +349,7 @@ class _TritonModelRepository:
         model_name: str,
         version: int,
         backend: Backend,
-    ) -> Path:
+    ) -> pathlib.Path:
         return self._model_repository_path / model_name / str(version) / self._get_filename(backend=backend)
 
     def _get_filename(self, *, backend: Backend):

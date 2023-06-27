@@ -24,8 +24,8 @@ from model_navigator.configuration.model.model_config import (
     TensorRTConfig,
     TorchTensorRTConfig,
 )
+from model_navigator.core.logger import LOGGER
 from model_navigator.frameworks import Framework
-from model_navigator.logger import LOGGER
 from model_navigator.pipelines.pipeline import Pipeline
 from model_navigator.runners.onnx import OnnxrtCUDARunner
 from model_navigator.runners.tensorflow import TensorFlowSavedModelCUDARunner
@@ -134,7 +134,6 @@ def find_device_max_batch_size_builder(
     execution_units.append(
         ExecutionUnit(
             command=FindMaxBatchSize,
-            config=config,
             configurations=configurations,
         )
     )

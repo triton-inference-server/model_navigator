@@ -13,23 +13,23 @@
 # limitations under the License.
 """Commands for loading samples from the drive."""
 
-from pathlib import Path
 from typing import Optional
 
 import yaml
 
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
-from model_navigator.core.status import Status
+from model_navigator.core.workspace import Workspace
+from model_navigator.package.status import Status
 from model_navigator.utils.common import get_default_status_filename
 from model_navigator.utils.dataloader import load_samples
 
 
-class LoadMetadata(Command):
+class LoadMetadata(Command, is_required=True):
     """Load IO metadata from the status.yaml file."""
 
     def _run(
         self,
-        workspace: Path,
+        workspace: Workspace,
     ) -> CommandOutput:
         """Run loading IO metadata from the status.yaml.
 
@@ -45,7 +45,7 @@ class LoadMetadata(Command):
         Returns:
             CommandOutput
         """
-        with open(workspace / get_default_status_filename()) as f:
+        with open(workspace.path / get_default_status_filename()) as f:
             status = Status.from_dict(yaml.safe_load(f))
         return CommandOutput(
             status=CommandStatus.OK,
@@ -63,7 +63,7 @@ class LoadSamples(Command):
 
     def _run(
         self,
-        workspace: Path,
+        workspace: Workspace,
         batch_dim: Optional[int] = None,
     ) -> CommandOutput:
         """Run loading IO samples.
@@ -74,8 +74,8 @@ class LoadSamples(Command):
             3) Correctness samples and their outputs.
 
         Args:
-            workspace (Path): Model Navigator workspace path.
-            batch_dim (Optional[int], optional): Batch dimension. Defaults to None.
+            workspace: Model Navigator workspace path.
+            batch_dim: Batch dimension. Defaults to None.
 
         Returns:
             CommandOutput
@@ -90,7 +90,7 @@ class LoadSamples(Command):
         )
         ret = {}
         for name in samples_name:
-            samples = load_samples(name, workspace, batch_dim)
+            samples = load_samples(name, workspace.path, batch_dim)
             if name.startswith("profiling"):
                 ret[name] = samples[0]
             else:

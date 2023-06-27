@@ -49,9 +49,7 @@ def get_verify_function():
 def get_optimization_profile():
     return nav.torch.OptimizationProfile(
         batch_sizes=[1, 2, 4],
-        measurement_mode=nav.MeasurementMode.TIME_WINDOWS,
-        measurement_interval=2500,  # ms
-        measurement_request_count=10,
+        window_size=10,
         stability_percentage=15,
         max_trials=5,
         throughput_cutoff_threshold=0.1,

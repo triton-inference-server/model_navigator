@@ -13,9 +13,10 @@
 # limitations under the License.
 """Logger module."""
 import contextlib
+import json
 import logging
-from pathlib import Path
-from typing import Optional
+import pathlib
+from typing import Dict, Optional
 
 import coloredlogs
 
@@ -70,27 +71,6 @@ class StdoutLogger:
         self._redirect_stdout.__exit__(exc_type, exc_value, traceback)
 
 
-def add_log_file_handler(log_dir: Path) -> None:
-    """Add log file handler to file in defined path.
-
-    Args:
-        log_dir: A path to log directory
-    """
-    log_file = log_dir / NAVIGATOR_LOG_NAME
-    fh = logging.FileHandler(log_file)
-    fh.setLevel(logging.DEBUG)
-    LOGGER.addHandler(fh)
-
-
-def get_logger_names() -> list:
-    """Collect logger names as list.
-
-    Returns:
-        List with names of the loggers
-    """
-    return list(logging.root.manager.loggerDict.keys())
-
-
 class LoggingContext(contextlib.AbstractContextManager):
     """LoggingContext to handle correct logging options when commands are executed.
 
@@ -103,7 +83,7 @@ class LoggingContext(contextlib.AbstractContextManager):
     def __init__(
         self,
         *,
-        log_dir: Optional[Path] = None,
+        log_dir: Optional[pathlib.Path] = None,
     ):
         """Initialize the context.
 
@@ -145,3 +125,49 @@ class LoggingContext(contextlib.AbstractContextManager):
                 logger.handlers = [h for h in logger.handlers if h != self.log_file_handler]
             LOGGER.removeHandler(self.log_file_handler)
             self.log_file_handler = None
+
+
+def add_log_file_handler(log_dir: pathlib.Path) -> None:
+    """Add log file handler to file in defined path.
+
+    Args:
+        log_dir: A path to log directory
+    """
+    log_file = log_dir / NAVIGATOR_LOG_NAME
+    fh = logging.FileHandler(log_file)
+    fh.setLevel(logging.DEBUG)
+    LOGGER.addHandler(fh)
+
+
+def get_logger_names() -> list:
+    """Collect logger names as list.
+
+    Returns:
+        List with names of the loggers
+    """
+    return list(logging.root.manager.loggerDict.keys())
+
+
+def log_dict(title: str, data: Dict):
+    """Log dictionary data with provided tittle.
+
+    Args:
+        title: The title for logged information
+        data: The dictionary with content to log
+
+    """
+    LOGGER.info(pad_string(title))
+    LOGGER.info(json.dumps(data, indent=4))
+
+
+def pad_string(s: str) -> str:
+    """Pad string with `=` signs.
+
+    Args:
+        s (str): String.
+
+    Returns:
+        str: Padded string.
+    """
+    s = f" {s} "
+    return s.center(118, "=")

@@ -12,4 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # noqa: D104
-from .performance import Performance, Profiler  # noqa: F401
+from .performance import Performance  # noqa: F401
+from .profile import Profile  # noqa: F401
+from .profiler import Profiler, ProfilingResults  # noqa: F401

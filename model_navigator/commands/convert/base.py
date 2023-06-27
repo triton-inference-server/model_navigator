@@ -18,7 +18,7 @@ from typing import Callable, Generator, Optional
 from model_navigator.api.config import TensorRTProfile
 from model_navigator.commands.base import Command
 from model_navigator.core.constants import DEFAULT_MAX_BATCH_SIZE_HALVING
-from model_navigator.logger import LOGGER
+from model_navigator.core.logger import LOGGER
 
 
 class Convert2TensorRTWithMaxBatchSizeSearch(Command):
