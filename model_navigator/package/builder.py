@@ -186,7 +186,8 @@ class PackageBuilder:
         result = {}
         for command_name, command_output in commands.commands.items():
             status[command_name] = command_output.status
-            result[command_name] = command_output.output
+            if command_output.output:
+                result[command_name] = command_output.output
 
         return status, result
 
@@ -201,7 +202,8 @@ class PackageBuilder:
                 result = {}
                 for command_name, command_output in runner_command.commands.items():
                     status[command_name] = command_output.status
-                    result[command_name] = command_output.output
+                    if command_output.output:
+                        result[command_name] = command_output.output
 
                 runners_status[runner_name] = RunnerStatus(
                     runner_name=runner_name,
@@ -213,7 +215,8 @@ class PackageBuilder:
             result = {}
             for command_name, command_output in model_command.commands.items():
                 status[command_name] = command_output.status
-                result[command_name] = command_output.output
+                if command_output.output:
+                    result[command_name] = command_output.output
 
             model_status[model_key] = ModelStatus(
                 model_config=model_command.model_config,
