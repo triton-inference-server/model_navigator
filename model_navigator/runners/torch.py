@@ -17,6 +17,7 @@ from typing import List, Mapping
 
 from model_navigator.api.config import Format, TensorType
 from model_navigator.core.tensor import get_tensor_type
+from model_navigator.frameworks import is_torch2_available
 from model_navigator.frameworks.tensorrt import utils as tensorrt_utils
 from model_navigator.runners.base import DeviceKind, NavigatorRunner
 from model_navigator.runners.registry import register_runner
@@ -41,6 +42,10 @@ class _BaseTorchRunner(NavigatorRunner):
         super().__init__(*args, **kwargs)
         """Initialization implementation."""
         self._loaded_model = None
+        if is_torch2_available():
+            self._infer = self._infer_v2
+        else:
+            self._infer = self._infer_v1
 
     def activate_impl(self):
         """Activation implementation."""
@@ -53,13 +58,7 @@ class _BaseTorchRunner(NavigatorRunner):
 
     def infer_impl(self, feed_dict):
         """Inference handler implementation."""
-        with torch.no_grad():
-            inputs = self._prepare_inputs(feed_dict)
-            if self.input_metadata_mapping is None:
-                outputs = self._loaded_model(*inputs)
-            else:
-                inputs_dict = dict(zip(self.input_metadata_mapping, inputs))
-                outputs = self._loaded_model(**inputs_dict)
+        outputs = self._infer(feed_dict=feed_dict)
 
         if torch.is_tensor(outputs):
             outputs = (outputs,)
@@ -83,6 +82,28 @@ class _BaseTorchRunner(NavigatorRunner):
 
     def get_available_return_types_impl(self) -> List[TensorType]:
         return [TensorType.NUMPY, TensorType.TORCH]
+
+    def _infer_v2(self, feed_dict):
+        with torch.inference_mode():
+            inputs = self._prepare_inputs(feed_dict)
+            if self.input_metadata_mapping is None:
+                outputs = self._loaded_model(*inputs)
+            else:
+                inputs_dict = dict(zip(self.input_metadata_mapping, inputs))
+                outputs = self._loaded_model(**inputs_dict)
+
+        return outputs
+
+    def _infer_v1(self, feed_dict):
+        with torch.no_grad():
+            inputs = self._prepare_inputs(feed_dict)
+            if self.input_metadata_mapping is None:
+                outputs = self._loaded_model(*inputs)
+            else:
+                inputs_dict = dict(zip(self.input_metadata_mapping, inputs))
+                outputs = self._loaded_model(**inputs_dict)
+
+        return outputs
 
     def _prepare_inputs(self, feed_dict):
         """Prepare inputs for inference."""
