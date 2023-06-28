@@ -63,11 +63,6 @@ def main():
     text = "Replace me by any text you'd like."
     encoded_input = tokenizer(text, return_tensors="np")
     dataloader = [encoded_input]
-    trt_profile = (
-        nav.TensorRTProfile()
-        .add("input_ids", (1, 64), (2, 64), (4, 64))
-        .add("attention_mask", (1, 64), (2, 64), (4, 64))
-    )
 
     LOGGER.info("Testing GPT2")
     package = nav.jax.optimize(
@@ -75,10 +70,6 @@ def main():
         model_params=model._params,
         dataloader=dataloader,
         verbose=True,
-        custom_configs=(
-            nav.TensorRTConfig(trt_profile=trt_profile),
-            nav.TensorFlowTensorRTConfig(trt_profile=trt_profile),
-        ),
         optimization_profile=nav.OptimizationProfile(batch_sizes=[1, 2, 4]),
     )
 

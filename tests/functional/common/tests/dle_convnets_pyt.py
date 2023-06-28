@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
-import math
 from typing import Any, List, Optional
 
 
@@ -30,18 +29,13 @@ def dle_convnets_pyt(model_name: str, dataloader: List, max_batch_size: Optional
 
     model_cls = models[model_name]
 
-    batch_sizes = None
-    if max_batch_size:
-        pow2 = math.ceil(math.log(max_batch_size, 2)) + 1
-        batch_sizes = [2**n for n in range(pow2)]
-
     logger.info(f"Testing {model_name}...")
     model = model_cls(pretrained=True).eval()
     package = nav.torch.optimize(
         model=model,
         dataloader=dataloader,
         verbose=True,
-        optimization_profile=nav.OptimizationProfile(batch_sizes=batch_sizes),
+        optimization_profile=nav.OptimizationProfile(max_batch_size=max_batch_size),
         **kwargs,
     )
     return package

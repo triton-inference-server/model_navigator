@@ -15,7 +15,75 @@ import pathlib
 import tempfile
 from unittest.mock import MagicMock
 
+import numpy as np
+
 from model_navigator.commands.performance.profiler import OptimizationProfile, Profiler, ProfilingResults
+
+
+def test_batch_size_is_set_correctly_when_no_max_or_batch_sizes_passed():
+    optimization_profile = OptimizationProfile()
+    profiler = Profiler(
+        profile=optimization_profile,
+        results_path=MagicMock(),
+    )
+
+    assert profiler._batch_sizes == (2 ** np.arange(31)).tolist()
+
+
+def test_batch_size_is_set_correctly_when_unsorted_batch_sizes_passed():
+    optimization_profile = OptimizationProfile(batch_sizes=[1, 16, 4, 8])
+    profiler = Profiler(
+        profile=optimization_profile,
+        results_path=MagicMock(),
+    )
+
+    assert profiler._batch_sizes == [1, 4, 8, 16]
+
+
+def test_batch_size_is_set_correctly_when_sorted_batch_sizes_passed():
+    optimization_profile = OptimizationProfile(batch_sizes=[1, 4, 16])
+    profiler = Profiler(
+        profile=optimization_profile,
+        results_path=MagicMock(),
+    )
+
+    assert profiler._batch_sizes == [1, 4, 16]
+
+
+def test_batch_size_is_set_correctly_when_max_batch_size_passed():
+    optimization_profile = OptimizationProfile(max_batch_size=1)
+    profiler = Profiler(
+        profile=optimization_profile,
+        results_path=MagicMock(),
+    )
+
+    assert profiler._batch_sizes == [1]
+
+    optimization_profile = OptimizationProfile(max_batch_size=32)
+    profiler = Profiler(
+        profile=optimization_profile,
+        results_path=MagicMock(),
+    )
+
+    assert profiler._batch_sizes == [1, 2, 4, 8, 16, 32]
+
+
+def test_batch_size_is_set_correctly_when_max_batch_size_which_is_not_power_of_2_passed():
+    optimization_profile = OptimizationProfile(max_batch_size=3)
+    profiler = Profiler(
+        profile=optimization_profile,
+        results_path=MagicMock(),
+    )
+
+    assert profiler._batch_sizes == [1, 2, 3]
+
+    optimization_profile = OptimizationProfile(max_batch_size=127)
+    profiler = Profiler(
+        profile=optimization_profile,
+        results_path=MagicMock(),
+    )
+
+    assert profiler._batch_sizes == [1, 2, 4, 8, 16, 32, 64, 127]
 
 
 def test_is_measurement_stable_return_false_when_window_is_empty():

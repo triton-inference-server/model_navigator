@@ -13,7 +13,6 @@
 # limitations under the License.
 """e2e tests for exporting BERT TensorFlow model from Deep Learning Examples"""
 import logging
-import math
 import os
 import pathlib
 import sys
@@ -125,16 +124,11 @@ def _dle_bert_tf_test(
 
     squad_model(dataloader[0])
 
-    batch_sizes = None
-    if max_batch_size:
-        pow2 = math.ceil(math.log(max_batch_size, 2))
-        batch_sizes = [2**n for n in range(pow2)]
-
     package = nav.tensorflow.optimize(
         model=squad_model,
         dataloader=dataloader,
         verbose=True,
-        optimization_profile=nav.OptimizationProfile(batch_sizes=batch_sizes),
+        optimization_profile=nav.OptimizationProfile(max_batch_size=max_batch_size),
         input_names=input_names,
         custom_configs=(
             nav.OnnxConfig(opset=13),

@@ -14,6 +14,7 @@
 """Runners profiling."""
 
 import logging
+import math
 import pathlib
 from typing import List, Optional
 
@@ -62,13 +63,18 @@ class Profiler:
         self._results_path = results_path
 
         if self._batch_dim is None:
-            self._batch_sizes = [None]
+            batch_sizes = [None]
+        elif self._profile.max_batch_size:
+            magnitude = math.floor(math.log2(self._profile.max_batch_size)) + 1
+            batch_sizes = set((2 ** np.arange(magnitude, dtype=np.int32)).tolist())
+            batch_sizes.add(self._profile.max_batch_size)
+            batch_sizes = sorted(batch_sizes)
+        elif self._profile.batch_sizes:
+            batch_sizes = sorted(self._profile.batch_sizes)
         else:
-            self._batch_sizes = (
-                self._profile.batch_sizes
-                if self._profile.batch_sizes
-                else (2 ** np.arange(31, dtype=np.int32)).tolist()
-            )
+            batch_sizes = (2 ** np.arange(31, dtype=np.int32)).tolist()
+
+        self._batch_sizes = batch_sizes
 
     def run(
         self,

@@ -272,9 +272,8 @@ class Package:
     def _create_status_file(self) -> None:
         """Create a status.yaml file for package."""
         path = self.workspace.path / self.status_filename
-        status = copy.deepcopy(self.status)
         config = DataObject.filter_data(
-            data=status.config,
+            data=self.status.config,
             filter_fields=[
                 "model",
                 "dataloader",
@@ -283,6 +282,7 @@ class Package:
             ],
         )
         config = DataObject.parse_data(config)
+        status = copy.copy(self.status)
         status.config = config
         data = status.to_dict(
             parse=True,

@@ -117,7 +117,7 @@ def main():
             nav.TensorRTConfig(trt_profile=trt_profile),
             nav.TensorFlowTensorRTConfig(trt_profile=trt_profile),
         ),
-        optimization_profile=nav.OptimizationProfile(batch_sizes=[1, 2, 4, 8, 16]),
+        optimization_profile=nav.OptimizationProfile(max_batch_size=16),
     )
 
     status_file = args.status

@@ -22,8 +22,6 @@ import tempfile
 
 import yaml
 
-import model_navigator as nav
-
 LOGGER = logging.getLogger((__package__ or "main").split(".")[-1])
 METADATA = {
     "image_name": "nvcr.io/nvidia/pytorch:{version}-py3",
@@ -73,17 +71,11 @@ def main():
         sys.path.append(model_dir.as_posix())
         os.chdir(model_dir.as_posix())
 
-        trt_profile = nav.TensorRTProfile().add("input__0", (1, 3, 224, 224), (32, 3, 224, 224), (64, 3, 224, 224))
-
         package = dle_convnets_pyt(
             model_name="efficientnet-widese-b0",
             dataloader=dataloader,
             max_batch_size=64,
             input_names=("input__0",),
-            custom_configs=(
-                nav.TensorRTConfig(trt_profile=trt_profile),
-                nav.TorchTensorRTConfig(trt_profile=trt_profile),
-            ),
         )
         status_file = args.status
         status = collect_optimize_status(package.status)

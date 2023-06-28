@@ -26,7 +26,7 @@ limitations under the License.
 - new: allow to run `nav.package.optimize` on empty package - status generation only
 - new: use `torch.inference_mode` for inference runner when PyTorch 2.x is available
 - fix: Missing `model` in config when passing package generated during `nav.{framework}.optimize` directly to `nav.package.optimize` command
-
+- Other minor fixes and improvements
 
 ## 0.5.6
 - fix: Load samples as sorted to keep valid order

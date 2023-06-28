@@ -28,7 +28,6 @@ METADATA = {
 
 
 def main():
-    import model_navigator as nav
     from tests import utils
     from tests.functional.common.tests.dle_bert_tf import dle_bert_tf
     from tests.functional.common.utils import collect_optimize_status
@@ -61,10 +60,6 @@ def main():
             "input_mask",
             "input_type_ids",
         ),
-        trt_profile=nav.TensorRTProfile()
-        .add("input_word_ids", (1, 128), (8, 128), (16, 128))
-        .add("input_mask", (1, 128), (8, 128), (16, 128))
-        .add("input_type_ids", (1, 128), (8, 128), (16, 128)),
     )
 
     status_file = args.status

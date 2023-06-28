@@ -88,16 +88,20 @@ def correctness(
 
             is_len_valid = len(original_output) == len(comp_output)
             if not is_len_valid:
-                LOGGER.error("Original model output length is different from exported model output")
+                LOGGER.error(
+                    """Original model output length is different from exported model output"""
+                    f"""Original output: {original_output}"""
+                    f"""Computed output: {comp_output}"""
+                )
                 sys.exit(1)
 
             for name in output_metadata:
                 if any(np.isnan(comp_output[name]).flatten()):
-                    LOGGER.error("Comparison output contains NaN")
+                    LOGGER.error(f"Comparison output {name} contains NaN")
                     sys.exit(1)
 
                 if any(np.isinf(comp_output[name]).flatten()):
-                    LOGGER.error("Comparison output contains inf")
+                    LOGGER.error(f"Comparison output {name} contains inf")
                     sys.exit(1)
 
                 out0, out1 = original_output[name], comp_output[name]
