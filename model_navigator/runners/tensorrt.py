@@ -407,11 +407,15 @@ class TensorRTRunner(NavigatorRunner):
             # Only update the input shape/address if something has changed. Otherwise, we'd be
             # doing extra work unnecessarily.
             # We retrieve the semantic shape from the FormattedArray, *not* the underlying array.
-            if self.context.get_tensor_shape(name) != array.shape:
+            tensor_shape = self.context.get_tensor_shape(name)
+            if tensor_shape != array.shape:
                 LOGGER.debug(f"Setting {name} input shape to: {array.shape}")
                 reshape = True
                 if not self.context.set_input_shape(name, array.shape):
-                    raise ModelNavigatorError(f"For input: {name}, failed to set shape to: {array.shape}")
+                    raise ModelNavigatorError(
+                        f"""For input: {name}, failed to set shape from {tensor_shape} to: {array.shape}."""
+                        f"""Please, review if input data shape match the maximal input size which is {tensor_shape}."""
+                    )
 
             if self.context.get_tensor_address(name) != ptr:
                 if not self.context.set_tensor_address(name, ptr):

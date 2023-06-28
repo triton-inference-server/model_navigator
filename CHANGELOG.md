@@ -24,7 +24,7 @@ limitations under the License.
   - new: `batch_sizes` and `max_batch_size` limit the max profile in TensorRT conversion
   - new: Allow to provide separate dataloader for profiling - first sample used only
 - new: allow to run `nav.package.optimize` on empty package - status generation only
-- new: use `torch.inference_mode` for inference runner when PyTorch 2.x available
+- new: use `torch.inference_mode` for inference runner when PyTorch 2.x is available
 - fix: Missing `model` in config when passing package generated during `nav.{framework}.optimize` directly to `nav.package.optimize` command
 
 
