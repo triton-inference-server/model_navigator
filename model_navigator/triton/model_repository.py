@@ -117,6 +117,7 @@ def add_model(
     """Generate model deployment inside provided model store path.
 
     The config requires specialized configuration to be passed for backend on which model is executed. Example:
+
     - ONNX model requires ONNXModelConfig
     - TensorRT model requires TensorRTModelConfig
     - TorchScript or Torch-TensorRT models requires PyTorchModelConfig

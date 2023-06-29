@@ -16,7 +16,7 @@ limitations under the License.
 
 # Navigator Package
 
-The model graph and/or checkpoint is not enough to perform a successful deployment of model. When you are deploying
+The model graph and/or checkpoint is not enough to perform a successful deployment of the model. When you are deploying
 model for inference you need to be aware of model inputs and outputs definition, maximal batch size that can be used
 for inference and other.
 
@@ -67,7 +67,7 @@ package = nav.package.load(
 )
 ```
 
-Once the package was loaded you can obtain desired information or use it to `optimize` or `profile` the package. Read
+Once the package is loaded you can obtain desired information or use it to `optimize` or `profile` the package. Read
 more in [load method API specification](package_load_api.md).
 
 ## Optimize
@@ -86,7 +86,7 @@ optimized_package = nav.package.optimize(
 )
 ```
 
-At the end of the process the new optimized models are generated. Please mind, the workspace is overriden in this step.
+At the end of the process the new optimized models are generated. Please mind, the workspace is overridden in this step.
 Read more in [optimize method API specification](package_optimize_api.md).
 
 ## Profile
@@ -94,7 +94,7 @@ Read more in [optimize method API specification](package_optimize_api.md).
 The optimize process use a single sample from dataloader for profiling. The process is focusing on selecting the best
 model format and this requires an unequivocal sample for performance comparison.
 
-In some cases you may want to profile the models on different dataset or sample. On that purpose the Model Navigator
+In some cases you may want to profile the models on different dataset. On that purpose the Model Navigator
 expose the API for profiling all samples in dataset for each model:
 
 ```python

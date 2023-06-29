@@ -24,9 +24,9 @@ repository path.
 
 ## Adding your own model to the Triton model repository
 
-When you works with an already exported model you can provide a path to where one's model is located.
-Then you can use one of the specialized APIs that guides you through what options are possible for deployment of tbe selected
-model type.
+When you work with an already exported model you can provide a path to where one's model is located.
+Then you can use one of the specialized APIs that guides you through what options are possible for deployment of the
+selected model type.
 
 Example of deploying a TensorRT model:
 
@@ -45,7 +45,8 @@ nav.triton.model_repository.add_model(
 )
 ```
 
-The model catalog with the model file and configuration is going to be created inside `model_repository_path`.
+The model catalog with the model file and configuration is going to be created inside `model_repository_path`. More
+about the function you can find in [adding model section](adding_model.md).
 
 ## Adding model from package to the Triton model repository
 
@@ -62,7 +63,8 @@ nav.triton.model_repository.add_model_from_package(
 ```
 
 The model is automatically selected based on profiling results. The default selection options can be adjusted by
-changing the `strategy` argument.
+changing the `strategy` argument. More
+about the function you can find in [adding model section](adding_model.md).
 
 ## Using Triton Model Analyzer
 

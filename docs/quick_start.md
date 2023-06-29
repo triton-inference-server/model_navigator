@@ -24,7 +24,7 @@ features.
 
 ## Optimize Model
 
-Optimizing models using Model Navigator is as simply as calling `optimize` function. The optimization process requires
+Optimizing models using Model Navigator is as simple as calling `optimize` function. The optimization process requires
 at least:
 
 - `model` - a Python object, callable or file path with model to optimize.
@@ -52,7 +52,7 @@ in [documentation](optimize/optimize.md)
 
 The [PyTriton](https://github.com/triton-inference-server/pytriton) can be used to serve inference of any optimized
 format. Model Navigator provide a dedicated `PyTritonAdapter` to retrieve the `runner` and other information required
-to bind model for serving inference. The `runner` is an abstraction that connects the model checkpoint with its
+to bind a model for serving inference. The `runner` is an abstraction that connects the model checkpoint with its
 runtime, making the inference process more accessible and straightforward.
 
 Following that, you can initialize the PyTriton server using the adapter information:
@@ -109,7 +109,7 @@ in [documentation](https://triton-inference-server.github.io/model_navigator/lat
 
 ## Using Navigator Package
 
-The `Navigator Package` is an artifact that can be produced at the end of optimization process. The package is a simple
+The `Navigator Package` is an artifact that can be produced at the end of the optimization process. The package is a simple
 Zip file which contains the optimization details, model metadata and serialized formats and can be saved using:
 
 ```python
@@ -119,6 +119,5 @@ nav.package.save(
 )
 ```
 
-The package can be easily loaded on other machine and used to re-run the optimization process or profile the model. Read
-more about using pacakge
-in [documentation](package/package.md).
+The package can be easily loaded on other machines and used to re-run the optimization process or profile the model. Read
+more about using package in [documentation](package/package.md).

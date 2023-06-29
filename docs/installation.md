@@ -16,7 +16,7 @@ limitations under the License.
 
 # Installation
 
-This section describe how to install the tool. We assume you are comfortable with Python programming language
+This section describes how to install the tool. We assume you are comfortable with Python programming language
 and familiar with Machine Learning models.
 
 ## Prerequisites
@@ -74,7 +74,7 @@ For using with PyTorch no extras are needed.
 
 ## Building the wheel
 
-The Triton Model Navigator can be built as wheel. On that purpose the Makefile provide necessary commands.
+The Triton Model Navigator can be built as a wheel. For that purpose the `Makefile` provides necessary commands.
 
 The first is required to install necessary packages to perform build.
 ```
@@ -86,4 +86,4 @@ Once the environment contain required packages run:
 make dist
 ```
 
-The wheel is going to be generated in `dist` catalog.
+The wheel is going to be generated in the `dist` catalog.

@@ -222,7 +222,7 @@ in [documentation](https://triton-inference-server.github.io/model_navigator/lat
 
 ### Using Navigator Package
 
-The `Navigator Package` is an artifact that can be produced at the end of optimization process. The package is a simple
+The `Navigator Package` is an artifact that can be produced at the end of the optimization process. The package is a simple
 Zip file which contains the optimization details, model metadata and serialized formats and can be saved using:
 
 ```python
@@ -232,8 +232,8 @@ nav.package.save(
 )
 ```
 
-The package can be easily loaded on other machine and used to re-run the optimization process or profile the model. Read
-more about using pacakge
+The package can be easily loaded on other machines and used to re-run the optimization process or profile the model. Read
+more about using package
 in [documentation](https://triton-inference-server.github.io/model_navigator/latest/package/package/).
 
 ## Examples

@@ -71,7 +71,7 @@ You can also apply quantization for some selected models to get better performan
 in [HiFiGAN example](../examples/08_optimize_pytorch_hifigan_qat_model).
 This model uses quantization aware
 training so accuracy is very good but many other models can use post-training quantization by just enabling INT8 flag in
-optimize function. It can reduce accuracy, so you must validate quantized model in such case.
+optimize function. It can reduce accuracy, so you must validate the quantized model in such cases.
 
 Model Navigator can build for your quantized model, when flag ```INT8``` is used:
 
@@ -86,7 +86,7 @@ package = nav.torch.optimize(
 ```
 
 At the end, the summary of the execution is presented and artifacts stored in Navigator workspace, which by default
-is ```navigator_workspace``` folder.
+is in the ```navigator_workspace``` folder.
 
 ## What next?
 

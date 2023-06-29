@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-# Triton Model Store API
+# Model Store API
 
 ::: model_navigator.api.triton.model_repository.add_model
 ::: model_navigator.api.triton.model_repository.add_model_from_package

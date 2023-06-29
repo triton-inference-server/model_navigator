@@ -23,7 +23,7 @@ more accessible and straightforward. The `runner` is a Python API through which 
 
 ## Obtaining runner from Package
 
-The [Navigator Package](../package/package.md) provide an API for obtaining the model for serving inference. One of the
+The [Navigator Package](../package/package.md) provides an API for obtaining the model for serving inference. One of the
 option is to obtain the `runner`:
 
 ```python
@@ -35,7 +35,7 @@ largest throughput. This runner is considered as most optimal for serving infere
 about `get_runner`
 method in [Navigator Package API](../package/package_api.md).
 
-In order to use the runner in PyTriton additional information for serving model are required. For that purpose we
+In order to use the runner in PyTriton additional information for the serving model is required. For that purpose we
 provide
 a `PyTritonAdapter` that contains all minimal information required to prepare successful deployment of model using
 PyTriton.
@@ -43,7 +43,7 @@ PyTriton.
 ## Using PyTritonAdapter
 
 Model Navigator provide a dedicated `PyTritonAdapter` to retrieve the `runner` and other information required
-to bind model for serving inference. Following that, you can initialize the PyTriton server using the adapter
+to bind a model for serving inference. Following that, you can initialize the PyTriton server using the adapter
 information:
 
 ```python
