@@ -39,13 +39,13 @@ class _BaseTorchRunner(NavigatorRunner):
         return Format.TORCH
 
     def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
         """Initialization implementation."""
+        super().__init__(*args, **kwargs)
         self._loaded_model = None
         if is_torch2_available():
-            self._infer = self._infer_v2
+            self._infer = self._infer_inference_mode
         else:
-            self._infer = self._infer_v1
+            self._infer = self._infer_no_grad
 
     def activate_impl(self):
         """Activation implementation."""
@@ -83,7 +83,7 @@ class _BaseTorchRunner(NavigatorRunner):
     def get_available_return_types_impl(self) -> List[TensorType]:
         return [TensorType.NUMPY, TensorType.TORCH]
 
-    def _infer_v2(self, feed_dict):
+    def _infer_inference_mode(self, feed_dict):
         with torch.inference_mode():
             inputs = self._prepare_inputs(feed_dict)
             if self.input_metadata_mapping is None:
@@ -94,7 +94,7 @@ class _BaseTorchRunner(NavigatorRunner):
 
         return outputs
 
-    def _infer_v1(self, feed_dict):
+    def _infer_no_grad(self, feed_dict):
         with torch.no_grad():
             inputs = self._prepare_inputs(feed_dict)
             if self.input_metadata_mapping is None:
@@ -261,6 +261,14 @@ class TorchCompileCUDARunner(_BaseTorchRunner):
     """Torch Compile model CUDA based runner."""
 
     _target_device = "cuda"
+
+    def __init__(self, *args, **kwargs) -> None:
+        """Initialization implementation."""
+        # FIXME:
+        #  Remove this constructor once inference_mode is fixed for TorchCompile.
+        #  Related closed issue: https://github.com/pytorch/pytorch/issues/101151
+        super().__init__(*args, **kwargs)
+        self._infer = self._infer_no_grad
 
     @classmethod
     def name(cls) -> str:
