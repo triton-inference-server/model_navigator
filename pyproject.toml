@@ -39,7 +39,6 @@ license = { text = "Apache 2.0" }
 requires-python = ">=3.8,<4"
 dependencies = [
     "coloredlogs>=15.0.0",
-    "dacite>=1.6.0",
     "fire>=0.4.0",
     "jsonlines>=3.1.0",
     "mpmath<1.0.0",

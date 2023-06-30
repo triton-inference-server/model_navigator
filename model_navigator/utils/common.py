@@ -20,7 +20,6 @@ import pathlib
 from enum import Enum
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Type, TypeVar, Union
 
-import dacite
 import numpy
 from polygraphy.backend.trt.profile import Profile, ShapeTuple
 
@@ -67,22 +66,6 @@ def dataclass2dict(config: Any) -> Dict:
     new_config_dict = dataclasses.asdict(config, dict_factory=_dict_factory_with_enum_values_extraction)
     config_dict_with_only_init_items = {k: v for k, v in new_config_dict.items() if k in init_fields_names}
     return config_dict_with_only_init_items
-
-
-def dict2dataclass(cls: Type[T], data: Dict) -> T:
-    """Parse a dictionary to a dataclass.
-
-    Args:
-        cls (Type[T]): Type of the dataclass.
-        data (Dict): Dictionary with the dataclass data.
-
-    Returns:
-        T: Dataclass.
-    """
-    dataclass = dacite.from_dict(cls, data, config=dacite.Config(cast=[Enum, pathlib.Path, tuple, numpy.dtype]))
-    assert isinstance(dataclass, cls)
-    assert dataclasses.is_dataclass(dataclass)
-    return dataclass
 
 
 class DataObject:
