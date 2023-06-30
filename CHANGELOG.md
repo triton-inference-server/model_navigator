@@ -16,7 +16,7 @@ limitations under the License.
 
 # Changelog
 
-## 0.6.0 (unreleased)
+## 0.6.0
 - new: Zero-copy runners for Torch, ONNX and TensorRT - omit H2D and D2H memory copy between runners execution
 - new: `nav.pacakge.profile` API method to profile generated models on provided dataloader
 - change: ProfilerConfig replaced with OptimizationProfile:
@@ -27,6 +27,18 @@ limitations under the License.
 - new: use `torch.inference_mode` for inference runner when PyTorch 2.x is available
 - fix: Missing `model` in config when passing package generated during `nav.{framework}.optimize` directly to `nav.package.optimize` command
 - Other minor fixes and improvements
+
+- Version of external components used during testing:
+  - [PyTorch 2.1.0a0+4136153](https://github.com/pytorch/pytorch/commit/4136153)
+  - [TensorFlow 2.12.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.12.0)
+  - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+  - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
+  - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.47.1
+  - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.26
+  - [tf2onnx v1.14.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0)
+  - Other component versions depend on the used framework containers versions.
+    See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+    for a detailed summary.
 
 ## 0.5.6
 - fix: Load samples as sorted to keep valid order
