@@ -44,7 +44,7 @@ dependencies = [
     "mpmath<1.0.0",
     "numpy~=1.21,<1.24",
     "onnx>=1.8.1",
-    "onnxruntime-gpu~=1.13,<1.14",
+    "onnxruntime-gpu~=1.15",
     "onnx_graphsurgeon>=0.3.14",
     "protobuf>=3.18.3,<3.21.0",
     "polygraphy>=0.33.1",
