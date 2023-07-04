@@ -13,7 +13,7 @@
 # limitations under the License.
 """Definition of enums and classes representing configuration for Model Navigator."""
 import abc
-from dataclasses import dataclass
+import dataclasses
 from enum import Enum
 from typing import (
     Any,
@@ -32,7 +32,7 @@ from typing import (
     runtime_checkable,
 )
 
-import numpy
+import numpy as np
 
 from model_navigator.core.constants import (
     DEFAULT_MAX_WORKSPACE_SIZE,
@@ -45,7 +45,7 @@ from model_navigator.exceptions import ModelNavigatorConfigurationError
 from model_navigator.frameworks import Framework
 from model_navigator.utils.common import DataObject
 
-Sample = Dict[str, numpy.ndarray]
+Sample = Dict[str, np.ndarray]
 
 VerifyFunction = Callable[[Iterable[Sample], Iterable[Sample]], bool]
 
@@ -175,7 +175,7 @@ class TensorRTCompatibilityLevel(Enum):
     AMPERE_PLUS = "ampere_plus"
 
 
-@dataclass
+@dataclasses.dataclass
 class ShapeTuple(DataObject):
     """Represents a set of shapes for a single binding in a profile.
 
@@ -204,7 +204,7 @@ class ShapeTuple(DataObject):
         yield from [self.min, self.opt, self.max]
 
 
-@dataclass
+@dataclasses.dataclass
 class OptimizationProfile(DataObject):
     """Optimization profile configuration.
 
@@ -410,7 +410,6 @@ DEFAULT_TARGET_FORMATS = {
     Framework.ONNX: DEFAULT_ONNX_TARGET_FORMATS,
 }
 
-
 AVAILABLE_JAX_TARGET_FORMATS = (Format.JAX,) + DEFAULT_JAX_TARGET_FORMATS
 
 AVAILABLE_TENSORFLOW_TARGET_FORMATS = (Format.TENSORFLOW,) + DEFAULT_TENSORFLOW_TARGET_FORMATS
@@ -462,7 +461,7 @@ class CustomConfigForFormat(DataObject, CustomConfig):
         raise NotImplementedError()
 
 
-@dataclass
+@dataclasses.dataclass
 class TensorFlowConfig(CustomConfigForFormat):
     """TensorFlow custom config used for SavedModel export.
 
@@ -495,7 +494,7 @@ class TensorFlowConfig(CustomConfigForFormat):
         self.enable_xla = (None,)
 
 
-@dataclass
+@dataclasses.dataclass
 class TensorFlowTensorRTConfig(CustomConfigForFormat):
     """TensorFlow TensorRT custom config used for TensorRT SavedModel export.
 
@@ -547,7 +546,7 @@ class TensorFlowTensorRTConfig(CustomConfigForFormat):
         return cls(**config_dict)
 
 
-@dataclass
+@dataclasses.dataclass
 class TorchConfig(CustomConfigForFormat):
     """Torch custom config used for TorchScript export.
 
@@ -585,7 +584,7 @@ class TorchConfig(CustomConfigForFormat):
         self.strict = True
 
 
-@dataclass
+@dataclasses.dataclass
 class TorchTensorRTConfig(CustomConfigForFormat):
     """Torch custom config used for TensorRT TorchScript conversion.
 
@@ -637,7 +636,7 @@ class TorchTensorRTConfig(CustomConfigForFormat):
         return cls(**config_dict)
 
 
-@dataclass
+@dataclasses.dataclass
 class OnnxConfig(CustomConfigForFormat):
     """ONNX custom config used for ONNX export and conversion.
 
@@ -667,7 +666,7 @@ class OnnxConfig(CustomConfigForFormat):
         return "Onnx"
 
 
-@dataclass
+@dataclasses.dataclass
 class TensorRTConfig(CustomConfigForFormat):
     """TensorRT custom config used for TensorRT conversion.
 

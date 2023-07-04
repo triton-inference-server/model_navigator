@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Runners profiling."""
-from dataclasses import dataclass
+import dataclasses
 from typing import List, Mapping, Optional
 
 import numpy as np
@@ -21,7 +21,7 @@ from model_navigator.runners.base import NavigatorStabilizedRunner
 from model_navigator.utils.common import DataObject
 
 
-@dataclass
+@dataclasses.dataclass
 class ProfilingResults(DataObject):
     """Profiling results."""
 

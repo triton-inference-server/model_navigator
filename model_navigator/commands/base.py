@@ -13,7 +13,7 @@
 # limitations under the License.
 """Base module for commands common classes and helpers."""
 import abc
-from dataclasses import dataclass
+import dataclasses
 from enum import Enum
 from inspect import getfullargspec
 from typing import Any, Callable, Dict, List, Optional, Type
@@ -34,7 +34,7 @@ class CommandStatus(str, Enum):
     SKIPPED = "SKIPPED"
 
 
-@dataclass
+@dataclasses.dataclass
 class CommandOutput(DataObject):
     """Command output dataclass structure."""
 

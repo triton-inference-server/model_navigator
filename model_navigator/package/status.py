@@ -19,7 +19,6 @@ import collections
 import dataclasses
 import datetime
 import pathlib
-from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Sequence, Tuple
 
 from packaging import version
@@ -47,13 +46,13 @@ from model_navigator.frameworks.tensorrt.utils import get_trt_profile_from_trt_d
 from model_navigator.utils.common import DataObject
 
 
-@dataclass
+@dataclasses.dataclass
 class RunnerStatus(DataObject):
     """Runner results."""
 
     runner_name: str
-    status: Dict[str, CommandStatus] = field(default_factory=lambda: {})
-    result: Dict = field(default_factory=lambda: {})
+    status: Dict[str, CommandStatus] = dataclasses.field(default_factory=lambda: {})
+    result: Dict = dataclasses.field(default_factory=lambda: {})
 
     @classmethod
     def from_dict(cls, data_dict: Dict) -> "RunnerStatus":
@@ -93,14 +92,14 @@ class RunnerStatus(DataObject):
         )
 
 
-@dataclass
+@dataclasses.dataclass
 class ModelStatus(DataObject):
     """Model Status."""
 
     model_config: ModelConfig
-    runners_status: Dict[str, RunnerStatus] = field(default_factory=lambda: {})
-    status: Dict[str, CommandStatus] = field(default_factory=lambda: {})
-    result: Dict = field(default_factory=lambda: {})
+    runners_status: Dict[str, RunnerStatus] = dataclasses.field(default_factory=lambda: {})
+    status: Dict[str, CommandStatus] = dataclasses.field(default_factory=lambda: {})
+    result: Dict = dataclasses.field(default_factory=lambda: {})
 
     @classmethod
     def from_dict(cls, data_dict: Dict) -> "ModelStatus":
@@ -123,7 +122,7 @@ class ModelStatus(DataObject):
         )
 
 
-@dataclass
+@dataclasses.dataclass
 class Status(DataObject):
     """Model Navigator Status."""
 
@@ -137,8 +136,8 @@ class Status(DataObject):
     output_metadata: TensorMetadata
     dataloader_trt_profile: TensorRTProfile
     dataloader_max_batch_size: int
-    status: Dict[str, CommandStatus] = field(default_factory=lambda: {})
-    result: Dict = field(default_factory=lambda: {})
+    status: Dict[str, CommandStatus] = dataclasses.field(default_factory=lambda: {})
+    result: Dict = dataclasses.field(default_factory=lambda: {})
     timestamp: str = dataclasses.field(default_factory=lambda: f"{datetime.datetime.utcnow():%Y-%m-%dT%H:%M:%S.%f}")
 
     @classmethod

@@ -15,7 +15,6 @@
 import collections
 import dataclasses
 import datetime
-from dataclasses import dataclass, field
 from typing import Any, Dict, List
 
 import yaml
@@ -33,11 +32,11 @@ from model_navigator.utils.common import DataObject
 from model_navigator.utils.environment import get_env
 
 
-@dataclass
+@dataclasses.dataclass
 class RunnerCommand(DataObject):
     """Runner Commands Status."""
 
-    commands: Dict[str, CommandOutput] = field(default_factory=lambda: {})
+    commands: Dict[str, CommandOutput] = dataclasses.field(default_factory=lambda: {})
 
     @classmethod
     def from_dict(cls, data_dict: Dict) -> "RunnerCommand":
@@ -56,13 +55,13 @@ class RunnerCommand(DataObject):
         )
 
 
-@dataclass
+@dataclasses.dataclass
 class ModelCommand(DataObject):
     """Model Commands Status."""
 
     model_config: ModelConfig
-    runners_commands: Dict[str, RunnerCommand] = field(default_factory=lambda: {})
-    commands: Dict[str, CommandOutput] = field(default_factory=lambda: {})
+    runners_commands: Dict[str, RunnerCommand] = dataclasses.field(default_factory=lambda: {})
+    commands: Dict[str, CommandOutput] = dataclasses.field(default_factory=lambda: {})
 
     @classmethod
     def from_dict(cls, data_dict: Dict) -> "ModelCommand":
@@ -84,12 +83,12 @@ class ModelCommand(DataObject):
         )
 
 
-@dataclass
+@dataclasses.dataclass
 class PipelineCommands(DataObject):
     """Pipeline Commands Status."""
 
     models_commands: Dict[str, ModelCommand]
-    commands: Dict[str, CommandOutput] = field(default_factory=lambda: {})
+    commands: Dict[str, CommandOutput] = dataclasses.field(default_factory=lambda: {})
 
     @classmethod
     def from_dict(cls, data_dict: Dict) -> "PipelineCommands":
@@ -130,7 +129,7 @@ class PipelineCommands(DataObject):
         return model_configs
 
 
-@dataclass
+@dataclasses.dataclass
 class PipelineMetadata(DataObject):
     """Metadata of pipeline execution."""
 

@@ -14,7 +14,6 @@
 """Config object to handle user inputs and define the execution of commands."""
 
 import dataclasses
-from dataclasses import dataclass
 from typing import Dict, Optional, Sequence
 
 from model_navigator.api.config import (
@@ -29,7 +28,7 @@ from model_navigator.frameworks import Framework
 from model_navigator.utils.common import DataObject
 
 
-@dataclass
+@dataclasses.dataclass
 class CommonConfig(DataObject):
     """Command context stores parameters used during commands execution not related to any particular model format."""
 

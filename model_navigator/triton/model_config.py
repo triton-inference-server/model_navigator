@@ -45,7 +45,7 @@ class ModelConfig:
     platform: Optional[Platform] = None
     max_batch_size: int = 4
     batching: bool = True
-    batcher: Union[DynamicBatcher, SequenceBatcher] = DynamicBatcher()
+    batcher: Union[DynamicBatcher, SequenceBatcher] = dataclasses.field(default_factory=DynamicBatcher)
     instance_groups: List[InstanceGroup] = dataclasses.field(default_factory=lambda: [])
     parameters: Dict[str, str] = dataclasses.field(default_factory=lambda: {})
     inputs: Optional[Sequence[InputTensorSpec]] = None

@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Profiling results generated from profile method."""
+import dataclasses
 import pathlib
-from dataclasses import dataclass
 from typing import Dict, List, Union
 
 import yaml
@@ -22,7 +22,7 @@ from model_navigator.commands.base import CommandStatus
 from model_navigator.utils.common import dataclass2dict
 
 
-@dataclass
+@dataclasses.dataclass
 class ProfilingResult:
     """Result for single profiling for sample.
 
@@ -49,7 +49,7 @@ class ProfilingResult:
     request_count: int
 
 
-@dataclass
+@dataclasses.dataclass
 class RunnerProfilingResults:
     """Profiling results for runner.
 
@@ -62,7 +62,7 @@ class RunnerProfilingResults:
     detailed: Dict[int, List[ProfilingResult]]
 
 
-@dataclass
+@dataclasses.dataclass
 class RunnerResults:
     """Result for runners.
 
@@ -73,7 +73,7 @@ class RunnerResults:
     runners: Dict[str, RunnerProfilingResults]
 
 
-@dataclass
+@dataclasses.dataclass
 class ProfilingResults:
     """Profiling results for models.
 

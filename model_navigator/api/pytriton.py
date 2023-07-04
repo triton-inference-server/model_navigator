@@ -12,9 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API definition for PyTriton related functionality."""
-
+import dataclasses
 import enum
-from dataclasses import dataclass
 from typing import Dict, List, Optional, Type, Union
 
 import numpy as np
@@ -38,7 +37,7 @@ class TimeoutAction(enum.Enum):
     DELAY: str = "DELAY"
 
 
-@dataclass
+@dataclasses.dataclass
 class QueuePolicy:
     """Model queue policy configuration.
 
@@ -58,7 +57,7 @@ class QueuePolicy:
     max_queue_size: int = 0
 
 
-@dataclass
+@dataclasses.dataclass
 class DynamicBatcher:
     """Dynamic batcher configuration.
 
@@ -86,7 +85,7 @@ class DynamicBatcher:
     priority_queue_policy: Optional[Dict[int, QueuePolicy]] = None
 
 
-@dataclass
+@dataclasses.dataclass
 class ModelConfig:
     """Additional model configuration for running model through Triton Inference Server.
 
@@ -99,11 +98,11 @@ class ModelConfig:
 
     batching: bool = True
     max_batch_size: int = 4
-    batcher: DynamicBatcher = DynamicBatcher()
+    batcher: DynamicBatcher = dataclasses.field(default_factory=DynamicBatcher)
     response_cache: bool = False
 
 
-@dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True)
 class Tensor:
     """Model input and output definition for Triton deployment.
 

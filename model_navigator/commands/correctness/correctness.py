@@ -12,11 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Correctness command and it's results."""
-
+import dataclasses
 import json
 import pathlib
 import tempfile
-from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Type
 
 from model_navigator.api.config import Format
@@ -30,7 +29,7 @@ from model_navigator.utils.common import DataObject, parse_kwargs_to_cmd
 from model_navigator.utils.format_helpers import is_source_format
 
 
-@dataclass
+@dataclasses.dataclass
 class Tolerance(DataObject):
     """Tolerance values."""
 
