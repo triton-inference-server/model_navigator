@@ -184,3 +184,20 @@ def validate_package(package_path: Union[str, pathlib.Path], expected_files: Lis
     if len(missing) > 0:
         missing_str = "\n  ".join(missing)
         raise ValidationError(f"The following files are missing in package:\n {missing_str}")
+
+
+def validate_model_repository(model_repository: Union[str, pathlib.Path], model_name: str, model_version: str = "1"):
+    model_repository = pathlib.Path(model_repository)
+
+    model_path = model_repository / model_name
+    assert model_path.exists() is True
+    assert model_path.is_dir() is True
+
+    config_path = model_path / "config.pbtxt"
+    assert config_path.exists() is True
+    assert config_path.is_file() is True
+
+    version_path = model_path / model_version
+    assert version_path.exists() is True
+    assert version_path.is_dir() is True
+    assert any(version_path.iterdir()) is True

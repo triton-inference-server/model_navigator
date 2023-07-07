@@ -16,6 +16,9 @@ limitations under the License.
 
 # Changelog
 
+## 0.6.1 (unreleased)
+- fix: Add model from package to Triton model store with custom configs
+
 ## 0.6.0
 - new: Zero-copy runners for Torch, ONNX and TensorRT - omit H2D and D2H memory copy between runners execution
 - new: `nav.pacakge.profile` API method to profile generated models on provided dataloader

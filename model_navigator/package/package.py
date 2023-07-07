@@ -14,13 +14,14 @@
 """Package module - structure to snapshot optimization result."""
 import copy
 import pathlib
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
 import yaml
 
 from model_navigator.api.config import (
     CUSTOM_CONFIGS_MAPPING,
     SERIALIZED_FORMATS,
+    CustomConfigForFormat,
     DeviceKind,
     Format,
     OptimizationProfile,
@@ -300,7 +301,7 @@ class Package:
     def _target_formats(self):
         return tuple(Format(target_format) for target_format in self.status.config["target_formats"])
 
-    def _get_custom_configs(self, custom_configs: Dict[str, Dict]) -> Dict:
+    def _get_custom_configs(self, custom_configs: Dict[str, Union[Dict, CustomConfigForFormat]]) -> Dict:
         """Build custom configs from config data.
 
         Args:
@@ -310,9 +311,11 @@ class Package:
             List with mapped objects
         """
         custom_configs_mapped = {}
-        for class_name, fields in custom_configs.items():
-            custom_config_class = CUSTOM_CONFIGS_MAPPING[class_name]
-            obj = custom_config_class.from_dict(fields)  # pytype: disable=not-instantiable
+        for class_name, obj in custom_configs.items():
+            if isinstance(obj, dict):
+                custom_config_class = CUSTOM_CONFIGS_MAPPING[class_name]
+                obj = custom_config_class.from_dict(obj)  # pytype: disable=not-instantiable
+
             custom_configs_mapped[class_name] = obj
 
         return custom_configs_mapped

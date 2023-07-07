@@ -83,8 +83,6 @@ class DataObject:
         Returns:
             Dict: Data serialized to a dictionary.
         """
-        data = {}
-
         if filter_fields:
             filtered_data = DataObject.filter_data(
                 data=self.__dict__,
