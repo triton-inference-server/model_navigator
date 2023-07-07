@@ -14,7 +14,7 @@
 """TorchScript conversions."""
 
 import pathlib
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 
 from model_navigator.api.config import DeviceKind, TensorRTPrecision, TensorRTPrecisionMode, TensorRTProfile
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
@@ -113,7 +113,7 @@ class ConvertTorchScript2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearch):
         batch_dim: Optional[int] = None,
         dataloader_max_batch_size: Optional[int] = None,
         device_max_batch_size: Optional[int] = None,
-        trt_profile: Optional[TensorRTProfile] = None,
+        optimized_trt_profiles: Optional[List[TensorRTProfile]] = None,
     ) -> CommandOutput:
         """Run Torchscript ot Torch-TensorRT conversion.
 
@@ -138,7 +138,7 @@ class ConvertTorchScript2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearch):
                 Defaults to None.
             device_max_batch_size (Optional[int], optional): Device maximum batch size.
                 Defaults to None.
-            trt_profile (Optional[TensorRTProfile], optional): User specified TensorRT profile. Defaults to None.
+            optimized_trt_profiles: List of TensorRT profiles that will be used by Model Navigator for conversion, user provided or optimized by TensorRTProfileBuilder command.
 
         Raises:
             RuntimeError: When no GPU is available.
@@ -157,17 +157,16 @@ class ConvertTorchScript2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearch):
             LOGGER.warning(f"Exported TorchScript model not found at {exported_model_path}. Skipping conversion.")
             return CommandOutput(status=CommandStatus.SKIPPED)
 
-        custom_trt_profile = trt_profile
-        trt_profile = self._get_trt_profile(
-            dataloader_trt_profile=dataloader_trt_profile, custom_trt_profile=custom_trt_profile
-        )
-
         converted_model_path.parent.mkdir(parents=True, exist_ok=True)
 
         input_dtypes_str = [tensorrt_utils.cast_type(input_spec.dtype).name for input_spec in input_metadata.values()]
 
         def get_args(max_batch_size=None):
-            shapes = self._get_shape_args(trt_profile=trt_profile, batch_dim=batch_dim, max_batch_size=max_batch_size)
+            # NOTE: Torch-TensorRT does not support multiple profiles. Use first profile.
+            # TODO: Add support for multiple profiles when Torch-TensorRT supports it.
+            profile = optimized_trt_profiles[0] if optimized_trt_profiles else dataloader_trt_profile
+            shapes = self._get_shape_args(trt_profile=profile, batch_dim=batch_dim, max_batch_size=max_batch_size)
+
             kwargs = {
                 "exported_model_path": exported_model_path.relative_to(workspace.path).as_posix(),
                 "converted_model_path": converted_model_path.relative_to(workspace.path).as_posix(),
@@ -196,7 +195,7 @@ class ConvertTorchScript2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearch):
                 batch_dim=batch_dim,
                 device_max_batch_size=device_max_batch_size,
                 dataloader_max_batch_size=dataloader_max_batch_size,
-                custom_trt_profile_available=bool(custom_trt_profile),
+                custom_trt_profile_available=bool(optimized_trt_profiles),
             )
         LOGGER.info("Converted TorchScript to Torch-TensorRT.")
         return CommandOutput(status=CommandStatus.OK, output={"max_conversion_batch_size": max_conversion_batch_size})

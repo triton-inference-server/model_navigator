@@ -15,12 +15,11 @@
 
 from typing import Dict, List
 
-from model_navigator.api.config import DeviceKind, Format
+from model_navigator.api.config import Format
 from model_navigator.commands.base import ExecutionUnit
 from model_navigator.commands.copy.onnx import CopyONNX
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig
-from model_navigator.frameworks import is_trt_available
 from model_navigator.pipelines.pipeline import Pipeline
 
 
@@ -39,22 +38,3 @@ def onnx_export_builder(config: CommonConfig, models_config: Dict[Format, List[M
         execution_units.append(ExecutionUnit(command=CopyONNX, model_config=model_cfg))
 
     return Pipeline(name="ONNX Export", execution_units=execution_units)
-
-
-def onnx_conversion_builder(config: CommonConfig, models_config: Dict[Format, List[ModelConfig]]) -> Pipeline:
-    """Build ONNX conversion pipeline.
-
-    Args:
-        config (CommonConfig): Common optimize config.
-        models_config (Dict[Format, List[ModelConfig]]): Models optimize configs.
-
-    Returns:
-        Pipeline: Conversion pipeline.
-    """
-    execution_units: List[ExecutionUnit] = []
-    if is_trt_available() and config.target_device == DeviceKind.CUDA:
-        from model_navigator.commands.convert.onnx import ConvertONNX2TRT
-
-        for model_cfg in models_config.get(Format.TENSORRT, []):
-            execution_units.append(ExecutionUnit(command=ConvertONNX2TRT, model_config=model_cfg))
-    return Pipeline(name="ONNX Conversion", execution_units=execution_units)

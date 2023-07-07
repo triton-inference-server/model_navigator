@@ -82,7 +82,7 @@ def test_get_torch_trt_config_returns_model_configs_matching_custom_config():
         precision=(TensorRTPrecision.FP16,),
         precision_mode=TensorRTPrecisionMode.MIXED,
         max_workspace_size=10,
-        trt_profile=TensorRTProfile().add("x", (1,), (2,), (3,)),
+        trt_profiles=[TensorRTProfile().add("x", (1,), (2,), (3,))],
     )
 
     custom_configs = [torch_config, torch_trt_config]
@@ -101,7 +101,7 @@ def test_get_torch_trt_config_returns_model_configs_matching_custom_config():
         assert torch_trt_model_configuration.max_workspace_size == torch_trt_config.max_workspace_size
         assert torch_trt_model_configuration.precision_mode == torch_trt_config.precision_mode
         assert torch_trt_model_configuration.format == torch_trt_config.format
-        assert torch_trt_model_configuration.trt_profile == torch_trt_config.trt_profile
+        assert torch_trt_model_configuration.trt_profiles == torch_trt_config.trt_profiles
         assert torch_trt_model_configuration.parent_key == torch_model_configuration.key
 
 
@@ -128,7 +128,7 @@ def test_get_tf_trt_config_returns_model_configs_matching_custom_config():
     tensorflow_tensorrt_config = TensorFlowTensorRTConfig(
         precision=(TensorRTPrecision.FP16,),
         max_workspace_size=10,
-        trt_profile=TensorRTProfile().add("x", (1,), (2,), (3,)),
+        trt_profiles=[TensorRTProfile().add("x", (1,), (2,), (3,))],
         minimum_segment_size=13,
     )
 
@@ -147,7 +147,7 @@ def test_get_tf_trt_config_returns_model_configs_matching_custom_config():
         assert tf_trt_model_configuration.precision == precision
         assert tf_trt_model_configuration.max_workspace_size == tensorflow_tensorrt_config.max_workspace_size
         assert tf_trt_model_configuration.minimum_segment_size == tensorflow_tensorrt_config.minimum_segment_size
-        assert tf_trt_model_configuration.trt_profile == tensorflow_tensorrt_config.trt_profile
+        assert tf_trt_model_configuration.trt_profiles == tensorflow_tensorrt_config.trt_profiles
         assert tf_trt_model_configuration.format == tensorflow_tensorrt_config.format
         assert tf_trt_model_configuration.parent_key == sm_model_configuration.key
 
@@ -255,7 +255,7 @@ def test_get_trt_config_returns_model_configs_matching_custom_config():
         precision=(TensorRTPrecision.FP16, TensorRTPrecision.FP16),
         precision_mode=TensorRTPrecisionMode.MIXED,
         max_workspace_size=10,
-        trt_profile=TensorRTProfile().add("x", (1,), (2,), (3,)),
+        trt_profiles=[TensorRTProfile().add("x", (1,), (2,), (3,))],
         optimization_level=1,
         compatibility_level=TensorRTCompatibilityLevel.AMPERE_PLUS,
     )
@@ -275,7 +275,7 @@ def test_get_trt_config_returns_model_configs_matching_custom_config():
         assert trt_model_configuration.max_workspace_size == trt_config.max_workspace_size
         assert trt_model_configuration.precision_mode == trt_config.precision_mode
         assert trt_model_configuration.format == trt_config.format
-        assert trt_model_configuration.trt_profile == trt_config.trt_profile
+        assert trt_model_configuration.trt_profiles == trt_config.trt_profiles
         assert trt_model_configuration.parent_key == onnx_model_configuration.key
         assert trt_model_configuration.optimization_level == 1
         assert trt_model_configuration.compatibility_level == TensorRTCompatibilityLevel.AMPERE_PLUS

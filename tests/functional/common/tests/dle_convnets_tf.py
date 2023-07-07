@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
-from typing import Optional
+from typing import List, Optional
 
 import model_navigator as nav
 
@@ -20,7 +20,7 @@ import model_navigator as nav
 def dle_convnets_tf(
     model_name: str,
     max_batch_size: Optional[int] = None,
-    trt_profile: Optional[nav.TensorRTProfile] = None,
+    trt_profiles: Optional[List[nav.TensorRTProfile]] = None,
 ):
     import tensorflow as tf  # pytype: disable=import-error
     from config.defaults import Config, base_config  # pytype: disable=import-error
@@ -54,14 +54,14 @@ def dle_convnets_tf(
     dataloader = [tf.random.uniform(shape=[max_batch_size, 224, 224, 3], minval=0, maxval=1, dtype=tf.dtypes.float32)]
 
     custom_configs = [nav.OnnxConfig(opset=13)]
-    if trt_profile:
+    if trt_profiles:
         custom_configs.extend(
             [
                 nav.TensorRTConfig(
-                    trt_profile=trt_profile,
+                    trt_profiles=trt_profiles,
                 ),
                 nav.TensorFlowTensorRTConfig(
-                    trt_profile=trt_profile,
+                    trt_profiles=trt_profiles,
                 ),
             ]
         )

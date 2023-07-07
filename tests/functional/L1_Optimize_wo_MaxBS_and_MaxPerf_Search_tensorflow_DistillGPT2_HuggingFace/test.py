@@ -96,11 +96,11 @@ def main():
     )
     dataloader = dataloader_factory(max_batch_size, framework=Framework.TENSORFLOW)
 
-    trt_profile = (
+    trt_profiles = [
         nav.TensorRTProfile()
         .add("input_ids", (1, 128), (8, 128), (16, 128))
         .add("attention_mask", (1, 128), (8, 128), (16, 128))
-    )
+    ]
 
     package = nav.tensorflow.optimize(
         model=model,
@@ -114,8 +114,8 @@ def main():
                 opset=opset,
                 dynamic_axes=dynamic_axes,
             ),
-            nav.TensorRTConfig(trt_profile=trt_profile),
-            nav.TensorFlowTensorRTConfig(trt_profile=trt_profile),
+            nav.TensorRTConfig(trt_profiles=trt_profiles),
+            nav.TensorFlowTensorRTConfig(trt_profiles=trt_profiles),
         ),
         optimization_profile=nav.OptimizationProfile(max_batch_size=16),
     )

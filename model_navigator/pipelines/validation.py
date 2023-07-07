@@ -56,12 +56,12 @@ class PipelineManagerConfigurationValidator:
         cls._validate_optimization_profile_batch_sizes_when_batching_is_disabled(config)
         for custom_config in config.custom_configs.values():
             if isinstance(custom_config, (TensorRTConfig, TorchTensorRTConfig, TensorFlowTensorRTConfig)):
-                cls._validate_trt_profile_input_names(custom_config.trt_profile, config._input_names)
-                cls._validate_trt_profile_batch_dimension(custom_config.trt_profile, config.batch_dim)
+                cls._validate_trt_profile_input_names(custom_config.trt_profiles, config._input_names)
+                cls._validate_trt_profile_batch_dimension(custom_config.trt_profiles, config.batch_dim)
                 for onnx_custom_config in config.custom_configs.values():
                     if isinstance(onnx_custom_config, OnnxConfig):
                         cls._validate_if_trt_profile_aligns_with_dynamic_axes(
-                            onnx_custom_config.dynamic_axes, custom_config.trt_profile
+                            onnx_custom_config.dynamic_axes, custom_config.trt_profiles
                         )
         if package is not None:
             cls._validate_if_target_formats_sources_are_available_in_package(
@@ -109,28 +109,32 @@ class PipelineManagerConfigurationValidator:
     @classmethod
     def _validate_trt_profile_input_names(
         cls,
-        trt_profile: Optional[TensorRTProfile],
+        trt_profiles: Optional[List[TensorRTProfile]],
         input_names: Optional[Tuple[str, ...]] = None,
     ):
-        if input_names and trt_profile:
-            if not set(trt_profile) == set(input_names):
-                raise ModelNavigatorConfigurationError(
-                    f"trt_profile input names: {trt_profile.keys()} are not "
-                    f"matching model input names: {input_names}."
-                )
+        if input_names and trt_profiles:
+            for trt_profile in trt_profiles:
+                if not set(trt_profile) == set(input_names):
+                    raise ModelNavigatorConfigurationError(
+                        f"trt_profile input names: {trt_profile.keys()} are not "
+                        f"matching model input names: {input_names}."
+                    )
 
     @classmethod
-    def _validate_trt_profile_batch_dimension(cls, trt_profile: Optional[TensorRTProfile], batch_dim: Optional[int]):
+    def _validate_trt_profile_batch_dimension(
+        cls, trt_profiles: Optional[List[TensorRTProfile]], batch_dim: Optional[int]
+    ):
         """Validate if batch dimension min, max, opt is matching for all inputs."""
-        if batch_dim is not None and trt_profile:
-            first_shape_tuple = list(trt_profile.values())[0]
-            for shape_tuple in trt_profile.values():
-                for ref_shape, shape in zip(first_shape_tuple, shape_tuple):
-                    if ref_shape[batch_dim] != shape[batch_dim]:
-                        raise ModelNavigatorConfigurationError(
-                            f"Shape values are not matching on the batch dimension: {batch_dim} "
-                            f"for all inputs in trt_profile: {trt_profile}."
-                        )
+        if batch_dim is not None and trt_profiles:
+            for trt_profile in trt_profiles:
+                first_shape_tuple = list(trt_profile.values())[0]
+                for shape_tuple in trt_profile.values():
+                    for ref_shape, shape in zip(first_shape_tuple, shape_tuple):
+                        if ref_shape[batch_dim] != shape[batch_dim]:
+                            raise ModelNavigatorConfigurationError(
+                                f"Shape values are not matching on the batch dimension: {batch_dim} "
+                                f"for all inputs in trt_profile: {trt_profile}."
+                            )
 
     @classmethod
     def _validate_if_target_formats_sources_are_available_in_package(
@@ -189,16 +193,19 @@ class PipelineManagerConfigurationValidator:
 
     @classmethod
     def _validate_if_trt_profile_aligns_with_dynamic_axes(
-        cls, dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]], trt_profile: Optional[TensorRTProfile]
+        cls,
+        dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]],
+        trt_profiles: Optional[List[TensorRTProfile]],
     ):
         def _get_trt_dynamic_axes(shape_tuple: ShapeTuple) -> List[int]:
             return [idx for idx, min_shape in enumerate(shape_tuple.min) if min_shape != shape_tuple.max[idx]]
 
-        if dynamic_axes is None or trt_profile is None:
+        if dynamic_axes is None or trt_profiles is None:
             return
-        for input_name, shape_tuple in trt_profile.items():
-            for trt_dynamic_ax in _get_trt_dynamic_axes(shape_tuple):
-                if trt_dynamic_ax not in dynamic_axes[input_name]:
-                    raise ModelNavigatorConfigurationError(
-                        f"Dynamic axis {trt_dynamic_ax} is not specified in dynamic_axes for input {input_name}."
-                    )
+        for trt_profile in trt_profiles:
+            for input_name, shape_tuple in trt_profile.items():
+                for trt_dynamic_ax in _get_trt_dynamic_axes(shape_tuple):
+                    if trt_dynamic_ax not in dynamic_axes[input_name]:
+                        raise ModelNavigatorConfigurationError(
+                            f"Dynamic axis {trt_dynamic_ax} is not specified in dynamic_axes for input {input_name}."
+                        )

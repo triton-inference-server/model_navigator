@@ -217,6 +217,7 @@ class StatusDictUpdater:
             version.parse("0.1.3"): self._update_from_v0_1_3,
             version.parse("0.1.4"): self._update_from_v0_1_4,
             version.parse("0.2.1"): self._update_from_v0_2_1,
+            version.parse("0.2.2"): self._update_from_v0_2_2,
         }
 
     def update(self, data_dict: Dict, format_version: version.Version):
@@ -520,3 +521,10 @@ class StatusDictUpdater:
 
         if optimization_profile:
             config["optimization_profile"] = optimization_profile
+
+    def _update_from_v0_2_2(self, data_dict: Dict):
+        config = data_dict["config"]
+        for custom_config in config["custom_configs"].values():
+            if "trt_profile" in custom_config:
+                custom_config["trt_profiles"] = [custom_config["trt_profile"]]
+                custom_config.pop("trt_profile")

@@ -14,10 +14,9 @@
 """Builders for Torch based models."""
 from typing import Dict, List
 
-from model_navigator.api.config import DeviceKind, Format
+from model_navigator.api.config import Format
 from model_navigator.commands.base import ExecutionUnit
-from model_navigator.commands.convert.onnx import ConvertONNX2TRT
-from model_navigator.commands.convert.torch import ConvertTorchScript2ONNX, ConvertTorchScript2TorchTensorRT
+from model_navigator.commands.convert.torch import ConvertTorchScript2ONNX
 from model_navigator.commands.export.torch import ExportTorch2ONNX, ExportTorch2TorchScript
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig
@@ -61,10 +60,5 @@ def torch_conversion_builder(config: CommonConfig, models_config: Dict[Format, L
             model_cfg.parent_path and Format.TORCHSCRIPT.value in model_cfg.parent_path.as_posix()
         ):  # FIXME find better way to distinguish ONNX from source from ONNX from TorchScript
             execution_units.append(ExecutionUnit(command=ConvertTorchScript2ONNX, model_config=model_cfg))
-    if config.target_device == DeviceKind.CUDA:
-        for model_cfg in models_config.get(Format.TORCH_TRT, []):
-            execution_units.append(ExecutionUnit(command=ConvertTorchScript2TorchTensorRT, model_config=model_cfg))
-        for model_cfg in models_config.get(Format.TENSORRT, []):
-            execution_units.append(ExecutionUnit(command=ConvertONNX2TRT, model_config=model_cfg))
 
     return Pipeline(name="PyTorch Conversion", execution_units=execution_units)

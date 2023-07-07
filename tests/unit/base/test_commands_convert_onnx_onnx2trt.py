@@ -71,7 +71,8 @@ def test_run_execute_conversion_when_model_not_support_batching(mocker):
             assert ConvertONNX2TRT._execute_conversion.called is True  # pytype: disable=attribute-error
 
 
-def test_run_execute_conversion_when_trt_profile_provided(mocker):
+# TODO: add similar test for when trt_profiles provided
+def test_run_execute_conversion_with_max_bs_search_when_trt_profile_not_provided(mocker):
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = pathlib.Path(tmpdir)
         workspace = tmpdir / "navigator_workspace"
@@ -98,7 +99,6 @@ def test_run_execute_conversion_when_trt_profile_provided(mocker):
                 ),
                 dataloader_trt_profile=TensorRTProfile().add("input__0", (1, 224), (16, 224), (128, 224)),
                 batch_dim=0,
-                trt_profile=TensorRTProfile(),
                 precision=TensorRTPrecision.FP16,
                 precision_mode=TensorRTPrecisionMode.HIERARCHY,
             )

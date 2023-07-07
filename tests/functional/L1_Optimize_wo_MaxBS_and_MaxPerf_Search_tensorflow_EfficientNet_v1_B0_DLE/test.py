@@ -69,12 +69,12 @@ def main():
         sys.path.append(model_dir.as_posix())
         os.chdir(model_dir.as_posix())
 
-        trt_profile = nav.TensorRTProfile().add("input__0", (1, 3, 224, 224), (32, 3, 224, 224), (64, 3, 224, 224))
+        trt_profiles = [nav.TensorRTProfile().add("input__0", (1, 3, 224, 224), (32, 3, 224, 224), (64, 3, 224, 224))]
 
         package = dle_convnets_tf(
             model_name="EfficientNet-v1-B0",
             max_batch_size=64,
-            trt_profile=trt_profile,
+            trt_profiles=trt_profiles,
         )
         status_file = args.status
         status = collect_optimize_status(package.status)

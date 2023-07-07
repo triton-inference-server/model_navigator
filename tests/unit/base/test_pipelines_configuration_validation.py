@@ -100,7 +100,7 @@ def test_validator_raises_no_error_when_trt_profile_names_match_input_names():
         config._input_names = ("my_input",)
         config.target_formats = (Format.TENSORRT,)
         config.custom_configs = {
-            "TensorRT": TensorRTConfig(trt_profile=TensorRTProfile().add("my_input", (1,), (2,), (4,)))
+            "TensorRT": TensorRTConfig(trt_profiles=[TensorRTProfile().add("my_input", (1,), (2,), (4,))])
         }
         PipelineManagerConfigurationValidator.run(config, None)
 
@@ -114,7 +114,7 @@ def test_validator_raises_error_when_trt_profile_names_mismatch_input_names():
         config._input_names = ("my_input",)
         config.target_formats = (Format.TORCH_TRT,)
         config.custom_configs = {
-            "TorchTRT": TorchTensorRTConfig(trt_profile=TensorRTProfile().add("not_my_input", (1,), (2,), (4,)))
+            "TorchTRT": TorchTensorRTConfig(trt_profiles=[TensorRTProfile().add("not_my_input", (1,), (2,), (4,))])
         }
         with pytest.raises(ModelNavigatorConfigurationError):
             PipelineManagerConfigurationValidator.run(config, None)
@@ -129,7 +129,7 @@ def test_validator_raises_no_error_when_trt_profile_batch_dimension_match():
         config.target_formats = (Format.TENSORRT,)
         config.custom_configs = {
             "TensorRT": TensorRTConfig(
-                trt_profile=TensorRTProfile().add("my_input", (1,), (2,), (4,)).add("my_input_2", (1,), (2,), (4,))
+                trt_profiles=[TensorRTProfile().add("my_input", (1,), (2,), (4,)).add("my_input_2", (1,), (2,), (4,))]
             )
         }
         PipelineManagerConfigurationValidator.run(config, None)
@@ -144,7 +144,7 @@ def test_validator_raises_error_when_trt_profile_batch_dimension_mismatch():
         config.target_formats = (Format.TORCH_TRT,)
         config.custom_configs = {
             "TorchTRT": TorchTensorRTConfig(
-                trt_profile=TensorRTProfile().add("my_input", (1,), (2,), (4,)).add("my_input_2", (1,), (2,), (8,))
+                trt_profiles=[TensorRTProfile().add("my_input", (1,), (2,), (4,)).add("my_input_2", (1,), (2,), (8,))]
             )
         }
         with pytest.raises(ModelNavigatorConfigurationError):
@@ -183,7 +183,7 @@ def test_validator_raises_no_error_when_trt_profile_aligns_with_dynamic_axes():
             config = package.config
             config.custom_configs["Onnx"] = OnnxConfig(dynamic_axes={"my_input": [0, 1]})
             config.custom_configs["TensorRT"] = TensorRTConfig(
-                trt_profile=TensorRTProfile().add("my_input", (1, 1), (2, 2), (4, 4))
+                trt_profiles=[TensorRTProfile().add("my_input", (1, 1), (2, 2), (4, 4))]
             )
             PipelineManagerConfigurationValidator.run(config, package)
 
@@ -197,7 +197,7 @@ def test_validator_raises_error_when_trt_profile_does_not_align_with_dynamic_axe
             config = package.config
             config.custom_configs["Onnx"] = OnnxConfig(dynamic_axes={"my_input": [0]})
             config.custom_configs["TensorRT"] = TensorRTConfig(
-                trt_profile=TensorRTProfile().add("my_input", (1, 1), (2, 2), (4, 4))
+                trt_profiles=[TensorRTProfile().add("my_input", (1, 1), (2, 2), (4, 4))]
             )
             with pytest.raises(ModelNavigatorConfigurationError):
                 PipelineManagerConfigurationValidator.run(config, package)

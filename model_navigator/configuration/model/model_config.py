@@ -341,9 +341,9 @@ class TensorRTConfig(_SerializedModelConfig, format=Format.TENSORRT):
         precision: TensorRTPrecision,
         precision_mode: TensorRTPrecisionMode,
         max_workspace_size: int,
-        trt_profile: Optional[TensorRTProfile],
         optimization_level: Optional[int],
         compatibility_level: Optional[TensorRTCompatibilityLevel],
+        trt_profiles: Optional[List[TensorRTProfile]] = None,
         parent: Optional[ModelConfig] = None,
     ) -> None:
         """Initializes TensorRT (plan) model configuration class.
@@ -353,15 +353,15 @@ class TensorRTConfig(_SerializedModelConfig, format=Format.TENSORRT):
             precision: TensorRT model precision
             precision_mode: Mode how the precision flags are combined
             max_workspace_size: The maximum GPU memory the model can use temporarily during execution
-            trt_profile: TensorRT profile
             optimization_level: Level of TensorRT engine optimization
+            trt_profiles: TensorRT profiles
             compatibility_level: Hardware compatibility level
         """
         super().__init__(parent=parent)
         self.precision = precision
         self.precision_mode = precision_mode
         self.max_workspace_size = max_workspace_size
-        self.trt_profile = trt_profile
+        self.trt_profiles = trt_profiles
         self.optimization_level = optimization_level
         self.compatibility_level = compatibility_level
 
@@ -370,14 +370,14 @@ class TensorRTConfig(_SerializedModelConfig, format=Format.TENSORRT):
 
     @classmethod
     def _from_dict(cls, data_dict: Dict):
-        trt_profile = data_dict.get("trt_profile")
-        if trt_profile is not None:
-            trt_profile = TensorRTProfile.from_dict(trt_profile)
+        trt_profiles = data_dict.get("trt_profiles")
+        if trt_profiles is not None:
+            trt_profiles = [TensorRTProfile.from_dict(trt_profile) for trt_profile in trt_profiles]
         return cls(
             precision=cls._parse_string(TensorRTPrecision, data_dict.get("precision")),
             precision_mode=cls._parse_string(TensorRTPrecisionMode, data_dict.get("precision_mode")),
             max_workspace_size=cls._parse_string(int, data_dict.get("max_workspace_size")),
-            trt_profile=trt_profile,
+            trt_profiles=trt_profiles,
             optimization_level=cls._parse_string(int, data_dict.get("optimization_level")),
             compatibility_level=cls._parse_string(TensorRTCompatibilityLevel, data_dict.get("compatibility_level")),
         )
@@ -391,7 +391,7 @@ class TensorFlowTensorRTConfig(_SerializedModelConfig, format=Format.TF_TRT):
         precision: TensorRTPrecision,
         max_workspace_size: int,
         minimum_segment_size: int,
-        trt_profile: Optional[TensorRTProfile],
+        trt_profiles: Optional[List[TensorRTProfile]] = None,
         parent: Optional[ModelConfig] = None,
     ) -> None:
         """Initializes TensorFlow TensorRT model configuration class.
@@ -401,27 +401,27 @@ class TensorFlowTensorRTConfig(_SerializedModelConfig, format=Format.TF_TRT):
             precision: TensorRT model precision
             max_workspace_size: TensorRT max workspace size
             minimum_segment_size: TensorRT minimum segment size
-            trt_profile: TensorRT profile
+            trt_profiles: TensorRT profiles
         """
         super().__init__(parent=parent)
         self.precision = precision
         self.max_workspace_size = max_workspace_size
         self.minimum_segment_size = minimum_segment_size
-        self.trt_profile = trt_profile
+        self.trt_profiles = trt_profiles
 
     def _get_path_params_as_array_of_strings(self) -> List[str]:
         return [self.precision.value] if self.precision else []
 
     @classmethod
     def _from_dict(cls, data_dict: Dict):
-        trt_profile = data_dict.get("trt_profile")
-        if trt_profile is not None:
-            trt_profile = TensorRTProfile.from_dict(trt_profile)
+        trt_profiles = data_dict.get("trt_profiles")
+        if trt_profiles is not None:
+            trt_profiles = [TensorRTProfile.from_dict(trt_profile) for trt_profile in trt_profiles]
         return cls(
             precision=cls._parse_string(TensorRTPrecision, data_dict.get("precision")),
             max_workspace_size=cls._parse_string(int, data_dict.get("max_workspace_size")),
             minimum_segment_size=cls._parse_string(int, data_dict.get("minimum_segment_size")),
-            trt_profile=trt_profile,
+            trt_profiles=trt_profiles,
         )
 
 
@@ -433,7 +433,7 @@ class TorchTensorRTConfig(_SerializedModelConfig, format=Format.TORCH_TRT):
         precision: TensorRTPrecision,
         precision_mode: TensorRTPrecisionMode,
         max_workspace_size: int,
-        trt_profile: Optional[TensorRTProfile],
+        trt_profiles: Optional[List[TensorRTProfile]] = None,
         parent: Optional[ModelConfig] = None,
     ) -> None:
         """Initializes Torch TensorRT model configuration class.
@@ -443,25 +443,25 @@ class TorchTensorRTConfig(_SerializedModelConfig, format=Format.TORCH_TRT):
             precision: TensorRT model precision
             precision_mode: Mode how the precision flags are combined
             max_workspace_size: The maximum GPU memory the model can use temporarily during execution
-            trt_profile: TensorRT profile
+            trt_profiles: TensorRT profiles
         """
         super().__init__(parent=parent)
         self.precision = precision
         self.precision_mode = precision_mode
         self.max_workspace_size = max_workspace_size
-        self.trt_profile = trt_profile
+        self.trt_profiles = trt_profiles
 
     def _get_path_params_as_array_of_strings(self) -> List[str]:
         return [self.precision.value] if self.precision else []
 
     @classmethod
     def _from_dict(cls, data_dict: Dict):
-        trt_profile = data_dict.get("trt_profile")
-        if trt_profile is not None:
-            trt_profile = TensorRTProfile.from_dict(trt_profile)
+        trt_profiles = data_dict.get("trt_profiles")
+        if trt_profiles is not None:
+            trt_profiles = [TensorRTProfile.from_dict(trt_profile) for trt_profile in trt_profiles]
         return cls(
             precision=cls._parse_string(TensorRTPrecision, data_dict.get("precision")),
             precision_mode=cls._parse_string(TensorRTPrecisionMode, data_dict.get("precision_mode")),
             max_workspace_size=cls._parse_string(int, data_dict.get("max_workspace_size")),
-            trt_profile=trt_profile,
+            trt_profiles=trt_profiles,
         )

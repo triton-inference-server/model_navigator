@@ -47,6 +47,14 @@ def get_version():
     return trt_version
 
 
+def search_for_optimized_profiles(config, model_configs):
+    """Check if search for optimized TensorRT profiles can be performed."""
+    search = config.batch_dim is not None
+    for model_cfg in model_configs:
+        search = search and not model_cfg.trt_profiles
+    return search
+
+
 def get_trt_profile_from_trt_dynamic_axes(trt_dynamic_axes):
     """Create TensorRT profile from dynamic axes."""
     trt_profile = TensorRTProfile()

@@ -47,7 +47,7 @@ def get_configuration():
         "input_names": ("input",),
         "custom_configs": [
             nav.TensorRTConfig(
-                trt_profile=nav.TensorRTProfile().add("input", (1, 5), (3, 5), (3, 5)),
+                trt_profiles=[nav.TensorRTProfile().add("input", (1, 5), (3, 5), (3, 5))],
             ),
         ],
     }

@@ -15,7 +15,6 @@
 
 from typing import Callable, Generator, Optional
 
-from model_navigator.api.config import TensorRTProfile
 from model_navigator.commands.base import Command
 from model_navigator.core.constants import DEFAULT_MAX_BATCH_SIZE_HALVING
 from model_navigator.core.logger import LOGGER
@@ -59,6 +58,7 @@ class Convert2TensorRTWithMaxBatchSizeSearch(Command):
             dataloader_batch_size=dataloader_max_batch_size,
             device_max_batch_size=device_max_batch_size,
         )
+
         if run_search:
             max_conversion_batch_size = (
                 cls._execute_conversion_with_max_batch_size_search(  # TODO what is the best value?
@@ -223,17 +223,3 @@ class Convert2TensorRTWithMaxBatchSizeSearch(Command):
             return False
 
         return True
-
-    @classmethod
-    def _get_trt_profile(
-        cls,
-        dataloader_trt_profile: TensorRTProfile,
-        custom_trt_profile: Optional[TensorRTProfile],
-    ):
-        """Obtain the TensorRT profiles from dataloader or custom values provided by user."""
-        if not custom_trt_profile:
-            LOGGER.info("Using dataloader profile for TRT conversion")
-            return dataloader_trt_profile
-        else:
-            LOGGER.info("Using user specified profile for TRT conversion")
-            return custom_trt_profile

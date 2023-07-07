@@ -33,7 +33,7 @@ tensorrt_config = TensorRTConfig(
     precision=TensorRTPrecision.FP16,
     precision_mode=TensorRTPrecisionMode.HIERARCHY,
     max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
-    trt_profile=None,
+    trt_profiles=None,
     optimization_level=None,
     compatibility_level=None,
 )

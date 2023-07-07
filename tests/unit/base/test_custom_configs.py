@@ -77,6 +77,6 @@ def test_default_values_for_tensorrt_config():
         TensorRTPrecision.FP16,
     )
     assert tensorrt_config.precision_mode == TensorRTPrecisionMode.HIERARCHY
-    assert tensorrt_config.trt_profile is None
+    assert tensorrt_config.trt_profiles is None
     assert tensorrt_config.max_workspace_size == DEFAULT_MAX_WORKSPACE_SIZE
     assert tensorrt_config.format == Format.TENSORRT

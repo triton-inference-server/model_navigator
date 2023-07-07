@@ -17,7 +17,7 @@ import os
 import pathlib
 import sys
 import tempfile
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 
 import model_navigator as nav
 
@@ -62,7 +62,7 @@ def _dle_bert_tf_test(
     do_lower_case: bool = False,
     max_batch_size: Optional[int] = None,
     input_names: Optional[Tuple] = None,
-    trt_profile: Optional[nav.TensorRTProfile] = None,
+    trt_profiles: Optional[List[nav.TensorRTProfile]] = None,
 ):
     import squad_lib  # pytype: disable=import-error
     import tensorflow as tf  # pytype: disable=import-error
@@ -132,8 +132,8 @@ def _dle_bert_tf_test(
         input_names=input_names,
         custom_configs=(
             nav.OnnxConfig(opset=13),
-            nav.TensorRTConfig(trt_profile=trt_profile),
-            nav.TensorFlowTensorRTConfig(trt_profile=trt_profile),
+            nav.TensorRTConfig(trt_profiles=trt_profiles),
+            nav.TensorFlowTensorRTConfig(trt_profiles=trt_profiles),
         ),
     )
 
@@ -145,7 +145,7 @@ def dle_bert_tf(
     git_url: str,
     max_batch_size: Optional[int] = None,
     input_names: Optional[Tuple] = None,
-    trt_profile: Optional[nav.TensorRTProfile] = None,
+    trt_profiles: Optional[List[nav.TensorRTProfile]] = None,
 ):
     from git import Repo
 
@@ -181,7 +181,7 @@ def dle_bert_tf(
             / "download/google_pretrained_weights/uncased_L-12_H-768_A-12/bert_model.ckpt.index",
             max_batch_size=max_batch_size,
             input_names=input_names,
-            trt_profile=trt_profile,
+            trt_profiles=trt_profiles,
         )
 
         return package

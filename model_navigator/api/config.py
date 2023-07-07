@@ -14,6 +14,9 @@
 """Definition of enums and classes representing configuration for Model Navigator."""
 import abc
 import dataclasses
+import inspect
+import itertools
+import warnings
 from enum import Enum
 from typing import (
     Any,
@@ -462,6 +465,44 @@ class CustomConfigForFormat(DataObject, CustomConfig):
 
 
 @dataclasses.dataclass
+class CustomConfigForTensorRT(CustomConfigForFormat):
+    """Abstract base class used for custom configs representing particular TensorRT format."""
+
+    trt_profiles: Optional[List[TensorRTProfile]] = None
+    trt_profile: Optional[TensorRTProfile] = None  # TODO: Remove before 1.0.0 release
+    precision: Union[
+        Union[str, TensorRTPrecision], Tuple[Union[str, TensorRTPrecision], ...]
+    ] = DEFAULT_TENSORRT_PRECISION
+    precision_mode: Optional[Union[str, TensorRTPrecisionMode]] = DEFAULT_TENSORRT_PRECISION_MODE
+    max_workspace_size: Optional[int] = DEFAULT_MAX_WORKSPACE_SIZE
+
+    def __post_init__(self):
+        """Initialize common TensorRT parameters and validate configuration."""
+        precision = (self.precision,) if not isinstance(self.precision, (list, tuple)) else self.precision
+        self.precision = tuple(TensorRTPrecision(p) for p in precision)
+        self.precision_mode = TensorRTPrecisionMode(self.precision_mode)
+
+        # TODO: Remove before 1.0.0 release
+        if self.trt_profile is not None and self.trt_profiles is not None:
+            raise ModelNavigatorConfigurationError("Only one of trt_profile and trt_profiles can be set.")
+        elif self.trt_profile:
+            warnings.warn(
+                "trt_profile will be deprecated in future releases. Use trt_profiles instead.",
+                category=DeprecationWarning,
+                stacklevel=2,
+            )
+            self.trt_profiles = [self.trt_profile]
+
+    def defaults(self) -> None:
+        """Update parameters to defaults."""
+        self.precision = tuple(TensorRTPrecision(p) for p in DEFAULT_TENSORRT_PRECISION)
+        self.precision_mode = DEFAULT_TENSORRT_PRECISION_MODE
+        self.max_workspace_size = DEFAULT_MAX_WORKSPACE_SIZE
+        self.trt_profiles = None
+        self.trt_profile = None
+
+
+@dataclasses.dataclass
 class TensorFlowConfig(CustomConfigForFormat):
     """TensorFlow custom config used for SavedModel export.
 
@@ -495,27 +536,14 @@ class TensorFlowConfig(CustomConfigForFormat):
 
 
 @dataclasses.dataclass
-class TensorFlowTensorRTConfig(CustomConfigForFormat):
+class TensorFlowTensorRTConfig(CustomConfigForTensorRT):
     """TensorFlow TensorRT custom config used for TensorRT SavedModel export.
 
     Args:
-        precision: TensorRT precision.
-        max_workspace_size: Max workspace size used by converter.
         minimum_segment_size: Min size of subgraph.
-        trt_profile: TensorRT profile.
     """
 
-    precision: Union[
-        Union[str, TensorRTPrecision], Tuple[Union[str, TensorRTPrecision], ...]
-    ] = DEFAULT_TENSORRT_PRECISION
-    max_workspace_size: Optional[int] = DEFAULT_MAX_WORKSPACE_SIZE
     minimum_segment_size: int = DEFAULT_MIN_SEGMENT_SIZE
-    trt_profile: Optional[TensorRTProfile] = None
-
-    def __post_init__(self) -> None:
-        """Parse dataclass enums."""
-        precision = (self.precision,) if not isinstance(self.precision, (list, tuple)) else self.precision
-        self.precision = tuple(TensorRTPrecision(p) for p in precision)
 
     @property
     def format(self) -> Format:
@@ -533,16 +561,20 @@ class TensorFlowTensorRTConfig(CustomConfigForFormat):
 
     def defaults(self) -> None:
         """Update parameters to defaults."""
-        self.precision = tuple(TensorRTPrecision(p) for p in DEFAULT_TENSORRT_PRECISION)
-        self.max_workspace_size = DEFAULT_MAX_WORKSPACE_SIZE
+        super().defaults()
         self.minimum_segment_size = DEFAULT_MIN_SEGMENT_SIZE
-        self.trt_profile = None
 
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "TensorFlowTensorRTConfig":
         """Instantiate TensorFlowTensorRTConfig from  adictionary."""
-        if config_dict.get("trt_profile") is not None and not isinstance(config_dict["trt_profile"], TensorRTProfile):
-            config_dict["trt_profile"] = TensorRTProfile.from_dict(config_dict["trt_profile"])
+        if config_dict.get("trt_profiles") is not None:
+            # if config_dict.get("trt_profiles") is not None and not isinstance(config_dict["trt_profile"], TensorRTProfile):
+            parsed_trt_profiles = []
+            for trt_profile in config_dict.get("trt_profiles"):
+                if not isinstance(trt_profile, TensorRTProfile):
+                    trt_profile = TensorRTProfile.from_dict(trt_profile)
+                parsed_trt_profiles.append(trt_profile)
+            config_dict["trt_profiles"] = parsed_trt_profiles
         return cls(**config_dict)
 
 
@@ -585,27 +617,8 @@ class TorchConfig(CustomConfigForFormat):
 
 
 @dataclasses.dataclass
-class TorchTensorRTConfig(CustomConfigForFormat):
-    """Torch custom config used for TensorRT TorchScript conversion.
-
-    Args:
-        precision: TensorRT precision.
-        max_workspace_size: Max workspace size used by converter.
-        trt_profile: TensorRT profile.
-    """
-
-    precision: Union[
-        Union[str, TensorRTPrecision], Tuple[Union[str, TensorRTPrecision], ...]
-    ] = DEFAULT_TENSORRT_PRECISION
-    precision_mode: Optional[Union[str, TensorRTPrecisionMode]] = DEFAULT_TENSORRT_PRECISION_MODE
-    trt_profile: Optional[TensorRTProfile] = None
-    max_workspace_size: Optional[int] = DEFAULT_MAX_WORKSPACE_SIZE
-
-    def __post_init__(self) -> None:
-        """Parse dataclass enums."""
-        precision = (self.precision,) if not isinstance(self.precision, (list, tuple)) else self.precision
-        self.precision = tuple(TensorRTPrecision(p) for p in precision)
-        self.precision_mode = TensorRTPrecisionMode(self.precision_mode)
+class TorchTensorRTConfig(CustomConfigForTensorRT):
+    """Torch custom config used for TensorRT TorchScript conversion."""
 
     @property
     def format(self) -> Format:
@@ -621,18 +634,17 @@ class TorchTensorRTConfig(CustomConfigForFormat):
         """Name of the config."""
         return "TorchTensorRT"
 
-    def defaults(self) -> None:
-        """Update parameters to defaults."""
-        self.precision = tuple(TensorRTPrecision(p) for p in DEFAULT_TENSORRT_PRECISION)
-        self.precision_mode = DEFAULT_TENSORRT_PRECISION_MODE
-        self.trt_profile = None
-        self.max_workspace_size = DEFAULT_MAX_WORKSPACE_SIZE
-
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "TorchTensorRTConfig":
         """Instantiate TorchTensorRTConfig from  adictionary."""
-        if config_dict.get("trt_profile") is not None and not isinstance(config_dict["trt_profile"], TensorRTProfile):
-            config_dict["trt_profile"] = TensorRTProfile.from_dict(config_dict["trt_profile"])
+        if config_dict.get("trt_profiles") is not None:
+            # if config_dict.get("trt_profiles") is not None and not isinstance(config_dict["trt_profile"], TensorRTProfile):
+            parsed_trt_profiles = []
+            for trt_profile in config_dict.get("trt_profiles"):
+                if not isinstance(trt_profile, TensorRTProfile):
+                    trt_profile = TensorRTProfile.from_dict(trt_profile)
+                parsed_trt_profiles.append(trt_profile)
+            config_dict["trt_profiles"] = parsed_trt_profiles
         return cls(**config_dict)
 
 
@@ -667,32 +679,20 @@ class OnnxConfig(CustomConfigForFormat):
 
 
 @dataclasses.dataclass
-class TensorRTConfig(CustomConfigForFormat):
+class TensorRTConfig(CustomConfigForTensorRT):
     """TensorRT custom config used for TensorRT conversion.
 
     Args:
-        precision: TensorRT precision.
-        max_workspace_size: Max workspace size used by converter.
-        trt_profile: TensorRT profile.
         optimization_level: Optimization level for TensorRT conversion. Allowed values are fom 0 to 5. Where default is
                             3 based on TensorRT API documentation.
     """
 
-    precision: Union[
-        Union[str, TensorRTPrecision], Tuple[Union[str, TensorRTPrecision], ...]
-    ] = DEFAULT_TENSORRT_PRECISION
-    precision_mode: Union[str, TensorRTPrecisionMode] = TensorRTPrecisionMode.HIERARCHY
-    trt_profile: Optional[TensorRTProfile] = None
-    max_workspace_size: Optional[int] = DEFAULT_MAX_WORKSPACE_SIZE
     optimization_level: Optional[int] = None
     compatibility_level: Optional[TensorRTCompatibilityLevel] = None
 
     def __post_init__(self) -> None:
         """Parse dataclass enums."""
-        self.precision_mode = TensorRTPrecisionMode(self.precision_mode)
-        precision = (self.precision,) if not isinstance(self.precision, (list, tuple)) else self.precision
-        self.precision = tuple(TensorRTPrecision(p) for p in precision)
-
+        super().__post_init__()
         if self.optimization_level is not None and (self.optimization_level < 0 or self.optimization_level > 5):
             raise ModelNavigatorConfigurationError(
                 f"TensorRT `optimization_level` must be between 0 and 5. Provided value: {self.optimization_level}."
@@ -714,18 +714,20 @@ class TensorRTConfig(CustomConfigForFormat):
 
     def defaults(self) -> None:
         """Update parameters to defaults."""
-        self.precision = tuple(TensorRTPrecision(p) for p in DEFAULT_TENSORRT_PRECISION)
-        self.precision_mode = DEFAULT_TENSORRT_PRECISION_MODE
-        self.trt_profile = None
-        self.max_workspace_size = DEFAULT_MAX_WORKSPACE_SIZE
+        super().defaults()
         self.optimization_level = None
         self.compatibility_level = None
 
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "TensorRTConfig":
         """Instantiate TensorRTConfig from  adictionary."""
-        if config_dict.get("trt_profile") is not None and not isinstance(config_dict["trt_profile"], TensorRTProfile):
-            config_dict["trt_profile"] = TensorRTProfile.from_dict(config_dict["trt_profile"])
+        if config_dict.get("trt_profiles") is not None:
+            parsed_trt_profiles = []
+            for trt_profile in config_dict.get("trt_profiles"):
+                if not isinstance(trt_profile, TensorRTProfile):
+                    trt_profile = TensorRTProfile.from_dict(trt_profile)
+                parsed_trt_profiles.append(trt_profile)
+            config_dict["trt_profiles"] = parsed_trt_profiles
         return cls(**config_dict)
 
 
@@ -747,7 +749,9 @@ def map_custom_configs(custom_configs: Optional[Sequence[CustomConfig]]) -> Dict
 def _custom_configs() -> Dict[str, Type[CustomConfigForFormat]]:
     custom_configs = {}
     custom_configs_formats = {}
-    for cls in CustomConfigForFormat.__subclasses__():
+    for cls in itertools.chain(CustomConfigForFormat.__subclasses__(), CustomConfigForTensorRT.__subclasses__()):
+        if inspect.isabstract(cls):
+            continue
         assert cls.name() not in custom_configs
         cls_format = cls().format
         assert cls_format not in custom_configs_formats

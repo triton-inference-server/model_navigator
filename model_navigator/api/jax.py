@@ -40,6 +40,8 @@ from model_navigator.pipelines.builders import (
     performance_builder,
     preprocessing_builder,
     tensorflow_conversion_builder,
+    tensorflow_tensorrt_conversion_builder,
+    tensorrt_conversion_builder,
     verify_builder,
 )
 from model_navigator.pipelines.builders.find_device_max_batch_size import find_device_max_batch_size_builder
@@ -147,6 +149,8 @@ def optimize(
         jax_export_builder,
         find_device_max_batch_size_builder,
         tensorflow_conversion_builder,
+        tensorflow_tensorrt_conversion_builder,
+        tensorrt_conversion_builder,
         correctness_builder,
         performance_builder,
         verify_builder,

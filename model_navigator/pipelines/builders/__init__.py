@@ -26,13 +26,16 @@ from model_navigator.pipelines.pipeline import Pipeline  # noqa: F401
 
 if is_torch_available():
     from .torch import torch_conversion_builder, torch_export_builder  # noqa: F401
+    from .torch_tensorrt import torch_tensorrt_conversion_builder  # noqa: F401
 
 if is_tf_available():
     from .tensorflow import tensorflow_conversion_builder, tensorflow_export_builder  # noqa: F401;
+    from .tensorflow_tensorrt import tensorflow_tensorrt_conversion_builder  # noqa: F401
 
 if is_tf_available() and is_jax_available():
     from .jax import jax_export_builder  # noqa: F401
 
-from .onnx import onnx_conversion_builder, onnx_export_builder  # noqa: F401
+from .onnx import onnx_export_builder  # noqa: F401
+from .tensorrt import tensorrt_conversion_builder  # noqa: F401
 
 PipelineBuilder = Callable[[CommonConfig, Dict[Format, List[ModelConfig]]], Pipeline]

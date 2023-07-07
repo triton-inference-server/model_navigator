@@ -16,10 +16,14 @@ limitations under the License.
 
 # Changelog
 
+## 0.7.0 (unreleased)
+- new: Generate multiple TensorRT optimization profiles during conversion for various scenarios
+
 ## 0.6.0
 - new: Zero-copy runners for Torch, ONNX and TensorRT - omit H2D and D2H memory copy between runners execution
 - new: `nav.pacakge.profile` API method to profile generated models on provided dataloader
 - change: ProfilerConfig replaced with OptimizationProfile:
+  - new: Navigator package version change to 0.2.3. Custom configurations now use trt_profiles list instead single value
   - new: OptimizationProfile impact the conversion for TensorRT
   - new: `batch_sizes` and `max_batch_size` limit the max profile in TensorRT conversion
   - new: Allow to provide separate dataloader for profiling - first sample used only

@@ -191,7 +191,7 @@ class ModelConfigBuilder:
                     precision=precision,
                     precision_mode=torch_trt_config.precision_mode,
                     max_workspace_size=torch_trt_config.max_workspace_size,
-                    trt_profile=torch_trt_config.trt_profile,
+                    trt_profiles=torch_trt_config.trt_profiles,
                 )
             )
 
@@ -237,7 +237,7 @@ class ModelConfigBuilder:
                     precision=precision,
                     max_workspace_size=tf_trt_config.max_workspace_size,
                     minimum_segment_size=tf_trt_config.minimum_segment_size,
-                    trt_profile=tf_trt_config.trt_profile,
+                    trt_profiles=tf_trt_config.trt_profiles,
                 )
             )
 
@@ -301,7 +301,7 @@ class ModelConfigBuilder:
                     precision=precision,
                     precision_mode=trt_config.precision_mode,
                     max_workspace_size=trt_config.max_workspace_size,
-                    trt_profile=trt_config.trt_profile,
+                    trt_profiles=trt_config.trt_profiles,
                     optimization_level=trt_config.optimization_level,
                     compatibility_level=trt_config.compatibility_level,
                 )

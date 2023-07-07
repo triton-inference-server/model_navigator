@@ -347,18 +347,27 @@ def _get_builders(framework: Framework) -> List[PipelineBuilder]:
     Args:
         framework (Framework): Package framework.
     """
+    conversion_builders = []
     if framework == Framework.TORCH:
-        from model_navigator.pipelines.builders import torch_conversion_builder as conversion_builder
+        from model_navigator.pipelines.builders import torch_conversion_builder, torch_tensorrt_conversion_builder
+
+        conversion_builders = [torch_conversion_builder, torch_tensorrt_conversion_builder]
     elif framework in (Framework.TENSORFLOW, Framework.JAX):
-        from model_navigator.pipelines.builders import tensorflow_conversion_builder as conversion_builder
-    else:
-        assert framework == Framework.ONNX
-        from model_navigator.pipelines.builders import onnx_conversion_builder as conversion_builder
+        from model_navigator.pipelines.builders import (
+            tensorflow_conversion_builder,
+            tensorflow_tensorrt_conversion_builder,
+        )
+
+        conversion_builders = [tensorflow_conversion_builder, tensorflow_tensorrt_conversion_builder]
+
+    from model_navigator.pipelines.builders import tensorrt_conversion_builder
+
+    conversion_builders.append(tensorrt_conversion_builder)
 
     builders: List[PipelineBuilder] = [
         preprocessing_builder,
         find_device_max_batch_size_builder,
-        conversion_builder,
+        *conversion_builders,
         correctness_builder,
         performance_builder,
         verify_builder,

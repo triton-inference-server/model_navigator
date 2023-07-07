@@ -32,10 +32,10 @@ from model_navigator.frameworks import Framework
 from model_navigator.package.package import Package
 from model_navigator.pipelines.builders import (
     correctness_builder,
-    onnx_conversion_builder,
     onnx_export_builder,
     performance_builder,
     preprocessing_builder,
+    tensorrt_conversion_builder,
     verify_builder,
 )
 from model_navigator.pipelines.builders.find_device_max_batch_size import find_device_max_batch_size_builder
@@ -126,7 +126,7 @@ def optimize(
         preprocessing_builder,
         onnx_export_builder,
         find_device_max_batch_size_builder,
-        onnx_conversion_builder,
+        tensorrt_conversion_builder,
         correctness_builder,
         performance_builder,
         verify_builder,

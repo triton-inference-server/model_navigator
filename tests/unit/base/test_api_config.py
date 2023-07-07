@@ -26,12 +26,54 @@ from model_navigator.api.config import (
     TensorRTConfig,
     TensorRTPrecision,
     TensorRTPrecisionMode,
+    TensorRTProfile,
     TorchConfig,
     TorchTensorRTConfig,
     _custom_configs,
     map_custom_configs,
 )
 from model_navigator.exceptions import ModelNavigatorConfigurationError
+
+
+def test_tensorrt_config_raise_exception_when_trt_profile_and_trt_profiles_are_both_set():
+    with pytest.raises(ModelNavigatorConfigurationError):
+        TensorRTConfig(trt_profile=TensorRTProfile(), trt_profiles=[TensorRTProfile()])
+
+
+def test_tensorflow_tensorrt_config_raise_exception_when_trt_profile_and_trt_profiles_are_both_set():
+    with pytest.raises(ModelNavigatorConfigurationError):
+        TensorFlowTensorRTConfig(trt_profile=TensorRTProfile(), trt_profiles=[TensorRTProfile()])
+
+
+def test_torch_tensorrt_config_raise_exception_when_trt_profile_and_trt_profiles_are_both_set():
+    with pytest.raises(ModelNavigatorConfigurationError):
+        TorchTensorRTConfig(trt_profile=TensorRTProfile(), trt_profiles=[TensorRTProfile()])
+
+
+def test_tensorrt_based_format_constructs_correctly_with_trt_profile():
+    TensorRTConfig(trt_profile=TensorRTProfile())
+    TensorFlowTensorRTConfig(trt_profile=TensorRTProfile())
+    TorchTensorRTConfig(trt_profile=TensorRTProfile())
+
+
+def test_tensorrt_based_format_constructs_correctly_with_trt_profiles():
+    trt_profiles = [TensorRTProfile(), TensorRTProfile(), TensorRTProfile()]
+
+    TensorRTConfig(trt_profiles=trt_profiles)
+    TensorFlowTensorRTConfig(trt_profiles=trt_profiles)
+    TorchTensorRTConfig(trt_profiles=trt_profiles)
+
+
+def test_tensorrt_based_configs_return_valid_profiles():
+    trt_profile = TensorRTProfile().add(name="input_0", min=(224, 224, 3), opt=(224, 224, 3), max=(224, 224, 3))
+
+    assert TensorRTConfig(trt_profile=trt_profile).trt_profiles[0] == trt_profile
+    assert TensorFlowTensorRTConfig(trt_profile=trt_profile).trt_profiles[0] == trt_profile
+    assert TorchTensorRTConfig(trt_profile=trt_profile).trt_profiles[0] == trt_profile
+
+    assert TensorRTConfig(trt_profiles=[trt_profile]).trt_profiles[0] == trt_profile
+    assert TensorFlowTensorRTConfig(trt_profiles=[trt_profile]).trt_profiles[0] == trt_profile
+    assert TorchTensorRTConfig(trt_profiles=[trt_profile]).trt_profiles[0] == trt_profile
 
 
 def test_tensorflow_config_has_valid_name_and_format():

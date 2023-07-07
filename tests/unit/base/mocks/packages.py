@@ -294,7 +294,7 @@ def trochscript_package_with_source(workspace) -> Package:
                         "jit_type": (JitType.TRACE,),
                     },
                     "TensorRT": {
-                        "trt_profile": {"input__0": {"min": (1, 3), "opt": (3, 3), "max": (4, 3)}},
+                        "trt_profiles": [{"input__0": {"min": (1, 3), "opt": (3, 3), "max": (4, 3)}}],
                     },
                 },
                 "optimization_profile": {
@@ -769,7 +769,7 @@ def tensorflow_package_with_tensorflow_tensorrt(workspace) -> Package:
         precision=TensorRTPrecision.FP16,
         max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
         minimum_segment_size=3,
-        trt_profile=None,
+        trt_profiles=None,
     )
 
     package = Package(
@@ -884,7 +884,7 @@ def tensorflow_package_with_optimal_model_tensorflow_tensorrt_and_dummy_navigato
         precision=TensorRTPrecision.FP16,
         max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
         minimum_segment_size=3,
-        trt_profile=None,
+        trt_profiles=None,
     )
 
     package = Package(
@@ -1098,7 +1098,7 @@ def torchscript_package_with_cuda(workspace) -> Package:
                         "dynamic_axes": {"input__0": [0]},
                     },
                     "TensorRT": {
-                        "trt_profile": {"input__0": {"min": (1, 3), "opt": (3, 3), "max": (4, 3)}},
+                        "trt_profiles": [{"input__0": {"min": (1, 3), "opt": (3, 3), "max": (4, 3)}}],
                     },
                 },
                 "optimization_profile": {
@@ -1187,7 +1187,7 @@ def torchscript_package_with_torch_tensorrt(workspace) -> Package:
         precision=TensorRTPrecision.FP16,
         precision_mode=TensorRTPrecisionMode.HIERARCHY,
         max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
-        trt_profile=None,
+        trt_profiles=None,
     )
     package = Package(
         status=Status(
@@ -1213,7 +1213,7 @@ def torchscript_package_with_torch_tensorrt(workspace) -> Package:
                         "dynamic_axes": {"input__0": [0]},
                     },
                     "TensorRT": {
-                        "trt_profile": {"input__0": {"min": (1, 3), "opt": (3, 3), "max": (4, 3)}},
+                        "trt_profiles": [{"input__0": {"min": (1, 3), "opt": (3, 3), "max": (4, 3)}}],
                     },
                 },
                 "optimization_profile": {
@@ -1307,7 +1307,7 @@ def onnx_package(workspace) -> Package:
         precision=TensorRTPrecision.FP16,
         precision_mode=TensorRTPrecisionMode.HIERARCHY,
         max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
-        trt_profile=None,
+        trt_profiles=None,
         optimization_level=None,
         compatibility_level=None,
     )
@@ -1338,7 +1338,7 @@ def onnx_package(workspace) -> Package:
                         "dynamic_axes": {"input__0": [0]},
                     },
                     "TensorRT": {
-                        "trt_profile": {"input__0": {"min": (1, 3), "opt": (3, 3), "max": (4, 3)}},
+                        "trt_profiles": [{"input__0": {"min": (1, 3), "opt": (3, 3), "max": (4, 3)}}],
                     },
                 },
                 "optimization_profile": {
@@ -1431,7 +1431,7 @@ def tensorrt_package(workspace) -> Package:
         precision=TensorRTPrecision.FP16,
         precision_mode=TensorRTPrecisionMode.HIERARCHY,
         max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
-        trt_profile=None,
+        trt_profiles=None,
         optimization_level=None,
         compatibility_level=None,
     )
@@ -1456,7 +1456,7 @@ def tensorrt_package(workspace) -> Package:
                         "dynamic_axes": {"input__0": [0]},
                     },
                     "TensorRT": {
-                        "trt_profile": {"input__0": {"min": (1, 3), "opt": (3, 3), "max": (4, 3)}},
+                        "trt_profiles": [{"input__0": {"min": (1, 3), "opt": (3, 3), "max": (4, 3)}}],
                     },
                 },
                 "optimization_profile": {

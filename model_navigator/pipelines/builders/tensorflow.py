@@ -15,10 +15,9 @@
 
 from typing import Dict, List
 
-from model_navigator.api.config import DeviceKind, Format
+from model_navigator.api.config import Format
 from model_navigator.commands.base import ExecutionUnit
-from model_navigator.commands.convert.onnx import ConvertONNX2TRT
-from model_navigator.commands.convert.tf import ConvertSavedModel2ONNX, ConvertSavedModel2TFTRT
+from model_navigator.commands.convert.tf import ConvertSavedModel2ONNX
 from model_navigator.commands.export.tf import ExportTF2SavedModel
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig
@@ -54,10 +53,5 @@ def tensorflow_conversion_builder(config: CommonConfig, models_config: Dict[Form
     execution_units: List[ExecutionUnit] = []
     for model_cfg in models_config.get(Format.ONNX, []):
         execution_units.append(ExecutionUnit(command=ConvertSavedModel2ONNX, model_config=model_cfg))
-    if config.target_device == DeviceKind.CUDA:
-        for model_cfg in models_config.get(Format.TF_TRT, []):
-            execution_units.append(ExecutionUnit(command=ConvertSavedModel2TFTRT, model_config=model_cfg))
-        for model_cfg in models_config.get(Format.TENSORRT, []):
-            execution_units.append(ExecutionUnit(command=ConvertONNX2TRT, model_config=model_cfg))
 
-    return Pipeline(name="TensorFlow2 Conversion", execution_units=execution_units)
+    return Pipeline(name="TensorFlow 2 Conversion", execution_units=execution_units)
