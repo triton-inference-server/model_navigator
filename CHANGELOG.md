@@ -18,12 +18,28 @@ limitations under the License.
 
 ## 0.7.0 (unreleased)
 - new: Generate multiple TensorRT optimization profiles during conversion for various scenarios
+- change: Navigator package version change to 0.2.3. Custom configurations now use trt_profiles list instead single value
+
+## 0.6.1
+- fix: Add model from package to Triton model store with custom configs
+
+- Version of external components used during testing:
+  - [PyTorch 2.1.0a0+4136153](https://github.com/pytorch/pytorch/commit/4136153)
+  - [TensorFlow 2.12.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.12.0)
+  - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+  - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
+  - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.47.1
+  - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.26
+  - [tf2onnx v1.14.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0)
+  - Other component versions depend on the used framework containers versions.
+    See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+    for a detailed summary.
 
 ## 0.6.0
 - new: Zero-copy runners for Torch, ONNX and TensorRT - omit H2D and D2H memory copy between runners execution
 - new: `nav.pacakge.profile` API method to profile generated models on provided dataloader
 - change: ProfilerConfig replaced with OptimizationProfile:
-  - new: Navigator package version change to 0.2.3. Custom configurations now use trt_profiles list instead single value
+
   - new: OptimizationProfile impact the conversion for TensorRT
   - new: `batch_sizes` and `max_batch_size` limit the max profile in TensorRT conversion
   - new: Allow to provide separate dataloader for profiling - first sample used only
