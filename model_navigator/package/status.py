@@ -526,5 +526,7 @@ class StatusDictUpdater:
         config = data_dict["config"]
         for custom_config in config["custom_configs"].values():
             if "trt_profile" in custom_config:
-                custom_config["trt_profiles"] = [custom_config["trt_profile"]]
+                trt_profile = custom_config["trt_profile"]
+                if trt_profile is not None:
+                    custom_config["trt_profiles"] = [trt_profile]
                 custom_config.pop("trt_profile")
