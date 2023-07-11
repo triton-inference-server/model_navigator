@@ -71,6 +71,9 @@ class TensorRTProfileBuilder(Command):
                 profiling_results=profiling_results,
                 latency_budget=latency_budget,
             )
+        elif batch_dim is None:
+            LOGGER.info("Batching disabled. Skipping generation of optimized TensorRT profiles.")
+            return CommandOutput(status=CommandStatus.SKIPPED)
         else:
             LOGGER.error("No profiling results found.")
             return CommandOutput(status=CommandStatus.FAIL)
