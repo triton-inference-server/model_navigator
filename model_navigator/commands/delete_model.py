@@ -14,11 +14,13 @@
 """Command for deleting models."""
 
 import os
+import shutil
 from pathlib import Path
 
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.workspace import Workspace
+from model_navigator.exceptions import ModelNavigatorRuntimeError
 
 
 class DeleteModel(Command):
@@ -39,7 +41,13 @@ class DeleteModel(Command):
             CommandOutput: Status OK.
         """
         model_path = workspace.path / path
-        if model_path.exists():
+        if model_path.is_file():
             os.unlink(model_path)
-            LOGGER.info(f"Model {model_path} deleted.")
+            LOGGER.info(f"Model file {model_path} deleted.")
+        elif model_path.is_dir():
+            shutil.rmtree(model_path)
+            LOGGER.info(f"Model catalog {model_path} deleted.")
+        else:
+            raise ModelNavigatorRuntimeError(f"File or catalog {model_path} not found.")
+
         return CommandOutput(status=CommandStatus.OK)
