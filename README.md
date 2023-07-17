@@ -102,7 +102,7 @@ The following prerequisites must be fulfilled to use Triton Model Navigator
 - Installed Python `3.8+`
 - Installed [NVIDIA TensorRT](https://developer.nvidia.com/tensorrt) for TensorRT models export.
 
-We recommend to use NGC Containers for PyTorch and TensorFlow which provide have all necessary dependencies:
+We recommend to use NGC Containers for PyTorch and TensorFlow which have all necessary dependencies preinstalled:
 
 - [PyTorch](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch)
 - [TensorFlow](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/tensorflow)
