@@ -59,7 +59,7 @@ class TensorFlowOptimization:
             GPUIOAccelerator,
             TensorRTAccelerator,
         ]:
-            raise ModelNavigatorWrongParameterError("Unsupported optimization type provided.")
+            raise ModelNavigatorWrongParameterError("Unsupported accelerator type provided.")
 
 
 @dataclasses.dataclass

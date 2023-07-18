@@ -19,6 +19,7 @@ from unittest.mock import Mock
 import numpy as np
 import pytest
 
+from model_navigator.core.tensor import TensorMetadata
 from model_navigator.exceptions import (
     ModelNavigatorEmptyPackageError,
     ModelNavigatorError,
@@ -28,14 +29,27 @@ from model_navigator.exceptions import (
 from model_navigator.runtime_analyzer import RuntimeAnalyzer
 from model_navigator.runtime_analyzer.analyzer import RuntimeAnalyzerResult
 from model_navigator.triton import model_repository
-from model_navigator.triton.model_repository import add_model, add_model_from_package
+from model_navigator.triton.model_config import ModelConfig
+from model_navigator.triton.model_repository import (
+    _input_tensor_from_metadata,
+    _output_tensor_from_metadata,
+    _TritonModelRepository,
+    add_model,
+    add_model_from_package,
+)
 from model_navigator.triton.specialized_configs import (
     DeviceKind,
     InputTensorSpec,
+    ModelWarmup,
+    ModelWarmupInput,
+    ModelWarmupInputDataType,
     ONNXModelConfig,
     OutputTensorSpec,
     PythonModelConfig,
     PyTorchModelConfig,
+    SequenceBatcher,
+    SequenceBatcherInitialState,
+    SequenceBatcherState,
     TensorFlowModelConfig,
     TensorRTAccelerator,
     TensorRTModelConfig,
@@ -229,6 +243,187 @@ def test_add_model_create_catalog_in_repository_when_string_path_passed():
 
         assert (model_repository_path / "TestModel" / "config.pbtxt").exists()
         assert (model_repository_path / "TestModel" / "1" / "model.plan").exists()
+
+
+def test_add_model_create_model_with_warmup_when_enabled(mocker):
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir = pathlib.Path(tmpdir)
+        model_repository_path = tmpdir / "model-repository"
+        model_repository_path.mkdir()
+
+        model_path = tmpdir / "model"
+        model_path.touch()
+
+        spy_deploy_model = mocker.spy(_TritonModelRepository, "deploy_model")
+
+        add_model(
+            model_repository_path=model_repository_path.as_posix(),
+            model_name="TestModel",
+            model_version=1,
+            model_path=model_path.as_posix(),
+            config=TensorRTModelConfig(
+                warmup={
+                    "warmup_1": ModelWarmup(
+                        inputs={
+                            "input_0": ModelWarmupInput(
+                                shape=(1,),
+                                dtype=np.dtype("float32"),
+                                input_data_type=ModelWarmupInputDataType.ZERO,
+                            )
+                        }
+                    ),
+                    "warmup_2": ModelWarmup(
+                        batch_size=2,
+                        iterations=1,
+                        inputs={
+                            "input_0": ModelWarmupInput(
+                                shape=(1,),
+                                dtype=np.dtype("float32"),
+                                input_data_type=ModelWarmupInputDataType.RANDOM,
+                            )
+                        },
+                    ),
+                }
+            ),
+        )
+
+        config = spy_deploy_model.call_args.kwargs["model_config"]
+
+        assert isinstance(config, ModelConfig) is True
+
+        assert config.warmup["warmup_1"].batch_size == 1
+        assert config.warmup["warmup_1"].iterations == 0
+        assert config.warmup["warmup_1"].inputs["input_0"].shape == (1,)
+        assert config.warmup["warmup_1"].inputs["input_0"].dtype == np.dtype("float32")
+        assert config.warmup["warmup_1"].inputs["input_0"].input_data_type.value == ModelWarmupInputDataType.ZERO.value
+
+        assert config.warmup["warmup_2"].batch_size == 2
+        assert config.warmup["warmup_2"].iterations == 1
+        assert config.warmup["warmup_2"].inputs["input_0"].shape == (1,)
+        assert config.warmup["warmup_2"].inputs["input_0"].dtype == np.dtype("float32")
+        assert (
+            config.warmup["warmup_2"].inputs["input_0"].input_data_type.value == ModelWarmupInputDataType.RANDOM.value
+        )
+
+        assert (model_repository_path / "TestModel" / "config.pbtxt").exists()
+        assert (model_repository_path / "TestModel" / "1" / "model.plan").exists()
+
+
+def test_add_model_create_model_with_warmup_when_enabled_and_warmup_file_passed(mocker):
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir = pathlib.Path(tmpdir)
+        model_repository_path = tmpdir / "model-repository"
+        model_repository_path.mkdir()
+
+        warmup_file1 = tmpdir / "file1.data"
+        warmup_file1.touch()
+
+        warmup_file2 = tmpdir / "file2.data"
+        warmup_file2.touch()
+
+        model_path = tmpdir / "model"
+        model_path.touch()
+
+        add_model(
+            model_repository_path=model_repository_path.as_posix(),
+            model_name="TestModel",
+            model_version=1,
+            model_path=model_path.as_posix(),
+            config=TensorRTModelConfig(
+                warmup={
+                    "warmup_1": ModelWarmup(
+                        inputs={
+                            "input_0": ModelWarmupInput(
+                                shape=(1,),
+                                dtype=np.dtype("float32"),
+                                input_data_type=ModelWarmupInputDataType.FILE,
+                                input_data_file=warmup_file1,
+                            )
+                        }
+                    ),
+                    "warmup_2": ModelWarmup(
+                        batch_size=2,
+                        iterations=1,
+                        inputs={
+                            "input_0": ModelWarmupInput(
+                                shape=(1,),
+                                dtype=np.dtype("float32"),
+                                input_data_type=ModelWarmupInputDataType.FILE,
+                                input_data_file=warmup_file2,
+                            )
+                        },
+                    ),
+                }
+            ),
+        )
+
+        assert (model_repository_path / "TestModel" / "config.pbtxt").exists()
+        assert (model_repository_path / "TestModel" / "1" / "model.plan").exists()
+
+        assert (model_repository_path / "TestModel" / "warmup").exists()
+        assert (model_repository_path / "TestModel" / "warmup" / "file1.data").exists()
+        assert (model_repository_path / "TestModel" / "warmup" / "file2.data").exists()
+
+
+def test_add_model_create_model_when_sequence_batcher_initial_state_file(mocker):
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir = pathlib.Path(tmpdir)
+        model_repository_path = tmpdir / "model-repository"
+        model_repository_path.mkdir()
+
+        initial_state1 = tmpdir / "file1.data"
+        initial_state1.touch()
+
+        initial_state2 = tmpdir / "file2.data"
+        initial_state2.touch()
+
+        model_path = tmpdir / "model"
+        model_path.touch()
+
+        add_model(
+            model_repository_path=model_repository_path.as_posix(),
+            model_name="TestModel",
+            model_version=1,
+            model_path=model_path.as_posix(),
+            config=TensorRTModelConfig(
+                batcher=SequenceBatcher(
+                    states=[
+                        SequenceBatcherState(
+                            input_name="input_1",
+                            output_name="output_1",
+                            dtype=np.float32,
+                            shape=(-1,),
+                            initial_states=[
+                                SequenceBatcherInitialState(
+                                    name="initialization",
+                                    dtype=np.int32,
+                                    shape=(-1, -1),
+                                    data_file=initial_state1,
+                                )
+                            ],
+                        ),
+                        SequenceBatcherState(
+                            input_name="input_2",
+                            output_name="output_2",
+                            dtype=np.int32,
+                            shape=(-1, -1),
+                            initial_states=[
+                                SequenceBatcherInitialState(
+                                    name="initialization", dtype=np.int32, shape=(-1, -1), data_file=initial_state2
+                                )
+                            ],
+                        ),
+                    ]
+                ),
+            ),
+        )
+
+        assert (model_repository_path / "TestModel" / "config.pbtxt").exists()
+        assert (model_repository_path / "TestModel" / "1" / "model.plan").exists()
+
+        assert (model_repository_path / "TestModel" / "initial_state").exists()
+        assert (model_repository_path / "TestModel" / "initial_state" / "file1.data").exists()
+        assert (model_repository_path / "TestModel" / "initial_state" / "file2.data").exists()
 
 
 def test_add_model_from_package_raise_error_when_unsupported_triton_runner_in_package():
@@ -632,3 +827,207 @@ def test_add_model_from_package_create_model_when_string_path_provided(mocker):
 
         assert (model_repository_path / "Model" / "config.pbtxt").exists()
         assert (model_repository_path / "Model" / "1" / "model.plan").exists()
+
+
+def test_add_model_from_package_create_model_with_warmup_when_model_has_static_shapes(mocker):
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        workspace_path = pathlib.Path(tmp_dir) / "workspace"
+        model_repository_path = pathlib.Path(tmp_dir) / "model_repository"
+
+        model_name = "Model"
+        model_version = 1
+
+        package_path = get_assets_path() / "packages" / "onnx_identity.nav"
+        import model_navigator as nav
+
+        package = nav.package.load(package_path, workspace=workspace_path)
+        spy_add_model = mocker.spy(model_repository, "add_model")
+
+        add_model_from_package(
+            model_repository_path=model_repository_path.as_posix(),
+            model_name=model_name,
+            model_version=model_version,
+            package=package,
+            warmup=True,
+        )
+
+        config = spy_add_model.call_args.kwargs["config"]
+
+        assert isinstance(config, ONNXModelConfig) is True
+
+        assert config.warmup["warmup_1"].batch_size == 1
+        assert config.warmup["warmup_1"].iterations == 0
+        assert config.warmup["warmup_1"].inputs["X"].shape == [3, 8, 8]
+        assert config.warmup["warmup_1"].inputs["X"].dtype == np.dtype("float32")
+        assert config.warmup["warmup_1"].inputs["X"].input_data_type.value == ModelWarmupInputDataType.FILE.value
+        assert config.warmup["warmup_1"].inputs["X"].input_data_file == workspace_path / "warmup" / "X.data"
+
+        assert config.warmup["warmup_16"].batch_size == 16
+        assert config.warmup["warmup_16"].iterations == 0
+        assert config.warmup["warmup_16"].inputs["X"].shape == [3, 8, 8]
+        assert config.warmup["warmup_16"].inputs["X"].dtype == np.dtype("float32")
+        assert config.warmup["warmup_16"].inputs["X"].input_data_type.value == ModelWarmupInputDataType.FILE.value
+        assert config.warmup["warmup_16"].inputs["X"].input_data_file == workspace_path / "warmup" / "X.data"
+
+        assert (model_repository_path / "Model" / "config.pbtxt").exists()
+        assert (model_repository_path / "Model" / "1" / "model.onnx").exists()
+
+        assert (model_repository_path / "Model" / "warmup").exists()
+        assert (model_repository_path / "Model" / "warmup" / "X.data").exists()
+
+
+def test_add_model_from_package_create_model_with_warmup_when_model_has_dynamic_shapes(mocker):
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        workspace_path = pathlib.Path(tmp_dir) / "workspace"
+        model_repository_path = pathlib.Path(tmp_dir) / "model_repository"
+
+        model_name = "Model"
+        model_version = 1
+
+        package_path = get_assets_path() / "packages" / "torch_identity.nav"
+        import model_navigator as nav
+
+        package = nav.package.load(package_path, workspace=workspace_path)
+        spy_add_model = mocker.spy(model_repository, "add_model")
+
+        add_model_from_package(
+            model_repository_path=model_repository_path.as_posix(),
+            model_name=model_name,
+            model_version=model_version,
+            package=package,
+            warmup=True,
+        )
+
+        config = spy_add_model.call_args.kwargs["config"]
+
+        assert isinstance(config, ONNXModelConfig) is True
+
+        assert config.warmup["warmup_1"].batch_size == 1
+        assert config.warmup["warmup_1"].iterations == 0
+        assert config.warmup["warmup_1"].inputs["input_0"].shape == [3]
+        assert config.warmup["warmup_1"].inputs["input_0"].dtype == np.dtype("float32")
+        assert config.warmup["warmup_1"].inputs["input_0"].input_data_type.value == ModelWarmupInputDataType.FILE.value
+        assert config.warmup["warmup_1"].inputs["input_0"].input_data_file == workspace_path / "warmup" / "input_0.data"
+
+        assert config.warmup["warmup_16"].batch_size == 16
+        assert config.warmup["warmup_16"].iterations == 0
+        assert config.warmup["warmup_16"].inputs["input_0"].shape == [3]
+        assert config.warmup["warmup_16"].inputs["input_0"].dtype == np.dtype("float32")
+        assert config.warmup["warmup_16"].inputs["input_0"].input_data_type.value == ModelWarmupInputDataType.FILE.value
+        assert (
+            config.warmup["warmup_16"].inputs["input_0"].input_data_file == workspace_path / "warmup" / "input_0.data"
+        )
+
+        assert (model_repository_path / "Model" / "config.pbtxt").exists()
+        assert (model_repository_path / "Model" / "1" / "model.onnx").exists()
+
+        assert (model_repository_path / "Model" / "warmup").exists()
+        assert (model_repository_path / "Model" / "warmup" / "input_0.data").exists
+
+
+def test_input_tensor_from_metadata_return_input_tensor_when_no_batching():
+    metadata = TensorMetadata()
+
+    metadata.add(name="input_1", shape=(224, 224, 3), dtype=np.float32)
+    metadata.add(name="input_2", shape=(-1, -1), dtype=np.int32)
+
+    tensors = _input_tensor_from_metadata(input_metadata=metadata, batching=False)
+
+    assert len(tensors) == 2
+
+    assert tensors[0].name == "input_1"
+    assert tensors[0].shape == (224, 224, 3)
+    assert tensors[0].dtype == np.dtype(np.float32)
+    assert tensors[0].reshape == ()
+    assert tensors[0].is_shape_tensor is False
+    assert tensors[0].optional is False
+    assert tensors[0].format is None
+    assert tensors[0].allow_ragged_batch is False
+
+    assert tensors[1].name == "input_2"
+    assert tensors[1].shape == (-1, -1)
+    assert tensors[1].dtype == np.dtype(np.int32)
+    assert tensors[1].reshape == ()
+    assert tensors[1].is_shape_tensor is False
+    assert tensors[1].optional is False
+    assert tensors[1].format is None
+    assert tensors[1].allow_ragged_batch is False
+
+
+def test_input_tensor_from_metadata_return_input_tensor_when_batching():
+    metadata = TensorMetadata()
+
+    metadata.add(name="input_1", shape=(-1, 224, 224, 3), dtype=np.float32)
+    metadata.add(name="input_2", shape=(-1, -1, -1), dtype=np.int32)
+
+    tensors = _input_tensor_from_metadata(input_metadata=metadata, batching=True)
+
+    assert len(tensors) == 2
+
+    assert tensors[0].name == "input_1"
+    assert tensors[0].shape == (224, 224, 3)
+    assert tensors[0].dtype == np.dtype(np.float32)
+    assert tensors[0].reshape == ()
+    assert tensors[0].is_shape_tensor is False
+    assert tensors[0].optional is False
+    assert tensors[0].format is None
+    assert tensors[0].allow_ragged_batch is False
+
+    assert tensors[1].name == "input_2"
+    assert tensors[1].shape == (-1, -1)
+    assert tensors[1].dtype == np.dtype(np.int32)
+    assert tensors[1].reshape == ()
+    assert tensors[1].is_shape_tensor is False
+    assert tensors[1].optional is False
+    assert tensors[1].format is None
+    assert tensors[1].allow_ragged_batch is False
+
+
+def test_output_tensor_from_metadata_return_input_tensor_when_no_batching():
+    metadata = TensorMetadata()
+
+    metadata.add(name="output_1", shape=(1000,), dtype=np.int32)
+    metadata.add(name="output_2", shape=(-1, -1), dtype=np.float32)
+
+    tensors = _output_tensor_from_metadata(output_metadata=metadata, batching=False)
+
+    assert len(tensors) == 2
+
+    assert tensors[0].name == "output_1"
+    assert tensors[0].shape == (1000,)
+    assert tensors[0].dtype == np.dtype(np.int32)
+    assert tensors[0].reshape == ()
+    assert tensors[0].is_shape_tensor is False
+    assert tensors[0].label_filename is None
+
+    assert tensors[1].name == "output_2"
+    assert tensors[1].shape == (-1, -1)
+    assert tensors[1].dtype == np.dtype(np.float32)
+    assert tensors[1].reshape == ()
+    assert tensors[1].is_shape_tensor is False
+    assert tensors[1].label_filename is None
+
+
+def test_output_tensor_from_metadata_return_input_tensor_when_batching():
+    metadata = TensorMetadata()
+
+    metadata.add(name="output_1", shape=(-1, 1000), dtype=np.int32)
+    metadata.add(name="output_2", shape=(-1, -1, -1), dtype=np.float32)
+
+    tensors = _output_tensor_from_metadata(output_metadata=metadata, batching=True)
+
+    assert len(tensors) == 2
+
+    assert tensors[0].name == "output_1"
+    assert tensors[0].shape == (1000,)
+    assert tensors[0].dtype == np.dtype(np.int32)
+    assert tensors[0].reshape == ()
+    assert tensors[0].is_shape_tensor is False
+    assert tensors[0].label_filename is None
+
+    assert tensors[1].name == "output_2"
+    assert tensors[1].shape == (-1, -1)
+    assert tensors[1].dtype == np.dtype(np.float32)
+    assert tensors[1].reshape == ()
+    assert tensors[1].is_shape_tensor is False
+    assert tensors[1].label_filename is None

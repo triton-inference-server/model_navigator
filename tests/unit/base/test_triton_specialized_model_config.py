@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import pathlib
 from typing import Type
 
 import numpy as np
@@ -22,7 +23,11 @@ from model_navigator.triton.specialized_configs import (
     DynamicBatcher,
     InputTensorSpec,
     InstanceGroup,
+    ModelWarmup,
+    ModelWarmupInput,
+    ModelWarmupInputDataType,
     ONNXModelConfig,
+    ONNXOptimization,
     OutputTensorSpec,
     PythonModelConfig,
     PyTorchModelConfig,
@@ -32,7 +37,9 @@ from model_navigator.triton.specialized_configs import (
     SequenceBatcherControlKind,
     SequenceBatcherInitialState,
     TensorFlowModelConfig,
+    TensorFlowOptimization,
     TensorRTModelConfig,
+    TensorRTOptimization,
     TimeoutAction,
 )
 
@@ -460,5 +467,96 @@ def test_sequence_batcher_initial_state_raise_error_when_have_to_many_parameters
             dtype=np.float32,
             shape=(-1,),
             zero_data=True,
-            data_file="file.data",
+            data_file=pathlib.Path("file.data"),
+        )
+
+
+def test_onnx_optimization_raise_error_when_invalid_accelerator_passed():
+    with pytest.raises(
+        ModelNavigatorWrongParameterError,
+        match="Unsupported accelerator type provided.",
+    ):
+        ONNXOptimization(accelerator=object())  # pytype: disable=wrong-arg-types
+
+
+def test_tensorflow_optimization_raise_error_when_invalid_accelerator_passed():
+    with pytest.raises(
+        ModelNavigatorWrongParameterError,
+        match="Unsupported accelerator type provided.",
+    ):
+        TensorFlowOptimization(accelerator=object())  # pytype: disable=wrong-arg-types
+
+
+def test_tensorrt_optimization_raise_error_when_none_of_accelerators_enabled():
+    with pytest.raises(
+        ModelNavigatorWrongParameterError,
+        match="At least one of the optimization options should be enabled.",
+    ):
+        TensorRTOptimization()
+
+
+def test_model_warmup_raise_error_when_batch_size_smaller_than_1():
+    with pytest.raises(
+        ModelNavigatorWrongParameterError,
+        match="`batch_size` must be greater or equal 1.",
+    ):
+        ModelWarmup(
+            batch_size=0,
+            inputs={
+                "INPUT_1": ModelWarmupInput(
+                    dtype=np.dtype("float32"),
+                    shape=(1000,),
+                    input_data_type=ModelWarmupInputDataType.RANDOM,
+                )
+            },
+        )
+
+
+def test_model_config_raise_error_when_iterations_smaller_than_1():
+    with pytest.raises(
+        ModelNavigatorWrongParameterError,
+        match="iterations` must be greater or equal 0.",
+    ):
+        ModelWarmup(
+            inputs={
+                "INPUT_1": ModelWarmupInput(
+                    dtype=np.dtype("float32"),
+                    shape=(1000,),
+                    input_data_type=ModelWarmupInputDataType.RANDOM,
+                )
+            },
+            iterations=-1,
+        )
+
+
+def test_model_config_raise_error_when_file_input_data_and_file_not_provided():
+    with pytest.raises(
+        ModelNavigatorWrongParameterError,
+        match="`input_data_file` is required. Set the file path.",
+    ):
+        ModelWarmup(
+            inputs={
+                "INPUT_1": ModelWarmupInput(
+                    dtype=np.dtype("float32"),
+                    shape=(1000,),
+                    input_data_type=ModelWarmupInputDataType.FILE,
+                )
+            },
+        )
+
+
+def test_model_config_raise_error_when_random_input_data_and_file_provided():
+    with pytest.raises(
+        ModelNavigatorWrongParameterError,
+        match="`input_data_file` is not required. Remove the parameter.",
+    ):
+        ModelWarmup(
+            inputs={
+                "INPUT_1": ModelWarmupInput(
+                    dtype=np.dtype("float32"),
+                    shape=(1000,),
+                    input_data_type=ModelWarmupInputDataType.RANDOM,
+                    input_data_file=pathlib.Path("my-file.data"),
+                )
+            },
         )

@@ -28,6 +28,9 @@ from model_navigator.triton.specialized_configs import (
     InputTensorFormat,
     InputTensorSpec,
     InstanceGroup,
+    ModelWarmup,
+    ModelWarmupInput,
+    ModelWarmupInputDataType,
     ONNXOptimization,
     OpenVINOAccelerator,
     OutputTensorSpec,
@@ -113,6 +116,14 @@ full_model_config = ModelConfig(
             format=InputTensorFormat.FORMAT_NHWC,
             optional=True,
         ),
+        InputTensorSpec(
+            name="INPUT_3",
+            dtype=np.dtype("int32"),
+            shape=(100, 100),
+            reshape=(1000, 1000),
+            format=InputTensorFormat.FORMAT_NHWC,
+            optional=True,
+        ),
     ],
     outputs=[
         OutputTensorSpec(
@@ -124,6 +135,50 @@ full_model_config = ModelConfig(
             label_filename="file.txt",
         ),
     ],
+    warmup={
+        "Warmup1": ModelWarmup(
+            inputs={
+                "INPUT_1": ModelWarmupInput(
+                    dtype=np.dtype("float32"),
+                    shape=(-1,),
+                    input_data_type=ModelWarmupInputDataType.RANDOM,
+                ),
+                "INPUT_2": ModelWarmupInput(
+                    dtype=np.dtype("bytes"),
+                    shape=(100, 100),
+                    input_data_type=ModelWarmupInputDataType.ZERO,
+                ),
+                "INPUT_3": ModelWarmupInput(
+                    dtype=np.dtype("int32"),
+                    shape=(100, 100),
+                    input_data_type=ModelWarmupInputDataType.FILE,
+                    input_data_file=pathlib.Path("file.data"),
+                ),
+            },
+        ),
+        "Warmup2": ModelWarmup(
+            batch_size=2,
+            iterations=1,
+            inputs={
+                "INPUT_1": ModelWarmupInput(
+                    dtype=np.dtype("float32"),
+                    shape=(-1,),
+                    input_data_type=ModelWarmupInputDataType.RANDOM,
+                ),
+                "INPUT_2": ModelWarmupInput(
+                    dtype=np.dtype("bytes"),
+                    shape=(100, 100),
+                    input_data_type=ModelWarmupInputDataType.ZERO,
+                ),
+                "INPUT_3": ModelWarmupInput(
+                    dtype=np.dtype("int32"),
+                    shape=(100, 100),
+                    input_data_type=ModelWarmupInputDataType.FILE,
+                    input_data_file=pathlib.Path("file.data"),
+                ),
+            },
+        ),
+    },
 )
 
 
@@ -777,7 +832,7 @@ def test_to_file_set_sequence_batching_when_state_provided_for_sequence_batcher_
                             name="initialization",
                             dtype=np.int32,
                             shape=(-1, -1),
-                            data_file="file.data",
+                            data_file=pathlib.Path("file.data"),
                         )
                     ],
                 ),
@@ -1395,6 +1450,14 @@ def test_to_file_save_config_to_file_when_full_config_specified():
                     "reshape": {"shape": ["1000", "1000"]},
                     "optional": True,
                 },
+                {
+                    "name": "INPUT_3",
+                    "data_type": "TYPE_INT32",
+                    "dims": ["100", "100"],
+                    "format": "FORMAT_NHWC",
+                    "reshape": {"shape": ["1000", "1000"]},
+                    "optional": True,
+                },
             ],
             "output": [
                 {
@@ -1410,4 +1473,49 @@ def test_to_file_save_config_to_file_when_full_config_specified():
                 "parameter1": {"string_value": "value1"},
                 "parameter2": {"string_value": "value2"},
             },
+            "model_warmup": [
+                {
+                    "name": "Warmup1",
+                    "batch_size": 1,
+                    "inputs": {
+                        "INPUT_1": {
+                            "data_type": "TYPE_FP32",
+                            "dims": ["-1"],
+                            "random_data": True,
+                        },
+                        "INPUT_2": {
+                            "data_type": "TYPE_STRING",
+                            "dims": ["100", "100"],
+                            "zero_data": True,
+                        },
+                        "INPUT_3": {
+                            "data_type": "TYPE_INT32",
+                            "dims": ["100", "100"],
+                            "input_data_file": "file.data",
+                        },
+                    },
+                },
+                {
+                    "name": "Warmup2",
+                    "batch_size": 2,
+                    "count": 1,
+                    "inputs": {
+                        "INPUT_1": {
+                            "data_type": "TYPE_FP32",
+                            "dims": ["-1"],
+                            "random_data": True,
+                        },
+                        "INPUT_2": {
+                            "data_type": "TYPE_STRING",
+                            "dims": ["100", "100"],
+                            "zero_data": True,
+                        },
+                        "INPUT_3": {
+                            "data_type": "TYPE_INT32",
+                            "dims": ["100", "100"],
+                            "input_data_file": "file.data",
+                        },
+                    },
+                },
+            ],
         }

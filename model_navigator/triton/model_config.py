@@ -22,6 +22,7 @@ from .specialized_configs import (
     DynamicBatcher,
     InputTensorSpec,
     InstanceGroup,
+    ModelWarmup,
     ONNXOptimization,
     OutputTensorSpec,
     Platform,
@@ -52,6 +53,7 @@ class ModelConfig:
     outputs: Optional[Sequence[OutputTensorSpec]] = None
     optimization: Optional[Union[TensorRTOptimization, TensorFlowOptimization, ONNXOptimization]] = None
     response_cache: Optional[bool] = None
+    warmup: Dict[str, ModelWarmup] = dataclasses.field(default_factory=lambda: {})
 
     def __post_init__(self) -> None:
         """Validate the configuration for early error handling."""
@@ -75,3 +77,23 @@ class ModelConfig:
             ONNXOptimization,
         ]:
             raise ModelNavigatorWrongParameterError("Unsupported optimization type provided.")
+
+        if self.inputs and self.warmup:
+            for warmup in self.warmup.values():
+                if len(self.inputs) != len(warmup.inputs):
+                    raise ModelNavigatorWrongParameterError("Length of warmup inputs not equal defined inputs.")
+
+                missing_inputs = []
+                for inpt in self.inputs:
+                    warmup_input = warmup.inputs.get(inpt.name)
+                    if warmup_input is None:
+                        missing_inputs.append(inpt.name)
+                    elif warmup_input.dtype != inpt.dtype:
+                        raise ModelNavigatorWrongParameterError(
+                            f"Incompatible data types for {inpt.name}. Expected: {inpt.dtype}. Got: {warmup_input.dtype}."
+                        )
+
+                if missing_inputs:
+                    raise ModelNavigatorWrongParameterError(
+                        f"Missing defined warmup inputs: {', '.join(missing_inputs)}."
+                    )

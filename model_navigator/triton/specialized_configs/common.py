@@ -14,6 +14,7 @@
 """Common configurations for public and internal API."""
 import dataclasses
 import enum
+import pathlib
 from typing import Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
@@ -432,7 +433,7 @@ class SequenceBatcherInitialState:
     shape: Tuple[int, ...]
     dtype: Optional[Union[np.dtype, Type[np.dtype]]] = None
     zero_data: Optional[bool] = None
-    data_file: Optional[str] = None
+    data_file: Optional[pathlib.Path] = None
 
     def __post_init__(self):
         """Validate the configuration for early error handling."""
@@ -549,3 +550,78 @@ class SequenceBatcher:
             and not isinstance(self.strategy, SequenceBatcherStrategyOldest)
         ):
             raise ModelNavigatorWrongParameterError("Unsupported strategy type provided.")
+
+
+class ModelWarmupInputDataType(enum.Enum):
+    """Model warmup input data type.
+
+    Read more in Triton Inference server [model configuration]
+    [model configuration]: https://github.com/triton-inference-server/common/blob/main/protobuf/model_config.proto#L1605
+
+    Args:
+        ZERO: "ZERO"
+        RANDOM: "RANDOM"
+        FILE: "FILE"
+    """
+
+    ZERO = "ZERO"
+    RANDOM = "RANDOM"
+    FILE = "FILE"
+
+
+@dataclasses.dataclass
+class ModelWarmupInput:
+    """Model warmup input configuration.
+
+    Read more in Triton Inference server [model configuration]
+    [model configuration]: https://github.com/triton-inference-server/common/blob/main/protobuf/model_config.proto#L1605
+
+    Args:
+        shape: Shape of the model input/output
+        dtype: Data type
+        input_data_type: Type of input data used for warmup
+        input_data_file: Path to file with input data. Provide the path where the file is located.
+                         Required only when input_data_type is `ModelWarmupInputDataType.DATA_FILE`
+    """
+
+    shape: Tuple[int, ...]
+    dtype: Optional[Union[np.dtype, Type[np.dtype]]]
+    input_data_type: ModelWarmupInputDataType
+    input_data_file: Optional[pathlib.Path] = None
+
+    def __post_init__(self):
+        """Validate the configuration for early error handling."""
+        if self.input_data_type == ModelWarmupInputDataType.FILE and self.input_data_file is None:
+            raise ModelNavigatorWrongParameterError("`input_data_file` is required. Set the file path.")
+
+        if self.input_data_type != ModelWarmupInputDataType.FILE and self.input_data_file is not None:
+            raise ModelNavigatorWrongParameterError("`input_data_file` is not required. Remove the parameter.")
+
+
+@dataclasses.dataclass
+class ModelWarmup:
+    """Model warmup configuration.
+
+    Read more in Triton Inference server [model configuration]
+    [model configuration]: https://github.com/triton-inference-server/common/blob/main/protobuf/model_config.proto#L1598
+
+    Args:
+        batch_size: The batch size of the inference request. This must be >= 1. For models that don't support batching,
+                    batch_size must be 1.
+        inputs: The warmup meta data associated with every model input, including control tensors.
+        iterations: The number of iterations that this warmup sample will be executed. For example, if this field is
+                    set to 2, 2 model executions using this sample will be scheduled for warmup. Default value is 0 which
+                    indicates that this sample will be used only once.
+    """
+
+    inputs: Dict[str, ModelWarmupInput]
+    batch_size: int = 1
+    iterations: int = 0
+
+    def __post_init__(self):
+        """Validate the configuration for early error handling."""
+        if self.batch_size < 1:
+            raise ModelNavigatorWrongParameterError("`batch_size` must be greater or equal 1.")
+
+        if self.iterations < 0:
+            raise ModelNavigatorWrongParameterError("`iterations` must be greater or equal 0.")

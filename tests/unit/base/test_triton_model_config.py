@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import pathlib
+
 import numpy as np
 import pytest
 
@@ -22,6 +24,9 @@ from model_navigator.triton.specialized_configs import (
     DynamicBatcher,
     InputTensorSpec,
     InstanceGroup,
+    ModelWarmup,
+    ModelWarmupInput,
+    ModelWarmupInputDataType,
     OutputTensorSpec,
     QueuePolicy,
     SequenceBatcher,
@@ -584,7 +589,7 @@ def test_model_config_raise_error_when_sequence_batcher_initial_state_have_to_ma
                                 dtype=np.float32,
                                 shape=(-1,),
                                 zero_data=True,
-                                data_file="file.data",
+                                data_file=pathlib.Path("file.data"),
                             ),
                         ],
                     )
@@ -608,4 +613,122 @@ def test_model_config_raise_error_when_unsupported_batcher_passed():
             model_name="simple",
             backend=Backend.TensorFlow,
             batcher=object(),  # pytype: disable=wrong-arg-types
+        )
+
+
+def test_model_config_raise_error_when_warmup_inputs_not_match_inputs():
+    with pytest.raises(
+        ModelNavigatorWrongParameterError,
+        match="Length of warmup inputs not equal defined inputs.",
+    ):
+        ModelConfig(
+            model_name="simple",
+            backend=Backend.ONNXRuntime,
+            inputs=[
+                InputTensorSpec(name="INPUT_1", dtype=np.dtype("float32"), shape=(1000,)),
+            ],
+            outputs=[
+                OutputTensorSpec(name="OUTPUT_1", dtype=np.dtype("int32"), shape=(1000,)),
+            ],
+            warmup={
+                "Warmup": ModelWarmup(
+                    inputs={
+                        "INPUT_1": ModelWarmupInput(
+                            dtype=np.dtype("float32"),
+                            shape=(1000,),
+                            input_data_type=ModelWarmupInputDataType.RANDOM,
+                        ),
+                        "INPUT_2": ModelWarmupInput(
+                            dtype=np.dtype("float32"),
+                            shape=(1000,),
+                            input_data_type=ModelWarmupInputDataType.RANDOM,
+                        ),
+                    },
+                ),
+            },
+        )
+
+
+def test_model_config_raise_error_when_inputs_not_match_warmup_inputs():
+    with pytest.raises(
+        ModelNavigatorWrongParameterError,
+        match="Length of warmup inputs not equal defined inputs.",
+    ):
+        ModelConfig(
+            model_name="simple",
+            backend=Backend.ONNXRuntime,
+            inputs=[
+                InputTensorSpec(name="INPUT_1", dtype=np.dtype("float32"), shape=(1000,)),
+                InputTensorSpec(name="INPUT_2", dtype=np.dtype("float32"), shape=(1000,)),
+            ],
+            outputs=[
+                OutputTensorSpec(name="OUTPUT_1", dtype=np.dtype("int32"), shape=(1000,)),
+            ],
+            warmup={
+                "Warmup": ModelWarmup(
+                    inputs={
+                        "INPUT_1": ModelWarmupInput(
+                            dtype=np.dtype("float32"),
+                            shape=(1000,),
+                            input_data_type=ModelWarmupInputDataType.RANDOM,
+                        )
+                    },
+                ),
+            },
+        )
+
+
+def test_model_config_raise_error_when_warmup_inputs_miss_inputs():
+    with pytest.raises(
+        ModelNavigatorWrongParameterError,
+        match="Missing defined warmup inputs: INPUT_1.",
+    ):
+        ModelConfig(
+            model_name="simple",
+            backend=Backend.ONNXRuntime,
+            inputs=[
+                InputTensorSpec(name="INPUT_1", dtype=np.dtype("float32"), shape=(1000,)),
+            ],
+            outputs=[
+                OutputTensorSpec(name="OUTPUT_1", dtype=np.dtype("int32"), shape=(1000,)),
+            ],
+            warmup={
+                "Warmup": ModelWarmup(
+                    inputs={
+                        "INPUT_2": ModelWarmupInput(
+                            dtype=np.dtype("float32"),
+                            shape=(1000,),
+                            input_data_type=ModelWarmupInputDataType.RANDOM,
+                        ),
+                    },
+                )
+            },
+        )
+
+
+def test_model_config_raise_error_when_warmup_inputs_and_inputs_have_different_dtype():
+    with pytest.raises(
+        ModelNavigatorWrongParameterError,
+        match="Incompatible data types for INPUT_1. Expected: float32. Got: int32.",
+    ):
+        ModelConfig(
+            model_name="simple",
+            backend=Backend.ONNXRuntime,
+            inputs=[
+                InputTensorSpec(name="INPUT_1", dtype=np.dtype("float32"), shape=(1000,)),
+            ],
+            outputs=[
+                OutputTensorSpec(name="OUTPUT_1", dtype=np.dtype("int32"), shape=(1000,)),
+            ],
+            warmup={
+                "Warmup": ModelWarmup(
+                    inputs={
+                        "INPUT_1": ModelWarmupInput(
+                            dtype=np.dtype("int32"),
+                            shape=(1000,),
+                            input_data_type=ModelWarmupInputDataType.RANDOM,
+                        ),
+                    },
+                )
+            },
         )

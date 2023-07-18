@@ -18,7 +18,7 @@ from typing import Dict, List, Union
 
 from model_navigator.exceptions import ModelNavigatorWrongParameterError
 
-from .common import DynamicBatcher, InstanceGroup, SequenceBatcher
+from .common import DynamicBatcher, InstanceGroup, ModelWarmup, SequenceBatcher
 from .internal import Backend
 
 
@@ -36,6 +36,7 @@ class BaseSpecializedModelConfig(abc.ABC):
         instance_groups: Instance groups configuration for multiple instances of the model
         parameters: Custom parameters for model or backend
         response_cache: Flag to enable/disable response cache for the model
+        warmup: Warmup configuration for model
     """
 
     max_batch_size: int = 4
@@ -44,6 +45,7 @@ class BaseSpecializedModelConfig(abc.ABC):
     instance_groups: List[InstanceGroup] = dataclasses.field(default_factory=lambda: [])
     parameters: Dict[str, str] = dataclasses.field(default_factory=lambda: {})
     response_cache: bool = False
+    warmup: Dict[str, ModelWarmup] = dataclasses.field(default_factory=lambda: {})
 
     def __post_init__(self) -> None:
         """Validate the configuration for early error handling."""

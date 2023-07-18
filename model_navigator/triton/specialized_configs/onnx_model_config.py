@@ -45,7 +45,7 @@ class ONNXOptimization:
     def __post_init__(self):
         """Validate the configuration for early error handling."""
         if self.accelerator and type(self.accelerator) not in [OpenVINOAccelerator, TensorRTAccelerator]:
-            raise ModelNavigatorWrongParameterError("Unsupported optimization type provided.")
+            raise ModelNavigatorWrongParameterError("Unsupported accelerator type provided.")
 
 
 @dataclasses.dataclass

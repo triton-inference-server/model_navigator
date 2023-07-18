@@ -41,6 +41,8 @@ from .specialized_configs import (
     DynamicBatcher,
     GPUIOAccelerator,
     InputTensorSpec,
+    ModelWarmupInput,
+    ModelWarmupInputDataType,
     ONNXOptimization,
     OpenVINOAccelerator,
     OutputTensorSpec,
@@ -124,6 +126,7 @@ class ModelConfigGenerator:
         self._set_optimization(model_config)
         self._set_parameters(model_config)
         self._set_response_cache(model_config)
+        self._set_model_warmup(model_config)
 
         return model_config
 
@@ -311,7 +314,7 @@ class ModelConfigGenerator:
                 if initial_state.zero_data:
                     initial_state_data["zero_data"] = True
                 elif initial_state.data_file:
-                    initial_state_data["data_file"] = initial_state.data_file
+                    initial_state_data["data_file"] = initial_state.data_file.name
 
                 initial_states_data.append(initial_state_data)
 
@@ -577,6 +580,57 @@ class ModelConfigGenerator:
             model_config["response_cache"] = {
                 "enable": self._config.response_cache,
             }
+
+    def _set_model_warmup(self, model_config: Dict):
+        """Configure model warmup.
+
+        Args:
+            model_config: Dictionary where configuration is attached.
+        """
+        if self._config.warmup:
+            warmups = []
+            for name, warmup in self._config.warmup.items():
+                warmups.append(
+                    {
+                        "name": name,
+                        "batch_size": warmup.batch_size,
+                        "count": warmup.iterations,
+                        "inputs": {name: self._set_warmup_input(data) for name, data in warmup.inputs.items()},
+                    }
+                )
+
+            model_config["model_warmup"] = warmups
+
+    def _set_warmup_input(self, inpt: ModelWarmupInput) -> Dict:
+        """Set warmup input configuration.
+
+        Args:
+            inpt: Warmup input configuration
+
+        Returns:
+            Dictionary with configuration
+        """
+        if inpt.dtype in [np.object_, np.bytes_]:
+            dtype = "TYPE_STRING"
+        else:
+            # pytype: enable=attribute-error
+            dtype = inpt.dtype
+            # pytype: enable=attribute-error
+            dtype = self._format_data_type(dtype)
+
+        data = {
+            "dims": list(inpt.shape),
+            "data_type": dtype,
+        }
+
+        if inpt.input_data_type.value == ModelWarmupInputDataType.RANDOM.value:
+            data["random_data"] = True
+        elif inpt.input_data_type.value == ModelWarmupInputDataType.ZERO.value:
+            data["zero_data"] = True
+        elif inpt.input_data_type.value == ModelWarmupInputDataType.FILE.value:
+            data["input_data_file"] = inpt.input_data_file.name
+
+        return data
 
     def _filter_empty_values(self, data: Dict) -> Dict:
         """Filter empty dict values and return new dict.

@@ -27,10 +27,14 @@ Example of use:
 import logging
 import pathlib
 import shutil
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
-from model_navigator.api.config import Format
+import numpy as np
+
+from model_navigator.api.config import Format, Sample, TensorRTProfile
 from model_navigator.commands.performance import Performance
+from model_navigator.core.tensor import TensorMetadata
+from model_navigator.core.workspace import Workspace
 from model_navigator.exceptions import (
     ModelNavigatorEmptyPackageError,
     ModelNavigatorError,
@@ -57,16 +61,20 @@ from model_navigator.triton.specialized_configs import (
     DeviceKind,
     InputTensorSpec,
     InstanceGroup,
+    ModelWarmup,
+    ModelWarmupInput,
+    ModelWarmupInputDataType,
     ONNXModelConfig,
     ONNXOptimization,
     OutputTensorSpec,
     PythonModelConfig,
     PyTorchModelConfig,
+    SequenceBatcher,
     TensorFlowModelConfig,
     TensorRTAccelerator,
     TensorRTModelConfig,
 )
-from model_navigator.triton.utils import input_tensor_from_metadata, output_tensor_from_metadata
+from model_navigator.utils.dataloader import load_samples
 
 LOGGER = logging.getLogger(__name__)
 
@@ -167,10 +175,15 @@ def add_model(
     else:
         raise ModelNavigatorWrongParameterError(f"Unsupported model config provided: {config.__class__}")
 
+    initial_state_files = _collect_initial_state_files(model_config=model_config)
+    warmup_files = _collect_warmup_files(model_config=model_config)
+
     triton_model_repository = _TritonModelRepository(model_repository_path=pathlib.Path(model_repository_path))
     return triton_model_repository.deploy_model(
         model_path=pathlib.Path(model_path),
         model_config=model_config,
+        warmup_files=warmup_files,
+        initial_state_files=initial_state_files,
     )
 
 
@@ -181,6 +194,7 @@ def add_model_from_package(
     model_version: int = 1,
     strategy: Optional[RuntimeSearchStrategy] = None,
     response_cache: bool = False,
+    warmup: bool = False,
 ):
     """Create the Triton Model Store with optimized model and save it to `model_repository_path`.
 
@@ -192,6 +206,7 @@ def add_model_from_package(
         strategy: Strategy for finding the best runtime.
                   When not set the `MaxThroughputAndMinLatencyStrategy` is used.
         response_cache: Enable response cache for model
+        warmup: Enable warmup for min and max batch size
 
     Returns:
         Path to created model store
@@ -215,10 +230,19 @@ def add_model_from_package(
         formats=[fmt.value for fmt in TRITON_FORMATS],
         runners=[runner.name() for runner in TRITON_RUNNERS],
     )
+
     max_batch_size = max(
-        profiling_results.batch_size
+        profiling_results.batch_size if profiling_results.batch_size is not None else 0
         for profiling_results in runtime_result.runner_status.result[Performance.name]["profiling_results"]
     )
+
+    model_warmup = {}
+    if warmup:
+        model_warmup = _prepare_model_warmup(
+            batching=batching,
+            max_batch_size=max_batch_size,
+            package=package,
+        )
 
     if runtime_result.model_status.model_config.format == Format.ONNX:
         config = _onnx_config_from_runtime_result(
@@ -226,6 +250,7 @@ def add_model_from_package(
             max_batch_size=max_batch_size,
             response_cache=response_cache,
             runtime_result=runtime_result,
+            warmup=model_warmup,
         )
 
     elif runtime_result.model_status.model_config.format in [Format.TF_SAVEDMODEL, Format.TF_TRT]:
@@ -234,13 +259,14 @@ def add_model_from_package(
             max_batch_size=max_batch_size,
             response_cache=response_cache,
             runtime_result=runtime_result,
+            warmup=model_warmup,
         )
     elif runtime_result.model_status.model_config.format in [Format.TORCHSCRIPT, Format.TORCH_TRT]:
-        inputs = input_tensor_from_metadata(
+        inputs = _input_tensor_from_metadata(
             package.status.input_metadata,
             batching=batching,
         )
-        outputs = output_tensor_from_metadata(
+        outputs = _output_tensor_from_metadata(
             package.status.output_metadata,
             batching=batching,
         )
@@ -252,12 +278,14 @@ def add_model_from_package(
             outputs=outputs,
             response_cache=response_cache,
             runtime_result=runtime_result,
+            warmup=model_warmup,
         )
     elif runtime_result.model_status.model_config.format == Format.TENSORRT:
         config = _tensorrt_config_from_runtime_result(
             batching=batching,
             max_batch_size=max_batch_size,
             response_cache=response_cache,
+            warmup=model_warmup,
         )
     else:
         raise ModelNavigatorError(
@@ -273,6 +301,27 @@ def add_model_from_package(
     )
 
 
+def _collect_warmup_files(model_config: ModelConfig):
+    warmup_files = []
+    for warmup in model_config.warmup.values():
+        for inpt in warmup.inputs.values():
+            if inpt.input_data_file:
+                warmup_files.append(inpt.input_data_file)
+
+    return warmup_files
+
+
+def _collect_initial_state_files(model_config: ModelConfig):
+    initial_state_files = []
+    if isinstance(model_config.batcher, SequenceBatcher):
+        for state in model_config.batcher.states:
+            for initial_state in state.initial_states:
+                if initial_state.data_file:
+                    initial_state_files.append(initial_state.data_file)
+
+    return initial_state_files
+
+
 class _TritonModelRepository:
     """Class for deploying models inside the Triton Model Store."""
 
@@ -285,12 +334,16 @@ class _TritonModelRepository:
         *,
         model_path: pathlib.Path,
         model_config: ModelConfig,
+        warmup_files: List[pathlib.Path],
+        initial_state_files: List[pathlib.Path],
     ) -> pathlib.Path:
         """Deploy model with provided config to model store.
 
         Args:
             model_path: Path to model that has to be deployed to model store
             model_config: Configuration of model deployment
+            warmup_files: List of warmup files to copy
+            initial_state_files: List of initial states files to copy
 
         Returns:
             Path to deployed model inside the model store
@@ -309,13 +362,24 @@ class _TritonModelRepository:
         )
 
         # remove model filename and model version
-        model_dir_in_model_repository_path = model_path.parent.parent
-        config_path = model_dir_in_model_repository_path / "config.pbtxt"
+        model_store_dir = model_path.parent.parent
+
+        self._copy_initial_state_files(
+            model_store_dir=model_store_dir,
+            initial_state_files=initial_state_files,
+        )
+
+        self._copy_warmup_files(
+            model_store_dir=model_store_dir,
+            warmup_files=warmup_files,
+        )
+
+        config_path = model_store_dir / "config.pbtxt"
 
         generator = ModelConfigGenerator(config=model_config)
         generator.to_file(config_path=config_path)
 
-        return model_dir_in_model_repository_path
+        return model_store_dir
 
     def _copy_model(
         self,
@@ -344,6 +408,28 @@ class _TritonModelRepository:
                 shutil.copytree(model_path, dst_path)
         return dst_path
 
+    def _copy_initial_state_files(self, model_store_dir: pathlib.Path, initial_state_files: List[pathlib.Path]):
+        if not initial_state_files:
+            return
+
+        initial_state_repository_dir = model_store_dir / "initial_state"
+        initial_state_repository_dir.mkdir(exist_ok=True)
+
+        for initial_state_file in initial_state_files:
+            initial_state_file_repository_path = initial_state_repository_dir / initial_state_file.name
+            shutil.copy(initial_state_file, initial_state_file_repository_path)
+
+    def _copy_warmup_files(self, model_store_dir: pathlib.Path, warmup_files: List[pathlib.Path]):
+        if not warmup_files:
+            return
+
+        warmup_repository_dir = model_store_dir / "warmup"
+        warmup_repository_dir.mkdir(exist_ok=True)
+
+        for warmup_file in warmup_files:
+            warmup_file_repository_path = warmup_repository_dir / warmup_file.name
+            shutil.copy(warmup_file, warmup_file_repository_path)
+
     def _get_model_path(
         self,
         *,
@@ -363,6 +449,7 @@ def _onnx_config_from_runtime_result(
     max_batch_size: int,
     response_cache: bool,
     runtime_result: RuntimeAnalyzerResult,
+    warmup: Dict[str, ModelWarmup],
 ):
     optimization = None
     instance_groups = []
@@ -378,6 +465,7 @@ def _onnx_config_from_runtime_result(
         response_cache=response_cache,
         optimization=optimization,
         instance_groups=instance_groups,
+        warmup=warmup,
     )
     return config
 
@@ -387,6 +475,7 @@ def _tensorflow_config_from_runtime_result(
     max_batch_size: int,
     response_cache: bool,
     runtime_result: RuntimeAnalyzerResult,
+    warmup: Dict[str, ModelWarmup],
 ):
     instance_groups = []
     if runtime_result.runner_status.runner_name == TensorFlowTensorRTRunner.name():
@@ -399,6 +488,7 @@ def _tensorflow_config_from_runtime_result(
         max_batch_size=max_batch_size,
         response_cache=response_cache,
         instance_groups=instance_groups,
+        warmup=warmup,
     )
     return config
 
@@ -410,6 +500,7 @@ def _pytorch_config_from_runtime_result(
     inputs: List[InputTensorSpec],
     outputs: List[OutputTensorSpec],
     runtime_result: RuntimeAnalyzerResult,
+    warmup: Dict[str, ModelWarmup],
 ):
     instance_groups = []
     if runtime_result.runner_status.runner_name in [TorchTensorRTRunner.name(), TorchScriptCUDARunner.name()]:
@@ -422,6 +513,7 @@ def _pytorch_config_from_runtime_result(
         outputs=outputs,
         response_cache=response_cache,
         instance_groups=instance_groups,
+        warmup=warmup,
     )
     return config
 
@@ -430,11 +522,128 @@ def _tensorrt_config_from_runtime_result(
     batching: bool,
     max_batch_size: int,
     response_cache: bool,
+    warmup: Dict[str, ModelWarmup],
 ):
     config = TensorRTModelConfig(
         batching=batching,
         max_batch_size=max_batch_size,
         response_cache=response_cache,
         instance_groups=[InstanceGroup(kind=DeviceKind.KIND_GPU)],
+        warmup=warmup,
     )
     return config
+
+
+def _prepare_model_warmup(max_batch_size: int, batching: bool, package: Package):
+    if not batching:
+        batch_sizes = [1]
+    else:
+        batch_sizes = {1, max_batch_size}
+
+    profiling_sample = load_samples("profiling_sample", package.workspace.path, package.config.batch_dim)[0]
+
+    model_warmups = {}
+    for batch_size in batch_sizes:
+        name = f"warmup_{batch_size}"
+        model_warmups[name] = ModelWarmup(
+            batch_size=batch_size,
+            inputs=_warmup_input_from_metadata(
+                workspace=package.workspace,
+                batching=batching,
+                input_metadata=package.status.input_metadata,
+                trt_profile=package.status.dataloader_trt_profile,
+                profiling_samples=profiling_sample,
+            ),
+        )
+
+    return model_warmups
+
+
+def _input_tensor_from_metadata(input_metadata: TensorMetadata, batching: bool = True) -> List:
+    """Generate list of input tensors based on TensorMetadata.
+
+    Args:
+        input_metadata: Model inputs metadata
+        batching: Flag indicating if input metadata contain batch in shape
+
+    Returns:
+        List of input tensors
+    """
+    input_tensors = []
+    for metadata in input_metadata.values():
+        shape = metadata.shape[1:] if batching else metadata.shape
+        tensor = InputTensorSpec(name=metadata.name, dtype=metadata.dtype, shape=shape)
+        input_tensors.append(tensor)
+    return input_tensors
+
+
+def _output_tensor_from_metadata(output_metadata: TensorMetadata, batching: bool = True) -> List:
+    """Generate list of output tensors based on TensorMetadata.
+
+    Args:
+        output_metadata: Model outputs metadata
+        batching: Flag indicating if output metadata contain batch in shape
+
+    Returns:
+        List of output tensors
+    """
+    output_tensors = []
+    for metadata in output_metadata.values():
+        shape = metadata.shape[1:] if batching else metadata.shape
+        tensor = OutputTensorSpec(name=metadata.name, dtype=metadata.dtype, shape=shape)
+        output_tensors.append(tensor)
+    return output_tensors
+
+
+def _warmup_input_from_metadata(
+    workspace: Workspace,
+    input_metadata: TensorMetadata,
+    trt_profile: TensorRTProfile,
+    profiling_samples: Sample,
+    batching: bool = True,
+) -> Dict:
+    """Generate list of warmup inputs tensors based on TensorMetadata.
+
+    Args:
+        workspace: Current workspace for package
+        trt_profile: TensorRT profile to get maximal shape of input
+        profiling_samples: sample used for generating data for inputs
+        batching: Flag indicating if output metadata contain batch in shape
+
+    Returns:
+       Dict with warmup inputs
+    """
+    warmup_inputs = {}
+    for name, profile in trt_profile.items():
+        shape = profile.max[1:] if batching else profile.max
+        input_data = profiling_samples[name][0] if batching else profiling_samples[name]
+        file_path = _generate_warmup_file(workspace=workspace, filename=name, input_data=input_data)
+        warmup_inputs[name] = ModelWarmupInput(
+            dtype=input_metadata[name].dtype,
+            shape=shape,
+            input_data_type=ModelWarmupInputDataType.FILE,
+            input_data_file=file_path,
+        )
+
+    return warmup_inputs
+
+
+def _generate_warmup_file(workspace: Workspace, filename: str, input_data: np.ndarray) -> pathlib.Path:
+    """Generate warmup file with binary content in row-major order.
+
+    Args:
+        workspace: workspace where files are going to be generated
+        filename: name under which the file would be generated
+        input_data: data to store inside the file
+
+    Returns:
+        Path to the file
+    """
+    warmup_path = workspace.path / "warmup"
+    warmup_path.mkdir(exist_ok=True)
+
+    file_path = warmup_path / f"{filename}.data"
+    with file_path.open("wb") as fp:
+        fp.write(input_data.tobytes(order="C"))
+
+    return file_path
