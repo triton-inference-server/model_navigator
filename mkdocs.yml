@@ -43,6 +43,9 @@ plugins:
             docstring_section_style: list
             merge_init_into_class: true
             separate_signature: true
+            inherited_members: true
+            filters:
+            - "!__post_init__"
   - search
 watch:
   - model_navigator
@@ -94,7 +97,7 @@ nav:
     - Triton Inference Server:
         - Deploying models: triton/triton_deployment.md
         - Model Store API:
-            - Adding Model: triton/model_store_api.md
+            - Adding Model: triton/adding_model.md
             - Specialized Configs: triton/specialized_configs.md
             - Instance Group: triton/instance_groups.md
             - Inputs and Outputs: triton/inputs_and_outputs.md

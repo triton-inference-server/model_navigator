@@ -97,7 +97,7 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
         converted_model_path.parent.mkdir(parents=True, exist_ok=True)
 
         custom_trt_profile = trt_profile
-        trt_profile = self._get_trt_profile(
+        trt_profile = self._get_initial_trt_profile(
             dataloader_trt_profile=dataloader_trt_profile, custom_trt_profile=custom_trt_profile
         )
 
@@ -168,7 +168,7 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
             load_args = parse_kwargs_to_cmd(kwargs)
             from . import trt_load_script
 
-            max_conversion_batch_size = self._execute_conversion(
+            conversion_max_batch_size = self._execute_conversion(
                 convert_func=lambda args: context.execute_cmd(
                     args + ["&&", sys.executable, trt_load_script.__file__] + load_args
                 ),
@@ -179,12 +179,20 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
                 custom_trt_profile_available=bool(custom_trt_profile),
             )
 
+        shapes = self._get_adapted_trt_profile(
+            trt_profile=trt_profile,
+            batch_dim=batch_dim,
+            max_batch_size=conversion_max_batch_size,
+        )
+
         LOGGER.info("Converted ONNX to TensorRT.")
-        return CommandOutput(status=CommandStatus.OK, output={"max_conversion_batch_size": max_conversion_batch_size})
+        return CommandOutput(
+            status=CommandStatus.OK,
+            output={"conversion_max_batch_size": conversion_max_batch_size, "conversion_profiles": shapes},
+        )
 
     @staticmethod
-    def _get_shape_args(
-        onnx_input_metadata: TensorMetadata,
+    def _get_adapted_trt_profile(
         trt_profile: TensorRTProfile,
         batch_dim: Optional[int] = None,
         max_batch_size: Optional[int] = None,
@@ -195,6 +203,21 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
                 max_batch_size=max_batch_size,
                 batch_dim=batch_dim,
             )
+
+        return trt_profile
+
+    @staticmethod
+    def _get_shape_args(
+        onnx_input_metadata: TensorMetadata,
+        trt_profile: TensorRTProfile,
+        batch_dim: Optional[int] = None,
+        max_batch_size: Optional[int] = None,
+    ):
+        trt_profile = ConvertONNX2TRT._get_adapted_trt_profile(
+            trt_profile=trt_profile,
+            batch_dim=batch_dim,
+            max_batch_size=max_batch_size,
+        )
 
         shape_args = []
         for attr in ("min", "opt", "max"):

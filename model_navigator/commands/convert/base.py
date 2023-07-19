@@ -60,7 +60,7 @@ class Convert2TensorRTWithMaxBatchSizeSearch(Command):
             device_max_batch_size=device_max_batch_size,
         )
         if run_search:
-            max_conversion_batch_size = (
+            conversion_max_batch_size = (
                 cls._execute_conversion_with_max_batch_size_search(  # TODO what is the best value?
                     convert_func=convert_func,
                     get_args=get_args,
@@ -68,13 +68,13 @@ class Convert2TensorRTWithMaxBatchSizeSearch(Command):
                     dataloader_max_batch_size=dataloader_max_batch_size,
                 )
             )
-            LOGGER.info(f"Converted with maximal batch size: {max_conversion_batch_size}.")
+            LOGGER.info(f"Converted with maximal batch size: {conversion_max_batch_size}.")
         else:
             LOGGER.info("Search for maximal batch size disable. Execute single conversion.")
-            max_conversion_batch_size = dataloader_max_batch_size
+            conversion_max_batch_size = dataloader_max_batch_size
             convert_func(get_args())
 
-        return max_conversion_batch_size
+        return conversion_max_batch_size
 
     @classmethod
     def _execute_conversion_with_max_batch_size_search(
@@ -105,15 +105,15 @@ class Convert2TensorRTWithMaxBatchSizeSearch(Command):
         try:
             max_batch_size = cls._get_conversion_max_batch_sizes(device_max_batch_size, dataloader_max_batch_size)
             convert_func(get_args(max_batch_size=max_batch_size))
-            max_conversion_batch_size = max_batch_size
-            LOGGER.info(f"Successful conversion for max batch size: {max_conversion_batch_size}.")
+            conversion_max_batch_size = max_batch_size
+            LOGGER.info(f"Successful conversion for max batch size: {conversion_max_batch_size}.")
         except Exception as e:
             LOGGER.debug(f"Conversion failed with error: {str(e)}.Trying fallback with smaller batch sizes.")
-            max_conversion_batch_size = cls._fallback_conversion(
+            conversion_max_batch_size = cls._fallback_conversion(
                 convert_func, get_args, device_max_batch_size, dataloader_max_batch_size
             )
 
-        return max_conversion_batch_size
+        return conversion_max_batch_size
 
     @classmethod
     def _fallback_conversion(
@@ -145,23 +145,23 @@ class Convert2TensorRTWithMaxBatchSizeSearch(Command):
         Raises:
             A conversion exception when command failed.
         """
-        max_conversion_batch_size = None
+        conversion_max_batch_size = None
         fallback_batch_sizes = cls._get_conversion_fallback_batch_sizes(
             device_max_batch_size,
             dataloader_max_batch_size,
         )
-        while max_conversion_batch_size is None:
+        while conversion_max_batch_size is None:
             max_batch_size = next(fallback_batch_sizes)
             try:
                 convert_func(get_args(max_batch_size=max_batch_size))
-                max_conversion_batch_size = max_batch_size
-                LOGGER.info(f"Successfully converted with max batch size: {max_conversion_batch_size}.")
+                conversion_max_batch_size = max_batch_size
+                LOGGER.info(f"Successfully converted with max batch size: {conversion_max_batch_size}.")
             except Exception as e:
                 LOGGER.debug(f"Conversion failed with error: {str(e)}")
                 if max_batch_size == dataloader_max_batch_size:
                     raise e
 
-        return max_conversion_batch_size
+        return conversion_max_batch_size
 
     @staticmethod
     def _get_conversion_max_batch_sizes(device_max_batch_size: Optional[int], dataloader_max_batch_size: int) -> int:
@@ -225,7 +225,7 @@ class Convert2TensorRTWithMaxBatchSizeSearch(Command):
         return True
 
     @classmethod
-    def _get_trt_profile(
+    def _get_initial_trt_profile(
         cls,
         dataloader_trt_profile: TensorRTProfile,
         custom_trt_profile: Optional[TensorRTProfile],

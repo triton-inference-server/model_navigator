@@ -83,7 +83,7 @@ def test_run_execute_conversion_when_trt_profile_provided(mocker):
         output_model_path = workspace / "trt-fp16" / "model.plan"
         output_model_path.parent.mkdir(parents=True)
 
-        with mocker.patch.object(ConvertONNX2TRT, "_execute_conversion"), mocker.patch.object(
+        with mocker.patch.object(ConvertONNX2TRT, "_execute_conversion", return_value=1), mocker.patch.object(
             ConvertONNX2TRT, "_get_onnx_input_metadata"
         ), mocker.patch("model_navigator.utils.devices.get_available_gpus", return_value=[0]):
             result = ConvertONNX2TRT().run(
@@ -120,7 +120,7 @@ def test_run_execute_conversion_when_dataloader_and_device_max_batch_size_is_inv
         output_model_path = workspace / "trt-fp16" / "model.plan"
         output_model_path.parent.mkdir(parents=True)
 
-        with mocker.patch.object(ConvertONNX2TRT, "_execute_conversion"), mocker.patch.object(
+        with mocker.patch.object(ConvertONNX2TRT, "_execute_conversion", return_value=1), mocker.patch.object(
             ConvertONNX2TRT, "_get_onnx_input_metadata"
         ), mocker.patch("model_navigator.utils.devices.get_available_gpus", return_value=[0]):
             result = ConvertONNX2TRT().run(
@@ -159,7 +159,7 @@ def test_run_execute_conversion_with_max_batch_size_search_when_dataloader_max_b
         output_model_path.parent.mkdir(parents=True)
 
         with mocker.patch.object(
-            ConvertONNX2TRT, "_execute_conversion_with_max_batch_size_search"
+            ConvertONNX2TRT, "_execute_conversion_with_max_batch_size_search", return_value=3
         ), mocker.patch.object(ConvertONNX2TRT, "_get_onnx_input_metadata"), mocker.patch(
             "model_navigator.utils.devices.get_available_gpus", return_value=[0]
         ):
@@ -201,7 +201,7 @@ def test_run_execute_conversion_with_max_batch_size_search_when_device_max_batch
         output_model_path.parent.mkdir(parents=True)
 
         with mocker.patch.object(
-            ConvertONNX2TRT, "_execute_conversion_with_max_batch_size_search"
+            ConvertONNX2TRT, "_execute_conversion_with_max_batch_size_search", return_value=3
         ), mocker.patch.object(ConvertONNX2TRT, "_get_onnx_input_metadata"), mocker.patch(
             "model_navigator.utils.devices.get_available_gpus", return_value=[0]
         ):
@@ -243,7 +243,7 @@ def test_run_execute_conversion_with_max_batch_size_search_when_both_max_batch_s
         output_model_path.parent.mkdir(parents=True)
 
         with mocker.patch.object(
-            ConvertONNX2TRT, "_execute_conversion_with_max_batch_size_search"
+            ConvertONNX2TRT, "_execute_conversion_with_max_batch_size_search", return_value=3
         ), mocker.patch.object(ConvertONNX2TRT, "_get_onnx_input_metadata"), mocker.patch(
             "model_navigator.utils.devices.get_available_gpus", return_value=[0]
         ):

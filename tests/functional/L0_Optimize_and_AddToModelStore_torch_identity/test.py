@@ -106,6 +106,7 @@ def main():
             model_repository_path=model_repository,
             model_name="Identity",
             package=package,
+            strategy=nav.strategy.MaxThroughputStrategy(),
         )
         LOGGER.info(f"Create deployment in {model_repository}")
 

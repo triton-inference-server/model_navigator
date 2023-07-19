@@ -19,6 +19,8 @@ limitations under the License.
 The Python API provides specialized configuration classes that help provide only
 available options for the given type of model.
 
+::: model_navigator.api.triton.BaseSpecializedModelConfig
+
 ::: model_navigator.api.triton.ONNXModelConfig
 ::: model_navigator.api.triton.ONNXOptimization
 

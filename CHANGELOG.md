@@ -16,6 +16,23 @@ limitations under the License.
 
 # Changelog
 
+## 0.6.2
+- new: Collect information about TensorRT shapes used during conversion
+- fix: Invalid link in documentation
+- change: Improved rendering documentation
+
+- Version of external components used during testing:
+  - [PyTorch 2.1.0a0+4136153](https://github.com/pytorch/pytorch/commit/4136153)
+  - [TensorFlow 2.12.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.12.0)
+  - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+  - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
+  - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.47.1
+  - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.26
+  - [tf2onnx v1.14.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0)
+  - Other component versions depend on the used framework containers versions.
+    See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+    for a detailed summary.
+
 ## 0.6.1
 - fix: Add model from package to Triton model store with custom configs
 

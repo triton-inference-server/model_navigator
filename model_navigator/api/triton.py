@@ -15,6 +15,7 @@
 from model_navigator.triton import model_repository  # noqa: F401
 from model_navigator.triton.specialized_configs import (  # noqa: F401
     AutoMixedPrecisionAccelerator,
+    BaseSpecializedModelConfig,
     DeviceKind,
     DynamicBatcher,
     GPUIOAccelerator,
