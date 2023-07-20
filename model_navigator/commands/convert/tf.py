@@ -167,7 +167,7 @@ class ConvertSavedModel2TFTRT(Convert2TensorRTWithMaxBatchSizeSearch):
             verbose=verbose,
         ) as context:
 
-            max_conversion_batch_size = self._execute_conversion(
+            conversion_max_batch_size = self._execute_conversion(
                 convert_func=lambda args: context.execute_external_runtime_script(sm2tftrt.__file__, args),
                 get_args=get_args,
                 batch_dim=batch_dim,
@@ -175,5 +175,6 @@ class ConvertSavedModel2TFTRT(Convert2TensorRTWithMaxBatchSizeSearch):
                 dataloader_max_batch_size=dataloader_max_batch_size,
                 custom_trt_profile_available=bool(optimized_trt_profiles),
             )
+
         LOGGER.info("Converted SavedModel to Tensorflow-TensorRT.")
-        return CommandOutput(status=CommandStatus.OK, output={"max_conversion_batch_size": max_conversion_batch_size})
+        return CommandOutput(status=CommandStatus.OK, output={"conversion_max_batch_size": conversion_max_batch_size})

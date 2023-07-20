@@ -189,7 +189,7 @@ class ConvertTorchScript2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearch):
             verbose=verbose,
         ) as context:
 
-            max_conversion_batch_size = self._execute_conversion(
+            conversion_max_batch_size = self._execute_conversion(
                 convert_func=lambda args: context.execute_external_runtime_script(ts2torchtrt.__file__, args),
                 get_args=get_args,
                 batch_dim=batch_dim,
@@ -197,8 +197,17 @@ class ConvertTorchScript2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearch):
                 dataloader_max_batch_size=dataloader_max_batch_size,
                 custom_trt_profile_available=bool(optimized_trt_profiles),
             )
+
+        conversion_profiles = self._get_shape_args(
+            trt_profile=optimized_trt_profiles[0] if optimized_trt_profiles else dataloader_trt_profile,
+            batch_dim=batch_dim,
+            max_batch_size=conversion_max_batch_size,
+        )
         LOGGER.info("Converted TorchScript to Torch-TensorRT.")
-        return CommandOutput(status=CommandStatus.OK, output={"max_conversion_batch_size": max_conversion_batch_size})
+        return CommandOutput(
+            status=CommandStatus.OK,
+            output={"conversion_max_batch_size": conversion_max_batch_size, "conversion_profiles": conversion_profiles},
+        )
 
     @staticmethod
     def _get_shape_args(
