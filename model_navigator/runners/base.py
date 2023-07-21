@@ -377,6 +377,11 @@ class NavigatorStabilizedRunner(NavigatorRunner):
         raise NotImplementedError
 
     @abc.abstractmethod
+    def avg_gpu_clock(self) -> float:
+        """Returns average gpu clock frequency in MHz just after inference."""
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def request_count(self) -> int:
         """Returns number of queries performed during measurement."""
         raise NotImplementedError

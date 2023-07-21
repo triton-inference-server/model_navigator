@@ -13,6 +13,7 @@
 # limitations under the License.
 """Runners profiling."""
 import dataclasses
+import warnings
 from typing import List, Mapping, Optional
 
 import numpy as np
@@ -26,7 +27,7 @@ class ProfilingResults(DataObject):
     """Profiling results."""
 
     sample_id: int
-    batch_size: int
+    batch_size: Optional[int]
     avg_latency: float  # ms
     std_latency: float  # ms
     p50_latency: float  # ms
@@ -35,6 +36,7 @@ class ProfilingResults(DataObject):
     p99_latency: float  # ms
     throughput: float  # infer / sec
     request_count: int
+    avg_gpu_clock: float = np.nan  # MHz
 
     @classmethod
     def from_dict(cls, d: Mapping) -> "ProfilingResults":
@@ -53,7 +55,7 @@ class ProfilingResults(DataObject):
 
     @classmethod
     def from_measurements(
-        cls, measurements: List[float], batch_size: Optional[int], sample_id: int
+        cls, measurements: List[float], gpu_clocks: List[float], batch_size: Optional[int], sample_id: int
     ) -> "ProfilingResults":
         """Instantiate ProfilingResults from a list of measurements.
 
@@ -66,6 +68,9 @@ class ProfilingResults(DataObject):
             ProfilingResults
         """
         measurements = np.array(measurements)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=RuntimeWarning)
+            avg_gpu_clock = np.nanmean(gpu_clocks)
         return cls(
             sample_id=sample_id,
             batch_size=batch_size,
@@ -76,6 +81,7 @@ class ProfilingResults(DataObject):
             p95_latency=float(np.percentile(measurements, 95)),
             p99_latency=float(np.percentile(measurements, 99)),
             throughput=float(1000 * (batch_size or 1) / np.mean(measurements)),
+            avg_gpu_clock=float(avg_gpu_clock),
             request_count=len(measurements),
         )
 
@@ -90,6 +96,9 @@ class ProfilingResults(DataObject):
             ProfilingResults
         """
         batch_size = profiling_results[0].batch_size
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=RuntimeWarning)
+            avg_gpu_clock = np.nanmean([result.avg_gpu_clock for result in profiling_results])
 
         return cls(
             sample_id=profiling_results[0].sample_id,
@@ -101,6 +110,7 @@ class ProfilingResults(DataObject):
             p95_latency=float(np.mean([result.p95_latency for result in profiling_results])),
             p99_latency=float(np.mean([result.p99_latency for result in profiling_results])),
             throughput=float(np.mean([result.throughput for result in profiling_results])),
+            avg_gpu_clock=float(avg_gpu_clock),
             request_count=int(np.mean([result.request_count for result in profiling_results])),
         )
 
@@ -128,6 +138,7 @@ class ProfilingResults(DataObject):
             p95_latency=runner.p95_latency(),
             p99_latency=runner.p99_latency(),
             throughput=float(1000 * max(1, batch_size) / runner.avg_latency()),
+            avg_gpu_clock=runner.avg_gpu_clock(),
             request_count=runner.request_count(),
         )
 
@@ -143,5 +154,6 @@ class ProfilingResults(DataObject):
             f"p50 Latency: {self.p50_latency:.4f} [ms]\n"
             f"p90 Latency: {self.p90_latency:.4f} [ms]\n"
             f"p95 Latency: {self.p95_latency:.4f} [ms]\n"
-            f"p99 Latency: {self.p99_latency:.4f} [ms]"
+            f"p99 Latency: {self.p99_latency:.4f} [ms]\n"
+            f"Avg GPU clock: {self.avg_gpu_clock:.4f} [MHz]"
         )

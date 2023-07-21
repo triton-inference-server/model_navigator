@@ -46,6 +46,7 @@ class ProfilingResult:
     p95_latency: float  # ms
     p99_latency: float  # ms
     throughput: float  # infer / sec
+    avg_gpu_clock: float  # MHz
     request_count: int
 
 

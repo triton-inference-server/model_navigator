@@ -98,6 +98,7 @@ def empty_package(workspace) -> Package:
                                             p95_latency=2.0,
                                             p99_latency=2.0,
                                             throughput=500.0,
+                                            avg_gpu_clock=1500.0,
                                             request_count=50,
                                         ),
                                     ]
@@ -168,6 +169,7 @@ def custom_runner_package(workspace) -> Package:
                                             p95_latency=1.0,
                                             p99_latency=1.0,
                                             throughput=1000.0,
+                                            avg_gpu_clock=1500.0,
                                             request_count=50,
                                         ),
                                     ]
@@ -240,6 +242,7 @@ def trochscript_package_without_source(workspace) -> Package:
                                             p95_latency=1.0,
                                             p99_latency=1.0,
                                             throughput=1000.0,
+                                            avg_gpu_clock=1500.0,
                                             request_count=50,
                                         ),
                                     ]
@@ -326,6 +329,7 @@ def trochscript_package_with_source(workspace) -> Package:
                                             p95_latency=2.0,
                                             p99_latency=2.0,
                                             throughput=500.0,
+                                            avg_gpu_clock=1500.0,
                                             request_count=50,
                                         ),
                                     ]
@@ -362,6 +366,7 @@ def trochscript_package_with_source(workspace) -> Package:
                                             p95_latency=1.0,
                                             p99_latency=1.0,
                                             throughput=1000.0,
+                                            avg_gpu_clock=1500.0,
                                             request_count=50,
                                         ),
                                     ]
@@ -442,6 +447,7 @@ def onnx_package_with_tensorrt_runner(workspace) -> Package:
                                             p95_latency=2.0,
                                             p99_latency=2.0,
                                             throughput=500.0,
+                                            avg_gpu_clock=1500.0,
                                             request_count=50,
                                         ),
                                     ]
@@ -473,6 +479,7 @@ def onnx_package_with_tensorrt_runner(workspace) -> Package:
                                             p95_latency=1.0,
                                             p99_latency=1.0,
                                             throughput=1000.0,
+                                            avg_gpu_clock=1500.0,
                                             request_count=50,
                                         ),
                                     ]
@@ -552,6 +559,7 @@ def onnx_package_with_cuda_runner(workspace) -> Package:
                                             p95_latency=2.0,
                                             p99_latency=2.0,
                                             throughput=500.0,
+                                            avg_gpu_clock=1500.0,
                                             request_count=50,
                                         ),
                                     ]
@@ -583,6 +591,7 @@ def onnx_package_with_cuda_runner(workspace) -> Package:
                                             p95_latency=1.0,
                                             p99_latency=1.0,
                                             throughput=1000.0,
+                                            avg_gpu_clock=1500.0,
                                             request_count=50,
                                         ),
                                     ]
@@ -662,6 +671,7 @@ def onnx_package_with_cpu_runner_only(workspace) -> Package:
                                             p95_latency=2.0,
                                             p99_latency=2.0,
                                             throughput=500.0,
+                                            avg_gpu_clock=1500.0,
                                             request_count=50,
                                         ),
                                     ]
@@ -736,6 +746,7 @@ def tensorflow_package_with_tensorflow_only(workspace) -> Package:
                                             p95_latency=2.0,
                                             p99_latency=2.0,
                                             throughput=500.0,
+                                            avg_gpu_clock=1500.0,
                                             request_count=50,
                                         ),
                                     ]
@@ -817,6 +828,7 @@ def tensorflow_package_with_tensorflow_tensorrt(workspace) -> Package:
                                             p95_latency=2.0,
                                             p99_latency=2.0,
                                             throughput=500.0,
+                                            avg_gpu_clock=1500.0,
                                             request_count=50,
                                         ),
                                     ]
@@ -849,6 +861,7 @@ def tensorflow_package_with_tensorflow_tensorrt(workspace) -> Package:
                                             p95_latency=1.0,
                                             p99_latency=1.0,
                                             throughput=1000.0,
+                                            avg_gpu_clock=1500.0,
                                             request_count=50,
                                         ),
                                     ]
@@ -931,6 +944,7 @@ def tensorflow_package_with_optimal_model_tensorflow_tensorrt_and_dummy_navigato
                                             p95_latency=2.0,
                                             p99_latency=2.0,
                                             throughput=500.0,
+                                            avg_gpu_clock=1500.0,
                                             request_count=50,
                                         ),
                                     ]
@@ -963,6 +977,7 @@ def tensorflow_package_with_optimal_model_tensorflow_tensorrt_and_dummy_navigato
                                             p95_latency=1.0,
                                             p99_latency=1.0,
                                             throughput=1000.0,
+                                            avg_gpu_clock=1500.0,
                                             request_count=50,
                                         ),
                                     ]
@@ -1048,6 +1063,7 @@ def torchscript_package_with_cpu_only(workspace) -> Package:
                                             p95_latency=2.0,
                                             p99_latency=2.0,
                                             throughput=500.0,
+                                            avg_gpu_clock=1500.0,
                                             request_count=50,
                                         ),
                                     ]
@@ -1130,6 +1146,7 @@ def torchscript_package_with_cuda(workspace) -> Package:
                                             p95_latency=1.0,
                                             p99_latency=1.0,
                                             throughput=1000.0,
+                                            avg_gpu_clock=1500.0,
                                             request_count=50,
                                         ),
                                     ]
@@ -1157,6 +1174,7 @@ def torchscript_package_with_cuda(workspace) -> Package:
                                             p95_latency=2.0,
                                             p99_latency=2.0,
                                             throughput=500.0,
+                                            avg_gpu_clock=1500.0,
                                             request_count=50,
                                         ),
                                     ]
@@ -1245,6 +1263,7 @@ def torchscript_package_with_torch_tensorrt(workspace) -> Package:
                                             p95_latency=1.0,
                                             p99_latency=1.0,
                                             throughput=1000.0,
+                                            avg_gpu_clock=1500.0,
                                             request_count=50,
                                         ),
                                     ]
@@ -1277,6 +1296,7 @@ def torchscript_package_with_torch_tensorrt(workspace) -> Package:
                                             p95_latency=2.0,
                                             p99_latency=2.0,
                                             throughput=500.0,
+                                            avg_gpu_clock=1500.0,
                                             request_count=50,
                                         ),
                                     ]
@@ -1370,6 +1390,7 @@ def onnx_package(workspace) -> Package:
                                             p95_latency=1.0,
                                             p99_latency=1.0,
                                             throughput=1000.0,
+                                            avg_gpu_clock=1500.0,
                                             request_count=50,
                                         ),
                                     ]
@@ -1402,6 +1423,7 @@ def onnx_package(workspace) -> Package:
                                             p95_latency=1.0,
                                             p99_latency=1.0,
                                             throughput=1000.0,
+                                            avg_gpu_clock=1500.0,
                                             request_count=50,
                                         ),
                                     ]
@@ -1488,6 +1510,7 @@ def tensorrt_package(workspace) -> Package:
                                             p95_latency=1.0,
                                             p99_latency=1.0,
                                             throughput=1000.0,
+                                            avg_gpu_clock=1500.0,
                                             request_count=50,
                                         ),
                                     ]

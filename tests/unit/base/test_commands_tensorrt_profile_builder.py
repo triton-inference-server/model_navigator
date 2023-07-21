@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import numpy as np
+
 from model_navigator.api.config import TensorRTProfile
 from model_navigator.commands.base import CommandStatus
 from model_navigator.commands.performance.profiler import ProfilingResults
@@ -41,12 +43,12 @@ def test_tensorrt_profile_builder_returns_valid_profiles():
     }
 
     profiling_results = [
-        ProfilingResults.from_measurements([10, 10, 10], 1, 0),
-        ProfilingResults.from_measurements([10, 10, 10], 2, 0),
-        ProfilingResults.from_measurements([11, 11, 11], 4, 0),
-        ProfilingResults.from_measurements([30, 30, 30], 8, 0),
-        ProfilingResults.from_measurements([40, 40, 40], 16, 0),
-        ProfilingResults.from_measurements([80, 80, 80], 32, 0),
+        ProfilingResults.from_measurements([10, 10, 10], [1500, np.nan], 1, 0),
+        ProfilingResults.from_measurements([10, 10, 10], [1500, np.nan], 2, 0),
+        ProfilingResults.from_measurements([11, 11, 11], [1500, np.nan], 4, 0),
+        ProfilingResults.from_measurements([30, 30, 30], [1500, np.nan], 8, 0),
+        ProfilingResults.from_measurements([40, 40, 40], [1500, np.nan], 16, 0),
+        ProfilingResults.from_measurements([80, 80, 80], [1500, np.nan], 32, 0),
     ]
 
     command_output = builder.run(
@@ -87,12 +89,12 @@ def test_tensorrt_profile_builder_returns_valid_profiles_with_latency_budget():
     }
 
     profiling_results = [
-        ProfilingResults.from_measurements([10, 10, 10], 1, 0),
-        ProfilingResults.from_measurements([10, 10, 10], 2, 0),
-        ProfilingResults.from_measurements([11, 11, 11], 4, 0),
-        ProfilingResults.from_measurements([30, 30, 30], 8, 0),
-        ProfilingResults.from_measurements([40, 40, 40], 16, 0),
-        ProfilingResults.from_measurements([80, 80, 80], 32, 0),
+        ProfilingResults.from_measurements([10, 10, 10], [1500, np.nan], 1, 0),
+        ProfilingResults.from_measurements([10, 10, 10], [1500, np.nan], 2, 0),
+        ProfilingResults.from_measurements([11, 11, 11], [1500, np.nan], 4, 0),
+        ProfilingResults.from_measurements([30, 30, 30], [1500, np.nan], 8, 0),
+        ProfilingResults.from_measurements([40, 40, 40], [1500, np.nan], 16, 0),
+        ProfilingResults.from_measurements([80, 80, 80], [1500, np.nan], 32, 0),
     ]
 
     command_output = builder.run(

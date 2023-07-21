@@ -51,6 +51,7 @@ dependencies = [
     "polygraphy>=0.33.1",
     "psutil>=5.7",
     "py-cpuinfo>=8.0",
+    "pynvml",
     "pyyaml~=6.0",
     "tabulate>=0.8",
     "tensorrt",

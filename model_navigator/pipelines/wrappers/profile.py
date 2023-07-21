@@ -110,6 +110,7 @@ class ProfilingResultsBuilder:
                         p95_latency=result.p95_latency,
                         p99_latency=result.p99_latency,
                         throughput=result.throughput,
+                        avg_gpu_clock=result.avg_gpu_clock,
                         request_count=result.request_count,
                     )
                     res = detailed.get(result.sample_id, [])

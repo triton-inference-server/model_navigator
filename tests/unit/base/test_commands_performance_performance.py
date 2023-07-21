@@ -47,7 +47,7 @@ def test_performance_command_returns_status_ok_when_profiling_results_found_and_
             mock.__enter__.return_value.name = tmpfile.name
             mocker.patch("tempfile.NamedTemporaryFile", return_value=mock)
             with jsonlines.open(tmpfile.name, "w") as f:
-                f.write(ProfilingResults.from_measurements([1.5], batch_size=1, sample_id=0).to_dict())
+                f.write(ProfilingResults.from_measurements([1.5], [1500], batch_size=1, sample_id=0).to_dict())
 
             command_output = Performance().run(
                 workspace=Workspace(workspace),
@@ -82,7 +82,7 @@ def test_performance_command_returns_status_ok_when_profiling_results_found_and_
             mock_tempfile.__enter__.return_value.name = tmpfile.name
             mocker.patch("tempfile.NamedTemporaryFile", return_value=mock_tempfile)
             with jsonlines.open(tmpfile.name, "w") as f:
-                f.write(ProfilingResults.from_measurements([1.5], batch_size=1, sample_id=0).to_dict())
+                f.write(ProfilingResults.from_measurements([1.5], [1500], batch_size=1, sample_id=0).to_dict())
 
             command_output = Performance().run(
                 workspace=Workspace(workspace),

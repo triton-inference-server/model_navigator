@@ -63,6 +63,7 @@ model_statuses1 = {
                                 p95_latency=2.0,
                                 p99_latency=2.0,
                                 throughput=500.0,
+                                avg_gpu_clock=1500.0,
                                 request_count=50,
                             ),
                         ]
@@ -95,6 +96,7 @@ model_statuses1 = {
                                 p95_latency=1.0,
                                 p99_latency=1.0,
                                 throughput=1000.0,
+                                avg_gpu_clock=1500.0,
                                 request_count=50,
                             ),
                         ]
@@ -130,6 +132,7 @@ model_statuses2 = {
                                 p95_latency=2.0,
                                 p99_latency=2.0,
                                 throughput=1000.0,
+                                avg_gpu_clock=1500.0,
                                 request_count=50,
                             ),
                         ]
@@ -157,6 +160,7 @@ model_statuses2 = {
                                 p95_latency=1.0,
                                 p99_latency=1.0,
                                 throughput=100.0,
+                                avg_gpu_clock=1500.0,
                                 request_count=50,
                             ),
                         ]
@@ -193,6 +197,7 @@ model_statuses3 = {
                                 p95_latency=1.0,
                                 p99_latency=1.0,
                                 throughput=1000.0,
+                                avg_gpu_clock=1500.0,
                                 request_count=50,
                             ),
                         ]
@@ -220,6 +225,7 @@ model_statuses3 = {
                                 p95_latency=2.0,
                                 p99_latency=2.0,
                                 throughput=500.0,
+                                avg_gpu_clock=1500.0,
                                 request_count=50,
                             ),
                         ]

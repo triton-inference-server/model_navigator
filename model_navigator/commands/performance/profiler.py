@@ -22,6 +22,7 @@ import numpy as np
 from jsonlines import jsonlines
 
 from model_navigator.api.config import OptimizationProfile, Sample
+from model_navigator.commands.performance.nvml_handler import NvmlHandler
 from model_navigator.commands.performance.results import ProfilingResults
 from model_navigator.core.logger import LOGGER
 from model_navigator.exceptions import ModelNavigatorError
@@ -93,13 +94,13 @@ class Profiler:
             List[ProfilingResults]: Results for each of the batch sizes from profiler configuration.
         """
         results, prev_result = [], None
-        with runner:
+        with runner, NvmlHandler() as nvml_handler:
             for batch_size in self._batch_sizes:
                 LOGGER.log(self._profiling_results_logging_level, f"Performance profiling for {runner.name()} started.")
                 if batch_size:
                     LOGGER.log(self._profiling_results_logging_level, f"Batch size: {batch_size}.")
                 sample = expand_sample(profiling_sample, self._batch_dim, batch_size)
-                profiling_result = self._run_measurement(runner, sample, batch_size, sample_id)
+                profiling_result = self._run_measurement(runner, nvml_handler, sample, batch_size, sample_id)
                 LOGGER.log(
                     self._profiling_results_logging_level,
                     (
@@ -124,14 +125,21 @@ class Profiler:
         return logging.INFO
 
     def _run_window_measurement(
-        self, runner: NavigatorRunner, sample: Sample, batch_size: Optional[int], sample_id: int
+        self,
+        runner: NavigatorRunner,
+        nvml_handler: NvmlHandler,
+        sample: Sample,
+        batch_size: Optional[int],
+        sample_id: int,
     ) -> ProfilingResults:
+        gpu_clocks = []
         measurements = []
         for _ in range(self._profile.window_size):
             runner.infer(sample)
+            gpu_clocks.append(nvml_handler.gpu_clock)
             measurements.append(runner.last_inference_time() * 1000)
 
-        return ProfilingResults.from_measurements(measurements, batch_size, sample_id)
+        return ProfilingResults.from_measurements(measurements, gpu_clocks, batch_size, sample_id)
 
     def _is_measurement_stable(self, profiling_results: List[ProfilingResults], count: int = 3) -> bool:
         if len(profiling_results) < count:
@@ -154,7 +162,12 @@ class Profiler:
         return profiling_result
 
     def _run_measurement(
-        self, runner: NavigatorRunner, sample: Sample, batch_size: Optional[int], sample_id: int
+        self,
+        runner: NavigatorRunner,
+        nvml_handler: NvmlHandler,
+        sample: Sample,
+        batch_size: Optional[int],
+        sample_id: int,
     ) -> ProfilingResults:
         profiling_results = []
 
@@ -165,7 +178,7 @@ class Profiler:
             return profiling_result
         else:
             for idx in range(self._profile.max_trials):
-                profiling_result = self._run_window_measurement(runner, sample, batch_size, sample_id)
+                profiling_result = self._run_window_measurement(runner, nvml_handler, sample, batch_size, sample_id)
                 profiling_results.append(profiling_result)
                 LOGGER.debug(
                     f"Measurement [{idx}]: {profiling_result.throughput} infer/sec, {profiling_result.avg_latency} ms"

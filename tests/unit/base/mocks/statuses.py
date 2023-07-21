@@ -72,7 +72,7 @@ def status_dict_v0_1_0():
                         "status": "OK",
                         "tolerance": [{"output_name": "output__0", "atol": 0.0, "rtol": 0.0}],
                         "performance": [
-                            {"batch_size": 1, "latency": 1.0, "throughput": 1500},
+                            {"batch_size": 1, "latency": 1.0, "throughput": 1500, "avg_gpu_clock": 1500.0},
                         ],
                         "err_msg": {},
                         "verified": False,
@@ -88,7 +88,7 @@ def status_dict_v0_1_0():
                         "status": "OK",
                         "tolerance": [{"output_name": "output__0", "atol": 0.0, "rtol": 0.0}],
                         "performance": [
-                            {"batch_size": 1, "latency": 1.0, "throughput": 1500},
+                            {"batch_size": 1, "latency": 1.0, "throughput": 1500, "avg_gpu_clock": 1500.0},
                         ],
                         "err_msg": {},
                         "verified": False,
@@ -98,7 +98,7 @@ def status_dict_v0_1_0():
                         "status": "OK",
                         "tolerance": [{"output_name": "output__0", "atol": 0.0, "rtol": 0.0}],
                         "performance": [
-                            {"batch_size": 1, "latency": 1.0, "throughput": 1500},
+                            {"batch_size": 1, "latency": 1.0, "throughput": 1500, "avg_gpu_clock": 1500.0},
                         ],
                         "err_msg": {},
                         "verified": False,
@@ -114,7 +114,7 @@ def status_dict_v0_1_0():
                         "status": "OK",
                         "tolerance": [{"output_name": "output__0", "atol": 0.0, "rtol": 0.0}],
                         "performance": [
-                            {"batch_size": 1, "latency": 1.0, "throughput": 1500},
+                            {"batch_size": 1, "latency": 1.0, "throughput": 1500, "avg_gpu_clock": 1500.0},
                         ],
                         "err_msg": {},
                         "verified": False,
@@ -131,7 +131,7 @@ def status_dict_v0_1_0():
                         "status": "OK",
                         "tolerance": [{"output_name": "output__0", "atol": 0.0, "rtol": 0.0}],
                         "performance": [
-                            {"batch_size": 1, "latency": 1.0, "throughput": 1500},
+                            {"batch_size": 1, "latency": 1.0, "throughput": 1500, "avg_gpu_clock": 1500.0},
                         ],
                         "err_msg": {},
                         "verified": False,
@@ -148,7 +148,7 @@ def status_dict_v0_1_0():
                         "status": "OK",
                         "tolerance": [{"output_name": "output__0", "atol": 0.0, "rtol": 0.0}],
                         "performance": [
-                            {"batch_size": 1, "latency": 1.0, "throughput": 1500},
+                            {"batch_size": 1, "latency": 1.0, "throughput": 1500, "avg_gpu_clock": 1500.0},
                         ],
                         "err_msg": {},
                         "verified": False,
@@ -165,7 +165,7 @@ def status_dict_v0_1_0():
                         "status": "OK",
                         "tolerance": [{"output_name": "output__0", "atol": 0.0, "rtol": 0.0}],
                         "performance": [
-                            {"batch_size": 1, "latency": 1.0, "throughput": 1500},
+                            {"batch_size": 1, "latency": 1.0, "throughput": 1500, "avg_gpu_clock": 1500.0},
                         ],
                         "err_msg": {},
                         "verified": False,
@@ -263,6 +263,7 @@ def status_dict_v0_1_2():
                                 "p95_latency": 1.0,
                                 "p99_latency": 1.0,
                                 "throughput": 1500.0,
+                                "avg_gpu_clock": 1500.0,
                                 "request_count": 50,
                             }
                         ],
@@ -291,6 +292,7 @@ def status_dict_v0_1_2():
                                 "p95_latency": 1.0,
                                 "p99_latency": 1.0,
                                 "throughput": 1500.0,
+                                "avg_gpu_clock": 1500.0,
                                 "request_count": 50,
                             }
                         ],
@@ -319,6 +321,7 @@ def status_dict_v0_1_2():
                                 "p95_latency": 1.0,
                                 "p99_latency": 1.0,
                                 "throughput": 1500.0,
+                                "avg_gpu_clock": 1500.0,
                                 "request_count": 50,
                             }
                         ],
@@ -339,6 +342,7 @@ def status_dict_v0_1_2():
                                 "p95_latency": 1.0,
                                 "p99_latency": 1.0,
                                 "throughput": 1500.0,
+                                "avg_gpu_clock": 1500.0,
                                 "request_count": 50,
                             }
                         ],
@@ -367,6 +371,7 @@ def status_dict_v0_1_2():
                                 "p95_latency": 1.0,
                                 "p99_latency": 1.0,
                                 "throughput": 1500.0,
+                                "avg_gpu_clock": 1500.0,
                                 "request_count": 50,
                             }
                         ],
@@ -395,6 +400,7 @@ def status_dict_v0_1_2():
                                 "p95_latency": 1.0,
                                 "p99_latency": 1.0,
                                 "throughput": 1500.0,
+                                "avg_gpu_clock": 1500.0,
                                 "request_count": 50,
                             }
                         ],
@@ -423,6 +429,7 @@ def status_dict_v0_1_2():
                                 "p95_latency": 1.0,
                                 "p99_latency": 1.0,
                                 "throughput": 1500.0,
+                                "avg_gpu_clock": 1500.0,
                                 "request_count": 50,
                             }
                         ],
@@ -451,6 +458,7 @@ def status_dict_v0_1_2():
                                 "p95_latency": 1.0,
                                 "p99_latency": 1.0,
                                 "throughput": 1500.0,
+                                "avg_gpu_clock": 1500.0,
                                 "request_count": 50,
                             }
                         ],
@@ -479,6 +487,7 @@ def status_dict_v0_1_2():
                                 "p95_latency": 1.0,
                                 "p99_latency": 1.0,
                                 "throughput": 1500.0,
+                                "avg_gpu_clock": 1500.0,
                                 "request_count": 50,
                             }
                         ],
@@ -507,6 +516,7 @@ def status_dict_v0_1_2():
                                 "p95_latency": 1.0,
                                 "p99_latency": 1.0,
                                 "throughput": 1500.0,
+                                "avg_gpu_clock": 1500.0,
                                 "request_count": 50,
                             }
                         ],
@@ -606,6 +616,7 @@ def status_dict_v0_1_3():
                                 "p95_latency": 1.0,
                                 "p99_latency": 1.0,
                                 "throughput": 1500.0,
+                                "avg_gpu_clock": 1500.0,
                                 "request_count": 50,
                             }
                         ],
@@ -634,6 +645,7 @@ def status_dict_v0_1_3():
                                 "p95_latency": 1.0,
                                 "p99_latency": 1.0,
                                 "throughput": 1500.0,
+                                "avg_gpu_clock": 1500.0,
                                 "request_count": 50,
                             }
                         ],
@@ -694,6 +706,7 @@ def status_dict_v0_1_3():
                                 "p95_latency": 1.0,
                                 "p99_latency": 1.0,
                                 "throughput": 1500.0,
+                                "avg_gpu_clock": 1500.0,
                                 "request_count": 50,
                             }
                         ],
@@ -722,6 +735,7 @@ def status_dict_v0_1_3():
                                 "p95_latency": 1.0,
                                 "p99_latency": 1.0,
                                 "throughput": 1500.0,
+                                "avg_gpu_clock": 1500.0,
                                 "request_count": 50,
                             }
                         ],
@@ -750,6 +764,7 @@ def status_dict_v0_1_3():
                                 "p95_latency": 1.0,
                                 "p99_latency": 1.0,
                                 "throughput": 1500.0,
+                                "avg_gpu_clock": 1500.0,
                                 "request_count": 50,
                             }
                         ],
@@ -778,6 +793,7 @@ def status_dict_v0_1_3():
                                 "p95_latency": 1.0,
                                 "p99_latency": 1.0,
                                 "throughput": 1500.0,
+                                "avg_gpu_clock": 1500.0,
                                 "request_count": 50,
                             }
                         ],
@@ -806,6 +822,7 @@ def status_dict_v0_1_3():
                                 "p95_latency": 1.0,
                                 "p99_latency": 1.0,
                                 "throughput": 1500.0,
+                                "avg_gpu_clock": 1500.0,
                                 "request_count": 50,
                             }
                         ],
@@ -834,6 +851,7 @@ def status_dict_v0_1_3():
                                 "p95_latency": 1.0,
                                 "p99_latency": 1.0,
                                 "throughput": 1500.0,
+                                "avg_gpu_clock": 1500.0,
                                 "request_count": 50,
                             }
                         ],
@@ -938,6 +956,7 @@ def status_dict_v0_1_4():
                                 "p95_latency": 1.0,
                                 "p99_latency": 1.0,
                                 "throughput": 1500.0,
+                                "avg_gpu_clock": 1500.0,
                                 "request_count": 50,
                             }
                         ],
@@ -968,6 +987,7 @@ def status_dict_v0_1_4():
                                 "p95_latency": 1.0,
                                 "p99_latency": 1.0,
                                 "throughput": 1500.0,
+                                "avg_gpu_clock": 1500.0,
                                 "request_count": 50,
                             }
                         ],
@@ -998,6 +1018,7 @@ def status_dict_v0_1_4():
                                 "p95_latency": 1.0,
                                 "p99_latency": 1.0,
                                 "throughput": 1500.0,
+                                "avg_gpu_clock": 1500.0,
                                 "request_count": 50,
                             }
                         ],
@@ -1018,6 +1039,7 @@ def status_dict_v0_1_4():
                                 "p95_latency": 1.0,
                                 "p99_latency": 1.0,
                                 "throughput": 1500.0,
+                                "avg_gpu_clock": 1500.0,
                                 "request_count": 50,
                             }
                         ],
@@ -1128,6 +1150,7 @@ def status_dict_v0_1_4():
                                 "p95_latency": 1.0,
                                 "p99_latency": 1.0,
                                 "throughput": 1500.0,
+                                "avg_gpu_clock": 1500.0,
                                 "request_count": 50,
                             }
                         ],
@@ -1148,6 +1171,7 @@ def status_dict_v0_1_4():
                                 "p95_latency": 1.0,
                                 "p99_latency": 1.0,
                                 "throughput": 1500.0,
+                                "avg_gpu_clock": 1500.0,
                                 "request_count": 50,
                             }
                         ],
@@ -1178,6 +1202,7 @@ def status_dict_v0_1_4():
                                 "p95_latency": 1.0,
                                 "p99_latency": 1.0,
                                 "throughput": 1500.0,
+                                "avg_gpu_clock": 1500.0,
                                 "request_count": 50,
                             }
                         ],
@@ -1198,6 +1223,7 @@ def status_dict_v0_1_4():
                                 "p95_latency": 1.0,
                                 "p99_latency": 1.0,
                                 "throughput": 1500.0,
+                                "avg_gpu_clock": 1500.0,
                                 "request_count": 50,
                             }
                         ],
@@ -1266,6 +1292,7 @@ def status_dict_v0_2_0():
                                         "p95_latency": 1.0,
                                         "p99_latency": 1.0,
                                         "throughput": 1500.0,
+                                        "avg_gpu_clock": 1500.0,
                                         "request_count": 50,
                                     }
                                 ]
@@ -1303,6 +1330,7 @@ def status_dict_v0_2_0():
                                         "p95_latency": 1.0,
                                         "p99_latency": 1.0,
                                         "throughput": 1500.0,
+                                        "avg_gpu_clock": 1500.0,
                                         "request_count": 50,
                                     }
                                 ]
@@ -1340,6 +1368,7 @@ def status_dict_v0_2_0():
                                         "p95_latency": 1.0,
                                         "p99_latency": 1.0,
                                         "throughput": 1500.0,
+                                        "avg_gpu_clock": 1500.0,
                                         "request_count": 50,
                                     }
                                 ]
@@ -1377,6 +1406,7 @@ def status_dict_v0_2_0():
                                         "p95_latency": 1.0,
                                         "p99_latency": 1.0,
                                         "throughput": 1500.0,
+                                        "avg_gpu_clock": 1500.0,
                                         "request_count": 50,
                                     }
                                 ]
@@ -1414,6 +1444,7 @@ def status_dict_v0_2_0():
                                         "p95_latency": 1.0,
                                         "p99_latency": 1.0,
                                         "throughput": 1500.0,
+                                        "avg_gpu_clock": 1500.0,
                                         "request_count": 50,
                                     }
                                 ]
@@ -1488,6 +1519,7 @@ def status_dict_v0_2_1():
                                         "p95_latency": 1.0,
                                         "p99_latency": 1.0,
                                         "throughput": 1500.0,
+                                        "avg_gpu_clock": 1500.0,
                                         "request_count": 50,
                                     }
                                 ]
@@ -1525,6 +1557,7 @@ def status_dict_v0_2_1():
                                         "p95_latency": 1.0,
                                         "p99_latency": 1.0,
                                         "throughput": 1500.0,
+                                        "avg_gpu_clock": 1500.0,
                                         "request_count": 50,
                                     }
                                 ]
@@ -1562,6 +1595,7 @@ def status_dict_v0_2_1():
                                         "p95_latency": 1.0,
                                         "p99_latency": 1.0,
                                         "throughput": 1500.0,
+                                        "avg_gpu_clock": 1500.0,
                                         "request_count": 50,
                                     }
                                 ]
@@ -1599,6 +1633,7 @@ def status_dict_v0_2_1():
                                         "p95_latency": 1.0,
                                         "p99_latency": 1.0,
                                         "throughput": 1500.0,
+                                        "avg_gpu_clock": 1500.0,
                                         "request_count": 50,
                                     }
                                 ]
@@ -1636,6 +1671,7 @@ def status_dict_v0_2_1():
                                         "p95_latency": 1.0,
                                         "p99_latency": 1.0,
                                         "throughput": 1500.0,
+                                        "avg_gpu_clock": 1500.0,
                                         "request_count": 50,
                                     }
                                 ]
@@ -1709,6 +1745,7 @@ def status_dict_v0_2_2():
                                         "p95_latency": 1.0,
                                         "p99_latency": 1.0,
                                         "throughput": 1500.0,
+                                        "avg_gpu_clock": 1500.0,
                                         "request_count": 50,
                                     }
                                 ]
@@ -1746,6 +1783,7 @@ def status_dict_v0_2_2():
                                         "p95_latency": 1.0,
                                         "p99_latency": 1.0,
                                         "throughput": 1500.0,
+                                        "avg_gpu_clock": 1500.0,
                                         "request_count": 50,
                                     }
                                 ]
@@ -1783,6 +1821,7 @@ def status_dict_v0_2_2():
                                         "p95_latency": 1.0,
                                         "p99_latency": 1.0,
                                         "throughput": 1500.0,
+                                        "avg_gpu_clock": 1500.0,
                                         "request_count": 50,
                                     }
                                 ]
@@ -1820,6 +1859,7 @@ def status_dict_v0_2_2():
                                         "p95_latency": 1.0,
                                         "p99_latency": 1.0,
                                         "throughput": 1500.0,
+                                        "avg_gpu_clock": 1500.0,
                                         "request_count": 50,
                                     }
                                 ]
@@ -1857,6 +1897,7 @@ def status_dict_v0_2_2():
                                         "p95_latency": 1.0,
                                         "p99_latency": 1.0,
                                         "throughput": 1500.0,
+                                        "avg_gpu_clock": 1500.0,
                                         "request_count": 50,
                                     }
                                 ]

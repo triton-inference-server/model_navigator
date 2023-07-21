@@ -82,6 +82,7 @@ def test_find_max_batch_size_return_max_batch_when_model_support_batching(mocker
                 "p95_latency": 1,
                 "p99_latency": 1,
                 "throughput": 1,
+                "avg_gpu_clock": 1,
                 "request_count": 1,
             },
             {
@@ -93,6 +94,7 @@ def test_find_max_batch_size_return_max_batch_when_model_support_batching(mocker
                 "p95_latency": 1,
                 "p99_latency": 1,
                 "throughput": 1,
+                "avg_gpu_clock": 1,
                 "request_count": 1,
             },
             {
@@ -104,6 +106,7 @@ def test_find_max_batch_size_return_max_batch_when_model_support_batching(mocker
                 "p95_latency": 1,
                 "p99_latency": 1,
                 "throughput": 1,
+                "avg_gpu_clock": 1,
                 "request_count": 1,
             },
         ]
