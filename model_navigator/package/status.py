@@ -252,7 +252,7 @@ class StatusDictUpdater:
                         "p95_latency": None,
                         "p99_latency": None,
                         "throughput": perf_results["throughput"],
-                        "avg_gpu_clock": perf_results["avg_gpu_clock"],
+                        "avg_gpu_clock": None,
                         "request_count": None,
                     }
 

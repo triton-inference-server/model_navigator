@@ -13,7 +13,6 @@
 # limitations under the License.
 from importlib.util import find_spec
 
-import numpy as np
 import pytest
 
 from model_navigator.commands.performance.nvml_handler import NvmlHandler
@@ -26,7 +25,7 @@ def _gpu_count() -> int:
 
 def test_commands_performance_nvml_handler_not_initialized() -> None:
     nvml_handler = NvmlHandler()
-    assert np.isnan(nvml_handler.gpu_clock)
+    assert nvml_handler.gpu_clock is None
     assert nvml_handler.gpu_count == 0
 
 

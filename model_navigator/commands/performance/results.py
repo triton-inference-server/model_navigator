@@ -36,7 +36,7 @@ class ProfilingResults(DataObject):
     p99_latency: float  # ms
     throughput: float  # infer / sec
     request_count: int
-    avg_gpu_clock: float = np.nan  # MHz
+    avg_gpu_clock: Optional[float] = None  # MHz
 
     @classmethod
     def from_dict(cls, d: Mapping) -> "ProfilingResults":
@@ -70,7 +70,7 @@ class ProfilingResults(DataObject):
         measurements = np.array(measurements)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=RuntimeWarning)
-            avg_gpu_clock = np.nanmean(gpu_clocks)
+            avg_gpu_clock = np.nanmean([gpu_clock for gpu_clock in gpu_clocks if gpu_clock is not None])
         return cls(
             sample_id=sample_id,
             batch_size=batch_size,

@@ -105,7 +105,7 @@ def test_is_measurement_stable_return_false_when_window_size_less_than_count():
     sample_id = 0
     batch_size = 1
     measurements = [25, 24, 23]
-    gpu_clocks = [1500, np.nan]
+    gpu_clocks = [1500, None]
     windows = [
         ProfilingResults.from_measurements(measurements, gpu_clocks, batch_size, sample_id),
         ProfilingResults.from_measurements(measurements, gpu_clocks, batch_size, sample_id),
@@ -124,9 +124,9 @@ def test_is_measurement_stable_return_false_when_avg_latencies_are_out_of_stabil
     sample_id = 0
     batch_size = 1
     windows = [
-        ProfilingResults.from_measurements([250, 220, 200], [1500, np.nan], batch_size, sample_id),
-        ProfilingResults.from_measurements([200, 150, 100], [1500, np.nan], batch_size, sample_id),
-        ProfilingResults.from_measurements([50, 49, 47], [1500, np.nan], batch_size, sample_id),
+        ProfilingResults.from_measurements([250, 220, 200], [1500, None], batch_size, sample_id),
+        ProfilingResults.from_measurements([200, 150, 100], [1500, None], batch_size, sample_id),
+        ProfilingResults.from_measurements([50, 49, 47], [1500, None], batch_size, sample_id),
     ]
 
     assert bool(profiler._is_measurement_stable(windows)) is False
@@ -142,11 +142,11 @@ def test_is_measurement_stable_return_true_when_avg_latencies_are_in_stability_r
     sample_id = 0
     batch_size = 1
     windows = [
-        ProfilingResults.from_measurements([250, 220, 200], [1500, np.nan], batch_size, sample_id),
-        ProfilingResults.from_measurements([200, 150, 100], [1500, np.nan], batch_size, sample_id),
-        ProfilingResults.from_measurements([52, 52, 51], [1500, np.nan], batch_size, sample_id),
-        ProfilingResults.from_measurements([50, 49, 48], [1500, np.nan], batch_size, sample_id),
-        ProfilingResults.from_measurements([52, 49, 47], [1500, np.nan], batch_size, sample_id),
+        ProfilingResults.from_measurements([250, 220, 200], [1500, None], batch_size, sample_id),
+        ProfilingResults.from_measurements([200, 150, 100], [1500, None], batch_size, sample_id),
+        ProfilingResults.from_measurements([52, 52, 51], [1500, None], batch_size, sample_id),
+        ProfilingResults.from_measurements([50, 49, 48], [1500, None], batch_size, sample_id),
+        ProfilingResults.from_measurements([52, 49, 47], [1500, None], batch_size, sample_id),
     ]
 
     assert bool(profiler._is_measurement_stable(windows)) is True
@@ -157,10 +157,10 @@ def test_profiler_run_return_batch_sizes_upto_4_when_batch_size_4_saturates_thro
     mocker.patch(
         "model_navigator.commands.performance.Profiler._run_measurement",
         side_effect=[
-            ProfilingResults.from_measurements([10, 10, 10], [1500, np.nan], 1, 0),
-            ProfilingResults.from_measurements([15, 15, 15], [1500, np.nan], 2, 0),
-            ProfilingResults.from_measurements([30, 30, 30], [1500, np.nan], 4, 0),
-            ProfilingResults.from_measurements([30, 30, 30], [1500, np.nan], 8, 0),
+            ProfilingResults.from_measurements([10, 10, 10], [1500, None], 1, 0),
+            ProfilingResults.from_measurements([15, 15, 15], [1500, None], 2, 0),
+            ProfilingResults.from_measurements([30, 30, 30], [1500, None], 4, 0),
+            ProfilingResults.from_measurements([30, 30, 30], [1500, None], 8, 0),
         ],
     )
 

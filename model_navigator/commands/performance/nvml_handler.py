@@ -13,7 +13,7 @@
 # limitations under the License.
 """NVML handler."""
 
-from typing import ContextManager
+from typing import ContextManager, Optional
 
 import numpy as np
 from pynvml import (
@@ -51,10 +51,11 @@ class NvmlHandler(ContextManager):
             self._nvml_exists = False
 
     @property
-    def gpu_clock(self) -> float:
+    def gpu_clock(self) -> Optional[float]:
         """Returns average gpu clock frequency in MHz for running gpus (if they exist)."""
         if not self._nvml_exists:
-            return np.nan
+            return None
+
         gpus_running = 0
         gpu_clocks_sum = 0
         for i in range(self.gpu_count):
