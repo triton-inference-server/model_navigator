@@ -27,6 +27,8 @@ from pynvml import (
     nvmlShutdown,
 )
 
+from model_navigator.core.logger import LOGGER
+
 
 class NvmlHandler(ContextManager):
     """Context manager for initializing and shutting down NVML."""
@@ -40,15 +42,21 @@ class NvmlHandler(ContextManager):
         try:
             nvmlInit()
             self._nvml_exists = True
-        except NVMLError:
+        except NVMLError as e:
+            LOGGER.debug(f"Unable to initialize NVML: {str(e)}")
             self._nvml_exists = False
+
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         """Shuts down NVML."""
         if self._nvml_exists:
-            nvmlShutdown()
-            self._nvml_exists = False
+            try:
+                nvmlShutdown()
+            except NVMLError as e:
+                LOGGER.debug(f"Unable to shutdown NVML: {str(e)}")
+            finally:
+                self._nvml_exists = False
 
     @property
     def gpu_clock(self) -> Optional[float]:
@@ -59,10 +67,20 @@ class NvmlHandler(ContextManager):
         gpus_running = 0
         gpu_clocks_sum = 0
         for i in range(self.gpu_count):
-            handle = nvmlDeviceGetHandleByIndex(i)
-            if len(nvmlDeviceGetComputeRunningProcesses(handle)) > 0:
-                gpus_running += 1
-                gpu_clocks_sum += nvmlDeviceGetClockInfo(handle, NVML_CLOCK_GRAPHICS)
+            try:
+                handle = nvmlDeviceGetHandleByIndex(i)
+                processes = nvmlDeviceGetComputeRunningProcesses(handle)
+
+                if len(processes) > 0:
+                    gpus_running += 1
+                    gpu_clocks_sum += nvmlDeviceGetClockInfo(handle, NVML_CLOCK_GRAPHICS)
+            except NVMLError as e:
+                LOGGER.debug(f"Unable to collect NVML data for GPU {i}: {str(e)}")
+                continue
+
+        if gpus_running == 0:
+            return None
+
         with np.errstate(invalid="ignore"):
             return np.divide(gpu_clocks_sum, gpus_running)
 
@@ -71,4 +89,9 @@ class NvmlHandler(ContextManager):
         """Returns number of available gpus."""
         if not self._nvml_exists:
             return 0
-        return nvmlDeviceGetCount()
+
+        try:
+            return nvmlDeviceGetCount()
+        except NVMLError as e:
+            LOGGER.debug(f"Unable to collect NVML device count: {str(e)}")
+            return 0

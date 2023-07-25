@@ -144,6 +144,7 @@ class ProfilingResults(DataObject):
 
     def __str__(self) -> str:
         """Get string representation."""
+        avg_gpu_clock = f"{self.avg_gpu_clock:.4f}" if self.avg_gpu_clock is not None else "-"
         return (
             f"Sample ID: {self.sample_id}\n"
             f"Batch: {self.batch_size}\n"
@@ -155,5 +156,5 @@ class ProfilingResults(DataObject):
             f"p90 Latency: {self.p90_latency:.4f} [ms]\n"
             f"p95 Latency: {self.p95_latency:.4f} [ms]\n"
             f"p99 Latency: {self.p99_latency:.4f} [ms]\n"
-            f"Avg GPU clock: {self.avg_gpu_clock:.4f} [MHz]"
+            f"Avg GPU clock: {avg_gpu_clock} [MHz]"
         )
