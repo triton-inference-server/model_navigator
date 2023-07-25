@@ -14,7 +14,7 @@
 """Script that converts SavedModel to Tensorflow-TensorRT model."""
 
 import pathlib
-from typing import Optional
+from typing import Any, Dict, Optional
 
 import fire
 from tensorflow.python.compiler.tensorrt import trt_convert as trtc  # pytype: disable=import-error
@@ -30,6 +30,7 @@ def convert(
     minimum_segment_size: int,
     batch_dim: int,
     max_batch_size: int,
+    custom_args: Dict[str, Any],
     navigator_workspace: Optional[str] = None,
 ) -> None:
     """Convert SavedModel to Tensorflow-TensorRT model.
@@ -48,6 +49,8 @@ def convert(
         max_batch_size (int): Maximum batch size.
         navigator_workspace (Optional[str], optional): Model Navigator workspace path.
             If None use current workdir. Defaults to None.
+        custom_args (Optional[Dict[str, Any]], optional): Passthrough parameters for TrtGraphConverterV2
+            For available arguments check TensorRT documentation: https://docs.nvidia.com/deeplearning/frameworks/tf-trt-user-guide/index.html
 
     Yields:
         _type_: _description_
@@ -76,7 +79,10 @@ def convert(
     # TODO: allow setting dynamic_shape_profile_strategy
 
     converter = trtc.TrtGraphConverterV2(
-        input_saved_model_dir=exported_model_path.as_posix(), use_dynamic_shape=True, conversion_params=params
+        input_saved_model_dir=exported_model_path.as_posix(),
+        use_dynamic_shape=True,
+        conversion_params=params,
+        **custom_args,
     )
 
     converter.convert()

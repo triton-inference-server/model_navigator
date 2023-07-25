@@ -19,6 +19,7 @@ limitations under the License.
 ## 0.7.0 (unreleased)
 - new: Generate multiple TensorRT optimization profiles during conversion for various scenarios
 - new: Model warmup support in Triton model configuration
+- new: Extended custom configs to pass arguments directly to export and conversion operations like `torch.onnx.export` or `polygraphy convert`
 - new: Collect GPU clock during model profiling
 - change: Navigator package version change to 0.2.3. Custom configurations now use trt_profiles list instead single value
 

@@ -17,7 +17,7 @@ import pathlib
 import sys
 import tempfile
 from distutils.version import LooseVersion
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from model_navigator.api.config import (
     TensorRTCompatibilityLevel,
@@ -50,6 +50,7 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
         precision: TensorRTPrecision,
         precision_mode: TensorRTPrecisionMode,
         dataloader_trt_profile: TensorRTProfile,
+        custom_args: Dict[str, Any],
         max_workspace_size: Optional[int] = None,
         batch_dim: Optional[int] = None,
         dataloader_max_batch_size: Optional[int] = None,
@@ -83,6 +84,9 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
             compatibility_level: Hardware compatibility level for generated engine
             optimized_trt_profiles: List of TensorRT profiles that will be used by Model Navigator for conversion, user provided or optimized by TensorRTProfileBuilder command.
             verbose: enable verbose logging for command
+            custom_args (Optional[Dict[str, Any]], optional): Passthrough parameters for Polygraphy convert command
+                For available arguments check Polygraphy documentation: https://docs.nvidia.com/deeplearning/tensorrt/developer-guide/index.html#polygraphy
+                or Polygraphy repository: https://github.com/NVIDIA/TensorRT/tree/main/tools/Polygraphy
 
         Returns:
             CommandOutput: Status and results of the command.
@@ -115,6 +119,7 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
             precision_mode=precision_mode,
             max_workspace_size=max_workspace_size,
             verbose=verbose,
+            custom_args=custom_args,
         )
 
         with ExecutionContext(
@@ -164,6 +169,7 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
         input_metadata: TensorMetadata,
         output_metadata: TensorMetadata,
         dataloader_trt_profile: TensorRTProfile,
+        custom_args: Dict[str, Any],
         optimized_trt_profiles: Optional[List[TensorRTProfile]] = None,
         batch_dim: Optional[int] = None,
         optimization_level: Optional[str] = None,
@@ -215,6 +221,12 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
                     reproduce_script_path=converted_model_path.parent,
                     verbose=verbose,
                 )
+
+        for k, v in (custom_args or {}).items():
+            if isinstance(v, bool) and v is True:
+                convert_cmd.append(k)
+            else:
+                convert_cmd.extend([k, v])
 
         def get_args(max_batch_size=None):
             if optimized_trt_profiles:

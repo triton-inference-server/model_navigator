@@ -14,7 +14,7 @@
 """Export Torch model to TorchScript model."""
 
 import pathlib
-from typing import Optional
+from typing import Any, Dict, Optional
 
 import fire
 import torch  # pytype: disable=import-error
@@ -38,6 +38,7 @@ def export(
     batch_dim: Optional[int],
     target_device: str,
     strict: bool,
+    custom_args: Dict[str, Any],
     navigator_workspace: Optional[str] = None,
 ):
     """Export Torch model to ONNX model.
@@ -50,6 +51,8 @@ def export(
         strict (bool): Enable or Disable strict flag for tracer used in TorchScript export.
         navigator_workspace (Optional[str], optional): Model Navigator workspace path.
             When None use current workdir. Defaults to None.
+        custom_args (Optional[Dict[str, Any]], optional): Passthrough parameters for torch.jit.trace
+            For available arguments check PyTorch documentation: https://pytorch.org/docs/stable/jit.html#torch.jit.trace
     """
     model = get_model()
     target_jit_type = JitType(target_jit_type)
@@ -64,7 +67,7 @@ def export(
         script_module = torch.jit.script(model)
     else:
         dummy_input = tuple(torch.from_numpy(val).to(target_device) for val in profiling_sample.values())
-        script_module = torch.jit.trace(model, dummy_input, strict=strict)
+        script_module = torch.jit.trace(model, dummy_input, strict=strict, **custom_args)
 
     exported_model_path = pathlib.Path(exported_model_path)
     if not exported_model_path.is_absolute():

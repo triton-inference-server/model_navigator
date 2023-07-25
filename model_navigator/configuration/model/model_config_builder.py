@@ -167,7 +167,9 @@ class ModelConfigBuilder:
         torch_config = _get_custom_config(custom_configs=custom_configs, custom_config_cls=config_api.TorchConfig)
         for jit_type in torch_config.jit_type:
             model_configs[Format.TORCHSCRIPT].append(
-                model_config.TorchScriptConfig(jit_type=jit_type, strict=torch_config.strict)
+                model_config.TorchScriptConfig(
+                    jit_type=jit_type, strict=torch_config.strict, custom_args=torch_config.custom_args
+                )
             )
 
     @staticmethod
@@ -192,6 +194,7 @@ class ModelConfigBuilder:
                     precision_mode=torch_trt_config.precision_mode,
                     max_workspace_size=torch_trt_config.max_workspace_size,
                     trt_profiles=torch_trt_config.trt_profiles,
+                    custom_args=torch_trt_config.custom_args,
                 )
             )
 
@@ -213,7 +216,9 @@ class ModelConfigBuilder:
         )
         for jit_compile_option, enable_xla_option in product(tf_config.jit_compile, tf_config.enable_xla):
             model_configs[Format.TF_SAVEDMODEL].append(
-                model_config.TensorFlowSavedModelConfig(jit_compile=jit_compile_option, enable_xla=enable_xla_option)
+                model_config.TensorFlowSavedModelConfig(
+                    jit_compile=jit_compile_option, enable_xla=enable_xla_option, custom_args=tf_config.custom_args
+                )
             )
 
     @staticmethod
@@ -238,6 +243,7 @@ class ModelConfigBuilder:
                     max_workspace_size=tf_trt_config.max_workspace_size,
                     minimum_segment_size=tf_trt_config.minimum_segment_size,
                     trt_profiles=tf_trt_config.trt_profiles,
+                    custom_args=tf_trt_config.custom_args,
                 )
             )
 
@@ -262,6 +268,7 @@ class ModelConfigBuilder:
                         parent=model_configuration,
                         opset=onnx_config.opset,
                         dynamic_axes=onnx_config.dynamic_axes,
+                        custom_args=onnx_config.custom_args,
                     )
                 )
         if framework in (Framework.TORCH, Framework.ONNX):
@@ -270,6 +277,7 @@ class ModelConfigBuilder:
                     parent=None,
                     opset=onnx_config.opset,
                     dynamic_axes=onnx_config.dynamic_axes,
+                    custom_args=onnx_config.custom_args,
                 )
             )
         if framework == Framework.TORCH and onnx_config.onnx_extended_conversion:
@@ -279,6 +287,7 @@ class ModelConfigBuilder:
                         parent=model_configuration,
                         opset=onnx_config.opset,
                         dynamic_axes=onnx_config.dynamic_axes,
+                        custom_args=onnx_config.custom_args,
                     )
                 )
 
@@ -304,5 +313,6 @@ class ModelConfigBuilder:
                     trt_profiles=trt_config.trt_profiles,
                     optimization_level=trt_config.optimization_level,
                     compatibility_level=trt_config.compatibility_level,
+                    custom_args=trt_config.custom_args,
                 )
             )

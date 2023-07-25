@@ -64,6 +64,7 @@ def test_run_execute_conversion_when_model_not_support_batching(mocker):
                 dataloader_trt_profile=TensorRTProfile(),
                 precision=TensorRTPrecision.FP16,
                 precision_mode=TensorRTPrecisionMode.HIERARCHY,
+                custom_args={},
             )
 
             assert result is not None
@@ -101,6 +102,7 @@ def test_run_execute_conversion_with_max_bs_search_when_trt_profile_not_provided
                 batch_dim=0,
                 precision=TensorRTPrecision.FP16,
                 precision_mode=TensorRTPrecisionMode.HIERARCHY,
+                custom_args={},
             )
 
             assert result is not None
@@ -139,6 +141,7 @@ def test_run_execute_conversion_when_dataloader_and_device_max_batch_size_is_inv
                 dataloader_trt_profile=TensorRTProfile(),
                 precision=TensorRTPrecision.FP16,
                 precision_mode=TensorRTPrecisionMode.HIERARCHY,
+                custom_args={},
             )
 
             assert result is not None
@@ -178,6 +181,7 @@ def test_run_execute_conversion_with_max_batch_size_search_when_dataloader_max_b
                 dataloader_trt_profile=TensorRTProfile(),
                 precision=TensorRTPrecision.FP16,
                 precision_mode=TensorRTPrecisionMode.HIERARCHY,
+                custom_args={},
             )
 
             assert result is not None
@@ -220,6 +224,7 @@ def test_run_execute_conversion_with_max_batch_size_search_when_device_max_batch
                 dataloader_trt_profile=TensorRTProfile(),
                 precision=TensorRTPrecision.FP16,
                 precision_mode=TensorRTPrecisionMode.HIERARCHY,
+                custom_args={},
             )
 
             assert result is not None
@@ -263,6 +268,7 @@ def test_run_execute_conversion_with_max_batch_size_search_when_both_max_batch_s
                 dataloader_trt_profile=TensorRTProfile(),
                 precision=TensorRTPrecision.FP16,
                 precision_mode=TensorRTPrecisionMode.HIERARCHY,
+                custom_args={},
             )
 
             assert result is not None

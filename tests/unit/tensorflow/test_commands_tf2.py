@@ -158,6 +158,7 @@ def test_tf2_convert_tf_trt():
             workspace=Workspace(workspace),
             verbose=True,
             dataloader_trt_profile=TensorRTProfile(),
+            custom_args={},
         )
 
         assert command_output.status == CommandStatus.OK

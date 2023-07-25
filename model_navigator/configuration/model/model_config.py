@@ -16,7 +16,7 @@
 
 import pathlib
 from abc import ABC, abstractmethod
-from typing import Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from model_navigator.api.config import (
     Format,
@@ -59,13 +59,15 @@ class ModelConfig(ABC, DataObject):
         instance.format = cls.format
         return instance
 
-    def __init__(self, parent: Optional["ModelConfig"]) -> None:
+    def __init__(self, parent: Optional["ModelConfig"], custom_args: Optional[Dict[str, Any]] = None) -> None:
         """Initializes ModelConfig class.
 
         Args:
             parent: Parent model configuration
+            custom_args: Additional keyword arguments used for model export and conversions
         """
         self.parent = parent
+        self.custom_args = custom_args or {}
 
     @classmethod
     def from_dict(cls, data_dict: Dict):
@@ -246,6 +248,7 @@ class TensorFlowSavedModelConfig(_SerializedModelConfig, format=Format.TF_SAVEDM
         jit_compile: Optional[bool],
         enable_xla: Optional[bool],
         parent: Optional[ModelConfig] = None,
+        custom_args: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Initializes SavedModel model configuration class.
 
@@ -253,8 +256,9 @@ class TensorFlowSavedModelConfig(_SerializedModelConfig, format=Format.TF_SAVEDM
             parent: Parent model configuration
             jit_compile: Flag passed to tf.function in case of SavedModel exported from JAX model
             enable_xla: Flag passed to jax2tf.convert in case of SavedModel exported from JAX model
+            custom_args: Custom arguments passed to Savedmodel export
         """
-        super().__init__(parent=parent)
+        super().__init__(parent=parent, custom_args=custom_args)
         self.jit_compile = jit_compile
         self.enable_xla = enable_xla
 
@@ -282,6 +286,7 @@ class TorchScriptConfig(_SerializedModelConfig, format=Format.TORCHSCRIPT):
         jit_type: JitType,
         strict: bool,
         parent: Optional[ModelConfig] = None,
+        custom_args: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Initializes TorchScript model configuration class.
 
@@ -289,10 +294,12 @@ class TorchScriptConfig(_SerializedModelConfig, format=Format.TORCHSCRIPT):
             jit_type: TorchScript export method
             strict: Enable or Disable strict flag for tracer used in TorchScript export
             parent: Parent model configuration
+            custom_args: Custom arguments passed to TorchScript export
         """
         super().__init__(parent=parent)
         self.jit_type = jit_type
         self.strict = strict
+        self.custom_args = custom_args
 
     def _get_path_params_as_array_of_strings(self) -> List[str]:
         return [self.jit_type.value] if self.jit_type else []
@@ -313,6 +320,7 @@ class ONNXConfig(_SerializedModelConfig, format=Format.ONNX):
         opset: int,
         dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]],
         parent: Optional[ModelConfig] = None,
+        custom_args: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Initializes ONNX model configuration class.
 
@@ -320,10 +328,12 @@ class ONNXConfig(_SerializedModelConfig, format=Format.ONNX):
             opset: ONNX opset
             dynamic_axes: Dynamic axes definition for ONNXConfig
             parent: Parent model configuration
+            custom_args: Custom arguments passed to ONNX export
         """
         super().__init__(parent=parent)
         self.opset = opset
         self.dynamic_axes = dynamic_axes
+        self.custom_args = custom_args
 
     @classmethod
     def _from_dict(cls, data_dict: Dict):
@@ -345,6 +355,7 @@ class TensorRTConfig(_SerializedModelConfig, format=Format.TENSORRT):
         compatibility_level: Optional[TensorRTCompatibilityLevel],
         trt_profiles: Optional[List[TensorRTProfile]] = None,
         parent: Optional[ModelConfig] = None,
+        custom_args: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Initializes TensorRT (plan) model configuration class.
 
@@ -356,6 +367,7 @@ class TensorRTConfig(_SerializedModelConfig, format=Format.TENSORRT):
             optimization_level: Level of TensorRT engine optimization
             trt_profiles: TensorRT profiles
             compatibility_level: Hardware compatibility level
+            custom_args: Custom arguments passed to TensorRT conversion
         """
         super().__init__(parent=parent)
         self.precision = precision
@@ -364,6 +376,7 @@ class TensorRTConfig(_SerializedModelConfig, format=Format.TENSORRT):
         self.trt_profiles = trt_profiles
         self.optimization_level = optimization_level
         self.compatibility_level = compatibility_level
+        self.custom_args = custom_args
 
     def _get_path_params_as_array_of_strings(self) -> List[str]:
         return [self.precision.value] if self.precision else []
@@ -393,6 +406,7 @@ class TensorFlowTensorRTConfig(_SerializedModelConfig, format=Format.TF_TRT):
         minimum_segment_size: int,
         trt_profiles: Optional[List[TensorRTProfile]] = None,
         parent: Optional[ModelConfig] = None,
+        custom_args: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Initializes TensorFlow TensorRT model configuration class.
 
@@ -402,12 +416,14 @@ class TensorFlowTensorRTConfig(_SerializedModelConfig, format=Format.TF_TRT):
             max_workspace_size: TensorRT max workspace size
             minimum_segment_size: TensorRT minimum segment size
             trt_profiles: TensorRT profiles
+            custom_args: Custom arguments passed to TensorFlow TensorRT conversion
         """
         super().__init__(parent=parent)
         self.precision = precision
         self.max_workspace_size = max_workspace_size
         self.minimum_segment_size = minimum_segment_size
         self.trt_profiles = trt_profiles
+        self.custom_args = custom_args
 
     def _get_path_params_as_array_of_strings(self) -> List[str]:
         return [self.precision.value] if self.precision else []
@@ -435,6 +451,7 @@ class TorchTensorRTConfig(_SerializedModelConfig, format=Format.TORCH_TRT):
         max_workspace_size: int,
         trt_profiles: Optional[List[TensorRTProfile]] = None,
         parent: Optional[ModelConfig] = None,
+        custom_args: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Initializes Torch TensorRT model configuration class.
 
@@ -444,12 +461,14 @@ class TorchTensorRTConfig(_SerializedModelConfig, format=Format.TORCH_TRT):
             precision_mode: Mode how the precision flags are combined
             max_workspace_size: The maximum GPU memory the model can use temporarily during execution
             trt_profiles: TensorRT profiles
+            custom_args: Custom arguments passed to Torch TensorRT conversion
         """
         super().__init__(parent=parent)
         self.precision = precision
         self.precision_mode = precision_mode
         self.max_workspace_size = max_workspace_size
         self.trt_profiles = trt_profiles
+        self.custom_args = custom_args
 
     def _get_path_params_as_array_of_strings(self) -> List[str]:
         return [self.precision.value] if self.precision else []

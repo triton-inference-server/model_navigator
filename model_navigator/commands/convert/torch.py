@@ -14,7 +14,7 @@
 """TorchScript conversions."""
 
 import pathlib
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from model_navigator.api.config import DeviceKind, TensorRTPrecision, TensorRTPrecisionMode, TensorRTProfile
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
@@ -42,6 +42,7 @@ class ConvertTorchScript2ONNX(Command):
         output_metadata: TensorMetadata,
         target_device: DeviceKind,
         verbose: bool,
+        custom_args: Dict[str, Any],
         forward_kw_names: Optional[Tuple[str, ...]] = None,
         batch_dim: Optional[int] = None,
     ) -> CommandOutput:
@@ -59,7 +60,8 @@ class ConvertTorchScript2ONNX(Command):
             forward_kw_names (Optional[Tuple[str, ...]], optional): Source model signature input names.
                 Defaults to None.
             batch_dim (Optional[int], optional): Batch dimension. Defaults to None.
-
+            custom_args (Optional[Dict[str, Any]], optional): Passthrough parameters for torch.onnx.export.
+                For available arguments check PyTorch documentation: https://pytorch.org/docs/stable/onnx.html#torch.onnx.export
         Returns:
             CommandOutput: Status OK.
         """
@@ -85,6 +87,7 @@ class ConvertTorchScript2ONNX(Command):
                 "batch_dim": batch_dim,
                 "forward_kw_names": list(forward_kw_names) if forward_kw_names else None,
                 "target_device": target_device.value,
+                "custom_args": custom_args,
             }
 
             args = parse_kwargs_to_cmd(kwargs)
@@ -110,6 +113,7 @@ class ConvertTorchScript2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearch):
         verbose: bool,
         debug: bool,
         dataloader_trt_profile: TensorRTProfile,
+        custom_args: Dict[str, Any],
         batch_dim: Optional[int] = None,
         dataloader_max_batch_size: Optional[int] = None,
         device_max_batch_size: Optional[int] = None,
@@ -139,6 +143,8 @@ class ConvertTorchScript2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearch):
             device_max_batch_size (Optional[int], optional): Device maximum batch size.
                 Defaults to None.
             optimized_trt_profiles: List of TensorRT profiles that will be used by Model Navigator for conversion, user provided or optimized by TensorRTProfileBuilder command.
+            custom_args (Optional[Dict[str, Any]], optional): Passthrough parameters for Torch-TensorRT conversion.
+                For available arguments check PyTorch documentation: https://pytorch.org/TensorRT/py_api/torch_tensorrt.html
 
         Raises:
             RuntimeError: When no GPU is available.
@@ -177,6 +183,7 @@ class ConvertTorchScript2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearch):
                 "precision_mode": precision_mode.value,
                 "target_device": target_device.value,
                 "navigator_workspace": workspace.path.as_posix(),
+                "custom_args": custom_args,
                 "debug": debug,
             }
             args = parse_kwargs_to_cmd(kwargs)

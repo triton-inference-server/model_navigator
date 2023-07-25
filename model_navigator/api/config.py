@@ -454,8 +454,11 @@ class CustomConfig(abc.ABC):
         return cls(**config_dict)
 
 
+@dataclasses.dataclass
 class CustomConfigForFormat(DataObject, CustomConfig):
     """Abstract base class used for custom configs representing particular format."""
+
+    custom_args: Dict[str, Any] = dataclasses.field(default_factory=dict)
 
     @property
     @abc.abstractmethod

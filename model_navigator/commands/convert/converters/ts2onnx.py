@@ -14,7 +14,7 @@
 """Convert TorchScript model to ONNX model."""
 
 import pathlib
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import fire
 import torch  # pytype: disable=import-error
@@ -32,6 +32,7 @@ def convert(
     batch_dim: Optional[int],
     forward_kw_names: Optional[List[str]],
     target_device: str,
+    custom_args: Dict[str, Any],
     workspace: Optional[str] = None,
 ):
     """Run TorchScript to ONNX conversion.
@@ -48,6 +49,8 @@ def convert(
         target_device (str): Device to load TorchScript model on.
         workspace (Optional[str], optional): Model Navigator workspace path.
             When None use current workdir. Defaults to None.
+        custom_args (Optional[Dict[str, Any]], optional): Passthrough parameters for torch.onnx.export
+            For available arguments check PyTorch documentation: https://pytorch.org/docs/stable/onnx.html#torch.onnx.export
     """
     if not workspace:
         workspace = pathlib.Path.cwd()
@@ -77,6 +80,7 @@ def convert(
         input_names=input_names,
         output_names=output_names,
         dynamic_axes=dynamic_axes,
+        **custom_args,
     )
 
 

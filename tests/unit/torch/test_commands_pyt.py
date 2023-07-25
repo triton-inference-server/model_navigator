@@ -111,6 +111,7 @@ def test_pyt_export_torchscript():
             target_device=DeviceKind.CPU,
             strict=True,
             verbose=False,
+            custom_args={},
         )
         assert command_output.status == CommandStatus.OK
         torch.jit.load(exported_model_path.as_posix())
@@ -140,6 +141,7 @@ def test_pyt_export_onnx():
             output_metadata=TensorMetadata({"output": TensorSpec("output", (-1, 7), numpy.dtype("float32"))}),
             target_device=device,
             verbose=False,
+            custom_args={},
         )
         assert command_output.status == CommandStatus.OK
         onnx.checker.check_model(exported_model_path.as_posix())

@@ -52,6 +52,7 @@ class ExportTorch2TorchScript(Command):
         jit_type: JitType,
         verbose: bool,
         strict: bool,
+        custom_args: Dict[str, Any],
         model: Optional[Any] = None,
         batch_dim: Optional[int] = None,
     ) -> CommandOutput:
@@ -60,11 +61,14 @@ class ExportTorch2TorchScript(Command):
         Args:
             workspace: Workspace where the files are stored.
             path: Path inside the workspace where exported model is stored.
+            target_device: Device to load TorchScript model on.
+            jit_type: TorchScript jit type.
             verbose: Enable verbose logging.
             strict: Enable or Disable strict flag for tracer used in TorchScript export.
             model: The model that has to be exported.
             batch_dim: Location of batch position in shapes.
-
+            custom_args (Optional[Dict[str, Any]], optional): Passthrough parameters for torch.jit.trace
+                For available arguments check PyTorch documentation: https://pytorch.org/docs/stable/jit.html#torch.jit.trace
         Returns:
             CommandOutput object with status
         """
@@ -103,6 +107,7 @@ class ExportTorch2TorchScript(Command):
                 "target_device": target_device.value,
                 "strict": strict,
                 "navigator_workspace": workspace.path.as_posix(),
+                "custom_args": custom_args,
             }
 
             args = parse_kwargs_to_cmd(kwargs)
@@ -142,6 +147,7 @@ class ExportTorch2ONNX(Command):
         output_metadata: TensorMetadata,
         target_device: DeviceKind,
         verbose: bool,
+        custom_args: Dict[str, Any],
         forward_kw_names: Optional[Tuple[str, ...]] = None,
         model: Optional[Any] = None,
         batch_dim: Optional[int] = None,
@@ -161,6 +167,8 @@ class ExportTorch2ONNX(Command):
             model: The model that has to be exported
             batch_dim: Location of batch position in shapes
             dynamic_axes: Definition of model inputs dynamic axes
+            custom_args (Optional[Dict[str, Any]], optional): Passthrough parameters for torch.onnx.export
+                For available arguments check PyTorch documentation: https://pytorch.org/docs/stable/onnx.html#torch.onnx.export
 
         Returns:
             CommandOutput object with status
@@ -208,6 +216,7 @@ class ExportTorch2ONNX(Command):
                 "batch_dim": batch_dim,
                 "forward_kw_names": list(forward_kw_names) if forward_kw_names else None,
                 "target_device": target_device.value,
+                "custom_args": custom_args,
             }
 
             args = parse_kwargs_to_cmd(kwargs)

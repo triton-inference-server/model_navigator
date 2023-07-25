@@ -15,7 +15,7 @@
 
 import logging
 import pathlib
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import fire
 import numpy as np
@@ -62,6 +62,7 @@ def convert(
     precision_mode: str,
     target_device: str,
     debug: bool,
+    custom_args: Dict[str, Any],
     workspace: Optional[str] = None,
 ) -> None:
     """Run conversion from TorchScript to Torch-TensorRT.
@@ -80,6 +81,8 @@ def convert(
         debug (bool): If True print debug logs.
         workspace (Optional[str], optional): Model Navigator workspace path.
             When None use current workdir. Defaults to None.
+        custom_args (Optional[Dict[str, str]], optional): Dictionary with passthrough parameters.
+            For available arguments check PyTorch documentation: https://pytorch.org/TensorRT/py_api/torch_tensorrt.html
     """
     import torch_tensorrt  # pytype: disable=import-error
 
@@ -119,6 +122,7 @@ def convert(
         workspace_size=max_workspace_size,
         truncate_long_and_double=True,
         **_get_precision(precision, precision_mode),
+        **custom_args,
     )
 
     converted_model_path = pathlib.Path(converted_model_path)
