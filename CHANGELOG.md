@@ -21,6 +21,7 @@ limitations under the License.
 - new: Model warmup support in Triton model configuration
 - new: Extended custom configs to pass arguments directly to export and conversion operations like `torch.onnx.export` or `polygraphy convert`
 - new: Collect GPU clock during model profiling
+- new: Add option to configure minimal trials and stabilization windows for performance verification and profiling
 - change: Navigator package version change to 0.2.3. Custom configurations now use trt_profiles list instead single value
 
 ## 0.6.3

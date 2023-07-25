@@ -178,13 +178,19 @@ class Profiler:
             return profiling_result
         else:
             for idx in range(self._profile.max_trials):
+                measurement_id = idx + 1
                 profiling_result = self._run_window_measurement(runner, nvml_handler, sample, batch_size, sample_id)
                 profiling_results.append(profiling_result)
                 LOGGER.debug(
-                    f"Measurement [{idx}]: {profiling_result.throughput} infer/sec, {profiling_result.avg_latency} ms"
+                    f"Measurement [{measurement_id}]: {profiling_result.throughput} infer/sec, {profiling_result.avg_latency} ms"
                 )
-                if self._is_measurement_stable(profiling_results, count=min(3, self._profile.max_trials)):
-                    return self._measurements_result(profiling_results, count=min(3, self._profile.max_trials))
+                is_stable = self._is_measurement_stable(
+                    profiling_results, count=min(self._profile.stabilization_windows, self._profile.max_trials)
+                )
+                if measurement_id >= self._profile.min_trials and is_stable:
+                    return self._measurements_result(
+                        profiling_results, count=min(self._profile.stabilization_windows, self._profile.max_trials)
+                    )
 
         raise RuntimeError(
             "Unable to get stable performance results. Consider increasing "

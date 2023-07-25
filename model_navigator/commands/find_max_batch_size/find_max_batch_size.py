@@ -132,8 +132,10 @@ class FindMaxBatchSize(Command):
             return device_max_batch_size
 
         optimization_profile = OptimizationProfile(
+            min_trials=1,
             max_trials=1,
             window_size=1,
+            stabilization_windows=1,
             throughput_cutoff_threshold=-2,
         )
 

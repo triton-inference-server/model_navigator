@@ -224,7 +224,9 @@ class OptimizationProfile(DataObject):
         max_batch_size: Maximal batch size used during conversion and profiling. None mean automatic search is enabled.
         batch_sizes : List of batch sizes to profile. None mean automatic search is enabled.
         window_size: Number of requests to measure in each window.
-        stability_percentage: Allowed percentage of variation from the mean in three consecutive windows.
+        stability_percentage: Allowed percentage of variation from the mean in consecutive windows.
+        stabilization_windows: Number consecutive windows selected for stabilization.
+        min_trials: Minimal number of window trials.
         max_trials: Maximum number of window trials.
         throughput_cutoff_threshold: Minimum throughput increase to continue profiling.
         dataloader: Optional dataloader for profiling. Use only 1 sample.
@@ -232,11 +234,38 @@ class OptimizationProfile(DataObject):
 
     max_batch_size: Optional[int] = None
     batch_sizes: Optional[List[Union[int, None]]] = None
-    window_size: Optional[int] = 50
+    window_size: int = 50
     stability_percentage: float = 10.0
+    stabilization_windows: int = 3
+    min_trials: int = 3
     max_trials: int = 10
     throughput_cutoff_threshold: float = DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD
     dataloader: Optional[SizedDataLoader] = None
+
+    def __post_init__(self):
+        """Validate OptimizationProfile definition to avoid unsupported configurations."""
+        if self.stability_percentage <= 0:
+            raise ModelNavigatorConfigurationError("`stability_percentage` must be greater than 0.0.")
+
+        greater_or_equal_1 = [
+            "window_size",
+            "stability_percentage",
+            "stabilization_windows",
+            "min_trials",
+            "max_trials",
+        ]
+        for member in greater_or_equal_1:
+            value = getattr(self, member)
+            if value < 1:
+                raise ModelNavigatorConfigurationError(f"`{member}` must be greater or equal 1.")
+
+        if self.min_trials < self.stabilization_windows:
+            raise ModelNavigatorConfigurationError(
+                "`min_trials` must be greater or equal than `stabilization_windows`."
+            )
+
+        if self.min_trials > self.max_trials:
+            raise ModelNavigatorConfigurationError("`max_trials` must be greater or equal `min_trials`.")
 
     def to_dict(self, filter_fields: Optional[List[str]] = None, parse: bool = False) -> Dict:
         """Serialize to a dictionary.
@@ -271,10 +300,14 @@ class OptimizationProfile(DataObject):
         return cls(
             max_batch_size=optimization_profile_dict.get("max_batch_size"),
             batch_sizes=optimization_profile_dict.get("batch_sizes"),
-            window_size=optimization_profile_dict.get("window_size"),
+            window_size=optimization_profile_dict.get("window_size", 50),
             stability_percentage=optimization_profile_dict.get("stability_percentage", 10.0),
+            stabilization_windows=optimization_profile_dict.get("stabilization_windows", 3),
+            min_trials=optimization_profile_dict.get("min_trials", 3),
             max_trials=optimization_profile_dict.get("max_trials", 10),
-            throughput_cutoff_threshold=optimization_profile_dict.get("throughput_cutoff_threshold", -2),
+            throughput_cutoff_threshold=optimization_profile_dict.get(
+                "throughput_cutoff_threshold", DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD
+            ),
         )
 
 

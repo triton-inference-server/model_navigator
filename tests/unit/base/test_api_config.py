@@ -21,6 +21,7 @@ from model_navigator.api.config import (
     Format,
     JitType,
     OnnxConfig,
+    OptimizationProfile,
     TensorFlowConfig,
     TensorFlowTensorRTConfig,
     TensorRTConfig,
@@ -218,3 +219,40 @@ def test_custom_configs_raise_error_when_config_with_duplicated_format_defined()
 
     with pytest.raises(AssertionError):
         _custom_configs()
+
+
+def test_optimization_profile_raise_error_when_windows_size_less_than_1():
+    with pytest.raises(ModelNavigatorConfigurationError, match="`window_size` must be greater or equal 1."):
+        OptimizationProfile(window_size=0)
+
+
+def test_optimization_profile_raise_error_when_stabilization_windows_less_than_1():
+    with pytest.raises(ModelNavigatorConfigurationError, match="`stabilization_windows` must be greater or equal 1."):
+        OptimizationProfile(stabilization_windows=0)
+
+
+def test_optimization_profile_raise_error_when_min_trials_less_than_1():
+    with pytest.raises(ModelNavigatorConfigurationError, match="`min_trials` must be greater or equal 1."):
+        OptimizationProfile(min_trials=0)
+
+
+def test_optimization_profile_raise_error_when_max_trials_less_than_1():
+    with pytest.raises(ModelNavigatorConfigurationError, match="`max_trials` must be greater or equal 1."):
+        OptimizationProfile(max_trials=0)
+
+
+def test_optimization_profile_raise_error_when_stability_percentage_equal_0():
+    with pytest.raises(ModelNavigatorConfigurationError, match="`stability_percentage` must be greater than 0.0."):
+        OptimizationProfile(stability_percentage=0.0)
+
+
+def test_optimization_profile_raise_error_when_min_trials_less_than_stabilization_windows():
+    with pytest.raises(
+        ModelNavigatorConfigurationError, match="`min_trials` must be greater or equal than `stabilization_windows`."
+    ):
+        OptimizationProfile(stabilization_windows=2, min_trials=1)
+
+
+def test_optimization_profile_raise_error_when_max_trials_less_than_min_trials():
+    with pytest.raises(ModelNavigatorConfigurationError, match="`max_trials` must be greater or equal `min_trials`."):
+        OptimizationProfile(max_trials=1, min_trials=2, stabilization_windows=1)

@@ -230,6 +230,8 @@ def profile(
     batch_sizes: Optional[List[int]] = None,
     window_size: int = 50,
     stability_percentage: float = 10.0,
+    stabilization_windows: int = 3,
+    min_trials: int = 3,
     max_trials: int = 10,
     throughput_cutoff_threshold: float = DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD,
     verbose: bool = False,
@@ -251,6 +253,8 @@ def profile(
         batch_sizes: List of batch sizes to profile. Default: None
         window_size: Number of inference queries performed in measurement window
         stability_percentage: Allowed percentage of variation from the mean in three consecutive windows.
+        stabilization_windows: Number consecutive windows selected for stabilization.
+        min_trials: Minimal number of window trials.
         max_trials: Maximum number of window trials.
         throughput_cutoff_threshold: Minimum throughput increase to continue profiling.
         verbose: If True enable verbose logging. Defaults to False.
@@ -285,6 +289,8 @@ def profile(
         batch_sizes=batch_sizes,
         window_size=window_size,
         stability_percentage=stability_percentage,
+        stabilization_windows=stabilization_windows,
+        min_trials=min_trials,
         max_trials=max_trials,
         throughput_cutoff_threshold=throughput_cutoff_threshold,
     )
