@@ -142,9 +142,7 @@ class ConvertTorchScript2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearch):
                 Defaults to None.
             device_max_batch_size (Optional[int], optional): Device maximum batch size.
                 Defaults to None.
-            optimized_trt_profiles: List of TensorRT profiles that will be used by Model Navigator for conversion, user provided or optimized by TensorRTProfileBuilder command.
-            custom_args (Optional[Dict[str, Any]], optional): Passthrough parameters for Torch-TensorRT conversion.
-                For available arguments check PyTorch documentation: https://pytorch.org/TensorRT/py_api/torch_tensorrt.html
+            trt_profile (Optional[TensorRTProfile], optional): User specified TensorRT profile. Defaults to None.
 
         Raises:
             RuntimeError: When no GPU is available.

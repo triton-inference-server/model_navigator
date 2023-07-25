@@ -22,5 +22,5 @@ if is_tf_available():
     from . import keras2savedmodel  # noqa: F401
     from . import savedmodel2savedmodel  # noqa: F401
 
-if is_tf_available and is_jax_available():
+if is_tf_available() and is_jax_available():
     from . import jax2savedmodel  # noqa: F401
