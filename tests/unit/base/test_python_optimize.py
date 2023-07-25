@@ -58,7 +58,7 @@ def test_python_package_return_valid_runner():
             ),
             workspace=workspace,
         )
-        runner = package.get_runner()
+        runner = package.get_runner(strategy=nav.MaxThroughputStrategy())
         assert runner is not None
         assert runner.format() == nav.Format.PYTHON
         assert runner.input_metadata == {
