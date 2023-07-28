@@ -35,7 +35,6 @@ if is_tf_available():
 if is_tf_available() and is_jax_available():
     from .jax import jax_export_builder  # noqa: F401
 
-from .onnx import onnx_export_builder  # noqa: F401
 from .tensorrt import tensorrt_conversion_builder  # noqa: F401
 
 PipelineBuilder = Callable[[CommonConfig, Dict[Format, List[ModelConfig]]], Pipeline]

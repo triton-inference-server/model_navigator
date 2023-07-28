@@ -47,7 +47,7 @@ class CommonConfig(DataObject):
     from_source: bool = True
     forward_kw_names: Optional[Sequence[str]] = None
     verify_func: Optional[VerifyFunction] = None
-    custom_configs: Dict[str, CustomConfig] = dataclasses.field(default_factory=lambda: {})
+    custom_configs: Optional[Dict[str, CustomConfig]] = dataclasses.field(default_factory=lambda: {})
 
     # Verbose logging - enable debug mode in export and conversion paths
     verbose: bool = False

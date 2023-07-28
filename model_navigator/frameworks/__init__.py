@@ -59,6 +59,7 @@ class Framework(Enum):
     ONNX = "onnx"
     JAX = "jax"
     NONE = "none"
+    TENSORRT = "tensorrt"
 
 
 class Extension(Enum):

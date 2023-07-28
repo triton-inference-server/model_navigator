@@ -74,6 +74,7 @@ def get_framework_export_formats(framework: Framework) -> Set[Optional[Format]]:
         },
         Framework.ONNX: {Format.ONNX},
         Framework.JAX: {Format.TF_SAVEDMODEL},
+        Framework.TENSORRT: {Format.TENSORRT},
     }[framework]
 
 
@@ -106,6 +107,7 @@ def get_base_format(format: Format, framework: Framework) -> Optional[Format]:
             Format.TENSORRT: Format.ONNX,
             Format.TF_TRT: Format.TF_SAVEDMODEL,
         },
+        Framework.TENSORRT: {Format.TENSORRT: Format.TENSORRT},
     }[framework].get(format)
 
 
@@ -131,4 +133,5 @@ FRAMEWORK2BASE_FORMAT = {
     Framework.JAX: Format.JAX,
     Framework.TENSORFLOW: Format.TENSORFLOW,
     Framework.ONNX: Format.ONNX,
+    Framework.TENSORRT: Format.TENSORRT,
 }

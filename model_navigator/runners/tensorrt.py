@@ -537,10 +537,12 @@ class TensorRTRunner(NavigatorRunner):
         }
 
         if trt_utils._should_use_v3_api():
-            output_buffers = self._infer_impl_v3(feed_dict)
+            out_dict = self._infer_impl_v3(feed_dict)
         else:
-            output_buffers = self._infer_impl_legacy(feed_dict, True)
-        out_dict = {k: v for k, v in output_buffers.items() if k in self.output_metadata}
+            out_dict = self._infer_impl_legacy(feed_dict, True)
+
+        if self.output_metadata:  # filter outputs if output_metadata is set
+            out_dict = {k: v for k, v in out_dict.items() if k in self.output_metadata}
 
         return out_dict
 

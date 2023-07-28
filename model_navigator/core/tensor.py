@@ -283,4 +283,5 @@ FRAMEWORK_TO_TENSOR_TYPE = {
     Framework.JAX: TensorType.NUMPY,
     Framework.ONNX: TensorType.NUMPY,
     Framework.NONE: TensorType.NUMPY,
+    Framework.TENSORRT: TensorType.NUMPY,
 }

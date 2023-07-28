@@ -110,7 +110,7 @@ class ModelConfigBuilder:
             ModelConfigBuilder.get_onnx_config(framework, custom_configs_for_format, model_configs)
 
         if Format.TENSORRT in target_formats:
-            ModelConfigBuilder.get_trt_config(custom_configs_for_format, model_configs)
+            ModelConfigBuilder.get_trt_config(framework, custom_configs_for_format, model_configs)
 
         if Format.TF_TRT in target_formats:
             ModelConfigBuilder.get_tf_trt_config(custom_configs_for_format, model_configs)
@@ -293,21 +293,23 @@ class ModelConfigBuilder:
 
     @staticmethod
     def get_trt_config(
+        framework: Framework,
         custom_configs: Sequence[config_api.CustomConfigForFormat],
         model_configs: Dict[Format, List[model_config.ModelConfig]],
     ):
         """Append TensorRT model configurations to model_configs dictionary.
 
         Args:
+            framework: source framework
             custom_configs: Format configurations provided by the user
             model_configs: Dictionary mappint model formats to lists of model configs
         """
         trt_config = _get_custom_config(custom_configs=custom_configs, custom_config_cls=config_api.TensorRTConfig)
-        for model_configuration, precision in product(model_configs[Format.ONNX], trt_config.precision):
+        if framework == Framework.TENSORRT:
             model_configs[Format.TENSORRT].append(
                 model_config.TensorRTConfig(
-                    parent=model_configuration,
-                    precision=precision,
+                    parent=None,
+                    precision=None,
                     precision_mode=trt_config.precision_mode,
                     max_workspace_size=trt_config.max_workspace_size,
                     trt_profiles=trt_config.trt_profiles,
@@ -316,3 +318,17 @@ class ModelConfigBuilder:
                     custom_args=trt_config.custom_args,
                 )
             )
+        else:
+            for model_configuration, precision in product(model_configs[Format.ONNX], trt_config.precision):
+                model_configs[Format.TENSORRT].append(
+                    model_config.TensorRTConfig(
+                        parent=model_configuration,
+                        precision=precision,
+                        precision_mode=trt_config.precision_mode,
+                        max_workspace_size=trt_config.max_workspace_size,
+                        trt_profiles=trt_config.trt_profiles,
+                        optimization_level=trt_config.optimization_level,
+                        compatibility_level=trt_config.compatibility_level,
+                        custom_args=trt_config.custom_args,
+                    )
+                )

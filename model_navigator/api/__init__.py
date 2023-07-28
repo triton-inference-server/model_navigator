@@ -13,7 +13,12 @@
 # limitations under the License.
 # noqa: D104
 from model_navigator.commands.base import CommandStatus  # noqa: F401
-from model_navigator.frameworks import is_jax_available, is_tf_available, is_torch_available  # noqa: F401
+from model_navigator.frameworks import (  # noqa: F401
+    is_jax_available,
+    is_tf_available,
+    is_torch_available,
+    is_trt_available,
+)
 from model_navigator.runtime_analyzer.strategy import (  # noqa: F401
     MaxThroughputAndMinLatencyStrategy,
     MaxThroughputStrategy,
@@ -45,6 +50,9 @@ if is_tf_available():
 
 if is_tf_available() and is_jax_available():
     from . import jax  # noqa: F401
+
+if is_trt_available():
+    from . import tensorrt  # noqa: F401
 
 from . import onnx  # noqa: F401
 from . import package  # noqa: F401

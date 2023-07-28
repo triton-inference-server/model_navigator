@@ -163,7 +163,8 @@ class OnnxrtCPURunner(_BaseOnnxrtRunner):
         out_dict = OrderedDict()
         for node, out in zip(self.sess.get_outputs(), inference_outputs):
             out_dict[node.name] = out
-        out_dict = {k: v for k, v in out_dict.items() if k in self.output_metadata}
+        if self.output_metadata:  # filter outputs if output_metadata is set
+            out_dict = {k: v for k, v in out_dict.items() if k in self.output_metadata}
         return out_dict
 
     @staticmethod
@@ -198,7 +199,6 @@ class OnnxrtCUDARunner(_BaseOnnxrtRunner):
 
         input_metadata = self.get_onnx_input_metadata()
         feed_dict = {name: tensor for name, tensor in feed_dict.items() if name in input_metadata}
-
         io_binding = self._get_io_bindings(feed_dict)
         self.sess.run_with_iobinding(io_binding)
         io_binding.synchronize_outputs()

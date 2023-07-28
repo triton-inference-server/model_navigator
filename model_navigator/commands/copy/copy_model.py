@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Command for copying ONNX model."""
+"""Command for copying model."""
 
 import pathlib
 import shutil
@@ -21,8 +21,8 @@ from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.core.workspace import Workspace
 
 
-class CopyONNX(Command):
-    """ONNX copy command."""
+class CopyModel(Command):
+    """Copy Model command."""
 
     def _run(
         self,
@@ -30,12 +30,12 @@ class CopyONNX(Command):
         path: pathlib.Path,
         model: Optional[pathlib.Path] = None,
     ) -> CommandOutput:
-        """Run copy of the ONNX model.
+        """Run copy of the model.
 
         Args:
             workspace (Path): Model Navigator workspace path.
-            path (Path): ONNX model path to copy to. Relative to workspace path.
-            model (Optional[Path], optional): ONNX model path to copy from. Defaults to None.
+            path (Path): model path to copy to. Relative to workspace path.
+            model (Optional[Path], optional): model path to copy from. Defaults to None.
 
         Returns:
             CommandOutput: Status OK.

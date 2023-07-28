@@ -18,6 +18,7 @@ from typing import Dict, List, Optional, Type, Union
 
 import numpy as np
 
+from model_navigator.api.config import TensorType
 from model_navigator.exceptions import ModelNavigatorNotFoundError
 from model_navigator.package.package import Package
 from model_navigator.runners.base import NavigatorRunner
@@ -122,16 +123,24 @@ class Tensor:
 class PyTritonAdapter:
     """Provides model and configuration for PyTrtion deployment."""
 
-    def __init__(self, package: Package, strategy: Optional[RuntimeSearchStrategy] = None):
+    def __init__(
+        self,
+        package: Package,
+        strategy: Optional[RuntimeSearchStrategy] = None,
+        runner_return_type: TensorType = TensorType.NUMPY,
+    ):
         """Initialize PyTritonAdapter.
 
         Args:
             package: A package object to be searched for best possible model.
             strategy: Strategy for finding the best model. Defaults to `MaxThroughputAndMinLatencyStrategy`
+            runner_return_type: The type of the output tensor. Defaults to `TensorType.NUMPY`.
+                If the return_type supports CUDA tensors (e.g. TensorType.TORCH) and the input tensors are on CUDA,
+                there will be no additional data transfer between CPU and GPU.
         """
         self._package = package
         self._strategy = MaxThroughputAndMinLatencyStrategy() if strategy is None else strategy
-        self._runner = self._package.get_runner(strategy=self._strategy)
+        self._runner = self._package.get_runner(strategy=self._strategy, return_type=runner_return_type)
         self._batching = self._package.status.config.get("batch_dim", None) == 0
 
     @property

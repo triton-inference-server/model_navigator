@@ -348,11 +348,11 @@ class TensorRTConfig(_SerializedModelConfig, format=Format.TENSORRT):
 
     def __init__(
         self,
-        precision: TensorRTPrecision,
         precision_mode: TensorRTPrecisionMode,
         max_workspace_size: int,
         optimization_level: Optional[int],
         compatibility_level: Optional[TensorRTCompatibilityLevel],
+        precision: Optional[TensorRTPrecision] = None,
         trt_profiles: Optional[List[TensorRTProfile]] = None,
         parent: Optional[ModelConfig] = None,
         custom_args: Optional[Dict[str, Any]] = None,
@@ -360,11 +360,11 @@ class TensorRTConfig(_SerializedModelConfig, format=Format.TENSORRT):
         """Initializes TensorRT (plan) model configuration class.
 
         Args:
-            parent: Parent model configuration
-            precision: TensorRT model precision
+            parent: Parent model configuration/
             precision_mode: Mode how the precision flags are combined
             max_workspace_size: The maximum GPU memory the model can use temporarily during execution
             optimization_level: Level of TensorRT engine optimization
+            precision: TensorRT model precision
             trt_profiles: TensorRT profiles
             compatibility_level: Hardware compatibility level
             custom_args: Custom arguments passed to TensorRT conversion

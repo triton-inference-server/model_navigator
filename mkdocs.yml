@@ -80,6 +80,7 @@ nav:
       -   JAX: optimize/jax.md
       -   ONNX: optimize/onnx.md
       -   TensorFlow 2: optimize/tensorflow.md
+      -   TensorRT: optimize/tensorrt.md
       -   PyTorch: optimize/torch.md
       -   Python: optimize/python.md
   - Navigator Package:

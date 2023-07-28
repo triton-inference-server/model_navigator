@@ -263,7 +263,7 @@ def test_get_trt_config_returns_model_configs_matching_custom_config():
     custom_configs = [onnx_config, trt_config]
     model_configs = {Format.ONNX: [], Format.TENSORRT: []}
     ModelConfigBuilder().get_onnx_config(Framework.ONNX, custom_configs, model_configs)
-    ModelConfigBuilder().get_trt_config(custom_configs, model_configs)
+    ModelConfigBuilder().get_trt_config(Framework.ONNX, custom_configs, model_configs)
 
     assert len(model_configs[Format.TENSORRT]) == 2
     for (onnx_model_configuration, precision), trt_model_configuration in zip(
