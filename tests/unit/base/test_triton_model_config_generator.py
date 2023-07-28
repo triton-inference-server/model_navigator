@@ -508,8 +508,8 @@ def test_to_file_set_dynamic_batching_config_when_priority_queue_policy_for_dyna
             "backend": "onnxruntime",
             "max_batch_size": 16,
             "dynamic_batching": {
-                "priority_levels": 3,
-                "default_priority_level": 1,
+                "priority_levels": "3",
+                "default_priority_level": "1",
                 "priority_queue_policy": {
                     "2": {
                         "allow_timeout_override": 1,
@@ -1398,8 +1398,8 @@ def test_to_file_save_config_to_file_when_full_config_specified():
                 "preferred_batch_size": [16, 32],
                 "max_queue_delay_microseconds": "100",
                 "preserve_ordering": True,
-                "priority_levels": 3,
-                "default_priority_level": 1,
+                "priority_levels": "3",
+                "default_priority_level": "1",
                 "default_queue_policy": {
                     "allow_timeout_override": True,
                     "timeout_action": "DELAY",
