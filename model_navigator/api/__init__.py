@@ -44,6 +44,7 @@ from .config import (  # noqa: F401
 
 if is_torch_available():
     from . import torch  # noqa: F401
+    from .inplace import *  # noqa: F401, F403
 
 if is_tf_available():
     from . import tensorflow  # noqa: F401

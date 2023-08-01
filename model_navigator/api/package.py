@@ -90,6 +90,26 @@ def load(
     return package
 
 
+def load_from_workspace(
+    workspace: Optional[Union[str, pathlib.Path]] = None,
+) -> Package:
+    """Load package from provided workspace.
+
+    Args:
+        workspace: The location of workspace to load
+
+    Returns:
+        Package.
+    """
+    LOGGER.info(f"Loading package from {workspace}.")
+
+    loader = PackageLoader()
+    package = loader.from_workspace(workspace)
+    LOGGER.info(f"Package loaded and unpacked {workspace}.")
+
+    return package
+
+
 def save(
     package: Package,
     path: Union[str, pathlib.Path],

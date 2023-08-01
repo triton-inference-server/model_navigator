@@ -83,6 +83,7 @@ nav:
       -   TensorRT: optimize/tensorrt.md
       -   PyTorch: optimize/torch.md
       -   Python: optimize/python.md
+    - Inplace Optimize: optimize/inplace.md
   - Navigator Package:
     - Using package: package/package.md
     - Package API:

@@ -17,6 +17,7 @@ limitations under the License.
 # Changelog
 
 ## 0.7.0 (unreleased)
+- new: Inplace Optimize feature - optimize models directly in the Python code
 - new: Generate multiple TensorRT optimization profiles during conversion for various scenarios
 - new: Model warmup support in Triton model configuration
 - new: Extended custom configs to pass arguments directly to export and conversion operations like `torch.onnx.export` or `polygraphy convert`

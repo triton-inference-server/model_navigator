@@ -101,7 +101,9 @@ class Package:
         if "batch_dim" not in config_dict:
             config_dict["batch_dim"] = None
 
-        config_dict["custom_configs"] = self._get_custom_configs(self.status.config["custom_configs"])
+        config_dict["custom_configs"] = self._get_custom_configs(
+            self.status.config["custom_configs"]
+        )  # pytype: disable=wrong-arg-types
         config_dict["target_device"] = DeviceKind(config_dict["target_device"])
 
         if "model" not in config_dict:

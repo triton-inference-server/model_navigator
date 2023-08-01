@@ -66,6 +66,32 @@ class PackageLoader:
 
         return package
 
+    def from_workspace(
+        self,
+        workspace_path: Union[str, pathlib.Path],
+    ) -> Package:
+        """Load package from provided workspace.
+
+        Args:
+            workspace: Workspace where packages will be extracted
+
+        Returns:
+            Package.
+        """
+        workspace_path = pathlib.Path(workspace_path)
+        workspace = Workspace(workspace_path)
+        status_path = workspace_path / Package.status_filename
+        if not status_path.exists():
+            raise FileNotFoundError(f"Status file {status_path} not found.")
+        with open(status_path) as status_file:
+            status_dict = yaml.safe_load(status_file)
+        package_version = self._extract_package_version(status_dict)
+        status = Status.from_dict(status_dict)
+        package = Package(status=status, workspace=workspace)
+        self._updater.run(package, package_version)
+
+        return package
+
     def _filter_out_generated_files(self, paths: List[str]):
         generated_files_extensions = [".log", ".sh", ".py"]
         return [p for p in paths if not any(p.endswith(suffix) for suffix in generated_files_extensions)]
