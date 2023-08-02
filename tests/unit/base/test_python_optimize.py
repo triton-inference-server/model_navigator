@@ -55,6 +55,10 @@ def test_python_package_return_valid_runner():
             verify_func=verify_func,
             optimization_profile=nav.OptimizationProfile(
                 batch_sizes=[1, 2, 4],
+                max_trials=1,
+                min_trials=1,
+                window_size=1,
+                stabilization_windows=1,
             ),
             workspace=workspace,
         )
