@@ -88,8 +88,8 @@ class Profile(Command):
             LOGGER.info(f"Profiling sample with idx: {sample_id}")
             with ExecutionContext(
                 workspace=workspace,
-                script_path=workspace.path / "reproduce_profiler.py",
-                cmd_path=workspace.path / "reproduce_profiler.sh",
+                script_path=workspace.path / f"reproduce_profiler-{runner_cls.slug()}.py",
+                cmd_path=workspace.path / f"reproduce_profiler-{runner_cls.slug()}.sh",
                 verbose=verbose,
             ) as context, tempfile.NamedTemporaryFile() as temp_file:
                 kwargs = {

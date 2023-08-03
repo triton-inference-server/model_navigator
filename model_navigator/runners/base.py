@@ -18,6 +18,7 @@ import time
 from typing import Any, Dict, List, Optional
 
 import numpy as np
+from slugify import slugify
 
 from model_navigator.api.config import DeviceKind, Format, TensorType
 from model_navigator.core.logger import LOGGER
@@ -95,6 +96,11 @@ class NavigatorRunner(abc.ABC):
     def name(cls) -> str:
         """Return name of the runner."""
         return cls.__name__
+
+    @classmethod
+    def slug(cls) -> str:
+        """Return slug for the runner."""
+        return slugify(cls.__name__)
 
     @classmethod
     @abc.abstractmethod

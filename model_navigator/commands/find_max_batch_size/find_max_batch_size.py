@@ -141,8 +141,8 @@ class FindMaxBatchSize(Command):
 
         with ExecutionContext(
             workspace=workspace,
-            script_path=reproduce_script_dir / "reproduce_max_batch_size.py",
-            cmd_path=reproduce_script_dir / "reproduce_max_batch_size.sh",
+            script_path=reproduce_script_dir / f"reproduce_max_batch_size-{runner_cls.slug()}.py",
+            cmd_path=reproduce_script_dir / f"reproduce_max_batch_size-{runner_cls.slug()}.sh",
             verbose=verbose,
         ) as context, tempfile.NamedTemporaryFile() as temp_file:
             kwargs = {

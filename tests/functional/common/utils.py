@@ -13,6 +13,7 @@
 # limitations under the License.
 import os.path
 import pathlib
+import re
 import zipfile
 from typing import Dict, List, Union
 
@@ -28,19 +29,19 @@ FORMAT_FILES = [
 ]
 
 EVALUATION_FILES = [
-    "reproduce_correctness.py",
-    "reproduce_correctness.sh",
-    "reproduce_profiling.py",
-    "reproduce_profiling.sh",
+    r"reproduce\_correctness\-.+\.py",
+    r"reproduce\_correctness\-.+\.sh",
+    r"reproduce\_profiling\-.+\.py",
+    r"reproduce\_profiling\-.+\.sh",
 ]
 
 COMMON_FILES = [
-    "navigator.log",
-    "status.yaml",
-    "model_input/correctness/0.npz",
-    "model_input/profiling/0.npz",
-    "model_output/correctness/0.npz",
-    "model_output/profiling/0.npz",
+    r"navigator\.log",
+    r"status\.yaml",
+    r"model\_input/correctness/0\.npz",
+    r"model\_input/profiling/0\.npz",
+    r"model\_output/correctness/0\.npz",
+    r"model\_output/profiling/0\.npz",
 ]
 
 
@@ -177,9 +178,13 @@ def validate_status(status: Dict, expected_statuses: List) -> None:
 
 def validate_package(package_path: Union[str, pathlib.Path], expected_files: List[str]) -> None:
     package_path = pathlib.Path(package_path)
+    missing = []
     with zipfile.ZipFile(package_path, "r") as zf:
         files = zf.namelist()
-        missing = [f for f in expected_files if f not in files]
+        for expected_file in expected_files:
+            matched = [file for file in files if re.match(expected_file, file)]
+            if not matched:
+                missing.append(expected_file)
 
     if len(missing) > 0:
         missing_str = "\n  ".join(missing)

@@ -18,13 +18,13 @@ limitations under the License.
 
 ## 0.7.0 (unreleased)
 - new: Inplace Optimize feature - optimize models directly in the Python code
-- new: Generate multiple TensorRT optimization profiles during conversion for various scenarios
-- new: Model warmup support in Triton model configuration
+- new: nav.tensorrt.optimize api added for testing and measuring performance of TensorRT models
 - new: Extended custom configs to pass arguments directly to export and conversion operations like `torch.onnx.export` or `polygraphy convert`
+- new: Model warmup support in Triton model configuration
 - new: Collect GPU clock during model profiling
 - new: Add option to configure minimal trials and stabilization windows for performance verification and profiling
-- new: nav.tensorrt.optimize api added for testing and measuring peroformance of TensorRT models
 - change: Navigator package version change to 0.2.3. Custom configurations now use trt_profiles list instead single value
+- change: Store separate reproduction scripts for runners used during correctness and profiling
 
 ## 0.6.3
 - fix: Conditional imports of supported frameworks in export commands

@@ -52,6 +52,7 @@ dependencies = [
     "psutil>=5.7",
     "py-cpuinfo>=8.0",
     "pynvml",
+    "python-slugify",
     "pyyaml~=6.0",
     "tabulate>=0.8",
     "tensorrt",

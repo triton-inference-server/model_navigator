@@ -85,8 +85,8 @@ class Performance(Command):
 
         with ExecutionContext(
             workspace=workspace,
-            script_path=reproduce_script_dir / "reproduce_profiling.py",
-            cmd_path=reproduce_script_dir / "reproduce_profiling.sh",
+            script_path=reproduce_script_dir / f"reproduce_profiling-{runner_cls.slug()}.py",
+            cmd_path=reproduce_script_dir / f"reproduce_profiling-{runner_cls.slug()}.sh",
             verbose=verbose,
         ) as context, tempfile.NamedTemporaryFile() as temp_file:
             kwargs = {

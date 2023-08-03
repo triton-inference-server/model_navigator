@@ -122,8 +122,8 @@ class Correctness(Command):
 
         with ExecutionContext(
             workspace=workspace,
-            script_path=model_dir / "reproduce_correctness.py",
-            cmd_path=model_dir / "reproduce_correctness.sh",
+            script_path=model_dir / f"reproduce_correctness-{runner_cls.slug()}.py",
+            cmd_path=model_dir / f"reproduce_correctness-{runner_cls.slug()}.sh",
             verbose=verbose,
         ) as context, tempfile.NamedTemporaryFile() as temp_file:
             kwargs = {
