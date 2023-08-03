@@ -41,6 +41,7 @@ class ProfileType(Enum):
             This profiles gives maximal throughput with latency below the latency budget.
         MAX_THROUGHPUT: Profile optimized for high throughput. Shapes are calculated based on the throughput cutoff threshold equal to 0.05 (5%).
             This profile is selected based on comparioson of current batch size throughput and next batch size throughput and the difference must be smaller than 5% to select current batch size.
+        MAX_THROUGHPUT_STATIC: Profile optimized for high throughput. Similar to MAX_THROUGHPUT except all shapes (min, opt, max) are equal.
         FALLBACK: Profile with fallback shape. Safe shape that tried to utilize all memory available on the device.
     """
 
@@ -48,6 +49,7 @@ class ProfileType(Enum):
     OPT_LATENCY = "opt_latency"
     LATENCY_BUDGET = "latency_budget"
     MAX_THROUGHPUT = "max_throughput"
+    MAX_THROUGHPUT_STATIC = "max_throughput_static"
     FALLBACK = "fallback"
 
 
@@ -103,8 +105,11 @@ class TensorRTProfileBuilder(Command):
             - Latency budget: (min = 1, opt = BS, max = BS) where BS is the batch size where:
                 average latency of the current batch size is below the latency budget provided by the user.
 
-            - Maximal throughput: (min = BS, opt = BS, max = BS) where BS is the batch size where:
+            - Maximal throughput: (min = 1, opt = BS, max = BS) where BS is the batch size where:
                 throughput of the current batch size is higher than throughput of the previous batch size by at least 5%.
+
+            - Maximal throughput static: (min = BS, opt = BS, max = BS) where BS the same as Maximal throughput,
+                but all shapes (min, opt, max) are equal.
 
             - Fallback: (min = 1, opt = BS, max = BS) where BS is the maximal batch size that saturates the device memory.
 
@@ -121,7 +126,8 @@ class TensorRTProfileBuilder(Command):
         LOGGER.info(f"Batch dimension index: {batch_dim}")
         LOGGER.info(f"Using profile generated from dataloader as base profile: {str(dataloader_trt_profile)}")
 
-        fallback_throughput_profiling_result = profiling_results[-1]
+        # TODO: Enable when multi-profile support is added.
+        # fallback_throughput_profiling_result = profiling_results[-1]
         current_throughput_profiling_result = profiling_results[0]
         current_latency_profiling_result = profiling_results[0]
         current_latency_budget_profiling_result = profiling_results[0]
@@ -140,17 +146,24 @@ class TensorRTProfileBuilder(Command):
         trt_profiles_dict = {}
         profiles = {
             ProfileType.MAX_THROUGHPUT: current_throughput_profiling_result.batch_size,
-            ProfileType.MIN_LATENCY: 1,
-            ProfileType.OPT_LATENCY: current_latency_profiling_result.batch_size,
-            ProfileType.FALLBACK: fallback_throughput_profiling_result.batch_size,
+            # TODO: Enable when multi-profile support is added.
+            # ProfileType.MAX_THROUGHPUT_STATIC: current_throughput_profiling_result.batch_size,
+            # ProfileType.MIN_LATENCY: 1,
+            # ProfileType.OPT_LATENCY: current_latency_profiling_result.batch_size,
+            # ProfileType.FALLBACK: fallback_throughput_profiling_result.batch_size,
         }
 
         if latency_budget:
             profiles[ProfileType.LATENCY_BUDGET] = current_latency_budget_profiling_result.batch_size
 
         for profile_name, batch_size in profiles.items():
-            trt_profiles_dict[profile_name] = tensorrt_utils.get_trt_profile_with_new_max_batch_size(
-                trt_profile=dataloader_trt_profile, max_batch_size=batch_size, batch_dim=batch_dim
-            )
+            if profile_name == ProfileType.MAX_THROUGHPUT_STATIC:
+                trt_profiles_dict[profile_name] = tensorrt_utils.get_new_profile_with_static_batch_size(
+                    trt_profile=dataloader_trt_profile, batch_size=batch_size, batch_dim=batch_dim
+                )
+            else:
+                trt_profiles_dict[profile_name] = tensorrt_utils.get_trt_profile_with_new_max_batch_size(
+                    trt_profile=dataloader_trt_profile, max_batch_size=batch_size, batch_dim=batch_dim
+                )
 
         return list(trt_profiles_dict.values())

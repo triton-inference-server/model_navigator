@@ -279,6 +279,13 @@ class PipelineContext:
                     if runners_command:
                         for runner_command in runners_command.commands.values():
                             _update_args(data=runner_command.output)
+                elif execution_unit.results_lookup_runner_cls:
+                    runners_command = model_commands.runners_commands.get(
+                        execution_unit.results_lookup_runner_cls.name()
+                    )
+                    if runners_command:
+                        for runner_command in runners_command.commands.values():
+                            _update_args(data=runner_command.output)
 
         for command_output in self._commands.commands.values():
             _update_args(data=command_output.output)

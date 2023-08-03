@@ -70,10 +70,16 @@ def tensorflow_tensorrt_conversion_builder(
             ExecutionUnit(
                 command=TensorRTProfileBuilder,
                 model_config=model_cfg,
-                runner_cls=get_runner(TensorFlowTensorRTRunner),
+                results_lookup_runner_cls=get_runner(TensorFlowTensorRTRunner),
             )
         )
 
         # Convert to TensorFlow TensorRT again, this time with optimized profiles
-        execution_units.append(ExecutionUnit(command=ConvertSavedModel2TFTRT, model_config=model_cfg))
+        execution_units.append(
+            ExecutionUnit(
+                command=ConvertSavedModel2TFTRT,
+                model_config=model_cfg,
+                results_lookup_runner_cls=get_runner(TensorFlowTensorRTRunner),
+            )
+        )
     return Pipeline(name="TensorFlow-TensorRT Conversion", execution_units=execution_units)

@@ -66,10 +66,18 @@ def torch_tensorrt_conversion_builder(config: CommonConfig, models_config: Dict[
         # Generate TensorRT profiles or use user provided ones
         execution_units.append(
             ExecutionUnit(
-                command=TensorRTProfileBuilder, model_config=model_cfg, runner_cls=get_runner(TorchTensorRTRunner)
+                command=TensorRTProfileBuilder,
+                model_config=model_cfg,
+                results_lookup_runner_cls=get_runner(TorchTensorRTRunner),
             )
         )
 
         # Convert TorchScript to Torch TensorRT again, this time with optimized profiles
-        execution_units.append(ExecutionUnit(command=ConvertTorchScript2TorchTensorRT, model_config=model_cfg))
+        execution_units.append(
+            ExecutionUnit(
+                command=ConvertTorchScript2TorchTensorRT,
+                model_config=model_cfg,
+                results_lookup_runner_cls=get_runner(TorchTensorRTRunner),
+            )
+        )
     return Pipeline(name="Torch-TensorRT Conversion", execution_units=execution_units)

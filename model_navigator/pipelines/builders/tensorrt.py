@@ -67,9 +67,17 @@ def tensorrt_conversion_builder(config: CommonConfig, models_config: Dict[Format
 
         # Generate TensorRT profiles or use user provided ones
         execution_units.append(
-            ExecutionUnit(command=TensorRTProfileBuilder, model_config=model_cfg, runner_cls=get_runner(TensorRTRunner))
+            ExecutionUnit(
+                command=TensorRTProfileBuilder,
+                model_config=model_cfg,
+                results_lookup_runner_cls=get_runner(TensorRTRunner),
+            )
         )
 
         # Convert ONNX to TensorRT again, this time with optimized profiles
-        execution_units.append(ExecutionUnit(command=ConvertONNX2TRT, model_config=model_cfg))
+        execution_units.append(
+            ExecutionUnit(
+                command=ConvertONNX2TRT, model_config=model_cfg, results_lookup_runner_cls=get_runner(TensorRTRunner)
+            )
+        )
     return Pipeline(name="TensorRT Conversion", execution_units=execution_units)

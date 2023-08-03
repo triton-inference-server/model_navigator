@@ -518,12 +518,6 @@ class TensorRTRunner(NavigatorRunner):
                     A mapping of input tensor names to corresponding input NumPy arrays
                     or DeviceViews.
 
-            copy_outputs_to_host (bool):
-                    Whether to copy inference outputs back to host memory.
-                    If this is False, DeviceViews are returned
-                    instead of NumPy arrays.
-                    Defaults to True.
-
         Returns:
             OrderedDict[str, Union[numpy.ndarray, DeviceView]]:
                     A mapping of output tensor names to corresponding output NumPy arrays

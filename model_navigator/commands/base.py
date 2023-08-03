@@ -164,6 +164,7 @@ class ExecutionUnit:
         command: Type[Command],
         model_config: Optional[ModelConfig] = None,
         runner_cls: Optional[Type[NavigatorRunner]] = None,
+        results_lookup_runner_cls: Optional[Type[NavigatorRunner]] = None,
         **kwargs,
     ) -> None:
         """Initialize object.
@@ -173,11 +174,16 @@ class ExecutionUnit:
             config: Global configuration provide by user
             model_config: Optional configuration of model that has to be produced by command
             runner_cls: Optional runner for correctness or performance evaluation
+            results_lookup_runner_cls: Optional runner for results lookup
         """
         self.command = command
         self.model_config = model_config
         self.runner_cls = runner_cls
+        self.results_lookup_runner_cls = results_lookup_runner_cls
         self.kwargs = kwargs
+
+        if self.runner_cls and self.results_lookup_runner_cls:
+            raise ModelNavigatorWrongParameterError("runner_cls and results_lookup_runner_cls cannot be set at once.")
 
         if self.runner_cls and not self.model_config:
             raise ModelNavigatorWrongParameterError("Unable to execute unit with runner without a model.")

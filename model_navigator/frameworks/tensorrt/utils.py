@@ -103,6 +103,33 @@ def cast_tensor(tensor: T, dtype: Optional[np.dtype] = None) -> T:
         return _cast_numpy_tensor(tensor, dtype)
 
 
+def get_new_profile_with_static_batch_size(
+    trt_profile: TensorRTProfile, batch_size: int, batch_dim: int
+) -> TensorRTProfile:
+    """Create new TensorRT profile with maximum batch size.
+
+    Args:
+        trt_profile (TensorRTProfile): TensorRT Profile.
+        max_batch_size (int): new maximum batch size.
+        batch_dim (int): Batch dimension.
+
+    Returns:
+        Profile: New TensoRT Profile.
+    """
+    new_profile = TensorRTProfile()
+    for input_name in trt_profile:
+        max_shapes = list(trt_profile[input_name].max)
+        opt_shapes = list(trt_profile[input_name].opt)
+        min_shapes = list(trt_profile[input_name].min)
+
+        max_shapes[batch_dim] = batch_size
+        opt_shapes[batch_dim] = batch_size
+        min_shapes[batch_dim] = batch_size
+
+        new_profile[input_name] = ShapeTuple(tuple(min_shapes), tuple(opt_shapes), tuple(max_shapes))
+    return new_profile
+
+
 def get_trt_profile_with_new_max_batch_size(
     trt_profile: TensorRTProfile, max_batch_size: int, batch_dim: int
 ) -> TensorRTProfile:
