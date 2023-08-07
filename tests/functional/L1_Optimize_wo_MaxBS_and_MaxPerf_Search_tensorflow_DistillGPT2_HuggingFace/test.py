@@ -72,7 +72,7 @@ def main():
 
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     tokenizer.pad_token = tokenizer.eos_token
-    max_sequence_length = getattr(tokenizer, "model_max_length", None)
+    max_sequence_length = min(128, getattr(tokenizer, "model_max_length", 128))
 
     onnx_config = GPT2OnnxConfig(model.config)
     input_names = tuple(onnx_config.inputs.keys())
@@ -98,8 +98,8 @@ def main():
 
     trt_profiles = [
         nav.TensorRTProfile()
-        .add("input_ids", (1, 128), (8, 128), (16, 128))
-        .add("attention_mask", (1, 128), (8, 128), (16, 128))
+        .add("input_ids", (1, max_sequence_length), (8, max_sequence_length), (16, max_sequence_length))
+        .add("attention_mask", (1, max_sequence_length), (8, max_sequence_length), (16, max_sequence_length))
     ]
 
     package = nav.tensorflow.optimize(

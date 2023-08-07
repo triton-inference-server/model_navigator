@@ -69,7 +69,7 @@ def main():
         sys.path.append(model_dir.as_posix())
         os.chdir(model_dir.as_posix())
 
-        trt_profiles = [nav.TensorRTProfile().add("input__0", (1, 3, 224, 224), (32, 3, 224, 224), (64, 3, 224, 224))]
+        trt_profiles = [nav.TensorRTProfile().add("input__0", (1, 224, 224, 3), (32, 224, 224, 3), (64, 224, 224, 3))]
 
         package = dle_convnets_tf(
             model_name="EfficientNet-v1-B0",

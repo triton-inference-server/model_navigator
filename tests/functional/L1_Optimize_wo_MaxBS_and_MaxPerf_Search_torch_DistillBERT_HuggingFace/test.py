@@ -67,7 +67,7 @@ def main():
     max_batch_size = 4
 
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-    max_sequence_length = getattr(tokenizer, "model_max_length", None)
+    max_sequence_length = min(128, getattr(tokenizer, "model_max_length", 128))
 
     onnx_config = DistilBertOnnxConfig(model.config)
     input_names = tuple(onnx_config.inputs.keys())
@@ -93,8 +93,8 @@ def main():
 
     trt_profiles = [
         nav.TensorRTProfile()
-        .add("input_ids", (1, 128), (8, 128), (16, 128))
-        .add("attention_mask", (1, 128), (8, 128), (16, 128))
+        .add("input_ids", (1, max_sequence_length), (8, max_sequence_length), (16, max_sequence_length))
+        .add("attention_mask", (1, max_sequence_length), (8, max_sequence_length), (16, max_sequence_length))
     ]
 
     package = nav.torch.optimize(
