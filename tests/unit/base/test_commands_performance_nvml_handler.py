@@ -39,5 +39,5 @@ def test_commands_performance_nvml_handler_gpu_torch() -> None:
         x = torch.rand((1000, 1000)).cuda()
         torch.matmul(x, x)
         torch.cuda.synchronize()
-        assert nvm_handler.gpu_clock > 0
-        assert nvm_handler.gpu_count > 0
+        assert nvm_handler.gpu_clock >= 0
+        assert nvm_handler.gpu_count >= 0

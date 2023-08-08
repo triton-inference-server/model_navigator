@@ -14,7 +14,7 @@
 """Script for exporting Keras model to SavedModel."""
 
 import pathlib
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import fire
 import tensorflow as tf  # pytype: disable=import-error
@@ -33,9 +33,8 @@ def get_model() -> tf.keras.Model:
 
 def export(
     exported_model_path: str,
-    input_metadata: List[Dict[str, Any]],
-    output_names: List[str],
-    keras_input_names: Optional[List[str]],
+    input_metadata: Dict[str, Any],
+    output_metadata: Dict[str, Any],
     navigator_workspace: Optional[str] = None,
 ) -> None:
     """Export Keras model to SavedModel.
@@ -43,14 +42,14 @@ def export(
     Args:
         exported_model_path (str): Path to SavedModel relative to navigator_workspace path.
         input_metadata (Dict[str, Any]): Input metadata.
-        output_names (List[str]): Output names.
-        keras_input_names (Optional[List[str]]): Source model signature input names.
+        output_metadata (Dict[str, Any]): Output metadata.
         navigator_workspace (Optional[str], optional): Model Navigator workspace path.
             If None use current workdir path. Defaults to None.
     """
     model = get_model()
 
     input_metadata = TensorMetadata.from_json(input_metadata)
+    output_metadata = TensorMetadata.from_json(output_metadata)
 
     if not navigator_workspace:
         navigator_workspace = pathlib.Path.cwd()
@@ -58,19 +57,10 @@ def export(
 
     @tf.function()
     def predict(inputs_dict):
+        inputs = input_metadata.unflatten_sample(inputs_dict)
         inputs = list(inputs_dict.values())
-        if keras_input_names:
-            inputs = dict(zip(keras_input_names, inputs))
-        elif len(inputs) == 1:
-            inputs = inputs[0]
         outputs = model(inputs)
-        if isinstance(outputs, (list, tuple)):
-            outputs_seq = outputs
-        elif isinstance(outputs, Dict):
-            outputs_seq = outputs.values()
-        else:
-            outputs_seq = [outputs]
-        return dict(zip(output_names, outputs_seq))
+        return output_metadata.flatten_sample(outputs)
 
     input_specs = {
         name: tf.TensorSpec(shape=[d if d != -1 else None for d in spec.shape], dtype=spec.dtype, name=name)

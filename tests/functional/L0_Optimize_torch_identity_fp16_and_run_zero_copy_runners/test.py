@@ -83,6 +83,7 @@ def main():
             "TensorRT",
         ),  # TODO remove after updating custom runners
         custom_configs=[nav.TensorRTConfig(precision=(nav.TensorRTPrecision.FP16))],
+        input_names=("input",),
     )
 
     status_file = args.status

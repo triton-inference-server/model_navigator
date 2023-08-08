@@ -14,7 +14,7 @@
 """Script for obtaining ONNX metadata from model."""
 import json
 import pathlib
-from typing import List
+from typing import Dict
 
 import fire
 
@@ -24,16 +24,16 @@ from model_navigator.runners.onnx import OnnxrtCPURunner
 
 def collect_onnx_input_metadata(
     model_path: str,
-    input_metadata: List,
-    output_metadata: List,
+    input_metadata: Dict,
+    output_metadata: Dict,
     results_path: str,
 ) -> None:
     """Collect input metadata from onnx model.
 
     Args:
         model_path (str): Path to onnx the model.
-        input_metadata (List): Input metadata.
-        output_metadata (List): Output metadata.
+        input_metadata (Dict): Input metadata.
+        output_metadata (Dict): Output metadata.
         results_path (str): Path where metadata file is stored
     """
     onnx_runner = OnnxrtCPURunner(

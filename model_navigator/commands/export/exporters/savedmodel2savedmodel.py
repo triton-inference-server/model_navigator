@@ -33,7 +33,7 @@ def get_model() -> tf.keras.Model:
 
 def update_signature(
     exported_model_path: str,
-    input_metadata: List[Dict[str, Any]],
+    input_metadata: Dict[str, Any],
     output_names: List[str],
     navigator_workspace: Optional[str] = None,
 ) -> None:

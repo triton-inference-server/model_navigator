@@ -14,7 +14,7 @@
 """Script for epxorting JAX model to SavedModel."""
 
 import pathlib
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, Optional
 
 import fire
 import numpy
@@ -44,7 +44,7 @@ def export(
     exported_model_path: str,
     jit_compile: bool,
     enable_xla: bool,
-    input_metadata: List[Dict],
+    input_metadata: Dict,
     navigator_workspace: Optional[str] = None,
 ) -> None:
     """Run JAX to SavedModel export.
@@ -56,7 +56,7 @@ def export(
         exported_model_path (str): Output SavedModel path relative to navigator_workspace path.
         jit_compile (bool): jax2tf parameter.
         enable_xla (bool): jax2tf parameter.
-        input_metadata (List[Dict]): Input metadata.
+        input_metadata (Dict): Input metadata.
         navigator_workspace (Optional[str], optional): Model Navigator workspace path.
             If None use current workdir. Defaults to None.
     """
@@ -69,7 +69,7 @@ def export(
 
     polymorphic_shapes = []
     tensor_spec = []
-    for m in input_metadata:
+    for m in input_metadata["metadata"]:
         p_shape = []
         p_shape_idx = 0
         tf_shape = []

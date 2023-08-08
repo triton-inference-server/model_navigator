@@ -51,13 +51,14 @@ class Workspace:
 
     def delete(self) -> None:
         """Remove existing workspace."""
-        shutil.rmtree(self._path.as_posix(), ignore_errors=True)
+        shutil.rmtree(self._path.as_posix(), ignore_errors=False)
 
     def initialize(self):
         """Initializing workspace."""
         if self.exists():
             LOGGER.info(f"Removing exiting workspace at {self.path}")
             self.delete()
+        assert not self.exists()
 
         LOGGER.info(f"Creating workspace at {self.path}")
         self.create()

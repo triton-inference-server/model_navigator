@@ -14,7 +14,7 @@
 """TorchScript conversions."""
 
 import pathlib
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from model_navigator.api.config import DeviceKind, TensorRTPrecision, TensorRTPrecisionMode, TensorRTProfile
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
@@ -43,7 +43,6 @@ class ConvertTorchScript2ONNX(Command):
         target_device: DeviceKind,
         verbose: bool,
         custom_args: Dict[str, Any],
-        forward_kw_names: Optional[Tuple[str, ...]] = None,
         batch_dim: Optional[int] = None,
     ) -> CommandOutput:
         """Run TorchScript to ONNX conversion.
@@ -57,8 +56,6 @@ class ConvertTorchScript2ONNX(Command):
             output_metadata (TensorMetadata): Output metadata.
             target_device (DeviceKind): Device to load TorchScript model on.
             verbose (bool): If True verbose logging.
-            forward_kw_names (Optional[Tuple[str, ...]], optional): Source model signature input names.
-                Defaults to None.
             batch_dim (Optional[int], optional): Batch dimension. Defaults to None.
             custom_args (Optional[Dict[str, Any]], optional): Passthrough parameters for torch.onnx.export.
                 For available arguments check PyTorch documentation: https://pytorch.org/docs/stable/onnx.html#torch.onnx.export
@@ -81,11 +78,11 @@ class ConvertTorchScript2ONNX(Command):
                 "exported_model_path": exported_model_path.relative_to(workspace.path).as_posix(),
                 "converted_model_path": converted_model_path.relative_to(workspace.path).as_posix(),
                 "opset": opset,
+                "input_metadata": input_metadata.to_json(),
                 "input_names": list(input_metadata.keys()),
                 "output_names": list(output_metadata.keys()),
                 "dynamic_axes": dict(**input_metadata.dynamic_axes, **output_metadata.dynamic_axes),
                 "batch_dim": batch_dim,
-                "forward_kw_names": list(forward_kw_names) if forward_kw_names else None,
                 "target_device": target_device.value,
                 "custom_args": custom_args,
             }

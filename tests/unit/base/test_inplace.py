@@ -131,21 +131,3 @@ def test_recording_model_is_ready_for_optimization_returns_true_when_enough_samp
     )
     module._samples = list(range(inplace_config.min_num_samples))
     assert module.is_ready_for_optimization
-
-
-def test_model_prepare_input_dict():
-    module = MagicMock()
-
-    def forward(self, x, y, z):
-        pass
-
-    module.forward = forward
-    module = PassthroughModule(
-        module=module,
-        name="model_name",
-        input_mapping=lambda x: x,
-        output_mapping=lambda x: x,
-        optimize_config=OptimizeConfig(),
-    )
-    input_dict = module._prepare_input_dict(1, z=3, y=2)
-    assert input_dict == {"x": 1, "y": 2, "z": 3}

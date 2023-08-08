@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import pathlib
+import tempfile
+
 import pytest
 import torch  # pytype: disable=import-error
 
@@ -35,7 +38,11 @@ model = MyModule()
 def test_raise_error_when_target_device_cuda_and_torchscript_cpu_runner_passed():
     with pytest.raises(ModelNavigatorConfigurationError):
         nav.torch.optimize(
-            model=model, dataloader=dataloader, target_device=nav.DeviceKind.CUDA, runners=("TorchScriptCPU",)
+            model=model,
+            workspace=pathlib.Path(tempfile.mkdtemp()),
+            dataloader=dataloader,
+            target_device=nav.DeviceKind.CUDA,
+            runners=("TorchScriptCPU",),
         )
 
 
@@ -43,6 +50,7 @@ def test_raise_error_when_target_device_cpu_and_torchscript_cuda_runner_passed()
     with pytest.raises(ModelNavigatorConfigurationError):
         nav.torch.optimize(
             model=model,
+            workspace=pathlib.Path(tempfile.mkdtemp()),
             dataloader=dataloader,
             runners=("TorchScriptCUDA",),
             target_device=nav.DeviceKind.CPU,

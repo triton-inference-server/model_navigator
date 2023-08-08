@@ -393,7 +393,10 @@ def test_get_onnx_input_metadata_return_filled_metadata_when_successfully_read_f
         output_metadata = TensorMetadata()
         output_metadata.add(name="Y", shape=(-1, 3, 8, 8), dtype=np.float32())
 
-        data = [{"name": "X", "shape": [-1, 3, -1, -1], "dtype": "float32"}]
+        data = {
+            "metadata": [{"name": "X", "shape": [-1, 3, -1, -1], "dtype": "float32"}],
+            "pytree_metadata": {"metadata": None, "tensor_type": "numpy"},
+        }
         with results_file.open("w") as fp:
             json.dump(data, fp)
 

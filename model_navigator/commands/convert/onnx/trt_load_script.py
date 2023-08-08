@@ -14,7 +14,7 @@
 """Script for running correctness tests on a runner."""
 
 import pathlib
-from typing import List, Optional
+from typing import Dict, Optional
 
 import fire
 
@@ -26,8 +26,8 @@ from model_navigator.utils.dataloader import load_samples
 def load_model(
     batch_dim: int,
     runner_name: str,
-    input_metadata: List,
-    output_metadata: List,
+    input_metadata: Dict,
+    output_metadata: Dict,
     model_path: str,
     navigator_workspace: Optional[str] = None,
 ) -> None:
@@ -36,8 +36,8 @@ def load_model(
     Args:
         batch_dim (int): Batch dimension.
         runner_name (str): Name of the model's runner.
-        input_metadata (List): Input metadata.
-        output_metadata (List): Output metadata.
+        input_metadata (Dict): Input metadata.
+        output_metadata (Dict): Output metadata.
         model_path (str): Path to the model.
         navigator_workspace (Optional[str], optional): Path of the Model Navigator workspace.
             When None use current workdir. Defaults to None.

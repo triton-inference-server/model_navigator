@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Inputs and outputs metadata commands."""
+import itertools
 import pathlib
 from typing import Dict, Iterator, List, Mapping, Optional, Sequence, Tuple, Union
 
@@ -21,18 +22,25 @@ from model_navigator.api.config import OptimizationProfile, SizedDataLoader, Siz
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.execution_context import ExecutionContext
 from model_navigator.core.logger import LOGGER
-from model_navigator.core.tensor import FRAMEWORK_TO_TENSOR_TYPE, TensorMetadata, TensorSpec
+from model_navigator.core.tensor import FRAMEWORK_TO_TENSOR_TYPE, PyTreeMetadata, TensorMetadata, TensorSpec
 from model_navigator.core.workspace import Workspace
 from model_navigator.exceptions import ModelNavigatorUserInputError
 from model_navigator.frameworks import Framework
 from model_navigator.runners.utils import get_format_default_runners
-from model_navigator.utils.dataloader import extract_sample, load_samples, sample_to_tuple, validate_sample_input
+from model_navigator.utils.dataloader import (
+    extract_sample,
+    load_samples,
+    sample_to_tuple,
+    to_numpy,
+    validate_sample_input,
+)
 from model_navigator.utils.devices import is_cuda_available
 from model_navigator.utils.format_helpers import FRAMEWORK2BASE_FORMAT
 
 
 def _extract_axes_shapes(
     dataloader: Union[SizedDataLoader, Iterator],
+    pytree_metadata: PyTreeMetadata,
     input_names: Sequence[str],
     input_ndims: Sequence[int],
     num_samples: int,
@@ -49,7 +57,7 @@ def _extract_axes_shapes(
             LOGGER.warning(f"{len(dataloader)=}, but more samples found.")
             break
         validate_sample_input(sample, FRAMEWORK_TO_TENSOR_TYPE[framework])
-        sample = extract_sample(sample, input_names, framework)
+        sample = {n: to_numpy(t, framework) for n, t in pytree_metadata.flatten_sample(sample).items()}
         for name, tensor in sample.items():
             for k, dim in enumerate(tensor.shape):
                 axes_shapes[name][k].append(dim)
@@ -60,8 +68,8 @@ def _extract_axes_shapes(
     return axes_shapes
 
 
-def _get_metadata_from_axes_shapes(axes_shapes, batch_dim, dtypes):
-    metadata = TensorMetadata()
+def _get_metadata_from_axes_shapes(pytree_metadata, axes_shapes, batch_dim, dtypes):
+    metadata = TensorMetadata(pytree_metadata=pytree_metadata)
     for name, axes in axes_shapes.items():
         tensor_shape = []
         for ax, shapes in axes.items():
@@ -90,13 +98,23 @@ def _get_trt_profile_from_axes_shapes(axes_shapes, batch_dim):
                 min_max_opt.append((min(shapes), int(np.median(shapes)), max(shapes)))
         if min_max_opt:
             trt_profile.add(name, *list(zip(*min_max_opt)))
-        else:
-            raise ModelNavigatorUserInputError(
-                f"Missing shape information for {name} input from dataloader."
-                "Scalar values are not supported by Triton Inference Server."
-                "Wrap it in tuple to add dimension e.g. tensor(3) -> tensor((3,))"
-            )
     return trt_profile
+
+
+def _assert_all_inputs_have_same_pytree_metadata(
+    dataloader: Union[SizedDataLoader, Iterator],
+    input_metadata: TensorMetadata,
+    framework: Framework,
+) -> bool:
+    for sample in dataloader:
+        names = itertools.chain(
+            input_metadata.keys(), (f"__unexpected_input_{i}" for i in itertools.count(start=0, step=1))
+        )
+        metadata = PyTreeMetadata.from_sample(sample, tensor_type=FRAMEWORK_TO_TENSOR_TYPE[framework], names=names)
+        if metadata != input_metadata.pytree_metadata:
+            raise ModelNavigatorUserInputError(
+                f"All inputs must have the same structure. Found: {metadata} and {input_metadata.pytree_metadata}"
+            )
 
 
 class InferInputMetadata(Command, is_required=True):
@@ -125,22 +143,33 @@ class InferInputMetadata(Command, is_required=True):
         """
         sample = next(iter(dataloader))
         validate_sample_input(sample, FRAMEWORK_TO_TENSOR_TYPE[framework])
-        input_names = _input_names
-        if input_names is None:
-            input_names = self._get_default_input_names(model, sample, framework)
+        if framework == Framework.ONNX:
+            if _input_names is None:
+                _input_names = self._get_default_input_names(model, sample, framework)
+            else:
+                raise NotImplementedError("ONNX input names are not supported yet.")
 
-        input_sample = extract_sample(sample, input_names, framework)
+        pytree_metadata = PyTreeMetadata.from_sample(
+            sample, tensor_type=FRAMEWORK_TO_TENSOR_TYPE[framework], names=_input_names, prefix="input"
+        )
+        input_sample = {n: to_numpy(t, framework) for n, t in pytree_metadata.flatten_sample(sample).items()}
+        input_names = list(input_sample.keys())
+
         input_ndims = [t.ndim for t in input_sample.values()]
         input_dtypes = {n: t.dtype for n, t in input_sample.items()}
         num_samples = len(dataloader)
-        axes_shapes = _extract_axes_shapes(dataloader, input_names, input_ndims, num_samples, framework)
+        axes_shapes = _extract_axes_shapes(
+            dataloader, pytree_metadata, input_names, input_ndims, num_samples, framework
+        )
         dataloader_max_batch_size = _extract_max_batch_size(axes_shapes, batch_dim)
         dataloader_trt_profile = _get_trt_profile_from_axes_shapes(axes_shapes, batch_dim)
-        input_metadata = _get_metadata_from_axes_shapes(axes_shapes, batch_dim, input_dtypes)
+        input_metadata = _get_metadata_from_axes_shapes(pytree_metadata, axes_shapes, batch_dim, input_dtypes)
+
+        _assert_all_inputs_have_same_pytree_metadata(dataloader, input_metadata, framework)
 
         if optimization_profile.dataloader:
             pd_sample = next(iter(optimization_profile.dataloader))
-            pd_input_sample = extract_sample(pd_sample, input_names, framework)
+            pd_input_sample = extract_sample(pd_sample, input_metadata, framework)
             pd_input_ndims = [t.ndim for t in pd_input_sample.values()]
             pd_input_dtypes = {n: t.dtype for n, t in pd_input_sample.items()}
 
@@ -156,6 +185,7 @@ class InferInputMetadata(Command, is_required=True):
 
             self._validate_performance_dataloader_trt_profiles(
                 optimization_profile=optimization_profile,
+                pytree_metadata=input_metadata.pytree_metadata,
                 input_names=input_names,
                 input_ndims=pd_input_ndims,
                 framework=framework,
@@ -198,6 +228,7 @@ class InferInputMetadata(Command, is_required=True):
     def _validate_performance_dataloader_trt_profiles(
         self,
         optimization_profile: OptimizationProfile,
+        pytree_metadata,
         input_names,
         input_ndims,
         framework,
@@ -206,6 +237,7 @@ class InferInputMetadata(Command, is_required=True):
     ):
         axes_shapes = _extract_axes_shapes(
             dataloader=optimization_profile.dataloader,
+            pytree_metadata=pytree_metadata,
             input_names=input_names,
             input_ndims=input_ndims,
             num_samples=1,
@@ -237,8 +269,6 @@ class InferOutputMetadata(Command, is_required=True):
         workspace: Workspace,
         verbose: bool,
         _output_names: Optional[Tuple[str, ...]] = None,
-        dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None,
-        forward_kw_names: Optional[Tuple[str, ...]] = None,
         batch_dim: Optional[int] = None,
     ) -> CommandOutput:
         """Execute the InferOutputMetadata command.
@@ -253,8 +283,6 @@ class InferOutputMetadata(Command, is_required=True):
             workspace: Working directory where command should be executed
             verbose: Enable verbose logging
             _output_names: Name of model outputs
-            dynamic_axes: Definition of model outputs dynamic axes
-            forward_kw_names: Forward keyword arguments (used for TensorFlow model)
             batch_dim: Location of batch dimension in data samples
 
         Returns:
@@ -262,6 +290,9 @@ class InferOutputMetadata(Command, is_required=True):
         """
         if _output_names:
             temp_output_metadata = TensorMetadata({out_name: TensorSpec(out_name, ()) for out_name in _output_names})
+
+            if framework == Framework.ONNX:
+                raise NotImplementedError("ONNX output names are not supported yet.")
         else:
             temp_output_metadata = TensorMetadata()
 
@@ -269,7 +300,6 @@ class InferOutputMetadata(Command, is_required=True):
             model=model,
             input_metadata=input_metadata,
             output_metadata=temp_output_metadata,
-            input_metadata_mapping=forward_kw_names,
             disable_fallback=False,
         )  # pytype: disable=not-instantiable
 
@@ -277,18 +307,26 @@ class InferOutputMetadata(Command, is_required=True):
         conversion_samples = load_samples("conversion_sample", workspace.path, batch_dim)
 
         with runner, ExecutionContext(workspace=workspace, verbose=verbose):
-            output_sample = runner.infer(profiling_sample)
+            kwargs = {
+                "check_inputs": False,
+                "return_raw_outputs": True,
+            }
+            outputs = runner.infer(profiling_sample, **kwargs)
+            pytree_metadata = PyTreeMetadata.from_sample(
+                outputs, tensor_type=FRAMEWORK_TO_TENSOR_TYPE[framework], names=_output_names, prefix="output"
+            )
+            output_sample = {n: to_numpy(t, framework) for n, t in pytree_metadata.flatten_sample(outputs).items()}
             output_names = list(output_sample.keys())
-            output_generator = (runner.infer(sample) for sample in conversion_samples)
+            output_generator = (runner.infer(sample, **kwargs) for sample in conversion_samples)
 
             output_ndims = [t.ndim for t in output_sample.values()]
             output_dtypes = {n: t.dtype for n, t in output_sample.items()}
             num_samples = len(dataloader)
             axes_shapes = _extract_axes_shapes(
-                output_generator, output_names, output_ndims, num_samples, framework, check_len=False
+                output_generator, pytree_metadata, output_names, output_ndims, num_samples, framework, check_len=False
             )
 
-        output_metadata = _get_metadata_from_axes_shapes(axes_shapes, batch_dim, output_dtypes)
+        output_metadata = _get_metadata_from_axes_shapes(pytree_metadata, axes_shapes, batch_dim, output_dtypes)
 
         return CommandOutput(
             status=CommandStatus.OK,

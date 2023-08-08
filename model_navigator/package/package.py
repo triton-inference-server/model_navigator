@@ -61,7 +61,6 @@ class Package:
         self.status = status
         self.workspace = workspace
         self._model = model
-        self._forward_kw_names = None
 
     @property
     def framework(self) -> Framework:

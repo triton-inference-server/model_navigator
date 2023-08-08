@@ -56,9 +56,12 @@ class _BaseTorchRunner(NavigatorRunner):
         """Deactivation implementation."""
         self._loaded_model = None
 
-    def infer_impl(self, feed_dict):
+    def infer_impl(self, feed_dict, return_raw_outputs=False):
         """Inference handler implementation."""
         outputs = self._infer(feed_dict=feed_dict)
+
+        if return_raw_outputs:
+            return outputs
 
         if torch.is_tensor(outputs):
             outputs = (outputs,)
@@ -85,34 +88,29 @@ class _BaseTorchRunner(NavigatorRunner):
 
     def _infer_inference_mode(self, feed_dict):
         with torch.inference_mode():
-            inputs = self._prepare_inputs(feed_dict)
-            if self.input_metadata_mapping is None:
-                outputs = self._loaded_model(*inputs)
-            else:
-                inputs_dict = dict(zip(self.input_metadata_mapping, inputs))
-                outputs = self._loaded_model(**inputs_dict)
-
+            args, kwargs = self._prepare_inputs(feed_dict)
+            outputs = self._loaded_model(*args, **kwargs)
         return outputs
 
     def _infer_no_grad(self, feed_dict):
         with torch.no_grad():
-            inputs = self._prepare_inputs(feed_dict)
-            if self.input_metadata_mapping is None:
-                outputs = self._loaded_model(*inputs)
-            else:
-                inputs_dict = dict(zip(self.input_metadata_mapping, inputs))
-                outputs = self._loaded_model(**inputs_dict)
-
+            args, kwargs = self._prepare_inputs(feed_dict)
+            outputs = self._loaded_model(*args, **kwargs)
         return outputs
 
     def _prepare_inputs(self, feed_dict):
         """Prepare inputs for inference."""
-        inputs = []
+        inputs = {}
         for input_name, spec in self.input_metadata.items():
             value = feed_dict[input_name]
             value = self._to_torch_tensor(value, spec.dtype)
-            inputs.append(value)
-        return inputs
+            inputs[input_name] = value
+        unflatten_inputs = self.input_metadata.unflatten_sample(inputs, wrap_input=True)
+        if isinstance(unflatten_inputs[-1], dict):
+            args, kwargs = unflatten_inputs[:-1], unflatten_inputs[-1]
+        else:
+            args, kwargs = unflatten_inputs, {}
+        return args, kwargs
 
     def _prepare_outputs(self, out_dict):
         """Prepare outputs for inference."""

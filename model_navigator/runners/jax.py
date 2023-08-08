@@ -13,50 +13,39 @@
 # limitations under the License.
 """JAX runner."""
 
-from collections import OrderedDict
-from typing import List, Mapping
+from typing import List
 
-import jax.numpy as jnp  # pytype: disable=import-error
 import numpy
 
 from model_navigator.api.config import Format
 from model_navigator.runners.base import DeviceKind, NavigatorRunner
 from model_navigator.runners.registry import register_runner
-from model_navigator.utils.dataloader import get_default_output_names
 
 
 class JAXRunner(NavigatorRunner):
     """Runs inference using JAX."""
 
-    def infer_impl(self, feed_dict):
+    def infer_impl(self, feed_dict, return_raw_outputs=False):
         """Run inference in JAX.
 
         Args:
             feed_dict: A dictionary with profiling samples
+            return_raw_outputs: If True, return raw outputs from the model. Default: False.
         """
-        inputs = tuple(feed_dict.values())
-
-        if self._input_metadata_mapping is None:
-            outputs = self.model(*inputs)
+        inputs = self.input_metadata.unflatten_sample(feed_dict, wrap_input=True)
+        if isinstance(inputs[-1], dict):
+            args, kwargs = inputs[:-1], inputs[-1]
         else:
-            inputs = dict(zip(self._input_metadata_mapping, inputs))
-            outputs = self.model(**inputs)
+            args, kwargs = inputs, {}
 
-        if self.output_metadata:
-            output_names = self.output_metadata.keys()
-        else:
-            output_names = outputs.keys() if isinstance(outputs, Mapping) else get_default_output_names(len(outputs))
+        outputs = self.model(*args, **kwargs)
 
-        if isinstance(outputs, (numpy.ndarray, jnp.ndarray)):
-            outputs = (outputs,)
-        if isinstance(outputs, Mapping):
-            outputs = outputs.values()
-        outputs = [numpy.asarray(output) for output in outputs]
-        outputs = tuple(outputs)
+        if return_raw_outputs:
+            return outputs
 
-        out_dict = OrderedDict()
-        for name, output in zip(output_names, outputs):
-            out_dict[name] = output
+        out_dict = self.output_metadata.flatten_sample(outputs)
+        out_dict = {n: numpy.asarray(t) for n, t in out_dict.items()}
+
         return out_dict
 
     @classmethod

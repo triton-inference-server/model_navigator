@@ -16,7 +16,7 @@
 The module provide functionality to export model to TorchScript and/or ONNX.
 """
 import pathlib
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Union
 
 from model_navigator.api.config import DeviceKind, JitType
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
@@ -50,6 +50,7 @@ class ExportTorch2TorchScript(Command):
         path: pathlib.Path,
         target_device: DeviceKind,
         jit_type: JitType,
+        input_metadata: TensorMetadata,
         verbose: bool,
         strict: bool,
         custom_args: Dict[str, Any],
@@ -63,6 +64,7 @@ class ExportTorch2TorchScript(Command):
             path: Path inside the workspace where exported model is stored.
             target_device: Device to load TorchScript model on.
             jit_type: TorchScript jit type.
+            input_metadata: Model inputs metadata
             verbose: Enable verbose logging.
             strict: Enable or Disable strict flag for tracer used in TorchScript export.
             model: The model that has to be exported.
@@ -103,6 +105,7 @@ class ExportTorch2TorchScript(Command):
             kwargs = {
                 "exported_model_path": exported_model_path.relative_to(workspace.path).as_posix(),
                 "target_jit_type": jit_type.value,
+                "input_metadata": input_metadata.to_json(),
                 "batch_dim": batch_dim,
                 "target_device": target_device.value,
                 "strict": strict,
@@ -148,7 +151,6 @@ class ExportTorch2ONNX(Command):
         target_device: DeviceKind,
         verbose: bool,
         custom_args: Dict[str, Any],
-        forward_kw_names: Optional[Tuple[str, ...]] = None,
         model: Optional[Any] = None,
         batch_dim: Optional[int] = None,
         dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None,
@@ -163,7 +165,6 @@ class ExportTorch2ONNX(Command):
             output_metadata: Model outputs metadata
             target_device: Target device for export - determine the exported model
             verbose: Enable verbose logging
-            forward_kw_names: Additional arguments to override input names
             model: The model that has to be exported
             batch_dim: Location of batch position in shapes
             dynamic_axes: Definition of model inputs dynamic axes
@@ -206,15 +207,17 @@ class ExportTorch2ONNX(Command):
             on_exit=on_exit,
         ) as context:
 
+            # import json # TODO fix that
+
             kwargs = {
                 "navigator_workspace": workspace.path.as_posix(),
                 "exported_model_path": exported_model_path.relative_to(workspace.path).as_posix(),
                 "opset": opset,
+                "input_metadata": input_metadata.to_json(),
                 "input_names": list(input_metadata.keys()),
                 "output_names": list(output_metadata.keys()),
                 "dynamic_axes": dynamic_axes,
                 "batch_dim": batch_dim,
-                "forward_kw_names": list(forward_kw_names) if forward_kw_names else None,
                 "target_device": target_device.value,
                 "custom_args": custom_args,
             }

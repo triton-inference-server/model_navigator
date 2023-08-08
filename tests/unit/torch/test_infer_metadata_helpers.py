@@ -14,7 +14,9 @@
 
 import torch  # pytype: disable=import-error
 
+from model_navigator.api.config import TensorType
 from model_navigator.commands.infer_metadata import _extract_axes_shapes
+from model_navigator.core.tensor import PyTreeMetadata
 from model_navigator.frameworks import Framework
 
 
@@ -28,6 +30,7 @@ def test_extract_axes_shapes_from_valid_dataloader_torch():
 
     axes_shapes = _extract_axes_shapes(
         dataloader=[{input_name: torch.full(size=shape, fill_value=1)} for _ in range(num_samples)],
+        pytree_metadata=PyTreeMetadata({"input_0": "input_0"}, TensorType.NUMPY),
         input_names=[input_name],
         input_ndims=[len(shape)],
         num_samples=num_samples,

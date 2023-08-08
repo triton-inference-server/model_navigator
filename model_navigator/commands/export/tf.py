@@ -14,7 +14,6 @@
 """Commands for exporting Tensorflow models."""
 
 import pathlib
-from typing import Optional, Tuple
 
 import tensorflow as tf  # pytype: disable=import-error
 
@@ -38,7 +37,6 @@ class ExportTF2SavedModel(Command):
         workspace: Workspace,
         path: pathlib.Path,
         verbose: bool,
-        forward_kw_names: Optional[Tuple[str, ...]] = None,
     ) -> CommandOutput:
         """Run Tensorflow to SavedModel export.
 
@@ -49,8 +47,6 @@ class ExportTF2SavedModel(Command):
             workspace (Path): Model Navigator workspace path.
             path (Path): Output SavedModel path relative to workspace path.
             verbose (bool): If True verbose logging.
-            forward_kw_names (Optional[Tuple[str, ...]], optional): List of source model signature input names.
-                Defaults to None.
 
         Returns:
             CommandOutput: Status OK.
@@ -76,8 +72,7 @@ class ExportTF2SavedModel(Command):
             kwargs = {
                 "exported_model_path": exported_model_path.relative_to(workspace.path).as_posix(),
                 "input_metadata": input_metadata.to_json(),
-                "output_names": list(output_metadata.keys()),
-                "keras_input_names": list(forward_kw_names) if forward_kw_names else None,
+                "output_metadata": output_metadata.to_json(),
                 "navigator_workspace": workspace.path.as_posix(),
             }
 

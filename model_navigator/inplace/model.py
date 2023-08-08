@@ -85,11 +85,6 @@ class BaseModule(abc.ABC):
         """Get signature of the module forward method."""
         return inspect.getfullargspec(self._module.forward).args[1:]
 
-    def _prepare_input_dict(self, *args, **kwds):
-        input_dict = {key: val for key, val in zip(self._signature, args)}
-        input_dict.update(kwds)
-        return self._input_mapping(input_dict)
-
     @property
     def is_ready_for_optimization(self) -> bool:
         """Check if the module is ready for optimization."""
@@ -112,17 +107,17 @@ class RecordModule(BaseModule):
         self._temp_dir = tempfile.TemporaryDirectory(prefix=f"{self._name}_")
         self._samples_dir = pathlib.Path(self._temp_dir.name)
 
-    def record_sample(self, *args: Any, **kwds: Any) -> None:
+    def record_sample(self, *args: Any, **kwargs: Any) -> None:
         """Record a sample from the module."""
-        sample = self._prepare_input_dict(*args, **kwds)
+        sample = (*args, kwargs)
         sample_path = self._samples_dir / f"{len(self._samples)}.pt"
         torch.save(sample, sample_path)  # change later to (sample,) to keep consistent with torch.onnx.export
         self._samples.append(sample_path)
 
-    def __call__(self, *args: Any, **kwds: Any) -> Any:
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
         """Record a sample and run the module."""
-        self.record_sample(*args, **kwds)
-        output = self._module(*args, **kwds)
+        self.record_sample(*args, **kwargs)
+        output = self._module(*args, **kwargs)
         return output
 
     def optimize(self):
@@ -147,12 +142,12 @@ class RecordModule(BaseModule):
 class RecordAndOptimizeModule(RecordModule):
     """Module that records samples for optimization and runs optimization."""
 
-    def __call__(self, *args: Any, **kwds: Any) -> Any:
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
         """Record a sample and run the module.
 
         If enough samples are collected for all registered modules, optimize them.
         """
-        output = super().__call__(*args, **kwds)
+        output = super().__call__(*args, **kwargs)
         if not self._optimized and module_registry.check_all_ready():
             module_registry.optimize()
         return output
@@ -173,11 +168,13 @@ class OptimizedModule(BaseModule):
         self._runner = self._package.get_runner(return_type=TensorType.TORCH, strategy=inplace_config.strategy)
         self._runner.activate()
 
-    def __call__(self, *args: Any, **kwds: Any) -> Any:
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
         """Run the call through the optimized module."""
-        input_dict = self._prepare_input_dict(*args, **kwds)
+        sample = (*args, kwargs)
+        input_dict = self._runner.input_metadata.flatten_sample(sample)
         runner_output = self._runner.infer(input_dict)
-        output = self._output_mapping(runner_output)  # TODO better solution?
+        output = self._runner.output_metadata.unflatten_sample(runner_output)
+        output = self._output_mapping(output)  # TODO better solution?
         return output
 
     @property
@@ -189,6 +186,6 @@ class OptimizedModule(BaseModule):
 class PassthroughModule(BaseModule):
     """Module that passes through the original module."""
 
-    def __call__(self, *args: Any, **kwds: Any) -> Any:
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
         """Pass through the original module."""
-        return self._module(*args, **kwds)
+        return self._module(*args, **kwargs)

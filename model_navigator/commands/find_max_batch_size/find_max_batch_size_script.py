@@ -14,7 +14,7 @@
 """Script for finding device maximum batch size for a runner."""
 
 import pathlib
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 import fire
 
@@ -32,8 +32,8 @@ def find_max_batch_size(
     optimization_profile: Dict,
     model_path: str,
     runner_name: str,
-    input_metadata: List,
-    output_metadata: List,
+    input_metadata: Dict,
+    output_metadata: Dict,
     navigator_workspace: Optional[str] = None,
 ) -> None:
     """Find device maximum batch size.
@@ -44,8 +44,8 @@ def find_max_batch_size(
         optimization_profile (Dict): Optimization profile used during conversion and profiling.
         model_path (str): Path to the model.
         runner_name (str): Name of the model's runner.
-        input_metadata (List): Input metadata.
-        output_metadata (List): Output metadata.
+        input_metadata (Dict): Input metadata.
+        output_metadata (Dict): Output metadata.
         navigator_workspace (Optional[str], optional): Model Navigator workspace path.
             When None use current workdir. Defaults to None.
     """

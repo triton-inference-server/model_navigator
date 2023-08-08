@@ -12,14 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""e2e tests for exporting ONNX identity model"""
+"""e2e tests for exporting PyTorch identity model"""
 import argparse
 import logging
 import pathlib
 
 import yaml
-
-from tests.utils import get_assets_path
 
 LOGGER = logging.getLogger((__package__ or "main").split(".")[-1])
 METADATA = {
@@ -29,6 +27,9 @@ METADATA = {
 EXPECTED_STATUES = [
     "onnx.OnnxCUDA",
     "onnx.OnnxTensorRT",
+    "torch.TorchCUDA",
+    "torchscript-script.TorchScriptCUDA",
+    "torchscript-trace.TorchScriptCUDA",
     "trt-fp16.TensorRT",
     "trt-fp32.TensorRT",
 ]
@@ -36,6 +37,7 @@ EXPECTED_STATUES = [
 
 def main():
     import numpy as np
+    import torch  # pytype: disable=import-error
 
     import model_navigator as nav
     from tests import utils
@@ -65,13 +67,15 @@ def main():
     logging.basicConfig(level=log_level, format=utils.DEFAULT_LOG_FORMAT)
     LOGGER.debug(f"CLI args: {args}")
 
-    onnx_model_path = get_assets_path() / "models" / "identity.onnx"
-    dataloader = [
-        {
-            "X": np.random.rand(3, 3, 8, 8).astype(np.dtype("float32")),
-        }
-        for _ in range(2)
-    ]
+    class SumWithControlFlow(torch.nn.Module):
+        def forward(self, x, flag):
+            a, b = x
+            if flag:
+                return a + b
+            raise ValueError("flag is False")
+
+    model = SumWithControlFlow()
+    dataloader = [{"x": (torch.randn(2, 3), torch.randn(2, 3)), "flag": True} for _ in range(2)]
 
     def verify_func(ys_runner, ys_expected):
         for y_runner, y_expected in zip(ys_runner, ys_expected):
@@ -79,13 +83,17 @@ def main():
                 return False
         return True
 
-    package = nav.onnx.optimize(
-        model=onnx_model_path,
+    package = nav.torch.optimize(
+        model=model,
         dataloader=dataloader,
         verify_func=verify_func,
+        input_names=(
+            "input_0",
+            "input_1",
+        ),
         verbose=True,
         optimization_profile=nav.OptimizationProfile(batch_sizes=[1, 8, 16], stability_percentage=100),
-        custom_configs=(nav.OnnxConfig(opset=13),),
+        custom_configs=[nav.OnnxConfig(opset=14)],
     )
     package_path = pathlib.Path("package.nav")
     nav.package.save(package, package_path)

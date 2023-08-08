@@ -19,6 +19,7 @@ from typing import Any, Dict, List, Optional
 import fire
 import torch  # pytype: disable=import-error
 
+from model_navigator.core.tensor import TensorMetadata
 from model_navigator.utils.dataloader import load_samples
 
 
@@ -34,11 +35,11 @@ def get_model() -> torch.nn.Module:
 def export(
     exported_model_path: str,
     opset: int,
+    input_metadata: Dict[str, Any],
     input_names: List[str],
     output_names: List[str],
     dynamic_axes: Dict[str, Dict[int, str]],
     batch_dim: Optional[int],
-    forward_kw_names: Optional[List[str]],
     target_device: str,
     custom_args: Dict[str, Any],
     navigator_workspace: Optional[str] = None,
@@ -48,11 +49,11 @@ def export(
     Args:
         exported_model_path (str): Output ONNX model path.
         opset (int): ONNX opset.
+        input_metadata (Dict): List of input metadata.
         input_names (List[str]): List of model input names.
         output_names (List[str]): List of model output names.
         dynamic_axes (Dict[str, Dict[int, str]]): Configuration of the dynamic axes.
         batch_dim (Optional[int]): Batch dimension.
-        forward_kw_names (Optional[List[str]]): List of input names in Torch model.forward signature.
         target_device (str): Device to load TorchScript model on.
         navigator_workspace (Optional[str], optional): Model Navigator workspace path.
             When None use current workdir. Defaults to None.
@@ -66,10 +67,11 @@ def export(
     navigator_workspace = pathlib.Path(navigator_workspace)
 
     profiling_sample = load_samples("profiling_sample", navigator_workspace, batch_dim)[0]
+    input_metadata = TensorMetadata.from_json(input_metadata)
 
-    dummy_input = tuple(torch.from_numpy(val).to(target_device) for val in profiling_sample.values())
-    if forward_kw_names is not None:
-        dummy_input = ({key: val for key, val in zip(forward_kw_names, dummy_input)},)
+    dummy_input = {n: torch.from_numpy(val).to(target_device) for n, val in profiling_sample.items()}
+    dummy_input = input_metadata.unflatten_sample(dummy_input)
+    input_names = list(input_metadata.keys())
 
     exported_model_path = pathlib.Path(exported_model_path)
     if not exported_model_path.is_absolute():

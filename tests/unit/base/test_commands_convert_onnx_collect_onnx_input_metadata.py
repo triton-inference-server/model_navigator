@@ -34,8 +34,14 @@ def test_collect_onnx_input_metadata_raise_onnxruntime_exception_when_file_not_e
         with pytest.raises(NoSuchFile):
             collect_onnx_input_metadata(
                 model_path=model_path.as_posix(),
-                input_metadata=[{"name": "X", "shape": (-1, 3, 8, 8), "dtype": "float32"}],
-                output_metadata=[{"name": "Y", "shape": (-1, 3, 8, 8), "dtype": "float32"}],
+                input_metadata={
+                    "metadata": [{"name": "X", "shape": (-1, 3, 8, 8), "dtype": "float32"}],
+                    "pytree_metadata": {"metadata": None, "tensor_type": "numpy"},
+                },
+                output_metadata={
+                    "metadata": [{"name": "Y", "shape": (-1, 3, 8, 8), "dtype": "float32"}],
+                    "pytree_metadata": {"metadata": None, "tensor_type": "numpy"},
+                },
                 results_path=results_path.as_posix(),
             )
 
@@ -52,8 +58,14 @@ def test_collect_onnx_input_metadata_save_inputs_to_json_file_when_metadata_obta
 
         collect_onnx_input_metadata(
             model_path=model_path.as_posix(),
-            input_metadata=[{"name": "X", "shape": (-1, 3, 8, 8), "dtype": "float32"}],
-            output_metadata=[{"name": "Y", "shape": (-1, 3, 8, 8), "dtype": "float32"}],
+            input_metadata={
+                "metadata": [{"name": "X", "shape": (-1, 3, 8, 8), "dtype": "float32"}],
+                "pytree_metadata": {"metadata": None, "tensor_type": "numpy"},
+            },
+            output_metadata={
+                "metadata": [{"name": "Y", "shape": (-1, 3, 8, 8), "dtype": "float32"}],
+                "pytree_metadata": {"metadata": None, "tensor_type": "numpy"},
+            },
             results_path=results_path.as_posix(),
         )
 
@@ -62,4 +74,7 @@ def test_collect_onnx_input_metadata_save_inputs_to_json_file_when_metadata_obta
         with results_path.open("r") as fp:
             input_metadata = json.load(fp)
 
-        assert input_metadata == [{"name": "X", "shape": [-1, 3, -1, -1], "dtype": "float32"}]
+        assert input_metadata == {
+            "metadata": [{"name": "X", "shape": [-1, 3, -1, -1], "dtype": "float32"}],
+            "pytree_metadata": {"metadata": None, "tensor_type": "numpy"},
+        }

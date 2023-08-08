@@ -18,10 +18,11 @@ import numpy as np
 import pytest
 import torch  # pytype: disable=import-error
 
+from model_navigator.api.config import TensorType
 from model_navigator.commands.base import CommandStatus
 from model_navigator.commands.data_dump.samples import samples_to_npz
 from model_navigator.commands.infer_metadata import InferOutputMetadata
-from model_navigator.core.tensor import TensorMetadata
+from model_navigator.core.tensor import PyTreeMetadata, TensorMetadata
 from model_navigator.core.workspace import Workspace
 from model_navigator.exceptions import ModelNavigatorUserInputError
 from model_navigator.frameworks import Framework
@@ -32,7 +33,7 @@ def test_infer_output_metadata_return_fails_status_when_invalid_model_used():
         def forward(self, x):
             raise ValueError
 
-    input_metadata = TensorMetadata()
+    input_metadata = TensorMetadata(pytree_metadata=PyTreeMetadata("input_0", tensor_type=TensorType.NUMPY))
     input_metadata.add(name="input_0", shape=(1,), dtype=np.int32)
 
     dataloader = [torch.randn(1) for _ in range(5)]
@@ -68,7 +69,7 @@ def test_infer_output_metadata_return_success_status_when_valid_model_used():
         def forward(self, x):
             return 2 * x
 
-    input_metadata = TensorMetadata()
+    input_metadata = TensorMetadata(pytree_metadata=PyTreeMetadata("input_0", tensor_type=TensorType.NUMPY))
     input_metadata.add(name="input_0", shape=(1,), dtype=np.int32)
 
     dataloader = [torch.randn(1) for _ in range(5)]

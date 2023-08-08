@@ -24,6 +24,7 @@ from model_navigator.api.config import (
     TensorRTPrecision,
     TensorRTPrecisionMode,
     TensorRTProfile,
+    TensorType,
 )
 from model_navigator.commands.base import CommandOutput, CommandStatus
 from model_navigator.commands.convert.base import Convert2TensorRTWithMaxBatchSizeSearch
@@ -344,6 +345,9 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
                     "Unable to collect metadata from ONNX model. The evaluation failed. Empty metadata used."
                 )
                 LOGGER.warning(f"Error during obtaining metadata: {str(e)}")
-                input_metadata = []
+                input_metadata = {
+                    "metadata": [],
+                    "pytree_metadata": {"metadata": None, "tensor_type": TensorType.NUMPY.value},
+                }
 
             return TensorMetadata.from_json(input_metadata)

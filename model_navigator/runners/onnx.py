@@ -152,7 +152,7 @@ class OnnxrtCPURunner(_BaseOnnxrtRunner):
         """Return supported devices for runner."""
         return [DeviceKind.CPU]
 
-    def infer_impl(self, feed_dict):
+    def infer_impl(self, feed_dict, return_raw_outputs=False):
         """Run inference."""
         assert self.is_active and hasattr(self, "sess"), "Runner must be activated."
 
@@ -163,6 +163,9 @@ class OnnxrtCPURunner(_BaseOnnxrtRunner):
         out_dict = OrderedDict()
         for node, out in zip(self.sess.get_outputs(), inference_outputs):
             out_dict[node.name] = out
+        if return_raw_outputs:
+            return out_dict
+
         if self.output_metadata:  # filter outputs if output_metadata is set
             out_dict = {k: v for k, v in out_dict.items() if k in self.output_metadata}
         return out_dict

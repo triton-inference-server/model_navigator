@@ -40,9 +40,7 @@ class NavigatorRunner(abc.ABC):
         model: Any,
         input_metadata: TensorMetadata,
         output_metadata: TensorMetadata,
-        input_metadata_mapping: Optional[Dict[str, str]] = None,
         return_type: TensorType = TensorType.NUMPY,
-        *args,
         **kwargs,
     ) -> None:
         """Initialize object.
@@ -51,13 +49,11 @@ class NavigatorRunner(abc.ABC):
             model: A model for which runner has to be initialized
             input_metadata: A model inputs metadata
             output_metadata: A model outputs metadata
-            input_metadata_mapping: Optional mapping for input metadata
             return_type: A type of return value
         """
         self._model = model
         self._input_metadata = input_metadata
         self._output_metadata = output_metadata
-        self._input_metadata_mapping = input_metadata_mapping
 
         self._check_return_type(return_type)
         self._return_type = return_type
@@ -81,11 +77,6 @@ class NavigatorRunner(abc.ABC):
     def output_metadata(self) -> TensorMetadata:
         """Property for obtaining model output metadata object."""
         return self._output_metadata
-
-    @property
-    def input_metadata_mapping(self) -> Optional[Dict[str, str]]:
-        """Property for obtaining model input metadata mapping."""
-        return self._input_metadata_mapping
 
     @property
     def return_type(self) -> TensorType:
@@ -198,7 +189,13 @@ class NavigatorRunner(abc.ABC):
         self.activate_impl()
         self.is_active = True
 
-    def infer(self, feed_dict: Dict[str, Any], check_inputs: bool = True, *args: Any, **kwargs: Any) -> Dict[str, Any]:
+    def infer(
+        self,
+        feed_dict: Dict[str, Any],
+        check_inputs: bool = True,
+        *args: Any,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
         """Runs inference using the provided feed_dict.
 
         Must be called only after ``activate()`` and before ``deactivate()``.

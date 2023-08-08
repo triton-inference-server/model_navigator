@@ -47,10 +47,10 @@ class JaxModel:
         """
         return self._params
 
-    def __call__(self, *args: Any, **kwds: Any) -> Any:
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
         """Run the inference on the model.
 
         Returns:
             Any: Model inference output.
         """
-        return self._model(*args, **kwds, params=self._params)
+        return self._model(*args, **kwargs, params=self._params)

@@ -16,7 +16,7 @@ from model_navigator.__version__ import __version__  # noqa: F401
 
 # Version
 NAVIGATOR_VERSION = __version__
-NAVIGATOR_PACKAGE_VERSION = "0.2.3"
+NAVIGATOR_PACKAGE_VERSION = "0.3.0"
 
 # Workspace related
 DEFAULT_WORKSPACE = "navigator_workspace"

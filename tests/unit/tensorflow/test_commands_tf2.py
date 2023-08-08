@@ -20,14 +20,14 @@ import numpy
 import pytest
 import tensorflow  # pytype: disable=import-error
 
-from model_navigator.api.config import Format, TensorRTPrecision, TensorRTProfile
+from model_navigator.api.config import Format, TensorRTPrecision, TensorRTProfile, TensorType
 from model_navigator.commands.base import CommandStatus
 from model_navigator.commands.convert.tf import ConvertSavedModel2TFTRT
 from model_navigator.commands.correctness import Correctness
 from model_navigator.commands.data_dump.samples import samples_to_npz
 from model_navigator.commands.export.tf import ExportTF2SavedModel
 from model_navigator.core.constants import DEFAULT_MAX_WORKSPACE_SIZE
-from model_navigator.core.tensor import TensorMetadata, TensorSpec
+from model_navigator.core.tensor import PyTreeMetadata, TensorMetadata, TensorSpec
 from model_navigator.core.workspace import Workspace
 from model_navigator.runners.tensorflow import TensorFlowSavedModelCUDARunner
 from model_navigator.utils.devices import get_gpus
@@ -114,8 +114,14 @@ def test_tf2_export_savedmodel():
         np_output = model.predict(input_data)
         np_input = input_data.numpy()
 
-        input_metadata = TensorMetadata({"input__1": TensorSpec("input__1", np_input.shape, np_input.dtype)})
-        output_metadata = TensorMetadata({"output__1": TensorSpec("output__1", np_output.shape, np_output.dtype)})
+        input_metadata = TensorMetadata(
+            {"input__1": TensorSpec("input__1", np_input.shape, np_input.dtype)},
+            pytree_metadata=PyTreeMetadata("input__1", TensorType.TENSORFLOW),
+        )
+        output_metadata = TensorMetadata(
+            {"output__1": TensorSpec("output__1", np_output.shape, np_output.dtype)},
+            pytree_metadata=PyTreeMetadata("output__1", TensorType.TENSORFLOW),
+        )
 
         command_output = ExportTF2SavedModel().run(
             model=model,

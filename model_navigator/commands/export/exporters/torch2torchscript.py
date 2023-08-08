@@ -20,6 +20,8 @@ import fire
 import torch  # pytype: disable=import-error
 
 from model_navigator.api.config import JitType
+from model_navigator.core.tensor import TensorMetadata
+from model_navigator.exceptions import ModelNavigatorUserInputError
 from model_navigator.utils.dataloader import load_samples
 
 
@@ -35,6 +37,7 @@ def get_model() -> torch.nn.Module:
 def export(
     exported_model_path: str,
     target_jit_type: str,
+    input_metadata: Dict[str, Any],
     batch_dim: Optional[int],
     target_device: str,
     strict: bool,
@@ -46,6 +49,7 @@ def export(
     Args:
         exported_model_path (str): Output ONNX model path.
         target_jit_type (str): TorchScript jit type. Could be "trace" or "script".
+        input_metadata (Dict[str, Any]): List of input metadata.
         batch_dim (Optional[int]): Batch dimension.
         target_device (str): Device to load TorchScript model on.
         strict (bool): Enable or Disable strict flag for tracer used in TorchScript export.
@@ -62,12 +66,30 @@ def export(
     navigator_workspace = pathlib.Path(navigator_workspace)
 
     profiling_sample = load_samples("profiling_sample", navigator_workspace, batch_dim)[0]
+    input_metadata = TensorMetadata.from_json(input_metadata)
 
     if target_jit_type == JitType.SCRIPT:
         script_module = torch.jit.script(model)
     else:
-        dummy_input = tuple(torch.from_numpy(val).to(target_device) for val in profiling_sample.values())
-        script_module = torch.jit.trace(model, dummy_input, strict=strict, **custom_args)
+        dummy_input = {n: torch.from_numpy(val).to(target_device) for n, val in profiling_sample.items()}
+        dummy_input = input_metadata.unflatten_sample(dummy_input, wrap_input=True)
+        if isinstance(dummy_input[-1], dict):
+            args, kwargs = dummy_input[:-1], dummy_input[-1]
+        else:
+            args, kwargs = dummy_input, {}
+        if args:
+            if kwargs:
+                raise ModelNavigatorUserInputError(
+                    "TorchScript trace does not support both args and kwargs, use only one."
+                )
+            input_kwargs = {
+                "example_inputs": args,
+            }
+        else:
+            input_kwargs = {
+                "example_kwarg_inputs": kwargs,
+            }
+        script_module = torch.jit.trace(model, strict=strict, **input_kwargs, **custom_args)
 
     exported_model_path = pathlib.Path(exported_model_path)
     if not exported_model_path.is_absolute():

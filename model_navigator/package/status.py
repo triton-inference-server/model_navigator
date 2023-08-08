@@ -218,6 +218,7 @@ class StatusDictUpdater:
             version.parse("0.1.4"): self._update_from_v0_1_4,
             version.parse("0.2.1"): self._update_from_v0_2_1,
             version.parse("0.2.2"): self._update_from_v0_2_2,
+            version.parse("0.2.3"): self._update_from_v0_2_3,
         }
 
     def update(self, data_dict: Dict, format_version: version.Version):
@@ -531,3 +532,30 @@ class StatusDictUpdater:
                 if trt_profile is not None:
                     custom_config["trt_profiles"] = [trt_profile]
                 custom_config.pop("trt_profile")
+
+    def _update_from_v0_2_3(self, data_dict: Dict):
+        def _update_tensor_metadata(tensor_metadata: Dict, forward_kw_names: Optional[List[str]] = None):
+            if forward_kw_names is None:
+                pytree_metadata = tuple(data["name"] for data in tensor_metadata)
+                if len(pytree_metadata) == 1:
+                    pytree_metadata = pytree_metadata[0]
+            else:
+                pytree_metadata = {
+                    forward_kw_name: data["name"] for forward_kw_name, data in zip(forward_kw_names, tensor_metadata)
+                }
+            updated_metadata = {
+                "metadata": tensor_metadata,
+                "pytree_metadata": {
+                    "metadata": pytree_metadata,
+                    "tensor_type": "numpy",
+                },
+            }
+            return updated_metadata
+
+        data_dict["input_metadata"] = _update_tensor_metadata(
+            data_dict["input_metadata"], data_dict["config"].get("forward_kw_names")
+        )
+        data_dict["output_metadata"] = _update_tensor_metadata(data_dict["output_metadata"])
+
+        if "forward_kw_names" in data_dict["config"]:
+            data_dict["config"].pop("forward_kw_names")

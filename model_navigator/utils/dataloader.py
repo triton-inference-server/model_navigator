@@ -13,11 +13,12 @@
 # limitations under the License.
 """Dataloader definition and helpers module."""
 import pathlib
-from typing import Any, Iterable, List, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any, List, Mapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
 
 from model_navigator.api.config import Sample, TensorType
+from model_navigator.core.tensor import is_tensor
 from model_navigator.exceptions import ModelNavigatorUserInputError
 from model_navigator.frameworks import Framework
 
@@ -36,8 +37,9 @@ def to_numpy(tensor: Any, from_framework: Framework) -> np.ndarray:
         return tensor
     if from_framework == Framework.TORCH:
         return tensor.detach().cpu().numpy()
-    else:
+    if from_framework == Framework.TENSORFLOW:
         return tensor.numpy()
+    return np.asarray(tensor)
 
 
 def sample_to_tuple(input: Any) -> Tuple[Any, ...]:
@@ -67,8 +69,8 @@ def extract_sample(sample, input_metadata, framework: Framework) -> Sample:
     Returns:
         A formatted sample data
     """
-    sample = sample_to_tuple(sample)
-    sample = {n: to_numpy(t, framework) for n, t in zip(input_metadata, sample)}
+    sample = input_metadata.flatten_sample(sample)
+    sample = {n: to_numpy(t, framework) for n, t in sample.items()}
     return sample
 
 
@@ -85,28 +87,6 @@ def extract_bs1(sample: Sample, batch_dim: Optional[int]) -> Sample:
     if batch_dim is not None:
         return {name: tensor.take([0], batch_dim) for name, tensor in sample.items()}
     return sample
-
-
-def is_tensor(tensor: Any, tensor_type: TensorType) -> bool:
-    """Validate if provided object is a valid tensor.
-
-    Args:
-        tensor: An object to validate
-        framework: A framework for which the object has to be tested
-
-    Returns:
-        True if object is a valid tensor, False otherwise
-    """
-    if tensor_type == TensorType.TORCH:
-        import torch  # pytype: disable=import-error
-
-        return torch.is_tensor(tensor) or isinstance(tensor, np.ndarray)
-    elif tensor_type == TensorType.TENSORFLOW:
-        import tensorflow  # pytype: disable=import-error
-
-        return tensorflow.is_tensor(tensor) or isinstance(tensor, np.ndarray)
-    else:
-        return isinstance(tensor, np.ndarray)
 
 
 def get_tensor_type_name(tensor_type: TensorType) -> str:
@@ -138,16 +118,18 @@ def _is_valid_io(sample: Any, tensor_type: TensorType) -> bool:
     Returns:
         True if sample is valid I/O, False otherwise
     """
-    if is_tensor(sample, tensor_type):
+    if is_tensor(sample, tensor_type) or isinstance(sample, (int, float, bool, type(None))):
         return True
-    if isinstance(sample, Mapping):
-        for tensor in sample.values():
-            if not is_tensor(tensor, tensor_type):
+    if isinstance(sample, dict):
+        for name, tensor in sample.items():
+            if not isinstance(name, str):
+                return False
+            if not _is_valid_io(tensor, tensor_type):
                 return False
         return True
-    elif isinstance(sample, Iterable):
+    elif isinstance(sample, (list, tuple)):
         for tensor in sample:
-            if not is_tensor(tensor, tensor_type):
+            if not _is_valid_io(tensor, tensor_type):
                 return False
         return True
     return False
@@ -169,7 +151,7 @@ def validate_sample_input(sample: Any, tensor_type: TensorType = TensorType.NUMP
         raise ModelNavigatorUserInputError(
             f"Invalid sample type. Sample must be of type Union[{tensor_type}, "
             f"Iterable[{tensor_type}], Mapping[str, {tensor_type}]]. Dataloader returned {sample}."
-        )
+        )  # TODO fix this message
 
 
 def validate_sample_output(sample, tensor_type: TensorType = TensorType.NUMPY):
@@ -188,7 +170,7 @@ def validate_sample_output(sample, tensor_type: TensorType = TensorType.NUMPY):
         raise ModelNavigatorUserInputError(
             f"Invalid model output type. Output must be of type Union[{tensor_type}, "
             f"Iterable[{tensor_type}]], Mapping[str, {tensor_type}]]. Model returned {sample}."
-        )
+        )  # TODO fix this message
 
 
 def load_samples(samples_name: str, workspace: Union[pathlib.Path, str], batch_dim: Optional[int]) -> List[Sample]:

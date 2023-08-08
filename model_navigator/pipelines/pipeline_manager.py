@@ -33,7 +33,6 @@ class PipelineManager:
         "model_params",
         "dataloader",
         "workspace",
-        "forward_kw_names",
         "verify_func",
     ]
 

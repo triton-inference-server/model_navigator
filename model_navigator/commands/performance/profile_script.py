@@ -14,7 +14,7 @@
 """Script for running profiling on a runner."""
 
 import pathlib
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 import fire
 
@@ -41,8 +41,8 @@ def profile(
     results_path: str,
     runner_name: str,
     optimization_profile: Dict,
-    input_metadata: List,
-    output_metadata: List,
+    input_metadata: Dict,
+    output_metadata: Dict,
     sample_id: int = 0,
     navigator_workspace: Optional[str] = None,
     model_path: Optional[str] = None,

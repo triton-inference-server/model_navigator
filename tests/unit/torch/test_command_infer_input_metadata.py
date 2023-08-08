@@ -111,11 +111,10 @@ def test_infer_input_metadata_return_success_status_when_dict_dataloader_with_kw
     dataloader = [{"x": torch.randn(1), "z": torch.randn(1)} for _ in range(5)]
 
     class Model(torch.nn.Module):
-        def forward(self, x, y):
-            def forward(self, x, y=None, z=None):
-                if z is not None:
-                    return x + z
-                raise ValueError
+        def forward(self, x, y=None, z=None):
+            if z is not None:
+                return x + z
+            raise ValueError
 
     status = InferInputMetadata().run(
         framework=Framework.TORCH,
@@ -138,11 +137,10 @@ def test_infer_input_metadata_raise_error_when_performance_dataloader_shape_is_t
     optimization_profile = OptimizationProfile(dataloader=performance_dataloader)
 
     class Model(torch.nn.Module):
-        def forward(self, x, y):
-            def forward(self, x, y=None, z=None):
-                if z is not None:
-                    return x + z
-                raise ValueError
+        def forward(self, x, y=None, z=None):
+            if z is not None:
+                return x + z
+            raise ValueError
 
     match_text = re.escape(
         """Provided performance dataloader has invalid shape against the dataset dataloader."""
@@ -167,11 +165,10 @@ def test_infer_input_metadata_raise_error_when_performance_dataloader_shape_is_t
     optimization_profile = OptimizationProfile(dataloader=performance_dataloader)
 
     class Model(torch.nn.Module):
-        def forward(self, x, y):
-            def forward(self, x, y=None, z=None):
-                if z is not None:
-                    return x + z
-                raise ValueError
+        def forward(self, x, y=None, z=None):
+            if z is not None:
+                return x + z
+            raise ValueError
 
     match_text = re.escape(
         """Provided performance dataloader has invalid shape against the dataset dataloader."""
@@ -196,11 +193,10 @@ def test_infer_input_metadata_raise_error_when_performance_dataloader_shape_is_t
     optimization_profile = OptimizationProfile(dataloader=performance_dataloader)
 
     class Model(torch.nn.Module):
-        def forward(self, x, y):
-            def forward(self, x, y=None, z=None):
-                if z is not None:
-                    return x + z
-                raise ValueError
+        def forward(self, x, y=None, z=None):
+            if z is not None:
+                return x + z
+            raise ValueError
 
     match_text = re.escape(
         """Provided performance dataloader has invalid shape against the dataset dataloader."""
@@ -225,11 +221,10 @@ def test_infer_input_metadata_raise_error_when_performance_dataloader_shape_is_t
     optimization_profile = OptimizationProfile(dataloader=performance_dataloader)
 
     class Model(torch.nn.Module):
-        def forward(self, x, y):
-            def forward(self, x, y=None, z=None):
-                if z is not None:
-                    return x + z
-                raise ValueError
+        def forward(self, x, y=None, z=None):
+            if z is not None:
+                return x + z
+            raise ValueError
 
     match_text = re.escape(
         """Provided performance dataloader has invalid shape against the dataset dataloader."""
@@ -254,11 +249,10 @@ def test_infer_input_metadata_raise_error_when_performance_dataloader_shape_not_
     optimization_profile = OptimizationProfile(dataloader=performance_dataloader)
 
     class Model(torch.nn.Module):
-        def forward(self, x, y):
-            def forward(self, x, y=None, z=None):
-                if z is not None:
-                    return x + z
-                raise ValueError
+        def forward(self, x, y=None, z=None):
+            if z is not None:
+                return x + z
+            raise ValueError
 
     match_text = """Provided performance dataloader does not match dataset dataloader size."""
 
@@ -279,11 +273,10 @@ def test_infer_input_metadata_raise_error_when_performance_dataloader_datatype_n
     optimization_profile = OptimizationProfile(dataloader=performance_dataloader)
 
     class Model(torch.nn.Module):
-        def forward(self, x, y):
-            def forward(self, x, y=None, z=None):
-                if z is not None:
-                    return x + z
-                raise ValueError
+        def forward(self, x, y=None, z=None):
+            if z is not None:
+                return x + z
+            raise ValueError
 
     match_text = """Provided performance dataloader does not match dataset dataloader data types."""
 
@@ -304,11 +297,10 @@ def test_infer_input_metadata_raise_error_when_performance_dataloader_shape_is_i
     optimization_profile = OptimizationProfile(dataloader=performance_dataloader)
 
     class Model(torch.nn.Module):
-        def forward(self, x, y):
-            def forward(self, x, y=None, z=None):
-                if z is not None:
-                    return x + z
-                raise ValueError
+        def forward(self, x, y=None, z=None):
+            if z is not None:
+                return x + z
+            raise ValueError
 
     status = InferInputMetadata().run(
         framework=Framework.TORCH,

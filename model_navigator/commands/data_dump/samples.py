@@ -13,7 +13,7 @@
 # limitations under the License.
 """Commands for fetching and dumping model IO."""
 import pathlib
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Optional
 
 import numpy as np
 
@@ -167,17 +167,22 @@ class FetchInputModelData(Command, is_required=True):
             do_sample_conversion = False
             do_sample_profiling = False
             for name in input_metadata:
-                for (ax, shapes), tensor_dim in zip(
-                    enumerate(zip(trt_profile[name].min, trt_profile[name].opt, trt_profile[name].max)),
-                    sample[name].shape,
-                ):
-                    if tensor_dim == shapes[0] and not conversion_min_max_sampled[name][ax]["min"]:
+                if name not in trt_profile:
+                    if not conversion_min_max_sampled[name]:
                         do_sample_conversion = True
-                        conversion_min_max_sampled[name][ax]["min"] = True
-                    if tensor_dim == shapes[2] and not conversion_min_max_sampled[name][ax]["max"]:
-                        do_sample_conversion = True
-                        conversion_min_max_sampled[name][ax]["max"] = True
-                        do_sample_profiling = True
+                        conversion_min_max_sampled[name] = True
+                else:
+                    for (ax, shapes), tensor_dim in zip(
+                        enumerate(zip(trt_profile[name].min, trt_profile[name].opt, trt_profile[name].max)),
+                        sample[name].shape,
+                    ):
+                        if tensor_dim == shapes[0] and not conversion_min_max_sampled[name][ax]["min"]:
+                            do_sample_conversion = True
+                            conversion_min_max_sampled[name][ax]["min"] = True
+                        if tensor_dim == shapes[2] and not conversion_min_max_sampled[name][ax]["max"]:
+                            do_sample_conversion = True
+                            conversion_min_max_sampled[name][ax]["max"] = True
+                            do_sample_profiling = True
 
             if do_sample_conversion:
                 conversion_samples.append(extract_bs1(sample, batch_dim))
@@ -210,7 +215,6 @@ class FetchOutputModelData(Command, is_required=True):
         output_metadata: TensorMetadata,
         batch_dim: Optional[int],
         raise_on_error: Optional[bool] = True,
-        forward_kw_names: Optional[Tuple[str, ...]] = None,
     ) -> CommandOutput:
         """Run the command and save model outputs.
 
@@ -223,7 +227,6 @@ class FetchOutputModelData(Command, is_required=True):
             batch_dim: Batch dimension.
             raise_on_error: If True raise an error when one of the samples is invalid.
                 Defaults to True.
-            forward_kw_names: List of source model input signature names. Defaults to None.
 
         Returns:
             CommandOutput
@@ -235,7 +238,6 @@ class FetchOutputModelData(Command, is_required=True):
             model=model,
             input_metadata=input_metadata,
             output_metadata=output_metadata,
-            input_metadata_mapping=forward_kw_names,
         )  # pytype: disable=not-instantiable
 
         output = {}

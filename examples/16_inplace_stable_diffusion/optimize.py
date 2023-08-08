@@ -18,10 +18,7 @@ import os
 import time
 
 # pytype: disable=import-error
-import torch
 from diffusers import DPMSolverMultistepScheduler, StableDiffusionPipeline
-from diffusers.models.unet_2d_condition import UNet2DConditionOutput
-from diffusers.models.vae import DecoderOutput
 from transformers.modeling_outputs import BaseModelOutputWithPooling
 
 import model_navigator as nav
@@ -41,7 +38,7 @@ logging.basicConfig(level=logging.INFO)
 
 def get_pipeline():
     model_id = "stabilityai/stable-diffusion-2-1"
-    pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16)
+    pipe = StableDiffusionPipeline.from_pretrained(model_id)
     pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
     pipe = pipe.to("cuda")
 
@@ -52,49 +49,27 @@ def get_pipeline():
             "TorchCUDA",
             "TensorRT",
         ),
+        custom_configs=[nav.TensorRTConfig(precision=nav.TensorRTPrecision.FP16)],
     )
 
-    # Currently Model Navigator does not support inplace optimization of models with non-tensor inputs.
-    # We can work around this by removing the non-tensor inputs from the input mapping, since they are not used
-    # in the model. In the future, we will add support for non-tensor inputs.
-    def clip_input_mapping(input):
-        del input["attention_mask"]
-        return input
-
-    def unet_input_mapping(input):
-        del input["return_dict"]
-        del input["cross_attention_kwargs"]
-        input["timestep"] = input["timestep"].unsqueeze(0)
-        return input
-
     # For outputs that are not primitive types (float, int, bool, str) or tensors and list, dict, tuples combinations of those.
-    # we need to provide a mapping to a desired output type. By default Model Navigator will return a flatten dict of tensors.
-    # In this case, we need to map the outputs of the models to custom HuggingFace classes.
+    # we need to provide a mapping to a desired output type. CLIP output is BaseModelOutputWithPooling, which inherits from dict.
+    # Model Navigator will recognize that the return type is a dict and will return it, but we need to provide a mapping to BaseModelOutputWithPooling.
     def clip_output_mapping(output):
-        return BaseModelOutputWithPooling(*list(output.values()))
-
-    def unet_output_mapping(output):
-        return UNet2DConditionOutput(*list(output.values()))
-
-    def vae_output_mapping(output):
-        return DecoderOutput(*list(output.values()))
+        return BaseModelOutputWithPooling(**output)
 
     pipe.text_encoder = nav.Module(
         pipe.text_encoder,
         optimize_config=optimize_config,
-        input_mapping=clip_input_mapping,
         output_mapping=clip_output_mapping,
     )
     pipe.unet = nav.Module(
         pipe.unet,
         optimize_config=optimize_config,
-        input_mapping=unet_input_mapping,
-        output_mapping=unet_output_mapping,
     )
     pipe.vae.decoder = nav.Module(
         pipe.vae.decoder,
         optimize_config=optimize_config,
-        output_mapping=vae_output_mapping,
     )
 
     return pipe

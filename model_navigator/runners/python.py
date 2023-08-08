@@ -12,37 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Runner definition for Python based models."""
-from collections import OrderedDict
-from typing import Dict, List, Mapping
-
-import numpy
+from typing import Dict, List
 
 from model_navigator.api.config import Format
 from model_navigator.runners.base import DeviceKind, NavigatorRunner
 from model_navigator.runners.registry import register_runner
-from model_navigator.utils.dataloader import get_default_output_names
 
 
 class PythonRunner(NavigatorRunner):
     """Runs inference for Python models."""
 
-    def infer_impl(self, feed_dict: Dict):
+    def infer_impl(self, feed_dict: Dict, return_raw_outputs: bool = False):
         """Runner inference handler implementation."""
-        outputs = self.model(**feed_dict).values()
-
-        if self.output_metadata:
-            output_names = self.output_metadata.keys()
+        inputs = self.input_metadata.unflatten_sample(feed_dict, wrap_input=True)
+        if isinstance(inputs[-1], dict):
+            args, kwargs = inputs[:-1], inputs[-1]
         else:
-            output_names = outputs.keys() if isinstance(outputs, Mapping) else get_default_output_names(len(outputs))
+            args, kwargs = inputs, {}
 
-        if isinstance(outputs, numpy.ndarray):
-            outputs = (outputs,)
-        if isinstance(outputs, Mapping):
-            outputs = outputs.values()
+        outputs = self.model(*args, **kwargs)
 
-        out_dict = OrderedDict()
-        for name, output in zip(output_names, outputs):
-            out_dict[name] = output
+        if return_raw_outputs:
+            return outputs
+
+        out_dict = self.output_metadata.flatten_sample(outputs)
         return out_dict
 
     @classmethod

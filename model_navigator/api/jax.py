@@ -13,7 +13,7 @@
 # limitations under the License.
 """JAX optimize API."""
 import pathlib
-from typing import Any, Callable, Mapping, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, Optional, Sequence, Tuple, Type, Union
 
 import tensorflow  # pytype: disable=import-error
 
@@ -106,9 +106,6 @@ def optimize(
     if target_formats is None:
         target_formats = DEFAULT_JAX_TARGET_FORMATS
 
-    sample = next(iter(dataloader))
-    forward_kw_names = tuple(sample.keys()) if isinstance(sample, Mapping) else None
-
     if runners is None:
         runners = default_runners(device_kind=target_device)
 
@@ -125,7 +122,6 @@ def optimize(
         Framework.JAX,
         model=JaxModel(model=model, params=model_params),
         dataloader=dataloader,
-        forward_kw_names=forward_kw_names,
         target_formats=target_formats_enums,
         target_device=target_device,
         sample_count=sample_count,

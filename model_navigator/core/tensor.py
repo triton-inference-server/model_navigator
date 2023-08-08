@@ -14,8 +14,12 @@
 """Utilities for working with tensors in different environments."""
 import abc
 import dataclasses
+import itertools
+
+# import json
+import uuid  # TODO find better solution
 from collections import defaultdict
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Dict, Iterable, Mapping, Optional, Sequence, Tuple, Type, Union
 
 import numpy as np
 
@@ -26,6 +30,7 @@ from model_navigator.utils import common, module
 torch = module.lazy_import("torch")
 tf = module.lazy_import("tensorflow")
 jax = module.lazy_import("jax")
+jaxlib = module.lazy_import("jaxlib")
 
 # pytype: disable=annotation-type-mismatch
 # pytype: disable=wrong-keyword-args
@@ -208,8 +213,167 @@ class BuiltinsTensorUtils(TensorUtils):
         return np.array(a)
 
 
+def is_tensor(tensor: Any, tensor_type: TensorType) -> bool:
+    """Validate if provided object is a valid tensor.
+
+    Args:
+        tensor: An object to validate
+        framework: A framework for which the object has to be tested
+
+    Returns:
+        True if object is a valid tensor, False otherwise
+    """
+    if tensor_type == TensorType.TORCH:
+        return torch.is_tensor(tensor) or isinstance(tensor, np.ndarray)
+    elif tensor_type == TensorType.TENSORFLOW:
+        return tf.is_tensor(tensor) or isinstance(tensor, np.ndarray)
+    elif tensor_type == TensorType.JAX:
+        return isinstance(tensor, (np.ndarray, jax.numpy.ndarray, jaxlib.xla_extension.ArrayImpl))
+    else:
+        return isinstance(tensor, np.ndarray)
+
+
+class PyTreeMetadata:
+    """Description of the metadata of a tree of tensors."""
+
+    def __init__(self, metadata: Any, tensor_type: TensorType) -> None:
+        """Create PyTreeMetadata from provided metadata."""
+        self._metadata = metadata
+        self.tensor_type = tensor_type
+
+    def __str__(self) -> str:
+        """Convert PyTree metadata to string."""
+        return str(self._metadata)
+
+    def __eq__(self, __value: object) -> bool:
+        """Compare PyTree metadatas."""
+        if not isinstance(__value, PyTreeMetadata):
+            return False
+        return self._metadata == __value._metadata
+
+    @classmethod
+    def from_sample(
+        cls, sample: Any, tensor_type: TensorType, names: Optional[Iterable[str]] = None, prefix: str = ""
+    ) -> "PyTreeMetadata":
+        """Create PyTreeMetadata from sample.
+
+        Args:
+            sample: A sample from which PyTreeMetadata will be created
+            tensor_type: A type of tensors in the sample
+            names: Names of tensors in the sample
+            prefix: A prefix for names of tensors in the sample. Used only if names are not provided.
+
+        Returns:
+            PyTreeMetadata created from sample
+        """
+        if names is None:
+            assert prefix != "", "Prefix must be provided if names are not provided"
+            names = (f"{prefix}__{i}" for i in itertools.count(start=0, step=1))
+        else:
+            names = iter(names)
+        metadata, _ = cls._from_sample(sample, tensor_type, names)
+        return cls(metadata, tensor_type)
+
+    def to_dict(self) -> Dict:
+        """Convert PyTree metadata to string."""
+        return {
+            "metadata": self._metadata,
+            "tensor_type": self.tensor_type.value,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict) -> "PyTreeMetadata":
+        """Create PyTreeMetadata from string."""
+        return cls(data["metadata"], TensorType(data["tensor_type"]))
+
+    def flatten_sample(self, sample: Any) -> Dict[str, Any]:
+        """Flatten sample according to PyTree metadata.
+
+        Returns flatten dictionary with keys corresponding to PyTree metadata.
+        """
+        flattened_sample = {}
+        self._flatten_sample(sample, self._metadata, flattened_sample)
+        return flattened_sample
+
+    def unflatten_sample(self, sample: Dict[str, Any], wrap_input: bool = False) -> Any:
+        """Unflatten sample according to PyTree metadata.
+
+        Returns unflatten sample according to PyTree metadata.
+        If wrap_input is True, then single tensor will be wrapped in tuple.
+        """
+        unflatten_sample = self._unflatten_sample(sample, self._metadata)
+        if wrap_input and isinstance(self._metadata, (str, dict)):
+            unflatten_sample = (unflatten_sample,)
+        return unflatten_sample
+
+    @classmethod
+    def _from_sample(cls, sample, tensor_type, names):
+        """Create PyTreeMetadata from sample."""
+        if is_tensor(sample, tensor_type):
+            return next(names), names
+        if isinstance(sample, (int, float, bool, type(None))):
+            return sample, names
+        if isinstance(sample, Mapping):
+            metadata = {}
+            for key, item in sorted(sample.items()):
+                submetadata, names = cls._from_sample(item, tensor_type, names)
+                metadata[key] = submetadata
+            return metadata, names
+        if isinstance(sample, (list, tuple)):
+            metadata = []
+            for item in sample:
+                submetadata, names = cls._from_sample(item, tensor_type, names)
+                metadata.append(submetadata)
+            return type(sample)(metadata), names
+        raise TypeError(f"Unsupported type: {type(sample)}")
+
+    def _flatten_sample(self, sample, struct, flatten_sample, include_constants=False):
+        if isinstance(sample, Mapping):
+            assert isinstance(struct, Mapping)
+            for key, item in sample.items():
+                self._flatten_sample(item, struct[key], flatten_sample, include_constants=include_constants)
+        elif isinstance(sample, (list, tuple)):
+            assert isinstance(struct, (list, tuple))
+            i = 0
+            for item in sample:
+                self._flatten_sample(item, struct[i], flatten_sample, include_constants=include_constants)
+                i += 1
+        elif isinstance(struct, str):
+            flatten_sample[struct] = sample
+        elif isinstance(sample, (int, float, bool, type(None))):
+            if include_constants:
+                flatten_sample[f"const_{uuid.uuid4()}"] = sample
+        else:
+            raise TypeError(f"Unsupported type: {type(sample)}")
+
+    def _unflatten_sample(self, sample, struct):
+        if isinstance(struct, Mapping):
+            return {key: self._unflatten_sample(sample, item) for key, item in struct.items()}
+        elif isinstance(struct, (list, tuple)):
+            return type(struct)(self._unflatten_sample(sample, item) for item in struct)
+        elif isinstance(struct, str):
+            return sample[struct]
+        elif isinstance(struct, (int, float, bool, type(None))):
+            return struct
+        else:
+            raise TypeError(f"Unsupported struct: {struct}")
+
+
 class TensorMetadata(Dict[str, TensorSpec]):
     """Metadata for inputs/outputs tensors."""
+
+    def __init__(self, *args, pytree_metadata: Optional[PyTreeMetadata] = None, **kwargs):
+        """Create TensorMetadata object.
+
+        Args:
+            args: Arguments for dict
+            pytree_metadata: Description of the PyTree metadata of the tensors
+            kwargs: Keyword arguments for dict
+        """
+        super().__init__(*args, **kwargs)
+        if pytree_metadata is None:
+            pytree_metadata = PyTreeMetadata(None, TensorType.NUMPY)
+        self._pytree_metadata = pytree_metadata
 
     def add(self, name: str, shape: Sequence[int], dtype: Union[np.dtype, Type[np.dtype]]) -> "TensorMetadata":
         """Add new item to metadata.
@@ -222,8 +386,13 @@ class TensorMetadata(Dict[str, TensorSpec]):
         self[name] = TensorSpec(name, tuple(shape), np.dtype(dtype))
         return self
 
+    @property
+    def pytree_metadata(self) -> PyTreeMetadata:
+        """Return PyTree metadata."""
+        return self._pytree_metadata
+
     @classmethod
-    def from_json(cls, data: List[Dict]) -> "TensorMetadata":
+    def from_json(cls, data: Dict) -> "TensorMetadata":
         """Create object JSON data format.
 
         Args:
@@ -232,21 +401,24 @@ class TensorMetadata(Dict[str, TensorSpec]):
         Returns:
             List converted to TensorMetadata object
         """
-        tensor_metadata = cls()
-        for value in data:
+        tensor_metadata = cls(pytree_metadata=PyTreeMetadata.from_dict(data["pytree_metadata"]))
+        for value in data["metadata"]:
             tensor_metadata.add(value["name"], value["shape"], value["dtype"])
         return tensor_metadata
 
-    def to_json(self) -> List[Dict]:
+    def to_json(self) -> Dict[str, Any]:
         """Convert object to JSON serializable format.
 
         Returns:
             List of dictionaries with tensors data.
         """
-        data = []
+        metadata = []
         for spec in self.values():
-            data.append(self._parse_tensorspec(spec))
-        return data
+            metadata.append(self._parse_tensorspec(spec))
+        return {
+            "metadata": metadata,
+            "pytree_metadata": self.pytree_metadata.to_dict(),
+        }
 
     @property
     def dynamic_axes(self) -> Dict:
@@ -262,6 +434,21 @@ class TensorMetadata(Dict[str, TensorSpec]):
     def _parse_tensorspec(spec: TensorSpec):
         return {"name": spec.name, "shape": spec.shape, "dtype": str(spec.dtype)}
 
+    def flatten_sample(self, sample: Any) -> Dict[str, Any]:
+        """Flatten sample according to PyTree metadata.
+
+        Returns flatten dictionary with keys corresponding to PyTree metadata.
+        """
+        return self.pytree_metadata.flatten_sample(sample)
+
+    def unflatten_sample(self, sample: Dict[str, Any], wrap_input: bool = False) -> Any:
+        """Unflatten sample according to PyTree metadata.
+
+        Returns unflatten sample according to PyTree metadata.
+        If wrap_input is True, then single tensor will be wrapped in tuple.
+        """
+        return self.pytree_metadata.unflatten_sample(sample, wrap_input=wrap_input)
+
 
 def get_tensor_type(tensor: Any) -> TensorType:
     """Get tensor type from tensor."""
@@ -271,7 +458,7 @@ def get_tensor_type(tensor: Any) -> TensorType:
         return TensorType.TORCH
     elif is_tf_available() and tf.is_tensor(tensor):
         return TensorType.TENSORFLOW
-    elif is_jax_available() and isinstance(tensor, jax.numpy.ndarray):
+    elif is_jax_available() and isinstance(tensor, (jax.numpy.ndarray, jaxlib.xla_extension.ArrayImpl)):
         return TensorType.JAX
     else:
         raise TypeError(f"Unsupported tensor type: {type(tensor)}")
@@ -280,7 +467,7 @@ def get_tensor_type(tensor: Any) -> TensorType:
 FRAMEWORK_TO_TENSOR_TYPE = {
     Framework.TORCH: TensorType.TORCH,
     Framework.TENSORFLOW: TensorType.TENSORFLOW,
-    Framework.JAX: TensorType.NUMPY,
+    Framework.JAX: TensorType.JAX,
     Framework.ONNX: TensorType.NUMPY,
     Framework.NONE: TensorType.NUMPY,
     Framework.TENSORRT: TensorType.NUMPY,

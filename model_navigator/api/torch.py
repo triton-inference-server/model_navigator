@@ -13,7 +13,7 @@
 # limitations under the License.
 """Torch optimize API."""
 import pathlib
-from typing import Mapping, Optional, Sequence, Tuple, Type, Union
+from typing import Optional, Sequence, Tuple, Type, Union
 
 import torch  # pytype: disable=import-error
 
@@ -101,12 +101,6 @@ def optimize(
             )
         LOGGER.info(f"Using default target formats: {[tf.name for tf in target_formats]}")
 
-    sample = next(iter(dataloader))
-    if isinstance(sample, Mapping):
-        forward_kw_names = tuple(sample.keys())
-    else:
-        forward_kw_names = None
-
     if runners is None:
         runners = default_runners(device_kind=target_device)
 
@@ -128,7 +122,6 @@ def optimize(
         _input_names=input_names,
         _output_names=output_names,
         target_device=target_device,
-        forward_kw_names=forward_kw_names,
         batch_dim=0 if batching else None,
         runner_names=runner_names,
         optimization_profile=optimization_profile,

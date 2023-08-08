@@ -16,7 +16,7 @@
 import json
 import pathlib
 import sys
-from typing import List, Optional
+from typing import Dict, Optional
 
 import fire
 import numpy as np
@@ -43,8 +43,8 @@ def correctness(
     batch_dim: int,
     results_path: str,
     runner_name: str,
-    input_metadata: List,
-    output_metadata: List,
+    input_metadata: Dict,
+    output_metadata: Dict,
     navigator_workspace: Optional[str] = None,
     model_path: Optional[str] = None,
 ) -> None:
@@ -54,8 +54,8 @@ def correctness(
         batch_dim (int): Batch dimension.
         results_path (str): Output results path.
         runner_name (str): Name of the model's runner.
-        input_metadata (List): Input metadata.
-        output_metadata (List): Output metadata.
+        input_metadata (Dict): Input metadata.
+        output_metadata (Dict): Output metadata.
         navigator_workspace (Optional[str], optional): Model Navigator workspace path.
             When None use current workdir. Defaults to None.
         model_path (Optional[str], optional): Path to the model.

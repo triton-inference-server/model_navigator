@@ -14,7 +14,7 @@
 """Runner definition for TensorFlow based models."""
 import gc
 from collections import OrderedDict
-from typing import Any, Dict, List, Mapping
+from typing import Dict, List, Mapping
 
 import numpy
 import numpy as np
@@ -40,9 +40,12 @@ class _BaseTFRunner(NavigatorRunner):
         """Runner deactivation implementation."""
         self._loaded_model = None
 
-    def infer_impl(self, feed_dict: Dict, *args: Any, **kwargs: Any) -> Dict[str, np.ndarray]:
+    def infer_impl(self, feed_dict: Dict, return_raw_outputs: bool = False) -> Dict[str, np.ndarray]:
         """Runner inference implementation override."""
         outputs = self._infer_impl(feed_dict)
+
+        if return_raw_outputs:
+            return outputs
 
         if self.output_metadata:
             output_names = self.output_metadata.keys()
@@ -161,13 +164,8 @@ class TensorFlowCUDARunner(_BaseTFRunner):
 
     def _infer_impl(self, feed_dict):
         """Runner inference handler implementation."""
-        if self._input_metadata_mapping is not None:
-            outputs = self.model.predict(dict(zip(self._input_metadata_mapping, feed_dict.values())), verbose=0)
-        else:
-            inputs = list(feed_dict.values())
-            if len(inputs) == 1:
-                inputs = inputs[0]
-            outputs = self.model.predict(inputs, verbose=0)
+        inputs = self.input_metadata.unflatten_sample(feed_dict)
+        outputs = self.model.predict(inputs, verbose=0)
         return outputs
 
     @classmethod
@@ -204,13 +202,8 @@ class TensorFlowCPURunner(_BaseTFRunner):
 
     def _infer_impl(self, feed_dict):
         """Runner inference handler implementation."""
-        if self._input_metadata_mapping is not None:
-            outputs = self.model.predict(dict(zip(self._input_metadata_mapping, feed_dict.values())), verbose=0)
-        else:
-            inputs = list(feed_dict.values())
-            if len(inputs) == 1:
-                inputs = inputs[0]
-            outputs = self.model.predict(inputs, verbose=0)
+        inputs = self.input_metadata.unflatten_sample(feed_dict)
+        outputs = self.model.predict(inputs, verbose=0)
         return outputs
 
     @classmethod

@@ -27,7 +27,6 @@ from model_navigator.api.config import (
     INPUT_FORMATS,
     Format,
 )
-from model_navigator.core.tensor import TensorSpec
 from model_navigator.frameworks import Framework
 
 
@@ -65,11 +64,13 @@ def test_python_package_return_valid_runner():
         runner = package.get_runner(strategy=nav.MaxThroughputStrategy())
         assert runner is not None
         assert runner.format() == nav.Format.PYTHON
-        assert runner.input_metadata == {
-            "input__0": TensorSpec(name="input__0", shape=(-1, 5), dtype=np.dtype("float32"), optional=False)
+        assert runner.input_metadata.to_json() == {
+            "metadata": [{"name": "input__0", "shape": (-1, 5), "dtype": "float32"}],
+            "pytree_metadata": {"metadata": "input__0", "tensor_type": "numpy"},
         }
-        assert runner.output_metadata == {
-            "output__0": TensorSpec(name="output__0", shape=(-1, 5), dtype=np.dtype("float32"), optional=False)
+        assert runner.output_metadata.to_json() == {
+            "metadata": [{"name": "output__0", "shape": (-1, 5), "dtype": "float32"}],
+            "pytree_metadata": {"metadata": {"output__0": "output__0"}, "tensor_type": "numpy"},
         }
 
         with runner:

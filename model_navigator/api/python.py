@@ -13,7 +13,7 @@
 # limitations under the License.
 """Python optimize API."""
 import pathlib
-from typing import Callable, Mapping, Optional, Sequence, Tuple, Type, Union
+from typing import Callable, Optional, Sequence, Tuple, Type, Union
 
 from model_navigator.api.config import (
     DEFAULT_NONE_FRAMEWORK_TARGET_FORMATS,
@@ -79,9 +79,6 @@ def optimize(
     if isinstance(model, str):
         model = pathlib.Path(model)
 
-    sample = next(iter(dataloader))
-    forward_kw_names = tuple(sample.keys()) if isinstance(sample, Mapping) else None
-
     if runners is None:
         runners = default_runners(device_kind=target_device)
 
@@ -96,7 +93,6 @@ def optimize(
         Framework.NONE,
         model=model,
         dataloader=dataloader,
-        forward_kw_names=forward_kw_names,
         target_formats=target_formats,
         target_device=target_device,
         sample_count=sample_count,
