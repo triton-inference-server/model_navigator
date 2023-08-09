@@ -26,6 +26,7 @@ import numpy as np
 from model_navigator.api.config import TensorType
 from model_navigator.frameworks import Framework, is_jax_available, is_tf_available, is_torch_available
 from model_navigator.utils import common, module
+from model_navigator.utils.common import PYTHON_PRIMITIVE_TYPES
 
 torch = module.lazy_import("torch")
 tf = module.lazy_import("tensorflow")
@@ -306,20 +307,55 @@ class PyTreeMetadata:
             unflatten_sample = (unflatten_sample,)
         return unflatten_sample
 
+    def is_compatible_with(self, sample: Any) -> bool:
+        """Check if sample is compatible with PyTreeMetadata.
+
+        Args:
+            sample: A sample to check compatibility with PyTreeMetadata
+
+        Returns:
+            True if sample is compatible with PyTreeMetadata, False otherwise
+        """
+        return self._is_compatible_with(self._metadata, sample)
+
+    def _is_compatible_with(self, metadata, sample):
+        if isinstance(metadata, str):
+            return is_tensor(sample, self.tensor_type)
+        elif isinstance(metadata, PYTHON_PRIMITIVE_TYPES):
+            if not isinstance(sample, PYTHON_PRIMITIVE_TYPES):
+                return False
+            return metadata == sample
+        elif isinstance(metadata, Mapping):
+            if not isinstance(sample, Mapping) or set(metadata) != set(sample):
+                return False
+            for key, item in sample.items():
+                if not self._is_compatible_with(metadata[key], item):
+                    return False
+            return True
+        elif isinstance(sample, Sequence):
+            if not isinstance(metadata, Sequence) or len(metadata) != len(sample):
+                return False
+            for item, submetadata in zip(sample, metadata):
+                if not self._is_compatible_with(submetadata, item):
+                    return False
+            return True
+        else:
+            raise TypeError(f"Unsupported type: {type(sample)}")
+
     @classmethod
     def _from_sample(cls, sample, tensor_type, names):
         """Create PyTreeMetadata from sample."""
         if is_tensor(sample, tensor_type):
             return next(names), names
-        if isinstance(sample, (int, float, bool, type(None))):
+        if isinstance(sample, PYTHON_PRIMITIVE_TYPES):
             return sample, names
         if isinstance(sample, Mapping):
             metadata = {}
-            for key, item in sorted(sample.items()):
+            for key, item in sample.items():
                 submetadata, names = cls._from_sample(item, tensor_type, names)
                 metadata[key] = submetadata
             return metadata, names
-        if isinstance(sample, (list, tuple)):
+        if isinstance(sample, Sequence):
             metadata = []
             for item in sample:
                 submetadata, names = cls._from_sample(item, tensor_type, names)
@@ -328,33 +364,33 @@ class PyTreeMetadata:
         raise TypeError(f"Unsupported type: {type(sample)}")
 
     def _flatten_sample(self, sample, struct, flatten_sample, include_constants=False):
-        if isinstance(sample, Mapping):
+        if isinstance(struct, str):
+            flatten_sample[struct] = sample
+        elif isinstance(sample, PYTHON_PRIMITIVE_TYPES):
+            if include_constants:
+                flatten_sample[f"const_{uuid.uuid4()}"] = sample
+        elif isinstance(sample, Mapping):
             assert isinstance(struct, Mapping)
             for key, item in sample.items():
                 self._flatten_sample(item, struct[key], flatten_sample, include_constants=include_constants)
-        elif isinstance(sample, (list, tuple)):
-            assert isinstance(struct, (list, tuple))
+        elif isinstance(sample, Sequence):
+            assert isinstance(struct, Sequence)
             i = 0
             for item in sample:
                 self._flatten_sample(item, struct[i], flatten_sample, include_constants=include_constants)
                 i += 1
-        elif isinstance(struct, str):
-            flatten_sample[struct] = sample
-        elif isinstance(sample, (int, float, bool, type(None))):
-            if include_constants:
-                flatten_sample[f"const_{uuid.uuid4()}"] = sample
         else:
             raise TypeError(f"Unsupported type: {type(sample)}")
 
     def _unflatten_sample(self, sample, struct):
-        if isinstance(struct, Mapping):
-            return {key: self._unflatten_sample(sample, item) for key, item in struct.items()}
-        elif isinstance(struct, (list, tuple)):
-            return type(struct)(self._unflatten_sample(sample, item) for item in struct)
-        elif isinstance(struct, str):
+        if isinstance(struct, str):
             return sample[struct]
-        elif isinstance(struct, (int, float, bool, type(None))):
+        elif isinstance(struct, PYTHON_PRIMITIVE_TYPES):
             return struct
+        elif isinstance(struct, Mapping):
+            return {key: self._unflatten_sample(sample, item) for key, item in struct.items()}
+        elif isinstance(struct, Sequence):
+            return type(struct)(self._unflatten_sample(sample, item) for item in struct)
         else:
             raise TypeError(f"Unsupported struct: {struct}")
 

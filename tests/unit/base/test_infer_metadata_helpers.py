@@ -16,7 +16,7 @@ from unittest.mock import MagicMock
 import numpy
 import pytest
 
-from model_navigator.api.config import Framework, TensorRTProfile, TensorType
+from model_navigator.api.config import TensorRTProfile, TensorType
 from model_navigator.commands.infer_metadata import (
     _assert_all_inputs_have_same_pytree_metadata,
     _extract_max_batch_size,
@@ -109,7 +109,7 @@ def test_assert_all_inputs_have_same_pytree_metadata_raise_no_exception_when_inp
         input_metadata.pytree_metadata = pytree_metadata
         input_metadata.keys = lambda: input_names
 
-        _assert_all_inputs_have_same_pytree_metadata(dataloader, input_metadata, Framework.ONNX)
+        _assert_all_inputs_have_same_pytree_metadata(dataloader, input_metadata)
 
 
 def test_assert_all_inputs_have_same_pytree_metadata_raise_exception_when_inputs_have_different_metadata():
@@ -140,4 +140,4 @@ def test_assert_all_inputs_have_same_pytree_metadata_raise_exception_when_inputs
         input_metadata.keys = lambda: input_names
 
         with pytest.raises(ModelNavigatorUserInputError):
-            _assert_all_inputs_have_same_pytree_metadata(dataloader, input_metadata, Framework.ONNX)
+            _assert_all_inputs_have_same_pytree_metadata(dataloader, input_metadata)

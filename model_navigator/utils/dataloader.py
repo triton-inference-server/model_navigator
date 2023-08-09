@@ -21,6 +21,7 @@ from model_navigator.api.config import Sample, TensorType
 from model_navigator.core.tensor import is_tensor
 from model_navigator.exceptions import ModelNavigatorUserInputError
 from model_navigator.frameworks import Framework
+from model_navigator.utils.common import PYTHON_PRIMITIVE_TYPES
 
 
 def to_numpy(tensor: Any, from_framework: Framework) -> np.ndarray:
@@ -118,16 +119,16 @@ def _is_valid_io(sample: Any, tensor_type: TensorType) -> bool:
     Returns:
         True if sample is valid I/O, False otherwise
     """
-    if is_tensor(sample, tensor_type) or isinstance(sample, (int, float, bool, type(None))):
+    if is_tensor(sample, tensor_type) or isinstance(sample, PYTHON_PRIMITIVE_TYPES):
         return True
-    if isinstance(sample, dict):
+    if isinstance(sample, Mapping):
         for name, tensor in sample.items():
             if not isinstance(name, str):
                 return False
             if not _is_valid_io(tensor, tensor_type):
                 return False
         return True
-    elif isinstance(sample, (list, tuple)):
+    elif isinstance(sample, Sequence):
         for tensor in sample:
             if not _is_valid_io(tensor, tensor_type):
                 return False

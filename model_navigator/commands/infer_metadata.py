@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Inputs and outputs metadata commands."""
-import itertools
 import pathlib
 from typing import Dict, Iterator, List, Mapping, Optional, Sequence, Tuple, Union
 
@@ -104,16 +103,13 @@ def _get_trt_profile_from_axes_shapes(axes_shapes, batch_dim):
 def _assert_all_inputs_have_same_pytree_metadata(
     dataloader: Union[SizedDataLoader, Iterator],
     input_metadata: TensorMetadata,
-    framework: Framework,
 ) -> bool:
     for sample in dataloader:
-        names = itertools.chain(
-            input_metadata.keys(), (f"__unexpected_input_{i}" for i in itertools.count(start=0, step=1))
-        )
-        metadata = PyTreeMetadata.from_sample(sample, tensor_type=FRAMEWORK_TO_TENSOR_TYPE[framework], names=names)
-        if metadata != input_metadata.pytree_metadata:
+        if not input_metadata.pytree_metadata.is_compatible_with(sample):
             raise ModelNavigatorUserInputError(
-                f"All inputs must have the same structure. Found: {metadata} and {input_metadata.pytree_metadata}"
+                f"All inputs must have the same structure.\n"
+                f"Input structure: {input_metadata.pytree_metadata}\n"
+                f"Sample: {sample}."
             )
 
 
@@ -165,7 +161,7 @@ class InferInputMetadata(Command, is_required=True):
         dataloader_trt_profile = _get_trt_profile_from_axes_shapes(axes_shapes, batch_dim)
         input_metadata = _get_metadata_from_axes_shapes(pytree_metadata, axes_shapes, batch_dim, input_dtypes)
 
-        _assert_all_inputs_have_same_pytree_metadata(dataloader, input_metadata, framework)
+        _assert_all_inputs_have_same_pytree_metadata(dataloader, input_metadata)
 
         if optimization_profile.dataloader:
             pd_sample = next(iter(optimization_profile.dataloader))

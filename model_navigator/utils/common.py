@@ -30,6 +30,8 @@ torch = module.lazy_import("torch")
 
 T = TypeVar("T")
 
+PYTHON_PRIMITIVE_TYPES = (int, float, str, bool, bytes, type(None))
+
 
 def dataclass2dict(config: Any) -> Dict:
     """Parse a dataclass to a dictionary.
