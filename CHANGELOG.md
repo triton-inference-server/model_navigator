@@ -16,7 +16,7 @@ limitations under the License.
 
 # Changelog
 
-## 0.7.0 (unreleased)
+## 0.7.0
 - new: Inplace Optimize feature - optimize models directly in the Python code
 - new: Non-tensor inputs and outputs support
 - new: Model warmup support in Triton model configuration
@@ -26,6 +26,18 @@ limitations under the License.
 - new: Add option to configure minimal trials and stabilization windows for performance verification and profiling
 - change: Navigator package version change to 0.2.3. Custom configurations now use trt_profiles list instead single value
 - change: Store separate reproduction scripts for runners used during correctness and profiling
+
+- Version of external components used during testing:
+  - [PyTorch 2.1.0a0+b5021ba](https://github.com/pytorch/pytorch/commit/b5021ba9)
+  - [TensorFlow 2.12.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.12.0)
+  - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+  - [ONNX Runtime 1.15.1](https://github.com/microsoft/onnxruntime/tree/v1.15.1)
+  - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.47.1
+  - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.27
+  - [tf2onnx v1.14.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0)
+  - Other component versions depend on the used framework containers versions.
+    See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+    for a detailed summary.
 
 ## 0.6.3
 - fix: Conditional imports of supported frameworks in export commands
