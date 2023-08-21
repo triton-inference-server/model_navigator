@@ -28,6 +28,7 @@ from model_navigator.runtime_analyzer.strategy import (  # noqa: F401
 from .config import (  # noqa: F401
     DeviceKind,
     Format,
+    Framework,
     JitType,
     OnnxConfig,
     OptimizationProfile,

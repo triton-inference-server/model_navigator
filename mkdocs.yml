@@ -107,6 +107,7 @@ nav:
             - Sequence Batcher: triton/sequence_batcher.md
             - Accelerators: triton/accelerators.md
             - Model Warmup: triton/warmup.md
+  - Utilities: utilities.md
   - Examples: examples.md
   - Changelog: CHANGELOG.md
   - Known Issues: known_issues.md

@@ -16,6 +16,10 @@ limitations under the License.
 
 # Changelog
 
+## unreleased
+- new: Added find max batch size utility
+- new: Added utilities API documentation
+
 ## 0.7.0
 - new: Inplace Optimize feature - optimize models directly in the Python code
 - new: Non-tensor inputs and outputs support
