@@ -303,7 +303,7 @@ class PyTreeMetadata:
         If wrap_input is True, then single tensor will be wrapped in tuple.
         """
         unflatten_sample = self._unflatten_sample(sample, self._metadata)
-        if wrap_input and isinstance(self._metadata, (str, dict)):
+        if wrap_input and isinstance(self._metadata, (str, Mapping)):
             unflatten_sample = (unflatten_sample,)
         return unflatten_sample
 
@@ -317,6 +317,30 @@ class PyTreeMetadata:
             True if sample is compatible with PyTreeMetadata, False otherwise
         """
         return self._is_compatible_with(self._metadata, sample)
+
+    def get_names_mapping(self) -> Tuple[Sequence[Any], Dict[str, Any]]:
+        """Get mapping of PyTree metadata to names."""
+        metadata = self._metadata
+        if isinstance(metadata, (str, Mapping)):
+            metadata = (metadata,)
+
+        if isinstance(metadata[-1], Mapping):
+            args, kwargs = metadata[:-1], metadata[-1]
+        else:
+            args, kwargs = metadata, {}
+
+        args_mapping, kwargs_mapping = [], {}
+        for arg in args:
+            flattened = {}
+            self._flatten_sample(arg, arg, flattened, include_constants=True)
+            args_mapping.append(list(flattened.keys()))
+
+        for key, arg in kwargs.items():
+            flattened = {}
+            self._flatten_sample(arg, arg, flattened, include_constants=True)
+            kwargs_mapping[key] = list(flattened.keys())
+
+        return args_mapping, kwargs_mapping
 
     def _is_compatible_with(self, metadata, sample):
         if isinstance(metadata, str):

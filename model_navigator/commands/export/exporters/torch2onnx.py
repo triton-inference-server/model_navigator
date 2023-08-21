@@ -13,6 +13,7 @@
 # limitations under the License.
 """Export Torch model to ONNX model."""
 
+import inspect
 import pathlib
 from typing import Any, Dict, List, Optional
 
@@ -71,7 +72,22 @@ def export(
 
     dummy_input = {n: torch.from_numpy(val).to(target_device) for n, val in profiling_sample.items()}
     dummy_input = input_metadata.unflatten_sample(dummy_input)
-    input_names = list(input_metadata.keys())
+
+    forward_argspec = inspect.getfullargspec(model.forward)
+    forward_args = forward_argspec.args[1:]
+
+    args_mapping, kwargs_mapping = input_metadata.pytree_metadata.get_names_mapping()
+
+    for argname in kwargs_mapping:
+        assert argname in forward_args, f"Argument {argname} is not in forward argspec."
+
+    input_names = []
+    for args_names in args_mapping:
+        input_names.extend(args_names)
+
+    for argname in forward_args:
+        if argname in kwargs_mapping:
+            input_names.extend(kwargs_mapping[argname])
 
     exported_model_path = pathlib.Path(exported_model_path)
     if not exported_model_path.is_absolute():

@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Torch runners."""
-from collections import OrderedDict
-from typing import List, Mapping
+from typing import List
 
 from model_navigator.api.config import Format, TensorType
 from model_navigator.core.tensor import get_tensor_type
@@ -23,7 +22,6 @@ from model_navigator.runners.base import DeviceKind, NavigatorRunner
 from model_navigator.runners.registry import register_runner
 from model_navigator.utils import module
 from model_navigator.utils.common import numpy_to_torch_dtype
-from model_navigator.utils.dataloader import get_default_output_names
 
 torch = module.lazy_import("torch")
 
@@ -63,19 +61,7 @@ class _BaseTorchRunner(NavigatorRunner):
         if return_raw_outputs:
             return outputs
 
-        if torch.is_tensor(outputs):
-            outputs = (outputs,)
-        if isinstance(outputs, Mapping):
-            outputs = outputs.values()
-
-        out_dict = OrderedDict()
-        if self.output_metadata:
-            output_names = self.output_metadata.keys()
-        else:
-            output_names = outputs.keys() if isinstance(outputs, Mapping) else get_default_output_names(len(outputs))
-
-        for name, output in zip(output_names, outputs):
-            out_dict[name] = output
+        out_dict = self.output_metadata.flatten_sample(outputs)
         out_dict = self._prepare_outputs(out_dict)
 
         return out_dict
