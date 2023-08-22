@@ -14,6 +14,7 @@
 # noqa: D104
 """Public utilities for the Model Navigator API."""
 
+import functools
 import json
 import logging
 import pathlib
@@ -113,6 +114,7 @@ def find_max_batch_size_till_oom(
             input_metadata=input_metadata,
             output_metadata=TensorMetadata(),
         )  # pytype: disable=not-instantiable
+        runner.infer = functools.partial(runner.infer, return_raw_outputs=True, check_inputs=False)
         try:
             LOGGER.info("Starting max batch size search.")
             MaxBatchSizeFinder(

@@ -20,6 +20,23 @@ limitations under the License.
 - new: Added find max batch size utility
 - new: Added utilities API documentation
 
+## 0.7.1
+- fix: gather onnx input names based on model's forward signature
+- fix: do not run TensorRT max batch size search when max batch size is None
+- fix: use pytree metadata to flatten torch complex outputs
+
+- Version of external components used during testing:
+  - [PyTorch 2.1.0a0+b5021ba](https://github.com/pytorch/pytorch/commit/b5021ba9)
+  - [TensorFlow 2.12.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.12.0)
+  - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+  - [ONNX Runtime 1.15.1](https://github.com/microsoft/onnxruntime/tree/v1.15.1)
+  - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.47.1
+  - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.27
+  - [tf2onnx v1.14.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0)
+  - Other component versions depend on the used framework containers versions.
+    See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+    for a detailed summary.
+
 ## 0.7.0
 - new: Inplace Optimize feature - optimize models directly in the Python code
 - new: Non-tensor inputs and outputs support

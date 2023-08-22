@@ -60,6 +60,9 @@ class Convert2TensorRTWithMaxBatchSizeSearch(Command):
         )
 
         if run_search:
+            assert dataloader_max_batch_size is not None
+            assert device_max_batch_size is not None
+
             conversion_max_batch_size = (
                 cls._execute_conversion_with_max_batch_size_search(  # TODO what is the best value?
                     convert_func=convert_func,
@@ -68,13 +71,24 @@ class Convert2TensorRTWithMaxBatchSizeSearch(Command):
                     dataloader_max_batch_size=dataloader_max_batch_size,
                 )
             )
-            LOGGER.info(f"Converted with maximal batch size: {conversion_max_batch_size}.")
         else:
-            LOGGER.info("Search for maximal batch size disable. Execute single conversion.")
-            conversion_max_batch_size = dataloader_max_batch_size
-            convert_func(get_args())
+            conversion_max_batch_size = cls._execute_single_conversion(
+                convert_func=convert_func, get_args=get_args, max_batch_size=dataloader_max_batch_size
+            )
+        LOGGER.info(f"Converted with maximal batch size: {conversion_max_batch_size}.")
 
         return conversion_max_batch_size
+
+    @classmethod
+    def _execute_single_conversion(
+        cls,
+        convert_func: Callable,
+        get_args: Callable,
+        max_batch_size: int,
+    ):
+        LOGGER.info("Search for maximal batch size disable. Execute single conversion.")
+        convert_func(get_args())
+        return max_batch_size
 
     @classmethod
     def _execute_conversion_with_max_batch_size_search(
@@ -213,7 +227,7 @@ class Convert2TensorRTWithMaxBatchSizeSearch(Command):
             LOGGER.info("`batch_dim` is None. Model does not support batching.")
             return False
 
-        if not cls._is_valid_batch_size(dataloader_batch_size) and not cls._is_valid_batch_size(device_max_batch_size):
+        if not cls._is_valid_batch_size(dataloader_batch_size) or not cls._is_valid_batch_size(device_max_batch_size):
             LOGGER.info(
                 "Dataloader or device max batch size is invalid.\n"
                 "Provided values:\n"
