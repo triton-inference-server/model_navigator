@@ -16,7 +16,7 @@
 from typing import TYPE_CHECKING, Dict
 
 if TYPE_CHECKING:
-    from .model import BaseModule
+    from .wrapper import Module
 
 
 class ModuleRegistry:
@@ -24,15 +24,15 @@ class ModuleRegistry:
 
     def __init__(self) -> None:
         """Initialize ModuleRegistry."""
-        self._registry: Dict[str, "BaseModule"] = {}
+        self._registry: Dict[str, "Module"] = {}
 
-    def register(self, name: str, module: "BaseModule") -> None:
+    def register(self, name: str, module: "Module") -> None:
         """Register a module."""
         if name in self._registry:
             raise ValueError(f"Module {name} already registered.")
         self._registry[name] = module
 
-    def get(self, name: str) -> "BaseModule":
+    def get(self, name: str) -> "Module":
         """Get a module."""
         return self._registry[name]
 
@@ -45,10 +45,21 @@ class ModuleRegistry:
 
     def optimize(self) -> None:
         """Optimize all registered modules."""
-        for module in self._registry.values():
+        for module in self.values():
             if not module.is_optimized:
-                assert hasattr(module, "optimize"), f"Module {module.name} does not have an optimize method."
                 module.optimize()
+
+    def items(self):
+        """Return registered items."""
+        return self._registry.items()
+
+    def keys(self):
+        """Return registered keys."""
+        return self._registry.keys()
+
+    def values(self):
+        """Return registered values."""
+        return self._registry.values()
 
 
 module_registry = ModuleRegistry()

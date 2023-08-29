@@ -15,5 +15,7 @@ limitations under the License.
 -->
 # Known Issues and Limitations
 
+- nav.Module moves original torch.nn.Module to the CPU, in case of weight sharing that might result in unexpected behaviour
+- For data dependent dynamic control flow (multiple computaion graphs) nav.Module might copy the weights for each separate grah
 - Source model running in Python can cause OOM issue when GPU memory is larger than CPU RAM memory
 - Verify command could potentially experience CUDA OOM errors while trying to run inference on two models at the same time.

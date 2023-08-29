@@ -16,9 +16,14 @@ limitations under the License.
 
 # Changelog
 
-## unreleased
+## 0.8.0 (unreleased)
+- new: Data dependent dynamic control flow support in nav.Module (multiple computaion graphs per module)
 - new: Added find max batch size utility
 - new: Added utilities API documentation
+
+- Known issues and limitations:
+  - nav.Module moves original torch.nn.Module to the CPU, in case of weight sharing that might result in unexpected behaviour
+  - For data dependent dynamic control flow (multiple computaion graphs) nav.Module might copy the weights for each separate grah
 
 ## 0.7.1
 - fix: gather onnx input names based on model's forward signature

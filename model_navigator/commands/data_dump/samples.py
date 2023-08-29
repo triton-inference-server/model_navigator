@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Commands for fetching and dumping model IO."""
+import math
 import pathlib
-from typing import Any, List, Optional
+from typing import Any, Iterable, Optional
 
 import numpy as np
 
@@ -25,7 +26,7 @@ from model_navigator.core.workspace import Workspace
 from model_navigator.exceptions import ModelNavigatorUserInputError
 from model_navigator.frameworks import Framework
 from model_navigator.runners.utils import get_format_default_runners
-from model_navigator.utils.dataloader import extract_bs1, extract_sample, load_samples
+from model_navigator.utils.dataloader import IndiciesFilteredDataloader, extract_bs1, extract_sample, load_samples
 from model_navigator.utils.format_helpers import FRAMEWORK2BASE_FORMAT
 
 
@@ -46,7 +47,14 @@ def _validate_tensor(tensor: np.ndarray, *, raise_on_error: bool = True):
 
 
 def samples_to_npz(
-    samples: List[Sample], path: pathlib.Path, batch_dim: Optional[int], *, raise_on_error: bool = True
+    samples: Iterable[Sample],
+    path: pathlib.Path,
+    batch_dim: Optional[int],
+    *,
+    num_samples: Optional[int] = None,
+    metadata: Optional[TensorMetadata] = None,
+    framework: Optional[Framework] = None,
+    raise_on_error: bool = True,
 ) -> None:
     """Save samples to .npz files. Each sample is saved to `path/{sample index}.npz` file.
 
@@ -54,10 +62,21 @@ def samples_to_npz(
         samples (List[Sample]): Samples to save.
         path (Path): Output directory.
         batch_dim (Optional[int]): Batch dimension
+        num_samples (Optional[int], optional): Number of samples to save. Defaults to None.
+        metadata (Optional[TensorMetadata], optional): Metadata of the samples. Defaults to None.
+        framework (Framework): Model framework. Defaults to None.
         raise_on_error (bool, optional): If True raise an error when sample is invalid. Defaults to True.
     """
     path.mkdir(parents=True, exist_ok=True)
+    if num_samples is None:
+        assert hasattr(samples, "__len__")
+        num_samples = len(samples)
+    num_digits = math.ceil(math.log10(num_samples)) + 1
     for i, sample in enumerate(samples):
+        if metadata is not None:
+            assert framework is not None
+            sample = extract_sample(sample, metadata, framework)
+        sample = extract_bs1(sample, batch_dim)
         squeezed_sample = {}
         for name, tensor in sample.items():
             if batch_dim is not None:
@@ -67,7 +86,7 @@ def samples_to_npz(
 
             squeezed_sample[name] = tensor
 
-        np.savez((path / f"{i}.npz").as_posix(), **squeezed_sample)
+        np.savez((path / f"{str(i).zfill(num_digits)}.npz").as_posix(), **squeezed_sample)
 
 
 class FetchInputModelData(Command, is_required=True):
@@ -119,40 +138,47 @@ class FetchInputModelData(Command, is_required=True):
         LOGGER.info("Collecting input samples for model.")
         np.random.seed(seed)
         correctness_samples_ind = set(np.random.choice(num_samples, size=sample_count, replace=False))
-        profiling_sample, correctness_samples, conversion_samples = self._collect_samples(
+        profiling_sample_ind, conversion_samples_ind = self._collect_samples(
             dataloader,
             input_metadata,
             dataloader_trt_profile,
             framework,
-            batch_dim,
             correctness_samples_ind,
-            optimization_profile.dataloader,
         )
 
         sample_data_path = workspace.path / "model_input"
         sample_data_path.mkdir(parents=True, exist_ok=True)
 
-        output = {}
-
         LOGGER.info("Saving samples into the workspace.")
-        for samples, dirname, sample_name in [
-            ([profiling_sample], "profiling", "profiling_sample"),
-            (correctness_samples, "correctness", "correctness_samples"),
-            (conversion_samples, "conversion", "conversion_samples"),
+        for samples_ind, dirname in [
+            ([profiling_sample_ind], "profiling"),
+            (correctness_samples_ind, "correctness"),
+            (conversion_samples_ind, "conversion"),
         ]:
             sample_path = sample_data_path / dirname
-            samples_to_npz(samples, sample_path, batch_dim, raise_on_error=raise_on_error)
-            output[sample_name] = sample_path
+            if dirname == "profiling" and optimization_profile.dataloader is not None:
+                LOGGER.info("Using performance dataloader for profiling sample. Collecting first item only.")
+                samples = IndiciesFilteredDataloader(optimization_profile.dataloader, [0])
+            else:
+                samples = IndiciesFilteredDataloader(dataloader, samples_ind)
+            samples_to_npz(
+                samples,
+                sample_path,
+                batch_dim,
+                metadata=input_metadata,
+                framework=framework,
+                raise_on_error=raise_on_error,
+            )
 
-        return CommandOutput(status=CommandStatus.OK, output=output)
+        return CommandOutput(
+            status=CommandStatus.OK,
+        )
 
     @staticmethod
-    def _collect_samples(
-        dataloader, input_metadata, trt_profile, framework, batch_dim, correctness_samples_ind, performance_dataloader
-    ):
-        profiling_sample = None
-        correctness_samples = []
-        conversion_samples = []
+    def _collect_samples(dataloader, input_metadata, trt_profile, framework, correctness_samples_ind):
+        profiling_sample_ind = None
+        correctness_samples_ind = []
+        conversion_samples_ind = []
         conversion_min_max_sampled = {
             name: {ax: {"min": False, "max": False} for ax in range(len(input_metadata[name].shape))}
             for name in input_metadata
@@ -162,8 +188,6 @@ class FetchInputModelData(Command, is_required=True):
                 break
             sample = extract_sample(sample, input_metadata, framework)
 
-            if i in correctness_samples_ind:
-                correctness_samples.append(extract_bs1(sample, batch_dim))
             do_sample_conversion = False
             do_sample_profiling = False
             for name in input_metadata:
@@ -185,22 +209,16 @@ class FetchInputModelData(Command, is_required=True):
                             do_sample_profiling = True
 
             if do_sample_conversion:
-                conversion_samples.append(extract_bs1(sample, batch_dim))
+                conversion_samples_ind.append(i)
             if do_sample_profiling:
-                profiling_sample = extract_bs1(sample, batch_dim)
+                profiling_sample_ind = i
 
-        if performance_dataloader:
-            LOGGER.info("Using performance dataloader for profiling sample. Collecting first item only.")
-            sample = next(iter(performance_dataloader))
-            sample = extract_sample(sample, input_metadata, framework)
-            profiling_sample = extract_bs1(sample, batch_dim)
+        if not conversion_samples_ind:
+            conversion_samples_ind = correctness_samples_ind[:1]
+        if profiling_sample_ind is None:
+            profiling_sample_ind = correctness_samples_ind[0]
 
-        if not conversion_samples:
-            conversion_samples = correctness_samples[:1]
-        if profiling_sample is None:
-            profiling_sample = conversion_samples[0]
-
-        return profiling_sample, correctness_samples, conversion_samples
+        return profiling_sample_ind, conversion_samples_ind
 
 
 class FetchOutputModelData(Command, is_required=True):
@@ -240,18 +258,18 @@ class FetchOutputModelData(Command, is_required=True):
             output_metadata=output_metadata,
         )  # pytype: disable=not-instantiable
 
-        output = {}
-        for input_sample, sample_name, output_sample in [
-            ("profiling_sample", "profiling", "profiling_sample_output"),
-            ("correctness_samples", "correctness", "correctness_samples_output"),
-            ("conversion_samples", "conversion", "conversion_samples_output"),
+        for input_sample, sample_name in [
+            ("profiling_sample", "profiling"),
+            ("correctness_samples", "correctness"),
+            ("conversion_samples", "conversion"),
         ]:
             samples = load_samples(samples_name=input_sample, workspace=workspace.path, batch_dim=batch_dim)
             with runner:
-                outputs = [runner.infer(sample) for sample in samples]
+                outputs = (runner.infer(sample) for sample in samples)
 
-            sample_path = output_data_path / sample_name
-            samples_to_npz(outputs, sample_path, batch_dim, raise_on_error=raise_on_error)
-            output[output_sample] = sample_path
+                sample_path = output_data_path / sample_name
+                samples_to_npz(outputs, sample_path, batch_dim, raise_on_error=raise_on_error, num_samples=len(samples))
 
-        return CommandOutput(status=CommandStatus.OK, output=output)
+        return CommandOutput(
+            status=CommandStatus.OK,
+        )

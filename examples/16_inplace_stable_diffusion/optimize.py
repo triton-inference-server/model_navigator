@@ -18,6 +18,8 @@ import os
 import time
 
 # pytype: disable=import-error
+import torch
+import transformers
 from diffusers import DPMSolverMultistepScheduler, StableDiffusionPipeline
 from transformers.modeling_outputs import BaseModelOutputWithPooling
 
@@ -32,8 +34,11 @@ nav.inplace_config.min_num_samples = int(
 )
 
 
-LOGGER = logging.getLogger("model_navigator.inplace")
+LOGGER = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
+
+# workaround to make transformers use the same device as model navigator
+transformers.modeling_utils.get_parameter_device = lambda parameter: torch.device("cuda")
 
 
 def get_pipeline():

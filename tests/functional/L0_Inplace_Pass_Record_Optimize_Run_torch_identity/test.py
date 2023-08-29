@@ -89,7 +89,7 @@ def main():
             "TorchCUDA",
             "TorchScriptCUDA",
             "TensorRT",
-        ),  # TODO: remove after custom runners support zero-copy
+        ),
     )
 
     @nav.module(optimize_config=optimize_config)
@@ -110,8 +110,9 @@ def main():
 
     assert nav.inplace_config.mode == nav.Mode.RUN, f"Unexpected mode: {nav.inplace_config.mode}"
 
-    package = getattr(model._wrapper, "_package", None)
-    assert package is not None, "Package is not created."
+    packages = getattr(model._wrapper, "_packages", [])
+    assert len(packages) == 1, "Package is not created."
+    package = packages[0]
 
     status_file = args.status
     status = collect_optimize_status(package.status)

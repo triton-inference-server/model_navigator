@@ -57,14 +57,6 @@ def test_model_registry_check_all_ready_returns_false_when_not_all_models_ready(
     assert not module_registry.check_all_ready()
 
 
-def test_model_registry_optimize_raises_error_when_model_missing_optimize_method():
-    model = MagicMock(is_optimized=False, is_ready_for_optimization=True)
-    del model.optimize
-    module_registry._registry = {"model1": model}
-    with pytest.raises(AssertionError):
-        module_registry.optimize()
-
-
 def test_pass_model_is_optimized_returns_false():
     module = PassthroughModule(
         module=MagicMock(),

@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from unittest.mock import MagicMock
 
 import numpy
 import pytest
@@ -102,14 +101,10 @@ def test_assert_all_inputs_have_same_pytree_metadata_raise_no_exception_when_inp
         ],
     ]
 
-    input_names = ["input_0", "input_1"]
     for dataloader in valid_dataloaders:
-        pytree_metadata = PyTreeMetadata.from_sample(dataloader[0], TensorType.NUMPY, names=input_names)
-        input_metadata = MagicMock()
-        input_metadata.pytree_metadata = pytree_metadata
-        input_metadata.keys = lambda: input_names
+        pytree_metadata = PyTreeMetadata.from_sample(dataloader[0], TensorType.NUMPY, prefix="dummy")
 
-        _assert_all_inputs_have_same_pytree_metadata(dataloader, input_metadata)
+        _assert_all_inputs_have_same_pytree_metadata(dataloader, pytree_metadata)
 
 
 def test_assert_all_inputs_have_same_pytree_metadata_raise_exception_when_inputs_have_different_metadata():
@@ -132,12 +127,8 @@ def test_assert_all_inputs_have_same_pytree_metadata_raise_exception_when_inputs
         ],
     ]
 
-    input_names = ["input_0", "input_1"]
     for dataloader in invalid_dataloaders:
-        pytree_metadata = PyTreeMetadata.from_sample(dataloader[0], TensorType.NUMPY, names=input_names)
-        input_metadata = MagicMock()
-        input_metadata.pytree_metadata = pytree_metadata
-        input_metadata.keys = lambda: input_names
+        pytree_metadata = PyTreeMetadata.from_sample(dataloader[0], TensorType.NUMPY, prefix="dummy")
 
         with pytest.raises(ModelNavigatorUserInputError):
-            _assert_all_inputs_have_same_pytree_metadata(dataloader, input_metadata)
+            _assert_all_inputs_have_same_pytree_metadata(dataloader, pytree_metadata)

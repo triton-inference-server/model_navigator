@@ -24,6 +24,70 @@ from model_navigator.frameworks import Framework
 from model_navigator.utils.common import PYTHON_PRIMITIVE_TYPES
 
 
+class IndiciesFilteredDataloader:
+    """Dataloader that filters indicies."""
+
+    def __init__(self, dataloader: Any, indicies: List[int]):
+        """Initialize IndiciesFilteredDataloader.
+
+        Args:
+            dataloader: A dataloader to filter
+            indicies: A list of indicies to filter
+        """
+        self._dataloader = dataloader
+        self._indicies = indicies
+
+    def __iter__(self):
+        """Iterate over samples."""
+        for idx, sample in enumerate(self._dataloader):
+            if idx in self._indicies:
+                yield sample
+
+    def __len__(self):
+        """Get number of samples."""
+        return len(self._indicies)
+
+
+class SortedSamplesLoader:
+    """Dataloader that loads samples from directory."""
+
+    def __init__(self, samples_dirpath: pathlib.Path, batch_dim: Optional[int] = None):
+        """Initialize SamplesLoader.
+
+        Args:
+            samples_dirpath: Path to samples directory
+            batch_dim: Batch dimension
+        """
+        self._samples_paths = sorted(samples_dirpath.iterdir())
+        self._batch_dim = batch_dim
+
+    def __getitem__(self, idx: int) -> Sample:
+        """Get sample for given index.
+
+        Args:
+            idx: Index of sample to get
+
+        Returns:
+            Sample data
+        """
+        sample_filepath = self._samples_paths[idx]
+        sample = {}
+        with np.load(sample_filepath.as_posix()) as data:
+            for k, v in data.items():
+                if self._batch_dim is not None:
+                    v = np.expand_dims(v, self._batch_dim)
+                sample[k] = v
+        return sample
+
+    def __len__(self) -> int:
+        """Get number of samples.
+
+        Returns:
+            Number of samples
+        """
+        return len(self._samples_paths)
+
+
 def to_numpy(tensor: Any, from_framework: Framework) -> np.ndarray:
     """Convert tensor to numpy array.
 
@@ -174,7 +238,9 @@ def validate_sample_output(sample, tensor_type: TensorType = TensorType.NUMPY):
         )  # TODO fix this message
 
 
-def load_samples(samples_name: str, workspace: Union[pathlib.Path, str], batch_dim: Optional[int]) -> List[Sample]:
+def load_samples(
+    samples_name: str, workspace: Union[pathlib.Path, str], batch_dim: Optional[int]
+) -> SortedSamplesLoader:
     """Load samples for provided name.
 
     Args:
@@ -190,18 +256,8 @@ def load_samples(samples_name: str, workspace: Union[pathlib.Path, str], batch_d
     samples_type = samples_name.split("_")[0]
     samples_dirname = "model_output" if samples_name.split("_")[-1] == "output" else "model_input"
     samples_dirpath = workspace / samples_dirname / samples_type
-    samples = []
-    for sample_filepath in sorted(samples_dirpath.iterdir()):
-        sample = {}
-        with np.load(sample_filepath.as_posix()) as data:
-            for k, v in data.items():
-                if batch_dim is not None:
-                    v = np.expand_dims(v, batch_dim)
-                    # v = numpy.repeat(v, max_batch_size, batch_dim)
-                sample[k] = v
-        samples.append(sample)
 
-    return samples
+    return SortedSamplesLoader(samples_dirpath, batch_dim)
 
 
 def get_default_output_names(num_output: int) -> List:

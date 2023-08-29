@@ -1,4 +1,5 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+#!/usr/bin/env bash
+# Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,5 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# noqa: D100
-__version__ = "0.8.0"
+
+python3 -m pip install --upgrade pip transformers datasets
+# python3 -m pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu121

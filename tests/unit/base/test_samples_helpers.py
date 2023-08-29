@@ -86,8 +86,8 @@ def test_samples_are_saved_and_loaded_in_the_same_order():
         input_name = "input_0"
         batch_dim = 0
         samples = []
-        for fill_value in range(0, 10):
-            sample = {input_name: numpy.full(shape=(1, 3), fill_value=fill_value)}
+        for fill_value in range(0, 100):
+            sample = {input_name: numpy.full(shape=(1,), fill_value=fill_value)}
             samples.append(sample)
         samples_to_npz(samples=samples, path=sample_filepath, batch_dim=batch_dim)
         loaded_samples = load_samples(samples_name="correctness_samples", workspace=tmpdir, batch_dim=batch_dim)

@@ -38,10 +38,10 @@ EVALUATION_FILES = [
 COMMON_FILES = [
     r"navigator\.log",
     r"status\.yaml",
-    r"model\_input/correctness/0\.npz",
-    r"model\_input/profiling/0\.npz",
-    r"model\_output/correctness/0\.npz",
-    r"model\_output/profiling/0\.npz",
+    r"model\_input/correctness/0*\.npz",
+    r"model\_input/profiling/0*\.npz",
+    r"model\_output/correctness/0*\.npz",
+    r"model\_output/profiling/0*\.npz",
 ]
 
 
@@ -138,6 +138,14 @@ def collect_optimize_status(status: Status) -> Dict:
             key = f"{model_key}.{runner_name}"
             test_status[key] = runner_status.status[Performance.__name__].name
 
+    return test_status
+
+
+def collect_optimize_statuses(statuses: List[Status], names: List[str]) -> Dict:
+    test_status = {}
+    for name, status in zip(names, statuses):
+        for k, v in collect_optimize_status(status).items():
+            test_status[f"{name}.{k}"] = v
     return test_status
 
 

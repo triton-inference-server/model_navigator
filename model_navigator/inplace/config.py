@@ -15,6 +15,7 @@
 
 import dataclasses
 import pathlib
+import sys
 from enum import Enum
 from typing import Any, Dict, Optional, Sequence, Tuple, Type, Union
 
@@ -41,6 +42,7 @@ class Mode(Enum):
 
 DEFAULT_CACHE_DIR = pathlib.Path.home() / ".cache" / "model_navigator"
 DEFAULT_MIN_NUM_SAMPLES = 100
+DEFAULT_MAX_NUM_SAMPLES = sys.maxsize
 DEFAULT_MODE = Mode.OPTIMIZE
 
 
@@ -52,6 +54,7 @@ class InplaceConfig:
         self._mode: Mode = DEFAULT_MODE
         self._cache_dir: pathlib.Path = DEFAULT_CACHE_DIR
         self._min_num_samples: int = DEFAULT_MIN_NUM_SAMPLES
+        self._max_num_samples: int = DEFAULT_MAX_NUM_SAMPLES
         self.strategy: RuntimeSearchStrategy = MinLatencyStrategy()
 
     @property
@@ -72,9 +75,23 @@ class InplaceConfig:
     @min_num_samples.setter
     def min_num_samples(self, min_num_samples: int) -> None:
         """Set the minimum number of samples to collect before optimizing."""
-        if min_num_samples < 1:
-            raise ValueError(f"min_num_samples must be greater than 0, got {min_num_samples}")
+        if min_num_samples < 1 or min_num_samples > self._max_num_samples:
+            raise ValueError(
+                f"min_num_samples must be greater than 0 and less than max_num_samples, got {min_num_samples}"
+            )
         self._min_num_samples = min_num_samples
+
+    @property
+    def max_num_samples(self) -> int:
+        """Get the minimum number of samples to collect before optimizing."""
+        return self._max_num_samples
+
+    @max_num_samples.setter
+    def max_num_samples(self, max_num_samples: int) -> None:
+        """Set the minimum number of samples to collect before optimizing."""
+        if max_num_samples < self._min_num_samples:
+            raise ValueError(f"max_num_samples must be less than min_num_samples, got {max_num_samples}")
+        self._max_num_samples = max_num_samples
 
     @property
     def cache_dir(self) -> pathlib.Path:

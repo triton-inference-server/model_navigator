@@ -36,6 +36,7 @@ class ExportJAX2SavedModel(Command):
         jit_compile: bool,
         enable_xla: bool,
         input_metadata: TensorMetadata,
+        output_metadata: TensorMetadata,
         verbose: bool,
         model: Optional[JaxModel] = None,
     ) -> CommandOutput:
@@ -78,6 +79,7 @@ class ExportJAX2SavedModel(Command):
                 "jit_compile": jit_compile,
                 "enable_xla": enable_xla,
                 "input_metadata": input_metadata.to_json(),
+                "output_names": list(output_metadata.keys()),
                 "navigator_workspace": workspace.path.as_posix(),
             }
 

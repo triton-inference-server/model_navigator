@@ -13,7 +13,7 @@
 # limitations under the License.
 """Inputs and outputs metadata commands."""
 import pathlib
-from typing import Dict, Iterator, List, Mapping, Optional, Sequence, Tuple, Union
+from typing import Dict, Iterator, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 
@@ -25,15 +25,9 @@ from model_navigator.core.tensor import FRAMEWORK_TO_TENSOR_TYPE, PyTreeMetadata
 from model_navigator.core.workspace import Workspace
 from model_navigator.exceptions import ModelNavigatorUserInputError
 from model_navigator.frameworks import Framework
+from model_navigator.frameworks.onnx.utils import get_onnx_io_names
 from model_navigator.runners.utils import get_format_default_runners
-from model_navigator.utils.dataloader import (
-    extract_sample,
-    load_samples,
-    sample_to_tuple,
-    to_numpy,
-    validate_sample_input,
-)
-from model_navigator.utils.devices import is_cuda_available
+from model_navigator.utils.dataloader import extract_sample, load_samples, to_numpy, validate_sample_input
 from model_navigator.utils.format_helpers import FRAMEWORK2BASE_FORMAT
 
 
@@ -102,13 +96,13 @@ def _get_trt_profile_from_axes_shapes(axes_shapes, batch_dim):
 
 def _assert_all_inputs_have_same_pytree_metadata(
     dataloader: Union[SizedDataLoader, Iterator],
-    input_metadata: TensorMetadata,
+    pytree_metadata: PyTreeMetadata,
 ) -> bool:
     for sample in dataloader:
-        if not input_metadata.pytree_metadata.is_compatible_with(sample):
+        if not pytree_metadata.is_compatible_with(sample):
             raise ModelNavigatorUserInputError(
                 f"All inputs must have the same structure.\n"
-                f"Input structure: {input_metadata.pytree_metadata}\n"
+                f"Input structure: {pytree_metadata}\n"
                 f"Sample: {sample}."
             )
 
@@ -140,14 +134,15 @@ class InferInputMetadata(Command, is_required=True):
         sample = next(iter(dataloader))
         validate_sample_input(sample, FRAMEWORK_TO_TENSOR_TYPE[framework])
         if framework == Framework.ONNX:
-            if _input_names is None:
-                _input_names = self._get_default_input_names(model, sample, framework)
-            else:
-                raise NotImplementedError("ONNX input names are not supported yet.")
+            if _input_names is not None:
+                LOGGER.warning("ONNX input names are not supported yet. `input_names` will be ignored.")
+            _input_names, _ = get_onnx_io_names(model)
 
         pytree_metadata = PyTreeMetadata.from_sample(
             sample, tensor_type=FRAMEWORK_TO_TENSOR_TYPE[framework], names=_input_names, prefix="input"
         )
+        _assert_all_inputs_have_same_pytree_metadata(dataloader, pytree_metadata)
+
         input_sample = {n: to_numpy(t, framework) for n, t in pytree_metadata.flatten_sample(sample).items()}
         input_names = list(input_sample.keys())
 
@@ -160,8 +155,6 @@ class InferInputMetadata(Command, is_required=True):
         dataloader_max_batch_size = _extract_max_batch_size(axes_shapes, batch_dim)
         dataloader_trt_profile = _get_trt_profile_from_axes_shapes(axes_shapes, batch_dim)
         input_metadata = _get_metadata_from_axes_shapes(pytree_metadata, axes_shapes, batch_dim, input_dtypes)
-
-        _assert_all_inputs_have_same_pytree_metadata(dataloader, input_metadata)
 
         if optimization_profile.dataloader:
             pd_sample = next(iter(optimization_profile.dataloader))
@@ -197,29 +190,6 @@ class InferInputMetadata(Command, is_required=True):
                 "dataloader_max_batch_size": dataloader_max_batch_size,
             },
         )
-
-    def _get_default_input_names(self, model, sample, framework):
-        input_tuple = sample_to_tuple(sample)
-        if framework == Framework.ONNX:
-            from model_navigator.runners.onnx import OnnxrtCPURunner, OnnxrtCUDARunner
-
-            assert isinstance(model, pathlib.Path), "ONNX model must be a pathlib.Path"
-
-            onnxrt_runner_cls = OnnxrtCUDARunner if is_cuda_available() else OnnxrtCPURunner
-            onnx_runner = onnxrt_runner_cls(
-                model=model,
-                input_metadata=TensorMetadata(),
-                output_metadata=TensorMetadata(),
-                disable_fallback=False,
-            )
-            with onnx_runner:
-                input_metadata = onnx_runner.get_onnx_input_metadata()
-                input_names = tuple(input_metadata.keys())
-        elif isinstance(sample, Mapping):
-            input_names = tuple(sample.keys())
-        else:
-            input_names = tuple(f"input__{i}" for i in range(len(input_tuple)))
-        return input_names
 
     def _validate_performance_dataloader_trt_profiles(
         self,
@@ -259,8 +229,6 @@ class InferOutputMetadata(Command, is_required=True):
         framework: Framework,
         model: Union[object, pathlib.Path],
         dataloader: SizedDataLoader,
-        profiling_sample: pathlib.Path,
-        conversion_samples: pathlib.Path,
         input_metadata: TensorMetadata,
         workspace: Workspace,
         verbose: bool,
@@ -273,8 +241,6 @@ class InferOutputMetadata(Command, is_required=True):
             framework: Framework of model to run inference
             model: A model object or path to file
             dataloader: Dataloader for providing samples
-            profiling_sample: Profiling sample
-            conversion_samples: Conversion samples
             input_metadata: Model inputs metadata
             workspace: Working directory where command should be executed
             verbose: Enable verbose logging
@@ -284,11 +250,13 @@ class InferOutputMetadata(Command, is_required=True):
         Returns:
             CommandOutput object
         """
+        if framework == Framework.ONNX:
+            if _output_names is not None:
+                LOGGER.warning("ONNX output names are not supported yet. `output_names` will be ignored.")
+            _, _output_names = get_onnx_io_names(model)
+
         if _output_names:
             temp_output_metadata = TensorMetadata({out_name: TensorSpec(out_name, ()) for out_name in _output_names})
-
-            if framework == Framework.ONNX:
-                raise NotImplementedError("ONNX output names are not supported yet.")
         else:
             temp_output_metadata = TensorMetadata()
 

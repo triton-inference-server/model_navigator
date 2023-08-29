@@ -14,7 +14,7 @@
 """Script for epxorting JAX model to SavedModel."""
 
 import pathlib
-from typing import Callable, Dict, Optional
+from typing import Callable, Dict, List, Optional
 
 import fire
 import numpy
@@ -45,6 +45,7 @@ def export(
     jit_compile: bool,
     enable_xla: bool,
     input_metadata: Dict,
+    output_names: List[str],
     navigator_workspace: Optional[str] = None,
 ) -> None:
     """Run JAX to SavedModel export.
@@ -57,6 +58,7 @@ def export(
         jit_compile (bool): jax2tf parameter.
         enable_xla (bool): jax2tf parameter.
         input_metadata (Dict): Input metadata.
+        output_names (List[str]): Output names.
         navigator_workspace (Optional[str], optional): Model Navigator workspace path.
             If None use current workdir. Defaults to None.
     """
@@ -89,7 +91,14 @@ def export(
     )
 
     def tf_function_wrapper(*args):
-        return tf_function(*args, params=params_vars)
+        outputs = tf_function(*args, params=params_vars)
+        if isinstance(outputs, (list, tuple)):
+            outputs_seq = outputs
+        elif isinstance(outputs, Dict):
+            outputs_seq = outputs.values()
+        else:
+            outputs_seq = [outputs]
+        return dict(zip(output_names, outputs_seq))
 
     tf_module = tf.Module()
     tf_module._variables = tf.nest.flatten(params_vars)

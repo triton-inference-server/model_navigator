@@ -110,6 +110,7 @@ class TensorRTRunner(NavigatorRunner):
         self.device_buffers = None
         self.host_output_buffers = None
         self.use_cuda_graphs = False
+        self._trt_input_metadata = None
 
     @classmethod
     def format(cls) -> Format:
@@ -203,6 +204,13 @@ class TensorRTRunner(NavigatorRunner):
             raise RuntimeError(
                 "Invalid Engine or Context. Please ensure the engine was built correctly. See error log for details."
             )
+
+        self._trt_input_metadata = self.get_input_metadata_impl()
+
+        self._type_casts = {}
+        for name, metadata in self.input_metadata.items():
+            if name in self._trt_input_metadata and trt_utils.cast_type(metadata.dtype) != metadata.dtype:
+                self._type_casts[name] = trt_utils.cast_type(metadata.dtype)
 
         def make_buffers_legacy():
             """Creates empty host and device buffers for the specified engine.
@@ -523,12 +531,9 @@ class TensorRTRunner(NavigatorRunner):
                     A mapping of output tensor names to corresponding output NumPy arrays
                     or DeviceViews.
         """
-        input_metadata = self.get_input_metadata_impl()
-        feed_dict = {
-            name: trt_utils.cast_tensor(tensor, dtype=input_metadata[name].dtype)
-            for name, tensor in feed_dict.items()
-            if name in input_metadata
-        }
+        feed_dict = {name: feed_dict[name] for name in self._trt_input_metadata}
+        for name, dtype in self._type_casts.items():
+            feed_dict[name] = trt_utils.cast_tensor(feed_dict[name], dtype)
 
         if trt_utils._should_use_v3_api():
             out_dict = self._infer_impl_v3(feed_dict)
@@ -536,7 +541,7 @@ class TensorRTRunner(NavigatorRunner):
             out_dict = self._infer_impl_legacy(feed_dict, True)
 
         if self.output_metadata:  # filter outputs if output_metadata is set
-            out_dict = {k: v for k, v in out_dict.items() if k in self.output_metadata}
+            out_dict = {name: out_dict[name] for name in self.output_metadata}
 
         return out_dict
 

@@ -157,11 +157,18 @@ class PackageBuilder:
                 LOGGER.info(f"No model found with strategy: {strategy}")
 
         external_weights_paths = set()
+        model_subpaths = set()
         for model_path in models_paths_to_save:
             if model_path.suffix == FORMAT2SUFFIX[Format.ONNX]:
                 filepaths = self._get_onnx_external_weights_filepaths(package=package, model_path=model_path)
                 external_weights_paths.update(filepaths)
+
+            if model_path.is_dir():
+                for subfile in model_path.rglob("*"):
+                    model_subpaths.add(subfile)
+
         models_paths_to_save.update(external_weights_paths)
+        models_paths_to_save.update(model_subpaths)
 
         return list(models_paths_to_save)
 

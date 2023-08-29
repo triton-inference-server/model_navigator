@@ -66,6 +66,10 @@ class _BaseTorchRunner(NavigatorRunner):
 
         return out_dict
 
+    def inplace_infer(self, *args, **kwargs):
+        """Inplace inference handler implementation."""
+        return self._loaded_model(*args, **kwargs)
+
     def get_available_input_types(self) -> List[TensorType]:
         return [TensorType.NUMPY, TensorType.TORCH]
 

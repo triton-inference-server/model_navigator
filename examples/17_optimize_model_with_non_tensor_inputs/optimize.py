@@ -12,6 +12,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from typing import Tuple
+
 import torch  # pytype: disable=import-error
 
 import model_navigator as nav
@@ -24,7 +26,7 @@ class ModelWithNonTensorInputs(torch.nn.Module):
         super().__init__()
         self.linear = torch.nn.Linear(5, 7)
 
-    def forward(self, xy, raise_error):
+    def forward(self, xy: Tuple[torch.Tensor, torch.Tensor], raise_error: bool):
         """Forward pass"""
         x, y = xy
         if raise_error:

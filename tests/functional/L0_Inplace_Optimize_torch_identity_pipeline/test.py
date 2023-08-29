@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,14 +24,20 @@ METADATA = {
     "image_name": "nvcr.io/nvidia/pytorch:{version}-py3",
 }
 
-EXPECTED_STATUES = [
-    "onnx.OnnxCUDA",
-    "onnx.OnnxTensorRT",
-    "torch.TorchCUDA",
-    "torchscript-script.TorchScriptCUDA",
-    "torchscript-trace.TorchScriptCUDA",
-    "trt-fp16.TensorRT",
-    "trt-fp32.TensorRT",
+EXPECTED_PACKAGES = 3
+EXPECTED_STATUSES_TEMPLATE = [
+    "{name}.{ind}.onnx.OnnxCUDA",
+    "{name}.{ind}.onnx.OnnxTensorRT",
+    "{name}.{ind}.torch.TorchCUDA",
+    "{name}.{ind}.torchscript-script.TorchScriptCUDA",
+    "{name}.{ind}.torchscript-trace.TorchScriptCUDA",
+    "{name}.{ind}.trt-fp16.TensorRT",
+    "{name}.{ind}.trt-fp32.TensorRT",
+]
+EXPECTED_STATUSES = [
+    status.format(name=name, ind=0)
+    for status in EXPECTED_STATUSES_TEMPLATE
+    for name in ("model_a", "model_b", "model_c")
 ]
 
 
@@ -40,11 +46,11 @@ def main():
     import torch  # pytype: disable=import-error
 
     import model_navigator as nav
+    from model_navigator.inplace.registry import module_registry
     from tests import utils
-    from tests.functional.common.utils import collect_optimize_status, validate_status
+    from tests.functional.common.utils import collect_optimize_statuses, validate_status
 
-    nav.inplace_config.mode = nav.Mode.OPTIMIZE
-    nav.inplace_config.min_num_samples = 1
+    nav.inplace_config.mode = nav.Mode.RECORDING
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -65,8 +71,21 @@ def main():
     logging.basicConfig(level=log_level, format=utils.DEFAULT_LOG_FORMAT)
     LOGGER.debug(f"CLI args: {args}")
 
-    model = torch.nn.Identity()
-    dataloader = [torch.randn(2, 3) for _ in range(2)]
+    class Pipeline:
+        def __init__(self):
+            self.model_a = torch.nn.Identity()
+            self.model_b = torch.nn.Identity()
+            self.model_c = torch.nn.Identity()
+
+        def __call__(self, x):
+            ret = self.model_a(x)
+            ret = self.model_b(ret)
+            ret = self.model_c(ret)
+            return ret
+
+    pipe = Pipeline()
+    t = torch.randn(2, 3)
+    dataloader = [t] * 5
 
     def verify_func(ys_runner, ys_expected):
         for y_runner, y_expected in zip(ys_runner, ys_expected):
@@ -86,19 +105,29 @@ def main():
             "TensorRT",
         ),
     )
-    model = nav.Module(model, optimize_config=optimize_config)
+    pipe.model_a = nav.Module(pipe.model_a, optimize_config=optimize_config, name="model_a")
+    pipe.model_b = nav.Module(pipe.model_b, optimize_config=optimize_config, name="model_b")
+    pipe.model_c = nav.Module(pipe.model_c, optimize_config=optimize_config, name="model_c")
 
     for batch in dataloader:
-        model(batch)
+        pipe(batch)
 
-    packages = getattr(model._wrapper, "_packages", [])
-    assert len(packages) == 1, "Package is not created."
-    package = packages[0]
+    nav.optimize()
+
+    for batch in dataloader:
+        pipe(batch)
+
+    names, packages = [], []
+    for name, module in module_registry.items():
+        for i, package in enumerate(getattr(module._wrapper, "_packages", [])):
+            names.append(f"{name}.{i}")
+            packages.append(package)
+    assert len(packages) == EXPECTED_PACKAGES, "Wrong number of packages."
 
     status_file = args.status
-    status = collect_optimize_status(package.status)
+    status = collect_optimize_statuses([package.status for package in packages], names)
 
-    validate_status(status, expected_statuses=EXPECTED_STATUES)
+    validate_status(status, expected_statuses=EXPECTED_STATUSES)
 
     with status_file.open("w") as fp:
         yaml.safe_dump(status, fp)

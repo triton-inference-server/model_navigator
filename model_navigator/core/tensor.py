@@ -248,9 +248,13 @@ class PyTreeMetadata:
 
     def __eq__(self, __value: object) -> bool:
         """Compare PyTree metadatas."""
-        if not isinstance(__value, PyTreeMetadata):
+        if not isinstance(__value, type(self)):
             return False
         return self._metadata == __value._metadata
+
+    def __hash__(self) -> int:
+        """Compute hash of PyTree metadata."""
+        return self._hash(self._metadata, 0)
 
     @classmethod
     def from_sample(
@@ -285,7 +289,7 @@ class PyTreeMetadata:
     @classmethod
     def from_dict(cls, data: Dict) -> "PyTreeMetadata":
         """Create PyTreeMetadata from string."""
-        return cls(data["metadata"], TensorType(data["tensor_type"]))
+        return cls(cls._from_json(data["metadata"]), TensorType(data["tensor_type"]))
 
     def flatten_sample(self, sample: Any) -> Dict[str, Any]:
         """Flatten sample according to PyTree metadata.
@@ -332,12 +336,12 @@ class PyTreeMetadata:
         args_mapping, kwargs_mapping = [], {}
         for arg in args:
             flattened = {}
-            self._flatten_sample(arg, arg, flattened, include_constants=True)
+            self._flatten_sample(arg, arg, flattened, include_constants=False)
             args_mapping.append(list(flattened.keys()))
 
         for key, arg in kwargs.items():
             flattened = {}
-            self._flatten_sample(arg, arg, flattened, include_constants=True)
+            self._flatten_sample(arg, arg, flattened, include_constants=False)
             kwargs_mapping[key] = list(flattened.keys())
 
         return args_mapping, kwargs_mapping
@@ -375,7 +379,7 @@ class PyTreeMetadata:
             return sample, names
         if isinstance(sample, Mapping):
             metadata = {}
-            for key, item in sample.items():
+            for key, item in sorted(sample.items()):
                 submetadata, names = cls._from_sample(item, tensor_type, names)
                 metadata[key] = submetadata
             return metadata, names
@@ -384,7 +388,26 @@ class PyTreeMetadata:
             for item in sample:
                 submetadata, names = cls._from_sample(item, tensor_type, names)
                 metadata.append(submetadata)
-            return type(sample)(metadata), names
+            return tuple(metadata), names
+        raise TypeError(f"Unsupported type: {type(sample)}")
+
+    @classmethod
+    def _from_json(cls, sample):
+        """Create PyTreeMetadata from sample."""
+        if isinstance(sample, str) or isinstance(sample, PYTHON_PRIMITIVE_TYPES):
+            return sample
+        if isinstance(sample, Mapping):
+            metadata = {}
+            for key, item in sorted(sample.items()):
+                submetadata = cls._from_json(item)
+                metadata[key] = submetadata
+            return metadata
+        if isinstance(sample, Sequence):
+            metadata = []
+            for item in sample:
+                submetadata = cls._from_json(item)
+                metadata.append(submetadata)
+            return tuple(metadata)
         raise TypeError(f"Unsupported type: {type(sample)}")
 
     def _flatten_sample(self, sample, struct, flatten_sample, include_constants=False):
@@ -415,6 +438,21 @@ class PyTreeMetadata:
             return {key: self._unflatten_sample(sample, item) for key, item in struct.items()}
         elif isinstance(struct, Sequence):
             return type(struct)(self._unflatten_sample(sample, item) for item in struct)
+        else:
+            raise TypeError(f"Unsupported struct: {struct}")
+
+    def _hash(self, struct, hash_):
+        if isinstance(struct, str) or isinstance(struct, PYTHON_PRIMITIVE_TYPES):
+            return hash_ ^ hash(struct)
+        elif isinstance(struct, Mapping):
+            for key, value in struct.items():
+                hash_ ^= hash(key)
+                hash_ ^= self._hash(value, hash_)
+            return hash_
+        elif isinstance(struct, Sequence):
+            for value in struct:
+                hash_ ^= self._hash(value, hash_)
+            return hash_
         else:
             raise TypeError(f"Unsupported struct: {struct}")
 

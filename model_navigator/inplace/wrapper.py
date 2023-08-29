@@ -21,7 +21,7 @@ import wrapt
 from model_navigator.utils.module import lazy_import
 
 from .config import Mode, OptimizeConfig, inplace_config
-from .model import OptimizedModule, PassthroughModule, RecordAndOptimizeModule, RecordModule
+from .model import BaseModule, OptimizedModule, PassthroughModule, RecordAndOptimizeModule, RecordModule
 from .registry import module_registry
 from .utils import get_object_name
 
@@ -44,6 +44,7 @@ class Module(wrapt.ObjectProxy):
         name: module name.
         input_mapping: function to map module inputs to the expected input.
         output_mapping: function to map module outputs to the expected output.
+        offload_parameters_to_cpu: offload parameters to cpu.
 
     Example:
         >>> import torch
@@ -59,6 +60,7 @@ class Module(wrapt.ObjectProxy):
         name: Optional[str] = None,
         input_mapping: Optional[Callable] = None,
         output_mapping: Optional[Callable] = None,
+        offload_parameters_to_cpu: bool = False,
     ) -> None:
         """Initialize Module."""
         super().__init__(module)
@@ -81,7 +83,7 @@ class Module(wrapt.ObjectProxy):
             self._output_mapping,
         )
 
-        module_registry.register(self._name, self._wrapper)
+        module_registry.register(self._name, self)
 
     @property
     def name(self) -> str:
@@ -99,16 +101,37 @@ class Module(wrapt.ObjectProxy):
         This method overrides the __call__ method of the wrapped module.
         If the module is already optimized it is replaced with the optimized one.
         """
-        if isinstance(self._wrapper, RecordModule) and self._wrapper._optimized:
-            self._wrapper = OptimizedModule(
-                self._wrapper._module,
-                self._optimize_config,
-                self._name,
-                self._input_mapping,
-                self._output_mapping,
-            )
         output = self._wrapper(*args, **kwargs)
         return output
+
+    @property
+    def wrapper(self) -> BaseModule:
+        """Return the wrapper module."""
+        return self._wrapper
+
+    @property
+    def is_ready_for_optimization(self) -> bool:
+        """Check if the module is ready for optimization."""
+        return self.wrapper.is_ready_for_optimization
+
+    @property
+    def is_optimized(self) -> bool:
+        """Check if the module is optimized."""
+        return self.wrapper.is_optimized
+
+    def optimize(self) -> None:
+        """Optimize the module."""
+        assert isinstance(self.wrapper, RecordModule), f"Module {self.name} must be in recording mode to optimize."
+        assert not self.is_optimized, f"Module {self.name} is already optimized."
+        assert hasattr(self.wrapper, "optimize"), f"Module {self.name} does not have an optimize method."
+        self.wrapper.optimize()
+        self._wrapper = OptimizedModule(
+            self._wrapper._module,
+            self._optimize_config,
+            self._name,
+            self._input_mapping,
+            self._output_mapping,
+        )
 
 
 def module(

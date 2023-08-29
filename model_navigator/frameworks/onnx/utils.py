@@ -30,3 +30,13 @@ ONNX_RT_TYPE_TO_NP = {
     "tensor(bool)": bool,
     "tensor(string)": str,
 }
+
+
+def get_onnx_io_names(onnx_path):
+    """Get input and output names from ONNX model."""
+    import onnx
+
+    model = onnx.load_model(onnx_path)
+    input_names = [inp.name for inp in model.graph.input]
+    output_names = [out.name for out in model.graph.output]
+    return input_names, output_names
