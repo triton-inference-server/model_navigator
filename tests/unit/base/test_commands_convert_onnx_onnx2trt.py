@@ -17,11 +17,9 @@ Note:
      Those test do not execute the conversion.
      The tests are checking if correct paths are executed on input arguments.
 """
-import json
+
 import pathlib
-import shutil
 import tempfile
-from unittest.mock import MagicMock
 
 import numpy as np
 
@@ -29,10 +27,8 @@ from model_navigator import TensorRTPrecision, TensorRTPrecisionMode
 from model_navigator.api.config import TensorRTProfile
 from model_navigator.commands.base import CommandStatus
 from model_navigator.commands.convert.onnx import ConvertONNX2TRT
-from model_navigator.commands.execution_context import ExecutionContext
 from model_navigator.core.tensor import TensorMetadata, TensorSpec
 from model_navigator.core.workspace import Workspace
-from tests.utils import get_assets_path
 
 
 def test_run_execute_conversion_when_model_not_support_batching(mocker):
@@ -47,9 +43,9 @@ def test_run_execute_conversion_when_model_not_support_batching(mocker):
         output_model_path = workspace / "trt-fp16" / "model.plan"
         output_model_path.parent.mkdir(parents=True)
 
-        with mocker.patch.object(ConvertONNX2TRT, "_execute_conversion"), mocker.patch.object(
-            ConvertONNX2TRT, "_get_onnx_input_metadata"
-        ), mocker.patch("model_navigator.utils.devices.get_available_gpus", return_value=[0]):
+        with mocker.patch.object(ConvertONNX2TRT, "_execute_conversion"), mocker.patch(
+            "model_navigator.utils.devices.get_available_gpus", return_value=[0]
+        ):
             result = ConvertONNX2TRT().run(
                 workspace=Workspace(workspace),
                 parent_path=input_model_path,
@@ -85,9 +81,9 @@ def test_run_execute_conversion_with_max_bs_search_when_trt_profile_not_provided
         output_model_path = workspace / "trt-fp16" / "model.plan"
         output_model_path.parent.mkdir(parents=True)
 
-        with mocker.patch.object(ConvertONNX2TRT, "_execute_conversion", return_value=1), mocker.patch.object(
-            ConvertONNX2TRT, "_get_onnx_input_metadata"
-        ), mocker.patch("model_navigator.utils.devices.get_available_gpus", return_value=[0]):
+        with mocker.patch.object(ConvertONNX2TRT, "_execute_conversion", return_value=1), mocker.patch(
+            "model_navigator.utils.devices.get_available_gpus", return_value=[0]
+        ):
             result = ConvertONNX2TRT().run(
                 workspace=Workspace(workspace),
                 parent_path=input_model_path,
@@ -122,9 +118,9 @@ def test_run_execute_conversion_when_dataloader_and_device_max_batch_size_is_inv
         output_model_path = workspace / "trt-fp16" / "model.plan"
         output_model_path.parent.mkdir(parents=True)
 
-        with mocker.patch.object(ConvertONNX2TRT, "_execute_conversion", return_value=1), mocker.patch.object(
-            ConvertONNX2TRT, "_get_onnx_input_metadata"
-        ), mocker.patch("model_navigator.utils.devices.get_available_gpus", return_value=[0]):
+        with mocker.patch.object(ConvertONNX2TRT, "_execute_conversion", return_value=1), mocker.patch(
+            "model_navigator.utils.devices.get_available_gpus", return_value=[0]
+        ):
             result = ConvertONNX2TRT().run(
                 workspace=Workspace(workspace),
                 parent_path=input_model_path,
@@ -161,9 +157,9 @@ def test_run_execute_single_conversion_when_only_dataloader_max_batch_size_provi
         output_model_path = workspace / "trt-fp16" / "model.plan"
         output_model_path.parent.mkdir(parents=True)
 
-        with mocker.patch.object(ConvertONNX2TRT, "_execute_single_conversion", return_value=3), mocker.patch.object(
-            ConvertONNX2TRT, "_get_onnx_input_metadata"
-        ), mocker.patch("model_navigator.utils.devices.get_available_gpus", return_value=[0]):
+        with mocker.patch.object(ConvertONNX2TRT, "_execute_single_conversion", return_value=3), mocker.patch(
+            "model_navigator.utils.devices.get_available_gpus", return_value=[0]
+        ):
             result = ConvertONNX2TRT().run(
                 workspace=Workspace(workspace),
                 parent_path=input_model_path,
@@ -199,9 +195,9 @@ def test_run_execute_single_conversion_when_only_device_max_batch_size_provided(
         output_model_path = workspace / "trt-fp16" / "model.plan"
         output_model_path.parent.mkdir(parents=True)
 
-        with mocker.patch.object(ConvertONNX2TRT, "_execute_single_conversion", return_value=3), mocker.patch.object(
-            ConvertONNX2TRT, "_get_onnx_input_metadata"
-        ), mocker.patch("model_navigator.utils.devices.get_available_gpus", return_value=[0]):
+        with mocker.patch.object(ConvertONNX2TRT, "_execute_single_conversion", return_value=3), mocker.patch(
+            "model_navigator.utils.devices.get_available_gpus", return_value=[0]
+        ):
             result = ConvertONNX2TRT().run(
                 workspace=Workspace(workspace),
                 parent_path=input_model_path,
@@ -239,9 +235,7 @@ def test_run_execute_conversion_with_max_batch_size_search_when_both_max_batch_s
 
         with mocker.patch.object(
             ConvertONNX2TRT, "_execute_conversion_with_max_batch_size_search", return_value=3
-        ), mocker.patch.object(ConvertONNX2TRT, "_get_onnx_input_metadata"), mocker.patch(
-            "model_navigator.utils.devices.get_available_gpus", return_value=[0]
-        ):
+        ), mocker.patch("model_navigator.utils.devices.get_available_gpus", return_value=[0]):
             result = ConvertONNX2TRT().run(
                 workspace=Workspace(workspace),
                 parent_path=input_model_path,
@@ -277,9 +271,7 @@ def test_get_shape_args_return_correct_arguments_when_batch_dim_is_none():
         max=(224, 224, 3),
     )
     result = ConvertONNX2TRT._get_shape_args(
-        onnx_input_metadata=TensorMetadata(
-            {"input_1": TensorSpec(name="input_1", shape=(-1, -1, -1), dtype=np.dtype("float32"))}
-        ),
+        onnx_input_names=["input_1"],
         batch_dim=None,
         trt_profile=profile,
     )
@@ -302,9 +294,7 @@ def test_get_shape_args_return_correct_arguments_when_max_batch_size_is_zero():
         max=(224, 224, 3),
     )
     result = ConvertONNX2TRT._get_shape_args(
-        onnx_input_metadata=TensorMetadata(
-            {"input_1": TensorSpec(name="input_1", shape=(-1, -1, -1), dtype=np.dtype("float32"))}
-        ),
+        onnx_input_names=["input_1"],
         batch_dim=0,
         max_batch_size=0,
         trt_profile=profile,
@@ -334,12 +324,8 @@ def test_get_shape_args_return_correct_arguments_when_batch_dim_and_max_batch_si
         opt=(64, 64),
         max=(256, 256),
     )
-    input_metadata = TensorMetadata()
-    input_metadata.add(name="input_1", shape=(-1, -1, -1, -1), dtype=np.dtype("float32"))
-    input_metadata.add(name="input_2", shape=(-1, -1), dtype=np.dtype("float32"))
-
     result = ConvertONNX2TRT._get_shape_args(
-        onnx_input_metadata=input_metadata,
+        onnx_input_names=["input_1", "input_2"],
         batch_dim=0,
         max_batch_size=128,
         trt_profile=profile,
@@ -356,80 +342,3 @@ def test_get_shape_args_return_correct_arguments_when_batch_dim_and_max_batch_si
         "input_2:[128,256]",
     ]
     assert result == expected_result
-
-
-def test_get_onnx_input_metadata_return_filled_metadata_when_successfully_read_from_file(mocker):
-    with mocker.patch.object(
-        ExecutionContext, "execute_external_runtime_script"
-    ), tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir = pathlib.Path(tmpdir)
-        results_file = tmpdir / "results.json"
-        workspace = tmpdir / "navigator_workspace"
-
-        mock = MagicMock()
-        mock.__enter__.return_value.name = results_file.as_posix()
-        mocker.patch("tempfile.NamedTemporaryFile", return_value=mock)
-
-        assets_path = get_assets_path()
-        model_path = assets_path / "models" / "identity.onnx"
-
-        onnx_model_path = workspace / "onnx" / "model.onnx"
-        onnx_model_path.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy(model_path, onnx_model_path)
-
-        input_metadata = TensorMetadata()
-        input_metadata.add(name="X", shape=(-1, 3, 8, 8), dtype=np.float32())
-
-        output_metadata = TensorMetadata()
-        output_metadata.add(name="Y", shape=(-1, 3, 8, 8), dtype=np.float32())
-
-        data = {
-            "metadata": [{"name": "X", "shape": [-1, 3, -1, -1], "dtype": "float32"}],
-            "pytree_metadata": {"metadata": None, "tensor_type": "numpy"},
-        }
-        with results_file.open("w") as fp:
-            json.dump(data, fp)
-
-        metadata = ConvertONNX2TRT()._get_onnx_input_metadata(
-            workspace=Workspace(workspace),
-            input_model_path=onnx_model_path,
-            input_metadata=input_metadata,
-            output_metadata=output_metadata,
-            reproduce_script_path=workspace,
-            verbose=False,
-        )
-
-        assert "X" in metadata
-        assert metadata["X"] == TensorSpec(name="X", shape=(-1, 3, -1, -1), dtype=np.float32().dtype)
-
-
-def test_get_onnx_input_metadata_return_empty_metadata_when_no_file(mocker):
-    with mocker.patch.object(
-        ExecutionContext, "execute_external_runtime_script"
-    ), tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir = pathlib.Path(tmpdir)
-        workspace = tmpdir / "navigator_workspace"
-
-        assets_path = get_assets_path()
-        model_path = assets_path / "models" / "identity.onnx"
-
-        onnx_model_path = workspace / "onnx" / "model.onnx"
-        onnx_model_path.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy(model_path, onnx_model_path)
-
-        input_metadata = TensorMetadata()
-        input_metadata.add(name="X", shape=(-1, 3, 8, 8), dtype=np.float32())
-
-        output_metadata = TensorMetadata()
-        output_metadata.add(name="Y", shape=(-1, 3, 8, 8), dtype=np.float32())
-
-        metadata = ConvertONNX2TRT()._get_onnx_input_metadata(
-            workspace=Workspace(workspace),
-            input_model_path=onnx_model_path,
-            input_metadata=input_metadata,
-            output_metadata=output_metadata,
-            reproduce_script_path=workspace,
-            verbose=False,
-        )
-
-        assert metadata == {}

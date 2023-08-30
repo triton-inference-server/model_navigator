@@ -12,10 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ConvertONNX2TRT command."""
-import json
 import pathlib
 import sys
-import tempfile
 from distutils.version import LooseVersion
 from typing import Any, Dict, List, Optional
 
@@ -24,7 +22,6 @@ from model_navigator.api.config import (
     TensorRTPrecision,
     TensorRTPrecisionMode,
     TensorRTProfile,
-    TensorType,
 )
 from model_navigator.commands.base import CommandOutput, CommandStatus
 from model_navigator.commands.convert.base import Convert2TensorRTWithMaxBatchSizeSearch
@@ -32,6 +29,7 @@ from model_navigator.commands.execution_context import ExecutionContext
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata
 from model_navigator.core.workspace import Workspace
+from model_navigator.frameworks.onnx.utils import get_onnx_io_names
 from model_navigator.frameworks.tensorrt import utils as tensorrt_utils
 from model_navigator.runners.tensorrt import TensorRTRunner
 from model_navigator.utils import devices
@@ -109,8 +107,6 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
             input_model_path=input_model_path,
             converted_model_path=converted_model_path,
             workspace=workspace,
-            input_metadata=input_metadata,
-            output_metadata=output_metadata,
             dataloader_trt_profile=dataloader_trt_profile,
             optimized_trt_profiles=optimized_trt_profiles,
             batch_dim=batch_dim,
@@ -119,7 +115,6 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
             precision=precision,
             precision_mode=precision_mode,
             max_workspace_size=max_workspace_size,
-            verbose=verbose,
             custom_args=custom_args,
         )
 
@@ -167,8 +162,6 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
         input_model_path: pathlib.Path,
         converted_model_path: pathlib.Path,
         workspace: Workspace,
-        input_metadata: TensorMetadata,
-        output_metadata: TensorMetadata,
         dataloader_trt_profile: TensorRTProfile,
         custom_args: Dict[str, Any],
         optimized_trt_profiles: Optional[List[TensorRTProfile]] = None,
@@ -178,7 +171,6 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
         precision: Optional[TensorRTPrecision] = None,
         precision_mode: Optional[TensorRTPrecisionMode] = None,
         max_workspace_size: Optional[int] = None,
-        verbose: bool = False,
     ):
         convert_cmd = ["polygraphy", "convert", input_model_path.relative_to(workspace.path).as_posix()]
         convert_cmd.extend(["--convert-to", "trt"])
@@ -214,20 +206,13 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
             else:
                 convert_cmd.extend(["--pool-limit", f"workspace:{max_workspace_size}"])
 
-                onnx_input_metadata = self._get_onnx_input_metadata(
-                    input_model_path=input_model_path,
-                    input_metadata=input_metadata,
-                    output_metadata=output_metadata,
-                    workspace=workspace,
-                    reproduce_script_path=converted_model_path.parent,
-                    verbose=verbose,
-                )
-
         for k, v in (custom_args or {}).items():
             if isinstance(v, bool) and v is True:
                 convert_cmd.append(k)
             else:
                 convert_cmd.extend([k, v])
+
+        onnx_input_names, _ = get_onnx_io_names(onnx_path=input_model_path)
 
         def get_args(max_batch_size=None):
             if optimized_trt_profiles:
@@ -235,14 +220,14 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
                 for trt_profile in optimized_trt_profiles:
                     shape_args.extend(
                         self._trt_profile_to_shape_args(
-                            onnx_input_metadata=onnx_input_metadata,
+                            onnx_input_names=onnx_input_names,
                             trt_profile=trt_profile,
                         )
                     )
                 return convert_cmd + shape_args
             else:
                 return convert_cmd + self._get_shape_args(
-                    onnx_input_metadata=onnx_input_metadata,
+                    onnx_input_names=onnx_input_names,
                     trt_profile=dataloader_trt_profile,
                     batch_dim=batch_dim,
                     max_batch_size=max_batch_size,
@@ -252,7 +237,7 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
 
     @staticmethod
     def _trt_profile_to_shape_args(
-        onnx_input_metadata: TensorMetadata,
+        onnx_input_names: List[str],
         trt_profile: TensorRTProfile,
     ):
         shape_args = []
@@ -260,7 +245,7 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
             arg = f"--trt-{attr}-shapes"
             shapes = []
             for input_name in trt_profile:
-                if input_name not in onnx_input_metadata:
+                if input_name not in onnx_input_names:
                     continue
                 shape = ",".join([str(d) for d in getattr(trt_profile[input_name], attr)])
                 shapes.append(f"{input_name}:[{shape}]")
@@ -286,7 +271,7 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
 
     @staticmethod
     def _get_shape_args(
-        onnx_input_metadata: TensorMetadata,
+        onnx_input_names: List[str],
         trt_profile: TensorRTProfile,
         batch_dim: Optional[int] = None,
         max_batch_size: Optional[int] = None,
@@ -302,7 +287,7 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
             arg = f"--trt-{attr}-shapes"
             shapes = []
             for input_name in trt_profile:
-                if input_name not in onnx_input_metadata:
+                if input_name not in onnx_input_names:
                     continue
                 shape = ",".join([str(d) for d in getattr(trt_profile[input_name], attr)])
                 shapes.append(f"{input_name}:[{shape}]")
@@ -310,44 +295,3 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
                 shape_args.extend([f"{arg}"] + shapes)
 
         return shape_args
-
-    def _get_onnx_input_metadata(
-        self,
-        workspace: Workspace,
-        input_model_path: pathlib.Path,
-        input_metadata: TensorMetadata,
-        output_metadata: TensorMetadata,
-        reproduce_script_path: pathlib.Path,
-        verbose: bool,
-    ):
-        with ExecutionContext(
-            script_path=reproduce_script_path / "reproduce_onnx_input_metadata.py",
-            cmd_path=reproduce_script_path / "reproduce_onnx_input_metadata.sh",
-            workspace=workspace,
-            verbose=verbose,
-        ) as context, tempfile.NamedTemporaryFile() as temp_file:
-            kwargs = {
-                "model_path": input_model_path.relative_to(workspace.path).as_posix(),
-                "input_metadata": input_metadata.to_json(),
-                "output_metadata": output_metadata.to_json(),
-                "results_path": temp_file.name,
-            }
-            args = parse_kwargs_to_cmd(kwargs)
-            from . import collect_onnx_input_metadata
-
-            try:
-                context.execute_external_runtime_script(collect_onnx_input_metadata.__file__, args)
-                with open(temp_file.name) as fp:
-                    input_metadata = json.load(fp)
-                LOGGER.info("Input metadata collected from ONNX model.")
-            except Exception as e:
-                LOGGER.warning(
-                    "Unable to collect metadata from ONNX model. The evaluation failed. Empty metadata used."
-                )
-                LOGGER.warning(f"Error during obtaining metadata: {str(e)}")
-                input_metadata = {
-                    "metadata": [],
-                    "pytree_metadata": {"metadata": None, "tensor_type": TensorType.NUMPY.value},
-                }
-
-            return TensorMetadata.from_json(input_metadata)
