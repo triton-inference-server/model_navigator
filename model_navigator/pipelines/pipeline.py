@@ -13,7 +13,6 @@
 # limitations under the License.
 """Definition of Pipeline module - Direct Acyclic Graph (DAG) of commands execution."""
 import contextlib
-import sys
 import traceback
 from typing import List
 
@@ -21,7 +20,11 @@ from model_navigator.commands.base import CommandOutput, CommandStatus, Executio
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.core.logger import LOGGER, LoggingContext, StdoutLogger, pad_string
 from model_navigator.core.workspace import Workspace
-from model_navigator.exceptions import ModelNavigatorCommandNotExecutable, ModelNavigatorUserInputError
+from model_navigator.exceptions import (
+    ModelNavigatorCommandNotExecutable,
+    ModelNavigatorRuntimeError,
+    ModelNavigatorUserInputError,
+)
 from model_navigator.pipelines.pipeline_context import PipelineContext
 
 
@@ -125,6 +128,9 @@ class Pipeline:
                 LOGGER.error(f"Command finished with unexpected error: {error}")
 
             if command_output.status != CommandStatus.OK and execution_unit.command.is_required():
-                sys.exit("The required command has failed. Please, review the log and verify the reported problems.")
+                raise ModelNavigatorRuntimeError(
+                    "The required command has failed. Please, review the log and verify the reported problems: \n"
+                    f"{command_output.output}."
+                )
 
             return command_output

@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ONNX utils."""
+import pathlib
+from typing import List, Tuple
 
 import numpy as np
 
@@ -32,11 +34,12 @@ ONNX_RT_TYPE_TO_NP = {
 }
 
 
-def get_onnx_io_names(onnx_path):
-    """Get input and output names from ONNX model."""
+def get_onnx_io_names(onnx_path: pathlib.Path) -> Tuple[List, List]:
+    """Get input and output metadata from ONNX model."""
     import onnx
 
-    model = onnx.load_model(onnx_path)
-    input_names = [inp.name for inp in model.graph.input]
-    output_names = [out.name for out in model.graph.output]
+    model = onnx.load_model(onnx_path.as_posix())
+
+    input_names = [input.name for input in model.graph.input]
+    output_names = [output.name for output in model.graph.output]
     return input_names, output_names
