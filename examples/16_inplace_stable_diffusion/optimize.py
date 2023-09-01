@@ -18,6 +18,7 @@ import os
 import time
 
 # pytype: disable=import-error
+import diffusers
 import torch
 import transformers
 from diffusers import DPMSolverMultistepScheduler, StableDiffusionPipeline
@@ -37,15 +38,18 @@ nav.inplace_config.min_num_samples = int(
 LOGGER = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
+DEVICE = torch.device("cuda")
+
 # workaround to make transformers use the same device as model navigator
-transformers.modeling_utils.get_parameter_device = lambda parameter: torch.device("cuda")
+transformers.modeling_utils.get_parameter_device = lambda parameter: DEVICE
+diffusers.models.modeling_utils.get_parameter_device = lambda parameter: DEVICE
 
 
 def get_pipeline():
     model_id = "stabilityai/stable-diffusion-2-1"
     pipe = StableDiffusionPipeline.from_pretrained(model_id)
     pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
-    pipe = pipe.to("cuda")
+    pipe = pipe.to(DEVICE)
 
     optimize_config = nav.OptimizeConfig(
         batching=False,

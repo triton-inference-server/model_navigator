@@ -48,6 +48,8 @@ class ModuleRegistry:
         for module in self.values():
             if not module.is_optimized:
                 module.optimize()
+        for module in self.values():
+            module.load_optimized()
 
     def items(self):
         """Return registered items."""

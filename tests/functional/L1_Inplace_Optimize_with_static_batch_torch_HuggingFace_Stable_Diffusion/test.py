@@ -91,12 +91,13 @@ def get_pipeline():
 
 def get_dataloader():
     return [
-        ["a photo of an astronaut riding a horse on mars"],  # batch size 1
-        ["dog", "cat"],  # batch size 2
+        ["a photo of an astronaut riding a horse on mars"],
+        ["a dog"],
     ]
 
 
 def main():
+    import diffusers  # pytype: disable=import-error
     import torch  # pytype: disable=import-error
     import transformers  # pytype: disable=import-error
 
@@ -105,7 +106,9 @@ def main():
     from tests import utils
     from tests.functional.common.utils import collect_optimize_statuses, validate_status
 
-    transformers.modeling_utils.get_parameter_device = lambda parameter: torch.device("cuda")
+    device = torch.device("cuda")
+    transformers.modeling_utils.get_parameter_device = lambda parameter: device
+    diffusers.models.modeling_utils.get_parameter_device = lambda parameter: device
 
     nav.inplace_config.mode = nav.Mode.RECORDING
 

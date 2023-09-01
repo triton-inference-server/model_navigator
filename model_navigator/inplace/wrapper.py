@@ -125,13 +125,19 @@ class Module(wrapt.ObjectProxy):
         assert not self.is_optimized, f"Module {self.name} is already optimized."
         assert hasattr(self.wrapper, "optimize"), f"Module {self.name} does not have an optimize method."
         self.wrapper.optimize()
-        self._wrapper = OptimizedModule(
-            self._wrapper._module,
-            self._optimize_config,
-            self._name,
-            self._input_mapping,
-            self._output_mapping,
-        )
+
+    def load_optimized(self) -> None:
+        """Load optimized module."""
+        assert self.is_optimized, f"Module {self.name} is not optimized."
+
+        if not isinstance(self.wrapper, OptimizedModule):
+            self._wrapper = OptimizedModule(
+                self._wrapper._module,
+                self._optimize_config,
+                self._name,
+                self._input_mapping,
+                self._output_mapping,
+            )
 
 
 def module(
