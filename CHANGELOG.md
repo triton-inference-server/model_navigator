@@ -17,13 +17,13 @@ limitations under the License.
 # Changelog
 
 ## 0.7.3 (unreleased)
-- new: Data dependent dynamic control flow support in nav.Module (multiple computaion graphs per module)
+- new: Data dependent dynamic control flow support in nav.Module (multiple computation graphs per module)
 - new: Added find max batch size utility
-- new: Added utilities API documentation
+- fix: Use wide range of shapes for TensorRT conversion
 
 - Known issues and limitations:
   - nav.Module moves original torch.nn.Module to the CPU, in case of weight sharing that might result in unexpected behaviour
-  - For data dependent dynamic control flow (multiple computaion graphs) nav.Module might copy the weights for each separate grah
+  - For data dependent dynamic control flow (multiple computation graphs) nav.Module might copy the weights for each separate graph
 
 
 ## 0.7.2

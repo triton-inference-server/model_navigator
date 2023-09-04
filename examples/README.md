@@ -31,8 +31,10 @@ the [PyTriton](https://github.com/triton-inference-server/pytriton) and [Triton 
 5. [Optimize and server model on PyTriton](../examples/05_optimize_and_serve_model_on_pytriton/)
 6. [Optimize and serve model on Triton Inference Server](../examples/06_optimize_and_serve_model_on_triton/)
 7. [Optimize model and use for offline inference](../examples/07_optimize_model_and_use_for_offline_inference/)
-8. [Optimize PyTorch HiFi-GAN QAT model](../examples/08_optimize_pytorch_hifigan_qat_model/)
+8. [Optimize PyTorch QAT model](../examples/08_optimize_pytorch_hifigan_qat_model/)
 9. [Custom configuration for optimize](../examples/09_custom_configurations_for_optimize/)
+10. [Inplace Optimize of single model](../examples/15_inplace_resnet)
+11. [Inplace Optimize of models pipeline](../examples/16_inplace_stable_diffusion)
 
 
 ## Example models
@@ -43,9 +45,13 @@ Inside [example/models](../examples/models/) directory you can find ready to use
 
 `PyTorch`:
 
+- [BART (Inplace Optimize)](../examples/19_inplace_bart)
+- [BERT](../examples/models/torch/bert)
 - [Linear Model](../examples/models/torch/linear)
 - [ResNet50](../examples/models/torch/resnet50)
-- [BERT](../examples/models/torch/bert)
+- [ResNet50 (Inplace Optimize)](../examples/15_inplace_resnet)
+- [Stable Diffusion (Inplace Optimize)](../examples/16_inplace_stable_diffusion)
+- [Whisper (Inplace Optimize)](../examples/18_inplace_whisper)
 
 `TensorFlow`:
 

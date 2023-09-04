@@ -127,7 +127,7 @@ class TensorRTProfileBuilder(Command):
         LOGGER.info(f"Using profile generated from dataloader as base profile: {str(dataloader_trt_profile)}")
 
         # TODO: Enable when multi-profile support is added.
-        # fallback_throughput_profiling_result = profiling_results[-1]
+        fallback_throughput_profiling_result = profiling_results[-1]
         current_throughput_profiling_result = profiling_results[0]
         current_latency_profiling_result = profiling_results[0]
         current_latency_budget_profiling_result = profiling_results[0]
@@ -145,12 +145,12 @@ class TensorRTProfileBuilder(Command):
 
         trt_profiles_dict = {}
         profiles = {
-            ProfileType.MAX_THROUGHPUT: current_throughput_profiling_result.batch_size,
-            # TODO: Enable when multi-profile support is added.
+            # ProfileType.MAX_THROUGHPUT: current_throughput_profiling_result.batch_size,
             # ProfileType.MAX_THROUGHPUT_STATIC: current_throughput_profiling_result.batch_size,
             # ProfileType.MIN_LATENCY: 1,
             # ProfileType.OPT_LATENCY: current_latency_profiling_result.batch_size,
-            # ProfileType.FALLBACK: fallback_throughput_profiling_result.batch_size,
+            # TODO: Enable when multi-profile support is added.
+            ProfileType.FALLBACK: fallback_throughput_profiling_result.batch_size,
         }
 
         if latency_budget:
