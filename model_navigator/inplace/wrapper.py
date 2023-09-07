@@ -18,6 +18,7 @@ from typing import Any, Callable, Optional
 
 import wrapt
 
+from model_navigator.inplace.utilities import Timer
 from model_navigator.utils.module import lazy_import
 
 from .config import Mode, OptimizeConfig, inplace_config
@@ -60,6 +61,7 @@ class Module(wrapt.ObjectProxy):
         name: Optional[str] = None,
         input_mapping: Optional[Callable] = None,
         output_mapping: Optional[Callable] = None,
+        timer: Optional[Timer] = None,
         offload_parameters_to_cpu: bool = False,
     ) -> None:
         """Initialize Module."""
@@ -68,6 +70,10 @@ class Module(wrapt.ObjectProxy):
         self._name = name or get_object_name(module)
         self._input_mapping = input_mapping or (lambda x: x)
         self._output_mapping = output_mapping or (lambda x: x)
+        if timer:
+            self._module_timer = timer.register_module(self._name)
+        else:
+            self._module_timer = None
 
         wrapper_cls = {
             Mode.OPTIMIZE: RecordAndOptimizeModule,
@@ -101,7 +107,14 @@ class Module(wrapt.ObjectProxy):
         This method overrides the __call__ method of the wrapped module.
         If the module is already optimized it is replaced with the optimized one.
         """
-        output = self._wrapper(*args, **kwargs)
+        if self._module_timer:
+            with self._module_timer:
+                output = self._wrapper(*args, **kwargs)
+                if isinstance(self, torch.nn.Module):
+                    torch.cuda.synchronize()
+        else:
+            output = self._wrapper(*args, **kwargs)
+
         return output
 
     @property

@@ -19,6 +19,8 @@ limitations under the License.
 ## 0.7.3 (unreleased)
 - new: Data dependent dynamic control flow support in nav.Module (multiple computation graphs per module)
 - new: Added find max batch size utility
+- new: Added utilities API documentation
+- new: Add Timer class for measuring execution time of models and Inplace modules.
 - fix: Use wide range of shapes for TensorRT conversion
 
 - Known issues and limitations:

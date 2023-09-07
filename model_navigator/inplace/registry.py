@@ -32,6 +32,11 @@ class ModuleRegistry:
             raise ValueError(f"Module {name} already registered.")
         self._registry[name] = module
 
+    @property
+    def modules(self) -> Dict[str, "Module"]:
+        """Get all registered modules."""
+        return self._registry
+
     def get(self, name: str) -> "Module":
         """Get a module."""
         return self._registry[name]

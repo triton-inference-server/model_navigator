@@ -11,10 +11,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# noqa: D104
-"""Inplace Optimize."""
-
-from model_navigator.inplace import optimize  # noqa: F401
-from model_navigator.inplace.config import Mode, OptimizeConfig, inplace_config  # noqa: F401
-from model_navigator.inplace.utilities import Timer, TimerComparator  # noqa: F401
-from model_navigator.inplace.wrapper import Module, module  # noqa: F401
