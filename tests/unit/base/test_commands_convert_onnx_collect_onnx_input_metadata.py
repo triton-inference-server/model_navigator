@@ -77,4 +77,5 @@ def test_collect_onnx_input_metadata_save_inputs_to_json_file_when_metadata_obta
         assert input_metadata == {
             "metadata": [{"name": "X", "shape": [-1, 3, -1, -1], "dtype": "float32"}],
             "pytree_metadata": {"metadata": None, "tensor_type": "numpy"},
+            "is_legacy": False,
         }

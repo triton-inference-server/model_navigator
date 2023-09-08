@@ -67,10 +67,12 @@ def test_python_package_return_valid_runner():
         assert runner.input_metadata.to_json() == {
             "metadata": [{"name": "input__0", "shape": (-1, 5), "dtype": "float32"}],
             "pytree_metadata": {"metadata": "input__0", "tensor_type": "numpy"},
+            "is_legacy": False,
         }
         assert runner.output_metadata.to_json() == {
             "metadata": [{"name": "output__0", "shape": (-1, 5), "dtype": "float32"}],
             "pytree_metadata": {"metadata": {"output__0": "output__0"}, "tensor_type": "numpy"},
+            "is_legacy": False,
         }
 
         with runner:

@@ -556,6 +556,7 @@ class StatusDictUpdater:
             data_dict["input_metadata"], data_dict["config"].get("forward_kw_names")
         )
         data_dict["output_metadata"] = _update_tensor_metadata(data_dict["output_metadata"])
+        data_dict["output_metadata"]["is_legacy"] = True
 
         if "forward_kw_names" in data_dict["config"]:
             data_dict["config"].pop("forward_kw_names")

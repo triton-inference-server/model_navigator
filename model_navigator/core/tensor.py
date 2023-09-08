@@ -460,18 +460,20 @@ class PyTreeMetadata:
 class TensorMetadata(Dict[str, TensorSpec]):
     """Metadata for inputs/outputs tensors."""
 
-    def __init__(self, *args, pytree_metadata: Optional[PyTreeMetadata] = None, **kwargs):
+    def __init__(self, *args, pytree_metadata: Optional[PyTreeMetadata] = None, is_legacy: bool = False, **kwargs):
         """Create TensorMetadata object.
 
         Args:
             args: Arguments for dict
             pytree_metadata: Description of the PyTree metadata of the tensors
+            is_legacy: If True use legacy flatten_sample. Should be set to True for packages older than v0.2.4
             kwargs: Keyword arguments for dict
         """
         super().__init__(*args, **kwargs)
         if pytree_metadata is None:
             pytree_metadata = PyTreeMetadata(None, TensorType.NUMPY)
         self._pytree_metadata = pytree_metadata
+        self.is_legacy = is_legacy
 
     def add(self, name: str, shape: Sequence[int], dtype: Union[np.dtype, Type[np.dtype]]) -> "TensorMetadata":
         """Add new item to metadata.
@@ -499,7 +501,9 @@ class TensorMetadata(Dict[str, TensorSpec]):
         Returns:
             List converted to TensorMetadata object
         """
-        tensor_metadata = cls(pytree_metadata=PyTreeMetadata.from_dict(data["pytree_metadata"]))
+        tensor_metadata = cls(
+            pytree_metadata=PyTreeMetadata.from_dict(data["pytree_metadata"]), is_legacy=data.get("is_legacy", False)
+        )
         for value in data["metadata"]:
             tensor_metadata.add(value["name"], value["shape"], value["dtype"])
         return tensor_metadata
@@ -516,6 +520,7 @@ class TensorMetadata(Dict[str, TensorSpec]):
         return {
             "metadata": metadata,
             "pytree_metadata": self.pytree_metadata.to_dict(),
+            "is_legacy": self.is_legacy,
         }
 
     @property
@@ -537,7 +542,10 @@ class TensorMetadata(Dict[str, TensorSpec]):
 
         Returns flatten dictionary with keys corresponding to PyTree metadata.
         """
-        return self.pytree_metadata.flatten_sample(sample)
+        if not self.is_legacy:
+            return self.pytree_metadata.flatten_sample(sample)
+        else:
+            return self._legacy_flatten_sample(sample)
 
     def unflatten_sample(self, sample: Dict[str, Any], wrap_input: bool = False) -> Any:
         """Unflatten sample according to PyTree metadata.
@@ -546,6 +554,17 @@ class TensorMetadata(Dict[str, TensorSpec]):
         If wrap_input is True, then single tensor will be wrapped in tuple.
         """
         return self.pytree_metadata.unflatten_sample(sample, wrap_input=wrap_input)
+
+    def _legacy_flatten_sample(self, sample: Any) -> Dict[str, Any]:
+        """Flatten sample without PyTree metadata."""
+        if is_tensor(sample, self.pytree_metadata.tensor_type):
+            sample = (sample,)
+        if isinstance(sample, Mapping):
+            sample = sample.values()
+
+        flattened_sample = {name: value for name, value in zip(self.keys(), sample)}
+
+        return flattened_sample
 
 
 def get_tensor_type(tensor: Any) -> TensorType:
