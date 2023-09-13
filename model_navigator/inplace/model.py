@@ -15,21 +15,23 @@
 
 import abc
 import collections
+import copy
 import dataclasses
 import inspect
 import pathlib
 import tempfile
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, List
 
-from model_navigator.api.config import TensorType
+from model_navigator.api.config import Framework, OnnxConfig, TensorRTConfig, TensorType, TorchTensorRTConfig
 from model_navigator.api.package import load_from_workspace
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import PyTreeMetadata
+from model_navigator.utils.dataloader import to_numpy
 from model_navigator.utils.module import lazy_import
 
 from .config import OptimizeConfig, inplace_config
 from .registry import module_registry
-from .utils import TorchDataloader
+from .utils import TorchDataloader, get_dynamic_axes_from_shapes, get_trt_profile_from_shapes
 
 torch = lazy_import("torch")
 
@@ -106,32 +108,30 @@ class RecordModule(BaseModule):
     def __init__(self, *args, **kwargs) -> None:
         """Initialize RecordModule."""
         super().__init__(*args, **kwargs)
-        self._samples = []
+        self._samples = collections.defaultdict(list)
+        self._samples_shapes = collections.defaultdict(list)
         self._optimized = False
         self._temp_dir = tempfile.TemporaryDirectory(prefix=f"{self._name}_")
         self._samples_dir = pathlib.Path(self._temp_dir.name)
-        self._indicies_groups: Dict[PyTreeMetadata, List[int]] = collections.defaultdict(list)
 
     def record_sample(self, *args: Any, **kwargs: Any) -> None:
         """Record a sample from the module."""
         sample = (*args, kwargs)
         sample = self._input_mapping(sample)
-        ind = len(self._samples)
-        sample_path = self._samples_dir / f"{ind}.pt"
-        torch.save(sample, sample_path)  # change later to (sample,) to keep consistent with torch.onnx.export
-        self._samples.append(sample_path)
-
         pytree_metadata = PyTreeMetadata.from_sample(sample, TensorType.TORCH, prefix=PYTREE_METADATA_PREFIX)
-        self._indicies_groups[pytree_metadata].append(ind)
 
-    def _filter_samples_by_pytree_metadata(self, pytree_metadata: PyTreeMetadata) -> List[pathlib.Path]:
-        """Filter samples by PyTreeMetadata."""
-        return [self._samples[ind] for ind in self._indicies_groups[pytree_metadata]]
+        if len(self._samples[pytree_metadata]) < inplace_config.max_num_samples_stored:
+            ind = self.get_total_num_samples()
+            sample_path = self._samples_dir / f"{ind}.pt"
+            torch.save(sample, sample_path)
+            self._samples[pytree_metadata].append(sample_path)
+
+        shapes = {n: to_numpy(t, Framework.TORCH).shape for n, t in pytree_metadata.flatten_sample(sample).items()}
+        self._samples_shapes[pytree_metadata].append(shapes)
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         """Record a sample and run the module."""
-        if len(self._samples) < inplace_config.max_num_samples:
-            self.record_sample(*args, **kwargs)
+        self.record_sample(*args, **kwargs)
         output = self._module(*args, **kwargs)
         return output
 
@@ -139,24 +139,84 @@ class RecordModule(BaseModule):
         """Optimize the module using the recorded samples."""
         from model_navigator.api.torch import optimize
 
+        batch_dim = 0 if self._optimize_config.batching else None
+        if self._optimize_config.optimization_profile is not None:
+            max_batch_size = self._optimize_config.optimization_profile.max_batch_size
+        else:
+            max_batch_size = None
         config_dict = {k: v for k, v in self._optimize_config.to_dict().items() if k != "workspace"}
 
-        for i, pytree_metadata in enumerate(self._indicies_groups):
+        for i, pytree_metadata in enumerate(self._samples):
             config_dict["workspace"] = self._optimize_config.workspace / str(i)
-            samples = self._filter_samples_by_pytree_metadata(pytree_metadata)
-            optimize(model=self._module, dataloader=TorchDataloader(samples), **config_dict)
+            samples = self._samples[pytree_metadata]
+            samples_shapes = self._samples_shapes[pytree_metadata]
+            dynamic_axes = get_dynamic_axes_from_shapes(samples_shapes, pytree_metadata, batch_dim)
+            trt_profile = get_trt_profile_from_shapes(samples_shapes, pytree_metadata, batch_dim, max_batch_size)
+            updated_config_dict = self._update_custom_configs(config_dict, dynamic_axes, trt_profile)
+
+            optimize(model=self._module, dataloader=TorchDataloader(samples), **updated_config_dict)
 
         self._optimized = True
+
+    def get_total_num_samples(self) -> int:
+        """Get the total number of samples."""
+        return sum(len(samples) for samples in self._samples.values())
+
+    def get_total_num_samples_shapes(self) -> int:
+        """Get the total number of samples."""
+        return sum(len(samples) for samples in self._samples_shapes.values())
 
     @property
     def is_ready_for_optimization(self) -> bool:
         """Check if the module is ready for optimization."""
-        return len(self._samples) >= inplace_config.min_num_samples
+        return (
+            self.get_total_num_samples_shapes() >= inplace_config.min_num_samples
+        )  # TODO min num samples should be per graph or per module?
 
     @property
     def is_optimized(self) -> bool:
         """Check if the module is optimized."""
         return self._optimized
+
+    def _update_custom_configs(self, config_dict, dynamic_axes, trt_profile):
+        config_dict = copy.deepcopy(config_dict)
+
+        if config_dict["custom_configs"] is None:
+            config_dict["custom_configs"] = []
+
+        onnx_config, trt_config, torch_trt_config = None, None, None
+        for custom_config in config_dict["custom_configs"]:
+            if isinstance(custom_config, OnnxConfig):
+                onnx_config = custom_config
+            elif isinstance(custom_config, TensorRTConfig):
+                trt_config = custom_config
+            elif isinstance(custom_config, TorchTensorRTConfig):
+                torch_trt_config = custom_config
+
+        if onnx_config is not None and onnx_config.dynamic_axes is None:
+            onnx_config.dynamic_axes = dynamic_axes
+        else:
+            config_dict["custom_configs"].append(OnnxConfig(dynamic_axes=dynamic_axes))
+
+        if trt_config is not None and trt_config.trt_profiles is None:
+            trt_config.trt_profiles = [trt_profile]
+            if trt_config.run_max_batch_size_search is None:
+                trt_config.run_max_batch_size_search = True
+        else:
+            config_dict["custom_configs"].append(
+                TensorRTConfig(trt_profiles=[trt_profile], run_max_batch_size_search=True)
+            )
+
+        if torch_trt_config is not None and torch_trt_config.trt_profiles is None:
+            torch_trt_config.trt_profiles = [trt_profile]
+            if torch_trt_config.run_max_batch_size_search is None:
+                torch_trt_config.run_max_batch_size_search = True
+        else:
+            config_dict["custom_configs"].append(
+                TorchTensorRTConfig(trt_profiles=[trt_profile], run_max_batch_size_search=True)
+            )
+
+        return config_dict
 
 
 class RecordAndOptimizeModule(RecordModule):
@@ -203,6 +263,7 @@ class OptimizedModule(BaseModule):
         """Run the call through the optimized module."""
         sample = (*args, kwargs)
         sample = self._input_mapping(sample)
+        # TODO when only one runner is present, we can avoid the PyTreeMetadata
         pytree_metadata = PyTreeMetadata.from_sample(sample, TensorType.TORCH, prefix=PYTREE_METADATA_PREFIX)
         if pytree_metadata not in self._runners:
             raise ValueError(f"No runner found for {pytree_metadata}")

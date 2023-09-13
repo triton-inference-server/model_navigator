@@ -68,5 +68,9 @@ class ModuleRegistry:
         """Return registered values."""
         return self._registry.values()
 
+    def is_empty(self):
+        """Return True if registry is empty."""
+        return not bool(self._registry)
+
 
 module_registry = ModuleRegistry()

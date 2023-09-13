@@ -121,5 +121,5 @@ def test_recording_model_is_ready_for_optimization_returns_true_when_enough_samp
         output_mapping=lambda x: x,
         optimize_config=OptimizeConfig(),
     )
-    module._samples = list(range(inplace_config.min_num_samples))
+    module._samples_shapes = {"hash": list(range(inplace_config.min_num_samples))}
     assert module.is_ready_for_optimization

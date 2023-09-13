@@ -518,6 +518,7 @@ class CustomConfigForTensorRT(CustomConfigForFormat):
     ] = DEFAULT_TENSORRT_PRECISION
     precision_mode: Optional[Union[str, TensorRTPrecisionMode]] = DEFAULT_TENSORRT_PRECISION_MODE
     max_workspace_size: Optional[int] = DEFAULT_MAX_WORKSPACE_SIZE
+    run_max_batch_size_search: Optional[bool] = None  # TODO this parameter is currently not used
 
     def __post_init__(self):
         """Initialize common TensorRT parameters and validate configuration."""
@@ -543,6 +544,7 @@ class CustomConfigForTensorRT(CustomConfigForFormat):
         self.max_workspace_size = DEFAULT_MAX_WORKSPACE_SIZE
         self.trt_profiles = None
         self.trt_profile = None
+        self.run_max_batch_size_search = None
 
 
 @dataclasses.dataclass

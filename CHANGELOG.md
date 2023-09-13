@@ -22,6 +22,7 @@ limitations under the License.
 - new: Added utilities API documentation
 - new: Add Timer class for measuring execution time of models and Inplace modules.
 - fix: Use wide range of shapes for TensorRT conversion
+- change: in Inplace, store one sample by default per module and store shape info for all samples
 
 - Known issues and limitations:
   - nav.Module moves original torch.nn.Module to the CPU, in case of weight sharing that might result in unexpected behaviour

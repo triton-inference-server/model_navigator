@@ -14,8 +14,11 @@
 """Inplace Optimize utility functions."""
 
 import pathlib
-from typing import Any, List
+from collections import defaultdict
+from typing import Any, Dict, List, Optional
 
+from model_navigator.commands.infer_metadata import _get_trt_profile_from_axes_shapes
+from model_navigator.core.tensor import PyTreeMetadata
 from model_navigator.utils.module import lazy_import
 
 torch = lazy_import("torch")
@@ -48,3 +51,41 @@ class TorchDataloader:
     def __len__(self):
         """Get number of samples."""
         return len(self._samples_paths)
+
+
+def _extract_axes_shapes(
+    shapes: List[Dict[str, List[int]]],
+    pytree_metadata: PyTreeMetadata,
+) -> Dict[str, Dict[int, List[int]]]:
+
+    axes_shapes = {name: defaultdict(list) for name in pytree_metadata.get_names()}
+    for sample_shapes in shapes:
+        for name, tensor_shape in sample_shapes.items():
+            for k, dim in enumerate(tensor_shape):
+                axes_shapes[name][k].append(dim)
+
+    return axes_shapes
+
+
+def get_trt_profile_from_shapes(
+    shapes: List[Dict[str, List[int]]],
+    pytree_metadata: PyTreeMetadata,
+    batch_dim: Optional[int],
+    max_batch_size: Optional[int],
+):
+    """Get trt profile from shapes."""
+    axes_shapes = _extract_axes_shapes(shapes, pytree_metadata)
+    return _get_trt_profile_from_axes_shapes(axes_shapes, batch_dim, max_batch_size)
+
+
+def get_dynamic_axes_from_shapes(
+    shapes: List[Dict[str, List[int]]], pytree_metadata: PyTreeMetadata, batch_dim: Optional[int]
+):
+    """Get dynamic axes from shapes."""
+    axes_shapes = _extract_axes_shapes(shapes, pytree_metadata)
+    dynamic_axes = defaultdict(list)
+    for name, axes_shapes_ in axes_shapes.items():
+        for axis, shapes in axes_shapes_.items():
+            if axis == batch_dim or min(shapes) != max(shapes):
+                dynamic_axes[name].append(axis)
+    return dict(dynamic_axes)

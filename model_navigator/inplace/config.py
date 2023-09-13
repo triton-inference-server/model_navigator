@@ -15,7 +15,6 @@
 
 import dataclasses
 import pathlib
-import sys
 from enum import Enum
 from typing import Any, Dict, Optional, Sequence, Tuple, Type, Union
 
@@ -23,6 +22,8 @@ from model_navigator.api.config import CustomConfig, DeviceKind, Format, Optimiz
 from model_navigator.core.constants import DEFAULT_SAMPLE_COUNT
 from model_navigator.runners.base import NavigatorRunner
 from model_navigator.runtime_analyzer.strategy import MinLatencyStrategy, RuntimeSearchStrategy
+
+from .registry import module_registry
 
 
 class Mode(Enum):
@@ -42,7 +43,7 @@ class Mode(Enum):
 
 DEFAULT_CACHE_DIR = pathlib.Path.home() / ".cache" / "model_navigator"
 DEFAULT_MIN_NUM_SAMPLES = 100
-DEFAULT_MAX_NUM_SAMPLES = sys.maxsize
+DEFAULT_MAX_NUM_SAMPLES_STORED = 1
 DEFAULT_MODE = Mode.OPTIMIZE
 
 
@@ -54,7 +55,7 @@ class InplaceConfig:
         self._mode: Mode = DEFAULT_MODE
         self._cache_dir: pathlib.Path = DEFAULT_CACHE_DIR
         self._min_num_samples: int = DEFAULT_MIN_NUM_SAMPLES
-        self._max_num_samples: int = DEFAULT_MAX_NUM_SAMPLES
+        self._max_num_samples_stored: int = DEFAULT_MAX_NUM_SAMPLES_STORED
         self.strategy: RuntimeSearchStrategy = MinLatencyStrategy()
 
     @property
@@ -65,6 +66,8 @@ class InplaceConfig:
     @mode.setter
     def mode(self, mode: Union[str, Mode]) -> None:
         """Set the mode of the inplace Optimize."""
+        if not module_registry.is_empty():
+            raise ValueError("Cannot change mode when modules are already registered.")
         self._mode = Mode(mode)
 
     @property
@@ -75,23 +78,19 @@ class InplaceConfig:
     @min_num_samples.setter
     def min_num_samples(self, min_num_samples: int) -> None:
         """Set the minimum number of samples to collect before optimizing."""
-        if min_num_samples < 1 or min_num_samples > self._max_num_samples:
-            raise ValueError(
-                f"min_num_samples must be greater than 0 and less than max_num_samples, got {min_num_samples}"
-            )
+        if min_num_samples < 1:
+            raise ValueError(f"min_num_samples must be greater than 0, got {min_num_samples}")
         self._min_num_samples = min_num_samples
 
     @property
-    def max_num_samples(self) -> int:
+    def max_num_samples_stored(self) -> int:
         """Get the minimum number of samples to collect before optimizing."""
-        return self._max_num_samples
+        return self._max_num_samples_stored
 
-    @max_num_samples.setter
-    def max_num_samples(self, max_num_samples: int) -> None:
+    @max_num_samples_stored.setter
+    def max_num_samples_stored(self, max_num_samples_stored: int) -> None:
         """Set the minimum number of samples to collect before optimizing."""
-        if max_num_samples < self._min_num_samples:
-            raise ValueError(f"max_num_samples must be less than min_num_samples, got {max_num_samples}")
-        self._max_num_samples = max_num_samples
+        self._max_num_samples_stored = max_num_samples_stored
 
     @property
     def cache_dir(self) -> pathlib.Path:

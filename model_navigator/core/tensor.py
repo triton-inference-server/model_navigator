@@ -346,6 +346,10 @@ class PyTreeMetadata:
 
         return args_mapping, kwargs_mapping
 
+    def get_names(self) -> Sequence[str]:
+        """Get names of tensors in PyTreeMetadata."""
+        return list(self.flatten_sample(self._metadata).keys())
+
     def _is_compatible_with(self, metadata, sample):
         if isinstance(metadata, str):
             return is_tensor(sample, self.tensor_type)
