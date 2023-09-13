@@ -81,7 +81,7 @@ def main():
 
     model = Model()
     t = torch.randn(2, 3)
-    dataloader = [t, (t, {"y": t}), (t, {"z": t}), (t, {"y": t, "z": t})] * 2
+    dataloader = [{"x": t}, {"x": t, "y": t}, {"x": t, "z": t}, {"x": t, "y": t, "z": t}] * 2
 
     def verify_func(ys_runner, ys_expected):
         for y_runner, y_expected in zip(ys_runner, ys_expected):
@@ -104,12 +104,12 @@ def main():
     model = nav.Module(model, optimize_config=optimize_config, name="identity")
 
     for batch in dataloader:
-        model(batch)
+        model(**batch)
 
     nav.optimize()
 
     for batch in dataloader:
-        model(batch)
+        model(**batch)
 
     names, packages = [], []
     for name, module in module_registry.items():

@@ -58,7 +58,6 @@ def export(
     @tf.function()
     def predict(inputs_dict):
         inputs = input_metadata.unflatten_sample(inputs_dict)
-        inputs = list(inputs_dict.values())
         outputs = model(inputs)
         return output_metadata.flatten_sample(outputs)
 
