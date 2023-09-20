@@ -18,10 +18,10 @@ from typing import Optional
 import yaml
 
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
+from model_navigator.core.dataloader import load_samples
 from model_navigator.core.workspace import Workspace
 from model_navigator.package.status import Status
 from model_navigator.utils.common import get_default_status_filename
-from model_navigator.utils.dataloader import load_samples
 
 
 class LoadMetadata(Command, is_required=True):

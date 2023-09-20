@@ -12,81 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Commands for fetching and dumping model IO."""
-import math
-import pathlib
-from typing import Any, Iterable, Optional
+from typing import Any, Optional
 
 import numpy as np
 
-from model_navigator.api.config import OptimizationProfile, Sample, SizedDataLoader, TensorRTProfile
+from model_navigator.api.config import OptimizationProfile, SizedDataLoader, TensorRTProfile
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
+from model_navigator.core.dataloader import IndiciesFilteredDataloader, extract_sample, load_samples, samples_to_npz
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata
 from model_navigator.core.workspace import Workspace
-from model_navigator.exceptions import ModelNavigatorUserInputError
 from model_navigator.frameworks import Framework
 from model_navigator.runners.utils import get_format_default_runners
-from model_navigator.utils.dataloader import IndiciesFilteredDataloader, extract_bs1, extract_sample, load_samples
 from model_navigator.utils.format_helpers import FRAMEWORK2BASE_FORMAT
-
-
-def _validate_tensor(tensor: np.ndarray, *, raise_on_error: bool = True):
-    if any(np.isnan(tensor.flatten())):
-        message = "Tensor data contains `NaN` value. Please verify the dataloader and model."
-        if raise_on_error:
-            raise ModelNavigatorUserInputError(message)
-        else:
-            LOGGER.warning(message)
-
-    if any(np.isinf(tensor.flatten())):
-        message = "Tensor data contains `inf` value. Please verify the dataloader and model."
-        if raise_on_error:
-            raise ModelNavigatorUserInputError(message)
-        else:
-            LOGGER.warning(message)
-
-
-def samples_to_npz(
-    samples: Iterable[Sample],
-    path: pathlib.Path,
-    batch_dim: Optional[int],
-    *,
-    num_samples: Optional[int] = None,
-    metadata: Optional[TensorMetadata] = None,
-    framework: Optional[Framework] = None,
-    raise_on_error: bool = True,
-) -> None:
-    """Save samples to .npz files. Each sample is saved to `path/{sample index}.npz` file.
-
-    Args:
-        samples (List[Sample]): Samples to save.
-        path (Path): Output directory.
-        batch_dim (Optional[int]): Batch dimension
-        num_samples (Optional[int], optional): Number of samples to save. Defaults to None.
-        metadata (Optional[TensorMetadata], optional): Metadata of the samples. Defaults to None.
-        framework (Framework): Model framework. Defaults to None.
-        raise_on_error (bool, optional): If True raise an error when sample is invalid. Defaults to True.
-    """
-    path.mkdir(parents=True, exist_ok=True)
-    if num_samples is None:
-        assert hasattr(samples, "__len__")
-        num_samples = len(samples)
-    num_digits = math.ceil(math.log10(num_samples)) + 1
-    for i, sample in enumerate(samples):
-        if metadata is not None:
-            assert framework is not None
-            sample = extract_sample(sample, metadata, framework)
-        sample = extract_bs1(sample, batch_dim)
-        squeezed_sample = {}
-        for name, tensor in sample.items():
-            if batch_dim is not None:
-                tensor = tensor.squeeze(batch_dim)
-
-            _validate_tensor(tensor, raise_on_error=raise_on_error)
-
-            squeezed_sample[name] = tensor
-
-        np.savez((path / f"{str(i).zfill(num_digits)}.npz").as_posix(), **squeezed_sample)
 
 
 class FetchInputModelData(Command, is_required=True):

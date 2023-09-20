@@ -24,9 +24,9 @@ from typing import Any, Callable, List
 
 from model_navigator.api.config import Framework, OnnxConfig, TensorRTConfig, TensorType, TorchTensorRTConfig
 from model_navigator.api.package import load_from_workspace
+from model_navigator.core.dataloader import to_numpy
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import PyTreeMetadata
-from model_navigator.utils.dataloader import to_numpy
 from model_navigator.utils.module import lazy_import
 
 from .config import OptimizeConfig, inplace_config

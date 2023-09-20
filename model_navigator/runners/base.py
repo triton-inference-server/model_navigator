@@ -21,9 +21,9 @@ import numpy as np
 from slugify import slugify
 
 from model_navigator.api.config import DeviceKind, Format, TensorType
+from model_navigator.core.dataloader import validate_sample_output
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata, TensorSpec, get_tensor_type
-from model_navigator.utils.dataloader import validate_sample_output
 
 
 class NavigatorRunner(abc.ABC):

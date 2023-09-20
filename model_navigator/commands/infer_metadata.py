@@ -20,6 +20,7 @@ import numpy as np
 from model_navigator.api.config import OptimizationProfile, SizedDataLoader, SizedIterable, TensorRTProfile
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.execution_context import ExecutionContext
+from model_navigator.core.dataloader import extract_sample, load_samples, to_numpy, validate_sample_input
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import FRAMEWORK_TO_TENSOR_TYPE, PyTreeMetadata, TensorMetadata, TensorSpec
 from model_navigator.core.workspace import Workspace
@@ -27,7 +28,6 @@ from model_navigator.exceptions import ModelNavigatorUserInputError
 from model_navigator.frameworks import Framework
 from model_navigator.frameworks.onnx.utils import get_onnx_io_names
 from model_navigator.runners.utils import get_format_default_runners
-from model_navigator.utils.dataloader import extract_sample, load_samples, to_numpy, validate_sample_input
 from model_navigator.utils.format_helpers import FRAMEWORK2BASE_FORMAT
 
 

@@ -24,10 +24,10 @@ from jsonlines import jsonlines
 from model_navigator.api.config import OptimizationProfile, Sample
 from model_navigator.commands.performance.nvml_handler import NvmlHandler
 from model_navigator.commands.performance.results import ProfilingResults
+from model_navigator.core.dataloader import expand_sample
 from model_navigator.core.logger import LOGGER
 from model_navigator.exceptions import ModelNavigatorError
 from model_navigator.runners.base import NavigatorRunner, NavigatorStabilizedRunner
-from model_navigator.utils.dataloader import expand_sample
 
 
 class Profiler:

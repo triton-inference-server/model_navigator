@@ -20,10 +20,10 @@ import numpy
 import numpy as np
 
 from model_navigator.api.config import Format
+from model_navigator.core.dataloader import get_default_output_names
 from model_navigator.runners.base import DeviceKind, NavigatorRunner
 from model_navigator.runners.registry import register_runner
 from model_navigator.utils import module
-from model_navigator.utils.dataloader import get_default_output_names
 
 tf = module.lazy_import("tensorflow")
 

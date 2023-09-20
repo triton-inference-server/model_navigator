@@ -22,6 +22,7 @@ limitations under the License.
 - new: Added utilities API documentation
 - new: Add Timer class for measuring execution time of models and Inplace modules.
 - fix: Use wide range of shapes for TensorRT conversion
+- fix: Sorting of samples loaded from workspace
 - change: in Inplace, store one sample by default per module and store shape info for all samples
 
 - Known issues and limitations:

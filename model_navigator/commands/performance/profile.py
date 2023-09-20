@@ -24,6 +24,7 @@ from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.data_dump.samples import samples_to_npz
 from model_navigator.commands.execution_context import ExecutionContext
 from model_navigator.commands.performance.results import ProfilingResults
+from model_navigator.core.dataloader import extract_bs1, extract_sample, load_samples
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata
 from model_navigator.core.workspace import Workspace
@@ -31,7 +32,6 @@ from model_navigator.exceptions import ModelNavigatorProfilingError
 from model_navigator.frameworks import Framework
 from model_navigator.runners.base import NavigatorRunner
 from model_navigator.utils.common import parse_kwargs_to_cmd
-from model_navigator.utils.dataloader import extract_bs1, extract_sample, load_samples
 from model_navigator.utils.format_helpers import is_source_format
 
 

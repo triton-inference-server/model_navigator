@@ -19,7 +19,7 @@ from typing import Any, Dict, Optional
 import fire
 from tensorflow.python.compiler.tensorrt import trt_convert as trtc  # pytype: disable=import-error
 
-from model_navigator.utils.dataloader import expand_sample, load_samples
+from model_navigator.core.dataloader import expand_sample, load_samples
 
 
 def convert(

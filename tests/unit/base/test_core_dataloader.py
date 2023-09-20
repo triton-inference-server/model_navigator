@@ -18,9 +18,8 @@ import tempfile
 import numpy
 import pytest
 
-from model_navigator.commands.data_dump.samples import _validate_tensor, samples_to_npz
+from model_navigator.core.dataloader import _sample_filename, _validate_tensor, load_samples, samples_to_npz
 from model_navigator.exceptions import ModelNavigatorUserInputError
-from model_navigator.utils.dataloader import load_samples
 
 
 def test_validate_tensor_raise_exception_when_values_are_nan():
@@ -98,3 +97,34 @@ def test_samples_are_saved_and_loaded_in_the_same_order():
             for (k1, v1), (k2, v2) in zip(s.items(), l_s.items()):
                 assert k1 == k2
                 assert (v1 == v2).all()
+
+
+def test_sample_filename_raise_error_when_idx_larger_than_num_samples():
+    with pytest.raises(ValueError):
+        _sample_filename(idx=11, num_samples=10)
+
+
+def test_sample_filename_is_generated_correctly():
+    sample_name = _sample_filename(idx=1, num_samples=1)
+    assert sample_name == "1.npz"
+
+    sample_name = _sample_filename(idx=2, num_samples=10)
+    assert sample_name == "02.npz"
+
+    sample_name = _sample_filename(idx=3, num_samples=100)
+    assert sample_name == "003.npz"
+
+    sample_name = _sample_filename(idx=4, num_samples=1000)
+    assert sample_name == "0004.npz"
+
+    sample_name = _sample_filename(idx=20, num_samples=20)
+    assert sample_name == "20.npz"
+
+    sample_name = _sample_filename(idx=30, num_samples=100)
+    assert sample_name == "030.npz"
+
+    sample_name = _sample_filename(idx=40, num_samples=1000)
+    assert sample_name == "0040.npz"
+
+    sample_name = _sample_filename(idx=500, num_samples=1000)
+    assert sample_name == "0500.npz"

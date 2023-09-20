@@ -153,7 +153,7 @@ def test_is_measurement_stable_return_true_when_avg_latencies_are_in_stability_r
 
 
 def test_profiler_run_return_batch_sizes_upto_4_when_batch_size_4_saturates_throughput(mocker):
-    mocker.patch("model_navigator.utils.dataloader.expand_sample", return_value=MagicMock())
+    mocker.patch("model_navigator.core.dataloader.expand_sample", return_value=MagicMock())
     mocker.patch(
         "model_navigator.commands.performance.Profiler._run_measurement",
         side_effect=[

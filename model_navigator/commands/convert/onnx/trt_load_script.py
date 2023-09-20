@@ -18,9 +18,9 @@ from typing import Dict, Optional
 
 import fire
 
+from model_navigator.core.dataloader import load_samples
 from model_navigator.core.tensor import TensorMetadata
 from model_navigator.runners.registry import get_runner
-from model_navigator.utils.dataloader import load_samples
 
 
 def load_model(

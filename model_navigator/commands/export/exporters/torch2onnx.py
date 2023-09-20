@@ -20,8 +20,8 @@ from typing import Any, Dict, List, Optional
 import fire
 import torch  # pytype: disable=import-error
 
+from model_navigator.core.dataloader import load_samples
 from model_navigator.core.tensor import TensorMetadata
-from model_navigator.utils.dataloader import load_samples
 
 
 def get_model() -> torch.nn.Module:

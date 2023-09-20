@@ -33,6 +33,7 @@ import numpy as np
 
 from model_navigator.api.config import Format, Sample, TensorRTProfile
 from model_navigator.commands.performance import Performance
+from model_navigator.core.dataloader import load_samples
 from model_navigator.core.tensor import TensorMetadata
 from model_navigator.core.workspace import Workspace
 from model_navigator.exceptions import (
@@ -74,7 +75,6 @@ from model_navigator.triton.specialized_configs import (
     TensorRTAccelerator,
     TensorRTModelConfig,
 )
-from model_navigator.utils.dataloader import load_samples
 
 LOGGER = logging.getLogger(__name__)
 
