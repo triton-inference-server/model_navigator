@@ -59,6 +59,7 @@ class VerifyModel(Command, requires=[Correctness.name, Performance.name]):
         format: Format,
         workspace: Workspace,
         path: pathlib.Path,
+        batch_dim: Optional[int],
         dataloader: SizedDataLoader,
         verify_func: VerifyFunction,
         runner_cls: Type[NavigatorRunner],
@@ -73,6 +74,7 @@ class VerifyModel(Command, requires=[Correctness.name, Performance.name]):
             format (Format): Model format.
             workspace (Path): Model Navigator workspace path.
             path (Path): Model path, relative to the workspace path.
+            batch_dim: Batch dimension.
             dataloader (SizedDataLoader): Model dataloader.
             verify_func (VerifyFunction): Boolean function that verifies the runner based on outputs
                 of the runner and source model.
@@ -104,6 +106,8 @@ class VerifyModel(Command, requires=[Correctness.name, Performance.name]):
             model=model if format == source_format else workspace.path / path,
             input_metadata=input_metadata,
             output_metadata=output_metadata,
+            navigator_workspace=workspace.path,
+            batch_dim=batch_dim,
         )
         y_pred = _get_outputs(runner)
 

@@ -77,6 +77,8 @@ def profile(
         model=model,
         input_metadata=TensorMetadata.from_json(input_metadata),
         output_metadata=TensorMetadata.from_json(output_metadata),
+        navigator_workspace=navigator_workspace,
+        batch_dim=batch_dim,
     )  # pytype: disable=not-instantiable
 
     Profiler(

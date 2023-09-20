@@ -79,6 +79,8 @@ def correctness(
         model=model,
         input_metadata=input_metadata,
         output_metadata=output_metadata,
+        navigator_workspace=navigator_workspace,
+        batch_dim=batch_dim,
     )  # pytype: disable=not-instantiable
 
     per_output_tolerance = TolerancePerOutputName({name: Tolerance(0.0, 0.0) for name in output_metadata})
