@@ -18,205 +18,23 @@ from model_navigator.api.config import (
     OptimizationProfile,
     TensorRTPrecision,
     TensorRTPrecisionMode,
-    TensorRTProfile,
 )
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import (
     ONNXConfig,
     TensorFlowSavedModelConfig,
-    TensorFlowTensorRTConfig,
     TensorRTConfig,
-    TorchModelConfig,
     TorchScriptConfig,
-    TorchTensorRTConfig,
 )
 from model_navigator.core.constants import DEFAULT_MAX_WORKSPACE_SIZE
 from model_navigator.frameworks import Framework
-from model_navigator.pipelines.builders.find_device_max_batch_size import (
-    do_run_max_batch_size_search,
-    find_device_max_batch_size_builder,
-)
+from model_navigator.pipelines.builders.find_device_max_batch_size import find_device_max_batch_size_builder
 from model_navigator.runners.onnx import OnnxrtCUDARunner
 from model_navigator.runners.tensorflow import TensorFlowSavedModelCUDARunner
 from model_navigator.runners.torch import TorchScriptCUDARunner
 
 
-def test_do_run_max_batch_size_search_return_false_when_batch_dim_is_none():
-
-    config = CommonConfig(
-        framework=Framework.TORCH,
-        dataloader=[{"input_name": [idx]} for idx in range(10)],
-        model=None,
-        optimization_profile=OptimizationProfile(),
-        runner_names=(),
-        sample_count=10,
-        target_formats=(),
-        target_device=DeviceKind.CUDA,
-        batch_dim=None,
-    )
-
-    model_cfg = TensorRTConfig(
-        precision=TensorRTPrecision.FP16,
-        precision_mode=TensorRTPrecisionMode.HIERARCHY,
-        max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
-        optimization_level=None,
-        compatibility_level=None,
-    )
-    assert do_run_max_batch_size_search(config=config, model_cfg=model_cfg) is False
-
-
-def test_do_run_max_batch_size_search_return_false_when_tensorrt_model_config_and_trt_profile_set():
-
-    config = CommonConfig(
-        framework=Framework.TORCH,
-        dataloader=[{"input_name": [idx]} for idx in range(10)],
-        model=None,
-        optimization_profile=OptimizationProfile(),
-        runner_names=(),
-        sample_count=10,
-        target_formats=(),
-        target_device=DeviceKind.CUDA,
-    )
-
-    model_cfg = TensorRTConfig(
-        precision=TensorRTPrecision.FP16,
-        precision_mode=TensorRTPrecisionMode.HIERARCHY,
-        max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
-        trt_profiles=[TensorRTProfile().add("x", (1,), (2,), (3,))],
-        optimization_level=None,
-        compatibility_level=None,
-    )
-    assert do_run_max_batch_size_search(config=config, model_cfg=model_cfg) is False
-
-
-def test_do_run_max_batch_size_search_return_false_when_tftrt_model_config_and_trt_profile_set():
-
-    config = CommonConfig(
-        framework=Framework.TORCH,
-        dataloader=[{"input_name": [idx]} for idx in range(10)],
-        model=None,
-        optimization_profile=OptimizationProfile(),
-        runner_names=(),
-        sample_count=10,
-        target_formats=(),
-        target_device=DeviceKind.CUDA,
-    )
-
-    model_cfg = TensorFlowTensorRTConfig(
-        precision=TensorRTPrecision.FP16,
-        minimum_segment_size=3,
-        max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
-        trt_profiles=[TensorRTProfile().add("x", (1,), (2,), (3,))],
-    )
-    assert do_run_max_batch_size_search(config=config, model_cfg=model_cfg) is False
-
-
-def test_do_run_max_batch_size_search_return_false_when_torchtrt_model_config_and_trt_profile_set():
-
-    config = CommonConfig(
-        framework=Framework.TORCH,
-        dataloader=[{"input_name": [idx]} for idx in range(10)],
-        model=None,
-        optimization_profile=OptimizationProfile(),
-        runner_names=(),
-        sample_count=10,
-        target_formats=(),
-        target_device=DeviceKind.CUDA,
-    )
-
-    model_cfg = TorchTensorRTConfig(
-        precision=TensorRTPrecision.FP16,
-        precision_mode=TensorRTPrecisionMode.HIERARCHY,
-        max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
-        trt_profiles=[TensorRTProfile().add("x", (1,), (2,), (3,))],
-    )
-    assert do_run_max_batch_size_search(config=config, model_cfg=model_cfg) is False
-
-
-def test_find_device_max_batch_size_builder_return_empty_execution_unit_when_no_cuda_device():
-
-    config = CommonConfig(
-        framework=Framework.TORCH,
-        dataloader=[{"input_name": [idx]} for idx in range(10)],
-        model=None,
-        optimization_profile=OptimizationProfile(),
-        runner_names=(),
-        sample_count=10,
-        target_formats=(Format.TENSORRT,),
-        target_device=DeviceKind.CPU,
-    )
-
-    models_config = {
-        Format.TENSORRT: [
-            TensorRTConfig(
-                precision=TensorRTPrecision.FP16,
-                precision_mode=TensorRTPrecisionMode.HIERARCHY,
-                max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
-                optimization_level=None,
-                compatibility_level=None,
-            )
-        ],
-    }
-
-    pipeline = find_device_max_batch_size_builder(config=config, models_config=models_config)
-
-    assert len(pipeline.execution_units) == 0
-
-
-def test_find_device_max_batch_size_builder_return_empty_execution_unit_when_no_adaptive_formats():
-
-    config = CommonConfig(
-        framework=Framework.TORCH,
-        dataloader=[{"input_name": [idx]} for idx in range(10)],
-        model=None,
-        optimization_profile=OptimizationProfile(),
-        runner_names=(),
-        sample_count=10,
-        target_formats=(Format.ONNX, Format.TORCH),
-        target_device=DeviceKind.CUDA,
-    )
-
-    models_config = {
-        Format.ONNX: [ONNXConfig(opset=17, dynamic_axes={})],
-        Format.TORCH: [TorchModelConfig()],
-    }
-
-    pipeline = find_device_max_batch_size_builder(config=config, models_config=models_config)
-    assert len(pipeline.execution_units) == 0
-
-
-def test_find_device_max_batch_size_builder_return_empty_execution_unit_when_no_adaptive_conversion_needed():
-
-    config = CommonConfig(
-        framework=Framework.TORCH,
-        dataloader=[{"input_name": [idx]} for idx in range(10)],
-        model=None,
-        optimization_profile=OptimizationProfile(),
-        runner_names=(),
-        sample_count=10,
-        target_formats=(Format.TENSORRT,),
-        target_device=DeviceKind.CUDA,
-    )
-
-    models_config = {
-        Format.TENSORRT: [
-            TensorRTConfig(
-                precision=TensorRTPrecision.FP16,
-                precision_mode=TensorRTPrecisionMode.HIERARCHY,
-                max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
-                trt_profiles=[TensorRTProfile().add("x", (1,), (2,), (3,))],
-                optimization_level=None,
-                compatibility_level=None,
-            )
-        ],
-    }
-
-    pipeline = find_device_max_batch_size_builder(config=config, models_config=models_config)
-    assert len(pipeline.execution_units) == 0
-
-
 def test_find_device_max_batch_size_builder_return_execution_unit_when_torch_framework_is_used():
-
     config = CommonConfig(
         framework=Framework.TORCH,
         dataloader=[{"input_name": [idx]} for idx in range(10)],
@@ -260,7 +78,6 @@ def test_find_device_max_batch_size_builder_return_execution_unit_when_torch_fra
 
 
 def test_find_device_max_batch_size_builder_return_execution_unit_when_tensorflow_framework_is_used():
-
     config = CommonConfig(
         framework=Framework.TENSORFLOW,
         dataloader=[{"input_name": [idx]} for idx in range(10)],
@@ -297,7 +114,6 @@ def test_find_device_max_batch_size_builder_return_execution_unit_when_tensorflo
 
 
 def test_find_device_max_batch_size_builder_return_execution_unit_when_jax_framework_is_used():
-
     config = CommonConfig(
         framework=Framework.JAX,
         dataloader=[{"input_name": [idx]} for idx in range(10)],
@@ -334,7 +150,6 @@ def test_find_device_max_batch_size_builder_return_execution_unit_when_jax_frame
 
 
 def test_find_device_max_batch_size_builder_return_execution_unit_when_onnx_framework_is_used():
-
     config = CommonConfig(
         framework=Framework.ONNX,
         dataloader=[{"input_name": [idx]} for idx in range(10)],

@@ -13,7 +13,7 @@
 # limitations under the License.
 """Helpers functions for formats."""
 
-from typing import Optional, Set
+from typing import List, Optional, Set
 
 from model_navigator.api.config import AVAILABLE_TARGET_FORMATS, DEFAULT_TARGET_FORMATS, Format
 from model_navigator.frameworks import Framework
@@ -109,6 +109,37 @@ def get_base_format(format: Format, framework: Framework) -> Optional[Format]:
         },
         Framework.TENSORRT: {Format.TENSORRT: Format.TENSORRT},
     }[framework].get(format)
+
+
+def get_export_formats(format: Format, framework: Framework) -> List[Format]:
+    """Get the export formats required to for max batch size search.
+
+    Args:
+        format: The format that has to be created
+        framework: The framework in which conversion is performed
+
+    Returns:
+        A export model format necessary to create provided format.
+    """
+    return {
+        Framework.NONE: {},
+        Framework.TORCH: {
+            Format.TENSORRT: [Format.TORCHSCRIPT, Format.ONNX],
+            Format.TORCH_TRT: [Format.TORCHSCRIPT],
+        },
+        Framework.TENSORFLOW: {
+            Format.ONNX: [Format.TF_SAVEDMODEL],
+            Format.TENSORRT: [Format.TF_SAVEDMODEL],
+            Format.TF_TRT: [Format.TF_SAVEDMODEL],
+        },
+        Framework.ONNX: {},
+        Framework.JAX: {
+            Format.ONNX: [Format.TF_SAVEDMODEL],
+            Format.TENSORRT: [Format.TF_SAVEDMODEL],
+            Format.TF_TRT: [Format.TF_SAVEDMODEL],
+        },
+        Framework.TENSORRT: {},
+    }[framework].get(format, [])
 
 
 SUFFIX2FORMAT = {

@@ -23,7 +23,7 @@ from model_navigator.api import Format
 from model_navigator.api import config as config_api
 from model_navigator.configuration.model import model_config
 from model_navigator.frameworks import Framework
-from model_navigator.utils.format_helpers import get_base_format
+from model_navigator.utils.format_helpers import get_base_format, get_export_formats
 
 C = TypeVar("C", bound=config_api.CustomConfigForFormat)
 
@@ -75,14 +75,18 @@ class ModelConfigBuilder:
                 raise NotImplementedError("Currently only custom configs for formats are implemented.")
 
         base_formats = []
+        export_formats = []
         for target_format in target_formats:
             base_format = get_base_format(target_format, framework)
             if base_format is not None:
                 base_formats.append(base_format)
-        target_formats = tuple(set(base_formats + list(target_formats)))
+
+            export_fmts = get_export_formats(target_format, framework)
+            export_formats.extend(export_fmts)
+
+        target_formats = tuple(set(base_formats + export_formats + list(target_formats)))
 
         model_configs = collections.defaultdict(list)
-
         if Format.PYTHON in target_formats:
             ModelConfigBuilder.get_source_python_config(model_configs)
 
@@ -100,22 +104,62 @@ class ModelConfigBuilder:
         if framework == Framework.TORCH and (Format.TORCHSCRIPT in target_formats or extended_onnx_export):
             ModelConfigBuilder.get_torchscript_config(custom_configs_for_format, model_configs)
 
-        if Format.TORCH_TRT in target_formats:
-            ModelConfigBuilder.get_torch_trt_config(custom_configs_for_format, model_configs)
-
-        if Format.TF_SAVEDMODEL in target_formats:
-            ModelConfigBuilder.get_savedmodel_config(custom_configs_for_format, model_configs, framework=framework)
-
-        if Format.ONNX in target_formats:
-            ModelConfigBuilder.get_onnx_config(framework, custom_configs_for_format, model_configs)
-
-        if Format.TENSORRT in target_formats:
-            ModelConfigBuilder.get_trt_config(framework, custom_configs_for_format, model_configs)
-
-        if Format.TF_TRT in target_formats:
-            ModelConfigBuilder.get_tf_trt_config(custom_configs_for_format, model_configs)
+        ModelConfigBuilder.update_model_configs(
+            framework=framework,
+            target_formats=target_formats,
+            model_configs=model_configs,
+            custom_configs_for_format=custom_configs_for_format,
+        )
 
         return model_configs
+
+    @staticmethod
+    def update_model_configs(
+        framework: Framework,
+        target_formats: Sequence[Format],
+        model_configs: Dict[Format, List],
+        custom_configs_for_format: List,
+    ):
+        """Update model configs based on target formats.
+
+        Args:
+            framework: Framework in which the source model is implemented
+            target_formats: Formats to which model has to be converted
+            model_configs: Generated model configs
+            custom_configs_for_format: Custom configs for formats
+        """
+        if Format.TORCH_TRT in target_formats:
+            ModelConfigBuilder.get_torch_trt_config(
+                custom_configs=custom_configs_for_format,
+                model_configs=model_configs,
+            )
+
+        if Format.TF_SAVEDMODEL in target_formats:
+            ModelConfigBuilder.get_savedmodel_config(
+                framework=framework,
+                custom_configs=custom_configs_for_format,
+                model_configs=model_configs,
+            )
+
+        if Format.ONNX in target_formats:
+            ModelConfigBuilder.get_onnx_config(
+                framework=framework,
+                custom_configs=custom_configs_for_format,
+                model_configs=model_configs,
+            )
+
+        if Format.TENSORRT in target_formats:
+            ModelConfigBuilder.get_trt_config(
+                framework=framework,
+                custom_configs=custom_configs_for_format,
+                model_configs=model_configs,
+            )
+
+        if Format.TF_TRT in target_formats:
+            ModelConfigBuilder.get_tf_trt_config(
+                custom_configs=custom_configs_for_format,
+                model_configs=model_configs,
+            )
 
     @staticmethod
     def get_source_python_config(model_configs: Dict[Format, List[model_config.ModelConfig]]):
