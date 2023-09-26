@@ -16,7 +16,7 @@ limitations under the License.
 
 # Changelog
 
-## 0.7.3 (unreleased)
+## 0.7.3
 - new: Data dependent dynamic control flow support in nav.Module (multiple computation graphs per module)
 - new: Added find max batch size utility
 - new: Added utilities API documentation
