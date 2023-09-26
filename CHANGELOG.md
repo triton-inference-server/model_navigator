@@ -24,7 +24,7 @@ limitations under the License.
 - fix: Use wide range of shapes for TensorRT conversion
 - fix: Sorting of samples loaded from workspace
 - change: in Inplace, store one sample by default per module and store shape info for all samples
-- change: always include export formats in navigator package
+- change: always execute export for all supported formats
 
 - Known issues and limitations:
   - nav.Module moves original torch.nn.Module to the CPU, in case of weight sharing that might result in unexpected behaviour
