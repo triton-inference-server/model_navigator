@@ -19,7 +19,7 @@ limitations under the License.
 In this example we show how to Model Navigator Inplace Optimize to run optimized models in place of the PyTorch models in the original pipeline.
 Depending on the mode the `optimize.py` script can run PyTorch Stable Diffusion pipeline or optimize and run the CLIP, U-Net and VAE models in TensorRT without any changes to the original pipeline.
 
-We recommend running this example in NVIDIA NGC [PyTorch containter](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch).
+We recommend running this example in NVIDIA NGC [PyTorch containter](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch) with CUDA 12 and TensorRT >= 8.6.
 The Python script `optimize.py` wraps the Python model using Inplace Optimize and then runs it without any chagnes.
 
 To run the original Python code without any modifications run:

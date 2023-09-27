@@ -471,8 +471,7 @@ class TensorRTRunner(NavigatorRunner):
     def _input_tensor_view(self, feed_dict, name) -> FormattedArray:
         # Set up input tensor shapes and copy from host memory if needed
         array = feed_dict[name]
-        tensor_type = get_tensor_type(array)
-        if tensor_type == TensorType.TORCH:
+        if not isinstance(array, cuda_utils.DeviceView) and get_tensor_type(array) == TensorType.TORCH:
             if not array.is_cuda:
                 array = array.cuda()
             array = cuda_utils.DeviceView(

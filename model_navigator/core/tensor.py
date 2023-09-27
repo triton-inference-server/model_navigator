@@ -25,6 +25,7 @@ import numpy as np
 
 from model_navigator.api.config import TensorType
 from model_navigator.frameworks import Framework, is_jax_available, is_tf_available, is_torch_available
+from model_navigator.frameworks.tensorrt.cuda import DeviceView
 from model_navigator.utils import common, module
 from model_navigator.utils.common import PYTHON_PRIMITIVE_TYPES
 
@@ -225,7 +226,7 @@ def is_tensor(tensor: Any, tensor_type: TensorType) -> bool:
         True if object is a valid tensor, False otherwise
     """
     if tensor_type == TensorType.TORCH:
-        return torch.is_tensor(tensor) or isinstance(tensor, np.ndarray)
+        return torch.is_tensor(tensor) or isinstance(tensor, (np.ndarray, DeviceView))
     elif tensor_type == TensorType.TENSORFLOW:
         return tf.is_tensor(tensor) or isinstance(tensor, np.ndarray)
     elif tensor_type == TensorType.JAX:

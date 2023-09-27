@@ -17,7 +17,7 @@ import ctypes
 import math
 import os
 import sys
-from typing import Optional, Sequence, Tuple
+from typing import Any, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -416,34 +416,14 @@ class DeviceView:
         self.dtype = dtype
         """np.dtype: The data type of the device buffer"""
 
-    def _check_host_buffer(self, host_buffer, copying_from):  # pytype: disable=attribute-error
-        if host_buffer.dtype != self.dtype:
-            raise ModelNavigatorUserInputError(
-                f"Host buffer type: {host_buffer.dtype} does not match the type of this device buffer: {self.dtype}. This may cause CUDA errors!"
-            )
+        self._torch = None
 
-        if not utils.is_contiguous(host_buffer):
-            raise ModelNavigatorUserInputError(
-                "Provided host buffer is not contiguous in memory.\n"
-                "Hint: Use `util.make_contiguous()` or `np.ascontiguousarray()` to make the array contiguous in memory."
-            )
-
-        # If the host buffer is an input, the device buffer should be large enough to accomodate it.
-        # Otherwise, the host buffer needs to be large enough to accomodate the device buffer.
-        if copying_from:
-            if host_buffer.nbytes > self.nbytes:
-                raise ModelNavigatorUserInputError(
-                    f"Provided host buffer is larger than device buffer.\n"
-                    f"Note: host buffer is {host_buffer.nbytes} bytes but device buffer is only {self.nbytes} bytes.\n"
-                    f"Hint: Use `resize()` to resize the device buffer to the correct shape."
-                )
-        else:
-            if host_buffer.nbytes < self.nbytes:
-                raise ModelNavigatorUserInputError(
-                    f"Provided host buffer is smaller than device buffer.\n"
-                    f"Note: host buffer is only {host_buffer.nbytes} bytes but device buffer is {self.nbytes} bytes.\n"
-                    f"Hint: Use `util.resize_buffer()` to resize the host buffer to the correct shape."
-                )
+    @property
+    def torch_array(self):
+        """Returns a torch array of the device buffer."""
+        if self._torch is None:
+            self._torch = self.torch()
+        return self._torch
 
     @property
     def dtype(self):
@@ -460,6 +440,22 @@ class DeviceView:
     def nbytes(self):
         """The number of bytes in the memory region."""
         return utils.volume(self.shape) * self.itemsize
+
+    def __getattr__(self, __name: str) -> Any:
+        """Returns the attribute of the torch array."""
+        return getattr(self.torch_array, __name)
+
+    def __getitem__(self, key: Any) -> Any:
+        """Returns the item of the torch array."""
+        return self.torch_array[key]
+
+    def __str__(self):
+        """Returns a string representation of the device buffer."""
+        return f"DeviceView[(dtype={np.dtype(self.dtype).name}, shape={self.shape}), ptr={hex(self.ptr)}]"
+
+    def __repr__(self):
+        """Returns a string representation of the device buffer."""
+        return _make_repr("DeviceView", ptr=self.ptr, shape=self.shape, dtype=self.dtype)[0]
 
     def copy_to(self, host_buffer: np.ndarray, stream: Optional[Stream] = None) -> np.ndarray:
         """Copies from this device buffer to the provided host buffer.
@@ -503,6 +499,7 @@ class DeviceView:
             The newly created NumPy array.
         """
         arr = torch.empty(self.shape, dtype=utils.numpy_to_torch_dtype(self.dtype), device="cuda")
+
         wrapper().memcpy(
             dst=arr.data_ptr(),
             src=self.ptr,
@@ -510,15 +507,37 @@ class DeviceView:
             kind=MemcpyKind.DeviceToDevice,
             stream_ptr=try_get_stream_handle(stream),
         )
+
         return arr
 
-    def __str__(self):
-        """Returns a string representation of the device buffer."""
-        return f"DeviceView[(dtype={np.dtype(self.dtype).name}, shape={self.shape}), ptr={hex(self.ptr)}]"
+    def _check_host_buffer(self, host_buffer, copying_from):  # pytype: disable=attribute-error
+        if host_buffer.dtype != self.dtype:
+            raise ModelNavigatorUserInputError(
+                f"Host buffer type: {host_buffer.dtype} does not match the type of this device buffer: {self.dtype}. This may cause CUDA errors!"
+            )
 
-    def __repr__(self):
-        """Returns a string representation of the device buffer."""
-        return _make_repr("DeviceView", ptr=self.ptr, shape=self.shape, dtype=self.dtype)[0]
+        if not utils.is_contiguous(host_buffer):
+            raise ModelNavigatorUserInputError(
+                "Provided host buffer is not contiguous in memory.\n"
+                "Hint: Use `util.make_contiguous()` or `np.ascontiguousarray()` to make the array contiguous in memory."
+            )
+
+        # If the host buffer is an input, the device buffer should be large enough to accomodate it.
+        # Otherwise, the host buffer needs to be large enough to accomodate the device buffer.
+        if copying_from:
+            if host_buffer.nbytes > self.nbytes:
+                raise ModelNavigatorUserInputError(
+                    f"Provided host buffer is larger than device buffer.\n"
+                    f"Note: host buffer is {host_buffer.nbytes} bytes but device buffer is only {self.nbytes} bytes.\n"
+                    f"Hint: Use `resize()` to resize the device buffer to the correct shape."
+                )
+        else:
+            if host_buffer.nbytes < self.nbytes:
+                raise ModelNavigatorUserInputError(
+                    f"Provided host buffer is smaller than device buffer.\n"
+                    f"Note: host buffer is only {host_buffer.nbytes} bytes but device buffer is {self.nbytes} bytes.\n"
+                    f"Hint: Use `util.resize_buffer()` to resize the host buffer to the correct shape."
+                )
 
 
 def try_get_stream_handle(stream):

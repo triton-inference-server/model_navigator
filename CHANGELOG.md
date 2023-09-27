@@ -17,6 +17,7 @@ limitations under the License.
 # Changelog
 
 ## 0.7.4 (unreleased)
+- change: in TensorRT runner, when TensorType.TORCH is the return type lazily convert tensort to Torch
 
 
 ## 0.7.3
