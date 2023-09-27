@@ -16,6 +16,9 @@ limitations under the License.
 
 # Changelog
 
+## 0.7.4 (unreleased)
+
+
 ## 0.7.3
 - new: Data dependent dynamic control flow support in nav.Module (multiple computation graphs per module)
 - new: Added find max batch size utility
@@ -30,6 +33,17 @@ limitations under the License.
   - nav.Module moves original torch.nn.Module to the CPU, in case of weight sharing that might result in unexpected behaviour
   - For data dependent dynamic control flow (multiple computation graphs) nav.Module might copy the weights for each separate graph
 
+- Version of external components used during testing:
+  - [PyTorch 2.1.0a0+29c30b1](https://github.com/pytorch/pytorch/commit/29c30b1)
+  - [TensorFlow 2.13.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.13.0)
+  - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+  - [ONNX Runtime 1.15.1](https://github.com/microsoft/onnxruntime/tree/v1.15.1)
+  - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.47.1
+  - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.27
+  - [tf2onnx v1.15.1](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.15.1)
+  - Other component versions depend on the used framework containers versions.
+    See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+    for a detailed summary.
 
 ## 0.7.2
 - fix: Obtaining inputs names from ONNX file for TensorRT conversion
