@@ -14,7 +14,7 @@
 """Workspace definition."""
 import pathlib
 import shutil
-from typing import Optional
+from typing import Optional, Union
 
 from model_navigator.core.constants import DEFAULT_WORKSPACE
 from model_navigator.core.logger import LOGGER, add_log_file_handler
@@ -23,7 +23,7 @@ from model_navigator.core.logger import LOGGER, add_log_file_handler
 class Workspace:
     """Workspace class to maintain shared directory to store artefacts."""
 
-    def __init__(self, path: Optional[pathlib.Path] = None):
+    def __init__(self, path: Optional[Union[str, pathlib.Path]] = None):
         """Initialize workspace.
 
         If path is not provided the default workspace is used.
@@ -34,7 +34,7 @@ class Workspace:
         if not path:
             self._path = pathlib.Path.cwd() / DEFAULT_WORKSPACE
         else:
-            self._path = path
+            self._path = pathlib.Path(path)
 
     @property
     def path(self) -> pathlib.Path:

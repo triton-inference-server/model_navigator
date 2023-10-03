@@ -53,6 +53,7 @@ class ModelConfig:
     outputs: Optional[Sequence[OutputTensorSpec]] = None
     optimization: Optional[Union[TensorRTOptimization, TensorFlowOptimization, ONNXOptimization]] = None
     response_cache: Optional[bool] = None
+    decoupled: Optional[bool] = None
     warmup: Dict[str, ModelWarmup] = dataclasses.field(default_factory=lambda: {})
 
     def __post_init__(self) -> None:

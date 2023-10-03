@@ -79,7 +79,6 @@ def load(
         Package.
     """
     LOGGER.info(f"Loading package from {path} to {workspace}.")
-
     workspace = Workspace(workspace)
     workspace.initialize()
 

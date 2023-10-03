@@ -126,6 +126,7 @@ class ModelConfigGenerator:
         self._set_optimization(model_config)
         self._set_parameters(model_config)
         self._set_response_cache(model_config)
+        self._set_decoupled_policy(model_config)
         self._set_model_warmup(model_config)
 
         return model_config
@@ -579,6 +580,17 @@ class ModelConfigGenerator:
         if self._config.response_cache:
             model_config["response_cache"] = {
                 "enable": self._config.response_cache,
+            }
+
+    def _set_decoupled_policy(self, model_config: Dict):
+        """Configure decoupled transaction policy for model.
+
+        Args:
+            model_config: Dictionary where configuration is attached.
+        """
+        if self._config.decoupled:
+            model_config["model_transaction_policy"] = {
+                "decoupled": self._config.decoupled,
             }
 
     def _set_model_warmup(self, model_config: Dict):

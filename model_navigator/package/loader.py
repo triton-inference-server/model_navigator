@@ -73,14 +73,13 @@ class PackageLoader:
         """Load package from provided workspace.
 
         Args:
-            workspace: Workspace where packages will be extracted
+            workspace_path: Workspace where packages will be extracted
 
         Returns:
             Package.
         """
-        workspace_path = pathlib.Path(workspace_path)
         workspace = Workspace(workspace_path)
-        status_path = workspace_path / Package.status_filename
+        status_path = workspace.path / Package.status_filename
         if not status_path.exists():
             raise FileNotFoundError(f"Status file {status_path} not found.")
         with open(status_path) as status_file:

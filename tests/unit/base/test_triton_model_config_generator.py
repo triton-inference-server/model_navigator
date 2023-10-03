@@ -56,6 +56,8 @@ full_model_config = ModelConfig(
     backend=Backend.TensorRT,
     batching=True,
     max_batch_size=16,
+    response_cache=True,
+    decoupled=True,
     batcher=DynamicBatcher(
         preferred_batch_size=[16, 32],
         max_queue_delay_microseconds=100,
@@ -208,6 +210,7 @@ def test_get_config_call_config_generator_methods_when_sequence_batcher_used(moc
     mock_set_model_parameters = mocker.patch.object(ModelConfigGenerator, "_set_parameters")
     mock_set_response_cache = mocker.patch.object(ModelConfigGenerator, "_set_response_cache")
     mock_set_sequence_batching = mocker.patch.object(ModelConfigGenerator, "_set_sequence_batching")
+    mock_set_decoupled_policy = mocker.patch.object(ModelConfigGenerator, "_set_decoupled_policy")
 
     model_config = ModelConfig(
         model_name="simple",
@@ -229,6 +232,7 @@ def test_get_config_call_config_generator_methods_when_sequence_batcher_used(moc
     assert mock_set_model_parameters.called is True  # pytype: disable=attribute-error
     assert mock_set_response_cache.called is True  # pytype: disable=attribute-error
     assert mock_set_sequence_batching.called is True  # pytype: disable=attribute-error
+    assert mock_set_decoupled_policy.called is True  # pytype: disable=attribute-error
 
 
 def test_get_config_call_config_generator_methods_when_dynamic_batcher_used(mocker):
@@ -237,6 +241,7 @@ def test_get_config_call_config_generator_methods_when_dynamic_batcher_used(mock
     mock_set_model_parameters = mocker.patch.object(ModelConfigGenerator, "_set_parameters")
     mock_set_response_cache = mocker.patch.object(ModelConfigGenerator, "_set_response_cache")
     mock_set_dynamic_batching = mocker.patch.object(ModelConfigGenerator, "_set_dynamic_batching")
+    mock_set_decoupled_policy = mocker.patch.object(ModelConfigGenerator, "_set_decoupled_policy")
 
     model_config = ModelConfig(model_name="simple", backend=Backend.ONNXRuntime, batcher=DynamicBatcher())
 
@@ -254,6 +259,7 @@ def test_get_config_call_config_generator_methods_when_dynamic_batcher_used(mock
     assert mock_set_model_parameters.called is True  # pytype: disable=attribute-error
     assert mock_set_response_cache.called is True  # pytype: disable=attribute-error
     assert mock_set_dynamic_batching.called is True  # pytype: disable=attribute-error
+    assert mock_set_decoupled_policy.called is True  # pytype: disable=attribute-error
 
 
 @pytest.mark.parametrize("backend", list(Backend))
@@ -1151,6 +1157,31 @@ def test_to_file_set_response_cache_when_enabled():
         }
 
 
+def test_to_file_set_decoupled_policy_when_enabled():
+    model_config = ModelConfig(
+        model_name="simple",
+        backend=Backend.ONNXRuntime,
+        decoupled=True,
+    )
+    generator = ModelConfigGenerator(model_config)
+
+    with tempfile.NamedTemporaryFile() as fp:
+        generator.to_file(fp.name)
+
+        config_path = pathlib.Path(fp.name)
+        assert config_path.exists() is True
+
+        data = _load_config(config_path)
+
+        assert data == {
+            "name": "simple",
+            "backend": "onnxruntime",
+            "max_batch_size": 4,
+            "dynamic_batching": {},
+            "model_transaction_policy": {"decoupled": True},
+        }
+
+
 def test_to_file_set_tensorrt_optimization_for_tensorrt_when_provided_for_model():
     model_config = ModelConfig(
         model_name="simple",
@@ -1394,6 +1425,8 @@ def test_to_file_save_config_to_file_when_full_config_specified():
             "name": "simple",
             "backend": "tensorrt",
             "max_batch_size": 16,
+            "response_cache": {"enable": True},
+            "model_transaction_policy": {"decoupled": True},
             "dynamic_batching": {
                 "preferred_batch_size": [16, 32],
                 "max_queue_delay_microseconds": "100",
