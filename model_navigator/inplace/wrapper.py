@@ -18,7 +18,7 @@ from typing import Any, Callable, Optional
 
 import wrapt
 
-from model_navigator.inplace.utilities import Timer
+from model_navigator.inplace.timers import Timer
 from model_navigator.utils.module import lazy_import
 
 from .config import Mode, OptimizeConfig, inplace_config
@@ -107,7 +107,7 @@ class Module(wrapt.ObjectProxy):
         This method overrides the __call__ method of the wrapped module.
         If the module is already optimized it is replaced with the optimized one.
         """
-        if self._module_timer:
+        if self._module_timer and self._module_timer.enabled:
             with self._module_timer:
                 output = self._wrapper(*args, **kwargs)
                 if isinstance(self, torch.nn.Module):

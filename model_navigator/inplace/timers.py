@@ -181,6 +181,7 @@ class ModuleTimer(contextlib.AbstractContextManager):
     def __init__(self, module_name: str) -> None:
         """Initialize ModuleTimer."""
         super().__init__()
+        self._enabled = False
         self._module_name = module_name
         self._times = []
 
@@ -191,7 +192,21 @@ class ModuleTimer(contextlib.AbstractContextManager):
 
     def __exit__(self, exc_type, exc_value, traceback):  # noqa: F841
         """Exit context."""
-        self._times.append((time.monotonic() - self._start) * 1000)  # convert to ms
+        if self._enabled:
+            self._times.append((time.monotonic() - self._start) * 1000)  # convert to ms
+
+    def enable(self):
+        """Enable module timers."""
+        self._enabled = True
+
+    def disable(self):
+        """Disable module timers."""
+        self._enabled = False
+
+    @property
+    def enabled(self):
+        """Check if module timers are enabled."""
+        return self._enabled
 
     @property
     def module_name(self) -> str:
@@ -229,7 +244,7 @@ class ModuleTimer(contextlib.AbstractContextManager):
             runners=self.module_runners,
         )
 
-    def reset_timer(self):
+    def reset(self):
         """Reset the total time spent in the __call__ method."""
         self._times = []
 
@@ -257,12 +272,16 @@ class Timer(contextlib.AbstractContextManager):
 
     def __enter__(self) -> Any:
         """Enter context."""
+        for module_timer in self._module_timers.values():
+            module_timer.enable()
         self._start = time.monotonic()
         return super().__enter__()
 
     def __exit__(self, exc_type, exc_value, traceback):  # noqa: F841
         """Exit context."""
         self._times.append((time.monotonic() - self._start) * 1000)  # convert to ms
+        for module_timer in self._module_timers.values():
+            module_timer.disable()
 
     @property
     def name(self) -> str:
@@ -291,11 +310,11 @@ class Timer(contextlib.AbstractContextManager):
 
         return self._module_timers[module_name]
 
-    def reset_timer(self):
+    def reset(self):
         """Reset the total time spent in the context."""
         self._times = []
         for module_timer in self._module_timers.values():
-            module_timer.reset_timer()
+            module_timer.reset()
 
 
 class TimerComparator:
@@ -397,3 +416,16 @@ class TimerComparator:
 
         output = tabulate.tabulate(t, tablefmt="plain")
         return output
+
+    def save_report(self, path: Union[str, pathlib.Path]):
+        """Save report."""
+        with open(path, "w") as fp:
+            fp.write(self.get_report())
+
+
+def setup_timer_comparator(original_timer: pathlib.Path, optimized_timer: pathlib.Path):
+    """Setup timer comparator."""
+    if original_timer.exists() and optimized_timer.exists():
+        return TimerComparator(original_timer, optimized_timer)
+    else:
+        return None
