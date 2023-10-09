@@ -18,7 +18,7 @@ from typing import Any, Callable, Optional
 
 import wrapt
 
-from model_navigator.inplace.timers import Timer
+from model_navigator.inplace.timer import Timer
 from model_navigator.utils.module import lazy_import
 
 from .config import Mode, OptimizeConfig, inplace_config

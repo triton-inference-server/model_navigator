@@ -26,8 +26,11 @@ import tabulate
 import yaml
 
 from model_navigator.api.config import Format
+from model_navigator.core.constants import DEFAULT_COMPARISON_REPORT_FILE
 from model_navigator.inplace.registry import module_registry
 from model_navigator.utils.environment import get_env
+
+from .config import Mode, inplace_config
 
 format2string = {
     Format.TORCH: "Torch",
@@ -56,10 +59,10 @@ class ModuleTimeData:
     """Dataclass used for storing module time data."""
 
     module_name: str
-    times: List[float]
     formats: List[str]
     runners: List[str]
     runtime_results: Optional[RuntimeResults] = None
+    times: Optional[List[float]] = dataclasses.field(default_factory=list)
 
     @property
     def total_time_ms(self) -> float:
@@ -96,8 +99,8 @@ class TimeData:
 
     name: str
     info: Optional[Dict[str, str]] = None
-    times: Optional[List[float]] = None
     runtime_results: Optional[RuntimeResults] = None
+    times: Optional[List[float]] = dataclasses.field(default_factory=list)
     modules: Optional[Dict[str, ModuleTimeData]] = None
 
     def __post_init__(self):
@@ -153,6 +156,17 @@ class TimeData:
         """Get module names."""
         return list(self.modules.keys())
 
+    @classmethod
+    def get_save_path(cls, mode: Optional[Mode] = None) -> pathlib.Path:
+        """Get save path.
+
+        Args:
+            mode: Mode of the inplace Optimize. If None use the current mode from inplace_config
+        """
+        if mode is None:
+            mode = inplace_config.mode
+        return pathlib.Path(inplace_config.cache_dir) / f"time_data_{mode.value}.yaml"
+
     def to_dict(self) -> Dict:
         """Convert to dict."""
         return dataclasses.asdict(self)
@@ -162,15 +176,19 @@ class TimeData:
         """Create from dict."""
         return dacite.from_dict(cls, data_dict)
 
-    def save(self, path: Union[str, pathlib.Path]):
+    def save(self):
         """Save to json."""
-        with open(path, "w") as fp:
+        with open(self.get_save_path(), "w") as fp:
             yaml.dump(self.to_dict(), fp, sort_keys=False)
 
     @classmethod
-    def load(cls, path: Union[str, pathlib.Path]):
-        """Load from json."""
-        with open(path) as fp:
+    def load(cls, mode: Optional[Mode] = None):
+        """Load from json.
+
+        Args:
+            mode: Mode of the inplace Optimize. If None use the current mode from inplace_config
+        """
+        with open(cls.get_save_path(mode=mode)) as fp:
             data = yaml.safe_load(fp)
         return dacite.from_dict(cls, data)
 
@@ -282,6 +300,7 @@ class Timer(contextlib.AbstractContextManager):
         self._times.append((time.monotonic() - self._start) * 1000)  # convert to ms
         for module_timer in self._module_timers.values():
             module_timer.disable()
+        self.save()
 
     @property
     def name(self) -> str:
@@ -298,9 +317,23 @@ class Timer(contextlib.AbstractContextManager):
             info=self._info,
         )
 
-    def save(self, path: Union[str, pathlib.Path]):
-        """Save to json."""
-        self._time_data.save(path)
+    def save(self, comparison_report_path: Optional[pathlib.Path] = None):
+        """Save to json timer data and comparison report.
+
+        Comparison report is generated only if the pipeline was executed in both modes: run and passthrough.
+
+        Args:
+            comparison_report_path: Path where the comparison report will be saved. Default: report.yaml
+        """
+        if not comparison_report_path:
+            comparison_report_path = pathlib.Path(DEFAULT_COMPARISON_REPORT_FILE)
+
+        self._time_data.save()
+
+        if TimeData.get_save_path(mode=Mode.PASSTHROUGH).exists() and TimeData.get_save_path(mode=Mode.RUN).exists():
+            timer_comparator = TimerComparator()
+            with open(comparison_report_path, "w") as fp:
+                fp.write(timer_comparator.get_report())
 
     def register_module(self, module_name: str) -> ModuleTimer:
         """Register a module in timer."""
@@ -320,26 +353,12 @@ class Timer(contextlib.AbstractContextManager):
 class TimerComparator:
     """Utility for comparing two timers."""
 
-    def __init__(
-        self, original_timer: Union[pathlib.Path, str, Timer], optimized_timer: Union[pathlib.Path, str, Timer]
-    ) -> None:
-        """Initialize TimerComparator.
-
-        Args:
-            original_timer: Original timer object or path to the original timer data.
-            optimized_timer: Optimized timer object or path to the optimized timer data.
-
-        """
+    def __init__(self) -> None:
+        """Initialize TimerComparator."""
         super().__init__()
-        if isinstance(original_timer, Timer):
-            self._original_timer_data = original_timer._time_data
-        elif isinstance(original_timer, (pathlib.Path, str)):
-            self._original_timer_data = TimeData.load(original_timer)
 
-        if isinstance(optimized_timer, Timer):
-            self._optimized_timer_data = optimized_timer._time_data
-        elif isinstance(optimized_timer, (pathlib.Path, str)):
-            self._optimized_timer_data = TimeData.load(optimized_timer)
+        self._original_timer_data = TimeData.load(mode=Mode.PASSTHROUGH)
+        self._optimized_timer_data = TimeData.load(mode=Mode.RUN)
 
     @property
     def total_speedup(self) -> float:
@@ -421,11 +440,3 @@ class TimerComparator:
         """Save report."""
         with open(path, "w") as fp:
             fp.write(self.get_report())
-
-
-def setup_timer_comparator(original_timer: pathlib.Path, optimized_timer: pathlib.Path):
-    """Setup timer comparator."""
-    if original_timer.exists() and optimized_timer.exists():
-        return TimerComparator(original_timer, optimized_timer)
-    else:
-        return None

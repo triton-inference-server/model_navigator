@@ -16,5 +16,5 @@
 
 from model_navigator.inplace import optimize  # noqa: F401
 from model_navigator.inplace.config import Mode, OptimizeConfig, inplace_config  # noqa: F401
-from model_navigator.inplace.timers import Timer, TimerComparator  # noqa: F401
+from model_navigator.inplace.timer import Timer, TimerComparator  # noqa: F401
 from model_navigator.inplace.wrapper import Module, module  # noqa: F401
