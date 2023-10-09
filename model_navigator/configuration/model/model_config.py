@@ -355,6 +355,7 @@ class TensorRTConfig(_SerializedModelConfig, format=Format.TENSORRT):
         precision: Optional[TensorRTPrecision] = None,
         trt_profiles: Optional[List[TensorRTProfile]] = None,
         parent: Optional[ModelConfig] = None,
+        onnx_parser_flags: Optional[List[int]] = None,
         custom_args: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Initializes TensorRT (plan) model configuration class.
@@ -367,6 +368,7 @@ class TensorRTConfig(_SerializedModelConfig, format=Format.TENSORRT):
             precision: TensorRT model precision
             trt_profiles: TensorRT profiles
             compatibility_level: Hardware compatibility level
+            onnx_parser_flags: ONNX parser flags
             custom_args: Custom arguments passed to TensorRT conversion
         """
         super().__init__(parent=parent)
@@ -376,6 +378,7 @@ class TensorRTConfig(_SerializedModelConfig, format=Format.TENSORRT):
         self.trt_profiles = trt_profiles
         self.optimization_level = optimization_level
         self.compatibility_level = compatibility_level
+        self.onnx_parser_flags = onnx_parser_flags
         self.custom_args = custom_args
 
     def _get_path_params_as_array_of_strings(self) -> List[str]:
@@ -386,6 +389,9 @@ class TensorRTConfig(_SerializedModelConfig, format=Format.TENSORRT):
         trt_profiles = data_dict.get("trt_profiles")
         if trt_profiles is not None:
             trt_profiles = [TensorRTProfile.from_dict(trt_profile) for trt_profile in trt_profiles]
+        onnx_parser_flags = data_dict.get("onnx_parser_flags")
+        if onnx_parser_flags:
+            onnx_parser_flags = [int(flag) for flag in onnx_parser_flags]
         return cls(
             precision=cls._parse_string(TensorRTPrecision, data_dict.get("precision")),
             precision_mode=cls._parse_string(TensorRTPrecisionMode, data_dict.get("precision_mode")),
@@ -393,6 +399,7 @@ class TensorRTConfig(_SerializedModelConfig, format=Format.TENSORRT):
             trt_profiles=trt_profiles,
             optimization_level=cls._parse_string(int, data_dict.get("optimization_level")),
             compatibility_level=cls._parse_string(TensorRTCompatibilityLevel, data_dict.get("compatibility_level")),
+            onnx_parser_flags=onnx_parser_flags,
         )
 
 

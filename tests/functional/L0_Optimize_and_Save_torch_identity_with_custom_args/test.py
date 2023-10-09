@@ -85,7 +85,7 @@ def main():
         optimization_profile=nav.OptimizationProfile(batch_sizes=[1, 8, 16], stability_percentage=100),
         custom_configs=[
             nav.TorchTensorRTConfig(custom_args={"ir": "ts"}),
-            nav.TensorRTConfig(custom_args={"--shape-inference": True}),
+            nav.TensorRTConfig(custom_args={"precision_constraints": "obey"}),
         ],
     )
     package_path = pathlib.Path("package.nav")

@@ -263,54 +263,48 @@ def test_run_execute_conversion_with_max_batch_size_search_when_both_max_batch_s
             )
 
 
-def test_get_shape_args_return_correct_arguments_when_batch_dim_is_none():
+def test_get_conversion_profiles_return_correct_arguments_when_batch_dim_is_none():
     profile = TensorRTProfile().add(
         "input_1",
         min=(224, 224, 3),
         opt=(224, 224, 3),
         max=(224, 224, 3),
     )
-    result = ConvertONNX2TRT._get_shape_args(
-        onnx_input_names=["input_1"],
+    result = ConvertONNX2TRT._get_conversion_profiles(
         batch_dim=None,
         trt_profile=profile,
     )
-    expected_result = [
-        "--trt-min-shapes",
-        "input_1:[224,224,3]",
-        "--trt-opt-shapes",
-        "input_1:[224,224,3]",
-        "--trt-max-shapes",
-        "input_1:[224,224,3]",
-    ]
+    expected_result = TensorRTProfile().add(
+        "input_1",
+        min=(224, 224, 3),
+        opt=(224, 224, 3),
+        max=(224, 224, 3),
+    )
     assert result == expected_result
 
 
-def test_get_shape_args_return_correct_arguments_when_max_batch_size_is_zero():
+def test_get_conversion_profiles_return_correct_arguments_when_max_batch_size_is_zero():
     profile = TensorRTProfile().add(
         "input_1",
         min=(224, 224, 3),
         opt=(224, 224, 3),
         max=(224, 224, 3),
     )
-    result = ConvertONNX2TRT._get_shape_args(
-        onnx_input_names=["input_1"],
+    result = ConvertONNX2TRT._get_conversion_profiles(
         batch_dim=0,
         max_batch_size=0,
         trt_profile=profile,
     )
-    expected_result = [
-        "--trt-min-shapes",
-        "input_1:[224,224,3]",
-        "--trt-opt-shapes",
-        "input_1:[224,224,3]",
-        "--trt-max-shapes",
-        "input_1:[224,224,3]",
-    ]
+    expected_result = TensorRTProfile().add(
+        "input_1",
+        min=(224, 224, 3),
+        opt=(224, 224, 3),
+        max=(224, 224, 3),
+    )
     assert result == expected_result
 
 
-def test_get_shape_args_return_correct_arguments_when_batch_dim_and_max_batch_size_provided():
+def test_get_conversion_profiles_return_correct_arguments_when_batch_dim_and_max_batch_size_provided():
     profile = TensorRTProfile()
     profile.add(
         "input_1",
@@ -324,21 +318,22 @@ def test_get_shape_args_return_correct_arguments_when_batch_dim_and_max_batch_si
         opt=(64, 64),
         max=(256, 256),
     )
-    result = ConvertONNX2TRT._get_shape_args(
-        onnx_input_names=["input_1", "input_2"],
+    result = ConvertONNX2TRT._get_conversion_profiles(
         batch_dim=0,
         max_batch_size=128,
         trt_profile=profile,
     )
-    expected_result = [
-        "--trt-min-shapes",
-        "input_1:[1,224,224,3]",
-        "input_2:[1,1]",
-        "--trt-opt-shapes",
-        "input_1:[64,224,224,3]",
-        "input_2:[64,64]",
-        "--trt-max-shapes",
-        "input_1:[128,224,224,3]",
-        "input_2:[128,256]",
-    ]
+    expected_result = TensorRTProfile()
+    expected_result.add(
+        "input_1",
+        min=(1, 224, 224, 3),
+        opt=(64, 224, 224, 3),
+        max=(128, 224, 224, 3),
+    )
+    expected_result.add(
+        "input_2",
+        min=(1, 1),
+        opt=(64, 64),
+        max=(128, 256),
+    )
     assert result == expected_result

@@ -350,6 +350,16 @@ class TensorRTProfile(Dict[str, ShapeTuple]):
         """
         return cls({name: ShapeTuple(**shapes) for name, shapes in profile_dict.items()})
 
+    def to_dict(self) -> Dict[str, Dict[str, Tuple[int, ...]]]:
+        """Serialize to a dictionary.
+
+        Returns:
+            Dict[str, Dict[str, Tuple[int, ...]]]:
+                A dictionary mapping binding names to a dictionary containing ``min``, ``opt``, and
+                ``max`` keys.
+        """
+        return {name: vars(shapes) for name, shapes in self.items()}
+
     def __getitem__(self, key):
         """Retrieves the shapes registered for a given input name.
 
@@ -730,10 +740,13 @@ class TensorRTConfig(CustomConfigForTensorRT):
     Args:
         optimization_level: Optimization level for TensorRT conversion. Allowed values are fom 0 to 5. Where default is
                             3 based on TensorRT API documentation.
+        compatibility_level: Compatibility level for TensorRT conversion.
+        onnx_parser_flags: List of TensorRT OnnxParserFlags used for conversion.
     """
 
     optimization_level: Optional[int] = None
     compatibility_level: Optional[TensorRTCompatibilityLevel] = None
+    onnx_parser_flags: Optional[List[int]] = None
 
     def __post_init__(self) -> None:
         """Parse dataclass enums."""
@@ -762,6 +775,7 @@ class TensorRTConfig(CustomConfigForTensorRT):
         super().defaults()
         self.optimization_level = None
         self.compatibility_level = None
+        self.onnx_parser_flags = None
 
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "TensorRTConfig":

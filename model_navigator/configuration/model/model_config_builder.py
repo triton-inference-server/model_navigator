@@ -359,6 +359,7 @@ class ModelConfigBuilder:
                     trt_profiles=trt_config.trt_profiles,
                     optimization_level=trt_config.optimization_level,
                     compatibility_level=trt_config.compatibility_level,
+                    onnx_parser_flags=trt_config.onnx_parser_flags,
                     custom_args=trt_config.custom_args,
                 )
             )
@@ -373,6 +374,7 @@ class ModelConfigBuilder:
                         trt_profiles=trt_config.trt_profiles,
                         optimization_level=trt_config.optimization_level,
                         compatibility_level=trt_config.compatibility_level,
+                        onnx_parser_flags=trt_config.onnx_parser_flags,
                         custom_args=trt_config.custom_args,
                     )
                 )

@@ -13,8 +13,6 @@
 # limitations under the License.
 """ConvertONNX2TRT command."""
 import pathlib
-import sys
-from distutils.version import LooseVersion
 from typing import Any, Dict, List, Optional
 
 from model_navigator.api.config import (
@@ -27,11 +25,9 @@ from model_navigator.commands.base import CommandOutput, CommandStatus
 from model_navigator.commands.convert.base import Convert2TensorRTWithMaxBatchSizeSearch
 from model_navigator.commands.execution_context import ExecutionContext
 from model_navigator.core.logger import LOGGER
-from model_navigator.core.tensor import TensorMetadata
 from model_navigator.core.workspace import Workspace
 from model_navigator.frameworks.onnx.utils import get_onnx_io_names
 from model_navigator.frameworks.tensorrt import utils as tensorrt_utils
-from model_navigator.runners.tensorrt import TensorRTRunner
 from model_navigator.utils import devices
 from model_navigator.utils.common import parse_kwargs_to_cmd
 
@@ -44,8 +40,6 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
         workspace: Workspace,
         path: pathlib.Path,
         parent_path: pathlib.Path,
-        input_metadata: TensorMetadata,
-        output_metadata: TensorMetadata,
         precision: TensorRTPrecision,
         precision_mode: TensorRTPrecisionMode,
         dataloader_trt_profile: TensorRTProfile,
@@ -57,6 +51,7 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
         optimization_level: Optional[int] = None,
         compatibility_level: Optional[TensorRTCompatibilityLevel] = None,
         optimized_trt_profiles: Optional[List[TensorRTProfile]] = None,
+        onnx_parser_flags: Optional[List[int]] = None,
         verbose: bool = False,
     ) -> CommandOutput:
         """Run the ConvertONNX2TRT Command.
@@ -82,6 +77,7 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
             optimization_level: Optimization level for TensorRT engine
             compatibility_level: Hardware compatibility level for generated engine
             optimized_trt_profiles: List of TensorRT profiles that will be used by Model Navigator for conversion, user provided or optimized by TensorRTProfileBuilder command.
+        onnx_parser_flags (Optional[List[trt.OnnxParserFlag]], optional): List of flags to set ONNX parser behavior.
             verbose: enable verbose logging for command
             custom_args (Optional[Dict[str, Any]], optional): Passthrough parameters for Polygraphy convert command
                 For available arguments check Polygraphy documentation: https://docs.nvidia.com/deeplearning/tensorrt/developer-guide/index.html#polygraphy
@@ -103,41 +99,55 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
             return CommandOutput(status=CommandStatus.SKIPPED)
         converted_model_path.parent.mkdir(parents=True, exist_ok=True)
 
-        get_args = self._get_get_args_callable(
-            input_model_path=input_model_path,
-            converted_model_path=converted_model_path,
-            workspace=workspace,
-            dataloader_trt_profile=dataloader_trt_profile,
-            optimized_trt_profiles=optimized_trt_profiles,
-            batch_dim=batch_dim,
-            optimization_level=optimization_level,
-            compatibility_level=compatibility_level,
-            precision=precision,
-            precision_mode=precision_mode,
-            max_workspace_size=max_workspace_size,
-            custom_args=custom_args,
-        )
+        onnx_input_names, _ = get_onnx_io_names(onnx_path=input_model_path)
+
+        def get_args(max_batch_size=None):
+            if optimized_trt_profiles:
+                profiles = optimized_trt_profiles
+            else:
+                profiles = [
+                    self._get_conversion_profiles(
+                        trt_profile=dataloader_trt_profile,
+                        batch_dim=batch_dim,
+                        max_batch_size=max_batch_size,
+                    )
+                ]
+
+            profiles_dicts = []
+            for profile in profiles:
+                profile_dict = {name: shapes for name, shapes in profile.to_dict().items() if name in onnx_input_names}
+                profiles_dicts.append(profile_dict)
+
+            kwargs = {
+                "exported_model_path": input_model_path.relative_to(workspace.path).as_posix(),
+                "converted_model_path": converted_model_path.relative_to(workspace.path).as_posix(),
+                "profiles": profiles_dicts,
+                "max_workspace_size": max_workspace_size,
+                "precision": precision.value,
+                "precision_mode": precision_mode.value,
+                "workspace": workspace.path.as_posix(),
+                "custom_args": custom_args,
+            }
+            if optimization_level is not None:
+                kwargs["optimization_level"] = optimization_level
+            if compatibility_level is not None:
+                kwargs["compatibility_level"] = compatibility_level.value
+            if onnx_parser_flags:
+                kwargs["onnx_parser_flags"] = onnx_parser_flags
+            args = parse_kwargs_to_cmd(kwargs)
+            return args
 
         with ExecutionContext(
             workspace=workspace,
+            script_path=converted_model_path.parent / "reproduce_conversion.py",
             cmd_path=converted_model_path.parent / "reproduce_conversion.sh",
             verbose=verbose,
         ) as context:
-            kwargs = {
-                "batch_dim": batch_dim,
-                "model_path": converted_model_path.relative_to(workspace.path).as_posix(),
-                "runner_name": TensorRTRunner.name(),
-                "input_metadata": input_metadata.to_json(),
-                "output_metadata": output_metadata.to_json(),
-            }
 
-            load_args = parse_kwargs_to_cmd(kwargs)
-            from . import trt_load_script
+            from model_navigator.commands.convert.converters import onnx2trt
 
             conversion_max_batch_size = self._execute_conversion(
-                convert_func=lambda args: context.execute_cmd(
-                    args + ["&&", sys.executable, trt_load_script.__file__] + load_args
-                ),
+                convert_func=lambda args: context.execute_external_runtime_script(onnx2trt.__file__, args),
                 get_args=get_args,
                 batch_dim=batch_dim,
                 device_max_batch_size=device_max_batch_size,
@@ -157,103 +167,6 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
             output={"conversion_max_batch_size": conversion_max_batch_size, "conversion_profiles": conversion_profiles},
         )
 
-    def _get_get_args_callable(
-        self,
-        input_model_path: pathlib.Path,
-        converted_model_path: pathlib.Path,
-        workspace: Workspace,
-        dataloader_trt_profile: TensorRTProfile,
-        custom_args: Dict[str, Any],
-        optimized_trt_profiles: Optional[List[TensorRTProfile]] = None,
-        batch_dim: Optional[int] = None,
-        optimization_level: Optional[str] = None,
-        compatibility_level: Optional[TensorRTCompatibilityLevel] = None,
-        precision: Optional[TensorRTPrecision] = None,
-        precision_mode: Optional[TensorRTPrecisionMode] = None,
-        max_workspace_size: Optional[int] = None,
-    ):
-        convert_cmd = ["polygraphy", "convert", input_model_path.relative_to(workspace.path).as_posix()]
-        convert_cmd.extend(["--convert-to", "trt"])
-        convert_cmd.extend(["-o", converted_model_path.relative_to(workspace.path).as_posix()])
-
-        if optimization_level is not None:
-            convert_cmd.extend(["--builder-optimization-level", optimization_level])
-
-        if compatibility_level is not None:
-            convert_cmd.extend(["--hardware-compatibility-level", compatibility_level.value])
-
-        if precision_mode == TensorRTPrecisionMode.HIERARCHY:
-            trt_precision_flags = {
-                TensorRTPrecision.FP32: ["--tf32"],
-                TensorRTPrecision.FP16: ["--tf32", "--fp16"],
-                TensorRTPrecision.INT8: ["--tf32", "--fp16", "--int8"],
-            }[precision]
-        elif precision_mode == TensorRTPrecisionMode.SINGLE:
-            trt_precision_flags = {
-                TensorRTPrecision.FP32: ["--tf32"],
-                TensorRTPrecision.FP16: ["--fp16"],
-                TensorRTPrecision.INT8: ["--int8"],
-            }[precision]
-        else:
-            trt_precision_flags = None
-
-        if trt_precision_flags:
-            convert_cmd.extend(trt_precision_flags)
-
-        if max_workspace_size is not None:
-            if tensorrt_utils.get_version() < LooseVersion("8.4.0"):
-                convert_cmd.extend(["--workspace", f"{max_workspace_size}"])
-            else:
-                convert_cmd.extend(["--pool-limit", f"workspace:{max_workspace_size}"])
-
-        for k, v in (custom_args or {}).items():
-            if isinstance(v, bool) and v is True:
-                convert_cmd.append(k)
-            else:
-                convert_cmd.extend([k, v])
-
-        onnx_input_names, _ = get_onnx_io_names(onnx_path=input_model_path)
-
-        def get_args(max_batch_size=None):
-            if optimized_trt_profiles:
-                shape_args = []
-                for trt_profile in optimized_trt_profiles:
-                    shape_args.extend(
-                        self._trt_profile_to_shape_args(
-                            onnx_input_names=onnx_input_names,
-                            trt_profile=trt_profile,
-                        )
-                    )
-                return convert_cmd + shape_args
-            else:
-                return convert_cmd + self._get_shape_args(
-                    onnx_input_names=onnx_input_names,
-                    trt_profile=dataloader_trt_profile,
-                    batch_dim=batch_dim,
-                    max_batch_size=max_batch_size,
-                )
-
-        return get_args
-
-    @staticmethod
-    def _trt_profile_to_shape_args(
-        onnx_input_names: List[str],
-        trt_profile: TensorRTProfile,
-    ):
-        shape_args = []
-        for attr in ("min", "opt", "max"):
-            arg = f"--trt-{attr}-shapes"
-            shapes = []
-            for input_name in trt_profile:
-                if input_name not in onnx_input_names:
-                    continue
-                shape = ",".join([str(d) for d in getattr(trt_profile[input_name], attr)])
-                shapes.append(f"{input_name}:[{shape}]")
-            if shapes:
-                shape_args.extend([f"{arg}"] + shapes)
-
-        return shape_args
-
     @staticmethod
     def _get_conversion_profiles(
         trt_profile: TensorRTProfile,
@@ -268,30 +181,3 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
             )
 
         return trt_profile
-
-    @staticmethod
-    def _get_shape_args(
-        onnx_input_names: List[str],
-        trt_profile: TensorRTProfile,
-        batch_dim: Optional[int] = None,
-        max_batch_size: Optional[int] = None,
-    ):
-        trt_profile = ConvertONNX2TRT._get_conversion_profiles(
-            trt_profile=trt_profile,
-            batch_dim=batch_dim,
-            max_batch_size=max_batch_size,
-        )
-
-        shape_args = []
-        for attr in ("min", "opt", "max"):
-            arg = f"--trt-{attr}-shapes"
-            shapes = []
-            for input_name in trt_profile:
-                if input_name not in onnx_input_names:
-                    continue
-                shape = ",".join([str(d) for d in getattr(trt_profile[input_name], attr)])
-                shapes.append(f"{input_name}:[{shape}]")
-            if shapes:
-                shape_args.extend([f"{arg}"] + shapes)
-
-        return shape_args
