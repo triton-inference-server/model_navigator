@@ -18,7 +18,8 @@ limitations under the License.
 
 ## 0.7.4 (unreleased)
 - new: decoupled mode configuration in Triton Model Config
-- change: in TensorRT runner, when TensorType.TORCH is the return type lazily convert tensort to Torch
+- fix: compatibility of generating PyTriton model config
+- change: in TensorRT runner, when TensorType.TORCH is the return type lazily convert tensor to Torch
 - change: move from Polygraphy CLI to Polygraphy Python API
 
 
