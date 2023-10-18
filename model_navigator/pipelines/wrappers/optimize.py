@@ -57,6 +57,9 @@ def optimize_pipeline(
     if not package or workspace.path != package.workspace.path:
         workspace.initialize()
 
+    if package:
+        model = package.model
+
     pipeline_manager = PipelineManager(workspace=workspace)
     context = pipeline_manager.run(
         workspace=workspace,

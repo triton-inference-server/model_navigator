@@ -106,7 +106,7 @@ class Package:
         config_dict["target_device"] = DeviceKind(config_dict["target_device"])
 
         if "model" not in config_dict:
-            config_dict["model"] = None
+            config_dict["model"] = self.model
 
         if "dataloader" not in config_dict:
             config_dict["dataloader"] = []
