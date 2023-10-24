@@ -36,16 +36,38 @@ The table below illustrates the model formats that can be obtained by using the 
 
 **Table:** Supported conversion target formats per each supported Python framework or file.
 
-+--------------------+------------------------+------------------------+----------+
-| PyTorch            | TensorFlow 2           | JAX                    | ONNX     |
-+====================+========================+========================+==========+
-| Torch 2 Compile    | SavedModel             | SavedModel             | TensorRT |
-| TorchScript Trace  | TensorRT in TensorFlow | TensorRT in TensorFlow |          |
-| TorchScript Script | ONNX                   | ONNX                   |          |
-| TorchTensorRT      | TensorRT               | TensorRT               |          |
-| ONNX               |                        |                        |          |
-| TensorRT           |                        |                        |          |
-+--------------------+------------------------+------------------------+----------+
+.. list-table:: Target Formats for Frameworks
+   :widths: 25 25 25 25
+   :header-rows: 1
+
+   * - PyTorch
+     - TensorFlow2
+     - JAX
+     - ONNX
+   * - Torch 2 Compile
+     - SavedModel
+     - SavedModel
+     - TensorRT
+   * - TorchScript Trace
+     - TensorRT in TensorFlow
+     - TensorRT in TensorFlow
+     -
+   * - TorchScript Script
+     - ONNX
+     - ONNX
+     -
+   * - TorchTensorRT
+     - TensorRT
+     - TensorRT
+     -
+   * - ONNX
+     -
+     -
+     -
+   * - TensorRT
+     -
+     -
+     -
 
 **Note:** The Model Navigator has the capability to support any Python function as input.
 However, in this particular case, its role is limited to profiling the function without generating any serialized models.
@@ -56,18 +78,27 @@ This package also includes base formats that can be used to regenerate the `Tens
 
 **Table:** Model formats that can be generated from saved `Navigator Package` and from model sources.
 
-+------------------------+-----------------------------+
-|   From model source    |   From Navigator Package    |
-+========================+=============================+
-| SavedModel             | TorchTensorRT               |
-| TensorRT in TensorFlow | TensorRT in TensorFlow      |
-| TorchScript Trace      | ONNX                        |
-| TorchScript Script     | TensorRT                    |
-| Torch 2 Compile        |                             |
-| TorchTensorRT          |                             |
-| ONNX                   |                             |
-| TensorRT               |                             |
-+------------------------+-----------------------------+
+.. list-table:: Target Formats for Inputs
+   :widths: 25 25
+   :header-rows: 1
+
+   * - Model Source
+     - Navigator Package
+   * - SavedModel
+     - TorchTensorRT
+   * - TensorRT in TensorFlow
+     - TensorRT in TensorFlow
+   * - TorchScript Trace
+     - ONNX
+   * - TorchScript Script
+     - TensorRT
+   * - TorchTensorRT
+     -
+   * - ONNX
+     -
+   * - TensorRT
+     -
+
 
 Installation
 --------------
