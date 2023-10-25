@@ -92,7 +92,7 @@ def get_os_info():
 def get_cpu_info():
     """Collect information about CPU available in the system."""
     cpu_details = {
-        "name": cpuinfo.get_cpu_info()["brand_raw"],
+        "name": cpuinfo.get_cpu_info().get("brand_raw", "n/a"),
         "physical_cores": psutil.cpu_count(logical=False),
         "logical_cores": psutil.cpu_count(logical=True),
         "min_frequency": psutil.cpu_freq().min,
