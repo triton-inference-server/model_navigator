@@ -19,8 +19,9 @@ from model_navigator.api.config import Format
 from model_navigator.commands.base import ExecutionUnit
 from model_navigator.commands.convert.tf import ConvertSavedModel2ONNX
 from model_navigator.commands.export.tf import ExportTF2SavedModel
+from model_navigator.commands.optimize.graph_surgeon import GraphSurgeonOptimize
 from model_navigator.configuration.common_config import CommonConfig
-from model_navigator.configuration.model.model_config import ModelConfig
+from model_navigator.configuration.model.model_config import ModelConfig, ONNXConfig
 from model_navigator.pipelines.pipeline import Pipeline
 
 
@@ -53,5 +54,8 @@ def tensorflow_conversion_builder(config: CommonConfig, models_config: Dict[Form
     execution_units: List[ExecutionUnit] = []
     for model_cfg in models_config.get(Format.ONNX, []):
         execution_units.append(ExecutionUnit(command=ConvertSavedModel2ONNX, model_config=model_cfg))
+        assert isinstance(model_cfg, ONNXConfig)
+        if model_cfg.graph_surgeon_optimization:
+            execution_units.append(ExecutionUnit(command=GraphSurgeonOptimize, model_config=model_cfg))
 
     return Pipeline(name="TensorFlow 2 Conversion", execution_units=execution_units)

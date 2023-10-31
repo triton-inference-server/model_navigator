@@ -68,6 +68,7 @@ def test_default_values_for_onnx_config():
     assert onnx_config.dynamic_axes is None
     assert onnx_config.onnx_extended_conversion is False
     assert onnx_config.format == Format.ONNX
+    assert onnx_config.graph_surgeon_optimization is True
 
 
 def test_default_values_for_tensorrt_config():

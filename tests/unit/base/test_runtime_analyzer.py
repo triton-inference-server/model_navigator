@@ -28,7 +28,7 @@ from model_navigator.runtime_analyzer import (
     RuntimeAnalyzer,
 )
 
-onnx_config = ONNXConfig(opset=13, dynamic_axes=None)
+onnx_config = ONNXConfig(opset=13, dynamic_axes=None, graph_surgeon_optimization=True)
 tensorrt_config = TensorRTConfig(
     precision=TensorRTPrecision.FP16,
     precision_mode=TensorRTPrecisionMode.HIERARCHY,

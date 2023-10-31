@@ -711,12 +711,14 @@ class OnnxConfig(CustomConfigForFormat):
         opset: ONNX opset used for conversion.
         dynamic_axes: Dynamic axes for ONNX conversion.
         onnx_extended_conversion: Enables additional conversions from TorchScript to ONNX.
+        graph_surgeon_optimization: Enables polygraphy graph surgeon optimization: fold_constants, infer_shapes, toposort, cleanup.
 
     """
 
     opset: Optional[int] = DEFAULT_ONNX_OPSET
     dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None
     onnx_extended_conversion: bool = False
+    graph_surgeon_optimization: bool = True
 
     @property
     def format(self) -> Format:

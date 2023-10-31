@@ -318,6 +318,7 @@ class ONNXConfig(_SerializedModelConfig, format=Format.ONNX):
     def __init__(
         self,
         opset: int,
+        graph_surgeon_optimization: bool,
         dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]],
         parent: Optional[ModelConfig] = None,
         custom_args: Optional[Dict[str, Any]] = None,
@@ -326,12 +327,14 @@ class ONNXConfig(_SerializedModelConfig, format=Format.ONNX):
 
         Args:
             opset: ONNX opset
+            graph_surgeon_optimization: Enable or Disable Graph Surgeon optimization
             dynamic_axes: Dynamic axes definition for ONNXConfig
             parent: Parent model configuration
             custom_args: Custom arguments passed to ONNX export
         """
         super().__init__(parent=parent)
         self.opset = opset
+        self.graph_surgeon_optimization = graph_surgeon_optimization
         self.dynamic_axes = dynamic_axes
         self.custom_args = custom_args
 
@@ -339,6 +342,7 @@ class ONNXConfig(_SerializedModelConfig, format=Format.ONNX):
     def _from_dict(cls, data_dict: Dict):
         return cls(
             opset=data_dict.get("opset"),
+            graph_surgeon_optimization=data_dict.get("graph_surgeon_optimization"),
             dynamic_axes=data_dict.get("dynamic_axes"),
         )
 

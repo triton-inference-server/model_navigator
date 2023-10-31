@@ -18,8 +18,9 @@ from model_navigator.api.config import Format
 from model_navigator.commands.base import ExecutionUnit
 from model_navigator.commands.convert.torch import ConvertTorchScript2ONNX
 from model_navigator.commands.export.torch import ExportTorch2ONNX, ExportTorch2TorchScript
+from model_navigator.commands.optimize.graph_surgeon import GraphSurgeonOptimize
 from model_navigator.configuration.common_config import CommonConfig
-from model_navigator.configuration.model.model_config import ModelConfig
+from model_navigator.configuration.model.model_config import ModelConfig, ONNXConfig
 from model_navigator.pipelines.pipeline import Pipeline
 
 
@@ -40,6 +41,9 @@ def torch_export_builder(config: CommonConfig, models_config: Dict[Format, List[
     for model_cfg in models_config.get(Format.ONNX, []):
         if model_cfg.parent_path in (None, Format.TORCH):
             execution_units.append(ExecutionUnit(command=ExportTorch2ONNX, model_config=model_cfg))
+            assert isinstance(model_cfg, ONNXConfig)
+            if model_cfg.graph_surgeon_optimization:
+                execution_units.append(ExecutionUnit(command=GraphSurgeonOptimize, model_config=model_cfg))
 
     return Pipeline(name="PyTorch Export", execution_units=execution_units)
 
@@ -60,5 +64,8 @@ def torch_conversion_builder(config: CommonConfig, models_config: Dict[Format, L
             model_cfg.parent_path and Format.TORCHSCRIPT.value in model_cfg.parent_path.as_posix()
         ):  # FIXME find better way to distinguish ONNX from source from ONNX from TorchScript
             execution_units.append(ExecutionUnit(command=ConvertTorchScript2ONNX, model_config=model_cfg))
+            assert isinstance(model_cfg, ONNXConfig)
+            if model_cfg.graph_surgeon_optimization:
+                execution_units.append(ExecutionUnit(command=GraphSurgeonOptimize, model_config=model_cfg))
 
     return Pipeline(name="PyTorch Conversion", execution_units=execution_units)

@@ -311,6 +311,7 @@ class ModelConfigBuilder:
                     model_config.ONNXConfig(
                         parent=model_configuration,
                         opset=onnx_config.opset,
+                        graph_surgeon_optimization=onnx_config.graph_surgeon_optimization,
                         dynamic_axes=onnx_config.dynamic_axes,
                         custom_args=onnx_config.custom_args,
                     )
@@ -320,6 +321,7 @@ class ModelConfigBuilder:
                 model_config.ONNXConfig(
                     parent=None,
                     opset=onnx_config.opset,
+                    graph_surgeon_optimization=onnx_config.graph_surgeon_optimization,
                     dynamic_axes=onnx_config.dynamic_axes,
                     custom_args=onnx_config.custom_args,
                 )
@@ -330,6 +332,7 @@ class ModelConfigBuilder:
                     model_config.ONNXConfig(
                         parent=model_configuration,
                         opset=onnx_config.opset,
+                        graph_surgeon_optimization=onnx_config.graph_surgeon_optimization,
                         dynamic_axes=onnx_config.dynamic_axes,
                         custom_args=onnx_config.custom_args,
                     )

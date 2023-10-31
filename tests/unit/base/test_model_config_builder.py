@@ -153,7 +153,9 @@ def test_get_tf_trt_config_returns_model_configs_matching_custom_config():
 
 
 def test_get_onnx_config_returns_model_configs_matching_custom_config_when_torch_framework_without_onnx_extended_conversion():  # noqa: E501
-    onnx_config = OnnxConfig(opset=8, dynamic_axes={"x": {0: "batch_size"}, "y": {0: "batch_size"}})
+    onnx_config = OnnxConfig(
+        opset=8, dynamic_axes={"x": {0: "batch_size"}, "y": {0: "batch_size"}}, graph_surgeon_optimization=False
+    )
     model_configs = {Format.ONNX: []}
     custom_configs = [onnx_config]
     ModelConfigBuilder().get_onnx_config(Framework.TORCH, custom_configs, model_configs)
@@ -165,6 +167,7 @@ def test_get_onnx_config_returns_model_configs_matching_custom_config_when_torch
     assert model_configuration.opset == onnx_config.opset
     assert model_configuration.format == onnx_config.format
     assert model_configuration.parent_key is None
+    assert model_configuration.graph_surgeon_optimization is onnx_config.graph_surgeon_optimization
 
 
 def test_get_onnx_config_returns_model_configs_matching_custom_config_when_torch_framework_with_onnx_extended_conversion():  # noqa: E501
@@ -185,6 +188,7 @@ def test_get_onnx_config_returns_model_configs_matching_custom_config_when_torch
         assert model_configuration.dynamic_axes == onnx_config.dynamic_axes
         assert model_configuration.opset == onnx_config.opset
         assert model_configuration.format == onnx_config.format
+        assert model_configuration.graph_surgeon_optimization is onnx_config.graph_surgeon_optimization
         if torchscript_model_configuration is None:
             assert model_configuration.parent_key is None
         else:
@@ -205,6 +209,7 @@ def test_get_onnx_config_for_onnx_framework_returns_model_configs_matching_custo
     assert model_configuration.opset == onnx_config.opset
     assert model_configuration.format == onnx_config.format
     assert model_configuration.parent_key is None
+    assert model_configuration.graph_surgeon_optimization is onnx_config.graph_surgeon_optimization
 
 
 def test_get_onnx_config_for_jax_framework_returns_model_configs_matching_custom_config():
@@ -224,6 +229,7 @@ def test_get_onnx_config_for_jax_framework_returns_model_configs_matching_custom
         assert model_configuration.dynamic_axes == onnx_config.dynamic_axes
         assert model_configuration.opset == onnx_config.opset
         assert model_configuration.format == onnx_config.format
+        assert model_configuration.graph_surgeon_optimization is onnx_config.graph_surgeon_optimization
         assert isinstance(savedmodel_model_configuration, model_config.TensorFlowSavedModelConfig)
         assert model_configuration.parent_key == savedmodel_model_configuration.key
 
@@ -245,6 +251,7 @@ def test_get_onnx_config_for_tensorflow_framework_returns_model_configs_matching
         assert model_configuration.dynamic_axes == onnx_config.dynamic_axes
         assert model_configuration.opset == onnx_config.opset
         assert model_configuration.format == onnx_config.format
+        assert model_configuration.graph_surgeon_optimization is onnx_config.graph_surgeon_optimization
         assert isinstance(savedmodel_model_configuration, model_config.TensorFlowSavedModelConfig)
         assert model_configuration.parent_key == savedmodel_model_configuration.key
 
