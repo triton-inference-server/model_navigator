@@ -43,7 +43,7 @@ dependencies = [
     "jsonlines>=3.1.0",
     "mpmath<1.0.0",
     "numpy~=1.21",
-    "onnx~=1.14",
+    "onnx~=1.14.0",
     "onnxruntime-gpu~=1.15;platform_machine == 'x86_64'",
     "onnx_graphsurgeon>=0.3.14",
     "protobuf>=3.18.3,<3.21.0",
