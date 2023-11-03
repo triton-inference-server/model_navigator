@@ -302,7 +302,53 @@ class TorchCompileCPURunner(_BaseTorchRunner):
         self._loaded_model = torch.compile(self._loaded_model)
 
 
+class _BaseTorchExportedProgramRunner(_BaseTorchRunner):
+    """Base runner for inference of Torch ExportedProgram models."""
+
+    @classmethod
+    def format(cls) -> Format:
+        return Format.TORCH_EXPORTEDPROGRAM
+
+    def activate_impl(self):
+        """Activation implementation."""
+        self._loaded_model = torch.load(str(self._model), map_location=self._target_device)
+
+
+class TorchExportedProgramCPURunner(_BaseTorchExportedProgramRunner):
+    """Torch ExportedProgram model CPU based runner."""
+
+    _target_device = "cpu"
+
+    @classmethod
+    def devices_kind(cls) -> List[DeviceKind]:
+        """Return supported devices for runner."""
+        return [DeviceKind.CPU]
+
+    @classmethod
+    def name(cls) -> str:
+        """Runner name."""
+        return "TorchExportedProgramCPU"
+
+
+class TorchExportedProgramCUDARunner(_BaseTorchExportedProgramRunner):
+    """Torch ExportedProgram model GPU based runner."""
+
+    _target_device = "cuda"
+
+    @classmethod
+    def devices_kind(cls) -> List[DeviceKind]:
+        """Return supported devices for runner."""
+        return [DeviceKind.CUDA]
+
+    @classmethod
+    def name(cls) -> str:
+        """Runner name."""
+        return "TorchExportedProgramCUDA"
+
+
 def register_torch2_runners():
     """Register runners in global registry."""
     register_runner(TorchCompileCPURunner)
     register_runner(TorchCompileCUDARunner)
+    register_runner(TorchExportedProgramCPURunner)
+    register_runner(TorchExportedProgramCUDARunner)

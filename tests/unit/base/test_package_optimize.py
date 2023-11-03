@@ -76,7 +76,7 @@ def test_update_config_returns_updated_custom_config_when_defaults_is_true():
         torch_config = config.custom_configs["Torch"]
         tensorrt_config = config.custom_configs["TensorRT"]
 
-        assert onnx_config.opset == 13  # pytype: disable=attribute-error
+        assert onnx_config.opset == 17  # pytype: disable=attribute-error
         assert torch_config.jit_type == (JitType.SCRIPT, JitType.TRACE)  # pytype: disable=attribute-error
         assert tensorrt_config.trt_profiles is None  # pytype: disable=attribute-error
 

@@ -110,6 +110,7 @@ class Format(Enum):
     TENSORFLOW = "tensorflow"
     JAX = "jax"
     TORCHSCRIPT = "torchscript"
+    TORCH_EXPORTEDPROGRAM = "torch-exportedprogram"
     TF_SAVEDMODEL = "tf-savedmodel"
     TF_TRT = "tf-trt"
     TORCH_TRT = "torch-trt"
@@ -417,7 +418,7 @@ EXPORT_FORMATS = {
     Framework.NONE: [],
     Framework.JAX: [Format.TF_SAVEDMODEL],
     Framework.TENSORFLOW: [Format.TF_SAVEDMODEL],
-    Framework.TORCH: [Format.TORCHSCRIPT, Format.ONNX],
+    Framework.TORCH: [Format.TORCHSCRIPT, Format.ONNX, Format.TORCH_EXPORTEDPROGRAM],
     Framework.ONNX: [Format.ONNX],
 }
 
@@ -439,6 +440,7 @@ DEFAULT_TENSORFLOW_TARGET_FORMATS = (
 
 DEFAULT_TORCH_TARGET_FORMATS = (
     Format.TORCHSCRIPT,
+    Format.TORCH_EXPORTEDPROGRAM,
     Format.ONNX,
     Format.TORCH_TRT,
     Format.TENSORRT,
@@ -709,6 +711,7 @@ class OnnxConfig(CustomConfigForFormat):
 
     Args:
         opset: ONNX opset used for conversion.
+        dynamo_export: Enable additional dynamo export.
         dynamic_axes: Dynamic axes for ONNX conversion.
         onnx_extended_conversion: Enables additional conversions from TorchScript to ONNX.
         graph_surgeon_optimization: Enables polygraphy graph surgeon optimization: fold_constants, infer_shapes, toposort, cleanup.
@@ -716,6 +719,7 @@ class OnnxConfig(CustomConfigForFormat):
     """
 
     opset: Optional[int] = DEFAULT_ONNX_OPSET
+    dynamo_export: Optional[bool] = False
     dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None
     onnx_extended_conversion: bool = False
     graph_surgeon_optimization: bool = True
@@ -733,6 +737,14 @@ class OnnxConfig(CustomConfigForFormat):
     def name(cls) -> str:
         """Name of the config."""
         return "Onnx"
+
+    def defaults(self) -> None:
+        """Update parameters to defaults."""
+        super().defaults()
+        self.opset = DEFAULT_ONNX_OPSET
+        self.dynamo_export = False
+        self.dynamic_axes = None
+        self.extended_conversion = False
 
 
 @dataclasses.dataclass

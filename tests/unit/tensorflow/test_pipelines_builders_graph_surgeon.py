@@ -36,6 +36,7 @@ def test_tensorflow_conversion_builder_return_graph_surgeon_optimization_when_en
             ONNXConfig(
                 opset=17,
                 dynamic_axes={},
+                dynamo_export=False,
                 graph_surgeon_optimization=True,
             )
         ],
@@ -62,6 +63,7 @@ def test_tensorflow_conversion_builder_does_not_return_graph_surgeon_optimizatio
             ONNXConfig(
                 opset=17,
                 dynamic_axes={},
+                dynamo_export=False,
                 graph_surgeon_optimization=False,
             )
         ],

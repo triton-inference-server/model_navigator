@@ -53,7 +53,7 @@ def test_find_device_max_batch_size_builder_return_execution_unit_when_torch_fra
                 strict=True,
             )
         ],
-        Format.ONNX: [ONNXConfig(opset=17, dynamic_axes={}, graph_surgeon_optimization=True)],
+        Format.ONNX: [ONNXConfig(opset=17, dynamic_axes={}, dynamo_export=False, graph_surgeon_optimization=True)],
         Format.TENSORRT: [
             TensorRTConfig(
                 precision=TensorRTPrecision.FP16,
@@ -91,7 +91,7 @@ def test_find_device_max_batch_size_builder_return_execution_unit_when_tensorflo
 
     models_config = {
         Format.TF_SAVEDMODEL: [TensorFlowSavedModelConfig(enable_xla=False, jit_compile=False)],
-        Format.ONNX: [ONNXConfig(opset=17, dynamic_axes={}, graph_surgeon_optimization=True)],
+        Format.ONNX: [ONNXConfig(opset=17, dynamic_axes={}, dynamo_export=False, graph_surgeon_optimization=True)],
         Format.TENSORRT: [
             TensorRTConfig(
                 precision=TensorRTPrecision.FP16,
@@ -127,7 +127,7 @@ def test_find_device_max_batch_size_builder_return_execution_unit_when_jax_frame
 
     models_config = {
         Format.TF_SAVEDMODEL: [TensorFlowSavedModelConfig(enable_xla=True, jit_compile=True)],
-        Format.ONNX: [ONNXConfig(opset=17, dynamic_axes={}, graph_surgeon_optimization=True)],
+        Format.ONNX: [ONNXConfig(opset=17, dynamic_axes={}, dynamo_export=False, graph_surgeon_optimization=True)],
         Format.TENSORRT: [
             TensorRTConfig(
                 precision=TensorRTPrecision.FP16,
@@ -162,7 +162,7 @@ def test_find_device_max_batch_size_builder_return_execution_unit_when_onnx_fram
     )
 
     models_config = {
-        Format.ONNX: [ONNXConfig(opset=17, dynamic_axes={}, graph_surgeon_optimization=True)],
+        Format.ONNX: [ONNXConfig(opset=17, dynamic_axes={}, dynamo_export=False, graph_surgeon_optimization=True)],
         Format.TENSORRT: [
             TensorRTConfig(
                 precision=TensorRTPrecision.FP16,

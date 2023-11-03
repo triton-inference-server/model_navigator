@@ -128,6 +128,12 @@ class ModelConfigBuilder:
             model_configs: Generated model configs
             custom_configs_for_format: Custom configs for formats
         """
+        if Format.TORCH_EXPORTEDPROGRAM in target_formats:
+            ModelConfigBuilder.get_torch_exportedprogram_config(
+                custom_configs=custom_configs_for_format,
+                model_configs=model_configs,
+            )
+
         if Format.TORCH_TRT in target_formats:
             ModelConfigBuilder.get_torch_trt_config(
                 custom_configs=custom_configs_for_format,
@@ -215,6 +221,22 @@ class ModelConfigBuilder:
                     jit_type=jit_type, strict=torch_config.strict, custom_args=torch_config.custom_args
                 )
             )
+
+    @staticmethod
+    def get_torch_exportedprogram_config(
+        custom_configs: Sequence[config_api.CustomConfigForFormat],
+        model_configs: Dict[Format, List[model_config.ModelConfig]],
+    ):
+        """Append ExportedProgram model configurations to model_configs dictionary.
+
+        Args:
+            custom_configs: Format configurations provided by the user
+            model_configs: Dictionary mappint model formats to lists of model configs
+        """
+        torch_config = _get_custom_config(custom_configs=custom_configs, custom_config_cls=config_api.TorchConfig)
+        model_configs[Format.TORCH_EXPORTEDPROGRAM].append(
+            model_config.TorchExportedProgram(custom_args=torch_config.custom_args)
+        )
 
     @staticmethod
     def get_torch_trt_config(
@@ -311,27 +333,44 @@ class ModelConfigBuilder:
                     model_config.ONNXConfig(
                         parent=model_configuration,
                         opset=onnx_config.opset,
+                        dynamo_export=False,
                         graph_surgeon_optimization=onnx_config.graph_surgeon_optimization,
                         dynamic_axes=onnx_config.dynamic_axes,
                         custom_args=onnx_config.custom_args,
                     )
                 )
-        if framework in (Framework.TORCH, Framework.ONNX):
+        if framework == Framework.ONNX:
             model_configs[Format.ONNX].append(
                 model_config.ONNXConfig(
                     parent=None,
                     opset=onnx_config.opset,
+                    dynamo_export=False,
                     graph_surgeon_optimization=onnx_config.graph_surgeon_optimization,
                     dynamic_axes=onnx_config.dynamic_axes,
                     custom_args=onnx_config.custom_args,
                 )
             )
+
+        if framework == Framework.TORCH:
+            for dynamo_export in (True, False) if onnx_config.dynamo_export else (False,):
+                model_configs[Format.ONNX].append(
+                    model_config.ONNXConfig(
+                        parent=None,
+                        opset=onnx_config.opset,
+                        dynamo_export=dynamo_export,
+                        graph_surgeon_optimization=onnx_config.graph_surgeon_optimization,
+                        dynamic_axes=onnx_config.dynamic_axes,
+                        custom_args=onnx_config.custom_args,
+                    )
+                )
+
         if framework == Framework.TORCH and onnx_config.onnx_extended_conversion:
             for model_configuration in model_configs[Format.TORCHSCRIPT]:
                 model_configs[Format.ONNX].append(
                     model_config.ONNXConfig(
                         parent=model_configuration,
                         opset=onnx_config.opset,
+                        dynamo_export=False,
                         graph_surgeon_optimization=onnx_config.graph_surgeon_optimization,
                         dynamic_axes=onnx_config.dynamic_axes,
                         custom_args=onnx_config.custom_args,

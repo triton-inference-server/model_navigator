@@ -312,12 +312,35 @@ class TorchScriptConfig(_SerializedModelConfig, format=Format.TORCHSCRIPT):
         )
 
 
+class TorchExportedProgram(_SerializedModelConfig, format=Format.TORCH_EXPORTEDPROGRAM):
+    """ExportedProgram model configuration class."""
+
+    def __init__(
+        self,
+        parent: Optional[ModelConfig] = None,
+        custom_args: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        """Initializes TorchScript model configuration class.
+
+        Args:
+            parent: Parent model configuration
+            custom_args: Custom arguments passed to TorchScript export
+        """
+        super().__init__(parent=parent)
+        self.custom_args = custom_args
+
+    @classmethod
+    def _from_dict(cls, data_dict: Dict):
+        return cls()
+
+
 class ONNXConfig(_SerializedModelConfig, format=Format.ONNX):
     """ONNX model configuration class."""
 
     def __init__(
         self,
         opset: int,
+        dynamo_export: bool,
         graph_surgeon_optimization: bool,
         dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]],
         parent: Optional[ModelConfig] = None,
@@ -327,6 +350,7 @@ class ONNXConfig(_SerializedModelConfig, format=Format.ONNX):
 
         Args:
             opset: ONNX opset
+            dynamo_export: True if dynamo export should be enabled, default: True
             graph_surgeon_optimization: Enable or Disable Graph Surgeon optimization
             dynamic_axes: Dynamic axes definition for ONNXConfig
             parent: Parent model configuration
@@ -334,14 +358,19 @@ class ONNXConfig(_SerializedModelConfig, format=Format.ONNX):
         """
         super().__init__(parent=parent)
         self.opset = opset
+        self.dynamo_export = dynamo_export
         self.graph_surgeon_optimization = graph_surgeon_optimization
         self.dynamic_axes = dynamic_axes
         self.custom_args = custom_args
+
+    def _get_path_params_as_array_of_strings(self) -> List[str]:
+        return ["dynamo"] if self.dynamo_export else []
 
     @classmethod
     def _from_dict(cls, data_dict: Dict):
         return cls(
             opset=data_dict.get("opset"),
+            dynamo_export=data_dict.get("dynamo_export", False),
             graph_surgeon_optimization=data_dict.get("graph_surgeon_optimization"),
             dynamic_axes=data_dict.get("dynamic_axes"),
         )

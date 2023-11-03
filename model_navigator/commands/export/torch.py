@@ -228,6 +228,165 @@ class ExportTorch2ONNX(Command):
         return CommandOutput(status=CommandStatus.OK)
 
 
+class ExportExportedProgram(Command):
+    """Command for exporting Torch models to ExportedProgram."""
+
+    def _run(
+        self,
+        workspace: Workspace,
+        path: pathlib.Path,
+        input_metadata: TensorMetadata,
+        output_metadata: TensorMetadata,
+        target_device: DeviceKind,
+        verbose: bool,
+        custom_args: Dict[str, Any],
+        model: Optional[Any] = None,
+        batch_dim: Optional[int] = None,
+        dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None,
+    ) -> CommandOutput:
+        """Execute command.
+
+        Args:
+            workspace: Workspace where the files are stored.
+            path: Path inside the workspace where exported model is stored
+            opset: ONNX opset
+            input_metadata: Model inputs metadata
+            output_metadata: Model outputs metadata
+            target_device: Target device for export - determine the exported model
+            verbose: Enable verbose logging
+            model: The model that has to be exported
+            batch_dim: Location of batch position in shapes
+            dynamic_axes: Definition of model inputs dynamic axes
+            custom_args (Optional[Dict[str, Any]], optional): Passthrough parameters for torch.onnx.export
+                For available arguments check PyTorch documentation: https://pytorch.org/docs/stable/onnx.html#torch.onnx.export
+
+        Returns:
+            CommandOutput object with status
+        """
+        LOGGER.info("PyTorch ExportedProgram export started")
+
+        exported_model_path = workspace.path / path
+        if exported_model_path.is_file() or exported_model_path.is_dir():
+            LOGGER.info("Model already exists. Skipping export.")
+            return CommandOutput(status=CommandStatus.SKIPPED)
+
+        exported_model_path.parent.mkdir(parents=True, exist_ok=True)
+
+        if model is None:
+            raise RuntimeError("Expected model of type torch.nn.Module. Got None instead.")
+
+        model.to(target_device.value)
+
+        exporters.torch2exportedprogram.get_model = lambda: model
+
+        # Keep model on CPU after operation
+        def on_exit():
+            model.to("cpu")
+
+        with ExecutionContext(
+            workspace=workspace,
+            script_path=exported_model_path.parent / "reproduce_export.py",
+            cmd_path=exported_model_path.parent / "reproduce_export.sh",
+            verbose=verbose,
+            on_exit=on_exit,
+        ) as context:
+
+            kwargs = {
+                "exported_model_path": exported_model_path.relative_to(workspace.path).as_posix(),
+                "input_metadata": input_metadata.to_json(),
+                "batch_dim": batch_dim,
+                "target_device": target_device.value,
+                "navigator_workspace": workspace.path.as_posix(),
+                "custom_args": custom_args,
+            }
+
+            args = parse_kwargs_to_cmd(kwargs)
+
+            context.execute_local_runtime_script(
+                exporters.torch2exportedprogram.__file__, exporters.torch2exportedprogram.export, args
+            )
+
+        return CommandOutput(status=CommandStatus.OK)
+
+
+class ExportTorch2DynamoONNX(Command):
+    """Command for exporting Torch models to ONNX with dynamo."""
+
+    def _run(
+        self,
+        workspace: Workspace,
+        path: pathlib.Path,
+        input_metadata: TensorMetadata,
+        target_device: DeviceKind,
+        verbose: bool,
+        custom_args: Dict[str, Any],
+        model: Optional[Any] = None,
+        batch_dim: Optional[int] = None,
+    ) -> CommandOutput:
+        """Execute command.
+
+        Args:
+            workspace: Workspace where the files are stored.
+            path: Path inside the workspace where exported model is stored
+            opset: ONNX opset
+            input_metadata: Model inputs metadata
+            target_device: Target device for export - determine the exported model
+            verbose: Enable verbose logging
+            model: The model that has to be exported
+            batch_dim: Location of batch position in shapes
+            custom_args (Optional[Dict[str, Any]], optional): Passthrough parameters for torch.onnx.dynamo_export
+                Can be used to pass ExportOptions object.
+                For available arguments check PyTorch documentation: https://pytorch.org/docs/stable/onnx.html#torch.onnx.export
+
+        Returns:
+            CommandOutput object with status
+        """
+        LOGGER.info("PyTorch ExportedProgram export started")
+
+        exported_model_path = workspace.path / path
+        if exported_model_path.is_file() or exported_model_path.is_dir():
+            LOGGER.info("Model already exists. Skipping export.")
+            return CommandOutput(status=CommandStatus.SKIPPED)
+
+        exported_model_path.parent.mkdir(parents=True, exist_ok=True)
+
+        if model is None:
+            raise RuntimeError("Expected model of type torch.nn.Module. Got None instead.")
+
+        model.to(target_device.value)
+
+        exporters.torch2dynamo_onnx.get_model = lambda: model
+
+        # Keep model on CPU after operation
+        def on_exit():
+            model.to("cpu")
+
+        with ExecutionContext(
+            workspace=workspace,
+            script_path=exported_model_path.parent / "reproduce_export.py",
+            cmd_path=exported_model_path.parent / "reproduce_export.sh",
+            verbose=verbose,
+            on_exit=on_exit,
+        ) as context:
+
+            kwargs = {
+                "exported_model_path": exported_model_path.relative_to(workspace.path).as_posix(),
+                "input_metadata": input_metadata.to_json(),
+                "batch_dim": batch_dim,
+                "target_device": target_device.value,
+                "navigator_workspace": workspace.path.as_posix(),
+                "custom_args": custom_args,
+            }
+
+            args = parse_kwargs_to_cmd(kwargs)
+
+            context.execute_local_runtime_script(
+                exporters.torch2dynamo_onnx.__file__, exporters.torch2dynamo_onnx.export, args
+            )
+
+        return CommandOutput(status=CommandStatus.OK)
+
+
 def _validate_if_dynamic_axes_aligns_with_dataloader_shapes(
     dynamic_axes: Dict[str, Union[Dict[int, str], List[int]]],
     input_metadata: TensorMetadata,

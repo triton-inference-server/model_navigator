@@ -17,7 +17,12 @@ from typing import Dict, List
 from model_navigator.api.config import Format
 from model_navigator.commands.base import ExecutionUnit
 from model_navigator.commands.convert.torch import ConvertTorchScript2ONNX
-from model_navigator.commands.export.torch import ExportTorch2ONNX, ExportTorch2TorchScript
+from model_navigator.commands.export.torch import (
+    ExportExportedProgram,
+    ExportTorch2DynamoONNX,
+    ExportTorch2ONNX,
+    ExportTorch2TorchScript,
+)
 from model_navigator.commands.optimize.graph_surgeon import GraphSurgeonOptimize
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig, ONNXConfig
@@ -38,9 +43,15 @@ def torch_export_builder(config: CommonConfig, models_config: Dict[Format, List[
     for model_cfg in models_config.get(Format.TORCHSCRIPT, []):
         execution_units.append(ExecutionUnit(command=ExportTorch2TorchScript, model_config=model_cfg))
 
+    for model_cfg in models_config.get(Format.TORCH_EXPORTEDPROGRAM, []):
+        execution_units.append(ExecutionUnit(command=ExportExportedProgram, model_config=model_cfg))
+
     for model_cfg in models_config.get(Format.ONNX, []):
         if model_cfg.parent_path in (None, Format.TORCH):
-            execution_units.append(ExecutionUnit(command=ExportTorch2ONNX, model_config=model_cfg))
+            if not model_cfg.dynamo_export:  # pytype: disable=attribute-error
+                execution_units.append(ExecutionUnit(command=ExportTorch2ONNX, model_config=model_cfg))
+            else:
+                execution_units.append(ExecutionUnit(command=ExportTorch2DynamoONNX, model_config=model_cfg))
             assert isinstance(model_cfg, ONNXConfig)
             if model_cfg.graph_surgeon_optimization:
                 execution_units.append(ExecutionUnit(command=GraphSurgeonOptimize, model_config=model_cfg))

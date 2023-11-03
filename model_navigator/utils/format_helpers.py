@@ -155,6 +155,7 @@ FORMAT2SUFFIX = {
     **{
         Format.TF_TRT: ".savedmodel",
         Format.TORCH_TRT: ".pt",
+        Format.TORCH_EXPORTEDPROGRAM: ".pt2",
     },
 }
 

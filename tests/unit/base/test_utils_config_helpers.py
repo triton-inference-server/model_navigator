@@ -165,7 +165,7 @@ def test_do_find_device_max_batch_size_return_false_when_no_adaptive_formats():
     )
 
     models_config = {
-        Format.ONNX: [ONNXConfig(opset=17, dynamic_axes={}, graph_surgeon_optimization=True)],
+        Format.ONNX: [ONNXConfig(opset=17, dynamic_axes={}, dynamo_export=False, graph_surgeon_optimization=True)],
         Format.TORCH: [TorchModelConfig()],
     }
 

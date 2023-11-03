@@ -32,7 +32,7 @@ def test_torch_export_builder_return_graph_surgeon_optimization_when_enabled():
     )
 
     models_config = {
-        Format.ONNX: [ONNXConfig(opset=17, dynamic_axes={}, graph_surgeon_optimization=True)],
+        Format.ONNX: [ONNXConfig(opset=17, dynamic_axes={}, dynamo_export=False, graph_surgeon_optimization=True)],
     }
     pipeline = torch_export_builder(config=config, models_config=models_config)
     assert len(pipeline.execution_units) == 2
@@ -52,7 +52,7 @@ def test_torch_export_builder_does_not_return_graph_surgeon_optimization_when_di
     )
 
     models_config = {
-        Format.ONNX: [ONNXConfig(opset=17, dynamic_axes={}, graph_surgeon_optimization=False)],
+        Format.ONNX: [ONNXConfig(opset=17, dynamic_axes={}, dynamo_export=False, graph_surgeon_optimization=False)],
     }
     pipeline = torch_export_builder(config=config, models_config=models_config)
     assert len(pipeline.execution_units) == 1
@@ -75,6 +75,7 @@ def test_torch_conversion_builder_return_graph_surgeon_optimization_when_enabled
             ONNXConfig(
                 opset=17,
                 dynamic_axes={},
+                dynamo_export=False,
                 graph_surgeon_optimization=True,
                 parent=TorchScriptConfig(jit_type=JitType.TRACE, strict=False),
             )
@@ -102,6 +103,7 @@ def test_torch_conversion_builder_does_not_return_graph_surgeon_optimization_whe
             ONNXConfig(
                 opset=17,
                 dynamic_axes={},
+                dynamo_export=False,
                 graph_surgeon_optimization=False,
                 parent=TorchScriptConfig(jit_type=JitType.TRACE, strict=False),
             )
