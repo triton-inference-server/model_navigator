@@ -13,6 +13,7 @@
 # limitations under the License.
 """Graph Surgeon ONNX optimization script."""
 
+import pathlib
 import shutil
 import tempfile
 
@@ -48,16 +49,16 @@ class _Optimizer:
     def infer_shapes(self):
         LOGGER.info("Inferring shapes")
         onnx_graph = gs.export_onnx(self.graph)
-        if onnx_graph.ByteSize() > 2**31:
+        if self.exceeds_protobuf_limit(onnx_graph):
             LOGGER.warn("Model size exceeds supported 2GB limit, unable to infer shapes.")
         else:
             onnx_graph = shape_inference.infer_shapes(onnx_graph)
-            self.graph = gs.import_onnx(onnx_graph)
+        self.graph = gs.import_onnx(onnx_graph)
 
     def get_graph(self):
         return gs.export_onnx(self.graph)
 
-    def safe_save(self, path: str):
+    def save(self, path: str):
         """Saves ONNX graph to file.
 
         Args:
@@ -65,10 +66,24 @@ class _Optimizer:
         """
         LOGGER.info(f"Saving ONNX graph to: {path}")
 
-        temp_file = tempfile.NamedTemporaryFile(delete=False)
+        temp_dir = pathlib.Path(tempfile.mkdtemp())
+        target_path = pathlib.Path(path)
+
         graph = self.get_graph()
-        onnx.save(graph, temp_file.name)
-        shutil.move(temp_file.name, path)
+        external_weights = self.exceeds_protobuf_limit(graph)
+        onnx.save(graph, str(temp_dir / target_path.name), save_as_external_data=external_weights)
+
+        for file in target_path.parent.iterdir():
+            if not file.name.endswith((".py", ".sh")):
+                file.unlink()
+
+        for onnx_file in temp_dir.iterdir():
+            shutil.move(str(onnx_file), str(target_path.parent / onnx_file.name))
+
+        shutil.rmtree(temp_dir)
+
+    def exceeds_protobuf_limit(self, graph):
+        return graph.ByteSize() > 2**31
 
 
 def optimize(onnx_path: str):
@@ -88,7 +103,7 @@ def optimize(onnx_path: str):
     opt.fold_constants()
     opt.infer_shapes()
     opt.cleanup()
-    opt.safe_save(onnx_path)
+    opt.save(onnx_path)
 
 
 if __name__ == "__main__":
