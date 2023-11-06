@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Torch runners."""
+import gc
+from copy import deepcopy
 from typing import List
 
 from model_navigator.api.config import Format, TensorType
@@ -271,14 +273,20 @@ class TorchCompileCUDARunner(_BaseTorchRunner):
     def activate_impl(self):
         """Runner activation implementation."""
         super().activate_impl()
-        self._loaded_model = torch.compile(self._loaded_model)
+        model_copy = deepcopy(self._loaded_model)
+        # offload original model from the gpu so other processes can use the memory
+        self.model.to("cpu")
+        model_copy.to(self._target_device).eval()
+        self._loaded_model = torch.compile(model_copy)
 
     def deactivate_impl(self):
         """Deactivation implementation."""
         super().deactivate_impl()
+        torch._dynamo.reset()
         # offload the model from the gpu so other processes can use the memory
         self.model.to("cpu")
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 class TorchCompileCPURunner(_BaseTorchRunner):
@@ -299,7 +307,14 @@ class TorchCompileCPURunner(_BaseTorchRunner):
     def activate_impl(self):
         """Runner activation implementation."""
         super().activate_impl()
-        self._loaded_model = torch.compile(self._loaded_model)
+        model_copy = deepcopy(self._loaded_model)
+        self._loaded_model = torch.compile(model_copy)
+
+    def deactivate_impl(self):
+        """Deactivation implementation."""
+        super().deactivate_impl()
+        torch._dynamo.reset()
+        gc.collect()
 
 
 class _BaseTorchExportedProgramRunner(_BaseTorchRunner):
