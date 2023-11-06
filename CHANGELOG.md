@@ -16,7 +16,7 @@ limitations under the License.
 
 # Changelog
 
-## 0.7.4 (unreleased)
+## 0.7.4
 - new: decoupled mode configuration in Triton Model Config
 - new: support for PyTorch ExportedProgram and ONNX dynamo export
 - new: added GraphSurgeon ONNX optimalization
