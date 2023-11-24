@@ -275,6 +275,7 @@ class StatusDictUpdater:
             get_trt_profile_from_trt_dynamic_axes(data_dict["export_config"]["trt_dynamic_axes"])
         )
         for model_status in data_dict["model_status"]:
+            assert isinstance(model_status, dict)
             if model_status["format"] == "torch-trt" and model_status.get("precision") is None:
                 model_status["precision"] = "fp32"
 
@@ -343,8 +344,8 @@ class StatusDictUpdater:
 
     def _framework2framework_for_0_1_4(self, framework: str) -> str:
         mapping = {
-            "pytorch": Framework.TORCH,
-            "tensorflow2": Framework.TENSORFLOW,
+            "pytorch": Framework.TORCH.value,
+            "tensorflow2": Framework.TENSORFLOW.value,
         }
         return mapping.get(framework, framework)
 
