@@ -62,6 +62,7 @@ class ExportJAX2SavedModel(Command):
         exported_model_path = workspace.path / path
         if exported_model_path.is_file() or exported_model_path.is_dir():
             return CommandOutput(status=CommandStatus.SKIPPED)
+
         assert model is not None
         exported_model_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -75,7 +76,7 @@ class ExportJAX2SavedModel(Command):
             verbose=verbose,
         ) as context:
             kwargs = {
-                "exported_model_path": exported_model_path.as_posix(),
+                "exported_model_path": exported_model_path.relative_to(workspace.path).as_posix(),
                 "jit_compile": jit_compile,
                 "enable_xla": enable_xla,
                 "input_metadata": input_metadata.to_json(),

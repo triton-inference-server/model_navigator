@@ -19,7 +19,7 @@ import collections
 import dataclasses
 import datetime
 import pathlib
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from packaging import version
 
@@ -270,7 +270,7 @@ class StatusDictUpdater:
         ):  # FIXME problably git_info should be removed from package updater - git_info no longer saved in status.yaml
             data_dict["git_info"] = {}
 
-    def _update_from_v0_1_2(self, data_dict: Dict):
+    def _update_from_v0_1_2(self, data_dict: Dict[str, Any]):
         data_dict["trt_profile"] = DataObject.parse_value(
             get_trt_profile_from_trt_dynamic_axes(data_dict["export_config"]["trt_dynamic_axes"])
         )

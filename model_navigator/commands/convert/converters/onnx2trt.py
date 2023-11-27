@@ -17,9 +17,12 @@ import pathlib
 from typing import Any, Dict, List, Optional, Tuple
 
 import fire
+from polygraphy import mod
 from polygraphy.backend.trt import CreateConfig, Profile, engine_from_network, network_from_onnx_path, save_engine
 
 from model_navigator.api.config import TensorRTPrecision, TensorRTPrecisionMode
+
+trt = mod.lazy_import("tensorrt")
 
 
 def _get_precisions(precision, precision_mode):
@@ -54,7 +57,7 @@ def convert(
     precision_mode: str,
     optimization_level: Optional[int] = None,
     compatibility_level: Optional[str] = None,
-    workspace: Optional[str] = None,
+    navigator_workspace: Optional[str] = None,
     onnx_parser_flags: Optional[List[int]] = None,
     custom_args: Optional[Dict[str, Any]] = None,
 ) -> None:
@@ -69,8 +72,7 @@ def convert(
         max_workspace_size (int): Maximum workspace size in bytes.
         precision (str): TensorRT precision. Could be "fp16" or "fp32".
         precision_mode (str): TensorRT precision mode.
-        target_device (str): _description_
-        workspace (Optional[str], optional): Model Navigator workspace path.
+        navigator_workspace (Optional[str], optional): Model Navigator workspace path.
             When None use current workdir. Defaults to None.
         optimization_level: Optimization level for TensorRT engine
         compatibility_level: Hardware compatibility level for generated engine
@@ -78,17 +80,17 @@ def convert(
         custom_args (Optional[Dict[str, str]], optional): Dictionary with passthrough parameters.
             For available arguments check PyTorch documentation: https://pytorch.org/TensorRT/py_api/torch_tensorrt.html
     """
-    if not workspace:
-        workspace = pathlib.Path.cwd()
-    workspace = pathlib.Path(workspace)
+    if not navigator_workspace:
+        navigator_workspace = pathlib.Path.cwd()
+    navigator_workspace = pathlib.Path(navigator_workspace)
 
     exported_model_path = pathlib.Path(exported_model_path)
     if not exported_model_path.is_absolute():
-        exported_model_path = workspace / exported_model_path
+        exported_model_path = navigator_workspace / exported_model_path
 
     converted_model_path = pathlib.Path(converted_model_path)
     if not converted_model_path.is_absolute():
-        converted_model_path = workspace / converted_model_path
+        converted_model_path = navigator_workspace / converted_model_path
 
     custom_args = custom_args or {}
 
@@ -109,6 +111,12 @@ def convert(
         config_kwargs["builder_optimization_level"] = optimization_level
     if compatibility_level:
         config_kwargs["hardware_compatibility_level"] = compatibility_level
+
+    if max_workspace_size:
+        config_kwargs["memory_pool_limits"] = {
+            trt.MemoryPoolType.WORKSPACE: max_workspace_size,
+        }
+
     engine = engine_from_network(
         network,
         config=CreateConfig(

@@ -125,7 +125,7 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
                 "max_workspace_size": max_workspace_size,
                 "precision": precision.value,
                 "precision_mode": precision_mode.value,
-                "workspace": workspace.path.as_posix(),
+                "navigator_workspace": workspace.path.as_posix(),
                 "custom_args": custom_args,
             }
             if optimization_level is not None:

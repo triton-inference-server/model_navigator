@@ -16,6 +16,10 @@ limitations under the License.
 
 # Changelog
 
+## 0.7.5 (unreleased)
+- fix: JAX export and TensorRT conversion fails when custom workspace is used
+- fix: Missing max workspace size passed to TensorRT conversion
+
 ## 0.7.4
 - new: decoupled mode configuration in Triton Model Config
 - new: support for PyTorch ExportedProgram and ONNX dynamo export

@@ -86,6 +86,7 @@ def main():
         verbose=True,
         optimization_profile=nav.OptimizationProfile(batch_sizes=[1, 8, 16], stability_percentage=100),
         custom_configs=(nav.OnnxConfig(opset=13),),
+        workspace=pathlib.Path("onnx_workspace"),
     )
     package_path = pathlib.Path("package.nav")
     nav.package.save(package, package_path)

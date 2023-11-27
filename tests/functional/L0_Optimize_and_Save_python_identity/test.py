@@ -77,6 +77,7 @@ def main():
         verify_func=verify_func,
         verbose=True,
         optimization_profile=nav.OptimizationProfile(batch_sizes=[1, 8, 16], stability_percentage=100),
+        workspace=pathlib.Path("python_workspace"),
     )
     package_path = pathlib.Path("package.nav")
     nav.package.save(package, package_path)

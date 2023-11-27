@@ -67,6 +67,7 @@ def export(
 
     if not navigator_workspace:
         navigator_workspace = pathlib.Path.cwd()
+
     navigator_workspace = pathlib.Path(navigator_workspace)
 
     polymorphic_shapes = []
