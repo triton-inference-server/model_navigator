@@ -18,19 +18,29 @@ from model_navigator.frameworks.tensorrt import utils as tensorrt_utils
 from model_navigator.frameworks.tensorrt.utils import _opt_batch_size
 
 
-def test_cast_type_return_current_type_when_has_no_cast():
+def test_cast_type_return_current_type_when_has_no_cast(mocker):
+    mocker.patch("model_navigator.frameworks.tensorrt.utils.get_version", return_value="8.6")
     dtypes = [np.dtype("int32"), np.dtype("float32"), np.dtype("object")]
     for dtype in dtypes:
         assert dtype == tensorrt_utils.cast_type(dtype)
 
 
-def test_cast_type_return_new_type_when_has_cast():
+def test_cast_type_return_new_type_when_has_cast_before_8_6(mocker):
+    mocker.patch("model_navigator.frameworks.tensorrt.utils.get_version", return_value="8.6")
     assert np.dtype("int32") == tensorrt_utils.cast_type(np.dtype("int64"))
     assert np.dtype("float32") == tensorrt_utils.cast_type(np.dtype("float64"))
     assert np.dtype("uint32") == tensorrt_utils.cast_type(np.dtype("uint64"))
 
 
-def test_cast_tensor_is_not_changed_when_tensor_has_no_cast_type():
+def test_cast_type_return_new_type_when_has_cast_after_8_6(mocker):
+    mocker.patch("model_navigator.frameworks.tensorrt.utils.get_version", return_value="9.0")
+    assert np.dtype("int64") == tensorrt_utils.cast_type(np.dtype("int64"))
+    assert np.dtype("float32") == tensorrt_utils.cast_type(np.dtype("float64"))
+    assert np.dtype("uint32") == tensorrt_utils.cast_type(np.dtype("uint64"))
+
+
+def test_cast_tensor_is_not_changed_when_tensor_has_no_cast_type(mocker):
+    mocker.patch("model_navigator.frameworks.tensorrt.utils.get_version", return_value="8.6")
     tensor = np.zeros(shape=(1,), dtype=np.dtype("int32"))
     modified_tensor = tensorrt_utils.cast_tensor(tensor)
 
@@ -38,9 +48,26 @@ def test_cast_tensor_is_not_changed_when_tensor_has_no_cast_type():
     assert modified_tensor.shape == tensor.shape
 
 
-def test_cast_tensor_is_changed_when_tensor_cast_type():
+def test_cast_tensor_is_changed_when_tensor_cast_type_before_8_6(mocker):
+    mocker.patch("model_navigator.frameworks.tensorrt.utils.get_version", return_value="8.6")
     test_cases = [
         ("int64", "int32"),
+        ("uint64", "uint32"),
+        ("float64", "float32"),
+    ]
+    for input_type, expected_type in test_cases:
+
+        tensor = np.zeros(shape=(1,), dtype=np.dtype(input_type))
+        modified_tensor = tensorrt_utils.cast_tensor(tensor)
+
+        assert modified_tensor.dtype == np.dtype(expected_type)
+        assert modified_tensor.shape == tensor.shape
+
+
+def test_cast_tensor_is_changed_when_tensor_cast_type_after_8_6(mocker):
+    mocker.patch("model_navigator.frameworks.tensorrt.utils.get_version", return_value="9.0")
+    test_cases = [
+        ("int64", "int64"),
         ("uint64", "uint32"),
         ("float64", "float32"),
     ]

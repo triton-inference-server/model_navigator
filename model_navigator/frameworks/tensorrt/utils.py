@@ -36,11 +36,6 @@ trt = module.lazy_import("tensorrt")
 T = TypeVar("T")
 
 LOGGER = logging.getLogger(__name__)
-_TYPE_CASTS = {
-    np.dtype(np.int64): np.dtype(np.int32),
-    np.dtype(np.float64): np.dtype(np.float32),
-    np.dtype(np.uint64): np.dtype(np.uint32),
-}
 
 
 def get_version():
@@ -70,14 +65,30 @@ def get_trt_profile_from_trt_dynamic_axes(trt_dynamic_axes):
 
 def cast_type(dtype: np.dtype) -> np.dtype:
     """Cast type and return new dtype."""
-    if dtype in _TYPE_CASTS:
-        return _TYPE_CASTS[dtype]
+    type_casts = _types_casts()
+    if dtype in type_casts:
+        return type_casts[dtype]
 
     return dtype
 
 
+def _types_casts():
+    if get_version() > LooseVersion("8.6"):
+        return {
+            np.dtype(np.float64): np.dtype(np.float32),
+            np.dtype(np.uint64): np.dtype(np.uint32),
+        }
+    else:
+        return {
+            np.dtype(np.int64): np.dtype(np.int32),
+            np.dtype(np.float64): np.dtype(np.float32),
+            np.dtype(np.uint64): np.dtype(np.uint32),
+        }
+
+
 def _cast_torch_tensor(tensor, dtype):
-    target_dtype = dtype or _TYPE_CASTS.get(np.dtype(torch_to_numpy_dtype(tensor.dtype)))
+    type_casts = _types_casts()
+    target_dtype = dtype or type_casts.get(np.dtype(torch_to_numpy_dtype(tensor.dtype)))
     if target_dtype:
         LOGGER.debug(f"Casting {dtype} tensor to {target_dtype}.")
         return tensor.to(numpy_to_torch_dtype(target_dtype))
@@ -85,7 +96,8 @@ def _cast_torch_tensor(tensor, dtype):
 
 
 def _cast_numpy_tensor(tensor, dtype):
-    target_dtype = dtype or _TYPE_CASTS.get(tensor.dtype)
+    type_casts = _types_casts()
+    target_dtype = dtype or type_casts.get(tensor.dtype)
     if target_dtype:
         LOGGER.debug(f"Casting {dtype} tensor to {target_dtype}.")
         return tensor.astype(target_dtype.type)
