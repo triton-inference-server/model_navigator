@@ -174,12 +174,7 @@ class TensorRTRunner(NavigatorRunner):
         Returns:
             TensorMetadata: Input metadata.
         """
-        if trt_utils._should_use_v3_api():
-            return trt_utils.get_metadata_from_engine(self.engine, mode=trt.TensorIOMode.INPUT)
-        else:
-            start_binding, end_binding = trt_utils.get_active_profile_bindings(self.context)
-            # This function always uses binding names of the 0th profile.
-            return trt_utils.get_input_metadata_from_engine(self.engine, start_binding, end_binding)
+        return trt_utils.get_input_metadata_impl(engine=self.engine, context=self.context)
 
     def activate_impl(self):
         """Implementation of activate method.
@@ -508,10 +503,7 @@ class TensorRTRunner(NavigatorRunner):
 
         return array
 
-    def infer_impl(
-        self,
-        feed_dict,
-    ):
+    def infer_impl(self, feed_dict, *args, **kwargs):
         """Implementation for running inference with TensorRT.
 
         Do not call this method directly - use ``infer()`` instead,

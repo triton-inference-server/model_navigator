@@ -95,7 +95,6 @@ def optimize(
         verbose=verbose,
         debug=debug,
         verify_func=verify_func,
-        custom_configs=None,
     )
 
     models_config = ModelConfigBuilder.generate_model_config(

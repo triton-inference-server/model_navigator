@@ -1,4 +1,3 @@
-#!/usr/bin/env bash
 # Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +11,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-set -ex
-
-THIS_SCRIPT_PATH="$(realpath --relative-to="$(pwd)" "$0")"
-TEST_MODULE="$(dirname "${THIS_SCRIPT_PATH}"|sed 's/\//./g').test"
-
-pip install --upgrade torch transformers flax "jax[cuda12_pip]<0.4.16" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
-pip install "ml-dtypes==0.2.0"
-
-python -m"${TEST_MODULE}" \
-    --status $(pwd)/status.yaml \
-    --verbose

@@ -56,11 +56,11 @@ class _BaseTorchRunner(NavigatorRunner):
         """Deactivation implementation."""
         self._loaded_model = None
 
-    def infer_impl(self, feed_dict, return_raw_outputs=False):
+    def infer_impl(self, feed_dict, *args, **kwargs):
         """Inference handler implementation."""
         outputs = self._infer(feed_dict=feed_dict)
 
-        if return_raw_outputs:
+        if self.output_metadata is None:
             return outputs
 
         out_dict = self.output_metadata.flatten_sample(outputs)

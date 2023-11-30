@@ -16,7 +16,6 @@ import gc
 from collections import OrderedDict
 from typing import Dict, List, Mapping
 
-import numpy
 import numpy as np
 
 from model_navigator.api.config import Format
@@ -40,11 +39,11 @@ class _BaseTFRunner(NavigatorRunner):
         """Runner deactivation implementation."""
         self._loaded_model = None
 
-    def infer_impl(self, feed_dict: Dict, return_raw_outputs: bool = False) -> Dict[str, np.ndarray]:
+    def infer_impl(self, feed_dict: Dict, *args, **kwargs):
         """Runner inference implementation override."""
         outputs = self._infer_impl(feed_dict)
 
-        if return_raw_outputs:
+        if self.output_metadata is None:
             return outputs
 
         if self.output_metadata:
@@ -52,7 +51,7 @@ class _BaseTFRunner(NavigatorRunner):
         else:
             output_names = outputs.keys() if isinstance(outputs, Mapping) else get_default_output_names(len(outputs))
 
-        if isinstance(outputs, numpy.ndarray):
+        if isinstance(outputs, np.ndarray):
             outputs = (outputs,)
         if isinstance(outputs, Mapping):
             outputs = outputs.values()
@@ -60,6 +59,7 @@ class _BaseTFRunner(NavigatorRunner):
         out_dict = OrderedDict()
         for name, output in zip(output_names, outputs):
             out_dict[name] = output
+
         return out_dict
 
     def _infer_impl(self, feed_dict: Dict):

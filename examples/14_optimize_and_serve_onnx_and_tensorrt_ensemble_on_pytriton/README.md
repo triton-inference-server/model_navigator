@@ -20,7 +20,7 @@ In this example we show how optimize ONNX and TensorRT models and build zero-cop
 
 ## Requirements
 
-The example requires the `torch` package. It can be installed in your current environment using pip:
+The example requires `CUDA 11.8` and `torch` package. It can be installed in your current environment using pip:
 
 ```shell
 pip install torch
@@ -28,7 +28,7 @@ pip install torch
 
 Or you can use NVIDIA Torch container:
 ```shell
-docker run -it --gpus 1 --shm-size 8gb -v ${PWD}:${PWD} -w ${PWD} nvcr.io/nvidia/pytorch:23.01-py3 bash
+docker run -it --gpus 1 --shm-size 8gb -v ${PWD}:${PWD} -w ${PWD} nvcr.io/nvidia/pytorch:22.12-py3 bash
 ```
 
 If you select to use container we recommend to install
@@ -46,7 +46,7 @@ pip install --extra-index-url https://pypi.ngc.nvidia.com .[torch]
 
 ## Exmaple must be executed from it's directory
 ```bash
-cd examples/14_optimize_and_serve_onnx_and_tensorrt_on_pytriton
+cd examples/14_optimize_and_serve_onnx_and_tensorrt_ensemble_on_pytriton
 ```
 
 ## Generate TensorRT model
@@ -66,15 +66,17 @@ python ./optimize.py
 
 Once the process is done, the `onnx_linear.nav` and `tensorrt_linear.nav` packages are created in current working directory.
 
-## Start PyTriton server
+## Serving model with NVIDIA PyTriton
 
-This step starts PyTriton server with package generated in previous step.
+Before running server and client install the NVIDIA PyTriton:
+```shell
+pip install nvidia-pytriton
+```
 
+Next start the PyTriton server with package generated in previous step.
 ```bash
 python ./serve.py
 ```
-
-## Example PyTriton client
 
 Use client to test model deployment on PyTriton
 

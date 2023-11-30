@@ -40,6 +40,7 @@ def main():
         dataloader=dataloader,
         target_formats=(nav.Format.ONNX,),
         workspace=pathlib.Path("onnx_workspace"),
+        optimization_profile=nav.OptimizationProfile(max_batch_size=1024),
     )
 
     nav.package.save(onnx_package, "onnx_linear.nav", override=True)
@@ -48,6 +49,7 @@ def main():
         model=tensorrt_model,
         dataloader=dataloader,
         workspace=pathlib.Path("tensorrt_workspace"),
+        optimization_profile=nav.OptimizationProfile(max_batch_size=1024),
     )
 
     nav.package.save(tensorrt_package, "tensorrt_linear.nav", override=True)

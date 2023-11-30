@@ -420,6 +420,7 @@ EXPORT_FORMATS = {
     Framework.TENSORFLOW: [Format.TF_SAVEDMODEL],
     Framework.TORCH: [Format.TORCHSCRIPT, Format.ONNX, Format.TORCH_EXPORTEDPROGRAM],
     Framework.ONNX: [Format.ONNX],
+    Framework.TENSORRT: [Format.TENSORRT],
 }
 
 DEFAULT_NONE_FRAMEWORK_TARGET_FORMATS = (Format.PYTHON,)

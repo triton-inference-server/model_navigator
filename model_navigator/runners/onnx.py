@@ -152,7 +152,7 @@ class OnnxrtCPURunner(_BaseOnnxrtRunner):
         """Return supported devices for runner."""
         return [DeviceKind.CPU]
 
-    def infer_impl(self, feed_dict, return_raw_outputs=False):
+    def infer_impl(self, feed_dict, *args, **kwargs):
         """Run inference."""
         assert self.is_active and hasattr(self, "sess"), "Runner must be activated."
 
@@ -163,11 +163,13 @@ class OnnxrtCPURunner(_BaseOnnxrtRunner):
         out_dict = OrderedDict()
         for node, out in zip(self.sess.get_outputs(), inference_outputs):
             out_dict[node.name] = out
-        if return_raw_outputs:
+
+        if self.output_metadata is None:
             return out_dict
 
         if self.output_metadata:  # filter outputs if output_metadata is set
             out_dict = {k: v for k, v in out_dict.items() if k in self.output_metadata}
+
         return out_dict
 
     @staticmethod
@@ -196,7 +198,7 @@ class OnnxrtCUDARunner(_BaseOnnxrtRunner):
         """Return supported devices for runner."""
         return [DeviceKind.CUDA]
 
-    def infer_impl(self, feed_dict):
+    def infer_impl(self, feed_dict, *args, **kwargs):
         """Run inference."""
         assert self.is_active and hasattr(self, "sess"), "Runner must be activated."
 
@@ -210,6 +212,9 @@ class OnnxrtCUDARunner(_BaseOnnxrtRunner):
         for node, out in zip(self.sess.get_outputs(), io_binding.get_outputs()):
             device_view = DeviceView(out.data_ptr(), out.shape(), ONNX_RT_TYPE_TO_NP[out.data_type()])
             out_dict[node.name] = device_view.torch() if self.return_type == TensorType.TORCH else device_view.numpy()
+
+        if self.output_metadata is None:
+            return out_dict
 
         out_dict = {k: v for k, v in out_dict.items() if k in self.output_metadata}
         return out_dict

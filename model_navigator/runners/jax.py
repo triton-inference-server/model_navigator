@@ -25,12 +25,11 @@ from model_navigator.runners.registry import register_runner
 class JAXRunner(NavigatorRunner):
     """Runs inference using JAX."""
 
-    def infer_impl(self, feed_dict, return_raw_outputs=False):
+    def infer_impl(self, feed_dict, *args, **kwargs):
         """Run inference in JAX.
 
         Args:
             feed_dict: A dictionary with profiling samples
-            return_raw_outputs: If True, return raw outputs from the model. Default: False.
         """
         inputs = self.input_metadata.unflatten_sample(feed_dict, wrap_input=True)
         if isinstance(inputs[-1], dict):
@@ -40,7 +39,7 @@ class JAXRunner(NavigatorRunner):
 
         outputs = self.model(*args, **kwargs)
 
-        if return_raw_outputs:
+        if self.output_metadata is None:
             return outputs
 
         out_dict = self.output_metadata.flatten_sample(outputs)

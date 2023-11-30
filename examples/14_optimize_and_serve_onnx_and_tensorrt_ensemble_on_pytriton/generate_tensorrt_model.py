@@ -44,7 +44,9 @@ def main():
             dataloader=dataloader,
             target_formats=(nav.Format.TENSORRT,),
             workspace=workspace,
+            optimization_profile=nav.OptimizationProfile(max_batch_size=1024),
             custom_configs=[nav.TensorRTConfig(precision=(nav.TensorRTPrecision.FP32,))],
+            verbose=True,
         )
 
         src_path = workspace / "trt-fp32" / "model.plan"

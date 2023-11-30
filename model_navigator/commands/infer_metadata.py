@@ -27,6 +27,7 @@ from model_navigator.core.workspace import Workspace
 from model_navigator.exceptions import ModelNavigatorUserInputError
 from model_navigator.frameworks import Framework
 from model_navigator.frameworks.onnx.utils import get_onnx_io_names
+from model_navigator.frameworks.tensorrt.utils import get_tensorrt_io_names
 from model_navigator.runners.utils import get_format_default_runners
 from model_navigator.utils.format_helpers import FRAMEWORK2BASE_FORMAT
 
@@ -138,6 +139,8 @@ class InferInputMetadata(Command, is_required=True):
             if _input_names is not None:
                 LOGGER.warning("ONNX input names are not supported yet. `input_names` will be ignored.")
             _input_names, _ = get_onnx_io_names(model)
+        elif framework == Framework.TENSORRT:
+            _input_names, _ = get_tensorrt_io_names(model)
 
         pytree_metadata = PyTreeMetadata.from_sample(
             sample, tensor_type=FRAMEWORK_TO_TENSOR_TYPE[framework], names=_input_names, prefix="input"
@@ -255,11 +258,12 @@ class InferOutputMetadata(Command, is_required=True):
             if _output_names is not None:
                 LOGGER.warning("ONNX output names are not supported yet. `output_names` will be ignored.")
             _, _output_names = get_onnx_io_names(model)
-
-        if _output_names:
+            temp_output_metadata = TensorMetadata({out_name: TensorSpec(out_name, ()) for out_name in _output_names})
+        elif framework == Framework.TENSORRT:
+            _, _output_names = get_tensorrt_io_names(model)
             temp_output_metadata = TensorMetadata({out_name: TensorSpec(out_name, ()) for out_name in _output_names})
         else:
-            temp_output_metadata = TensorMetadata()
+            temp_output_metadata = None
 
         runner = get_format_default_runners(FRAMEWORK2BASE_FORMAT[framework])[0](
             model=model,
@@ -272,17 +276,13 @@ class InferOutputMetadata(Command, is_required=True):
         conversion_samples = load_samples("conversion_sample", workspace.path, batch_dim)
 
         with runner, ExecutionContext(workspace=workspace, verbose=verbose):
-            kwargs = {
-                "check_inputs": False,
-                "return_raw_outputs": True,
-            }
-            outputs = runner.infer(profiling_sample, **kwargs)
+            outputs = runner.infer(profiling_sample)
             pytree_metadata = PyTreeMetadata.from_sample(
                 outputs, tensor_type=FRAMEWORK_TO_TENSOR_TYPE[framework], names=_output_names, prefix="output"
             )
             output_sample = {n: to_numpy(t, framework) for n, t in pytree_metadata.flatten_sample(outputs).items()}
             output_names = list(output_sample.keys())
-            output_generator = (runner.infer(sample, **kwargs) for sample in conversion_samples)
+            output_generator = (runner.infer(sample) for sample in conversion_samples)
 
             output_ndims = [t.ndim for t in output_sample.values()]
             output_dtypes = {n: t.dtype for n, t in output_sample.items()}

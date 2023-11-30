@@ -19,11 +19,13 @@ limitations under the License.
 ## 0.7.5 (unreleased)
 - fix: JAX export and TensorRT conversion fails when custom workspace is used
 - fix: Missing max workspace size passed to TensorRT conversion
+- fix: Execution of TensorRT optimize raise error during handling output metadata
+
 
 ## 0.7.4
 - new: decoupled mode configuration in Triton Model Config
 - new: support for PyTorch ExportedProgram and ONNX dynamo export
-- new: added GraphSurgeon ONNX optimalization
+- new: added GraphSurgeon ONNX optimization
 - fix: compatibility of generating PyTriton model config through adapter
 - fix: installation of packages that are platform dependent
 - fix: update package config with model loaded from source

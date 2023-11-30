@@ -22,7 +22,7 @@ from model_navigator.runners.registry import register_runner
 class PythonRunner(NavigatorRunner):
     """Runs inference for Python models."""
 
-    def infer_impl(self, feed_dict: Dict, return_raw_outputs: bool = False):
+    def infer_impl(self, feed_dict: Dict, *args, **kwargs):
         """Runner inference handler implementation."""
         inputs = self.input_metadata.unflatten_sample(feed_dict, wrap_input=True)
         if isinstance(inputs[-1], dict):
@@ -32,7 +32,7 @@ class PythonRunner(NavigatorRunner):
 
         outputs = self.model(*args, **kwargs)
 
-        if return_raw_outputs:
+        if self.output_metadata is None:
             return outputs
 
         out_dict = self.output_metadata.flatten_sample(outputs)

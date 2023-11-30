@@ -39,7 +39,7 @@ class NavigatorRunner(abc.ABC):
         self,
         model: Any,
         input_metadata: TensorMetadata,
-        output_metadata: TensorMetadata,
+        output_metadata: Optional[TensorMetadata],
         return_type: TensorType = TensorType.NUMPY,
         **kwargs,
     ) -> None:

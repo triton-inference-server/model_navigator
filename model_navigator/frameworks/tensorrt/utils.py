@@ -16,9 +16,10 @@ import contextlib
 import logging
 import math
 import os
+import pathlib
 import signal
 from distutils.version import LooseVersion
-from typing import Callable, Optional, TypeVar, Union
+from typing import Callable, List, Optional, Tuple, TypeVar, Union
 
 import numpy as np
 
@@ -26,6 +27,7 @@ from model_navigator.api.config import ShapeTuple, TensorRTProfile, TensorType
 from model_navigator.core.constants import OPT_MAX_SHAPE_RATIO
 from model_navigator.core.tensor import TensorMetadata, get_tensor_type
 from model_navigator.exceptions import ModelNavigatorNotFoundError
+from model_navigator.utils import common as utils
 from model_navigator.utils import module
 from model_navigator.utils.common import invoke_if_callable, numpy_to_torch_dtype, torch_to_numpy_dtype
 
@@ -293,7 +295,7 @@ def add_binding_to_metadata(engine, binding, metadata, name_binding):
     )
 
 
-def get_input_metadata_from_engine(engine, start_binding, end_binding):
+def _get_input_metadata_from_engine(engine, start_binding, end_binding):
     """Returns input metada from engine."""
     if _should_use_v3_api():
         LOGGER.error("This function should not be called when using the V3 API")
@@ -305,7 +307,19 @@ def get_input_metadata_from_engine(engine, start_binding, end_binding):
     return inputs
 
 
-def get_metadata_from_engine(engine, mode):
+def _get_output_metadata_from_engine(engine, start_binding, end_binding):
+    """Returns input metada from engine."""
+    if _should_use_v3_api():
+        LOGGER.error("This function should not be called when using the V3 API")
+
+    inputs = TensorMetadata()
+    for index, binding in enumerate(range(start_binding, end_binding)):
+        if engine.binding_is_output(binding):
+            add_binding_to_metadata(engine, binding, inputs, name_binding=index)
+    return inputs
+
+
+def _get_metadata_from_engine(engine, mode):
     """Returns metadata from engine."""
     meta = TensorMetadata()
     for idx in range(engine.num_io_tensors):
@@ -346,3 +360,79 @@ def get_active_profile_bindings(context):
         f"Active Profile: {active_profile}, Start Binding: {start_binding}, End Binding: {end_binding}"
     )
     return start_binding, end_binding
+
+
+def get_input_metadata_impl(engine, context=None):
+    """Implementation of get_input_metadata method.
+
+    Returns:
+        TensorMetadata: Input metadata.
+    """
+    if _should_use_v3_api():
+        return _get_metadata_from_engine(engine, mode=trt.TensorIOMode.INPUT)
+    else:
+        start_binding, end_binding = get_active_profile_bindings(context)
+        # This function always uses binding names of the 0th profile.
+        return _get_input_metadata_from_engine(engine, start_binding, end_binding)
+
+
+def get_output_metadate_impl(engine, context=None):
+    """Implementation of get_output_metadata method.
+
+    Returns:
+        TensorMetadata: Output metadata.
+    """
+    if _should_use_v3_api():
+        return _get_metadata_from_engine(engine, mode=trt.TensorIOMode.OUTPUT)
+    else:
+        start_binding, end_binding = get_active_profile_bindings(context)
+        # This function always uses binding names of the 0th profile.
+        return _get_output_metadata_from_engine(engine, start_binding, end_binding)
+
+
+def get_tensorrt_io_names(model: pathlib.Path) -> Tuple[List, List]:
+    """Collect inputs and outputs names from TensorRT model.
+
+    Args:
+        model: path to TensorRT model
+
+    Returns:
+        Tuple with lists of inputs and outputs names
+    """
+    engine_or_context = EngineFromBytes(utils.BytesFromPath(model.as_posix()))
+    engine_or_context, owning = utils.invoke_if_callable(engine_or_context)
+
+    if isinstance(engine_or_context, trt.ICudaEngine):
+        engine = engine_or_context
+        context = engine.create_execution_context()
+        owns_engine = owning
+        owns_context = True
+        if not context:
+            raise RuntimeError("Failed to create execution context")
+    elif isinstance(engine_or_context, trt.IExecutionContext):
+        context = engine_or_context
+        engine = context.engine
+        owns_context = owning
+        owns_engine = False
+    else:
+        raise RuntimeError(
+            "Invalid Engine or Context. Please ensure the engine was built correctly. See error log for details."
+        )
+
+    input_metadata = get_input_metadata_impl(engine, context)
+    output_metadata = get_output_metadate_impl(engine, context)
+
+    with contextlib.ExitStack() as stack:
+        if owns_engine:
+            stack.enter_context(engine)
+        if owns_context:
+            stack.enter_context(context)
+
+    del (
+        engine,
+        owns_engine,
+        context,
+        owns_context,
+    )
+
+    return list(input_metadata.keys()), list(output_metadata.keys())
