@@ -412,7 +412,7 @@ class TensorRTRunner(NavigatorRunner):
             # We retrieve the semantic shape from the FormattedArray, *not* the underlying array.
             tensor_shape = self.context.get_tensor_shape(name)
             if tensor_shape != array.shape:
-                LOGGER.debug(f"Setting {name} input shape to: {array.shape}")
+                LOGGER.debug(f"Setting {name} input shape from {tensor_shape} to: {array.shape}")
                 reshape = True
                 if not self.context.set_input_shape(name, array.shape):
                     raise ModelNavigatorError(

@@ -77,7 +77,7 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
             optimization_level: Optimization level for TensorRT engine
             compatibility_level: Hardware compatibility level for generated engine
             optimized_trt_profiles: List of TensorRT profiles that will be used by Model Navigator for conversion, user provided or optimized by TensorRTProfileBuilder command.
-        onnx_parser_flags (Optional[List[trt.OnnxParserFlag]], optional): List of flags to set ONNX parser behavior.
+            onnx_parser_flags (Optional[List[trt.OnnxParserFlag]], optional): List of flags to set ONNX parser behavior.
             verbose: enable verbose logging for command
             custom_args (Optional[Dict[str, Any]], optional): Passthrough parameters for Polygraphy convert command
                 For available arguments check Polygraphy documentation: https://docs.nvidia.com/deeplearning/tensorrt/developer-guide/index.html#polygraphy

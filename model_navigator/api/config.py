@@ -137,11 +137,13 @@ class TensorRTPrecision(Enum):
 
     Args:
         INT8 (str): 8-bit integer precision.
+        FP8 (str): 8-bit floating point precision.
         FP16 (str): 16-bit floating point precision.
         FP32 (str): 32-bit floating point precision.
     """
 
     INT8 = "int8"
+    FP8 = "fp8"
     FP16 = "fp16"
     FP32 = "fp32"
 
@@ -484,7 +486,10 @@ AVAILABLE_TARGET_FORMATS = {
     Framework.TENSORRT: AVAILABLE_TENSORRT_TARGET_FORMATS,
 }
 
-DEFAULT_TENSORRT_PRECISION = (TensorRTPrecision.FP32, TensorRTPrecision.FP16)
+DEFAULT_TENSORRT_PRECISION = (
+    TensorRTPrecision.FP32,
+    TensorRTPrecision.FP16,
+)
 DEFAULT_TENSORRT_PRECISION_MODE = TensorRTPrecisionMode.HIERARCHY
 
 

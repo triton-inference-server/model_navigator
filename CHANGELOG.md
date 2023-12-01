@@ -17,6 +17,7 @@ limitations under the License.
 # Changelog
 
 ## 0.7.5 (unreleased)
+- new: FP8 precision support for TensorRT
 - fix: JAX export and TensorRT conversion fails when custom workspace is used
 - fix: Missing max workspace size passed to TensorRT conversion
 - fix: Execution of TensorRT optimize raise error during handling output metadata
