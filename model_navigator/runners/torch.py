@@ -17,6 +17,7 @@ from copy import deepcopy
 from typing import List
 
 from model_navigator.api.config import Format, TensorType
+from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import get_tensor_type
 from model_navigator.frameworks import is_torch2_available
 from model_navigator.frameworks.tensorrt import utils as tensorrt_utils
@@ -259,6 +260,12 @@ class TorchCompileCUDARunner(_BaseTorchRunner):
         #  Related closed issue: https://github.com/pytorch/pytorch/issues/101151
         super().__init__(*args, **kwargs)
         self._infer = self._infer_no_grad
+        self.fullgraph = False
+        self.dynamic = None
+        self.backend = "inductor"
+        self.mode = None
+        self.options = None
+        self.disable = False
 
     @classmethod
     def name(cls) -> str:
@@ -277,7 +284,17 @@ class TorchCompileCUDARunner(_BaseTorchRunner):
         # offload original model from the gpu so other processes can use the memory
         self.model.to("cpu")
         model_copy.to(self._target_device).eval()
-        self._loaded_model = torch.compile(model_copy)
+        LOGGER.info(
+            f"Using torch.compile with config: fullgraph={self.fullgraph}, dynamic={self.dynamic}, backend={self.backend}, mode={self.mode}, options={self.options}"
+        )
+        self._loaded_model = torch.compile(
+            model=model_copy,
+            fullgraph=self.fullgraph,
+            dynamic=self.dynamic,
+            backend=self.backend,
+            mode=self.mode,
+            options=self.options,
+        )
 
     def deactivate_impl(self):
         """Deactivation implementation."""
