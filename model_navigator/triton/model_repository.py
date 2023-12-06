@@ -86,6 +86,11 @@ BACKEND2SUFFIX = {
     Backend.TensorRT: ".plan",
 }
 
+BACKEND2CATALOGBASEDMODEL = {
+    Backend.PyTorch: True,
+    Backend.TensorFlow: True,
+}
+
 TRITON_FORMATS = (
     Format.ONNX,
     Format.TF_TRT,
@@ -352,17 +357,30 @@ class _TritonModelRepository:
             f"Deploying model {model_path} of version {model_config.model_version} in "
             f"Triton Model Store {self._model_repository_path}/{model_config.model_name}"
         )
+        # Collect model filename if default not provided
+        backend = model_config.backend or model_config.platform
+        model_filename = model_config.default_model_filename or self._get_default_filename(backend=backend)
 
-        # Order of model repository files might be important while using Triton server in polling model_control_mode
-        model_path = self._copy_model(
-            model_path=model_path,
-            backend=model_config.backend or model_config.platform,
-            model_name=model_config.model_name,
-            version=model_config.model_version,
+        # Path to model version catalog
+        model_version_path = self._get_version_path(
+            model_name=model_config.model_name, version=model_config.model_version
         )
 
+        # Order of model repository files might be important while using Triton server in polling model_control_mode
+        if model_path.is_file() or self._allow_model_catalog(backend=backend):
+            self._copy_model_file(
+                model_path=model_path,
+                model_version_path=model_version_path,
+                model_filename=model_filename,
+            )
+        else:
+            self._copy_model_catalog(
+                model_path=model_path,
+                model_version_path=model_version_path,
+            )
+
         # remove model filename and model version
-        model_store_dir = model_path.parent.parent
+        model_store_dir = model_version_path.parent
 
         self._copy_initial_state_files(
             model_store_dir=model_store_dir,
@@ -381,21 +399,17 @@ class _TritonModelRepository:
 
         return model_store_dir
 
-    def _copy_model(
+    def _copy_model_file(
         self,
         *,
         model_path: pathlib.Path,
-        backend: Backend,
-        model_name: str,
-        version: int,
-    ) -> pathlib.Path:
-        dst_path = self._get_model_path(
-            model_name=model_name,
-            version=version,
-            backend=backend,
-        )
-        dst_path.parent.mkdir(exist_ok=True, parents=True)
-        LOGGER.debug(f"Copying {model_path} to {dst_path}")
+        model_version_path: pathlib.Path,
+        model_filename: str,
+    ):
+        LOGGER.debug(f"Creating version directory {model_version_path}")
+        model_version_path.mkdir(exist_ok=True, parents=True)
+        dst_path = model_version_path / model_filename
+        LOGGER.debug(f"Copying {model_path} file to {dst_path}")
         if model_path.is_file():
             shutil.copy(model_path, dst_path)
         else:
@@ -406,7 +420,23 @@ class _TritonModelRepository:
                 shutil._USE_CP_SENDFILE = False
                 shutil.rmtree(dst_path)
                 shutil.copytree(model_path, dst_path)
-        return dst_path
+
+    def _copy_model_catalog(
+        self,
+        *,
+        model_path: pathlib.Path,
+        model_version_path: pathlib.Path,
+    ):
+        LOGGER.debug(f"Creating model directory {model_version_path.parent}")
+        model_version_path.parent.mkdir(exist_ok=True, parents=True)
+        LOGGER.debug(f"Copying {model_path} file to {model_version_path}")
+        try:
+            shutil.copytree(model_path, model_version_path)
+        except shutil.Error:
+            # due to error as reported on https://bugs.python.org/issue43743
+            shutil._USE_CP_SENDFILE = False
+            shutil.rmtree(model_version_path)
+            shutil.copytree(model_path, model_version_path)
 
     def _copy_initial_state_files(self, model_store_dir: pathlib.Path, initial_state_files: List[pathlib.Path]):
         if not initial_state_files:
@@ -430,18 +460,15 @@ class _TritonModelRepository:
             warmup_file_repository_path = warmup_repository_dir / warmup_file.name
             shutil.copy(warmup_file, warmup_file_repository_path)
 
-    def _get_model_path(
-        self,
-        *,
-        model_name: str,
-        version: int,
-        backend: Backend,
-    ) -> pathlib.Path:
-        return self._model_repository_path / model_name / str(version) / self._get_filename(backend=backend)
+    def _get_version_path(self, *, model_name: str, version: int) -> pathlib.Path:
+        return self._model_repository_path / model_name / str(version)
 
-    def _get_filename(self, *, backend: Backend):
+    def _get_default_filename(self, *, backend: Backend):
         suffix = BACKEND2SUFFIX[backend]
         return f"model{suffix}"
+
+    def _allow_model_catalog(self, *, backend: Backend):
+        return BACKEND2CATALOGBASEDMODEL.get(backend, False)
 
 
 def _onnx_config_from_runtime_result(

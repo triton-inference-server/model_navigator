@@ -44,6 +44,7 @@ class ModelConfig:
     model_version: int = 1
     backend: Optional[Backend] = None
     platform: Optional[Platform] = None
+    default_model_filename: Optional[str] = None
     max_batch_size: int = 4
     batching: bool = True
     batcher: Union[DynamicBatcher, SequenceBatcher] = dataclasses.field(default_factory=DynamicBatcher)

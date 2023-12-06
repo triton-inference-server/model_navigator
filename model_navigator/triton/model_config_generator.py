@@ -120,6 +120,9 @@ class ModelConfigGenerator:
         elif self._config.backend is not None:
             model_config["backend"] = self._config.backend.value
 
+        if self._config.default_model_filename is not None:
+            model_config["default_model_filename"] = self._config.default_model_filename
+
         self._set_batching(model_config)
         self._set_model_signature(model_config)
         self._set_instance_group(model_config)

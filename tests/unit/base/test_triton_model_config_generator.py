@@ -58,6 +58,7 @@ full_model_config = ModelConfig(
     max_batch_size=16,
     response_cache=True,
     decoupled=True,
+    default_model_filename="tensorrt.plan",
     batcher=DynamicBatcher(
         preferred_batch_size=[16, 32],
         max_queue_delay_microseconds=100,
@@ -331,6 +332,31 @@ def test_to_file_set_platform_when_platform_and_backend_provided():
             "platform": "onnxruntime_onnx",
             "max_batch_size": 4,
             "dynamic_batching": {},
+        }
+
+
+def test_to_file_set_default_model_filename_when_provided():
+    model_config = ModelConfig(
+        model_name="simple",
+        backend=Backend.ONNXRuntime,
+        default_model_filename="mymodel.onnx",
+    )
+    generator = ModelConfigGenerator(model_config)
+
+    with tempfile.NamedTemporaryFile() as fp:
+        generator.to_file(fp.name)
+
+        config_path = pathlib.Path(fp.name)
+        assert config_path.exists() is True
+
+        data = _load_config(config_path)
+
+        assert data == {
+            "name": "simple",
+            "backend": "onnxruntime",
+            "default_model_filename": "mymodel.onnx",
+            "dynamic_batching": {},
+            "max_batch_size": 4,
         }
 
 
@@ -1426,6 +1452,7 @@ def test_to_file_save_config_to_file_when_full_config_specified():
             "backend": "tensorrt",
             "max_batch_size": 16,
             "response_cache": {"enable": True},
+            "default_model_filename": "tensorrt.plan",
             "model_transaction_policy": {"decoupled": True},
             "dynamic_batching": {
                 "preferred_batch_size": [16, 32],

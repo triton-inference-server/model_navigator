@@ -14,7 +14,7 @@
 """Configuration of base model config on Triton Inference Server."""
 import abc
 import dataclasses
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 from model_navigator.exceptions import ModelNavigatorWrongParameterError
 
@@ -32,6 +32,7 @@ class BaseSpecializedModelConfig(abc.ABC):
     Args:
         max_batch_size: The maximal batch size that would be handled by model.
         batching: Flag to enable/disable batching for model.
+        default_model_filename: Optional filename of the model file to use.
         batcher: Configuration of Dynamic Batching for the model.
         instance_groups: Instance groups configuration for multiple instances of the model
         parameters: Custom parameters for model or backend
@@ -41,6 +42,7 @@ class BaseSpecializedModelConfig(abc.ABC):
 
     max_batch_size: int = 4
     batching: bool = True
+    default_model_filename: Optional[str] = None
     batcher: Union[DynamicBatcher, SequenceBatcher] = dataclasses.field(default_factory=DynamicBatcher)
     instance_groups: List[InstanceGroup] = dataclasses.field(default_factory=lambda: [])
     parameters: Dict[str, str] = dataclasses.field(default_factory=lambda: {})

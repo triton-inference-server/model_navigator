@@ -99,6 +99,23 @@ def test_add_model_raise_error_when_model_not_exists():
             )
 
 
+def test_add_model_raise_error_when_model_not_exists_and_backand_support_catalog_based_models():
+    model_path = get_assets_path() / "models" / "identity.notexisting"
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir = pathlib.Path(tmpdir)
+        model_repository_path = tmpdir / "model-repository"
+        model_repository_path.mkdir()
+
+        with pytest.raises(OSError):
+            add_model(
+                model_repository_path=model_repository_path,
+                model_name="TestModel",
+                model_version=1,
+                model_path=model_path,
+                config=TensorFlowModelConfig(),
+            )
+
+
 def test_add_model_create_catalog_in_repository_when_onnx_model_passed():
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = pathlib.Path(tmpdir)
@@ -120,14 +137,35 @@ def test_add_model_create_catalog_in_repository_when_onnx_model_passed():
         assert (model_repository_path / "TestModel" / "1" / "model.onnx").exists()
 
 
-def test_add_model_create_catalog_in_repository_when_python_model_passed():
+def test_add_model_create_catalog_in_repository_when_onnx_model_passed_and_default_filename_provided():
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = pathlib.Path(tmpdir)
         model_repository_path = tmpdir / "model-repository"
         model_repository_path.mkdir()
 
         model_path = tmpdir / "model"
-        model_path.mkdir()
+        model_path.touch()
+
+        add_model(
+            model_repository_path=model_repository_path,
+            model_name="TestModel",
+            model_version=1,
+            model_path=model_path,
+            config=ONNXModelConfig(default_model_filename="mymodel.onnx"),
+        )
+
+        assert (model_repository_path / "TestModel" / "config.pbtxt").exists()
+        assert (model_repository_path / "TestModel" / "1" / "mymodel.onnx").exists()
+
+
+def test_add_model_create_catalog_in_repository_when_python_model_passed():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir = pathlib.Path(tmpdir)
+        model_repository_path = tmpdir / "model-repository"
+        model_repository_path.mkdir()
+
+        model_path = tmpdir / "model.py"
+        model_path.touch()
 
         python_config = PythonModelConfig(
             inputs=[
@@ -151,7 +189,39 @@ def test_add_model_create_catalog_in_repository_when_python_model_passed():
         assert (model_repository_path / "TestModel" / "1" / "model.py").exists()
 
 
-def test_add_model_create_catalog_in_repository_when_pytorch_model_passed():
+def test_add_model_create_catalog_in_repository_when_python_model_passed_and_default_filename_provided():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir = pathlib.Path(tmpdir)
+        model_repository_path = tmpdir / "model-repository"
+        model_repository_path.mkdir()
+
+        model_path = tmpdir / "model.py"
+        model_path.touch()
+
+        python_config = PythonModelConfig(
+            default_model_filename="mymodel.py",
+            inputs=[
+                InputTensorSpec(name="INPUT_1", dtype=np.dtype("float32"), shape=(-1,)),
+                InputTensorSpec(name="INPUT_2", dtype=np.dtype("bytes"), shape=(100, 100)),
+            ],
+            outputs=[
+                OutputTensorSpec(name="OUTPUT_1", dtype=np.dtype("int32"), shape=(1000,)),
+            ],
+        )
+
+        add_model(
+            model_repository_path=model_repository_path,
+            model_name="TestModel",
+            model_version=1,
+            model_path=model_path,
+            config=python_config,
+        )
+
+        assert (model_repository_path / "TestModel" / "config.pbtxt").exists()
+        assert (model_repository_path / "TestModel" / "1" / "mymodel.py").exists()
+
+
+def test_add_model_create_catalog_in_repository_when_catalog_with_python_model_passed():
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = pathlib.Path(tmpdir)
         model_repository_path = tmpdir / "model-repository"
@@ -159,6 +229,44 @@ def test_add_model_create_catalog_in_repository_when_pytorch_model_passed():
 
         model_path = tmpdir / "model"
         model_path.mkdir()
+
+        file1 = model_path / "model.py"
+        file1.touch()
+
+        file2 = model_path / "data.py"
+        file2.touch()
+
+        python_config = PythonModelConfig(
+            inputs=[
+                InputTensorSpec(name="INPUT_1", dtype=np.dtype("float32"), shape=(-1,)),
+                InputTensorSpec(name="INPUT_2", dtype=np.dtype("bytes"), shape=(100, 100)),
+            ],
+            outputs=[
+                OutputTensorSpec(name="OUTPUT_1", dtype=np.dtype("int32"), shape=(1000,)),
+            ],
+        )
+
+        add_model(
+            model_repository_path=model_repository_path,
+            model_name="TestModel",
+            model_version=1,
+            model_path=model_path,
+            config=python_config,
+        )
+
+        assert (model_repository_path / "TestModel" / "config.pbtxt").exists()
+        assert (model_repository_path / "TestModel" / "1" / "model.py").exists()
+        assert (model_repository_path / "TestModel" / "1" / "data.py").exists()
+
+
+def test_add_model_create_catalog_in_repository_when_pytorch_model_passed():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir = pathlib.Path(tmpdir)
+        model_repository_path = tmpdir / "model-repository"
+        model_repository_path.mkdir()
+
+        model_path = tmpdir / "model.pt"
+        model_path.touch()
 
         pytorch_config = PyTorchModelConfig(
             inputs=[
@@ -182,6 +290,109 @@ def test_add_model_create_catalog_in_repository_when_pytorch_model_passed():
         assert (model_repository_path / "TestModel" / "1" / "model.pt").exists()
 
 
+def test_add_model_create_catalog_in_repository_when_pytorch_model_passed_and_default_model_filename_provided():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir = pathlib.Path(tmpdir)
+        model_repository_path = tmpdir / "model-repository"
+        model_repository_path.mkdir()
+
+        model_path = tmpdir / "model.pt"
+        model_path.touch()
+
+        pytorch_config = PyTorchModelConfig(
+            default_model_filename="mymodel.pt",
+            inputs=[
+                InputTensorSpec(name="INPUT_1", dtype=np.dtype("float32"), shape=(-1,)),
+                InputTensorSpec(name="INPUT_2", dtype=np.dtype("bytes"), shape=(100, 100)),
+            ],
+            outputs=[
+                OutputTensorSpec(name="OUTPUT_1", dtype=np.dtype("int32"), shape=(1000,)),
+            ],
+        )
+
+        add_model(
+            model_repository_path=model_repository_path,
+            model_name="TestModel",
+            model_version=1,
+            model_path=model_path,
+            config=pytorch_config,
+        )
+
+        assert (model_repository_path / "TestModel" / "config.pbtxt").exists()
+        assert (model_repository_path / "TestModel" / "1" / "mymodel.pt").exists()
+
+
+def test_add_model_create_catalog_in_repository_when_pytorch_model_catalog_passed():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir = pathlib.Path(tmpdir)
+        model_repository_path = tmpdir / "model-repository"
+        model_repository_path.mkdir()
+
+        model_path = tmpdir / "model"
+        model_path.mkdir()
+
+        file1 = model_path / "file.pt"
+        file1.touch()
+
+        pytorch_config = PyTorchModelConfig(
+            inputs=[
+                InputTensorSpec(name="INPUT_1", dtype=np.dtype("float32"), shape=(-1,)),
+                InputTensorSpec(name="INPUT_2", dtype=np.dtype("bytes"), shape=(100, 100)),
+            ],
+            outputs=[
+                OutputTensorSpec(name="OUTPUT_1", dtype=np.dtype("int32"), shape=(1000,)),
+            ],
+        )
+
+        add_model(
+            model_repository_path=model_repository_path,
+            model_name="TestModel",
+            model_version=1,
+            model_path=model_path,
+            config=pytorch_config,
+        )
+
+        assert (model_repository_path / "TestModel" / "config.pbtxt").exists()
+        assert (model_repository_path / "TestModel" / "1" / "model.pt").exists()
+        assert (model_repository_path / "TestModel" / "1" / "model.pt" / "file.pt").exists()
+
+
+def test_add_model_create_catalog_in_repository_when_pytorch_model_catalog_passed_and_default_model_filename_provided():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir = pathlib.Path(tmpdir)
+        model_repository_path = tmpdir / "model-repository"
+        model_repository_path.mkdir()
+
+        model_path = tmpdir / "model"
+        model_path.mkdir()
+
+        file1 = model_path / "file.pt"
+        file1.touch()
+
+        pytorch_config = PyTorchModelConfig(
+            default_model_filename="mymodel.pt",
+            inputs=[
+                InputTensorSpec(name="INPUT_1", dtype=np.dtype("float32"), shape=(-1,)),
+                InputTensorSpec(name="INPUT_2", dtype=np.dtype("bytes"), shape=(100, 100)),
+            ],
+            outputs=[
+                OutputTensorSpec(name="OUTPUT_1", dtype=np.dtype("int32"), shape=(1000,)),
+            ],
+        )
+
+        add_model(
+            model_repository_path=model_repository_path,
+            model_name="TestModel",
+            model_version=1,
+            model_path=model_path,
+            config=pytorch_config,
+        )
+
+        assert (model_repository_path / "TestModel" / "config.pbtxt").exists()
+        assert (model_repository_path / "TestModel" / "1" / "mymodel.pt").exists()
+        assert (model_repository_path / "TestModel" / "1" / "mymodel.pt" / "file.pt").exists()
+
+
 def test_add_model_create_catalog_in_repository_when_tensorflow_model_passed():
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = pathlib.Path(tmpdir)
@@ -203,6 +414,29 @@ def test_add_model_create_catalog_in_repository_when_tensorflow_model_passed():
         assert (model_repository_path / "TestModel" / "1" / "model.savedmodel").exists()
 
 
+def test_add_model_create_catalog_in_repository_when_tensorflow_model_passed_and_default_model_filename_provided():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir = pathlib.Path(tmpdir)
+        model_repository_path = tmpdir / "model-repository"
+        model_repository_path.mkdir()
+
+        model_path = tmpdir / "model"
+        model_path.mkdir()
+
+        add_model(
+            model_repository_path=model_repository_path,
+            model_name="TestModel",
+            model_version=1,
+            model_path=model_path,
+            config=TensorFlowModelConfig(
+                default_model_filename="mymodel.savemodel",
+            ),
+        )
+
+        assert (model_repository_path / "TestModel" / "config.pbtxt").exists()
+        assert (model_repository_path / "TestModel" / "1" / "mymodel.savemodel").exists()
+
+
 def test_add_model_create_catalog_in_repository_when_tensorrt_model_passed():
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = pathlib.Path(tmpdir)
@@ -222,6 +456,29 @@ def test_add_model_create_catalog_in_repository_when_tensorrt_model_passed():
 
         assert (model_repository_path / "TestModel" / "config.pbtxt").exists()
         assert (model_repository_path / "TestModel" / "1" / "model.plan").exists()
+
+
+def test_add_model_create_catalog_in_repository_when_tensorrt_model_passed_and_default_model_filename_provided():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir = pathlib.Path(tmpdir)
+        model_repository_path = tmpdir / "model-repository"
+        model_repository_path.mkdir()
+
+        model_path = tmpdir / "model"
+        model_path.touch()
+
+        add_model(
+            model_repository_path=model_repository_path,
+            model_name="TestModel",
+            model_version=1,
+            model_path=model_path,
+            config=TensorRTModelConfig(
+                default_model_filename="mymodel.plan",
+            ),
+        )
+
+        assert (model_repository_path / "TestModel" / "config.pbtxt").exists()
+        assert (model_repository_path / "TestModel" / "1" / "mymodel.plan").exists()
 
 
 def test_add_model_create_catalog_in_repository_when_string_path_passed():
