@@ -14,17 +14,19 @@
 """Torch runners."""
 import gc
 from copy import deepcopy
-from typing import List
+from typing import List, Optional
 
 from model_navigator.api.config import Format, TensorType
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import get_tensor_type
+from model_navigator.exceptions import ModelNavigatorConfigurationError
 from model_navigator.frameworks import is_torch2_available
 from model_navigator.frameworks.tensorrt import utils as tensorrt_utils
 from model_navigator.runners.base import DeviceKind, NavigatorRunner
 from model_navigator.runners.registry import register_runner
 from model_navigator.utils import module
 from model_navigator.utils.common import numpy_to_torch_dtype
+from model_navigator.utils.config_helpers import get_id_from_device_string, validate_device_string
 
 torch = module.lazy_import("torch")
 
@@ -32,26 +34,42 @@ torch = module.lazy_import("torch")
 class _BaseTorchRunner(NavigatorRunner):
     """Base runner for inference using PyTorch."""
 
-    _target_device: str
+    _target_device = None
 
     @classmethod
     def format(cls) -> Format:
         """Runner supported format."""
         return Format.TORCH
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, device: Optional[str] = None, *args, **kwargs) -> None:
         """Initialization implementation."""
         super().__init__(*args, **kwargs)
         self._loaded_model = None
+        self.device = device
+
         if is_torch2_available():
             self._infer = self._infer_inference_mode
         else:
             self._infer = self._infer_no_grad
 
+        # validate device with runner target device
+        if self.device:
+            validate_device_string(self.device)
+            if self._target_device.value not in self.device:
+                raise ModelNavigatorConfigurationError(f"Device type {self.device} is not supported by {self.name()}.")
+
+            device_id = get_id_from_device_string(self.device)
+            if device_id and device_id >= torch.cuda.device_count():
+                raise ModelNavigatorConfigurationError(
+                    f"Device index {device_id} exceeds the number of available devices {torch.cuda.device_count()}."
+                )
+        else:
+            self.device = self._target_device.value
+
     def activate_impl(self):
         """Activation implementation."""
         self._loaded_model = self.model
-        self._loaded_model.to(self._target_device).eval()
+        self._loaded_model.to(self.device).eval()
 
     def deactivate_impl(self):
         """Deactivation implementation."""
@@ -112,8 +130,7 @@ class _BaseTorchRunner(NavigatorRunner):
                 out_dict[name] = outputs.cpu().numpy()
         return out_dict
 
-    @classmethod
-    def _to_torch_tensor(cls, value, dtype):
+    def _to_torch_tensor(self, value, dtype):
         tensor_type = get_tensor_type(value)
         if tensor_type == TensorType.TORCH:
             value = value.to(numpy_to_torch_dtype(dtype))
@@ -122,7 +139,7 @@ class _BaseTorchRunner(NavigatorRunner):
             value = torch.from_numpy(value)
         else:
             raise ValueError(f"Unsupported type {type(value)}")
-        return value.to(cls._target_device)
+        return value.to(self.device)
 
 
 class _BaseTorchScriptRunner(_BaseTorchRunner):
@@ -134,13 +151,13 @@ class _BaseTorchScriptRunner(_BaseTorchRunner):
 
     def activate_impl(self):
         """Activation implementation."""
-        self._loaded_model = torch.jit.load(str(self._model), map_location=self._target_device).eval()
+        self._loaded_model = torch.jit.load(str(self._model), map_location=self.device).eval()
 
 
 class TorchCUDARunner(_BaseTorchRunner):
     """Torch model CUDA based runner."""
 
-    _target_device = "cuda"
+    _target_device = DeviceKind.CUDA
 
     @classmethod
     def name(cls) -> str:
@@ -150,7 +167,7 @@ class TorchCUDARunner(_BaseTorchRunner):
     @classmethod
     def devices_kind(cls) -> List[DeviceKind]:
         """Return supported devices for runner."""
-        return [DeviceKind.CUDA]
+        return [cls._target_device]
 
     def deactivate_impl(self):
         """Deactivation implementation."""
@@ -163,12 +180,12 @@ class TorchCUDARunner(_BaseTorchRunner):
 class TorchCPURunner(_BaseTorchRunner):
     """Torch model CPU based runner."""
 
-    _target_device = "cpu"
+    _target_device = DeviceKind.CPU
 
     @classmethod
     def devices_kind(cls) -> List[DeviceKind]:
         """Return supported devices for runner."""
-        return [DeviceKind.CPU]
+        return [cls._target_device]
 
     @classmethod
     def name(cls) -> str:
@@ -179,12 +196,12 @@ class TorchCPURunner(_BaseTorchRunner):
 class TorchScriptCUDARunner(_BaseTorchScriptRunner):
     """TorchScript model GPU based runner."""
 
-    _target_device = "cuda"
+    _target_device = DeviceKind.CUDA
 
     @classmethod
     def devices_kind(cls) -> List[DeviceKind]:
         """Return supported devices for runner."""
-        return [DeviceKind.CUDA]
+        return [cls._target_device]
 
     @classmethod
     def name(cls) -> str:
@@ -195,12 +212,12 @@ class TorchScriptCUDARunner(_BaseTorchScriptRunner):
 class TorchScriptCPURunner(_BaseTorchScriptRunner):
     """TorchScript model CPU based runner."""
 
-    _target_device = "cpu"
+    _target_device = DeviceKind.CPU
 
     @classmethod
     def devices_kind(cls) -> List[DeviceKind]:
         """Return supported devices for runner."""
-        return [DeviceKind.CPU]
+        return [cls._target_device]
 
     @classmethod
     def name(cls) -> str:
@@ -211,7 +228,7 @@ class TorchScriptCPURunner(_BaseTorchScriptRunner):
 class TorchTensorRTRunner(_BaseTorchScriptRunner):
     """TorchScript-TensorRT model runner."""
 
-    _target_device = "cuda"
+    _target_device = DeviceKind.CUDA
 
     @classmethod
     def format(cls) -> Format:
@@ -221,7 +238,7 @@ class TorchTensorRTRunner(_BaseTorchScriptRunner):
     @classmethod
     def devices_kind(cls) -> List[DeviceKind]:
         """Return supported devices for runner."""
-        return [DeviceKind.CUDA]
+        return [cls._target_device]
 
     @classmethod
     def name(cls) -> str:
@@ -232,8 +249,7 @@ class TorchTensorRTRunner(_BaseTorchScriptRunner):
         """Initialization implementation."""
         import torch_tensorrt  # pytype: disable=import-error # noqa: F401
 
-    @classmethod
-    def _to_torch_tensor(cls, value, dtype):
+    def _to_torch_tensor(self, value, dtype):
         value = super()._to_torch_tensor(value, dtype)
         value = tensorrt_utils.cast_tensor(value)
         return value
@@ -251,7 +267,7 @@ def register_torch_runners():
 class TorchCompileCUDARunner(_BaseTorchRunner):
     """Torch Compile model CUDA based runner."""
 
-    _target_device = "cuda"
+    _target_device = DeviceKind.CUDA
 
     def __init__(self, *args, **kwargs) -> None:
         """Initialization implementation."""
@@ -275,7 +291,7 @@ class TorchCompileCUDARunner(_BaseTorchRunner):
     @classmethod
     def devices_kind(cls) -> List[DeviceKind]:
         """Return supported devices for runner."""
-        return [DeviceKind.CUDA]
+        return [cls._target_device]
 
     def activate_impl(self):
         """Runner activation implementation."""
@@ -283,7 +299,7 @@ class TorchCompileCUDARunner(_BaseTorchRunner):
         model_copy = deepcopy(self._loaded_model)
         # offload original model from the gpu so other processes can use the memory
         self.model.to("cpu")
-        model_copy.to(self._target_device).eval()
+        model_copy.to(self.device).eval()
         LOGGER.info(
             f"Using torch.compile with config: fullgraph={self.fullgraph}, dynamic={self.dynamic}, backend={self.backend}, mode={self.mode}, options={self.options}"
         )
@@ -309,12 +325,12 @@ class TorchCompileCUDARunner(_BaseTorchRunner):
 class TorchCompileCPURunner(_BaseTorchRunner):
     """Torch Compile model CPU based runner."""
 
-    _target_device = "cpu"
+    _target_device = DeviceKind.CPU
 
     @classmethod
     def devices_kind(cls) -> List[DeviceKind]:
         """Return supported devices for runner."""
-        return [DeviceKind.CPU]
+        return [cls._target_device]
 
     @classmethod
     def name(cls) -> str:
@@ -343,18 +359,18 @@ class _BaseTorchExportedProgramRunner(_BaseTorchRunner):
 
     def activate_impl(self):
         """Activation implementation."""
-        self._loaded_model = torch.load(str(self._model), map_location=self._target_device)
+        self._loaded_model = torch.load(str(self._model), map_location=self.device)
 
 
 class TorchExportedProgramCPURunner(_BaseTorchExportedProgramRunner):
     """Torch ExportedProgram model CPU based runner."""
 
-    _target_device = "cpu"
+    _target_device = DeviceKind.CPU
 
     @classmethod
     def devices_kind(cls) -> List[DeviceKind]:
         """Return supported devices for runner."""
-        return [DeviceKind.CPU]
+        return [cls._target_device]
 
     @classmethod
     def name(cls) -> str:
@@ -365,12 +381,12 @@ class TorchExportedProgramCPURunner(_BaseTorchExportedProgramRunner):
 class TorchExportedProgramCUDARunner(_BaseTorchExportedProgramRunner):
     """Torch ExportedProgram model GPU based runner."""
 
-    _target_device = "cuda"
+    _target_device = DeviceKind.CUDA
 
     @classmethod
     def devices_kind(cls) -> List[DeviceKind]:
         """Return supported devices for runner."""
-        return [DeviceKind.CUDA]
+        return [cls._target_device]
 
     @classmethod
     def name(cls) -> str:

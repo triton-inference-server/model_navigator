@@ -46,6 +46,7 @@ def profile(
     sample_id: int = 0,
     navigator_workspace: Optional[str] = None,
     model_path: Optional[str] = None,
+    device: Optional[str] = None,
 ) -> None:
     """Run profiling.
 
@@ -61,6 +62,7 @@ def profile(
             When None use current workdir. Defaults to None.
         model_path: Path to the model.
             When None use `get_model()` to load the model. Defaults to None.
+        device (Optional[str]): Device to run the model on. Defaults to None.
     """
     if not navigator_workspace:
         navigator_workspace = pathlib.Path.cwd()
@@ -79,6 +81,7 @@ def profile(
         output_metadata=TensorMetadata.from_json(output_metadata),
         navigator_workspace=navigator_workspace,
         batch_dim=batch_dim,
+        device=device,
     )  # pytype: disable=not-instantiable
 
     Profiler(

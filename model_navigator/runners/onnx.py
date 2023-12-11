@@ -13,21 +13,28 @@
 # limitations under the License.
 """ONNX runners."""
 from collections import OrderedDict
-from typing import List, Optional, Sequence, Union
+from typing import Any, Dict, List, Optional, Sequence, Union
 
 import model_navigator.utils.common as utils
 from model_navigator.api.config import Format, TensorType
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata, get_tensor_type
-from model_navigator.exceptions import ModelNavigatorNotFoundError
+from model_navigator.exceptions import ModelNavigatorConfigurationError, ModelNavigatorNotFoundError
 from model_navigator.frameworks.onnx.utils import ONNX_RT_TYPE_TO_NP
 from model_navigator.frameworks.tensorrt.cuda import DeviceView
 from model_navigator.runners.base import DeviceKind, NavigatorRunner
 from model_navigator.runners.registry import register_runner
 from model_navigator.utils import module
+from model_navigator.utils.config_helpers import get_id_from_device_string, validate_device_string
 
 onnxrt = module.lazy_import("onnxruntime")
 np = module.lazy_import("numpy")
+
+provider2device = {
+    "CPUExecutionProvider": DeviceKind.CPU,
+    "CUDAExecutionProvider": DeviceKind.CUDA,
+    "TensorrtExecutionProvider": DeviceKind.CUDA,
+}
 
 
 class SessionFromOnnx:
@@ -36,7 +43,12 @@ class SessionFromOnnx:
     Functor that builds an ONNX-Runtime inference session.
     """
 
-    def __init__(self, model_bytes: Union[bytes, str], providers: Optional[Sequence[str]] = None):
+    def __init__(
+        self,
+        model_bytes: Union[bytes, str],
+        providers: Optional[Sequence[str]] = None,
+        provider_options: Optional[Sequence[Dict[Any, Any]]] = None,
+    ):
         """Builds an ONNX-Runtime inference session.
 
         Args:
@@ -47,10 +59,11 @@ class SessionFromOnnx:
                     for the execution providers available in ONNX-Runtime. For example, a value of "cpu" would
                     match the "CPUExecutionProvider".
                     Defaults to ``["CUDA"]``.
-
+            provider_options: A dictionary of options to pass to the execution provider.
         """
         self._model_bytes_or_path = model_bytes
         self.providers = utils.default(providers, ["cuda"])
+        self.provider_options = provider_options
 
     def __call__(self, *args, **kwargs):
         """Invokes ``call_impl``.
@@ -80,16 +93,32 @@ class SessionFromOnnx:
             providers.append(matched_prov)
 
         LOGGER.info(f"Creating ONNX-Runtime Inference Session with providers: {providers}")
-        return onnxrt.InferenceSession(model_bytes, providers=providers)
+        return onnxrt.InferenceSession(model_bytes, providers=providers, provider_options=self.provider_options)
 
 
 class _BaseOnnxrtRunner(NavigatorRunner):
     _provider: str
 
-    def __init__(self, disable_fallback=True, *args, **kwargs) -> None:
+    def __init__(self, disable_fallback=True, device: Optional[str] = None, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._disable_fallback = disable_fallback
-        self._sess = SessionFromOnnx(self._model.as_posix(), providers=[self._provider])
+
+        if device:
+            validate_device_string(device)
+            if provider2device[self._provider].value not in device:
+                raise ModelNavigatorConfigurationError(f"device: {device} is not supported by runner: {self.name()}")
+            self.device_id = get_id_from_device_string(device)
+        else:
+            self.device_id = 0
+
+        if provider2device[self._provider] == DeviceKind.CUDA:
+            provider_options = [{"device_id": self.device_id}]
+        else:
+            provider_options = None
+
+        self._sess = SessionFromOnnx(
+            self._model.as_posix(), providers=[self._provider], provider_options=provider_options
+        )
 
     @classmethod
     def format(cls) -> Format:
@@ -241,7 +270,7 @@ class OnnxrtCUDARunner(_BaseOnnxrtRunner):
         io_binding.synchronize_inputs()
 
         for name in self.output_metadata:
-            io_binding.bind_output(name, DeviceKind.CUDA.value, 0)
+            io_binding.bind_output(name, DeviceKind.CUDA.value, self.device_id)
 
         return io_binding
 

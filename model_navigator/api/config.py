@@ -514,9 +514,15 @@ class CustomConfig(abc.ABC):
 
 @dataclasses.dataclass
 class CustomConfigForFormat(DataObject, CustomConfig):
-    """Abstract base class used for custom configs representing particular format."""
+    """Abstract base class used for custom configs representing particular format.
+
+    Args:
+        custom_args: Custom arguments passed to conversion function.
+        device: torch-like string used for selecting device e.q. "cuda:0".
+    """
 
     custom_args: Dict[str, Any] = dataclasses.field(default_factory=dict)
+    device: Optional[str] = None
 
     @property
     @abc.abstractmethod

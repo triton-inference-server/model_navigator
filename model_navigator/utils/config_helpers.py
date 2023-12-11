@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Find Max Batch size pipelines builders."""
-from typing import Dict, List, Union
+import re
+from typing import Dict, List, Optional, Union
 
 from model_navigator.api.config import DeviceKind, Format
 from model_navigator.configuration.common_config import CommonConfig
@@ -23,6 +24,7 @@ from model_navigator.configuration.model.model_config import (
     TorchTensorRTConfig,
 )
 from model_navigator.core.logger import LOGGER
+from model_navigator.exceptions import ModelNavigatorConfigurationError
 
 
 def do_find_device_max_batch_size(config: CommonConfig, models_config: Dict[Format, List[ModelConfig]]) -> bool:
@@ -70,3 +72,30 @@ def _do_run_max_batch_size_search(
         bool: True if run max batch size.
     """
     return bool(model_cfg.trt_profiles) is False and config.batch_dim is not None
+
+
+def validate_device_string(device: str):
+    """Validate device torch-like string.
+
+    Args:
+        device: Device string e.g. cuda:0, cuda:1, cpu
+    """
+    pattern = r"^(cuda:\d+|cuda|cpu)$"
+    if not bool(re.match(pattern, device)):
+        raise ModelNavigatorConfigurationError("device must be 'cpu' or in format 'cuda:<device_id>'")
+
+
+def get_id_from_device_string(device: str) -> Optional[int]:
+    """Get device id from device string.
+
+    Args:
+        device: Device string e.g. cuda:0, cuda:1, cpu
+
+    Returns:
+        Device id or None if not found.
+    """
+    pattern = r"^cuda:(\d+)$"
+    match = re.match(pattern, device)
+    if match:
+        return int(match.group(1))
+    return None

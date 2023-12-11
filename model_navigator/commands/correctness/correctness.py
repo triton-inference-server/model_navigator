@@ -93,6 +93,7 @@ class Correctness(Command):
         path: pathlib.Path,
         verbose: bool,
         model: Optional[Any] = None,
+        device: Optional[str] = None,
     ) -> CommandOutput:
         """Run correcntess command.
 
@@ -105,8 +106,9 @@ class Correctness(Command):
             batch_dim (Optional[int]): Batch dimension.
             path (Path): Model path relative to workspace path.
             verbose (bool): If True verbose logging.
-            model (Optional[Any], optional): Model if correcness should be run on a source model.
+            model (Optional[Any]): Model if correcness should be run on a source model.
                 Defaults to None.
+            device: (Optional[str]): Device to run the model on.
 
         Returns:
             CommandOutput: Status OK and TolerancePerOutputName of the model with runner.
@@ -133,6 +135,7 @@ class Correctness(Command):
                 "runner_name": runner_cls.name(),
                 "input_metadata": input_metadata.to_json(),
                 "output_metadata": output_metadata.to_json(),
+                "device": device,
             }
 
             from model_navigator.commands.correctness import correctness_script

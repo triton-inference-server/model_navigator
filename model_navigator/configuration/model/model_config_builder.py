@@ -91,7 +91,9 @@ class ModelConfigBuilder:
             ModelConfigBuilder.get_source_python_config(model_configs)
 
         if Format.TORCH in target_formats:
-            ModelConfigBuilder.get_source_torch_config(model_configs)
+            ModelConfigBuilder.get_source_torch_config(
+                custom_configs=custom_configs_for_format, model_configs=model_configs
+            )
 
         if Format.TENSORFLOW in target_formats:
             ModelConfigBuilder.get_source_tensorflow_config(model_configs)
@@ -177,13 +179,18 @@ class ModelConfigBuilder:
         model_configs[Format.PYTHON].append(model_config.PythonModelConfig())
 
     @staticmethod
-    def get_source_torch_config(model_configs: Dict[Format, List[model_config.ModelConfig]]):
+    def get_source_torch_config(
+        custom_configs: Sequence[config_api.CustomConfigForFormat],
+        model_configs: Dict[Format, List[model_config.ModelConfig]],
+    ):
         """Append source Torch model configuration to model_configs dictionary.
 
         Args:
+            custom_configs: Format configurations provided by the user
             model_configs: Dictionary mappint model formats to lists of model configs
         """
-        model_configs[Format.TORCH].append(model_config.TorchModelConfig())
+        torch_config = _get_custom_config(custom_configs=custom_configs, custom_config_cls=config_api.TorchConfig)
+        model_configs[Format.TORCH].append(model_config.TorchModelConfig(device=torch_config.device))
 
     @staticmethod
     def get_source_tensorflow_config(model_configs: Dict[Format, List[model_config.ModelConfig]]):
@@ -218,7 +225,10 @@ class ModelConfigBuilder:
         for jit_type in torch_config.jit_type:
             model_configs[Format.TORCHSCRIPT].append(
                 model_config.TorchScriptConfig(
-                    jit_type=jit_type, strict=torch_config.strict, custom_args=torch_config.custom_args
+                    jit_type=jit_type,
+                    strict=torch_config.strict,
+                    custom_args=torch_config.custom_args,
+                    device=torch_config.device,
                 )
             )
 
@@ -235,7 +245,7 @@ class ModelConfigBuilder:
         """
         torch_config = _get_custom_config(custom_configs=custom_configs, custom_config_cls=config_api.TorchConfig)
         model_configs[Format.TORCH_EXPORTEDPROGRAM].append(
-            model_config.TorchExportedProgram(custom_args=torch_config.custom_args)
+            model_config.TorchExportedProgram(custom_args=torch_config.custom_args, device=torch_config.device)
         )
 
     @staticmethod
@@ -261,6 +271,7 @@ class ModelConfigBuilder:
                     max_workspace_size=torch_trt_config.max_workspace_size,
                     trt_profiles=torch_trt_config.trt_profiles,
                     custom_args=torch_trt_config.custom_args,
+                    device=torch_trt_config.device,
                 )
             )
 
@@ -337,6 +348,7 @@ class ModelConfigBuilder:
                         graph_surgeon_optimization=onnx_config.graph_surgeon_optimization,
                         dynamic_axes=onnx_config.dynamic_axes,
                         custom_args=onnx_config.custom_args,
+                        device=onnx_config.device,
                     )
                 )
         if framework == Framework.ONNX:
@@ -348,6 +360,7 @@ class ModelConfigBuilder:
                     graph_surgeon_optimization=onnx_config.graph_surgeon_optimization,
                     dynamic_axes=onnx_config.dynamic_axes,
                     custom_args=onnx_config.custom_args,
+                    device=onnx_config.device,
                 )
             )
 
@@ -361,6 +374,7 @@ class ModelConfigBuilder:
                         graph_surgeon_optimization=onnx_config.graph_surgeon_optimization,
                         dynamic_axes=onnx_config.dynamic_axes,
                         custom_args=onnx_config.custom_args,
+                        device=onnx_config.device,
                     )
                 )
 
@@ -374,6 +388,7 @@ class ModelConfigBuilder:
                         graph_surgeon_optimization=onnx_config.graph_surgeon_optimization,
                         dynamic_axes=onnx_config.dynamic_axes,
                         custom_args=onnx_config.custom_args,
+                        device=onnx_config.device,
                     )
                 )
 

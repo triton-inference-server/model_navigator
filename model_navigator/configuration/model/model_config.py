@@ -213,6 +213,11 @@ class PythonModelConfig(_SourceModelConfig, format=Format.PYTHON):
 class TorchModelConfig(_SourceModelConfig, format=Format.TORCH):
     """Source code Torch model configuration class."""
 
+    def __init__(self, device: Optional[str] = None) -> None:
+        """Initializes Torch model configuration class."""
+        super().__init__()
+        self.device = device
+
     @classmethod
     def _from_dict(cls, data_dict: Dict):
         return cls()
@@ -287,6 +292,7 @@ class TorchScriptConfig(_SerializedModelConfig, format=Format.TORCHSCRIPT):
         strict: bool,
         parent: Optional[ModelConfig] = None,
         custom_args: Optional[Dict[str, Any]] = None,
+        device: Optional[str] = None,
     ) -> None:
         """Initializes TorchScript model configuration class.
 
@@ -295,11 +301,13 @@ class TorchScriptConfig(_SerializedModelConfig, format=Format.TORCHSCRIPT):
             strict: Enable or Disable strict flag for tracer used in TorchScript export
             parent: Parent model configuration
             custom_args: Custom arguments passed to TorchScript export
+            device: runtime device e.g. "cuda:0"
         """
         super().__init__(parent=parent)
         self.jit_type = jit_type
         self.strict = strict
         self.custom_args = custom_args
+        self.device = device
 
     def _get_path_params_as_array_of_strings(self) -> List[str]:
         return [self.jit_type.value] if self.jit_type else []
@@ -319,15 +327,18 @@ class TorchExportedProgram(_SerializedModelConfig, format=Format.TORCH_EXPORTEDP
         self,
         parent: Optional[ModelConfig] = None,
         custom_args: Optional[Dict[str, Any]] = None,
+        device: Optional[str] = None,
     ) -> None:
         """Initializes TorchScript model configuration class.
 
         Args:
             parent: Parent model configuration
             custom_args: Custom arguments passed to TorchScript export
+            device: runtime device e.g. "cuda:0"
         """
         super().__init__(parent=parent)
         self.custom_args = custom_args
+        self.device = device
 
     @classmethod
     def _from_dict(cls, data_dict: Dict):
@@ -345,6 +356,7 @@ class ONNXConfig(_SerializedModelConfig, format=Format.ONNX):
         dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]],
         parent: Optional[ModelConfig] = None,
         custom_args: Optional[Dict[str, Any]] = None,
+        device: Optional[str] = None,
     ) -> None:
         """Initializes ONNX model configuration class.
 
@@ -355,6 +367,7 @@ class ONNXConfig(_SerializedModelConfig, format=Format.ONNX):
             dynamic_axes: Dynamic axes definition for ONNXConfig
             parent: Parent model configuration
             custom_args: Custom arguments passed to ONNX export
+            device: runtime device e.g. "cuda:0"
         """
         super().__init__(parent=parent)
         self.opset = opset
@@ -362,6 +375,7 @@ class ONNXConfig(_SerializedModelConfig, format=Format.ONNX):
         self.graph_surgeon_optimization = graph_surgeon_optimization
         self.dynamic_axes = dynamic_axes
         self.custom_args = custom_args
+        self.device = device
 
     def _get_path_params_as_array_of_strings(self) -> List[str]:
         return ["dynamo"] if self.dynamo_export else []
@@ -492,6 +506,7 @@ class TorchTensorRTConfig(_SerializedModelConfig, format=Format.TORCH_TRT):
         trt_profiles: Optional[List[TensorRTProfile]] = None,
         parent: Optional[ModelConfig] = None,
         custom_args: Optional[Dict[str, Any]] = None,
+        device: Optional[str] = None,
     ) -> None:
         """Initializes Torch TensorRT model configuration class.
 
@@ -502,6 +517,7 @@ class TorchTensorRTConfig(_SerializedModelConfig, format=Format.TORCH_TRT):
             max_workspace_size: The maximum GPU memory the model can use temporarily during execution
             trt_profiles: TensorRT profiles
             custom_args: Custom arguments passed to Torch TensorRT conversion
+            device: runtime device e.g. "cuda:0"
         """
         super().__init__(parent=parent)
         self.precision = precision
@@ -509,6 +525,7 @@ class TorchTensorRTConfig(_SerializedModelConfig, format=Format.TORCH_TRT):
         self.max_workspace_size = max_workspace_size
         self.trt_profiles = trt_profiles
         self.custom_args = custom_args
+        self.device = device
 
     def _get_path_params_as_array_of_strings(self) -> List[str]:
         return [self.precision.value] if self.precision else []

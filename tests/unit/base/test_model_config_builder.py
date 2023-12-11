@@ -33,8 +33,9 @@ from model_navigator.frameworks import Framework
 
 
 def test_get_source_torch_config_returns_model_configs_matching_custom_config():
+    custom_configs = [TorchConfig()]
     model_configs = {Format.TORCH: []}
-    ModelConfigBuilder().get_source_torch_config(model_configs)
+    ModelConfigBuilder().get_source_torch_config(custom_configs=custom_configs, model_configs=model_configs)
 
     assert len(model_configs[Format.TORCH]) == 1
     model_configuration = model_configs[Format.TORCH][0]

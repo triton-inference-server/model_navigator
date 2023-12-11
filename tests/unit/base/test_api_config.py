@@ -34,6 +34,7 @@ from model_navigator.api.config import (
     map_custom_configs,
 )
 from model_navigator.exceptions import ModelNavigatorConfigurationError
+from model_navigator.utils.config_helpers import get_id_from_device_string, validate_device_string
 
 
 def test_tensorrt_config_raise_exception_when_trt_profile_and_trt_profiles_are_both_set():
@@ -256,3 +257,56 @@ def test_optimization_profile_raise_error_when_min_trials_less_than_stabilizatio
 def test_optimization_profile_raise_error_when_max_trials_less_than_min_trials():
     with pytest.raises(ModelNavigatorConfigurationError, match="`max_trials` must be greater or equal `min_trials`."):
         OptimizationProfile(max_trials=1, min_trials=2, stabilization_windows=1)
+
+
+def test_validate_device_string_not_raises_exception_for_valid_strings():
+    validate_device_string("cpu")
+    validate_device_string("cuda")
+    for i in range(10):
+        validate_device_string(f"cuda:{i}")
+
+
+def test_validate_device_string_raises_exception_for_incorrect_strings():
+    with pytest.raises(ModelNavigatorConfigurationError):
+        validate_device_string("")
+    with pytest.raises(ModelNavigatorConfigurationError):
+        validate_device_string("")
+    with pytest.raises(ModelNavigatorConfigurationError):
+        validate_device_string("cuda:1a")
+    with pytest.raises(ModelNavigatorConfigurationError):
+        validate_device_string("cuda:1:2")
+    with pytest.raises(ModelNavigatorConfigurationError):
+        validate_device_string("cuda:")
+    with pytest.raises(ModelNavigatorConfigurationError):
+        validate_device_string("cpu:1,2")
+    with pytest.raises(ModelNavigatorConfigurationError):
+        validate_device_string("cpu:1")
+    with pytest.raises(ModelNavigatorConfigurationError):
+        validate_device_string("0")
+    with pytest.raises(ModelNavigatorConfigurationError):
+        validate_device_string("cpu:1,2")
+    with pytest.raises(ModelNavigatorConfigurationError):
+        validate_device_string("cu")
+
+
+def test_get_id_from_device_string_returns_device_id_when_available():
+    for i in range(10):
+        assert get_id_from_device_string(f"cuda:{i}") == i
+
+
+def test_get_id_from_device_string_returns_none_when_device_id_is_not_available():
+    assert get_id_from_device_string("cpu") is None
+    assert get_id_from_device_string("cuda") is None
+    assert get_id_from_device_string("cuda:1a") is None
+    assert get_id_from_device_string("cuda:1:2") is None
+    assert get_id_from_device_string("cuda:1,2") is None
+    assert get_id_from_device_string("cuda:1-2") is None
+    assert get_id_from_device_string("cuda:1 2") is None
+    assert get_id_from_device_string("uda") is None
+    assert get_id_from_device_string("cud") is None
+    assert get_id_from_device_string("") is None
+    assert get_id_from_device_string(" ") is None
+    assert get_id_from_device_string("1") is None
+    assert get_id_from_device_string("2") is None
+    assert get_id_from_device_string("cpu:1") is None
+    assert get_id_from_device_string("cuda:") is None

@@ -66,6 +66,7 @@ class VerifyModel(Command, requires=[Correctness.name, Performance.name]):
         input_metadata: TensorMetadata,
         output_metadata: TensorMetadata,
         model: Optional[Any] = None,
+        device: Optional[str] = None,
     ) -> CommandOutput:
         """Run verification.
 
@@ -82,6 +83,7 @@ class VerifyModel(Command, requires=[Correctness.name, Performance.name]):
             input_metadata (TensorMetadata): Input metadata.
             output_metadata (TensorMetadata): Output metadata.
             model (Optional[Any], optional): Model if source model should be used. Defaults to None.
+            device: (Optional[str]): Device to run the model on.
 
         Returns:
             CommandOutput: Status OK if succesfull verification, FAIL otherwise.
@@ -108,6 +110,7 @@ class VerifyModel(Command, requires=[Correctness.name, Performance.name]):
             output_metadata=output_metadata,
             navigator_workspace=workspace.path,
             batch_dim=batch_dim,
+            device=device,
         )
         y_pred = _get_outputs(runner)
 

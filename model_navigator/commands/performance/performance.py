@@ -48,6 +48,7 @@ class Performance(Command):
         runner_cls: Type[NavigatorRunner],
         reproduce_script_dir: Optional[pathlib.Path] = None,
         model: Optional[Any] = None,
+        device: Optional[str] = None,
     ) -> CommandOutput:
         """Run performance command.
 
@@ -64,6 +65,7 @@ class Performance(Command):
             reproduce_script_dir: Path to store the reproducing scripts for the command.
                 When None use model directory. Defaults to None.
             model: Model when profiling on a source format. Defaults to None.
+            device: (Optional[str]): Device to run the model on.
 
         Returns:
             CommandOutput: Output of the command containing profiling results.
@@ -97,6 +99,7 @@ class Performance(Command):
                 "optimization_profile": optimization_profile.to_dict(parse=True),
                 "input_metadata": input_metadata.to_json(),
                 "output_metadata": output_metadata.to_json(),
+                "device": device,
             }
 
             from model_navigator.commands.performance import profile_script

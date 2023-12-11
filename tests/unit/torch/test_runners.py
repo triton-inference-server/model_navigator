@@ -27,14 +27,18 @@ torch = module.lazy_import("torch")
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA is not available")
 def test_torch_tensorrt_to_torch_dtype_cast_int64():
     torch_tensor = torch.tensor([1, 2, 3], dtype=torch.int64)
-    casted_tensor = TorchTensorRTRunner._to_torch_tensor(torch_tensor, np.int64)
+    casted_tensor = TorchTensorRTRunner(model=None, input_metadata=None, output_metadata=None)._to_torch_tensor(
+        torch_tensor, np.int64
+    )
     if tensorrt_utils.get_version() > LooseVersion("8.6"):
         assert casted_tensor.dtype == torch.int64
     else:
         assert casted_tensor.dtype == torch.int32
 
     numpy_tensor = np.array([1, 2, 3], dtype=np.int64)
-    casted_tensor = TorchTensorRTRunner._to_torch_tensor(numpy_tensor, np.int64)
+    casted_tensor = TorchTensorRTRunner(model=None, input_metadata=None, output_metadata=None)._to_torch_tensor(
+        numpy_tensor, np.int64
+    )
     if tensorrt_utils.get_version() > LooseVersion("8.6"):
         assert casted_tensor.dtype == torch.int64
     else:
@@ -44,9 +48,13 @@ def test_torch_tensorrt_to_torch_dtype_cast_int64():
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA is not available")
 def test_torch_tensorrt_to_torch_dtype_cast_float64():
     torch_tensor = torch.tensor([1, 2, 3], dtype=torch.float64)
-    casted_tensor = TorchTensorRTRunner._to_torch_tensor(torch_tensor, np.float64)
+    casted_tensor = TorchTensorRTRunner(model=None, input_metadata=None, output_metadata=None)._to_torch_tensor(
+        torch_tensor, np.float64
+    )
     assert casted_tensor.dtype == torch.float32
 
     numpy_tensor = np.array([1, 2, 3], dtype=np.float64)
-    casted_tensor = TorchTensorRTRunner._to_torch_tensor(numpy_tensor, np.float64)
+    casted_tensor = TorchTensorRTRunner(model=None, input_metadata=None, output_metadata=None)._to_torch_tensor(
+        numpy_tensor, np.float64
+    )
     assert casted_tensor.dtype == torch.float32

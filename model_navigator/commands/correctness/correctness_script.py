@@ -47,6 +47,7 @@ def correctness(
     output_metadata: Dict,
     navigator_workspace: Optional[str] = None,
     model_path: Optional[str] = None,
+    device: Optional[str] = None,
 ) -> None:
     """Run correcntess tests.
 
@@ -60,6 +61,7 @@ def correctness(
             When None use current workdir. Defaults to None.
         model_path (Optional[str], optional): Path to the model.
             When None use `get_model()` to load the model. Defaults to None.
+        device (Optional[str]): Device to run the model on. Defaults to None.
     """
     if not navigator_workspace:
         navigator_workspace = pathlib.Path.cwd()
@@ -81,6 +83,7 @@ def correctness(
         output_metadata=output_metadata,
         navigator_workspace=navigator_workspace,
         batch_dim=batch_dim,
+        device=device,
     )  # pytype: disable=not-instantiable
 
     per_output_tolerance = TolerancePerOutputName({name: Tolerance(0.0, 0.0) for name in output_metadata})
