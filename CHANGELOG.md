@@ -18,11 +18,24 @@ limitations under the License.
 
 ## 0.7.5 (unreleased)
 - new: FP8 precision support for TensorRT
+- new: Support for autocast and inference mode configuration for Torch runners
+- new: Allow to select device for Torch and ONNX runners
 - new: Add support for `default_model_filename` in Triton model configuration
 - fix: JAX export and TensorRT conversion fails when custom workspace is used
 - fix: Missing max workspace size passed to TensorRT conversion
 - fix: Execution of TensorRT optimize raise error during handling output metadata
 
+- Version of external components used during testing:
+  - [PyTorch 2.2.0a0+6a974be](https://github.com/pytorch/pytorch/commit/6a974be)
+  - [TensorFlow 2.13.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.13.0)
+  - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+  - [ONNX Runtime 1.16.2](https://github.com/microsoft/onnxruntime/tree/v1.16.2)
+  - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.49.0
+  - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.27
+  - [tf2onnx v1.15.1](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.15.1)
+  - Other component versions depend on the used framework containers versions.
+    See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+    for a detailed summary.
 
 ## 0.7.4
 - new: decoupled mode configuration in Triton Model Config
@@ -35,6 +48,17 @@ limitations under the License.
 - change: move from Polygraphy CLI to Polygraphy Python API
 - change: removed Windows from support list
 
+- Version of external components used during testing:
+  - [PyTorch 2.1.0a0+32f93b1](https://github.com/pytorch/pytorch/commit/32f93b1)
+  - [TensorFlow 2.13.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.13.0)
+  - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+  - [ONNX Runtime 1.16.2](https://github.com/microsoft/onnxruntime/tree/v1.16.2)
+  - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.49.0
+  - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.27
+  - [tf2onnx v1.15.1](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.15.1)
+  - Other component versions depend on the used framework containers versions.
+    See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+    for a detailed summary.
 
 ## 0.7.3
 - new: Data dependent dynamic control flow support in nav.Module (multiple computation graphs per module)

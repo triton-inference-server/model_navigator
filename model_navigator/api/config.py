@@ -649,16 +649,51 @@ class TensorFlowTensorRTConfig(CustomConfigForTensorRT):
 
 @dataclasses.dataclass
 class TorchConfig(CustomConfigForFormat):
+    """Torch custom config used for torch runner.
+
+    Args:
+        autocast: Enable Automatic Mixed Precision in runner (default: False).
+        inference_mode: Enable inference mode in runner (default: True).
+    """
+
+    autocast: bool = False
+    inference_mode: bool = True
+
+    @property
+    def format(self) -> Format:
+        """Returns Format.TORCH.
+
+        Returns:
+            Format.TORCH
+        """
+        return Format.TORCH
+
+    @classmethod
+    def name(cls) -> str:
+        """Name of the config."""
+        return "Torch"
+
+    def defaults(self) -> None:
+        """Update parameters to defaults."""
+        self.autocast = False
+        self.inference_mode = True
+
+
+@dataclasses.dataclass
+class TorchScriptConfig(CustomConfigForFormat):
     """Torch custom config used for TorchScript export.
 
     Args:
         jit_type: Type of TorchScript export.
-        strict: Enable or Disable strict flag for tracer used in TorchScript export, default: True.
-
+        strict: Enable or Disable strict flag for tracer used in TorchScript export (default: True).
+        autocast: Enable Automatic Mixed Precision in runner (default: False).
+        inference_mode: Enable inference mode in runner (default: True).
     """
 
     jit_type: Union[Union[str, JitType], Tuple[Union[str, JitType], ...]] = (JitType.SCRIPT, JitType.TRACE)
     strict: bool = True
+    autocast: bool = False
+    inference_mode: bool = True
 
     def __post_init__(self) -> None:
         """Parse dataclass enums."""
@@ -677,12 +712,46 @@ class TorchConfig(CustomConfigForFormat):
     @classmethod
     def name(cls) -> str:
         """Name of the config."""
-        return "Torch"
+        return "TorchScript"
 
     def defaults(self) -> None:
         """Update parameters to defaults."""
         self.jit_type = (JitType.SCRIPT, JitType.TRACE)
         self.strict = True
+        self.autocast = False
+        self.inference_mode = True
+
+
+@dataclasses.dataclass
+class TorchExportConfig(CustomConfigForFormat):
+    """Torch export custom config used for torch.export.export.
+
+    Args:
+        autocast: Enable Automatic Mixed Precision in runner (default: False).
+        inference_mode: Enable inference mode in runner (default: True).
+    """
+
+    autocast: bool = False
+    inference_mode: bool = True
+
+    @property
+    def format(self) -> Format:
+        """Returns Format.
+
+        Returns:
+            Format.TORCH_EXPORTEDPROGRAM
+        """
+        return Format.TORCH_EXPORTEDPROGRAM
+
+    @classmethod
+    def name(cls) -> str:
+        """Name of the config."""
+        return "TorchExport"
+
+    def defaults(self) -> None:
+        """Update parameters to defaults."""
+        self.autocast = False
+        self.inference_mode = True
 
 
 @dataclasses.dataclass

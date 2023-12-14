@@ -40,6 +40,8 @@ from .config import (  # noqa: F401
     TensorRTProfile,
     TensorType,
     TorchConfig,
+    TorchExportConfig,
+    TorchScriptConfig,
     TorchTensorRTConfig,
 )
 

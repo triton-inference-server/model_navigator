@@ -23,6 +23,7 @@ from model_navigator.api.config import Format, OptimizationProfile
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.execution_context import ExecutionContext
 from model_navigator.commands.performance.results import ProfilingResults
+from model_navigator.configuration.runner.runner_config import RunnerConfig
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata
 from model_navigator.core.workspace import Workspace
@@ -48,7 +49,7 @@ class Performance(Command):
         runner_cls: Type[NavigatorRunner],
         reproduce_script_dir: Optional[pathlib.Path] = None,
         model: Optional[Any] = None,
-        device: Optional[str] = None,
+        runner_config: Optional[RunnerConfig] = None,
     ) -> CommandOutput:
         """Run performance command.
 
@@ -65,7 +66,7 @@ class Performance(Command):
             reproduce_script_dir: Path to store the reproducing scripts for the command.
                 When None use model directory. Defaults to None.
             model: Model when profiling on a source format. Defaults to None.
-            device: (Optional[str]): Device to run the model on.
+            runner_config: Additional runner arguments.
 
         Returns:
             CommandOutput: Output of the command containing profiling results.
@@ -99,7 +100,7 @@ class Performance(Command):
                 "optimization_profile": optimization_profile.to_dict(parse=True),
                 "input_metadata": input_metadata.to_json(),
                 "output_metadata": output_metadata.to_json(),
-                "device": device,
+                "runner_config": runner_config.to_dict(parse=True) if runner_config else None,
             }
 
             from model_navigator.commands.performance import profile_script

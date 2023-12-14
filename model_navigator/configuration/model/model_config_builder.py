@@ -92,7 +92,8 @@ class ModelConfigBuilder:
 
         if Format.TORCH in target_formats:
             ModelConfigBuilder.get_source_torch_config(
-                custom_configs=custom_configs_for_format, model_configs=model_configs
+                custom_configs=custom_configs_for_format,
+                model_configs=model_configs,
             )
 
         if Format.TENSORFLOW in target_formats:
@@ -174,7 +175,7 @@ class ModelConfigBuilder:
         """Append source Python model configuration to model_configs dictionary.
 
         Args:
-            model_configs: Dictionary mappint model formats to lists of model configs
+            model_configs: Dictionary mapping model formats to lists of model configs
         """
         model_configs[Format.PYTHON].append(model_config.PythonModelConfig())
 
@@ -187,17 +188,23 @@ class ModelConfigBuilder:
 
         Args:
             custom_configs: Format configurations provided by the user
+            model_configs: Dictionary mapping model formats to lists of model configs
+            custom_configs: Format configurations provided by the user
             model_configs: Dictionary mappint model formats to lists of model configs
         """
         torch_config = _get_custom_config(custom_configs=custom_configs, custom_config_cls=config_api.TorchConfig)
-        model_configs[Format.TORCH].append(model_config.TorchModelConfig(device=torch_config.device))
+        model_configs[Format.TORCH].append(
+            model_config.TorchModelConfig(
+                autocast=torch_config.autocast, inference_mode=torch_config.inference_mode, device=torch_config.device
+            )
+        )
 
     @staticmethod
     def get_source_tensorflow_config(model_configs: Dict[Format, List[model_config.ModelConfig]]):
         """Append source TensorFlow model configuration to model_configs dictionary.
 
         Args:
-            model_configs: Dictionary mappint model formats to lists of model configs
+            model_configs: Dictionary mapping model formats to lists of model configs
         """
         model_configs[Format.TENSORFLOW].append(model_config.TensorFlowModelConfig())
 
@@ -206,7 +213,7 @@ class ModelConfigBuilder:
         """Append source Jax model configuration to model_configs dictionary.
 
         Args:
-            model_configs: Dictionary mappint model formats to lists of model configs
+            model_configs: Dictionary mapping model formats to lists of model configs
         """
         model_configs[Format.JAX].append(model_config.JAXModelConfig())
 
@@ -219,14 +226,16 @@ class ModelConfigBuilder:
 
         Args:
             custom_configs: Format configurations provided by the user
-            model_configs: Dictionary mappint model formats to lists of model configs
+            model_configs: Dictionary mapping model formats to lists of model configs
         """
-        torch_config = _get_custom_config(custom_configs=custom_configs, custom_config_cls=config_api.TorchConfig)
+        torch_config = _get_custom_config(custom_configs=custom_configs, custom_config_cls=config_api.TorchScriptConfig)
         for jit_type in torch_config.jit_type:
             model_configs[Format.TORCHSCRIPT].append(
                 model_config.TorchScriptConfig(
                     jit_type=jit_type,
                     strict=torch_config.strict,
+                    autocast=torch_config.autocast,
+                    inference_mode=torch_config.inference_mode,
                     custom_args=torch_config.custom_args,
                     device=torch_config.device,
                 )
@@ -241,11 +250,16 @@ class ModelConfigBuilder:
 
         Args:
             custom_configs: Format configurations provided by the user
-            model_configs: Dictionary mappint model formats to lists of model configs
+            model_configs: Dictionary mapping model formats to lists of model configs
         """
-        torch_config = _get_custom_config(custom_configs=custom_configs, custom_config_cls=config_api.TorchConfig)
+        torch_config = _get_custom_config(custom_configs=custom_configs, custom_config_cls=config_api.TorchExportConfig)
         model_configs[Format.TORCH_EXPORTEDPROGRAM].append(
-            model_config.TorchExportedProgram(custom_args=torch_config.custom_args, device=torch_config.device)
+            model_config.TorchExportedProgram(
+                autocast=torch_config.autocast,
+                inference_mode=torch_config.inference_mode,
+                custom_args=torch_config.custom_args,
+                device=torch_config.device,
+            )
         )
 
     @staticmethod
@@ -257,7 +271,7 @@ class ModelConfigBuilder:
 
         Args:
             custom_configs: Format configurations provided by the user
-            model_configs: Dictionary mappint model formats to lists of model configs
+            model_configs: Dictionary mapping model formats to lists of model configs
         """
         torch_trt_config = _get_custom_config(
             custom_configs=custom_configs, custom_config_cls=config_api.TorchTensorRTConfig
@@ -307,7 +321,7 @@ class ModelConfigBuilder:
 
         Args:
             custom_configs: Format configurations provided by the user
-            model_configs: Dictionary mappint model formats to lists of model configs
+            model_configs: Dictionary mapping model formats to lists of model configs
         """
         tf_trt_config = _get_custom_config(
             custom_configs=custom_configs, custom_config_cls=config_api.TensorFlowTensorRTConfig
@@ -335,7 +349,7 @@ class ModelConfigBuilder:
         Args:
             framework: source framework
             custom_configs: Format configurations provided by the user
-            model_configs: Dictionary mappint model formats to lists of model configs
+            model_configs: Dictionary mapping model formats to lists of model configs
         """
         onnx_config = _get_custom_config(custom_configs=custom_configs, custom_config_cls=config_api.OnnxConfig)
         if framework in (Framework.TENSORFLOW, Framework.JAX):
@@ -403,7 +417,7 @@ class ModelConfigBuilder:
         Args:
             framework: source framework
             custom_configs: Format configurations provided by the user
-            model_configs: Dictionary mappint model formats to lists of model configs
+            model_configs: Dictionary mapping model formats to lists of model configs
         """
         trt_config = _get_custom_config(custom_configs=custom_configs, custom_config_cls=config_api.TensorRTConfig)
         if framework == Framework.TENSORRT:

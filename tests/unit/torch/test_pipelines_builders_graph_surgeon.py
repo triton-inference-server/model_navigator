@@ -77,7 +77,7 @@ def test_torch_conversion_builder_return_graph_surgeon_optimization_when_enabled
                 dynamic_axes={},
                 dynamo_export=False,
                 graph_surgeon_optimization=True,
-                parent=TorchScriptConfig(jit_type=JitType.TRACE, strict=False),
+                parent=TorchScriptConfig(jit_type=JitType.TRACE, strict=False, autocast=False, inference_mode=True),
             )
         ],
     }
@@ -105,7 +105,7 @@ def test_torch_conversion_builder_does_not_return_graph_surgeon_optimization_whe
                 dynamic_axes={},
                 dynamo_export=False,
                 graph_surgeon_optimization=False,
-                parent=TorchScriptConfig(jit_type=JitType.TRACE, strict=False),
+                parent=TorchScriptConfig(jit_type=JitType.TRACE, strict=False, autocast=False, inference_mode=True),
             )
         ],
     }

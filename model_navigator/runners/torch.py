@@ -41,16 +41,20 @@ class _BaseTorchRunner(NavigatorRunner):
         """Runner supported format."""
         return Format.TORCH
 
-    def __init__(self, device: Optional[str] = None, *args, **kwargs) -> None:
+    def __init__(
+        self, inference_mode: bool = True, autocast: bool = False, device: Optional[str] = None, *args, **kwargs
+    ) -> None:
         """Initialization implementation."""
         super().__init__(*args, **kwargs)
+        self._inference_mode = inference_mode
+        self._autocast = autocast
         self._loaded_model = None
         self.device = device
 
         if is_torch2_available():
-            self._infer = self._infer_inference_mode
+            self._infer = self._infer_v2
         else:
-            self._infer = self._infer_no_grad
+            self._infer = self._infer_v1
 
         # validate device with runner target device
         if self.device:
@@ -97,16 +101,19 @@ class _BaseTorchRunner(NavigatorRunner):
     def get_available_return_types_impl(self) -> List[TensorType]:
         return [TensorType.NUMPY, TensorType.TORCH]
 
-    def _infer_inference_mode(self, feed_dict):
-        with torch.inference_mode():
+    def _infer_v2(self, feed_dict):
+        with torch.inference_mode(mode=self._inference_mode):
             args, kwargs = self._prepare_inputs(feed_dict)
-            outputs = self._loaded_model(*args, **kwargs)
+            with torch.autocast(device_type=self.device, enabled=self._autocast):
+                outputs = self._loaded_model(*args, **kwargs)
         return outputs
 
-    def _infer_no_grad(self, feed_dict):
+    def _infer_v1(self, feed_dict):
         with torch.no_grad():
             args, kwargs = self._prepare_inputs(feed_dict)
-            outputs = self._loaded_model(*args, **kwargs)
+            with torch.autocast(device_type=self.device, enabled=self._autocast):
+                outputs = self._loaded_model(*args, **kwargs)
+
         return outputs
 
     def _prepare_inputs(self, feed_dict):
@@ -275,7 +282,7 @@ class TorchCompileCUDARunner(_BaseTorchRunner):
         #  Remove this constructor once inference_mode is fixed for TorchCompile.
         #  Related closed issue: https://github.com/pytorch/pytorch/issues/101151
         super().__init__(*args, **kwargs)
-        self._infer = self._infer_no_grad
+        self._infer = self._infer_v1
         self.fullgraph = False
         self.dynamic = None
         self.backend = "inductor"

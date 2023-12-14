@@ -271,9 +271,8 @@ class Package:
         runtime_result = RuntimeAnalyzer.get_runtime(self.status.models_status, strategy=strategy, formats=formats)
         return runtime_result
 
-    def _create_status_file(self) -> None:
-        """Create a status.yaml file for package."""
-        path = self.workspace.path / self.status_filename
+    def _status_serializable_dict(self) -> Dict:
+        """Convert status to serializable dict."""
         config = DataObject.filter_data(
             data=self.status.config,
             filter_fields=[
@@ -286,9 +285,13 @@ class Package:
         config = DataObject.parse_data(config)
         status = copy.copy(self.status)
         status.config = config
-        data = status.to_dict(
-            parse=True,
-        )
+        data = status.to_dict(parse=True)
+        return data
+
+    def _create_status_file(self) -> None:
+        """Create a status.yaml file for package."""
+        path = self.workspace.path / self.status_filename
+        data = self._status_serializable_dict()
         with path.open("w") as f:
             yaml.safe_dump(data, f, sort_keys=False)
 

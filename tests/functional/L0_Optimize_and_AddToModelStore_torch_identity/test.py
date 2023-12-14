@@ -80,7 +80,7 @@ def main():
         verbose=True,
         optimization_profile=nav.OptimizationProfile(batch_sizes=[1, 8, 16], stability_percentage=100),
         custom_configs=[
-            nav.TorchConfig(
+            nav.TorchScriptConfig(
                 jit_type=(
                     nav.JitType.TRACE,
                     nav.JitType.SCRIPT,

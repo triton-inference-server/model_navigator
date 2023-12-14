@@ -35,19 +35,20 @@ def find_max_batch_size(
     input_metadata: Dict,
     output_metadata: Dict,
     navigator_workspace: Optional[str] = None,
+    runner_config: Optional[Dict] = None,
 ) -> None:
     """Find device maximum batch size.
 
     Args:
-        batch_dim (int): Batch dimension.
-        results_path (str): Output results path.
-        optimization_profile (Dict): Optimization profile used during conversion and profiling.
-        model_path (str): Path to the model.
-        runner_name (str): Name of the model's runner.
-        input_metadata (Dict): Input metadata.
-        output_metadata (Dict): Output metadata.
-        navigator_workspace (Optional[str], optional): Model Navigator workspace path.
-            When None use current workdir. Defaults to None.
+        batch_dim: Batch dimension.
+        results_path: Output results path.
+        optimization_profile: Optimization profile used during conversion and profiling.
+        model_path: Path to the model.
+        runner_name: Name of the model's runner.
+        input_metadata: Input metadata.
+        output_metadata: Output metadata.
+        navigator_workspace: Model Navigator workspace path. When None use current workdir. Defaults to None.
+        runner_config: Additional runner configuration.
     """
     if not navigator_workspace:
         navigator_workspace = pathlib.Path.cwd()
@@ -56,11 +57,15 @@ def find_max_batch_size(
     profiling_sample = load_samples("profiling_sample", navigator_workspace, batch_dim)[0]
     results_path = pathlib.Path(results_path)
 
+    if runner_config is None:
+        runner_config = {}
+
     runner = get_runner(runner_name)(
         model=navigator_workspace / model_path,
         input_metadata=TensorMetadata.from_json(input_metadata),
         output_metadata=TensorMetadata.from_json(output_metadata),
         disable_fallback=False,
+        **runner_config,
     )  # pytype: disable=not-instantiable
     try:
         MaxBatchSizeFinder(

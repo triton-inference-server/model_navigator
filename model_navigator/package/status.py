@@ -219,6 +219,7 @@ class StatusDictUpdater:
             version.parse("0.2.1"): self._update_from_v0_2_1,
             version.parse("0.2.2"): self._update_from_v0_2_2,
             version.parse("0.2.3"): self._update_from_v0_2_3,
+            version.parse("0.3.0"): self._update_from_v0_3_0,
         }
 
     def update(self, data_dict: Dict, format_version: version.Version):
@@ -561,3 +562,12 @@ class StatusDictUpdater:
 
         if "forward_kw_names" in data_dict["config"]:
             data_dict["config"].pop("forward_kw_names")
+
+    def _update_from_v0_3_0(self, data_dict: Dict):
+        config = data_dict["config"]
+        custom_configs = config.pop("custom_configs", {})
+        if "Torch" in custom_configs:
+            torch_config = custom_configs.pop("Torch")
+            custom_configs["TorchScript"] = torch_config
+
+        config["custom_configs"] = custom_configs

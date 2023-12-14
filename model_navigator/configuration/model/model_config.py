@@ -26,12 +26,13 @@ from model_navigator.api.config import (
     TensorRTPrecisionMode,
     TensorRTProfile,
 )
+from model_navigator.configuration.runner.runner_config import DeviceRunnerConfig, TorchRunnerConfig
 from model_navigator.utils.common import DataObject
 from model_navigator.utils.format_helpers import FORMAT2SUFFIX, is_source_format
 
 
 class ModelConfig(ABC, DataObject):
-    """Abstrac model configuration class."""
+    """Abstract model configuration class."""
 
     _subclasses = {}
     format: Format
@@ -80,20 +81,30 @@ class ModelConfig(ABC, DataObject):
             data_dict: Dictionary with model configuration data
 
         Returns:
-            Subclass of ModelConfig representing particular modle configuration
+            Subclass of ModelConfig representing particular model configuration
         """
         return cls._subclasses[Format(data_dict["format"])]._from_dict(data_dict)
 
     def to_dict(self, *_, **__) -> dict:
         """Returns dictionary representation of the object.
 
-        Instead of saving paraent object, unique parent_path is saved.
+        Instead of saving parent object, unique parent_path is saved.
 
-        Ignores all other paramters.
+        Ignores all other parameters.
 
         Returns:
             Dictionary representation of ModelConfig
         """
+        params = {}
+        for key, value in self.__dict__.items():
+            if value is None:
+                continue
+
+            if hasattr(value, "to_dict"):
+                params = {**params, **value.to_dict()}
+            else:
+                params[key] = value
+
         return DataObject._from_dict(
             {
                 "format": self.format,
@@ -102,7 +113,7 @@ class ModelConfig(ABC, DataObject):
                 "parent_path": self.parent_path,
                 "parent_key": self.parent_key,
                 "log_path": self.log_path,
-                **{k: v for k, v in self.__dict__.items() if v is not None},
+                **params,
             }
         )
 
@@ -213,14 +224,28 @@ class PythonModelConfig(_SourceModelConfig, format=Format.PYTHON):
 class TorchModelConfig(_SourceModelConfig, format=Format.TORCH):
     """Source code Torch model configuration class."""
 
-    def __init__(self, device: Optional[str] = None) -> None:
-        """Initializes Torch model configuration class."""
+    def __init__(self, autocast: bool, inference_mode: bool, device: Optional[str] = None) -> None:
+        """Initializes Torch model configuration class.
+
+        Args:
+            autocast: Enable Automatic Mixed Precision in runner
+            inference_mode: Enable inference mode in runner
+            device: The target device on which mode has to be loaded
+        """
         super().__init__()
-        self.device = device
+        self.runner_config = TorchRunnerConfig(
+            autocast=autocast,
+            inference_mode=inference_mode,
+            device=device,
+        )
 
     @classmethod
     def _from_dict(cls, data_dict: Dict):
-        return cls()
+        return cls(
+            autocast=cls._parse_string(bool, data_dict.get("autocast")),
+            inference_mode=cls._parse_string(bool, data_dict.get("inference_mode")),
+            device=data_dict.get("device"),
+        )
 
 
 class TensorFlowModelConfig(_SourceModelConfig, format=Format.TENSORFLOW):
@@ -230,6 +255,9 @@ class TensorFlowModelConfig(_SourceModelConfig, format=Format.TENSORFLOW):
     def _from_dict(cls, data_dict: Dict):
         return cls()
 
+    def _to_dict(self) -> Dict:
+        return {}
+
 
 class JAXModelConfig(_SourceModelConfig, format=Format.JAX):
     """Source code JAX model configuration class."""
@@ -237,6 +265,9 @@ class JAXModelConfig(_SourceModelConfig, format=Format.JAX):
     @classmethod
     def _from_dict(cls, data_dict: Dict):
         return cls()
+
+    def _to_dict(self) -> Dict:
+        return {}
 
 
 class _SerializedModelConfig(ModelConfig, format=None):
@@ -290,6 +321,8 @@ class TorchScriptConfig(_SerializedModelConfig, format=Format.TORCHSCRIPT):
         self,
         jit_type: JitType,
         strict: bool,
+        autocast: bool,
+        inference_mode: bool,
         parent: Optional[ModelConfig] = None,
         custom_args: Optional[Dict[str, Any]] = None,
         device: Optional[str] = None,
@@ -299,6 +332,8 @@ class TorchScriptConfig(_SerializedModelConfig, format=Format.TORCHSCRIPT):
         Args:
             jit_type: TorchScript export method
             strict: Enable or Disable strict flag for tracer used in TorchScript export
+            autocast: Enable Automatic Mixed Precision in runner
+            inference_mode: Enable inference mode in runner
             parent: Parent model configuration
             custom_args: Custom arguments passed to TorchScript export
             device: runtime device e.g. "cuda:0"
@@ -307,7 +342,11 @@ class TorchScriptConfig(_SerializedModelConfig, format=Format.TORCHSCRIPT):
         self.jit_type = jit_type
         self.strict = strict
         self.custom_args = custom_args
-        self.device = device
+        self.runner_config = TorchRunnerConfig(
+            autocast=autocast,
+            inference_mode=inference_mode,
+            device=device,
+        )
 
     def _get_path_params_as_array_of_strings(self) -> List[str]:
         return [self.jit_type.value] if self.jit_type else []
@@ -317,6 +356,9 @@ class TorchScriptConfig(_SerializedModelConfig, format=Format.TORCHSCRIPT):
         return cls(
             jit_type=cls._parse_string(JitType, data_dict.get("jit_type")),
             strict=cls._parse_string(bool, data_dict.get("strict")),
+            autocast=cls._parse_string(bool, data_dict.get("autocast")),
+            inference_mode=cls._parse_string(bool, data_dict.get("inference_mode")),
+            device=data_dict.get("device"),
         )
 
 
@@ -325,6 +367,8 @@ class TorchExportedProgram(_SerializedModelConfig, format=Format.TORCH_EXPORTEDP
 
     def __init__(
         self,
+        autocast: bool,
+        inference_mode: bool,
         parent: Optional[ModelConfig] = None,
         custom_args: Optional[Dict[str, Any]] = None,
         device: Optional[str] = None,
@@ -332,17 +376,23 @@ class TorchExportedProgram(_SerializedModelConfig, format=Format.TORCH_EXPORTEDP
         """Initializes TorchScript model configuration class.
 
         Args:
+            autocast: Enable Automatic Mixed Precision in runner
+            inference_mode: Enable inference mode in runner
             parent: Parent model configuration
             custom_args: Custom arguments passed to TorchScript export
             device: runtime device e.g. "cuda:0"
         """
         super().__init__(parent=parent)
         self.custom_args = custom_args
-        self.device = device
+        self.runner_config = TorchRunnerConfig(autocast=autocast, inference_mode=inference_mode, device=device)
 
     @classmethod
     def _from_dict(cls, data_dict: Dict):
-        return cls()
+        return cls(
+            autocast=cls._parse_string(bool, data_dict.get("autocast")),
+            inference_mode=cls._parse_string(bool, data_dict.get("inference_mode")),
+            device=data_dict.get("device"),
+        )
 
 
 class ONNXConfig(_SerializedModelConfig, format=Format.ONNX):
@@ -375,7 +425,7 @@ class ONNXConfig(_SerializedModelConfig, format=Format.ONNX):
         self.graph_surgeon_optimization = graph_surgeon_optimization
         self.dynamic_axes = dynamic_axes
         self.custom_args = custom_args
-        self.device = device
+        self.runner_config = DeviceRunnerConfig(device=device)
 
     def _get_path_params_as_array_of_strings(self) -> List[str]:
         return ["dynamo"] if self.dynamo_export else []
@@ -387,6 +437,8 @@ class ONNXConfig(_SerializedModelConfig, format=Format.ONNX):
             dynamo_export=data_dict.get("dynamo_export", False),
             graph_surgeon_optimization=data_dict.get("graph_surgeon_optimization"),
             dynamic_axes=data_dict.get("dynamic_axes"),
+            custom_args=data_dict.get("custom_args"),
+            device=data_dict.get("device"),
         )
 
 
@@ -525,7 +577,7 @@ class TorchTensorRTConfig(_SerializedModelConfig, format=Format.TORCH_TRT):
         self.max_workspace_size = max_workspace_size
         self.trt_profiles = trt_profiles
         self.custom_args = custom_args
-        self.device = device
+        self.runner_config = DeviceRunnerConfig(device=device)
 
     def _get_path_params_as_array_of_strings(self) -> List[str]:
         return [self.precision.value] if self.precision else []
@@ -540,4 +592,5 @@ class TorchTensorRTConfig(_SerializedModelConfig, format=Format.TORCH_TRT):
             precision_mode=cls._parse_string(TensorRTPrecisionMode, data_dict.get("precision_mode")),
             max_workspace_size=cls._parse_string(int, data_dict.get("max_workspace_size")),
             trt_profiles=trt_profiles,
+            device=data_dict.get("device"),
         )

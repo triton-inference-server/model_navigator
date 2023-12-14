@@ -24,6 +24,7 @@ from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.data_dump.samples import samples_to_npz
 from model_navigator.commands.execution_context import ExecutionContext
 from model_navigator.commands.performance.results import ProfilingResults
+from model_navigator.configuration.runner.runner_config import RunnerConfig
 from model_navigator.core.dataloader import extract_bs1, extract_sample, load_samples
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata
@@ -52,6 +53,7 @@ class Profile(Command):
         verbose: bool,
         runner_cls: Type[NavigatorRunner],
         model: Optional[Any] = None,
+        runner_config: Optional[RunnerConfig] = None,
     ) -> CommandOutput:
         """Run performance command.
 
@@ -66,6 +68,7 @@ class Profile(Command):
             verbose: If True verbose logging.
             runner_cls: Runner type to profile the model with.
             model: Model when profiling on a source format. Defaults to None.
+            runner_config: Additional runner configuration.
 
         Returns:
             CommandOutput: Output of the command containing profiling results.
@@ -101,6 +104,7 @@ class Profile(Command):
                     "input_metadata": input_metadata.to_json(),
                     "output_metadata": output_metadata.to_json(),
                     "sample_id": sample_id,
+                    "runner_config": runner_config.to_dict(parse=True) if runner_config else None,
                 }
 
                 from model_navigator.commands.performance import profile_script

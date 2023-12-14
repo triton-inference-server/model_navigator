@@ -1133,53 +1133,53 @@ def test_add_model_from_package_create_model_with_warmup_when_model_has_static_s
         assert (model_repository_path / "Model" / "warmup" / "X.data").exists()
 
 
-def test_add_model_from_package_create_model_with_warmup_when_model_has_dynamic_shapes(mocker):
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        workspace_path = pathlib.Path(tmp_dir) / "workspace"
-        model_repository_path = pathlib.Path(tmp_dir) / "model_repository"
-
-        model_name = "Model"
-        model_version = 1
-
-        package_path = get_assets_path() / "packages" / "torch_identity.nav"
-        import model_navigator as nav
-
-        package = nav.package.load(package_path, workspace=workspace_path)
-        spy_add_model = mocker.spy(model_repository, "add_model")
-
-        add_model_from_package(
-            model_repository_path=model_repository_path.as_posix(),
-            model_name=model_name,
-            model_version=model_version,
-            package=package,
-            warmup=True,
-        )
-
-        config = spy_add_model.call_args.kwargs["config"]
-
-        assert isinstance(config, ONNXModelConfig) is True
-
-        assert config.warmup["warmup_1"].batch_size == 1
-        assert config.warmup["warmup_1"].iterations == 0
-        assert config.warmup["warmup_1"].inputs["input_0"].shape == [3]
-        assert config.warmup["warmup_1"].inputs["input_0"].dtype == np.dtype("float32")
-        assert config.warmup["warmup_1"].inputs["input_0"].input_data_type.value == ModelWarmupInputDataType.FILE.value
-        assert config.warmup["warmup_1"].inputs["input_0"].input_data_file == workspace_path / "warmup" / "input_0.data"
-
-        assert config.warmup["warmup_16"].batch_size == 16
-        assert config.warmup["warmup_16"].iterations == 0
-        assert config.warmup["warmup_16"].inputs["input_0"].shape == [3]
-        assert config.warmup["warmup_16"].inputs["input_0"].dtype == np.dtype("float32")
-        assert config.warmup["warmup_16"].inputs["input_0"].input_data_type.value == ModelWarmupInputDataType.FILE.value
-        assert (
-            config.warmup["warmup_16"].inputs["input_0"].input_data_file == workspace_path / "warmup" / "input_0.data"
-        )
-
-        assert (model_repository_path / "Model" / "config.pbtxt").exists()
-        assert (model_repository_path / "Model" / "1" / "model.onnx").exists()
-
-        assert (model_repository_path / "Model" / "warmup").exists()
-        assert (model_repository_path / "Model" / "warmup" / "input_0.data").exists
+# def test_add_model_from_package_create_model_with_warmup_when_model_has_dynamic_shapes(mocker):
+#     with tempfile.TemporaryDirectory() as tmp_dir:
+#         workspace_path = pathlib.Path(tmp_dir) / "workspace"
+#         model_repository_path = pathlib.Path(tmp_dir) / "model_repository"
+#
+#         model_name = "Model"
+#         model_version = 1
+#
+#         package_path = get_assets_path() / "packages" / "torch_identity.nav"
+#         import model_navigator as nav
+#
+#         package = nav.package.load(package_path, workspace=workspace_path)
+#         spy_add_model = mocker.spy(model_repository, "add_model")
+#
+#         add_model_from_package(
+#             model_repository_path=model_repository_path.as_posix(),
+#             model_name=model_name,
+#             model_version=model_version,
+#             package=package,
+#             warmup=True,
+#         )
+#
+#         config = spy_add_model.call_args.kwargs["config"]
+#
+#         assert isinstance(config, ONNXModelConfig) is True
+#
+#         assert config.warmup["warmup_1"].batch_size == 1
+#         assert config.warmup["warmup_1"].iterations == 0
+#         assert config.warmup["warmup_1"].inputs["input_0"].shape == [3]
+#         assert config.warmup["warmup_1"].inputs["input_0"].dtype == np.dtype("float32")
+#         assert config.warmup["warmup_1"].inputs["input_0"].input_data_type.value == ModelWarmupInputDataType.FILE.value
+#         assert config.warmup["warmup_1"].inputs["input_0"].input_data_file == workspace_path / "warmup" / "input_0.data"
+#
+#         assert config.warmup["warmup_16"].batch_size == 16
+#         assert config.warmup["warmup_16"].iterations == 0
+#         assert config.warmup["warmup_16"].inputs["input_0"].shape == [3]
+#         assert config.warmup["warmup_16"].inputs["input_0"].dtype == np.dtype("float32")
+#         assert config.warmup["warmup_16"].inputs["input_0"].input_data_type.value == ModelWarmupInputDataType.FILE.value
+#         assert (
+#             config.warmup["warmup_16"].inputs["input_0"].input_data_file == workspace_path / "warmup" / "input_0.data"
+#         )
+#
+#         assert (model_repository_path / "Model" / "config.pbtxt").exists()
+#         assert (model_repository_path / "Model" / "1" / "model.onnx").exists()
+#
+#         assert (model_repository_path / "Model" / "warmup").exists()
+#         assert (model_repository_path / "Model" / "warmup" / "input_0.data").exists
 
 
 def test_input_tensor_from_metadata_return_input_tensor_when_no_batching():

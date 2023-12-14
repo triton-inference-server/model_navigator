@@ -21,6 +21,7 @@ from model_navigator.api.config import Format, SizedDataLoader, VerifyFunction
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.correctness import Correctness
 from model_navigator.commands.performance import Performance
+from model_navigator.configuration.runner.runner_config import RunnerConfig
 from model_navigator.core.dataloader import extract_sample
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata
@@ -66,27 +67,27 @@ class VerifyModel(Command, requires=[Correctness.name, Performance.name]):
         input_metadata: TensorMetadata,
         output_metadata: TensorMetadata,
         model: Optional[Any] = None,
-        device: Optional[str] = None,
+        runner_config: Optional[RunnerConfig] = None,
     ) -> CommandOutput:
         """Run verification.
 
         Args:
-            framework (Framework): Model framework.
-            format (Format): Model format.
-            workspace (Path): Model Navigator workspace path.
-            path (Path): Model path, relative to the workspace path.
+            framework: Model framework.
+            format: Model format.
+            workspace: Model Navigator workspace path.
+            path: Model path, relative to the workspace path.
             batch_dim: Batch dimension.
-            dataloader (SizedDataLoader): Model dataloader.
-            verify_func (VerifyFunction): Boolean function that verifies the runner based on outputs
+            dataloader: Model dataloader.
+            verify_func: Boolean function that verifies the runner based on outputs
                 of the runner and source model.
-            runner_cls (Type[NavigatorRunner]): Type of the runner to use for verification.
-            input_metadata (TensorMetadata): Input metadata.
-            output_metadata (TensorMetadata): Output metadata.
-            model (Optional[Any], optional): Model if source model should be used. Defaults to None.
-            device: (Optional[str]): Device to run the model on.
+            runner_cls: Type of the runner to use for verification.
+            input_metadata: Input metadata.
+            output_metadata: Output metadata.
+            model: Model if source model should be used. Defaults to None.
+            runner_config: Additional runner configuration.
 
         Returns:
-            CommandOutput: Status OK if succesfull verification, FAIL otherwise.
+            CommandOutput: Status OK if successful verification, FAIL otherwise.
         """
         LOGGER.info(f"Verification for: {format} {runner_cls} started.")
 
@@ -96,6 +97,11 @@ class VerifyModel(Command, requires=[Correctness.name, Performance.name]):
         if runner_cls.name() in [runner.name() for runner in source_runners]:
             LOGGER.info("Runner is the same as source model.")
             return CommandOutput(status=CommandStatus.OK)
+
+        if runner_config is None:
+            runner_config_args = {}
+        else:
+            runner_config_args = runner_config.to_dict()
 
         def _get_outputs(runner):
             with runner:
@@ -110,7 +116,7 @@ class VerifyModel(Command, requires=[Correctness.name, Performance.name]):
             output_metadata=output_metadata,
             navigator_workspace=workspace.path,
             batch_dim=batch_dim,
-            device=device,
+            **runner_config_args,
         )
         y_pred = _get_outputs(runner)
 

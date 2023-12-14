@@ -22,6 +22,8 @@ from model_navigator.api.config import (
     TensorRTPrecision,
     TensorRTPrecisionMode,
     TorchConfig,
+    TorchExportConfig,
+    TorchScriptConfig,
     TorchTensorRTConfig,
 )
 from model_navigator.core.constants import DEFAULT_MAX_WORKSPACE_SIZE, DEFAULT_MIN_SEGMENT_SIZE, DEFAULT_ONNX_OPSET
@@ -46,9 +48,26 @@ def test_default_values_for_tensorflow_tensorrt_custom_config():
 
 
 def test_default_values_for_torch_custom_config():
-    torch_config = TorchConfig()
-    assert torch_config.jit_type == (JitType.SCRIPT, JitType.TRACE)
-    assert torch_config.format == Format.TORCHSCRIPT
+    config = TorchConfig()
+    assert config.autocast is False
+    assert config.inference_mode is True
+    assert config.format == Format.TORCH
+
+
+def test_default_values_for_torch_export_custom_config():
+    config = TorchExportConfig()
+    assert config.autocast is False
+    assert config.inference_mode is True
+    assert config.format == Format.TORCH_EXPORTEDPROGRAM
+
+
+def test_default_values_for_torch_script_custom_config():
+    config = TorchScriptConfig()
+    assert config.jit_type == (JitType.SCRIPT, JitType.TRACE)
+    assert config.autocast is False
+    assert config.inference_mode is True
+    assert config.strict is True
+    assert config.format == Format.TORCHSCRIPT
 
 
 def test_default_values_for_torch_tensorrt_custom_confg():

@@ -18,7 +18,7 @@ import tempfile
 
 import pytest
 
-from model_navigator.api.config import Format, JitType, OptimizationProfile, TorchConfig
+from model_navigator.api.config import Format, JitType, OptimizationProfile, TorchScriptConfig
 from model_navigator.api.package import _get_model_configs, _update_config, optimize
 from model_navigator.exceptions import ModelNavigatorEmptyPackageError, ModelNavigatorMissingSourceModelError
 from model_navigator.runners.registry import runner_registry
@@ -41,14 +41,14 @@ def test_get_model_configs_returns_original_configs_when_no_custom_configs_passe
         assert len(flatten_model_configs) == 6
 
 
-def test_get_model_configs_returns_updated_torchscript_config_when_torch_custom_config_passed():
+def test_get_model_configs_returns_updated_torchscript_config_when_torch_script_custom_config_passed():
     with tempfile.TemporaryDirectory() as tmp_dir:
         workspace = pathlib.Path(tmp_dir) / "navigator_workspace"
         package = trochscript_package_with_source(workspace)
         model_configs = _get_model_configs(
             config=package.config,
             custom_configs=[
-                TorchConfig(jit_type=(JitType.TRACE,)),
+                TorchScriptConfig(jit_type=(JitType.TRACE,)),
             ],
         )
 
@@ -73,11 +73,11 @@ def test_update_config_returns_updated_custom_config_when_defaults_is_true():
 
         assert len(config.custom_configs) == 3
         onnx_config = config.custom_configs["Onnx"]
-        torch_config = config.custom_configs["Torch"]
+        torch_script_config = config.custom_configs["TorchScript"]
         tensorrt_config = config.custom_configs["TensorRT"]
 
         assert onnx_config.opset == 17  # pytype: disable=attribute-error
-        assert torch_config.jit_type == (JitType.SCRIPT, JitType.TRACE)  # pytype: disable=attribute-error
+        assert torch_script_config.jit_type == (JitType.SCRIPT, JitType.TRACE)  # pytype: disable=attribute-error
         assert tensorrt_config.trt_profiles is None  # pytype: disable=attribute-error
 
 

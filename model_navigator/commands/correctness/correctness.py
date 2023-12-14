@@ -21,6 +21,7 @@ from typing import Any, Dict, List, Optional, Type
 from model_navigator.api.config import Format
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.execution_context import ExecutionContext
+from model_navigator.configuration.runner.runner_config import RunnerConfig
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata
 from model_navigator.core.workspace import Workspace
@@ -93,27 +94,25 @@ class Correctness(Command):
         path: pathlib.Path,
         verbose: bool,
         model: Optional[Any] = None,
-        device: Optional[str] = None,
+        runner_config: Optional[RunnerConfig] = None,
     ) -> CommandOutput:
-        """Run correcntess command.
+        """Run correctness command.
 
         Args:
-            workspace (Path): Model Navigator worksapce path.
-            format (Format): Model format.
-            runner_cls (Type[NavigatorRunner]): Type of a runner to use with a model.
-            input_metadata (TensorMetadata): Input metadata.
-            output_metadata (TensorMetadata): Output metadata.
-            batch_dim (Optional[int]): Batch dimension.
-            path (Path): Model path relative to workspace path.
-            verbose (bool): If True verbose logging.
-            model (Optional[Any]): Model if correcness should be run on a source model.
-                Defaults to None.
-            device: (Optional[str]): Device to run the model on.
+            workspace: Model Navigator workspace path.
+            format: Model format.
+            runner_cls: Type of a runner to use with a model.
+            input_metadata: Input metadata.
+            output_metadata: Output metadata.
+            batch_dim: Batch dimension.
+            path: Model path relative to workspace path.
+            verbose: If True verbose logging.
+            model: Model if correctness should be run on a source model. Defaults to None.
+            runner_config: Additional runner arguments
 
         Returns:
             CommandOutput: Status OK and TolerancePerOutputName of the model with runner.
         """
-        per_output_tolerance = None
         LOGGER.info(f"Correctness test for: {format} {runner_cls} started.")
         model_path = workspace.path / path
         model_dir = model_path.parent
@@ -135,7 +134,7 @@ class Correctness(Command):
                 "runner_name": runner_cls.name(),
                 "input_metadata": input_metadata.to_json(),
                 "output_metadata": output_metadata.to_json(),
-                "device": device,
+                "runner_config": runner_config.to_dict(parse=True) if runner_config else None,
             }
 
             from model_navigator.commands.correctness import correctness_script

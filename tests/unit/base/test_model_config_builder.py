@@ -25,6 +25,8 @@ from model_navigator.api.config import (
     TensorRTPrecisionMode,
     TensorRTProfile,
     TorchConfig,
+    TorchExportConfig,
+    TorchScriptConfig,
     TorchTensorRTConfig,
 )
 from model_navigator.configuration.model import model_config
@@ -33,14 +35,35 @@ from model_navigator.frameworks import Framework
 
 
 def test_get_source_torch_config_returns_model_configs_matching_custom_config():
-    custom_configs = [TorchConfig()]
+    torch_config = TorchConfig()
     model_configs = {Format.TORCH: []}
+    custom_configs = [torch_config]
     ModelConfigBuilder().get_source_torch_config(custom_configs=custom_configs, model_configs=model_configs)
 
     assert len(model_configs[Format.TORCH]) == 1
     model_configuration = model_configs[Format.TORCH][0]
     assert isinstance(model_configuration, model_config.TorchModelConfig)
     assert model_configuration.parent_key is None
+
+    assert model_configuration.runner_config.autocast is False
+    assert model_configuration.runner_config.inference_mode is True
+    assert model_configuration.runner_config.device is None
+
+
+def test_get_source_torch_config_returns_model_configs_matching_custom_config_when_overriden_arguments():
+    torch_config = TorchConfig(autocast=True, inference_mode=False, device="cpu")
+    model_configs = {Format.TORCH: []}
+    custom_configs = [torch_config]
+    ModelConfigBuilder().get_source_torch_config(custom_configs=custom_configs, model_configs=model_configs)
+
+    assert len(model_configs[Format.TORCH]) == 1
+    model_configuration = model_configs[Format.TORCH][0]
+    assert isinstance(model_configuration, model_config.TorchModelConfig)
+    assert model_configuration.parent_key is None
+
+    assert model_configuration.runner_config.autocast is True
+    assert model_configuration.runner_config.inference_mode is False
+    assert model_configuration.runner_config.device == "cpu"
 
 
 def test_get_source_tensorflow_config_returns_model_configs_matching_custom_config():
@@ -64,17 +87,77 @@ def test_get_source_jax_config_returns_model_configs_matching_custom_config():
 
 
 def test_get_torchscript_config_returns_model_configs_matching_custom_config():
-    torch_config = TorchConfig(jit_type=(JitType.TRACE))
+    torch_script_config = TorchScriptConfig()
     model_configs = {Format.TORCHSCRIPT: []}
-    custom_configs = [torch_config]
+    custom_configs = [torch_script_config]
+    ModelConfigBuilder().get_torchscript_config(custom_configs, model_configs)
+
+    assert len(model_configs[Format.TORCHSCRIPT]) == 2
+    for jit_type, model_configuration in zip(torch_script_config.jit_type, model_configs[Format.TORCHSCRIPT]):
+        assert isinstance(model_configuration, model_config.TorchScriptConfig)
+        assert model_configuration.jit_type == jit_type
+        assert model_configuration.format == torch_script_config.format
+        assert model_configuration.parent_key is None
+
+        assert model_configuration.runner_config.autocast is False
+        assert model_configuration.runner_config.inference_mode is True
+        assert model_configuration.runner_config.device is None
+
+
+def test_get_torchscript_config_returns_model_configs_matching_custom_config_when_overriden_arguments():
+    torch_script_config = TorchScriptConfig(
+        jit_type=(JitType.TRACE,),
+        autocast=True,
+        inference_mode=False,
+        device="cpu",
+    )
+    model_configs = {Format.TORCHSCRIPT: []}
+    custom_configs = [torch_script_config]
     ModelConfigBuilder().get_torchscript_config(custom_configs, model_configs)
 
     assert len(model_configs[Format.TORCHSCRIPT]) == 1
-    for jit_type, model_configuration in zip(torch_config.jit_type, model_configs[Format.TORCHSCRIPT]):
-        assert isinstance(model_configuration, model_config.TorchScriptConfig)
-        assert model_configuration.jit_type == jit_type
-        assert model_configuration.format == torch_config.format
-        assert model_configuration.parent_key is None
+    model_configuration = model_configs[Format.TORCHSCRIPT][0]
+
+    assert isinstance(model_configuration, model_config.TorchScriptConfig)
+    assert model_configuration.jit_type == JitType.TRACE
+    assert model_configuration.format == torch_script_config.format
+    assert model_configuration.parent_key is None
+
+    assert model_configuration.runner_config.autocast is True
+    assert model_configuration.runner_config.inference_mode is False
+    assert model_configuration.runner_config.device == "cpu"
+
+
+def test_get_torch_export_config_returns_model_configs_matching_custom_config():
+    torch_export_config = TorchExportConfig()
+    model_configs = {Format.TORCH_EXPORTEDPROGRAM: []}
+    custom_configs = [torch_export_config]
+    ModelConfigBuilder().get_torch_exportedprogram_config(custom_configs, model_configs)
+
+    assert len(model_configs[Format.TORCH_EXPORTEDPROGRAM]) == 1
+    model_configuration = model_configs[Format.TORCH_EXPORTEDPROGRAM][0]
+    assert isinstance(model_configuration, model_config.TorchExportedProgram)
+    assert model_configuration.parent_key is None
+
+    assert model_configuration.runner_config.autocast is False
+    assert model_configuration.runner_config.inference_mode is True
+    assert model_configuration.runner_config.device is None
+
+
+def test_get_torch_export_config_returns_model_configs_matching_custom_config_when_overriden_arguments():
+    torch_export_config = TorchExportConfig(autocast=True, inference_mode=False, device="cpu")
+    model_configs = {Format.TORCH_EXPORTEDPROGRAM: []}
+    custom_configs = [torch_export_config]
+    ModelConfigBuilder().get_torch_exportedprogram_config(custom_configs, model_configs)
+
+    assert len(model_configs[Format.TORCH_EXPORTEDPROGRAM]) == 1
+    model_configuration = model_configs[Format.TORCH_EXPORTEDPROGRAM][0]
+    assert isinstance(model_configuration, model_config.TorchExportedProgram)
+    assert model_configuration.parent_key is None
+
+    assert model_configuration.runner_config.autocast is True
+    assert model_configuration.runner_config.inference_mode is False
+    assert model_configuration.runner_config.device == "cpu"
 
 
 def test_get_torch_trt_config_returns_model_configs_matching_custom_config():
@@ -104,6 +187,7 @@ def test_get_torch_trt_config_returns_model_configs_matching_custom_config():
         assert torch_trt_model_configuration.format == torch_trt_config.format
         assert torch_trt_model_configuration.trt_profiles == torch_trt_config.trt_profiles
         assert torch_trt_model_configuration.parent_key == torch_model_configuration.key
+        assert torch_trt_model_configuration.runner_config.device is None
 
 
 def test_get_savedmodel_config_returns_model_configs_matching_custom_config():
@@ -174,7 +258,9 @@ def test_get_onnx_config_returns_model_configs_matching_custom_config_when_torch
 def test_get_onnx_config_returns_model_configs_matching_custom_config_when_torch_framework_with_onnx_extended_conversion():  # noqa: E501
     torch_config = TorchConfig()
     onnx_config = OnnxConfig(
-        opset=8, dynamic_axes={"x": {0: "batch_size"}, "y": {0: "batch_size"}}, onnx_extended_conversion=True
+        opset=8,
+        dynamic_axes={"x": {0: "batch_size"}, "y": {0: "batch_size"}},
+        onnx_extended_conversion=True,
     )
     model_configs = {Format.TORCHSCRIPT: [], Format.ONNX: []}
     custom_configs = [torch_config, onnx_config]
@@ -244,7 +330,6 @@ def test_get_onnx_config_for_tensorflow_framework_returns_model_configs_matching
     ModelConfigBuilder().get_onnx_config(Framework.TENSORFLOW, custom_configs, model_configs)
 
     assert len(model_configs[Format.ONNX]) == 1
-    model_configuration = model_configs[Format.ONNX][0]
     for model_configuration, savedmodel_model_configuration in zip(
         model_configs[Format.ONNX], model_configs[Format.TF_SAVEDMODEL]
     ):

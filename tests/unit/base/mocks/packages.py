@@ -199,7 +199,7 @@ def custom_runner_package(workspace) -> Package:
 
 
 def trochscript_package_without_source(workspace) -> Package:
-    torchscript_config = TorchScriptConfig(jit_type=JitType.SCRIPT, strict=True)
+    torchscript_config = TorchScriptConfig(jit_type=JitType.SCRIPT, strict=True, autocast=False, inference_mode=True)
     package = Package(
         status=Status(
             format_version=NAVIGATOR_PACKAGE_VERSION,
@@ -273,8 +273,8 @@ def trochscript_package_without_source(workspace) -> Package:
 
 
 def trochscript_package_with_source(workspace) -> Package:
-    source_config = TorchModelConfig()
-    torchscript_config = TorchScriptConfig(jit_type=JitType.SCRIPT, strict=True)
+    source_config = TorchModelConfig(autocast=False, inference_mode=True)
+    torchscript_config = TorchScriptConfig(jit_type=JitType.SCRIPT, strict=True, autocast=False, inference_mode=True)
     package = Package(
         status=Status(
             format_version=NAVIGATOR_PACKAGE_VERSION,
@@ -297,7 +297,7 @@ def trochscript_package_with_source(workspace) -> Package:
                     "Onnx": {
                         "opset": 13,
                     },
-                    "Torch": {
+                    "TorchScript": {
                         "jit_type": (JitType.TRACE,),
                     },
                     "TensorRT": {
@@ -1013,7 +1013,7 @@ def tensorflow_package_with_optimal_model_tensorflow_tensorrt_and_dummy_navigato
 
 
 def torchscript_package_with_cpu_only(workspace) -> Package:
-    torchscript_config = TorchScriptConfig(jit_type=JitType.TRACE, strict=True)
+    torchscript_config = TorchScriptConfig(jit_type=JitType.TRACE, strict=True, autocast=False, inference_mode=True)
 
     package = Package(
         status=Status(
@@ -1093,7 +1093,7 @@ def torchscript_package_with_cpu_only(workspace) -> Package:
 
 
 def torchscript_package_with_cuda(workspace) -> Package:
-    torchscript_config = TorchScriptConfig(jit_type=JitType.TRACE, strict=True)
+    torchscript_config = TorchScriptConfig(jit_type=JitType.TRACE, strict=True, autocast=False, inference_mode=True)
     package = Package(
         status=Status(
             format_version=NAVIGATOR_PACKAGE_VERSION,
@@ -1204,7 +1204,7 @@ def torchscript_package_with_cuda(workspace) -> Package:
 
 
 def torchscript_package_with_torch_tensorrt(workspace) -> Package:
-    torchscript_config = TorchScriptConfig(jit_type=JitType.TRACE, strict=True)
+    torchscript_config = TorchScriptConfig(jit_type=JitType.TRACE, strict=True, autocast=False, inference_mode=True)
     torchtensorrt_config = TorchTensorRTConfig(
         precision=TensorRTPrecision.FP16,
         precision_mode=TensorRTPrecisionMode.HIERARCHY,

@@ -46,7 +46,7 @@ def profile(
     sample_id: int = 0,
     navigator_workspace: Optional[str] = None,
     model_path: Optional[str] = None,
-    device: Optional[str] = None,
+    runner_config: Optional[Dict] = None,
 ) -> None:
     """Run profiling.
 
@@ -58,11 +58,9 @@ def profile(
         input_metadata: Input metadata.
         output_metadata: Output metadata.
         sample_id: Identifier of profiled sample.
-        navigator_workspace: Path of the Model Navigator workspace.
-            When None use current workdir. Defaults to None.
-        model_path: Path to the model.
-            When None use `get_model()` to load the model. Defaults to None.
-        device (Optional[str]): Device to run the model on. Defaults to None.
+        navigator_workspace: Path of the Model Navigator workspace. When None use current workdir. Defaults to None.
+        model_path: Path to the model. When None use `get_model()` to load the model. Defaults to None.
+        runner_config: Additional runner arguments.
     """
     if not navigator_workspace:
         navigator_workspace = pathlib.Path.cwd()
@@ -75,13 +73,16 @@ def profile(
     else:
         model = get_model()
 
+    if runner_config is None:
+        runner_config = {}
+
     runner = get_runner(runner_name)(
         model=model,
         input_metadata=TensorMetadata.from_json(input_metadata),
         output_metadata=TensorMetadata.from_json(output_metadata),
         navigator_workspace=navigator_workspace,
         batch_dim=batch_dim,
-        device=device,
+        **runner_config,
     )  # pytype: disable=not-instantiable
 
     Profiler(

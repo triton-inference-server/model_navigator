@@ -1707,6 +1707,7 @@ def status_dict_v0_2_2():
                 "Onnx": {
                     "opset": 13,
                 },
+                "TensorRT": {"trt_profile": {}},
             },
             "optimization_profile": {
                 "batch_sizes": [16],
@@ -1911,4 +1912,493 @@ def status_dict_v0_2_2():
         "output_metadata": [{"name": "output__0", "shape": (-1, 1), "dtype": "float32"}],
         "dataloader_trt_profile": {},
         "dataloader_max_batch_size": 2,
+    }
+
+
+def status_dict_v0_2_3():
+    return {
+        "format_version": "0.2.3",
+        "model_navigator_version": "0.6.0",
+        "uuid": "1",
+        "timestamp": "2022-11-24T19:57:03.145190",
+        "environment": {},
+        "config": {
+            "framework": "torch",
+            "target_device": "cpu",
+            "runner_names": ["DummySourceTorchRunner", "DummyTorchScriptRunner"],
+            "verbose": False,
+            "debug": False,
+            "target_formats": ["torch", "torchscript"],
+            "sample_count": 1,
+            "custom_configs": {
+                "Onnx": {
+                    "opset": 13,
+                },
+                "TensorRT": {"trt_profiles": {}},
+            },
+            "optimization_profile": {
+                "batch_sizes": [16],
+                "window_size": 50,
+                "max_trials": 10,
+                "stability_percentage": 10,
+                "throughput_cutoff_threshold": 0.05,
+            },
+        },
+        "models_status": {
+            "torch": {
+                "model_config": {
+                    "format": "torch",
+                    "key": "torch",
+                    "path": "torch/----",
+                    "parent_path": None,
+                    "parent_key": None,
+                    "log_path": "torch/format.log",
+                },
+                "runners_status": {
+                    "DummySourceTorchRunner": {
+                        "runner_name": "DummySourceTorchRunner",
+                        "status": {"Correctness": "OK", "Performance": "OK", "VerifyModel": "OK"},
+                        "result": {
+                            "Correctness": {
+                                "per_output_tolerance": [{"output_name": "output__0", "atol": 0.0, "rtol": 0.0}]
+                            },
+                            "Performance": {
+                                "profiling_results": [
+                                    {
+                                        "batch_size": 1,
+                                        "avg_latency": 1.0,
+                                        "std_latency": 0.0,
+                                        "p50_latency": 1.0,
+                                        "p90_latency": 1.0,
+                                        "p95_latency": 1.0,
+                                        "p99_latency": 1.0,
+                                        "throughput": 1500.0,
+                                        "avg_gpu_clock": 1500.0,
+                                        "request_count": 50,
+                                    }
+                                ]
+                            },
+                        },
+                    }
+                },
+            },
+            "torchscript-script": {
+                "model_config": {
+                    "format": "torchscript",
+                    "key": "torchscript-script",
+                    "path": "torchscript-script/model.pt",
+                    "parent_path": None,
+                    "parent_key": None,
+                    "log_path": "torchscript-script/format.log",
+                    "jit_type": "script",
+                },
+                "runners_status": {
+                    "DummyTorchScriptRunner": {
+                        "runner_name": "DummyTorchScriptRunner",
+                        "status": {"Correctness": "OK", "Performance": "OK", "VerifyModel": "OK"},
+                        "result": {
+                            "Correctness": {
+                                "per_output_tolerance": [{"output_name": "output__0", "atol": 0.0, "rtol": 0.0}]
+                            },
+                            "Performance": {
+                                "profiling_results": [
+                                    {
+                                        "batch_size": 1,
+                                        "avg_latency": 1.0,
+                                        "std_latency": 0.0,
+                                        "p50_latency": 1.0,
+                                        "p90_latency": 1.0,
+                                        "p95_latency": 1.0,
+                                        "p99_latency": 1.0,
+                                        "throughput": 1500.0,
+                                        "avg_gpu_clock": 1500.0,
+                                        "request_count": 50,
+                                    }
+                                ]
+                            },
+                        },
+                    }
+                },
+            },
+            "torchscript-trace": {
+                "model_config": {
+                    "format": "torchscript",
+                    "key": "torchscript-trace",
+                    "path": "torchscript-trace/model.pt",
+                    "parent_path": None,
+                    "parent_key": None,
+                    "log_path": "torchscript-trace/format.log",
+                    "jit_type": "trace",
+                },
+                "runners_status": {
+                    "DummyTorchScriptRunner": {
+                        "runner_name": "DummyTorchScriptRunner",
+                        "status": {"Correctness": "OK", "Performance": "OK", "VerifyModel": "OK"},
+                        "result": {
+                            "Correctness": {
+                                "per_output_tolerance": [{"output_name": "output__0", "atol": 0.0, "rtol": 0.0}]
+                            },
+                            "Performance": {
+                                "profiling_results": [
+                                    {
+                                        "batch_size": 1,
+                                        "avg_latency": 1.0,
+                                        "std_latency": 0.0,
+                                        "p50_latency": 1.0,
+                                        "p90_latency": 1.0,
+                                        "p95_latency": 1.0,
+                                        "p99_latency": 1.0,
+                                        "throughput": 1500.0,
+                                        "avg_gpu_clock": 1500.0,
+                                        "request_count": 50,
+                                    }
+                                ]
+                            },
+                        },
+                    }
+                },
+            },
+            "onnx": {
+                "model_config": {
+                    "format": "onnx",
+                    "key": "onnx",
+                    "path": "onnx/model.onnx",
+                    "parent_path": None,
+                    "parent_key": None,
+                    "log_path": "onnx/format.log",
+                    "jit_type": None,
+                },
+                "runners_status": {
+                    "OnnxCUDA": {
+                        "runner_name": "OnnxCUDA",
+                        "status": {"Correctness": "OK", "Performance": "OK", "VerifyModel": "OK"},
+                        "result": {
+                            "Correctness": {
+                                "per_output_tolerance": [{"output_name": "output__0", "atol": 0.0, "rtol": 0.0}]
+                            },
+                            "Performance": {
+                                "profiling_results": [
+                                    {
+                                        "batch_size": 1,
+                                        "avg_latency": 1.0,
+                                        "std_latency": 0.0,
+                                        "p50_latency": 1.0,
+                                        "p90_latency": 1.0,
+                                        "p95_latency": 1.0,
+                                        "p99_latency": 1.0,
+                                        "throughput": 1500.0,
+                                        "avg_gpu_clock": 1500.0,
+                                        "request_count": 50,
+                                    }
+                                ]
+                            },
+                        },
+                    }
+                },
+            },
+            "trt-fp16": {
+                "model_config": {
+                    "format": "trt",
+                    "key": "trt-fp16",
+                    "path": "trt-fp16/model.plan",
+                    "parent_path": "onnx/model.onnx",
+                    "parent_key": "onnx",
+                    "log_path": "trt-fp16/format.log",
+                    "jit_type": None,
+                },
+                "runners_status": {
+                    "OnnxCUDA": {
+                        "runner_name": "TensorRT",
+                        "status": {"Correctness": "OK", "Performance": "OK", "VerifyModel": "OK"},
+                        "result": {
+                            "Correctness": {
+                                "per_output_tolerance": [{"output_name": "output__0", "atol": 0.0, "rtol": 0.0}]
+                            },
+                            "Performance": {
+                                "profiling_results": [
+                                    {
+                                        "batch_size": 1,
+                                        "avg_latency": 1.0,
+                                        "std_latency": 0.0,
+                                        "p50_latency": 1.0,
+                                        "p90_latency": 1.0,
+                                        "p95_latency": 1.0,
+                                        "p99_latency": 1.0,
+                                        "throughput": 1500.0,
+                                        "avg_gpu_clock": 1500.0,
+                                        "request_count": 50,
+                                    }
+                                ]
+                            },
+                        },
+                    }
+                },
+            },
+        },
+        "input_metadata": [{"name": "input__0", "shape": (-1, 1), "dtype": "float32"}],
+        "output_metadata": [{"name": "output__0", "shape": (-1, 1), "dtype": "float32"}],
+        "dataloader_trt_profile": {},
+        "dataloader_max_batch_size": 2,
+    }
+
+
+def status_dict_v0_3_0():
+    return {
+        "format_version": "0.3.0",
+        "model_navigator_version": "0.7.4",
+        "uuid": "1",
+        "environment": {},
+        "config": {
+            "framework": "torch",
+            "target_device": "cpu",
+            "runner_names": ["DummySourceTorchRunner", "DummyTorchScriptRunner"],
+            "verbose": False,
+            "debug": False,
+            "target_formats": ["torch", "torchscript"],
+            "sample_count": 1,
+            "custom_configs": {
+                "Onnx": {"opset": 13},
+                "TensorRT": {"trt_profiles": {}},
+                "Torch": {
+                    "jit_type": ["trace", "script"],
+                },
+            },
+            "optimization_profile": {
+                "batch_sizes": [16],
+                "window_size": 50,
+                "max_trials": 10,
+                "stability_percentage": 10,
+                "throughput_cutoff_threshold": 0.05,
+            },
+        },
+        "models_status": {
+            "torch": {
+                "model_config": {
+                    "format": "torch",
+                    "key": "torch",
+                    "path": "torch/----",
+                    "parent_path": None,
+                    "parent_key": None,
+                    "log_path": "torch/format.log",
+                    "custom_args": {},
+                },
+                "runners_status": {
+                    "DummySourceTorchRunner": {
+                        "runner_name": "DummySourceTorchRunner",
+                        "status": {"Correctness": "OK", "Performance": "OK", "VerifyModel": "OK"},
+                        "result": {
+                            "Correctness": {
+                                "per_output_tolerance": [{"output_name": "output__0", "atol": 0.0, "rtol": 0.0}]
+                            },
+                            "Performance": {
+                                "profiling_results": [
+                                    {
+                                        "sample_id": 0,
+                                        "batch_size": 1,
+                                        "avg_latency": 1.0,
+                                        "std_latency": 0.0,
+                                        "p50_latency": 1.0,
+                                        "p90_latency": 1.0,
+                                        "p95_latency": 1.0,
+                                        "p99_latency": 1.0,
+                                        "throughput": 1500.0,
+                                        "request_count": 50,
+                                        "avg_gpu_clock": 1500.0,
+                                    }
+                                ]
+                            },
+                        },
+                    }
+                },
+                "status": {},
+                "result": {},
+            },
+            "torchscript-script": {
+                "model_config": {
+                    "format": "torchscript",
+                    "key": "torchscript-script",
+                    "path": "torchscript-script/model.pt",
+                    "parent_path": None,
+                    "parent_key": None,
+                    "log_path": "torchscript-script/format.log",
+                    "jit_type": "script",
+                },
+                "runners_status": {
+                    "DummyTorchScriptRunner": {
+                        "runner_name": "DummyTorchScriptRunner",
+                        "status": {"Correctness": "OK", "Performance": "OK", "VerifyModel": "OK"},
+                        "result": {
+                            "Correctness": {
+                                "per_output_tolerance": [{"output_name": "output__0", "atol": 0.0, "rtol": 0.0}]
+                            },
+                            "Performance": {
+                                "profiling_results": [
+                                    {
+                                        "sample_id": 0,
+                                        "batch_size": 1,
+                                        "avg_latency": 1.0,
+                                        "std_latency": 0.0,
+                                        "p50_latency": 1.0,
+                                        "p90_latency": 1.0,
+                                        "p95_latency": 1.0,
+                                        "p99_latency": 1.0,
+                                        "throughput": 1500.0,
+                                        "request_count": 50,
+                                        "avg_gpu_clock": 1500.0,
+                                    }
+                                ]
+                            },
+                        },
+                    }
+                },
+                "status": {},
+                "result": {},
+            },
+            "torchscript-trace": {
+                "model_config": {
+                    "format": "torchscript",
+                    "key": "torchscript-trace",
+                    "path": "torchscript-trace/model.pt",
+                    "parent_path": None,
+                    "parent_key": None,
+                    "log_path": "torchscript-trace/format.log",
+                    "jit_type": "trace",
+                },
+                "runners_status": {
+                    "DummyTorchScriptRunner": {
+                        "runner_name": "DummyTorchScriptRunner",
+                        "status": {"Correctness": "OK", "Performance": "OK", "VerifyModel": "OK"},
+                        "result": {
+                            "Correctness": {
+                                "per_output_tolerance": [{"output_name": "output__0", "atol": 0.0, "rtol": 0.0}]
+                            },
+                            "Performance": {
+                                "profiling_results": [
+                                    {
+                                        "sample_id": 0,
+                                        "batch_size": 1,
+                                        "avg_latency": 1.0,
+                                        "std_latency": 0.0,
+                                        "p50_latency": 1.0,
+                                        "p90_latency": 1.0,
+                                        "p95_latency": 1.0,
+                                        "p99_latency": 1.0,
+                                        "throughput": 1500.0,
+                                        "request_count": 50,
+                                        "avg_gpu_clock": 1500.0,
+                                    }
+                                ]
+                            },
+                        },
+                    }
+                },
+                "status": {},
+                "result": {},
+            },
+            "onnx": {
+                "model_config": {
+                    "format": "onnx",
+                    "key": "onnx",
+                    "path": "onnx/model.onnx",
+                    "parent_path": None,
+                    "parent_key": None,
+                    "log_path": "onnx/format.log",
+                    "dynamo_export": False,
+                },
+                "runners_status": {
+                    "OnnxCUDA": {
+                        "runner_name": "OnnxCUDA",
+                        "status": {"Correctness": "OK", "Performance": "OK", "VerifyModel": "OK"},
+                        "result": {
+                            "Correctness": {
+                                "per_output_tolerance": [{"output_name": "output__0", "atol": 0.0, "rtol": 0.0}]
+                            },
+                            "Performance": {
+                                "profiling_results": [
+                                    {
+                                        "sample_id": 0,
+                                        "batch_size": 1,
+                                        "avg_latency": 1.0,
+                                        "std_latency": 0.0,
+                                        "p50_latency": 1.0,
+                                        "p90_latency": 1.0,
+                                        "p95_latency": 1.0,
+                                        "p99_latency": 1.0,
+                                        "throughput": 1500.0,
+                                        "request_count": 50,
+                                        "avg_gpu_clock": 1500.0,
+                                    }
+                                ]
+                            },
+                        },
+                    }
+                },
+                "status": {},
+                "result": {},
+            },
+            "trt-fp16": {
+                "model_config": {
+                    "format": "trt",
+                    "key": "trt",
+                    "path": "trt/model.plan",
+                    "parent_path": "onnx/model.onnx",
+                    "parent_key": "onnx",
+                    "log_path": "trt/format.log",
+                    "parent": {
+                        "format": "onnx",
+                        "key": "onnx",
+                        "path": "onnx/model.onnx",
+                        "parent_path": None,
+                        "parent_key": None,
+                        "log_path": "onnx/format.log",
+                        "dynamo_export": False,
+                    },
+                },
+                "runners_status": {
+                    "OnnxCUDA": {
+                        "runner_name": "TensorRT",
+                        "status": {"Correctness": "OK", "Performance": "OK", "VerifyModel": "OK"},
+                        "result": {
+                            "Correctness": {
+                                "per_output_tolerance": [{"output_name": "output__0", "atol": 0.0, "rtol": 0.0}]
+                            },
+                            "Performance": {
+                                "profiling_results": [
+                                    {
+                                        "sample_id": 0,
+                                        "batch_size": 1,
+                                        "avg_latency": 1.0,
+                                        "std_latency": 0.0,
+                                        "p50_latency": 1.0,
+                                        "p90_latency": 1.0,
+                                        "p95_latency": 1.0,
+                                        "p99_latency": 1.0,
+                                        "throughput": 1500.0,
+                                        "request_count": 50,
+                                        "avg_gpu_clock": 1500.0,
+                                    }
+                                ]
+                            },
+                        },
+                    }
+                },
+                "status": {},
+                "result": {},
+            },
+        },
+        "input_metadata": {
+            "metadata": [{"name": "input__0", "shape": (-1, 1), "dtype": "float32"}],
+            "pytree_metadata": {"metadata": "input__0", "tensor_type": "numpy"},
+            "is_legacy": False,
+        },
+        "output_metadata": {
+            "metadata": [{"name": "output__0", "shape": (-1, 1), "dtype": "float32"}],
+            "pytree_metadata": {"metadata": "output__0", "tensor_type": "numpy"},
+            "is_legacy": True,
+        },
+        "dataloader_trt_profile": {},
+        "dataloader_max_batch_size": 2,
+        "status": {},
+        "result": {},
+        "timestamp": "2022-11-24T19:57:03.145190",
     }

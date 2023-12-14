@@ -171,7 +171,7 @@ model_statuses2 = {
     ),
 }
 
-torchscript_config = TorchScriptConfig(jit_type=JitType.TRACE, strict=True)
+torchscript_config = TorchScriptConfig(jit_type=JitType.TRACE, strict=True, inference_mode=True, autocast=False)
 model_statuses3 = {
     torchscript_config.key: ModelStatus(
         model_config=torchscript_config,

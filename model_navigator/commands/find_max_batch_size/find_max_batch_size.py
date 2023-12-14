@@ -16,7 +16,7 @@ import dataclasses
 import logging
 import pathlib
 import tempfile
-from typing import List, Optional, Type, Union
+from typing import Dict, List, Optional, Type, Union
 
 import jsonlines
 
@@ -24,6 +24,7 @@ from model_navigator.api.config import OptimizationProfile
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.execution_context import ExecutionContext
 from model_navigator.commands.performance import Profiler, ProfilingResults
+from model_navigator.configuration.runner.runner_config import RunnerConfig
 from model_navigator.core.constants import DEFAULT_MAX_BATCH_SIZE_THRESHOLD
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata
@@ -61,6 +62,7 @@ class FindMaxBatchSize(Command):
         optimization_profile: OptimizationProfile,
         verbose: bool,
         reproduce_script_dir: Optional[pathlib.Path] = None,
+        runner_config: Optional[Dict] = None,
     ) -> CommandOutput:
         """Execute command.
 
@@ -73,6 +75,7 @@ class FindMaxBatchSize(Command):
             optimization_profile: Configuration for performance measurement
             verbose: Flag to enable/disable verbose logging for command
             reproduce_script_dir: Script where reproduction of command is saved
+            runner_config: Additional runner configuration.
 
         Returns:
             CommandOutput with status and additional output parameters
@@ -89,6 +92,7 @@ class FindMaxBatchSize(Command):
                 verbose=verbose,
                 runner_cls=configuration.runner_cls,
                 reproduce_script_dir=reproduce_script_dir,
+                runner_config=runner_config,
             )
             if device_max_batch_size is not None:
                 break
@@ -109,6 +113,7 @@ class FindMaxBatchSize(Command):
         verbose: bool,
         runner_cls: Type[NavigatorRunner],
         reproduce_script_dir: Optional[pathlib.Path] = None,
+        runner_config: Optional[RunnerConfig] = None,
     ):
         model_path = workspace.path / path
         model_dir = model_path.parent
@@ -154,6 +159,7 @@ class FindMaxBatchSize(Command):
                 "runner_name": runner_cls.name(),
                 "input_metadata": input_metadata.to_json(),
                 "output_metadata": output_metadata.to_json(),
+                "runner_config": runner_config.to_dict(parse=True) if runner_config else None,
             }
 
             args = parse_kwargs_to_cmd(kwargs)

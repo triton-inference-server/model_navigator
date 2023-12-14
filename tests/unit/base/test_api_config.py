@@ -29,6 +29,8 @@ from model_navigator.api.config import (
     TensorRTPrecisionMode,
     TensorRTProfile,
     TorchConfig,
+    TorchExportConfig,
+    TorchScriptConfig,
     TorchTensorRTConfig,
     _custom_configs,
     map_custom_configs,
@@ -99,19 +101,47 @@ def test_tensorflow_tensorrt_config_defaults_reset_values_to_initial():
 def test_torch_config_has_valid_name_and_format():
     config = TorchConfig()
     assert config.name() == "Torch"
-    assert config.format == Format.TORCHSCRIPT
-
-
-def test_torch_config_has_strict_true_by_default():
-    config = TorchConfig()
-    assert config.strict is True
+    assert config.format == Format.TORCH
 
 
 def test_torch_config_defaults_reset_values_to_initial():
-    config = TorchConfig(strict=False, jit_type=(JitType.TRACE,))
+    config = TorchConfig(inference_mode=False, autocast=True)
+    config.defaults()
+    assert config.autocast is False
+    assert config.inference_mode is True
+
+
+def test_torch_script_config_has_valid_name_and_format():
+    config = TorchScriptConfig()
+    assert config.name() == "TorchScript"
+    assert config.format == Format.TORCHSCRIPT
+
+
+def test_torch_script_config_has_strict_true_by_default():
+    config = TorchScriptConfig()
+    assert config.strict is True
+
+
+def test_torch_script_config_defaults_reset_values_to_initial():
+    config = TorchScriptConfig(strict=False, jit_type=(JitType.TRACE,), inference_mode=False, autocast=True)
     config.defaults()
     assert config.strict is True
     assert config.jit_type == (JitType.SCRIPT, JitType.TRACE)
+    assert config.autocast is False
+    assert config.inference_mode is True
+
+
+def test_torch_export_config_has_valid_name_and_format():
+    config = TorchExportConfig()
+    assert config.name() == "TorchExport"
+    assert config.format == Format.TORCH_EXPORTEDPROGRAM
+
+
+def test_torch__export_config_defaults_reset_values_to_initial():
+    config = TorchExportConfig(inference_mode=False, autocast=True)
+    config.defaults()
+    assert config.autocast is False
+    assert config.inference_mode is True
 
 
 def test_torch_tensorrt_config_has_valid_name_and_format():

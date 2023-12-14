@@ -18,13 +18,13 @@ import json
 import logging
 import pathlib
 import tempfile
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Dict, Optional
 
 from model_navigator.api.config import Framework, OptimizationProfile, SizedDataLoader
 from model_navigator.commands.find_max_batch_size.find_max_batch_size import MaxBatchSizeFinder
 from model_navigator.core.dataloader import to_numpy
 from model_navigator.core.tensor import FRAMEWORK_TO_TENSOR_TYPE, PyTreeMetadata, TensorMetadata
-from model_navigator.exceptions import ModelNavigatorProfilingError
+from model_navigator.exceptions import ModelNavigatorError, ModelNavigatorProfilingError
 from model_navigator.runners.registry import get_runner
 
 logger_name = "model_navigator.api.utilities"
@@ -69,6 +69,7 @@ def find_max_batch_size_till_oom(
     dataloader: SizedDataLoader,
     batch_dim: int = 0,
     max_batch_size_search_limit: Optional[int] = None,
+    runner_config: Optional[Dict] = None,
 ):
     """Find the maximum batch size for a model.
 
@@ -80,6 +81,7 @@ def find_max_batch_size_till_oom(
         dataloader: A SizedDataLoader.
         batch_dim: The batch dimension of the model.
         max_batch_size_search_limit: Limit the search for the maximum batch size to this value.
+        runner_config: Additional runner configuration.
     """
     if framework == Framework.TORCH:
         runner_name = "TorchCUDA"
@@ -89,6 +91,8 @@ def find_max_batch_size_till_oom(
         runner_name = "OnnxCUDA"
     elif framework == Framework.JAX:
         runner_name = "Jax"
+    else:
+        raise ModelNavigatorError(f"Unsupported {framework} for operation.")
 
     sample = next(iter(dataloader))
 
@@ -105,6 +109,18 @@ def find_max_batch_size_till_oom(
         shape[batch_dim] = -1
         input_metadata.add(name=name, shape=shape, dtype=tensor.dtype)
 
+    if runner_config is None:
+        runner_config = {}
+
+    optimization_profile = OptimizationProfile(
+        max_batch_size=max_batch_size_search_limit,
+        window_size=1,
+        stabilization_windows=1,
+        min_trials=1,
+        max_trials=1,
+        throughput_cutoff_threshold=-2,
+    )
+
     with tempfile.NamedTemporaryFile() as temp_file:
         results_path = pathlib.Path(temp_file.name)
 
@@ -112,14 +128,11 @@ def find_max_batch_size_till_oom(
             model=model,
             input_metadata=input_metadata,
             output_metadata=None,
+            **runner_config,
         )  # pytype: disable=not-instantiable
         try:
             LOGGER.info("Starting max batch size search.")
-            MaxBatchSizeFinder(
-                profile=OptimizationProfile(max_batch_size=max_batch_size_search_limit),
-                batch_dim=batch_dim,
-                results_path=results_path,
-            ).run(
+            MaxBatchSizeFinder(profile=optimization_profile, batch_dim=batch_dim, results_path=results_path,).run(
                 runner=runner,
                 profiling_sample=profiling_sample,
                 sample_id=0,

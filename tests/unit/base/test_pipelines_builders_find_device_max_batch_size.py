@@ -51,6 +51,8 @@ def test_find_device_max_batch_size_builder_return_execution_unit_when_torch_fra
             TorchScriptConfig(
                 jit_type=JitType.TRACE,
                 strict=True,
+                autocast=False,
+                inference_mode=True,
             )
         ],
         Format.ONNX: [ONNXConfig(opset=17, dynamic_axes={}, dynamo_export=False, graph_surgeon_optimization=True)],

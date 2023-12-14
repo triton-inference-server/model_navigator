@@ -47,21 +47,19 @@ def correctness(
     output_metadata: Dict,
     navigator_workspace: Optional[str] = None,
     model_path: Optional[str] = None,
-    device: Optional[str] = None,
+    runner_config: Optional[Dict] = None,
 ) -> None:
-    """Run correcntess tests.
+    """Run correctness tests.
 
     Args:
-        batch_dim (int): Batch dimension.
-        results_path (str): Output results path.
-        runner_name (str): Name of the model's runner.
-        input_metadata (Dict): Input metadata.
-        output_metadata (Dict): Output metadata.
-        navigator_workspace (Optional[str], optional): Model Navigator workspace path.
-            When None use current workdir. Defaults to None.
-        model_path (Optional[str], optional): Path to the model.
-            When None use `get_model()` to load the model. Defaults to None.
-        device (Optional[str]): Device to run the model on. Defaults to None.
+        batch_dim: Batch dimension.
+        results_path: Output results path.
+        runner_name: Name of the model's runner.
+        input_metadata: Input metadata.
+        output_metadata: Output metadata.
+        navigator_workspace: Model Navigator workspace path. When None use current workdir. Defaults to None.
+        model_path: Path to the model. When None use `get_model()` to load the model. Defaults to None.
+        runner_config: Additional runner arguments
     """
     if not navigator_workspace:
         navigator_workspace = pathlib.Path.cwd()
@@ -75,6 +73,9 @@ def correctness(
     else:
         model = get_model()
 
+    if runner_config is None:
+        runner_config = {}
+
     input_metadata = TensorMetadata.from_json(input_metadata)
     output_metadata = TensorMetadata.from_json(output_metadata)
     runner = get_runner(runner_name)(
@@ -83,7 +84,7 @@ def correctness(
         output_metadata=output_metadata,
         navigator_workspace=navigator_workspace,
         batch_dim=batch_dim,
-        device=device,
+        **runner_config,
     )  # pytype: disable=not-instantiable
 
     per_output_tolerance = TolerancePerOutputName({name: Tolerance(0.0, 0.0) for name in output_metadata})
