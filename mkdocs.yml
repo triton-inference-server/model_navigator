@@ -44,8 +44,6 @@ plugins:
             merge_init_into_class: true
             separate_signature: true
             inherited_members: true
-            filters:
-            - "!__post_init__"
   - search
 watch:
   - model_navigator
