@@ -21,6 +21,7 @@ import shutil
 import subprocess
 import sys
 import textwrap
+import traceback
 from typing import Callable, List, Optional, Union
 
 import fire
@@ -170,7 +171,9 @@ class ExecutionContext(contextlib.AbstractContextManager):
             if not allow_failure:
                 raise ModelNavigatorUserInputError(f"Command to reproduce error: {' '.join(cmd)}") from e
             else:
-                LOGGER.warning(f"Command exited with error: {e}. Command to reproduce error: {' '.join(cmd)}")
+                LOGGER.warning(
+                    f"Command exited with error: {traceback.format_exc()}. Command to reproduce error: {' '.join(cmd)}"
+                )
 
     def execute_external_runtime_script(self, path: str, args: List, allow_failure: bool = False) -> None:
         """Execute a command as subprocess.

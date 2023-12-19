@@ -24,6 +24,7 @@ from model_navigator.commands.performance.performance import Performance
 from model_navigator.commands.performance.profiler import ProfilingResults
 from model_navigator.core.workspace import Workspace
 from model_navigator.exceptions import ModelNavigatorProfilingError
+from model_navigator.runners.base import InferenceTime
 
 
 def test_performance_command_returns_status_ok_when_profiling_results_found_and_profiler_exit_status_0(mocker):
@@ -47,7 +48,11 @@ def test_performance_command_returns_status_ok_when_profiling_results_found_and_
             mock.__enter__.return_value.name = tmpfile.name
             mocker.patch("tempfile.NamedTemporaryFile", return_value=mock)
             with jsonlines.open(tmpfile.name, "w") as f:
-                f.write(ProfilingResults.from_measurements([1.5], [1500], batch_size=1, sample_id=0).to_dict())
+                f.write(
+                    ProfilingResults.from_measurements(
+                        [InferenceTime(total=1.5)], [1500], batch_size=1, sample_id=0
+                    ).to_dict(parse=True)
+                )
 
             command_output = Performance().run(
                 workspace=Workspace(workspace),
@@ -82,7 +87,11 @@ def test_performance_command_returns_status_ok_when_profiling_results_found_and_
             mock_tempfile.__enter__.return_value.name = tmpfile.name
             mocker.patch("tempfile.NamedTemporaryFile", return_value=mock_tempfile)
             with jsonlines.open(tmpfile.name, "w") as f:
-                f.write(ProfilingResults.from_measurements([1.5], [1500], batch_size=1, sample_id=0).to_dict())
+                f.write(
+                    ProfilingResults.from_measurements(
+                        [InferenceTime(total=1.5)], [1500], batch_size=1, sample_id=0
+                    ).to_dict(parse=True)
+                )
 
             command_output = Performance().run(
                 workspace=Workspace(workspace),

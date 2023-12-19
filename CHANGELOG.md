@@ -21,6 +21,7 @@ limitations under the License.
 - new: Support for autocast and inference mode configuration for Torch runners
 - new: Allow to select device for Torch and ONNX runners
 - new: Add support for `default_model_filename` in Triton model configuration
+- new: Detailed profiling of inference steps (pre- and postprocessing, memcpy and compute)
 - fix: JAX export and TensorRT conversion fails when custom workspace is used
 - fix: Missing max workspace size passed to TensorRT conversion
 - fix: Execution of TensorRT optimize raise error during handling output metadata

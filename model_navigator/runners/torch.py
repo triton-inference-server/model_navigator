@@ -22,7 +22,7 @@ from model_navigator.core.tensor import get_tensor_type
 from model_navigator.exceptions import ModelNavigatorConfigurationError
 from model_navigator.frameworks import is_torch2_available
 from model_navigator.frameworks.tensorrt import utils as tensorrt_utils
-from model_navigator.runners.base import DeviceKind, NavigatorRunner
+from model_navigator.runners.base import DeviceKind, InferenceStep, InferenceStepTimer, NavigatorRunner
 from model_navigator.runners.registry import register_runner
 from model_navigator.utils import module
 from model_navigator.utils.common import numpy_to_torch_dtype
@@ -86,8 +86,11 @@ class _BaseTorchRunner(NavigatorRunner):
         if self.output_metadata is None:
             return outputs
 
-        out_dict = self.output_metadata.flatten_sample(outputs)
-        out_dict = self._prepare_outputs(out_dict)
+        with InferenceStepTimer(self._inference_time, InferenceStep.POSTPROCESSING, enabled=self._enable_timer):
+            out_dict = self.output_metadata.flatten_sample(outputs)
+
+        with InferenceStepTimer(self._inference_time, InferenceStep.D2H_MEMCPY, enabled=self._enable_timer):
+            out_dict = self._prepare_outputs(out_dict)
 
         return out_dict
 
@@ -104,30 +107,43 @@ class _BaseTorchRunner(NavigatorRunner):
     def _infer_v2(self, feed_dict):
         with torch.inference_mode(mode=self._inference_mode):
             args, kwargs = self._prepare_inputs(feed_dict)
-            with torch.autocast(device_type=self.device, enabled=self._autocast):
+
+            with InferenceStepTimer(
+                self._inference_time, InferenceStep.COMPUTE, enabled=self._enable_timer
+            ), torch.autocast(device_type=self.device, enabled=self._autocast):
                 outputs = self._loaded_model(*args, **kwargs)
         return outputs
 
     def _infer_v1(self, feed_dict):
         with torch.no_grad():
             args, kwargs = self._prepare_inputs(feed_dict)
-            with torch.autocast(device_type=self.device, enabled=self._autocast):
+
+            with InferenceStepTimer(
+                self._inference_time, InferenceStep.COMPUTE, enabled=self._enable_timer
+            ), torch.autocast(device_type=self.device, enabled=self._autocast):
                 outputs = self._loaded_model(*args, **kwargs)
 
         return outputs
 
     def _prepare_inputs(self, feed_dict):
         """Prepare inputs for inference."""
-        inputs = {}
-        for input_name, spec in self.input_metadata.items():
-            value = feed_dict[input_name]
-            value = self._to_torch_tensor(value, spec.dtype)
-            inputs[input_name] = value
-        unflatten_inputs = self.input_metadata.unflatten_sample(inputs, wrap_input=True)
-        if isinstance(unflatten_inputs[-1], dict):
-            args, kwargs = unflatten_inputs[:-1], unflatten_inputs[-1]
-        else:
-            args, kwargs = unflatten_inputs, {}
+        with InferenceStepTimer(self._inference_time, InferenceStep.PREPROCESSING, enabled=self._enable_timer):
+            inputs = {}
+            for input_name, spec in self.input_metadata.items():
+                value = feed_dict[input_name]
+                value = self._to_torch_tensor(value, spec.dtype)
+                inputs[input_name] = value
+
+        with InferenceStepTimer(self._inference_time, InferenceStep.H2D_MEMCPY, enabled=self._enable_timer):
+            for input_name, value in inputs.items():
+                inputs[input_name] = value.to(self.device)
+
+        with InferenceStepTimer(self._inference_time, InferenceStep.PREPROCESSING, enabled=self._enable_timer):
+            unflatten_inputs = self.input_metadata.unflatten_sample(inputs, wrap_input=True)
+            if isinstance(unflatten_inputs[-1], dict):
+                args, kwargs = unflatten_inputs[:-1], unflatten_inputs[-1]
+            else:
+                args, kwargs = unflatten_inputs, {}
         return args, kwargs
 
     def _prepare_outputs(self, out_dict):
@@ -146,7 +162,7 @@ class _BaseTorchRunner(NavigatorRunner):
             value = torch.from_numpy(value)
         else:
             raise ValueError(f"Unsupported type {type(value)}")
-        return value.to(self.device)
+        return value
 
 
 class _BaseTorchScriptRunner(_BaseTorchRunner):

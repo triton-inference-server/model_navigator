@@ -14,8 +14,10 @@
 """Base runners definition for Model Navigator."""
 
 import abc
+import collections
 import time
-from typing import Any, Dict, List, Optional
+from enum import Enum
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 from slugify import slugify
@@ -24,6 +26,59 @@ from model_navigator.api.config import DeviceKind, Format, TensorType
 from model_navigator.core.dataloader import validate_sample_output
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata, TensorSpec, get_tensor_type
+from model_navigator.frameworks import is_torch_available
+from model_navigator.utils import module
+
+
+class InferenceStep(Enum):
+    """Inference step enum."""
+
+    PREPROCESSING = "preprocessing"
+    H2D_MEMCPY = "h2d_memcpy"
+    COMPUTE = "compute"
+    D2H_MEMCPY = "d2h_memcpy"
+    POSTPROCESSING = "postprocessing"
+    TOTAL = "total"
+
+
+class InferenceTime(collections.defaultdict):
+    """Inference time object."""
+
+    def __init__(self, *args, **kwargs):
+        """Initialize object."""
+        super().__init__(float, *args, **kwargs)
+
+
+class InferenceStepTimer:
+    """Context manager for measuring inference step time."""
+
+    def __init__(self, inference_time: InferenceTime, step_name: Union[str, InferenceStep], enabled: bool = False):
+        """Initialize object.
+
+        Args:
+            inference_time: InferenceTime object to store measured time.
+            step_name: Name of the step to measure.
+            enabled: Flag indicating if timer is enabled.
+        """
+        self.inference_time = inference_time
+        self.step_name = step_name if isinstance(step_name, str) else step_name.value
+        self.start_time = None
+        self.enabled = enabled
+        self._torch = module.lazy_import("torch") if is_torch_available() else None
+
+    def __enter__(self):
+        """Start measuring time."""
+        if self.enabled:
+            self.start_time = time.monotonic()
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """Stop measuring time and store measured time in InferenceTime object."""
+        if self.enabled:
+            end_time = time.monotonic()
+            runtime = (end_time - self.start_time) * 1000
+            self.inference_time[self.step_name] += runtime
+            if self._torch is not None and self._torch.cuda.is_available():
+                self._torch.cuda.synchronize()
 
 
 class NavigatorRunner(abc.ABC):
@@ -41,6 +96,7 @@ class NavigatorRunner(abc.ABC):
         input_metadata: TensorMetadata,
         output_metadata: Optional[TensorMetadata],
         return_type: TensorType = TensorType.NUMPY,
+        enable_timer: bool = False,
         **kwargs,
     ) -> None:
         """Initialize object.
@@ -50,6 +106,7 @@ class NavigatorRunner(abc.ABC):
             input_metadata: A model inputs metadata
             output_metadata: A model outputs metadata
             return_type: A type of return value
+            enable_timer: Flag indicating if timer should be enabled
         """
         self._model = model
         self._input_metadata = input_metadata
@@ -58,7 +115,8 @@ class NavigatorRunner(abc.ABC):
         self._check_return_type(return_type)
         self._return_type = return_type
 
-        self.inference_time = None
+        self._enable_timer = enable_timer
+        self._inference_time = None
         self.is_active = False
 
         self.init_impl()
@@ -247,31 +305,30 @@ class NavigatorRunner(abc.ABC):
                         f"Note: Expected a shape compatible with: {meta.shape}"
                     )
 
-        start_time = time.monotonic()
-        output = self.infer_impl(feed_dict, *args, **kwargs)
-        end_time = time.monotonic()
+        self._inference_time = InferenceTime()
+        with InferenceStepTimer(self._inference_time, InferenceStep.TOTAL, enabled=self._enable_timer):
+            output = self.infer_impl(feed_dict, *args, **kwargs)
 
         if check_inputs:
             validate_sample_output(output, self.return_type)
 
-        self.inference_time = end_time - start_time
         return output
 
-    def last_inference_time(self) -> Optional[float]:
-        """Returns the total inference time in seconds required during the last call to ``infer()``.
+    def last_inference_time(self) -> InferenceTime:
+        """Returns the total inference time in miliseconds required during the last call to ``infer()``.
 
         Must be called only after ``activate()`` and before ``deactivate()``.
 
         Returns:
-            The time in seconds, or None if runtime was not measured by the runner.
+            Inference time in seconds split into preprocessing, host-to-device, compute, device-to-host, and
+            postprocessing times.
         """
-        if self.inference_time is None:
-            msg = f"{self.name()} | `inference_time` was not set. Inference time will be incorrect! "
-            msg += "To correctly compare runtimes, please set the `inference_time` attribute in `infer_impl()`"
-
-            LOGGER.error(msg)
-            return None
-        return self.inference_time
+        if self._inference_time is None:
+            raise RuntimeError(
+                f"{self.name()} | Inference time not available. "
+                "Make sure to call `infer()` before calling `last_inference_time()`."
+            )
+        return self._inference_time
 
     def deactivate(self):
         """Deactivate the runner. For example, this may involve freeing CPU or GPU memory."""
@@ -283,7 +340,6 @@ class NavigatorRunner(abc.ABC):
             )
             return
 
-        self.inference_time = None
         self.is_active = None
 
         self.deactivate_impl()

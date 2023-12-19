@@ -18,6 +18,7 @@ from unittest.mock import MagicMock
 import numpy as np
 
 from model_navigator.commands.performance.profiler import OptimizationProfile, Profiler, ProfilingResults
+from model_navigator.runners.base import InferenceTime
 
 
 def test_batch_size_is_set_correctly_when_no_max_or_batch_sizes_passed():
@@ -104,7 +105,7 @@ def test_is_measurement_stable_return_false_when_window_size_less_than_count():
     )
     sample_id = 0
     batch_size = 1
-    measurements = [25, 24, 23]
+    measurements = [InferenceTime(total=measurement) for measurement in [25, 24, 23]]
     gpu_clocks = [1500, None]
     windows = [
         ProfilingResults.from_measurements(measurements, gpu_clocks, batch_size, sample_id),
@@ -124,9 +125,24 @@ def test_is_measurement_stable_return_false_when_avg_latencies_are_out_of_stabil
     sample_id = 0
     batch_size = 1
     windows = [
-        ProfilingResults.from_measurements([250, 220, 200], [1500, None], batch_size, sample_id),
-        ProfilingResults.from_measurements([200, 150, 100], [1500, None], batch_size, sample_id),
-        ProfilingResults.from_measurements([50, 49, 47], [1500, None], batch_size, sample_id),
+        ProfilingResults.from_measurements(
+            [InferenceTime(total=250), InferenceTime(total=220), InferenceTime(total=200)],
+            [1500, None],
+            batch_size,
+            sample_id,
+        ),
+        ProfilingResults.from_measurements(
+            [InferenceTime(total=200), InferenceTime(total=150), InferenceTime(total=100)],
+            [1500, None],
+            batch_size,
+            sample_id,
+        ),
+        ProfilingResults.from_measurements(
+            [InferenceTime(total=50), InferenceTime(total=49), InferenceTime(total=47)],
+            [1500, None],
+            batch_size,
+            sample_id,
+        ),
     ]
 
     assert bool(profiler._is_measurement_stable(windows)) is False
@@ -142,11 +158,36 @@ def test_is_measurement_stable_return_true_when_avg_latencies_are_in_stability_r
     sample_id = 0
     batch_size = 1
     windows = [
-        ProfilingResults.from_measurements([250, 220, 200], [1500, None], batch_size, sample_id),
-        ProfilingResults.from_measurements([200, 150, 100], [1500, None], batch_size, sample_id),
-        ProfilingResults.from_measurements([52, 52, 51], [1500, None], batch_size, sample_id),
-        ProfilingResults.from_measurements([50, 49, 48], [1500, None], batch_size, sample_id),
-        ProfilingResults.from_measurements([52, 49, 47], [1500, None], batch_size, sample_id),
+        ProfilingResults.from_measurements(
+            [InferenceTime(total=250), InferenceTime(total=220), InferenceTime(total=200)],
+            [1500, None],
+            batch_size,
+            sample_id,
+        ),
+        ProfilingResults.from_measurements(
+            [InferenceTime(total=200), InferenceTime(total=150), InferenceTime(total=100)],
+            [1500, None],
+            batch_size,
+            sample_id,
+        ),
+        ProfilingResults.from_measurements(
+            [InferenceTime(total=52), InferenceTime(total=52), InferenceTime(total=51)],
+            [1500, None],
+            batch_size,
+            sample_id,
+        ),
+        ProfilingResults.from_measurements(
+            [InferenceTime(total=50), InferenceTime(total=49), InferenceTime(total=48)],
+            [1500, None],
+            batch_size,
+            sample_id,
+        ),
+        ProfilingResults.from_measurements(
+            [InferenceTime(total=52), InferenceTime(total=49), InferenceTime(total=47)],
+            [1500, None],
+            batch_size,
+            sample_id,
+        ),
     ]
 
     assert bool(profiler._is_measurement_stable(windows)) is True
@@ -157,10 +198,18 @@ def test_profiler_run_return_batch_sizes_upto_4_when_batch_size_4_saturates_thro
     mocker.patch(
         "model_navigator.commands.performance.Profiler._run_measurement",
         side_effect=[
-            ProfilingResults.from_measurements([10, 10, 10], [1500, None], 1, 0),
-            ProfilingResults.from_measurements([15, 15, 15], [1500, None], 2, 0),
-            ProfilingResults.from_measurements([30, 30, 30], [1500, None], 4, 0),
-            ProfilingResults.from_measurements([30, 30, 30], [1500, None], 8, 0),
+            ProfilingResults.from_measurements(
+                [InferenceTime(total=10), InferenceTime(total=10), InferenceTime(total=10)], [1500, None], 1, 0
+            ),
+            ProfilingResults.from_measurements(
+                [InferenceTime(total=15), InferenceTime(total=15), InferenceTime(total=15)], [1500, None], 2, 0
+            ),
+            ProfilingResults.from_measurements(
+                [InferenceTime(total=30), InferenceTime(total=30), InferenceTime(total=30)], [1500, None], 4, 0
+            ),
+            ProfilingResults.from_measurements(
+                [InferenceTime(total=30), InferenceTime(total=30), InferenceTime(total=30)], [1500, None], 8, 0
+            ),
         ],
     )
 

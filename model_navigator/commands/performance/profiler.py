@@ -27,7 +27,7 @@ from model_navigator.commands.performance.results import ProfilingResults
 from model_navigator.core.dataloader import expand_sample
 from model_navigator.core.logger import LOGGER
 from model_navigator.exceptions import ModelNavigatorError
-from model_navigator.runners.base import NavigatorRunner, NavigatorStabilizedRunner
+from model_navigator.runners.base import InferenceStep, NavigatorRunner, NavigatorStabilizedRunner
 
 
 class Profiler:
@@ -108,8 +108,17 @@ class Profiler:
                         f"and batch size: {batch_size}:\n{profiling_result}"
                     ),
                 )
+                total_latency = profiling_result.avg_latency
+                total_steps_latency = sum(
+                    result.avg_time
+                    for step_name, result in profiling_result.detailed_results.items()
+                    if step_name != InferenceStep.TOTAL.value
+                )
+                steps_coverage = total_steps_latency / total_latency
+                LOGGER.log(self._profiling_results_logging_level, f"Inference steps coverage: {steps_coverage:.3f}")
+
                 with jsonlines.open(self._results_path.as_posix(), "a") as f:
-                    f.write(profiling_result.to_dict())
+                    f.write(profiling_result.to_dict(parse=True))
 
                 results.append(profiling_result)
                 if prev_result is not None and profiling_result.throughput < prev_result.throughput * (
@@ -137,7 +146,7 @@ class Profiler:
         for _ in range(self._profile.window_size):
             runner.infer(sample)
             gpu_clocks.append(nvml_handler.gpu_clock)
-            measurements.append(runner.last_inference_time() * 1000)
+            measurements.append(runner.last_inference_time())
 
         return ProfilingResults.from_measurements(measurements, gpu_clocks, batch_size, sample_id)
 

@@ -24,15 +24,15 @@ from model_navigator.api.config import Format, TensorType
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import get_tensor_type
 from model_navigator.exceptions import ModelNavigatorError, ModelNavigatorUserInputError
+from model_navigator.frameworks import is_torch_available
 from model_navigator.frameworks.tensorrt import cuda as cuda_utils
 from model_navigator.frameworks.tensorrt import utils as trt_utils
-from model_navigator.runners.base import DeviceKind, NavigatorRunner
+from model_navigator.runners.base import DeviceKind, InferenceStep, InferenceStepTimer, NavigatorRunner
 from model_navigator.runners.registry import register_runner
 from model_navigator.utils import common as utils
 from model_navigator.utils import module
 
 trt = module.lazy_import("tensorrt")
-torch = module.lazy_import("torch")
 
 
 class FormattedArray:
@@ -111,6 +111,11 @@ class TensorRTRunner(NavigatorRunner):
         self.host_output_buffers = None
         self.use_cuda_graphs = False
         self._trt_input_metadata = None
+
+        if is_torch_available():
+            self._torch = module.lazy_import("torch")
+        else:
+            self._torch = None
 
     @classmethod
     def format(cls) -> Format:
@@ -364,97 +369,99 @@ class TensorRTRunner(NavigatorRunner):
         return output_buffers
 
     def _infer_impl_v3(self, feed_dict):  # noqa C901
-        reshape = False
-        for idx in range(self.engine.num_io_tensors):
-            name = self.engine.get_tensor_name(idx)
+        with InferenceStepTimer(self._inference_time, InferenceStep.PREPROCESSING, enabled=self._enable_timer):
+            reshape = False
+            for idx in range(self.engine.num_io_tensors):
+                name = self.engine.get_tensor_name(idx)
 
-            if self.engine.get_tensor_mode(name) != trt.TensorIOMode.INPUT:
-                continue
+                if self.engine.get_tensor_mode(name) != trt.TensorIOMode.INPUT:
+                    continue
 
-            # Set up input tensor shapes and copy from host memory if needed
-            array = self._input_tensor_view(feed_dict, name)
+                # Set up input tensor shapes and copy from host memory if needed
+                array = self._input_tensor_view(feed_dict, name)
 
-            underlying_array = array.array
+                underlying_array = array.array
 
-            ptr = None
-            if self.engine.is_shape_inference_io(name):
-                if not isinstance(underlying_array, np.ndarray):
-                    raise ModelNavigatorUserInputError(
-                        f"A {type(underlying_array).__name__} was provided for input: {name}, but since this is a shape tensor, "
-                        "it must reside in host memory. Please use a NumPy array instead. "
-                    )
+                ptr = None
+                if self.engine.is_shape_inference_io(name):
+                    if not isinstance(underlying_array, np.ndarray):
+                        raise ModelNavigatorUserInputError(
+                            f"A {type(underlying_array).__name__} was provided for input: {name}, but since this is a shape tensor, "
+                            "it must reside in host memory. Please use a NumPy array instead. "
+                        )
 
-                ptr = underlying_array.ctypes.data
-            else:
-                if isinstance(underlying_array, cuda_utils.DeviceView):
-                    ptr = underlying_array.ptr
-                elif isinstance(underlying_array, np.ndarray):
-                    underlying_array = utils.make_contiguous(underlying_array)
-                    dev_array = self.device_buffers[name]
-                    dev_array.resize(shape=(underlying_array.nbytes,))
-
-                    # For scalars, we need to reshape the array to 1D before we can use `view()` or NumPy complains.
-                    if not underlying_array.shape:
-                        view = underlying_array.reshape(-1).view(np.byte)
-                    else:
-                        view = underlying_array.view(np.byte)
-
-                    dev_array.copy_from(view, stream=self.stream)
-                    ptr = dev_array.ptr
+                    ptr = underlying_array.ctypes.data
                 else:
-                    raise ModelNavigatorUserInputError(
-                        f"For input: {name}, unrecognized type in feed_dict: {type(underlying_array).__name__}.\n"
-                        "Please provide either a NumPy array or DeviceView. "
-                    )
+                    if isinstance(underlying_array, cuda_utils.DeviceView):
+                        ptr = underlying_array.ptr
+                    elif isinstance(underlying_array, np.ndarray):
+                        underlying_array = utils.make_contiguous(underlying_array)
+                        dev_array = self.device_buffers[name]
+                        dev_array.resize(shape=(underlying_array.nbytes,))
 
-            # Only update the input shape/address if something has changed. Otherwise, we'd be
-            # doing extra work unnecessarily.
-            # We retrieve the semantic shape from the FormattedArray, *not* the underlying array.
-            tensor_shape = self.context.get_tensor_shape(name)
-            if tensor_shape != array.shape:
-                LOGGER.debug(f"Setting {name} input shape from {tensor_shape} to: {array.shape}")
-                reshape = True
-                if not self.context.set_input_shape(name, array.shape):
-                    raise ModelNavigatorError(
-                        f"""For input: {name}, failed to set shape from {tensor_shape} to: {array.shape}."""
-                        f"""Please, review if input data shape match the maximal input size which is {tensor_shape}."""
-                    )
+                        # For scalars, we need to reshape the array to 1D before we can use `view()` or NumPy complains.
+                        if not underlying_array.shape:
+                            view = underlying_array.reshape(-1).view(np.byte)
+                        else:
+                            view = underlying_array.view(np.byte)
 
-            if self.context.get_tensor_address(name) != ptr:
-                if not self.context.set_tensor_address(name, ptr):
-                    raise ModelNavigatorError(f"For input: {name}, failed to set tensor address to: {ptr}")
-        # Any change in shape requires recapture of CUDA graph
-        if reshape:
-            self.cuda_graph = None
-            self.graph_exe = None
+                        dev_array.copy_from(view, stream=self.stream)
+                        ptr = dev_array.ptr
+                    else:
+                        raise ModelNavigatorUserInputError(
+                            f"For input: {name}, unrecognized type in feed_dict: {type(underlying_array).__name__}.\n"
+                            "Please provide either a NumPy array or DeviceView. "
+                        )
 
-        if self.use_cuda_graphs:
-            if self.cuda_graph is None:
-                # do inference before CUDA graph capture
+                # Only update the input shape/address if something has changed. Otherwise, we'd be
+                # doing extra work unnecessarily.
+                # We retrieve the semantic shape from the FormattedArray, *not* the underlying array.
+                tensor_shape = self.context.get_tensor_shape(name)
+                if tensor_shape != array.shape:
+                    LOGGER.debug(f"Setting {name} input shape from {tensor_shape} to: {array.shape}")
+                    reshape = True
+                    if not self.context.set_input_shape(name, array.shape):
+                        raise ModelNavigatorError(
+                            f"""For input: {name}, failed to set shape from {tensor_shape} to: {array.shape}."""
+                            f"""Please, review if input data shape match the maximal input size which is {tensor_shape}."""
+                        )
+
+                if self.context.get_tensor_address(name) != ptr:
+                    if not self.context.set_tensor_address(name, ptr):
+                        raise ModelNavigatorError(f"For input: {name}, failed to set tensor address to: {ptr}")
+            # Any change in shape requires recapture of CUDA graph
+            if reshape:
+                self.cuda_graph = None
+                self.graph_exe = None
+
+        with InferenceStepTimer(self._inference_time, InferenceStep.COMPUTE, enabled=self._enable_timer):
+            if self.use_cuda_graphs:
+                if self.cuda_graph is None:
+                    # do inference before CUDA graph capture
+                    if not self.context.execute_async_v3(self.stream.ptr):
+                        raise ModelNavigatorError(
+                            "`execute_async_v3()` failed. Please see the logging output above for details."
+                        )
+                    self.stream.synchronize()  # Added just in case
+                    # CUDA graph capture
+                    self.stream.begin_capture()
+
+                    if not self.context.execute_async_v3(self.stream.ptr):
+                        raise ModelNavigatorError(
+                            "`execute_async_v3()` failed. Please see the logging output above for details."
+                        )
+                    self.cuda_graph = self.stream.end_capture()
+                    self.stream.synchronize()  # Added to prevent crash
+                    self.graph_exe = self.cuda_graph.instantiate()
+                    self.stream.synchronize()  # Added just in case
+
+                self.graph_exe.launch(self.stream)
+                self.stream.synchronize()  # Added base on examples
+            else:
                 if not self.context.execute_async_v3(self.stream.ptr):
                     raise ModelNavigatorError(
                         "`execute_async_v3()` failed. Please see the logging output above for details."
                     )
-                self.stream.synchronize()  # Added just in case
-                # CUDA graph capture
-                self.stream.begin_capture()
-
-                if not self.context.execute_async_v3(self.stream.ptr):
-                    raise ModelNavigatorError(
-                        "`execute_async_v3()` failed. Please see the logging output above for details."
-                    )
-                self.cuda_graph = self.stream.end_capture()
-                self.stream.synchronize()  # Added to prevent crash
-                self.graph_exe = self.cuda_graph.instantiate()
-                self.stream.synchronize()  # Added just in case
-
-            self.graph_exe.launch(self.stream)
-            self.stream.synchronize()  # Added base on examples
-        else:
-            if not self.context.execute_async_v3(self.stream.ptr):
-                raise ModelNavigatorError(
-                    "`execute_async_v3()` failed. Please see the logging output above for details."
-                )
 
         output_buffers = OrderedDict()
         for name in self.host_output_buffers.keys():
@@ -478,28 +485,30 @@ class TensorRTRunner(NavigatorRunner):
     def _output_tensor_view(self, name, return_type):
         # If we're dealing with vectorized formats, we need to return a FormattedArray.
         # Otherwise, we create a view instead with the correct shape/dtype.
-        raw_array = self.output_allocator.buffers[name]
-        shape = self.output_allocator.shapes[name]
-        dtype = np.dtype(trt.nptype(self.engine.get_tensor_dtype(name)))
+        with InferenceStepTimer(self._inference_time, InferenceStep.POSTPROCESSING, enabled=self._enable_timer):
+            raw_array = self.output_allocator.buffers[name]
+            shape = self.output_allocator.shapes[name]
+            dtype = np.dtype(trt.nptype(self.engine.get_tensor_dtype(name)))
 
-        using_nonlinear_format = self.engine.get_tensor_format(name) != trt.TensorFormat.LINEAR
-        if using_nonlinear_format:
-            raise NotImplementedError("Nonlinear formats are not yet supported.")
-        # The memory allocated by the output allocator may be larger than actually required.
-        # If we're using a vectorized format, then we need to copy the whole thing.
-        # Otherwise, we can determine how much we actually need.
-        nbytes = raw_array.nbytes if using_nonlinear_format else (utils.volume(shape) * dtype.itemsize)
+            using_nonlinear_format = self.engine.get_tensor_format(name) != trt.TensorFormat.LINEAR
+            if using_nonlinear_format:
+                raise NotImplementedError("Nonlinear formats are not yet supported.")
+            # The memory allocated by the output allocator may be larger than actually required.
+            # If we're using a vectorized format, then we need to copy the whole thing.
+            # Otherwise, we can determine how much we actually need.
+            nbytes = raw_array.nbytes if using_nonlinear_format else (utils.volume(shape) * dtype.itemsize)
 
-        if return_type == TensorType.NUMPY:
-            self.host_output_buffers[name] = utils.resize_buffer(self.host_output_buffers[name], (nbytes,))
-            raw_array.view(shape=(nbytes,)).copy_to(self.host_output_buffers[name], stream=self.stream)
-            raw_array = self.host_output_buffers[name]
+        with InferenceStepTimer(self._inference_time, InferenceStep.D2H_MEMCPY, enabled=self._enable_timer):
+            if return_type == TensorType.NUMPY:
+                self.host_output_buffers[name] = utils.resize_buffer(self.host_output_buffers[name], (nbytes,))
+                raw_array.view(shape=(nbytes,)).copy_to(self.host_output_buffers[name], stream=self.stream)
+                raw_array = self.host_output_buffers[name]
 
-            array = FormattedArray(raw_array, shape=shape, dtype=dtype)
-            array = raw_array.view(dtype).reshape(shape)
-        else:
-            assert return_type == TensorType.TORCH
-            array = cuda_utils.DeviceView(raw_array.ptr, shape, dtype).torch(stream=self.stream)
+                array = FormattedArray(raw_array, shape=shape, dtype=dtype)
+                array = raw_array.view(dtype).reshape(shape)
+            else:
+                assert return_type == TensorType.TORCH
+                array = cuda_utils.DeviceView(raw_array.ptr, shape, dtype).torch(stream=self.stream)
 
         return array
 
@@ -522,17 +531,35 @@ class TensorRTRunner(NavigatorRunner):
                     A mapping of output tensor names to corresponding output NumPy arrays
                     or DeviceViews.
         """
-        feed_dict = {name: feed_dict[name] for name in self._trt_input_metadata}
-        for name, dtype in self._type_casts.items():
-            feed_dict[name] = trt_utils.cast_tensor(feed_dict[name], dtype)
+        with InferenceStepTimer(self._inference_time, InferenceStep.PREPROCESSING, enabled=self._enable_timer):
+            feed_dict = {name: feed_dict[name] for name in self._trt_input_metadata}
+            inputs = {}
+            tensor_types = {}
+            for name, tensor in feed_dict.items():
+                tensor_types[name] = get_tensor_type(tensor)
+                if tensor_types[name] == TensorType.NUMPY and self._torch is not None:
+                    inputs[name] = self._torch.from_numpy(tensor)
+                    tensor_types[name] = TensorType.TORCH
+                else:
+                    inputs[name] = tensor
+
+        with InferenceStepTimer(self._inference_time, InferenceStep.H2D_MEMCPY, enabled=self._enable_timer):
+            for name, tensor in inputs.items():
+                if tensor_types[name] == TensorType.TORCH:
+                    inputs[name] = tensor.cuda()
+
+        with InferenceStepTimer(self._inference_time, InferenceStep.PREPROCESSING, enabled=self._enable_timer):
+            for name, dtype in self._type_casts.items():
+                inputs[name] = trt_utils.cast_tensor(inputs[name], dtype)
 
         if trt_utils._should_use_v3_api():
-            out_dict = self._infer_impl_v3(feed_dict)
+            out_dict = self._infer_impl_v3(inputs)
         else:
-            out_dict = self._infer_impl_legacy(feed_dict, True)
+            out_dict = self._infer_impl_legacy(inputs, True)
 
-        if self.output_metadata:  # filter outputs if output_metadata is set
-            out_dict = {name: out_dict[name] for name in self.output_metadata}
+        with InferenceStepTimer(self._inference_time, InferenceStep.POSTPROCESSING, enabled=self._enable_timer):
+            if self.output_metadata:  # filter outputs if output_metadata is set
+                out_dict = {name: out_dict[name] for name in self.output_metadata}
 
         return out_dict
 

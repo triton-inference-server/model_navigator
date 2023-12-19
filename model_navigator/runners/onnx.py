@@ -20,9 +20,10 @@ from model_navigator.api.config import Format, TensorType
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata, get_tensor_type
 from model_navigator.exceptions import ModelNavigatorConfigurationError, ModelNavigatorNotFoundError
+from model_navigator.frameworks import is_torch_available
 from model_navigator.frameworks.onnx.utils import ONNX_RT_TYPE_TO_NP
 from model_navigator.frameworks.tensorrt.cuda import DeviceView
-from model_navigator.runners.base import DeviceKind, NavigatorRunner
+from model_navigator.runners.base import DeviceKind, InferenceStep, InferenceStepTimer, NavigatorRunner
 from model_navigator.runners.registry import register_runner
 from model_navigator.utils import module
 from model_navigator.utils.config_helpers import get_id_from_device_string, validate_device_string
@@ -217,6 +218,14 @@ class OnnxrtCUDARunner(_BaseOnnxrtRunner):
 
     _provider = "CUDAExecutionProvider"
 
+    def __init__(self, *args, **kwargs) -> None:
+        """Initialize runner."""
+        super().__init__(*args, **kwargs)
+        if is_torch_available:
+            self._torch = module.lazy_import("torch")
+        else:
+            self._torch = None
+
     @classmethod
     def name(cls) -> str:
         """Get runner name."""
@@ -231,31 +240,63 @@ class OnnxrtCUDARunner(_BaseOnnxrtRunner):
         """Run inference."""
         assert self.is_active and hasattr(self, "sess"), "Runner must be activated."
 
-        input_metadata = self.get_onnx_input_metadata()
-        feed_dict = {name: tensor for name, tensor in feed_dict.items() if name in input_metadata}
-        io_binding = self._get_io_bindings(feed_dict)
-        self.sess.run_with_iobinding(io_binding)
-        io_binding.synchronize_outputs()
+        with InferenceStepTimer(self._inference_time, InferenceStep.PREPROCESSING, enabled=self._enable_timer):
+            input_metadata = self.get_onnx_input_metadata()
+            feed_dict = {name: tensor for name, tensor in feed_dict.items() if name in input_metadata}
 
-        out_dict = OrderedDict()
-        for node, out in zip(self.sess.get_outputs(), io_binding.get_outputs()):
-            device_view = DeviceView(out.data_ptr(), out.shape(), ONNX_RT_TYPE_TO_NP[out.data_type()])
-            out_dict[node.name] = device_view.torch() if self.return_type == TensorType.TORCH else device_view.numpy()
+        inputs, tensor_types = self._prepare_inputs(feed_dict)
 
-        if self.output_metadata is None:
-            return out_dict
+        with InferenceStepTimer(self._inference_time, InferenceStep.COMPUTE, enabled=self._enable_timer):
+            io_binding = self._get_io_bindings(inputs, tensor_types)
+            self.sess.run_with_iobinding(io_binding)
+            io_binding.synchronize_outputs()
 
-        out_dict = {k: v for k, v in out_dict.items() if k in self.output_metadata}
+        with InferenceStepTimer(self._inference_time, InferenceStep.POSTPROCESSING, enabled=self._enable_timer):
+            out_dict = OrderedDict()
+            for node, out in zip(self.sess.get_outputs(), io_binding.get_outputs()):
+                device_view = DeviceView(out.data_ptr(), out.shape(), ONNX_RT_TYPE_TO_NP[out.data_type()])
+                out_dict[node.name] = device_view.torch()
+
+            if self.output_metadata is None:
+                return out_dict
+
+            out_dict = {k: v for k, v in out_dict.items() if k in self.output_metadata}
+
+        with InferenceStepTimer(self._inference_time, InferenceStep.D2H_MEMCPY, enabled=self._enable_timer):
+            if self.return_type == TensorType.NUMPY:
+                for name, tensor in out_dict.items():
+                    out_dict[name] = tensor.detach().cpu().numpy()
+
         return out_dict
 
-    def _get_io_bindings(self, feed_dict):
+    def _prepare_inputs(self, feed_dict):
+
+        with InferenceStepTimer(self._inference_time, InferenceStep.PREPROCESSING, enabled=self._enable_timer):
+            inputs = {}
+            tensor_types = {}
+            for name, tensor in feed_dict.items():
+                tensor_type = get_tensor_type(tensor)
+                if tensor_type == TensorType.NUMPY and self._torch is not None:
+                    inputs[name] = self._torch.from_numpy(tensor)
+                    tensor_types[name] = tensor_type.TORCH
+                else:
+                    inputs[name] = tensor
+                    tensor_types[name] = tensor_type
+
+        with InferenceStepTimer(self._inference_time, InferenceStep.H2D_MEMCPY, enabled=self._enable_timer):
+            if self._torch is not None:
+                for name, tensor in inputs.items():
+                    assert tensor_types[name] == TensorType.TORCH
+                    inputs[name] = tensor.to(self._torch.device(DeviceKind.CUDA.value, self.device_id))
+
+        return inputs, tensor_types
+
+    def _get_io_bindings(self, inputs, tensor_types):
         assert self.is_active and hasattr(self, "sess"), "Runner must be activated."
 
         io_binding = self.sess.io_binding()
-        for name, tensor in feed_dict.items():
-            tensor_type = get_tensor_type(tensor)
-            if tensor_type == TensorType.TORCH:
-                tensor = tensor.to(DeviceKind.CUDA.value)
+        for name, tensor in inputs.items():
+            if tensor_types[name] == TensorType.TORCH:
                 io_binding.bind_input(
                     name,
                     DeviceKind.CUDA.value,
@@ -265,7 +306,7 @@ class OnnxrtCUDARunner(_BaseOnnxrtRunner):
                     tensor.data_ptr(),
                 )
             else:
-                assert tensor_type == TensorType.NUMPY
+                assert tensor_types[name] == TensorType.NUMPY
                 io_binding.bind_cpu_input(name, tensor)
         io_binding.synchronize_inputs()
 

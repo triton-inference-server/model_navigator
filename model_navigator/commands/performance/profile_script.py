@@ -82,6 +82,7 @@ def profile(
         output_metadata=TensorMetadata.from_json(output_metadata),
         navigator_workspace=navigator_workspace,
         batch_dim=batch_dim,
+        enable_timer=True,
         **runner_config,
     )  # pytype: disable=not-instantiable
 

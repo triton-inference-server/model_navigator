@@ -12,14 +12,46 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Runners profiling."""
+import collections
 import dataclasses
 import warnings
-from typing import List, Mapping, Optional
+from typing import Dict, List, Mapping, Optional
 
 import numpy as np
 
-from model_navigator.runners.base import NavigatorStabilizedRunner
+from model_navigator.runners.base import InferenceStep, InferenceTime, NavigatorStabilizedRunner
 from model_navigator.utils.common import DataObject
+
+
+@dataclasses.dataclass
+class ProfilingStepResults(DataObject):
+    """Profiling step results."""
+
+    avg_time: float  # ms
+    std_time: float  # ms
+    p50_time: float  # ms
+    p90_time: float  # ms
+    p95_time: float  # ms
+    p99_time: float  # ms
+
+    @classmethod
+    def from_dict(cls, d: Mapping) -> "ProfilingStepResults":
+        """Instantiate ProfilingStepResults from a json dictionary.
+
+        Args:
+            d (Mapping): Data dictionary.
+
+        Returns:
+            ProfilingStepResults
+        """
+        return cls(
+            avg_time=d["avg_time"],
+            std_time=d["std_time"],
+            p50_time=d["p50_time"],
+            p90_time=d["p90_time"],
+            p95_time=d["p95_time"],
+            p99_time=d["p99_time"],
+        )
 
 
 @dataclasses.dataclass
@@ -38,6 +70,8 @@ class ProfilingResults(DataObject):
     request_count: int
     avg_gpu_clock: Optional[float] = None  # MHz
 
+    detailed_results: Dict[str, ProfilingStepResults] = dataclasses.field(default_factory=dict)
+
     @classmethod
     def from_dict(cls, d: Mapping) -> "ProfilingResults":
         """Instantiate ProfilingResults from a json dictionary.
@@ -51,11 +85,30 @@ class ProfilingResults(DataObject):
         if "sample_id" not in d:
             d = {"sample_id": 0, **d}
 
-        return cls(**d)
+        detailed_results = {}
+        if "detailed_results" in d:
+            assert isinstance(d["detailed_results"], dict)
+            for step_name, step_dict in d["detailed_results"].items():
+                detailed_results[step_name] = ProfilingStepResults.from_dict(step_dict)
+
+        return cls(
+            sample_id=d["sample_id"],
+            batch_size=d.get("batch_size"),
+            request_count=d["request_count"],
+            avg_gpu_clock=d.get("avg_gpu_clock"),
+            avg_latency=d["avg_latency"],
+            std_latency=d["std_latency"],
+            p50_latency=d["p50_latency"],
+            p90_latency=d["p90_latency"],
+            p95_latency=d["p95_latency"],
+            p99_latency=d["p99_latency"],
+            throughput=d["throughput"],
+            detailed_results=detailed_results,
+        )
 
     @classmethod
     def from_measurements(
-        cls, measurements: List[float], gpu_clocks: List[float], batch_size: Optional[int], sample_id: int
+        cls, measurements: List[InferenceTime], gpu_clocks: List[float], batch_size: Optional[int], sample_id: int
     ) -> "ProfilingResults":
         """Instantiate ProfilingResults from a list of measurements.
 
@@ -71,18 +124,38 @@ class ProfilingResults(DataObject):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=RuntimeWarning)
             avg_gpu_clock = np.nanmean([gpu_clock for gpu_clock in gpu_clocks if gpu_clock is not None])
+
+        step_measurements: Dict[str, List[float]] = collections.defaultdict(list)
+        for measurement in measurements:
+            for step_name, step_measurement in measurement.items():
+                step_measurements[step_name].append(step_measurement)
+
+        detailed_results = {
+            step_name: ProfilingStepResults(
+                avg_time=float(np.mean(detailed_results)),
+                std_time=float(np.std(detailed_results)),
+                p50_time=float(np.percentile(detailed_results, 50)),
+                p90_time=float(np.percentile(detailed_results, 90)),
+                p95_time=float(np.percentile(detailed_results, 95)),
+                p99_time=float(np.percentile(detailed_results, 99)),
+            )
+            for step_name, detailed_results in step_measurements.items()
+        }
+
+        assert InferenceStep.TOTAL.value in detailed_results
         return cls(
             sample_id=sample_id,
             batch_size=batch_size,
-            avg_latency=float(np.mean(measurements)),
-            std_latency=float(np.std(measurements)),
-            p50_latency=float(np.percentile(measurements, 50)),
-            p90_latency=float(np.percentile(measurements, 90)),
-            p95_latency=float(np.percentile(measurements, 95)),
-            p99_latency=float(np.percentile(measurements, 99)),
-            throughput=float(1000 * (batch_size or 1) / np.mean(measurements)),
             avg_gpu_clock=float(avg_gpu_clock),
             request_count=len(measurements),
+            detailed_results=detailed_results,
+            avg_latency=detailed_results[InferenceStep.TOTAL.value].avg_time,
+            std_latency=detailed_results[InferenceStep.TOTAL.value].std_time,
+            p50_latency=detailed_results[InferenceStep.TOTAL.value].p50_time,
+            p90_latency=detailed_results[InferenceStep.TOTAL.value].p90_time,
+            p95_latency=detailed_results[InferenceStep.TOTAL.value].p95_time,
+            p99_latency=detailed_results[InferenceStep.TOTAL.value].p99_time,
+            throughput=(1000 * (batch_size or 1) / detailed_results[InferenceStep.TOTAL.value].avg_time),
         )
 
     @classmethod
@@ -100,18 +173,38 @@ class ProfilingResults(DataObject):
             warnings.simplefilter("ignore", category=RuntimeWarning)
             avg_gpu_clock = np.nanmean([result.avg_gpu_clock for result in profiling_results])
 
+        step_measurements: Dict[str, List[ProfilingStepResults]] = collections.defaultdict(list)
+        for result in profiling_results:
+            assert result.batch_size == batch_size, "Batch size must be the same for all profiling results"
+            for step_name, step_result in result.detailed_results.items():
+                step_measurements[step_name].append(step_result)
+
+        detailed_results = {
+            step_name: ProfilingStepResults(
+                avg_time=float(np.mean([result.avg_time for result in detailed_results])),
+                std_time=float(np.std([result.std_time for result in detailed_results])),
+                p50_time=float(np.percentile([result.p50_time for result in detailed_results], 50)),
+                p90_time=float(np.percentile([result.p90_time for result in detailed_results], 90)),
+                p95_time=float(np.percentile([result.p95_time for result in detailed_results], 95)),
+                p99_time=float(np.percentile([result.p99_time for result in detailed_results], 99)),
+            )
+            for step_name, detailed_results in step_measurements.items()
+        }
+
+        assert InferenceStep.TOTAL.value in detailed_results
         return cls(
             sample_id=profiling_results[0].sample_id,
             batch_size=batch_size,
-            avg_latency=float(np.mean([result.avg_latency for result in profiling_results])),
-            std_latency=float(np.mean([result.std_latency for result in profiling_results])),
-            p50_latency=float(np.mean([result.p50_latency for result in profiling_results])),
-            p90_latency=float(np.mean([result.p90_latency for result in profiling_results])),
-            p95_latency=float(np.mean([result.p95_latency for result in profiling_results])),
-            p99_latency=float(np.mean([result.p99_latency for result in profiling_results])),
-            throughput=float(np.mean([result.throughput for result in profiling_results])),
             avg_gpu_clock=float(avg_gpu_clock),
             request_count=int(np.mean([result.request_count for result in profiling_results])),
+            detailed_results=detailed_results,
+            avg_latency=detailed_results[InferenceStep.TOTAL.value].avg_time,
+            std_latency=detailed_results[InferenceStep.TOTAL.value].std_time,
+            p50_latency=detailed_results[InferenceStep.TOTAL.value].p50_time,
+            p90_latency=detailed_results[InferenceStep.TOTAL.value].p90_time,
+            p95_latency=detailed_results[InferenceStep.TOTAL.value].p95_time,
+            p99_latency=detailed_results[InferenceStep.TOTAL.value].p99_time,
+            throughput=(1000 * (batch_size or 1) / detailed_results[InferenceStep.TOTAL.value].avg_time),
         )
 
     @classmethod

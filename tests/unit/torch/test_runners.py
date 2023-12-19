@@ -17,8 +17,9 @@ from distutils.version import LooseVersion
 import numpy as np
 import pytest
 
+from model_navigator.core.tensor import PyTreeMetadata, TensorMetadata, TensorType
 from model_navigator.frameworks.tensorrt import utils as tensorrt_utils
-from model_navigator.runners.torch import TorchTensorRTRunner
+from model_navigator.runners.torch import TorchCUDARunner, TorchTensorRTRunner
 from model_navigator.utils import module
 
 torch = module.lazy_import("torch")
@@ -58,3 +59,27 @@ def test_torch_tensorrt_to_torch_dtype_cast_float64():
         numpy_tensor, np.float64
     )
     assert casted_tensor.dtype == torch.float32
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA is not available")
+def test_torch_cuda_runner_returns_the_same_output_with_timer():
+    numpy_tensor = np.ones((1, 2), dtype=np.float32)
+    model = torch.nn.Identity()
+    input_metadata = TensorMetadata(pytree_metadata=PyTreeMetadata("input", TensorType.TORCH)).add(
+        "input", numpy_tensor.shape, numpy_tensor.dtype
+    )
+    output_metadata = TensorMetadata(pytree_metadata=PyTreeMetadata("output", TensorType.TORCH)).add(
+        "output", numpy_tensor.shape, numpy_tensor.dtype
+    )
+    standard_runner = TorchCUDARunner(model=model, input_metadata=input_metadata, output_metadata=output_metadata)
+    timer_runner = TorchCUDARunner(
+        model=model, input_metadata=input_metadata, output_metadata=output_metadata, enable_timer=True
+    )
+
+    with standard_runner, timer_runner:
+        standard_output = standard_runner.infer({"input": numpy_tensor})
+        timer_output = timer_runner.infer({"input": numpy_tensor})
+
+    assert set(standard_output.keys()) == set(timer_output.keys())
+    for key in standard_output:
+        assert np.allclose(standard_output[key], timer_output[key])

@@ -65,6 +65,7 @@ def find_max_batch_size(
         input_metadata=TensorMetadata.from_json(input_metadata),
         output_metadata=TensorMetadata.from_json(output_metadata),
         disable_fallback=False,
+        enable_timer=True,
         **runner_config,
     )  # pytype: disable=not-instantiable
     try:

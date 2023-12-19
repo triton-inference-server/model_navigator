@@ -128,6 +128,7 @@ def find_max_batch_size_till_oom(
             model=model,
             input_metadata=input_metadata,
             output_metadata=None,
+            enable_timer=True,
             **runner_config,
         )  # pytype: disable=not-instantiable
         try:
