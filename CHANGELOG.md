@@ -16,6 +16,8 @@ limitations under the License.
 
 # Changelog
 
+## 0.8.0 (unreleased)
+
 ## 0.7.5
 - new: FP8 precision support for TensorRT
 - new: Support for autocast and inference mode configuration for Torch runners
