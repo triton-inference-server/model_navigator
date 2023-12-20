@@ -1,0 +1,3327 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../examples/">
+      
+      
+        <link rel="next" href="../known_issues/">
+      
+      
+      <link rel="icon" href="../assets/favicon.png">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.2">
+    
+    
+      
+        <title>Changelog - Triton Model Navigator</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.50c56a3b.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../assets/styles.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#changelog" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Triton Model Navigator" class="md-header__button md-logo" aria-label="Triton Model Navigator" data-md-component="logo">
+      
+  <img src="../assets/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Triton Model Navigator
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Changelog
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/triton-inference-server/model_navigator" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Git Repository
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Triton Model Navigator" class="md-nav__button md-logo" aria-label="Triton Model Navigator" data-md-component="logo">
+      
+  <img src="../assets/logo.png" alt="logo">
+
+    </a>
+    Triton Model Navigator
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/triton-inference-server/model_navigator" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Git Repository
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Installation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quick_start/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Quick start
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Optimize Model
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Optimize Model
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../optimize/optimize/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Using optimize
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Optimize API
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            Optimize API
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../optimize/config/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Config
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../optimize/jax/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    JAX
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../optimize/onnx/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    ONNX
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../optimize/tensorflow/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    TensorFlow 2
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../optimize/tensorrt/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    TensorRT
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../optimize/torch/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    PyTorch
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../optimize/python/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Python
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../optimize/inplace/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Inplace Optimize
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Navigator Package
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Navigator Package
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../package/package/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Using package
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Package API
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2">
+            <span class="md-nav__icon md-icon"></span>
+            Package API
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../package/package_api/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Package
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../package/package_load_api/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Load
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../package/package_save_api/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Save
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../package/package_optimize_api/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Optimize
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../package/package_profile_api/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Profile
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Inference Deployment
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Inference Deployment
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_1" id="__nav_6_1_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    PyTriton
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_1">
+            <span class="md-nav__icon md-icon"></span>
+            PyTriton
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pytriton/pytriton_deployment/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Deploying models
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pytriton/pytriton_adapter/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    PyTritonAdapter API
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_2" id="__nav_6_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Triton Inference Server
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_2">
+            <span class="md-nav__icon md-icon"></span>
+            Triton Inference Server
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../triton/triton_deployment/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Deploying models
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_2_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_2_2" id="__nav_6_2_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Model Store API
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            Model Store API
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../triton/adding_model/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Adding Model
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../triton/specialized_configs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Specialized Configs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../triton/instance_groups/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Instance Group
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../triton/inputs_and_outputs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Inputs and Outputs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../triton/dynamic_batcher/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dynamic Batcher
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../triton/sequence_batcher/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Sequence Batcher
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../triton/accelerators/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Accelerators
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../triton/warmup/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Model Warmup
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../utilities/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Utilities
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Examples
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Changelog
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Changelog
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#075" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.7.5
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#074" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.7.4
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#073" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.7.3
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#072" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.7.2
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#071" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.7.1
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#070" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.7.0
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#063" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.6.3
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#062" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.6.2
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#061" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.6.1
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#060" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.6.0
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#056" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.5.6
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#055" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.5.5
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#054" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.5.4
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#053" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.5.3
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#052" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.5.2
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#051" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.5.1
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#050" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.5.0
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#044" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.4.4
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#043" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.4.3
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#042" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.4.2
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#041" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.4.1
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#040" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.4.0
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#038" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.3.8
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#037" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.3.7
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#036" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.3.6
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#035" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.3.5
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#034" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.3.4
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#033" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.3.3
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#032" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.3.2
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#031" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.3.1
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#030" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.3.0
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#027" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.2.7
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#026" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.2.6
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#025" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.2.5
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#024-2021-12-07" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.2.4 (2021-12-07)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#023-2021-11-10" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.2.3 (2021-11-10)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#022-2021-09-06" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.2.2 (2021-09-06)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#021-2021-08-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.2.1 (2021-08-17)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#020-2021-07-05" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.2.0 (2021-07-05)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#011-2021-04-12" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.1.1 (2021-04-12)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#010-2021-04-09" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.1.0 (2021-04-09)
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../known_issues/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Known Issues
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CONTRIBUTING/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contributing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../LICENSE/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    License
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#075" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.7.5
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#074" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.7.4
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#073" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.7.3
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#072" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.7.2
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#071" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.7.1
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#070" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.7.0
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#063" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.6.3
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#062" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.6.2
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#061" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.6.1
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#060" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.6.0
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#056" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.5.6
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#055" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.5.5
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#054" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.5.4
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#053" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.5.3
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#052" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.5.2
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#051" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.5.1
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#050" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.5.0
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#044" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.4.4
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#043" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.4.3
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#042" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.4.2
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#041" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.4.1
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#040" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.4.0
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#038" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.3.8
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#037" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.3.7
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#036" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.3.6
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#035" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.3.5
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#034" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.3.4
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#033" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.3.3
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#032" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.3.2
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#031" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.3.1
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#030" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.3.0
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#027" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.2.7
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#026" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.2.6
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#025" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.2.5
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#024-2021-12-07" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.2.4 (2021-12-07)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#023-2021-11-10" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.2.3 (2021-11-10)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#022-2021-09-06" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.2.2 (2021-09-06)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#021-2021-08-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.2.1 (2021-08-17)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#020-2021-07-05" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.2.0 (2021-07-05)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#011-2021-04-12" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.1.1 (2021-04-12)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#010-2021-04-09" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.1.0 (2021-04-09)
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<!--
+Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<h1 id="changelog">Changelog</h1>
+<h2 id="075">0.7.5</h2>
+<ul>
+<li>new: FP8 precision support for TensorRT</li>
+<li>new: Support for autocast and inference mode configuration for Torch runners</li>
+<li>new: Allow to select device for Torch and ONNX runners</li>
+<li>new: Add support for <code>default_model_filename</code> in Triton model configuration</li>
+<li>new: Detailed profiling of inference steps (pre- and postprocessing, memcpy and compute)</li>
+<li>fix: JAX export and TensorRT conversion fails when custom workspace is used</li>
+<li>fix: Missing max workspace size passed to TensorRT conversion</li>
+<li>fix: Execution of TensorRT optimize raise error during handling output metadata</li>
+<li>
+<p>fix: Limited Polygraphy version to work correctly with onnxruntime-gpu package</p>
+</li>
+<li>
+<p>Version of external components used during testing:</p>
+</li>
+<li><a href="https://github.com/pytorch/pytorch/commit/6a974be">PyTorch 2.2.0a0+6a974be</a></li>
+<li><a href="https://github.com/tensorflow/tensorflow/releases/tag/v2.13.0">TensorFlow 2.13.0</a></li>
+<li><a href="https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html">TensorRT 8.6.1</a></li>
+<li><a href="https://github.com/microsoft/onnxruntime/tree/v1.16.2">ONNX Runtime 1.16.2</a></li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.49.0</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.3.27</li>
+<li><a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.15.1">tf2onnx v1.15.1</a></li>
+<li>Other component versions depend on the used framework containers versions.
+    See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+    for a detailed summary.</li>
+</ul>
+<h2 id="074">0.7.4</h2>
+<ul>
+<li>new: decoupled mode configuration in Triton Model Config</li>
+<li>new: support for PyTorch ExportedProgram and ONNX dynamo export</li>
+<li>new: added GraphSurgeon ONNX optimization</li>
+<li>fix: compatibility of generating PyTriton model config through adapter</li>
+<li>fix: installation of packages that are platform dependent</li>
+<li>fix: update package config with model loaded from source</li>
+<li>change: in TensorRT runner, when TensorType.TORCH is the return type lazily convert tensor to Torch</li>
+<li>change: move from Polygraphy CLI to Polygraphy Python API</li>
+<li>
+<p>change: removed Windows from support list</p>
+</li>
+<li>
+<p>Version of external components used during testing:</p>
+</li>
+<li><a href="https://github.com/pytorch/pytorch/commit/32f93b1">PyTorch 2.1.0a0+32f93b1</a></li>
+<li><a href="https://github.com/tensorflow/tensorflow/releases/tag/v2.13.0">TensorFlow 2.13.0</a></li>
+<li><a href="https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html">TensorRT 8.6.1</a></li>
+<li><a href="https://github.com/microsoft/onnxruntime/tree/v1.16.2">ONNX Runtime 1.16.2</a></li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.49.0</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.3.27</li>
+<li><a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.15.1">tf2onnx v1.15.1</a></li>
+<li>Other component versions depend on the used framework containers versions.
+    See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+    for a detailed summary.</li>
+</ul>
+<h2 id="073">0.7.3</h2>
+<ul>
+<li>new: Data dependent dynamic control flow support in nav.Module (multiple computation graphs per module)</li>
+<li>new: Added find max batch size utility</li>
+<li>new: Added utilities API documentation</li>
+<li>new: Add Timer class for measuring execution time of models and Inplace modules.</li>
+<li>fix: Use wide range of shapes for TensorRT conversion</li>
+<li>fix: Sorting of samples loaded from workspace</li>
+<li>change: in Inplace, store one sample by default per module and store shape info for all samples</li>
+<li>
+<p>change: always execute export for all supported formats</p>
+</li>
+<li>
+<p>Known issues and limitations:</p>
+</li>
+<li>nav.Module moves original torch.nn.Module to the CPU, in case of weight sharing that might result in unexpected behaviour</li>
+<li>
+<p>For data dependent dynamic control flow (multiple computation graphs) nav.Module might copy the weights for each separate graph</p>
+</li>
+<li>
+<p>Version of external components used during testing:</p>
+</li>
+<li><a href="https://github.com/pytorch/pytorch/commit/29c30b1">PyTorch 2.1.0a0+29c30b1</a></li>
+<li><a href="https://github.com/tensorflow/tensorflow/releases/tag/v2.13.0">TensorFlow 2.13.0</a></li>
+<li><a href="https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html">TensorRT 8.6.1</a></li>
+<li><a href="https://github.com/microsoft/onnxruntime/tree/v1.15.1">ONNX Runtime 1.15.1</a></li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.47.1</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.3.27</li>
+<li><a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.15.1">tf2onnx v1.15.1</a></li>
+<li>Other component versions depend on the used framework containers versions.
+    See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+    for a detailed summary.</li>
+</ul>
+<h2 id="072">0.7.2</h2>
+<ul>
+<li>fix: Obtaining inputs names from ONNX file for TensorRT conversion</li>
+<li>
+<p>change: Raise exception instead of exit with code when required command has failed</p>
+</li>
+<li>
+<p>Version of external components used during testing:</p>
+</li>
+<li><a href="https://github.com/pytorch/pytorch/commit/b5021ba9">PyTorch 2.1.0a0+b5021ba</a></li>
+<li><a href="https://github.com/tensorflow/tensorflow/releases/tag/v2.12.0">TensorFlow 2.12.0</a></li>
+<li><a href="https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html">TensorRT 8.6.1</a></li>
+<li><a href="https://github.com/microsoft/onnxruntime/tree/v1.15.1">ONNX Runtime 1.15.1</a></li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.47.1</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.3.27</li>
+<li><a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0">tf2onnx v1.14.0</a></li>
+<li>Other component versions depend on the used framework containers versions.
+    See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+    for a detailed summary.</li>
+</ul>
+<h2 id="071">0.7.1</h2>
+<ul>
+<li>fix: gather onnx input names based on model's forward signature</li>
+<li>fix: do not run TensorRT max batch size search when max batch size is None</li>
+<li>
+<p>fix: use pytree metadata to flatten torch complex outputs</p>
+</li>
+<li>
+<p>Version of external components used during testing:</p>
+</li>
+<li><a href="https://github.com/pytorch/pytorch/commit/b5021ba9">PyTorch 2.1.0a0+b5021ba</a></li>
+<li><a href="https://github.com/tensorflow/tensorflow/releases/tag/v2.12.0">TensorFlow 2.12.0</a></li>
+<li><a href="https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html">TensorRT 8.6.1</a></li>
+<li><a href="https://github.com/microsoft/onnxruntime/tree/v1.15.1">ONNX Runtime 1.15.1</a></li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.47.1</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.3.27</li>
+<li><a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0">tf2onnx v1.14.0</a></li>
+<li>Other component versions depend on the used framework containers versions.
+    See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+    for a detailed summary.</li>
+</ul>
+<h2 id="070">0.7.0</h2>
+<ul>
+<li>new: Inplace Optimize feature - optimize models directly in the Python code</li>
+<li>new: Non-tensor inputs and outputs support</li>
+<li>new: Model warmup support in Triton model configuration</li>
+<li>new: nav.tensorrt.optimize api added for testing and measuring performance of TensorRT models</li>
+<li>new: Extended custom configs to pass arguments directly to export and conversion operations like <code>torch.onnx.export</code> or <code>polygraphy convert</code></li>
+<li>new: Collect GPU clock during model profiling</li>
+<li>new: Add option to configure minimal trials and stabilization windows for performance verification and profiling</li>
+<li>change: Navigator package version change to 0.2.3. Custom configurations now use trt_profiles list instead single value</li>
+<li>
+<p>change: Store separate reproduction scripts for runners used during correctness and profiling</p>
+</li>
+<li>
+<p>Version of external components used during testing:</p>
+</li>
+<li><a href="https://github.com/pytorch/pytorch/commit/b5021ba9">PyTorch 2.1.0a0+b5021ba</a></li>
+<li><a href="https://github.com/tensorflow/tensorflow/releases/tag/v2.12.0">TensorFlow 2.12.0</a></li>
+<li><a href="https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html">TensorRT 8.6.1</a></li>
+<li><a href="https://github.com/microsoft/onnxruntime/tree/v1.15.1">ONNX Runtime 1.15.1</a></li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.47.1</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.3.27</li>
+<li><a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0">tf2onnx v1.14.0</a></li>
+<li>Other component versions depend on the used framework containers versions.
+    See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+    for a detailed summary.</li>
+</ul>
+<h2 id="063">0.6.3</h2>
+<ul>
+<li>
+<p>fix: Conditional imports of supported frameworks in export commands</p>
+</li>
+<li>
+<p>Version of external components used during testing:</p>
+</li>
+<li><a href="https://github.com/pytorch/pytorch/commit/4136153">PyTorch 2.1.0a0+4136153</a></li>
+<li><a href="https://github.com/tensorflow/tensorflow/releases/tag/v2.12.0">TensorFlow 2.12.0</a></li>
+<li><a href="https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html">TensorRT 8.6.1</a></li>
+<li><a href="https://github.com/microsoft/onnxruntime/tree/v1.13.1">ONNX Runtime 1.13.1</a></li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.47.1</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.3.26</li>
+<li><a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0">tf2onnx v1.14.0</a></li>
+<li>Other component versions depend on the used framework containers versions.
+    See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+    for a detailed summary.</li>
+</ul>
+<h2 id="062">0.6.2</h2>
+<ul>
+<li>new: Collect information about TensorRT shapes used during conversion</li>
+<li>fix: Invalid link in documentation</li>
+<li>
+<p>change: Improved rendering documentation</p>
+</li>
+<li>
+<p>Version of external components used during testing:</p>
+</li>
+<li><a href="https://github.com/pytorch/pytorch/commit/4136153">PyTorch 2.1.0a0+4136153</a></li>
+<li><a href="https://github.com/tensorflow/tensorflow/releases/tag/v2.12.0">TensorFlow 2.12.0</a></li>
+<li><a href="https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html">TensorRT 8.6.1</a></li>
+<li><a href="https://github.com/microsoft/onnxruntime/tree/v1.13.1">ONNX Runtime 1.13.1</a></li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.47.1</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.3.26</li>
+<li><a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0">tf2onnx v1.14.0</a></li>
+<li>Other component versions depend on the used framework containers versions.
+    See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+    for a detailed summary.</li>
+</ul>
+<h2 id="061">0.6.1</h2>
+<ul>
+<li>
+<p>fix: Add model from package to Triton model store with custom configs</p>
+</li>
+<li>
+<p>Version of external components used during testing:</p>
+</li>
+<li><a href="https://github.com/pytorch/pytorch/commit/4136153">PyTorch 2.1.0a0+4136153</a></li>
+<li><a href="https://github.com/tensorflow/tensorflow/releases/tag/v2.12.0">TensorFlow 2.12.0</a></li>
+<li><a href="https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html">TensorRT 8.6.1</a></li>
+<li><a href="https://github.com/microsoft/onnxruntime/tree/v1.13.1">ONNX Runtime 1.13.1</a></li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.47.1</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.3.26</li>
+<li><a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0">tf2onnx v1.14.0</a></li>
+<li>Other component versions depend on the used framework containers versions.
+    See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+    for a detailed summary.</li>
+</ul>
+<h2 id="060">0.6.0</h2>
+<ul>
+<li>new: Zero-copy runners for Torch, ONNX and TensorRT - omit H2D and D2H memory copy between runners execution</li>
+<li>new: <code>nav.pacakge.profile</code> API method to profile generated models on provided dataloader</li>
+<li>change: ProfilerConfig replaced with OptimizationProfile:</li>
+<li>new: OptimizationProfile impact the conversion for TensorRT</li>
+<li>new: <code>batch_sizes</code> and <code>max_batch_size</code> limit the max profile in TensorRT conversion</li>
+<li>new: Allow to provide separate dataloader for profiling - first sample used only</li>
+<li>new: allow to run <code>nav.package.optimize</code> on empty package - status generation only</li>
+<li>new: use <code>torch.inference_mode</code> for inference runner when PyTorch 2.x is available</li>
+<li>fix: Missing <code>model</code> in config when passing package generated during <code>nav.{framework}.optimize</code> directly to <code>nav.package.optimize</code> command</li>
+<li>
+<p>Other minor fixes and improvements</p>
+</li>
+<li>
+<p>Version of external components used during testing:</p>
+</li>
+<li><a href="https://github.com/pytorch/pytorch/commit/4136153">PyTorch 2.1.0a0+4136153</a></li>
+<li><a href="https://github.com/tensorflow/tensorflow/releases/tag/v2.12.0">TensorFlow 2.12.0</a></li>
+<li><a href="https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html">TensorRT 8.6.1</a></li>
+<li><a href="https://github.com/microsoft/onnxruntime/tree/v1.13.1">ONNX Runtime 1.13.1</a></li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.47.1</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.3.26</li>
+<li><a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0">tf2onnx v1.14.0</a></li>
+<li>Other component versions depend on the used framework containers versions.
+    See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+    for a detailed summary.</li>
+</ul>
+<h2 id="056">0.5.6</h2>
+<ul>
+<li>fix: Load samples as sorted to keep valid order</li>
+<li>fix: Execute conversion when model already exists in path</li>
+<li>
+<p>Other minor fixes and improvements</p>
+</li>
+<li>
+<p>Version of external components used during testing:</p>
+</li>
+<li><a href="https://github.com/pytorch/pytorch/commit/fe05266f">PyTorch 2.1.0a0+fe05266f</a></li>
+<li><a href="https://github.com/tensorflow/tensorflow/releases/tag/v2.12.0">TensorFlow 2.12.0</a></li>
+<li><a href="https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html">TensorRT 8.6.1</a></li>
+<li><a href="https://github.com/microsoft/onnxruntime/tree/v1.13.1">ONNX Runtime 1.13.1</a></li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.47.1</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.3.26</li>
+<li><a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0">tf2onnx v1.14.0</a></li>
+<li>Other component versions depend on the used framework containers versions.
+    See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+    for a detailed summary.</li>
+</ul>
+<h2 id="055">0.5.5</h2>
+<ul>
+<li>new: Public <code>nav.utilities</code> module with UnpackedDataloader wrapper</li>
+<li>new: Added support for strict flag in Torch custom config</li>
+<li>new: Extended TensorRT custom config to support builder optimization level and hardware compatibility flags</li>
+<li>
+<p>fix: Invalid optimal shape calculation for odd values in max batch size</p>
+</li>
+<li>
+<p>Version of external components used during testing:</p>
+</li>
+<li><a href="https://github.com/pytorch/pytorch/commit/fe05266f">PyTorch 2.1.0a0+fe05266f</a></li>
+<li><a href="https://github.com/tensorflow/tensorflow/releases/tag/v2.12.0">TensorFlow 2.12.0</a></li>
+<li><a href="https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html">TensorRT 8.6.1</a></li>
+<li><a href="https://github.com/microsoft/onnxruntime/tree/v1.13.1">ONNX Runtime 1.13.1</a></li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.47.1</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.3.26</li>
+<li><a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0">tf2onnx v1.14.0</a></li>
+<li>Other component versions depend on the used framework containers versions.
+    See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+    for a detailed summary.</li>
+</ul>
+<h2 id="054">0.5.4</h2>
+<ul>
+<li>new: Custom implementation for ONNX and TensorRT runners</li>
+<li>new: Use CUDA 12 for JAX in unit tests and functional tests</li>
+<li>new: Step-by-step examples</li>
+<li>new: Updated documentation</li>
+<li>new: TensorRTCUDAGraph runner introduced with support for CUDA graphs</li>
+<li>fix: Optimal shape not set correctly during adaptive conversion</li>
+<li>fix: Find max batch size command for JAX</li>
+<li>
+<p>fix: Save stdout to logfiles in debug mode</p>
+</li>
+<li>
+<p>Version of external components used during testing:</p>
+</li>
+<li><a href="https://github.com/pytorch/pytorch/commit/fe05266f">PyTorch 2.1.0a0+fe05266f</a></li>
+<li><a href="https://github.com/tensorflow/tensorflow/releases/tag/v2.12.0">TensorFlow 2.12.0</a></li>
+<li><a href="https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html">TensorRT 8.6.1</a></li>
+<li><a href="https://github.com/microsoft/onnxruntime/tree/v1.13.1">ONNX Runtime 1.13.1</a></li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.47.1</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.3.26</li>
+<li><a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0">tf2onnx v1.14.0</a></li>
+<li>Other component versions depend on the used framework containers versions.
+    See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+    for a detailed summary.</li>
+</ul>
+<h2 id="053">0.5.3</h2>
+<ul>
+<li>
+<p>fix: filter outputs using output_metadata in ONNX runners</p>
+</li>
+<li>
+<p>Version of external components used during testing:</p>
+</li>
+<li><a href="https://github.com/pytorch/pytorch/commit/1767026">PyTorch 2.0.0a0+1767026</a></li>
+<li><a href="https://github.com/tensorflow/tensorflow/releases/tag/v2.11.0">TensorFlow 2.11.0</a></li>
+<li><a href="https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html">TensorRT 8.5.3.1</a></li>
+<li><a href="https://github.com/microsoft/onnxruntime/tree/v1.13.1">ONNX Runtime 1.13.1</a></li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.44.2</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.3.26</li>
+<li><a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0">tf2onnx v1.14.0</a></li>
+<li>Other component versions depend on the used framework containers versions.
+    See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+    for a detailed summary.</li>
+</ul>
+<h2 id="052">0.5.2</h2>
+<ul>
+<li>new: Added Contributor License Agreement (CLA)</li>
+<li>fix: Added missing --extra-index-url to installation instruction for pypi</li>
+<li>fix: Updated wheel readme</li>
+<li>fix: Do not run TorchScript export when only ONNX in target formats and ONNX extended export is disabled</li>
+<li>
+<p>fix: Log full traceback for ModelNavigatorUserInputError</p>
+</li>
+<li>
+<p>Version of external components used during testing:</p>
+</li>
+<li><a href="https://github.com/pytorch/pytorch/commit/1767026">PyTorch 2.0.0a0+1767026</a></li>
+<li><a href="https://github.com/tensorflow/tensorflow/releases/tag/v2.11.0">TensorFlow 2.11.0</a></li>
+<li><a href="https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html">TensorRT 8.5.3.1</a></li>
+<li><a href="https://github.com/microsoft/onnxruntime/tree/v1.13.1">ONNX Runtime 1.13.1</a></li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.44.2</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.3.26</li>
+<li><a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0">tf2onnx v1.14.0</a></li>
+<li>Other component versions depend on the used framework containers versions.
+    See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+    for a detailed summary.</li>
+</ul>
+<h2 id="051">0.5.1</h2>
+<ul>
+<li>fix: Using relative workspace cause error during Onnx to TensorRT conversion</li>
+<li>fix: Added external weight in package for ONNX format</li>
+<li>
+<p>fix: bugfixes for functional tests</p>
+</li>
+<li>
+<p>Version of external components used during testing:</p>
+</li>
+<li><a href="https://github.com/pytorch/pytorch/commit/410ce96">PyTorch 1.14.0a0+410ce96</a></li>
+<li><a href="https://github.com/tensorflow/tensorflow/releases/tag/v2.11.0">TensorFlow 2.11.0</a></li>
+<li><a href="https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html">TensorRT 8.5.3</a></li>
+<li><a href="https://github.com/microsoft/onnxruntime/tree/v1.13.1">ONNX Runtime 1.13.1</a></li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.44.2</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.4.6</li>
+<li><a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.13.0">tf2onnx v1.13.0</a></li>
+<li>Other component versions depend on the used framework containers versions.
+    See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+    for a detailed summary.</li>
+</ul>
+<h2 id="050">0.5.0</h2>
+<ul>
+<li>new: Support for PyTriton deployment</li>
+<li>new: Support for Python models with python.optimize API</li>
+<li>new: PyTorch 2 compile CPU and CUDA runners</li>
+<li>new: Collect conversion max batch size in status</li>
+<li>new: PyTorch runners with <code>compile</code> support</li>
+<li>change: Improved handling CUDA and CPU runners</li>
+<li>change: Reduced finding device max batch size time by running it once as separate pipeline</li>
+<li>
+<p>change: Stored find max batch size result in separate filed in status</p>
+</li>
+<li>
+<p>Version of external components used during testing:</p>
+</li>
+<li><a href="https://github.com/pytorch/pytorch/commit/410ce96">PyTorch 1.14.0a0+410ce96</a></li>
+<li><a href="https://github.com/tensorflow/tensorflow/releases/tag/v2.11.0">TensorFlow 2.11.0</a></li>
+<li><a href="https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html">TensorRT 8.5.3</a></li>
+<li><a href="https://github.com/microsoft/onnxruntime/tree/v1.13.1">ONNX Runtime 1.13.1</a></li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.44.2</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.4.6</li>
+<li><a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.13.0">tf2onnx v1.13.0</a></li>
+<li>Other component versions depend on the used framework containers versions.
+    See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+    for a detailed summary.</li>
+</ul>
+<h2 id="044">0.4.4</h2>
+<ul>
+<li>
+<p>fix: when exporting single input model to saved model, unwrap one element list with inputs</p>
+</li>
+<li>
+<p>Version of external components used during testing:</p>
+</li>
+<li><a href="https://github.com/pytorch/pytorch/commit/410ce96">PyTorch 1.14.0a0+410ce96</a></li>
+<li><a href="https://github.com/tensorflow/tensorflow/releases/tag/v2.11.0">TensorFlow 2.11.0</a></li>
+<li><a href="https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html">TensorRT 8.5.3</a></li>
+<li><a href="https://github.com/microsoft/onnxruntime/tree/v1.13.1">ONNX Runtime 1.13.1</a></li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.44.2</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.4.6</li>
+<li><a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.13.0">tf2onnx v1.13.0</a></li>
+<li>Other component versions depend on the used framework containers versions.
+    See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+    for a detailed summary.</li>
+</ul>
+<h2 id="043">0.4.3</h2>
+<ul>
+<li>
+<p>fix: in Keras inference use model.predict(tensor) for single input models</p>
+</li>
+<li>
+<p>Version of external components used during testing:</p>
+</li>
+<li><a href="https://github.com/pytorch/pytorch/commit/410ce96">PyTorch 1.14.0a0+410ce96</a></li>
+<li><a href="https://github.com/tensorflow/tensorflow/releases/tag/v2.11.0">TensorFlow 2.11.0</a></li>
+<li><a href="https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html">TensorRT 8.5.3</a></li>
+<li><a href="https://github.com/microsoft/onnxruntime/tree/v1.13.1">ONNX Runtime 1.13.1</a></li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.44.2</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.4.6</li>
+<li><a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.13.0">tf2onnx v1.13.0</a></li>
+<li>Other component versions depend on the used framework containers versions.
+    See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+    for a detailed summary.</li>
+</ul>
+<h2 id="042">0.4.2</h2>
+<ul>
+<li>fix: loading configuration for trt_profile from package</li>
+<li>fix: missing reproduction scripts and logs inside package</li>
+<li>fix: invalid model path in reproduction script for ONNX to TRT conversion</li>
+<li>
+<p>fix: collecting metadata from ONNX model in main thread during ONNX to TRT conversion</p>
+</li>
+<li>
+<p>Version of external components used during testing:</p>
+</li>
+<li><a href="https://github.com/pytorch/pytorch/commit/410ce96">PyTorch 1.14.0a0+410ce96</a></li>
+<li><a href="https://github.com/tensorflow/tensorflow/releases/tag/v2.11.0">TensorFlow 2.11.0</a></li>
+<li><a href="https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html">TensorRT 8.5.3</a></li>
+<li><a href="https://github.com/microsoft/onnxruntime/tree/v1.13.1">ONNX Runtime 1.13.1</a></li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.44.2</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.4.6</li>
+<li><a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.13.0">tf2onnx v1.13.0</a></li>
+<li>Other component versions depend on the used framework containers versions.
+    See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+    for a detailed summary.</li>
+</ul>
+<h2 id="041">0.4.1</h2>
+<ul>
+<li>
+<p>fix: when specified use dynamic axes from custom OnnxConfig</p>
+</li>
+<li>
+<p>Version of external components used during testing:</p>
+</li>
+<li><a href="https://github.com/pytorch/pytorch/commit/410ce96">PyTorch 1.14.0a0+410ce96</a></li>
+<li><a href="https://github.com/tensorflow/tensorflow/releases/tag/v2.11.0">TensorFlow 2.11.0</a></li>
+<li><a href="https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html">TensorRT 8.5.2.2</a></li>
+<li><a href="https://github.com/microsoft/onnxruntime/tree/v1.13.1">ONNX Runtime 1.13.1</a></li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.43.1</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.4.6</li>
+<li><a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.13.0">tf2onnx v1.13.0</a></li>
+<li>Other component versions depend on the used framework containers versions.
+    See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+    for a detailed summary.</li>
+</ul>
+<h2 id="040">0.4.0</h2>
+<ul>
+<li>new: <code>optimize</code> method that replace <code>export</code> and perform max batch size search and improved profiling during process</li>
+<li>new: Introduced custom configs in <code>optimize</code> for better parametrization of export/conversion commands</li>
+<li>new: Support for adding user runners for model correctness and profiling</li>
+<li>new: Search for max possible batch size per format during conversion and profiling</li>
+<li>new: API for creating Triton model store from Navigator Package and user provided models</li>
+<li>change: Improved status structure for Navigator Package</li>
+<li>deprecated: Optimize for Triton Inference Server support</li>
+<li>deprecated: HuggingFace contrib module</li>
+<li>
+<p>Bug fixes and other improvements</p>
+</li>
+<li>
+<p>Version of external components used during testing:</p>
+</li>
+<li><a href="https://github.com/pytorch/pytorch/commit/410ce96">PyTorch 1.14.0a0+410ce96</a></li>
+<li><a href="https://github.com/tensorflow/tensorflow/releases/tag/v2.11.0">TensorFlow 2.11.0</a></li>
+<li><a href="https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html">TensorRT 8.5.2.2</a></li>
+<li><a href="https://github.com/microsoft/onnxruntime/tree/v1.13.1">ONNX Runtime 1.13.1</a></li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.43.1</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.4.6</li>
+<li><a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.13.0">tf2onnx v1.13.0</a></li>
+<li>Other component versions depend on the used framework containers versions.
+    See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+    for a detailed summary.</li>
+</ul>
+<h2 id="038">0.3.8</h2>
+<ul>
+<li>
+<p>Updated NVIDIA containers defaults to 22.11</p>
+</li>
+<li>
+<p>Version of external components used during testing:</p>
+<ul>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.42.2</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.3.19</li>
+<li><a href="https://github.com/triton-inference-server/model_analyzer">Triton Model Analyzer 1.20.0</a></li>
+<li>tf2onnx: <a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.12.1">v1.12.1</a></li>
+<li>Other component versions depend on the used framework and Triton Inference Server containers versions.
+  See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+  for a detailed summary.</li>
+</ul>
+</li>
+</ul>
+<h2 id="037">0.3.7</h2>
+<ul>
+<li>
+<p>Updated NVIDIA containers defaults to 22.10</p>
+</li>
+<li>
+<p>Version of external components used during testing:</p>
+<ul>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.42.2</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.3.19</li>
+<li><a href="https://github.com/triton-inference-server/model_analyzer">Triton Model Analyzer 1.20.0</a></li>
+<li>tf2onnx: <a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.12.1">v1.12.1</a></li>
+<li>Other component versions depend on the used framework and Triton Inference Server containers versions.
+  See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+  for a detailed summary.</li>
+</ul>
+</li>
+</ul>
+<h2 id="036">0.3.6</h2>
+<ul>
+<li>Updated NVIDIA containers defaults to 22.09</li>
+<li>
+<p>Model Navigator Export API:</p>
+<ul>
+<li>new: cast int64 input data to int32 in runner for Torch-TensorRT</li>
+<li>new: cast 64-bit data samples to 32-bit values for TensorRT</li>
+<li>new: verbose flag for logging export and conversion commands to console</li>
+<li>new: debug flag to enable debug mode for export and conversion commands</li>
+<li>change: logs from commands are streamed to console during command run</li>
+<li>change: package load omit the log files and autogenerated scripts</li>
+</ul>
+</li>
+<li>
+<p>Version of external components used during testing:</p>
+<ul>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.42.2</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.3.19</li>
+<li><a href="https://github.com/triton-inference-server/model_analyzer">Triton Model Analyzer 1.20.0</a></li>
+<li>tf2onnx: <a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.12.1">v1.12.1</a></li>
+<li>Other component versions depend on the used framework and Triton Inference Server containers versions.
+  See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+  for a detailed summary.</li>
+</ul>
+</li>
+</ul>
+<h2 id="035">0.3.5</h2>
+<ul>
+<li>Updated NVIDIA containers defaults to 22.08</li>
+<li>
+<p>Model Navigator Export API:</p>
+<ul>
+<li>new: TRTExec runner use <code>use_cuda_graph=True</code> by default</li>
+<li>new: log warning instead of raising error when dataloader dump inputs with <code>nan</code> or <code>inf</code> values</li>
+<li>new: enabled logging for command input parameters</li>
+<li>fix: invalid use of Polygraphy TRT profile when trt_dynamic_axes is passed to export function</li>
+</ul>
+</li>
+<li>
+<p>Version of external components used during testing:</p>
+<ul>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.38.0</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.3.19</li>
+<li><a href="https://github.com/triton-inference-server/model_analyzer">Triton Model Analyzer 1.19.0</a></li>
+<li>tf2onnx: <a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.12.1">v1.12.1</a></li>
+<li>Other component versions depend on the used framework and Triton Inference Server containers versions.
+  See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+  for a detailed summary.</li>
+</ul>
+</li>
+</ul>
+<h2 id="034">0.3.4</h2>
+<ul>
+<li>Updated NVIDIA containers defaults to 22.07</li>
+<li>Model Navigator OTIS:<ul>
+<li>deprecated: <code>TF32</code> precision for TensorRT from CLI options - will be removed in future versions</li>
+<li>fix: Tensorflow module was imported when obtaining model signature during conversion</li>
+</ul>
+</li>
+<li>
+<p>Model Navigator Export API:</p>
+<ul>
+<li>new: Support for building framework containers with Model Navigator installed</li>
+<li>new: Example for loading Navigator Package for reproducing the results</li>
+<li>new: Create reproducing script for correctness and performance steps</li>
+<li>new: TrtexecRunner for correctness and performance tests
+  with <a href="https://docs.nvidia.com/deeplearning/tensorrt/developer-guide/index.html#trtexec">trtexec</a> tool</li>
+<li>new: Use TF32 support by default for models with FP32 precision</li>
+<li>new: Reset conversion parameters to defaults when using <code>load</code> for package</li>
+<li>new: Testing all options for JAX export enable_xla and jit_compile parameters</li>
+<li>change: Profiling stability improvements</li>
+<li>change: Rename of <code>onnx_runtimes</code> export function parameters to <code>runtimes</code></li>
+<li>deprecated: <code>TF32</code> precision for TensorRT from available options - will be removed in future versions</li>
+<li>fix: Do not save TF-TRT models to the .nav package</li>
+<li>fix: Do not save TF-TRT models from the .nav package</li>
+<li>fix: Correctly load .nav packages when <code>_input_names</code> or <code>_output_names</code> specified</li>
+<li>fix: Adjust TF and TF-TRT model signatures to match <code>input_names</code></li>
+<li>fix: Save ONNX opset for CLI configuration inside package</li>
+<li>fix: Reproduction scripts were missing for failing paths</li>
+</ul>
+</li>
+<li>
+<p>Version of external components used during testing:</p>
+<ul>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.38.0</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.3.19</li>
+<li><a href="https://github.com/triton-inference-server/model_analyzer">Triton Model Analyzer 1.17.0</a></li>
+<li>tf2onnx: <a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.11.1">v1.11.1</a></li>
+<li>Other component versions depend on the used framework and Triton Inference Server containers versions.
+  See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+  for a detailed summary.</li>
+</ul>
+</li>
+</ul>
+<h2 id="033">0.3.3</h2>
+<ul>
+<li>
+<p>Model Navigator Export API:</p>
+<ul>
+<li>new: Improved handling inputs and outputs metadata</li>
+<li>new: Navigator Package version updated to 0.1.3</li>
+<li>new: Backward compatibility with previous versions of Navigator Package</li>
+<li>fix: Dynamic shapes for output shapes were read incorrectly</li>
+</ul>
+</li>
+<li>
+<p>Version of external components used during testing:</p>
+<ul>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.36.2</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.3.19</li>
+<li><a href="https://github.com/triton-inference-server/model_analyzer">Triton Model Analyzer 1.17.0</a></li>
+<li>tf2onnx: <a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.11.1">v1.11.1</a></li>
+<li>Other component versions depend on the used framework and Triton Inference Server containers versions.
+  See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+  for a detailed summary.</li>
+</ul>
+</li>
+</ul>
+<h2 id="032">0.3.2</h2>
+<ul>
+<li>Updated NVIDIA containers defaults to 22.06</li>
+<li>Model Navigator OTIS:<ul>
+<li>new: Perf Analyzer profiling data use base64 format for content</li>
+<li>fix: Signature for TensorRT model when has <code>uint64</code> or <code>int64</code> input and/or outputs defined</li>
+</ul>
+</li>
+<li>
+<p>Model Navigator Export API:</p>
+<ul>
+<li>new: Updated navigator package format to 0.1.1</li>
+<li>new: Added Model Navigator version to status file</li>
+<li>new: Add atol and rtol configuration to CLI config for model</li>
+<li>new: Added experimental support for JAX models</li>
+<li>new: In case of export or conversion failures prepare minimal scripts to reproduce errors</li>
+<li>fix: Conversion parameters are not stored in Navigator Package for CLI execution</li>
+</ul>
+</li>
+<li>
+<p>Version of external components used during testing:</p>
+<ul>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.36.2</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.3.19</li>
+<li><a href="https://github.com/triton-inference-server/model_analyzer">Triton Model Analyzer 1.17.0</a></li>
+<li>tf2onnx: <a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.11.1">v1.11.1</a></li>
+<li>Other component versions depend on the used framework and Triton Inference Server containers versions.
+  See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+  for a detailed summary.</li>
+</ul>
+</li>
+</ul>
+<h2 id="031">0.3.1</h2>
+<ul>
+<li>Updated NVIDIA containers defaults to 22.05</li>
+<li>Model Navigator OTIS:<ul>
+<li>fix: Saving paths inside the Triton package status file</li>
+<li>fix: Empty list of gpus cause the process run on CPU only</li>
+<li>fix: Reading content from zipped Navigator Package</li>
+<li>fix: When no GPU or target device set to CPU <code>optimize</code> avoid running unsupported conversions in CLI</li>
+<li>new: Converter accept passing target device kind to selected CPU or GPU supported conversions</li>
+<li>new: Added support for OpenVINO accelerator for ONNXRuntime</li>
+<li>new: Added option <code>--config-search-early-exit-enable</code> for Model Analyzer early exit support
+  in manual profiling mode</li>
+<li>new: Added option <code>--model-config-name</code> to the <code>select</code> command.
+  It allows to pick a particular model configuration for deployment from the set of all configurations
+  generated by Triton Model Analyzer, even if it's not the best performing one.</li>
+<li>removed: The <code>--tensorrt-strict-types</code> option has been removed due to deprecation of the functionality
+  in upstream libraries.</li>
+</ul>
+</li>
+<li>
+<p>Model Navigator Export API:</p>
+<ul>
+<li>new: Added dynamic shapes support and trt dynamic shapes support for TensorFlow2 export</li>
+<li>new: Improved per format logging</li>
+<li>new: PyTorch to Torch-TRT precision selection added</li>
+<li>new: Advanced profiling (measurement windows, configurable batch sizes)</li>
+</ul>
+</li>
+<li>
+<p>Version of external components used during testing:</p>
+<ul>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.36.2</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.3.19</li>
+<li><a href="https://github.com/triton-inference-server/model_analyzer">Triton Model Analyzer 1.16.0</a></li>
+<li>tf2onnx: <a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.10.1">v1.10.1</a></li>
+<li>Other component versions depend on the used framework and Triton Inference Server containers versions.
+  See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+  for a detailed summary.</li>
+</ul>
+</li>
+</ul>
+<h2 id="030">0.3.0</h2>
+<ul>
+<li>Updated NVIDIA containers defaults to 22.04</li>
+<li>Model Navigator Export API<ul>
+<li>Support for exporting models from TensorFlow2 and PyTorch source code to supported target formats</li>
+<li>Support for conversion from ONNX to supported target formats</li>
+<li>Support for exporting HuggingFace models</li>
+<li>Conversion, Correctness and performance tests for exported models</li>
+<li>Definition of package structure for storing all exported models and additional metadata</li>
+</ul>
+</li>
+<li>Model Navigator OTIS:<ul>
+<li>change: <code>run</code> command has been deprecated and may be removed in a future release</li>
+<li>new: <code>optimize</code> command replace <code>run</code> and produces an output <code>*.triton.nav</code> package</li>
+<li>new: <code>select</code> selects the best-performing configuration from <code>*.triton.nav</code> package and create a
+  Triton Inference Server model repository</li>
+<li>new: Added support for using shared memory option for Perf Analyzer</li>
+</ul>
+</li>
+<li>
+<p>Remove wkhtmltopdf package dependency</p>
+</li>
+<li>
+<p>Version of external components used during testing:</p>
+<ul>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.35.1</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.3.14</li>
+<li><a href="https://github.com/triton-inference-server/model_analyzer">Triton Model Analyzer 1.14.0</a></li>
+<li>tf2onnx: <a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.9.3">v1.9.3</a></li>
+<li>Other component versions depend on the used framework and Triton Inference Server containers versions.
+  See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+  for a detailed summary.</li>
+</ul>
+</li>
+</ul>
+<h2 id="027">0.2.7</h2>
+<ul>
+<li>Updated NVIDIA containers defaults to 22.02</li>
+<li>Removed support for Python 3.7</li>
+<li>Triton Model configuration related:<ul>
+<li>Support dynamic batching without setting preferred batch size value</li>
+</ul>
+</li>
+<li>
+<p>Profiling related:</p>
+<ul>
+<li>Deprecated <code>--config-search-max-preferred-batch-size</code> flag as is no longer supported in Triton Model Analyzer</li>
+</ul>
+</li>
+<li>
+<p>Version of external components used during testing:</p>
+<ul>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.35.1</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.3.14</li>
+<li><a href="https://github.com/triton-inference-server/model_analyzer">Triton Model Analyzer 1.8.2</a></li>
+<li>tf2onnx: <a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.9.3">v1.9.3</a></li>
+<li>Other component versions depend on the used framework and Triton Inference Server containers versions.
+  See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+  for a detailed summary.</li>
+</ul>
+</li>
+</ul>
+<h2 id="026">0.2.6</h2>
+<ul>
+<li>Updated NVIDIA containers defaults to 22.01</li>
+<li>Removed support for Python 3.6 due to EOL</li>
+<li>Conversion related:<ul>
+<li>Added support for Torch-TensorRT conversion</li>
+</ul>
+</li>
+<li>
+<p>Fixes and improvements</p>
+<ul>
+<li>Processes inside containers started by Model Navigator now run without root privileges</li>
+<li>Fix for volume mounts while running Triton Inference Server in container from other container</li>
+<li>Fix for conversion of models without file extension on input and output paths</li>
+<li>Fix using <code>--model-format</code> argument when input and output files have no extension</li>
+</ul>
+</li>
+<li>
+<p>Version of external components used during testing:</p>
+<ul>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.35.1</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.3.14</li>
+<li><a href="https://github.com/triton-inference-server/model_analyzer">Triton Model Analyzer 1.8.2</a></li>
+<li>tf2onnx: <a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.9.3">v1.9.3</a></li>
+<li>Other component versions depend on the used framework and Triton Inference Server containers versions.
+  See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+  for a detailed summary.</li>
+</ul>
+</li>
+<li>
+<p>Known issues and limitations</p>
+<ul>
+<li>missing support for stateful models (ex. time-series one)</li>
+<li>no verification of conversion results for conversions: TF -&gt; ONNX, TF-&gt;TF-TRT, TorchScript -&gt; ONNX</li>
+<li>possible to define a single profile for TensorRT</li>
+<li>no custom ops support</li>
+<li>Triton Inference Server stays in the background when the profile
+  process is interrupted by the user</li>
+<li>TF-TRT conversion lost outputs shapes info</li>
+</ul>
+</li>
+</ul>
+<h2 id="025">0.2.5</h2>
+<ul>
+<li>Updated NVIDIA containers defaults to 21.12</li>
+<li>Conversion related:<ul>
+<li>[Experimental] TF-TRT - fixed default dataset profile generation</li>
+</ul>
+</li>
+<li>
+<p>Configuration Model on Triton related</p>
+<ul>
+<li>Fixed name for onnxruntime backend in Triton model deployment configuration</li>
+</ul>
+</li>
+<li>
+<p>Version of external components used during testing:</p>
+<ul>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.33.1</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.3.14</li>
+<li><a href="https://github.com/triton-inference-server/model_analyzer">Triton Model Analyzer 1.8.2</a></li>
+<li>tf2onnx: <a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.9.3">v1.9.3</a></li>
+<li>Other component versions depend on the used framework and Triton Inference Server containers versions.
+  See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+  for a detailed summary.</li>
+</ul>
+</li>
+<li>
+<p>Known issues and limitations</p>
+<ul>
+<li>missing support for stateful models (ex. time-series one)</li>
+<li>no verification of conversion results for conversions: TF -&gt; ONNX, TF-&gt;TF-TRT, TorchScript -&gt; ONNX</li>
+<li>possible to define a single profile for TensorRT</li>
+<li>no custom ops support</li>
+<li>Triton Inference Server stays in the background when the profile
+  process is interrupted by the user</li>
+<li>TF-TRT conversion lost outputs shapes info</li>
+</ul>
+</li>
+</ul>
+<h2 id="024-2021-12-07">0.2.4 (2021-12-07)</h2>
+<ul>
+<li>Updated NVIDIA containers defaults to 21.10</li>
+<li>Fixed generating profiling data when <code>dtypes</code> are not passed</li>
+<li>Conversion related:<ul>
+<li>[Experimental] Added support for TF-TRT conversion</li>
+</ul>
+</li>
+<li>Configuration Model on Triton related<ul>
+<li>Added possibility to select batching mode - default, dynamic and disabled options supported</li>
+</ul>
+</li>
+<li>Install dependencies from pip packages instead of wheels for Polygraphy and Triton Model Analyzer</li>
+<li>
+<p>fixes and improvements</p>
+</li>
+<li>
+<p>Version of external components used during testing:</p>
+<ul>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.33.1</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.3.14</li>
+<li><a href="https://github.com/triton-inference-server/model_analyzer">Triton Model Analyzer 1.8.2</a></li>
+<li>tf2onnx: <a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.9.3">v1.9.3</a></li>
+<li>Other component versions depend on the used framework and Triton Inference Server containers versions.
+  See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+  for a detailed summary.</li>
+</ul>
+</li>
+<li>
+<p>Known issues and limitations</p>
+<ul>
+<li>missing support for stateful models (ex. time-series one)</li>
+<li>no verification of conversion results for conversions: TF -&gt; ONNX, TF-&gt;TF-TRT, TorchScript -&gt; ONNX</li>
+<li>possible to define a single profile for TensorRT</li>
+<li>no custom ops support</li>
+<li>Triton Inference Server stays in the background when the profile
+  process is interrupted by the user</li>
+<li>TF-TRT conversion lost outputs shapes info</li>
+</ul>
+</li>
+</ul>
+<h2 id="023-2021-11-10">0.2.3 (2021-11-10)</h2>
+<ul>
+<li>Updated NVIDIA containers defaults to 21.09</li>
+<li>Improved naming of arguments specific for TensorRT conversion and acceleration with backward compatibility</li>
+<li>Use pip package for Triton Model Analyzer installation with minimal version 1.8.0</li>
+<li>Fixed <code>model_repository</code> path to be not relative to <code>&lt;navigator_workspace&gt;</code> dir</li>
+<li>Handle exit codes correctly from CLI commands</li>
+<li>Support for use device ids for <code>--gpus</code> argument</li>
+<li>Conversion related<ul>
+<li>Added support for precision modes to support multiple precisions during conversion to TensorRT</li>
+<li>Added <code>--tensorrt-sparse-weights</code> flag for sparse weight optimization for TensorRT</li>
+<li>Added <code>--tensorrt-strict-types</code> flag forcing it to choose tactics based on the layer precision for TensorRT</li>
+<li>Added <code>--tensorrt-explicit-precision</code> flag enabling explicit precision mode</li>
+<li>Fixed nan values appearing in relative tolerance during conversion to TensorRT</li>
+</ul>
+</li>
+<li>Configuration Model on Triton related<ul>
+<li>Removed default value for <code>engine_count_per_device</code></li>
+<li>Added possibility to define Triton Custom Backend parameters with <code>triton_backend_parameters</code> command</li>
+<li>Added possibility to define max workspace size for TensorRT backend accelerator using
+  argument <code>tensorrt_max_workspace_size</code></li>
+</ul>
+</li>
+<li>Profiling related<ul>
+<li>Added <code>config_search</code> prefix to all profiling parameters (BREAKING CHANGE)</li>
+<li>Added <code>config_search_max_preferred_batch_size</code> parameter</li>
+<li>Added <code>config_search_backend_parameters</code> parameter</li>
+</ul>
+</li>
+<li>
+<p>fixes and improvements</p>
+</li>
+<li>
+<p>Versions of used external components:</p>
+<ul>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.32.0</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.3.13</li>
+<li>tf2onnx: <a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.9.2">v1.9.2</a> (support for ONNX opset 14,
+  tf 1.15 and 2.6)</li>
+<li><a href="https://github.com/triton-inference-server/model_analyzer">Triton Model Analyzer 1.8.2</a></li>
+<li>Other component versions depend on the used framework and Triton Inference Server containers versions.
+  See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+  for a detailed summary.</li>
+</ul>
+</li>
+<li>
+<p>Known issues and limitations</p>
+<ul>
+<li>missing support for stateful models (ex. time-series one)</li>
+<li>missing support for models without batching support</li>
+<li>no verification of conversion results for conversions: TF -&gt; ONNX, TorchScript -&gt; ONNX</li>
+<li>possible to define a single profile for TensorRT</li>
+</ul>
+</li>
+</ul>
+<h2 id="022-2021-09-06">0.2.2 (2021-09-06)</h2>
+<ul>
+<li>
+<p>Updated NVIDIA containers defaults to 21.08</p>
+</li>
+<li>
+<p>Versions of used external components:</p>
+<ul>
+<li><a href="https://github.com/triton-inference-server/model_analyzer">Triton Model Analyzer</a>: 1.7.0</li>
+<li><a href="https://github.com/triton-inference-server/client/">Triton Inference Server Client</a>: 2.13.0</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.31.1</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.3.11</li>
+<li>tf2onnx: <a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.9.1">v1.9.1</a> (support for ONNX opset 14,
+  tf 1.15 and 2.5)</li>
+<li>Other component versions depend on the used framework and Triton Inference Server containers versions.
+  See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+  for a detailed summary.</li>
+</ul>
+</li>
+<li>
+<p>Known issues and limitations</p>
+<ul>
+<li>missing support for stateful models (ex. time-series one)</li>
+<li>missing support for models without batching support</li>
+<li>no verification of conversion results for conversions: TF -&gt; ONNX, TorchScript -&gt; ONNX</li>
+<li>possible to define a single profile for TensorRT</li>
+</ul>
+</li>
+</ul>
+<h2 id="021-2021-08-17">0.2.1 (2021-08-17)</h2>
+<ul>
+<li>Fixed triton-model-config error when tensorrt_capture_cuda_graph flag is not passed</li>
+<li>Dump Conversion Comparator inputs and outputs into JSON files</li>
+<li>Added information in logs on the tolerance parameters values to pass the conversion verification</li>
+<li>Use <code>count_windows</code> mode as default option for Perf Analyzer</li>
+<li>Added possibility to define custom docker images</li>
+<li>
+<p>Bugfixes</p>
+</li>
+<li>
+<p>Versions of used external components:</p>
+<ul>
+<li><a href="https://github.com/triton-inference-server/model_analyzer">Triton Model Analyzer</a>: 1.6.0</li>
+<li><a href="https://github.com/triton-inference-server/client/">Triton Inference Server Client</a>: 2.12.0</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/">Polygraphy</a>: 0.31.1</li>
+<li><a href="https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/">GraphSurgeon</a>: 0.3.11</li>
+<li>tf2onnx: <a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.9.1">v1.9.1</a> (support for ONNX opset 14,
+  tf 1.15 and 2.5)</li>
+<li>Other component versions depend on the used framework and Triton Inference Server containers versions.
+  See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+  for a detailed summary.</li>
+</ul>
+</li>
+<li>
+<p>Known issues and limitations</p>
+<ul>
+<li>missing support for stateful models (ex. time-series one)</li>
+<li>missing support for models without batching support</li>
+<li>no verification of conversion results for conversions: TF -&gt; ONNX, TorchScript -&gt; ONNX</li>
+<li>possible to define a single profile for TensorRT</li>
+<li>TensorRT backend acceleration not supported for ONNX Runtime in Triton Inference Server ver. 21.07</li>
+</ul>
+</li>
+</ul>
+<h2 id="020-2021-07-05">0.2.0 (2021-07-05)</h2>
+<ul>
+<li>
+<p>comprehensive refactor of command-line API in order to provide more gradual
+  pipeline steps execution</p>
+</li>
+<li>
+<p>Versions of used external components:</p>
+<ul>
+<li><a href="https://github.com/triton-inference-server/model_analyzer">Triton Model Analyzer</a>: 21.05</li>
+<li>tf2onnx: <a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.8.5">v1.8.5</a> (support for ONNX opset 13,
+  tf 1.15 and 2.5)</li>
+<li>Other component versions depend on the used framework and Triton Inference Server containers versions.
+  See its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+  for a detailed summary.</li>
+</ul>
+</li>
+<li>
+<p>Known issues and limitations</p>
+<ul>
+<li>missing support for stateful models (ex. time-series one)</li>
+<li>missing support for models without batching support</li>
+<li>no verification of conversion results for conversions: TF -&gt; ONNX, TorchScript -&gt; ONNX</li>
+<li>issues with TorchScript -&gt; ONNX conversion due
+  to <a href="https://github.com/pytorch/pytorch/issues/53506">issue in PyTorch 1.8</a><ul>
+<li>affected NVIDIA PyTorch containers: 20.12, 21.02, 21.03</li>
+<li>workaround: use PyTorch containers newer than 21.03</li>
+</ul>
+</li>
+<li>possible to define a single profile for TensorRT</li>
+</ul>
+</li>
+</ul>
+<h2 id="011-2021-04-12">0.1.1 (2021-04-12)</h2>
+<ul>
+<li>documentation update</li>
+</ul>
+<h2 id="010-2021-04-09">0.1.0 (2021-04-09)</h2>
+<ul>
+<li>
+<p>Release of main components:</p>
+<ul>
+<li>Model Converter - converts the model to a set of variants optimized for inference or to be later optimized by
+  Triton Inference Server backend.</li>
+<li>Model Repo Builder - setup Triton Inference Server Model Repository, including its configuration.</li>
+<li>Model Analyzer - select optimal Triton Inference Server configuration based on models compute and memory
+  requirements,
+  available computation infrastructure, and model application constraints.</li>
+<li>Helm Chart Generator - deploy Triton Inference Server and model with optimal configuration to cloud.</li>
+</ul>
+</li>
+<li>
+<p>Versions of used external components:</p>
+<ul>
+<li><a href="https://github.com/triton-inference-server/model_analyzer">Triton Model Analyzer</a>: 21.03+616e8a30</li>
+<li>tf2onnx: <a href="https://github.com/onnx/tensorflow-onnx/releases/tag/v1.8.4">v1.8.4</a> (support for ONNX opset 13, tf 1.15
+  and 2.4)</li>
+<li>Other component versions depend on the used framework and Triton Inference Server containers versions.
+  Refer to its <a href="https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html">support matrix</a>
+  for a detailed summary.</li>
+</ul>
+</li>
+<li>
+<p>Known issues</p>
+<ul>
+<li>missing support for stateful models (ex. time-series one)</li>
+<li>missing support for models without batching support</li>
+<li>no verification of conversion results for conversions: TF -&gt; ONNX, TorchScript -&gt; ONNX</li>
+<li>issues with TorchScript -&gt; ONNX conversion due
+  to <a href="https://github.com/pytorch/pytorch/issues/53506">issue in PyTorch 1.8</a><ul>
+<li>affected NVIDIA PyTorch containers: 20.12, 21.03</li>
+<li>workaround: use containers different from above</li>
+</ul>
+</li>
+<li>Triton Inference Server stays in the background when the profile process is interrupted by the user</li>
+</ul>
+</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12Z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <!--
+Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+Copyright © 2023 NVIDIA Corporation
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.top"], "search": "../assets/javascripts/workers/search.f886a092.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7c377c4.min.js"></script>
+      
+    
+  </body>
+</html>
