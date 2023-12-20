@@ -71,6 +71,12 @@ def get_pipeline():
         chunk_length_s=30,
         device=DEVICE,
     )
+    # WAR: reorder modules
+    pipe.model.proj_out = nav.Module(
+        pipe.model.proj_out,
+        name="proj_out",
+        optimize_config=optimize_config,
+    )
     pipe.model.model.encoder = nav.Module(
         pipe.model.model.encoder,
         name="encoder",
@@ -83,11 +89,7 @@ def get_pipeline():
         optimize_config=optimize_config,
         output_mapping=lambda x: BaseModelOutputWithPastAndCrossAttentions(**x),
     )
-    pipe.model.proj_out = nav.Module(
-        pipe.model.proj_out,
-        name="proj_out",
-        optimize_config=optimize_config,
-    )
+
     return pipe
 
 

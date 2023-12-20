@@ -100,7 +100,7 @@ class ModelConfig(ABC, DataObject):
             if value is None:
                 continue
 
-            if hasattr(value, "to_dict"):
+            if hasattr(value, "to_dict") and not isinstance(value, ModelConfig):
                 params = {**params, **value.to_dict()}
             else:
                 params[key] = value
@@ -255,9 +255,6 @@ class TensorFlowModelConfig(_SourceModelConfig, format=Format.TENSORFLOW):
     def _from_dict(cls, data_dict: Dict):
         return cls()
 
-    def _to_dict(self) -> Dict:
-        return {}
-
 
 class JAXModelConfig(_SourceModelConfig, format=Format.JAX):
     """Source code JAX model configuration class."""
@@ -265,9 +262,6 @@ class JAXModelConfig(_SourceModelConfig, format=Format.JAX):
     @classmethod
     def _from_dict(cls, data_dict: Dict):
         return cls()
-
-    def _to_dict(self) -> Dict:
-        return {}
 
 
 class _SerializedModelConfig(ModelConfig, format=None):

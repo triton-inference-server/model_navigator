@@ -90,7 +90,7 @@ def main():
             dataset_name, tokenizer, max_sequence_length
         ),
         inputs=input_names,
-        padding=True,
+        padding="max_length",
         max_sequence_length=max_sequence_length,
         return_tensors=TensorType.TENSORFLOW,
     )

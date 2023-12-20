@@ -25,6 +25,7 @@ limitations under the License.
 - fix: JAX export and TensorRT conversion fails when custom workspace is used
 - fix: Missing max workspace size passed to TensorRT conversion
 - fix: Execution of TensorRT optimize raise error during handling output metadata
+- fix: Limited Polygraphy version to work correctly with onnxruntime-gpu package
 
 - Version of external components used during testing:
   - [PyTorch 2.2.0a0+6a974be](https://github.com/pytorch/pytorch/commit/6a974be)

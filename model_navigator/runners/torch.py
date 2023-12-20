@@ -53,8 +53,10 @@ class _BaseTorchRunner(NavigatorRunner):
 
         if is_torch2_available():
             self._infer = self._infer_v2
+            self._inplace_infer = self._inplace_infer_v2
         else:
             self._infer = self._infer_v1
+            self._inplace_infer = self._inplace_infer_v1
 
         # validate device with runner target device
         if self.device:
@@ -121,6 +123,19 @@ class _BaseTorchRunner(NavigatorRunner):
             with InferenceStepTimer(
                 self._inference_time, InferenceStep.COMPUTE, enabled=self._enable_timer
             ), torch.autocast(device_type=self.device, enabled=self._autocast):
+                outputs = self._loaded_model(*args, **kwargs)
+
+        return outputs
+
+    def _inplace_infer_v2(self, *args, **kwargs):
+        with torch.inference_mode(mode=self._inference_mode):
+            with torch.autocast(device_type=self.device, enabled=self._autocast):
+                outputs = self._loaded_model(*args, **kwargs)
+        return outputs
+
+    def _inplace_infer_v1(self, *args, **kwargs):
+        with torch.no_grad():
+            with torch.autocast(device_type=self.device, enabled=self._autocast):
                 outputs = self._loaded_model(*args, **kwargs)
 
         return outputs
