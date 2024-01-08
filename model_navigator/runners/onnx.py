@@ -221,7 +221,7 @@ class OnnxrtCUDARunner(_BaseOnnxrtRunner):
     def __init__(self, *args, **kwargs) -> None:
         """Initialize runner."""
         super().__init__(*args, **kwargs)
-        if is_torch_available:
+        if is_torch_available():
             self._torch = module.lazy_import("torch")
         else:
             self._torch = None
