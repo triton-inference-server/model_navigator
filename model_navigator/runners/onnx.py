@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ from typing import Any, Dict, List, Optional, Sequence, Union
 
 import model_navigator.utils.common as utils
 from model_navigator.api.config import Format, TensorType
+from model_navigator.configuration.validation.device import get_id_from_device_string, validate_device_string
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata, get_tensor_type
 from model_navigator.exceptions import ModelNavigatorConfigurationError, ModelNavigatorNotFoundError
@@ -26,7 +27,6 @@ from model_navigator.frameworks.tensorrt.cuda import DeviceView
 from model_navigator.runners.base import DeviceKind, InferenceStep, InferenceStepTimer, NavigatorRunner
 from model_navigator.runners.registry import register_runner
 from model_navigator.utils import module
-from model_navigator.utils.config_helpers import get_id_from_device_string, validate_device_string
 
 onnxrt = module.lazy_import("onnxruntime")
 np = module.lazy_import("numpy")

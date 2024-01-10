@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -121,6 +121,28 @@ class Cuda:
             raise ModelNavigatorError(
                 f"CUDA Error: {status}. To figure out what this means, refer to https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html#group__CUDART__TYPES_1g3f51e3575c2178246db0a94a430e0038"
             )
+
+    # extern __host__ ​cudaError_t cudaSetDevice(int  device);
+    def set_device(self, device: int):
+        """Set the current CUDA device.
+
+        Args:
+            device (int): The device index to set.
+        """
+        # Signature: int -> None
+        self.check(self.handle.cudaSetDevice(ctypes.c_int(device)))
+
+    # extern __host__ ​ __device__ ​cudaError_t cudaGetDevice(int* device)
+    def get_device(self):
+        """Get the current CUDA device.
+
+        Returns:
+            int: The current device index.
+        """
+        # Signature: None -> int
+        device = ctypes.c_int()
+        self.check(self.handle.cudaGetDevice(ctypes.byref(device)))
+        return device.value
 
     # extern __host__ cudaError_t CUDARTAPI cudaStreamCreate(cudaStream_t *pStream);
     def stream_create(self):
@@ -264,6 +286,27 @@ def wrapper():
     if G_CUDA is None:
         G_CUDA = Cuda()
     return G_CUDA
+
+
+class CudaDeviceSelector:
+    """A context manager that sets the current CUDA device to the specified device for current thread."""
+
+    def __init__(self, device: int):
+        """Initializes a CUDA device context.
+
+        Args:
+            device (int): The device index to set.
+        """
+        self.device = device
+
+    def __enter__(self):
+        """Sets the current CUDA device."""
+        self.prev_device = wrapper().get_device()
+        wrapper().set_device(self.device)
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """Resets the current CUDA device to the previous device."""
+        wrapper().set_device(self.prev_device)
 
 
 class GraphExec:

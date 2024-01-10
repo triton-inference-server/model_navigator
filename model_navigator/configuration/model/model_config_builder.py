@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -432,6 +432,7 @@ class ModelConfigBuilder:
                     compatibility_level=trt_config.compatibility_level,
                     onnx_parser_flags=trt_config.onnx_parser_flags,
                     custom_args=trt_config.custom_args,
+                    device=trt_config.device,
                 )
             )
         else:
@@ -447,5 +448,6 @@ class ModelConfigBuilder:
                         compatibility_level=trt_config.compatibility_level,
                         onnx_parser_flags=trt_config.onnx_parser_flags,
                         custom_args=trt_config.custom_args,
+                        device=trt_config.device,
                     )
                 )

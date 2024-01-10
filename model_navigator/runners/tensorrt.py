@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ from typing import List, Optional, Sequence
 import numpy as np
 
 from model_navigator.api.config import Format, TensorType
+from model_navigator.configuration.validation.device import get_id_from_device_string, validate_device_string_for_cuda
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import get_tensor_type
 from model_navigator.exceptions import ModelNavigatorError, ModelNavigatorUserInputError
@@ -91,7 +92,7 @@ def _make_output_allocator():
 class TensorRTRunner(NavigatorRunner):
     """TensorRT runner class."""
 
-    def __init__(self, optimization_profile: Optional[int] = None, *args, **kwargs):
+    def __init__(self, optimization_profile: Optional[int] = None, *args, device: Optional[str] = None, **kwargs):
         """Initialization of TensorRTRunner.
 
         Args:
@@ -99,8 +100,17 @@ class TensorRTRunner(NavigatorRunner):
             optimization_profile: The index of the optimization profile to set each time this runner is activated.
                 When this is not provided, the profile is not set explicitly and will default to the 0th profile.
                 You can also change the profile after the runner is active using the ``set_profile()`` method.
+            device: torch-like device string identifying cuda device to use for inference.
         """
         super().__init__(*args, **kwargs)
+
+        if device:
+            validate_device_string_for_cuda(device)
+
+            self.device = get_id_from_device_string(device)
+        else:
+            self.device = 0
+
         self._engine_or_context = trt_utils.EngineFromBytes(utils.BytesFromPath(self.model.as_posix()))
         self.optimization_profile = optimization_profile
         self.context = None
@@ -186,84 +196,85 @@ class TensorRTRunner(NavigatorRunner):
 
         Activate runner and prepare it for inference.
         """
-        engine_or_context, owning = utils.invoke_if_callable(self._engine_or_context)
+        with cuda_utils.CudaDeviceSelector(self.device):
+            engine_or_context, owning = utils.invoke_if_callable(self._engine_or_context)
 
-        if isinstance(engine_or_context, trt.ICudaEngine):
-            self.engine = engine_or_context
-            self.owns_engine = owning
-            self.context = self.engine.create_execution_context()
-            self.owns_context = True
-            if not self.context:
-                raise RuntimeError("Failed to create execution context")
-        elif isinstance(engine_or_context, trt.IExecutionContext):
-            self.context = engine_or_context
-            self.owns_context = owning
-            self.engine = self.context.engine
-            self.owns_engine = False
-        else:
-            raise RuntimeError(
-                "Invalid Engine or Context. Please ensure the engine was built correctly. See error log for details."
+            if isinstance(engine_or_context, trt.ICudaEngine):
+                self.engine = engine_or_context
+                self.owns_engine = owning
+                self.context = self.engine.create_execution_context()
+                self.owns_context = True
+                if not self.context:
+                    raise RuntimeError("Failed to create execution context")
+            elif isinstance(engine_or_context, trt.IExecutionContext):
+                self.context = engine_or_context
+                self.owns_context = owning
+                self.engine = self.context.engine
+                self.owns_engine = False
+            else:
+                raise RuntimeError(
+                    "Invalid Engine or Context. Please ensure the engine was built correctly. See error log for details."
+                )
+
+            self._trt_input_metadata = self.get_input_metadata_impl()
+
+            self._type_casts = {}
+            for name, metadata in self.input_metadata.items():
+                if name in self._trt_input_metadata and trt_utils.cast_type(metadata.dtype) != metadata.dtype:
+                    self._type_casts[name] = trt_utils.cast_type(metadata.dtype)
+
+            def make_buffers_legacy():
+                """Creates empty host and device buffers for the specified engine.
+
+                Always uses binding names from Profile 0.
+                """
+                device_buffers = OrderedDict()
+                host_output_buffers = OrderedDict()
+
+                for idx in range(trt_utils.get_bindings_per_profile(self.engine)):
+                    binding = self.engine[idx]
+                    dtype = trt_utils.np_dtype_from_trt(self.engine.get_binding_dtype(binding))
+                    device_buffers[binding] = cuda_utils.DeviceArray(dtype=dtype)
+                    if not self.engine.binding_is_input(binding):
+                        host_output_buffers[binding] = np.empty(shape=(), dtype=dtype)
+
+                LOGGER.debug(f"Initialized device buffers: {device_buffers}")
+                return device_buffers, host_output_buffers, None
+
+            def make_buffers():
+                """Creates empty host buffers for outputs and empty device buffers for inputs."""
+                device_buffers = OrderedDict()
+                host_output_buffers = OrderedDict()
+                output_allocator = _make_output_allocator()
+
+                for idx in range(self.engine.num_io_tensors):
+                    name = self.engine.get_tensor_name(idx)
+
+                    # NOTE: We use raw arrays to enable vectorized formats.
+                    if self.engine.get_tensor_mode(name) == trt.TensorIOMode.INPUT:
+                        device_buffers[name] = cuda_utils.DeviceArray.raw(shape=())
+                    elif self.engine.get_tensor_mode(name) == trt.TensorIOMode.OUTPUT:
+                        host_output_buffers[name] = np.empty(shape=(), dtype=np.byte)
+                        if not self.context.set_output_allocator(name, output_allocator):
+                            raise ModelNavigatorError(f"For output: {name}, failed to set output allocator")
+                    else:
+                        # TODO: warning, error or exception here?
+                        LOGGER.warning(
+                            f"Unexpected tensor I/O mode encountered during inference: {self.engine.get_tensor_mode(name)}.\n"
+                            "Please update this implementation!"
+                        )
+
+                LOGGER.debug(f"Initialized device buffers: {device_buffers}")
+                return device_buffers, host_output_buffers, output_allocator
+
+            self.device_buffers, self.host_output_buffers, self.output_allocator = (
+                make_buffers() if trt_utils._should_use_v3_api() else make_buffers_legacy()
             )
+            self.stream = cuda_utils.Stream()
 
-        self._trt_input_metadata = self.get_input_metadata_impl()
-
-        self._type_casts = {}
-        for name, metadata in self.input_metadata.items():
-            if name in self._trt_input_metadata and trt_utils.cast_type(metadata.dtype) != metadata.dtype:
-                self._type_casts[name] = trt_utils.cast_type(metadata.dtype)
-
-        def make_buffers_legacy():
-            """Creates empty host and device buffers for the specified engine.
-
-            Always uses binding names from Profile 0.
-            """
-            device_buffers = OrderedDict()
-            host_output_buffers = OrderedDict()
-
-            for idx in range(trt_utils.get_bindings_per_profile(self.engine)):
-                binding = self.engine[idx]
-                dtype = trt_utils.np_dtype_from_trt(self.engine.get_binding_dtype(binding))
-                device_buffers[binding] = cuda_utils.DeviceArray(dtype=dtype)
-                if not self.engine.binding_is_input(binding):
-                    host_output_buffers[binding] = np.empty(shape=(), dtype=dtype)
-
-            LOGGER.debug(f"Initialized device buffers: {device_buffers}")
-            return device_buffers, host_output_buffers, None
-
-        def make_buffers():
-            """Creates empty host buffers for outputs and empty device buffers for inputs."""
-            device_buffers = OrderedDict()
-            host_output_buffers = OrderedDict()
-            output_allocator = _make_output_allocator()
-
-            for idx in range(self.engine.num_io_tensors):
-                name = self.engine.get_tensor_name(idx)
-
-                # NOTE: We use raw arrays to enable vectorized formats.
-                if self.engine.get_tensor_mode(name) == trt.TensorIOMode.INPUT:
-                    device_buffers[name] = cuda_utils.DeviceArray.raw(shape=())
-                elif self.engine.get_tensor_mode(name) == trt.TensorIOMode.OUTPUT:
-                    host_output_buffers[name] = np.empty(shape=(), dtype=np.byte)
-                    if not self.context.set_output_allocator(name, output_allocator):
-                        raise ModelNavigatorError(f"For output: {name}, failed to set output allocator")
-                else:
-                    # TODO: warning, error or exception here?
-                    LOGGER.warning(
-                        f"Unexpected tensor I/O mode encountered during inference: {self.engine.get_tensor_mode(name)}.\n"
-                        "Please update this implementation!"
-                    )
-
-            LOGGER.debug(f"Initialized device buffers: {device_buffers}")
-            return device_buffers, host_output_buffers, output_allocator
-
-        self.device_buffers, self.host_output_buffers, self.output_allocator = (
-            make_buffers() if trt_utils._should_use_v3_api() else make_buffers_legacy()
-        )
-        self.stream = cuda_utils.Stream()
-
-        if self.optimization_profile is not None:
-            self.set_profile(self.optimization_profile)
-        self.cuda_graph = None
+            if self.optimization_profile is not None:
+                self.set_profile(self.optimization_profile)
+            self.cuda_graph = None
 
     def _set_shapes_from_feed_dict_legacy(self, feed_dict):
         """Sets context shapes according to the provided feed_dict.
@@ -531,35 +542,36 @@ class TensorRTRunner(NavigatorRunner):
                     A mapping of output tensor names to corresponding output NumPy arrays
                     or DeviceViews.
         """
-        with InferenceStepTimer(self._inference_time, InferenceStep.PREPROCESSING, enabled=self._enable_timer):
-            feed_dict = {name: feed_dict[name] for name in self._trt_input_metadata}
-            inputs = {}
-            tensor_types = {}
-            for name, tensor in feed_dict.items():
-                tensor_types[name] = get_tensor_type(tensor)
-                if tensor_types[name] == TensorType.NUMPY and self._torch is not None:
-                    inputs[name] = self._torch.from_numpy(tensor)
-                    tensor_types[name] = TensorType.TORCH
-                else:
-                    inputs[name] = tensor
+        with cuda_utils.CudaDeviceSelector(self.device):
+            with InferenceStepTimer(self._inference_time, InferenceStep.PREPROCESSING, enabled=self._enable_timer):
+                feed_dict = {name: feed_dict[name] for name in self._trt_input_metadata}
+                inputs = {}
+                tensor_types = {}
+                for name, tensor in feed_dict.items():
+                    tensor_types[name] = get_tensor_type(tensor)
+                    if tensor_types[name] == TensorType.NUMPY and self._torch is not None:
+                        inputs[name] = self._torch.from_numpy(tensor)
+                        tensor_types[name] = TensorType.TORCH
+                    else:
+                        inputs[name] = tensor
 
-        with InferenceStepTimer(self._inference_time, InferenceStep.H2D_MEMCPY, enabled=self._enable_timer):
-            for name, tensor in inputs.items():
-                if tensor_types[name] == TensorType.TORCH:
-                    inputs[name] = tensor.cuda()
+            with InferenceStepTimer(self._inference_time, InferenceStep.H2D_MEMCPY, enabled=self._enable_timer):
+                for name, tensor in inputs.items():
+                    if tensor_types[name] == TensorType.TORCH:
+                        inputs[name] = tensor.cuda()
 
-        with InferenceStepTimer(self._inference_time, InferenceStep.PREPROCESSING, enabled=self._enable_timer):
-            for name, dtype in self._type_casts.items():
-                inputs[name] = trt_utils.cast_tensor(inputs[name], dtype)
+            with InferenceStepTimer(self._inference_time, InferenceStep.PREPROCESSING, enabled=self._enable_timer):
+                for name, dtype in self._type_casts.items():
+                    inputs[name] = trt_utils.cast_tensor(inputs[name], dtype)
 
-        if trt_utils._should_use_v3_api():
-            out_dict = self._infer_impl_v3(inputs)
-        else:
-            out_dict = self._infer_impl_legacy(inputs, True)
+            if trt_utils._should_use_v3_api():
+                out_dict = self._infer_impl_v3(inputs)
+            else:
+                out_dict = self._infer_impl_legacy(inputs, True)
 
-        with InferenceStepTimer(self._inference_time, InferenceStep.POSTPROCESSING, enabled=self._enable_timer):
-            if self.output_metadata:  # filter outputs if output_metadata is set
-                out_dict = {name: out_dict[name] for name in self.output_metadata}
+            with InferenceStepTimer(self._inference_time, InferenceStep.POSTPROCESSING, enabled=self._enable_timer):
+                if self.output_metadata:  # filter outputs if output_metadata is set
+                    out_dict = {name: out_dict[name] for name in self.output_metadata}
 
         return out_dict
 

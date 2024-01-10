@@ -17,6 +17,7 @@ limitations under the License.
 # Changelog
 
 ## 0.8.0 (unreleased)
+- new: Allow to select device for TensorRT runner
 
 ## 0.7.5
 - new: FP8 precision support for TensorRT

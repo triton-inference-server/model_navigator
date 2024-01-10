@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -450,6 +450,7 @@ class TensorRTConfig(_SerializedModelConfig, format=Format.TENSORRT):
         parent: Optional[ModelConfig] = None,
         onnx_parser_flags: Optional[List[int]] = None,
         custom_args: Optional[Dict[str, Any]] = None,
+        device: Optional[str] = None,
     ) -> None:
         """Initializes TensorRT (plan) model configuration class.
 
@@ -463,6 +464,7 @@ class TensorRTConfig(_SerializedModelConfig, format=Format.TENSORRT):
             compatibility_level: Hardware compatibility level
             onnx_parser_flags: ONNX parser flags
             custom_args: Custom arguments passed to TensorRT conversion
+            device: runtime device e.g. "cuda:0"
         """
         super().__init__(parent=parent)
         self.precision = precision
@@ -473,6 +475,7 @@ class TensorRTConfig(_SerializedModelConfig, format=Format.TENSORRT):
         self.compatibility_level = compatibility_level
         self.onnx_parser_flags = onnx_parser_flags
         self.custom_args = custom_args
+        self.runner_config = DeviceRunnerConfig(device=device)
 
     def _get_path_params_as_array_of_strings(self) -> List[str]:
         return [self.precision.value] if self.precision else []

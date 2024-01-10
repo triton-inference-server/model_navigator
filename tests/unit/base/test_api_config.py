@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,8 +35,12 @@ from model_navigator.api.config import (
     _custom_configs,
     map_custom_configs,
 )
+from model_navigator.configuration.validation.device import (
+    get_id_from_device_string,
+    validate_device_string,
+    validate_device_string_for_cuda,
+)
 from model_navigator.exceptions import ModelNavigatorConfigurationError
-from model_navigator.utils.config_helpers import get_id_from_device_string, validate_device_string
 
 
 def test_tensorrt_config_raise_exception_when_trt_profile_and_trt_profiles_are_both_set():
@@ -317,6 +321,35 @@ def test_validate_device_string_raises_exception_for_incorrect_strings():
         validate_device_string("cpu:1,2")
     with pytest.raises(ModelNavigatorConfigurationError):
         validate_device_string("cu")
+
+
+def test_validate_device_string_for_cuda_not_raises_exception_for_valid_strings():
+    validate_device_string_for_cuda("cuda")
+    for i in range(10):
+        validate_device_string_for_cuda(f"cuda:{i}")
+
+
+def test_validate_device_string_for_cuda_raises_exception_for_incorrect_strings():
+    with pytest.raises(ModelNavigatorConfigurationError):
+        validate_device_string_for_cuda("")
+    with pytest.raises(ModelNavigatorConfigurationError):
+        validate_device_string_for_cuda("")
+    with pytest.raises(ModelNavigatorConfigurationError):
+        validate_device_string_for_cuda("cuda:1a")
+    with pytest.raises(ModelNavigatorConfigurationError):
+        validate_device_string_for_cuda("cuda:1:2")
+    with pytest.raises(ModelNavigatorConfigurationError):
+        validate_device_string_for_cuda("cuda:")
+    with pytest.raises(ModelNavigatorConfigurationError):
+        validate_device_string_for_cuda("cuda:1,2")
+    with pytest.raises(ModelNavigatorConfigurationError):
+        validate_device_string_for_cuda("0")
+    with pytest.raises(ModelNavigatorConfigurationError):
+        validate_device_string_for_cuda("cpu:1,2")
+    with pytest.raises(ModelNavigatorConfigurationError):
+        validate_device_string_for_cuda("cu")
+    with pytest.raises(ModelNavigatorConfigurationError):
+        validate_device_string_for_cuda("cpu")
 
 
 def test_get_id_from_device_string_returns_device_id_when_available():
