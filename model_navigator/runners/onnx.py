@@ -251,21 +251,19 @@ class OnnxrtCUDARunner(_BaseOnnxrtRunner):
             self.sess.run_with_iobinding(io_binding)
             io_binding.synchronize_outputs()
 
-        with InferenceStepTimer(self._inference_time, InferenceStep.POSTPROCESSING, enabled=self._enable_timer):
-            out_dict = OrderedDict()
+        with InferenceStepTimer(self._inference_time, InferenceStep.D2H_MEMCPY, enabled=self._enable_timer):
+            out_dict = {}
             for node, out in zip(self.sess.get_outputs(), io_binding.get_outputs()):
                 device_view = DeviceView(out.data_ptr(), out.shape(), ONNX_RT_TYPE_TO_NP[out.data_type()])
-                out_dict[node.name] = device_view.torch()
+                out_dict[node.name] = (
+                    device_view.torch() if self.return_type == TensorType.TORCH else device_view.numpy()
+                )
 
-            if self.output_metadata is None:
-                return out_dict
+        if self.output_metadata is None:
+            return out_dict
 
+        with InferenceStepTimer(self._inference_time, InferenceStep.POSTPROCESSING, enabled=self._enable_timer):
             out_dict = {k: v for k, v in out_dict.items() if k in self.output_metadata}
-
-        with InferenceStepTimer(self._inference_time, InferenceStep.D2H_MEMCPY, enabled=self._enable_timer):
-            if self.return_type == TensorType.NUMPY:
-                for name, tensor in out_dict.items():
-                    out_dict[name] = tensor.detach().cpu().numpy()
 
         return out_dict
 
