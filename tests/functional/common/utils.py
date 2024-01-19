@@ -18,7 +18,7 @@ import zipfile
 from typing import Dict, List, Union
 
 from model_navigator import CommandStatus
-from model_navigator.api.config import EXPORT_FORMATS, INPUT_FORMATS, Format
+from model_navigator.api.config import INPUT_FORMATS, Format
 from model_navigator.commands.performance.performance import Performance
 from model_navigator.frameworks import Framework
 from model_navigator.package.status import ModelStatus, Status
@@ -113,10 +113,9 @@ def collect_expected_files(package_path: pathlib.Path, status: Status) -> List[s
         if conversion_status == "SKIPPED":
             continue
 
-        export_formats = [fmt.value for fmt in EXPORT_FORMATS[framework]]
         if model_status_key == input_format.value:
             format_files = FORMAT_FILES
-        elif any(model_status_key.startswith(fmt) for fmt in export_formats):
+        elif model_status.model_config.parent is None:
             format_files = FORMAT_FILES + ["reproduce_export.sh", "reproduce_export.py"]
         else:
             format_files = FORMAT_FILES + ["reproduce_conversion.sh"]

@@ -15,7 +15,7 @@
 
 import inspect
 import pathlib
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Mapping, Optional
 
 import fire
 import torch  # pytype: disable=import-error
@@ -72,6 +72,10 @@ def export(
 
     dummy_input = {n: torch.from_numpy(val).to(target_device) for n, val in profiling_sample.items()}
     dummy_input = input_metadata.unflatten_sample(dummy_input)
+
+    # torch.onnx.export requires inputs to be a tuple or tensor
+    if isinstance(dummy_input, Mapping):
+        dummy_input = (dummy_input,)
 
     forward_argspec = inspect.getfullargspec(model.forward)
     forward_args = forward_argspec.args[1:]

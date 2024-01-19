@@ -74,7 +74,7 @@ class ConvertTorchScript2ONNX(Command):
             verbose=verbose,
         ) as context:
             kwargs = {
-                "workspace": workspace.path.as_posix(),
+                "navigator_workspace": workspace.path.as_posix(),
                 "exported_model_path": exported_model_path.relative_to(workspace.path).as_posix(),
                 "converted_model_path": converted_model_path.relative_to(workspace.path).as_posix(),
                 "opset": opset,
