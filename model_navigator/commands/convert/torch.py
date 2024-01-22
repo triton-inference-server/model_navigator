@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ class ConvertTorchScript2ONNX(Command):
             verbose=verbose,
         ) as context:
             kwargs = {
-                "workspace": workspace.path.as_posix(),
+                "navigator_workspace": workspace.path.as_posix(),
                 "exported_model_path": exported_model_path.relative_to(workspace.path).as_posix(),
                 "converted_model_path": converted_model_path.relative_to(workspace.path).as_posix(),
                 "opset": opset,

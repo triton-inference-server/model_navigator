@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 
 import inspect
 import pathlib
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Mapping, Optional
 
 import fire
 import torch  # pytype: disable=import-error
@@ -72,6 +72,10 @@ def export(
 
     dummy_input = {n: torch.from_numpy(val).to(target_device) for n, val in profiling_sample.items()}
     dummy_input = input_metadata.unflatten_sample(dummy_input)
+
+    # torch.onnx.export requires inputs to be a tuple or tensor
+    if isinstance(dummy_input, Mapping):
+        dummy_input = (dummy_input,)
 
     forward_argspec = inspect.getfullargspec(model.forward)
     forward_args = forward_argspec.args[1:]
