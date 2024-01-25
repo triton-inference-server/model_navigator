@@ -22,7 +22,7 @@ limitations under the License.
 
 - Version of external components used during testing:
   - [PyTorch 2.2.0a0+81ea7a48](https://github.com/pytorch/pytorch/commit/81ea7a48)
-  - [TensorFlow 2.14.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.13.0)
+  - [TensorFlow 2.14.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.14.0)
   - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
   - [ONNX Runtime 1.16.2](https://github.com/microsoft/onnxruntime/tree/v1.16.2)
   - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.49.0
