@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,6 +19,23 @@ limitations under the License.
 ## 0.8.0 (unreleased)
 - new: Allow to select device for TensorRT runner
 - fix: Passing inputs for Torch to ONNX export
+
+## 0.7.6
+- fix: Passing inputs for Torch to ONNX export
+- fix: Passing input data to OnnxCUDA runner
+
+- Version of external components used during testing:
+  - [PyTorch 2.2.0a0+81ea7a48](https://github.com/pytorch/pytorch/commit/81ea7a48)
+  - [TensorFlow 2.14.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.14.0)
+  - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+  - [ONNX Runtime 1.16.2](https://github.com/microsoft/onnxruntime/tree/v1.16.2)
+  - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.49.0
+  - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.27
+  - [tf2onnx v1.16.1](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.16.1)
+  - Other component versions depend on the used framework containers versions.
+    See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+    for a detailed summary.
+
 
 ## 0.7.5
 - new: FP8 precision support for TensorRT
