@@ -15,6 +15,7 @@
 
 import abc
 import collections
+import contextlib
 import time
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
@@ -26,8 +27,6 @@ from model_navigator.api.config import DeviceKind, Format, TensorType
 from model_navigator.core.dataloader import validate_sample_output
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata, TensorSpec, get_tensor_type
-from model_navigator.frameworks import is_torch_available
-from model_navigator.utils import module
 
 
 class InferenceStep(Enum):
@@ -37,6 +36,7 @@ class InferenceStep(Enum):
     H2D_MEMCPY = "h2d_memcpy"
     COMPUTE = "compute"
     D2H_MEMCPY = "d2h_memcpy"
+    D2D_MEMCPY = "d2d_memcpy"
     POSTPROCESSING = "postprocessing"
     TOTAL = "total"
 
@@ -52,33 +52,32 @@ class InferenceTime(collections.defaultdict):
 class InferenceStepTimer:
     """Context manager for measuring inference step time."""
 
-    def __init__(self, inference_time: InferenceTime, step_name: Union[str, InferenceStep], enabled: bool = False):
+    def __init__(self, inference_time: InferenceTime, enabled: bool = False, callbacks: Optional[List] = None):
         """Initialize object.
 
         Args:
             inference_time: InferenceTime object to store measured time.
-            step_name: Name of the step to measure.
             enabled: Flag indicating if timer is enabled.
+            callbacks: List of callbacks to call after each step. E.g. to synchronize CUDA streams.
         """
         self.inference_time = inference_time
-        self.step_name = step_name if isinstance(step_name, str) else step_name.value
-        self.start_time = None
         self.enabled = enabled
-        self._torch = module.lazy_import("torch") if is_torch_available() else None
+        self._callbacks = callbacks or []
 
-    def __enter__(self):
-        """Start measuring time."""
+    @contextlib.contextmanager
+    def measure_step(self, step_name: Union[str, InferenceStep]):
+        """Context manager for measuring nested inference step time."""
+        step_name = step_name.value if isinstance(step_name, InferenceStep) else step_name
         if self.enabled:
-            self.start_time = time.monotonic()
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Stop measuring time and store measured time in InferenceTime object."""
-        if self.enabled:
+            start_time = time.monotonic()
+            yield
+            for callback in self._callbacks:
+                callback()
             end_time = time.monotonic()
-            runtime = (end_time - self.start_time) * 1000
-            self.inference_time[self.step_name] += runtime
-            if self._torch is not None and self._torch.cuda.is_available():
-                self._torch.cuda.synchronize()
+            runtime = (end_time - start_time) * 1000
+            self.inference_time[step_name] += runtime
+        else:
+            yield
 
 
 class NavigatorRunner(abc.ABC):
@@ -116,8 +115,10 @@ class NavigatorRunner(abc.ABC):
         self._return_type = return_type
 
         self._enable_timer = enable_timer
-        self._inference_time = None
+        self._inference_time = InferenceTime()
         self.is_active = False
+
+        self._inference_step_timer = InferenceStepTimer(self._inference_time, enabled=self._enable_timer)
 
         self.init_impl()
 
@@ -306,7 +307,8 @@ class NavigatorRunner(abc.ABC):
                     )
 
         self._inference_time = InferenceTime()
-        with InferenceStepTimer(self._inference_time, InferenceStep.TOTAL, enabled=self._enable_timer):
+        self._inference_step_timer.inference_time = self._inference_time
+        with self._inference_step_timer.measure_step(InferenceStep.TOTAL):
             output = self.infer_impl(feed_dict, *args, **kwargs)
 
         if check_inputs:
@@ -323,7 +325,7 @@ class NavigatorRunner(abc.ABC):
             Inference time in seconds split into preprocessing, host-to-device, compute, device-to-host, and
             postprocessing times.
         """
-        if self._inference_time is None:
+        if not self._inference_time:
             raise RuntimeError(
                 f"{self.name()} | Inference time not available. "
                 "Make sure to call `infer()` before calling `last_inference_time()`."

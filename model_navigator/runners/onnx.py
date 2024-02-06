@@ -24,7 +24,7 @@ from model_navigator.exceptions import ModelNavigatorConfigurationError, ModelNa
 from model_navigator.frameworks import is_torch_available
 from model_navigator.frameworks.onnx.utils import ONNX_RT_TYPE_TO_NP
 from model_navigator.frameworks.tensorrt.cuda import DeviceView
-from model_navigator.runners.base import DeviceKind, InferenceStep, InferenceStepTimer, NavigatorRunner
+from model_navigator.runners.base import DeviceKind, InferenceStep, NavigatorRunner
 from model_navigator.runners.registry import register_runner
 from model_navigator.utils import module
 
@@ -240,18 +240,20 @@ class OnnxrtCUDARunner(_BaseOnnxrtRunner):
         """Run inference."""
         assert self.is_active and hasattr(self, "sess"), "Runner must be activated."
 
-        with InferenceStepTimer(self._inference_time, InferenceStep.PREPROCESSING, enabled=self._enable_timer):
+        with self._inference_step_timer.measure_step(InferenceStep.PREPROCESSING):
             input_metadata = self.get_onnx_input_metadata()
             feed_dict = {name: tensor for name, tensor in feed_dict.items() if name in input_metadata}
 
         inputs, tensor_types = self._prepare_inputs(feed_dict)
 
-        with InferenceStepTimer(self._inference_time, InferenceStep.COMPUTE, enabled=self._enable_timer):
+        with self._inference_step_timer.measure_step(InferenceStep.COMPUTE):
             io_binding = self._get_io_bindings(inputs, tensor_types)
             self.sess.run_with_iobinding(io_binding)
             io_binding.synchronize_outputs()
 
-        with InferenceStepTimer(self._inference_time, InferenceStep.D2H_MEMCPY, enabled=self._enable_timer):
+        with self._inference_step_timer.measure_step(
+            InferenceStep.D2H_MEMCPY if self.return_type == TensorType.TORCH else InferenceStep.D2D_MEMCPY
+        ):
             out_dict = {}
             for node, out in zip(self.sess.get_outputs(), io_binding.get_outputs()):
                 device_view = DeviceView(out.data_ptr(), out.shape(), ONNX_RT_TYPE_TO_NP[out.data_type()])
@@ -262,14 +264,14 @@ class OnnxrtCUDARunner(_BaseOnnxrtRunner):
         if self.output_metadata is None:
             return out_dict
 
-        with InferenceStepTimer(self._inference_time, InferenceStep.POSTPROCESSING, enabled=self._enable_timer):
+        with self._inference_step_timer.measure_step(InferenceStep.POSTPROCESSING):
             out_dict = {k: v for k, v in out_dict.items() if k in self.output_metadata}
 
         return out_dict
 
     def _prepare_inputs(self, feed_dict):
 
-        with InferenceStepTimer(self._inference_time, InferenceStep.PREPROCESSING, enabled=self._enable_timer):
+        with self._inference_step_timer.measure_step(InferenceStep.PREPROCESSING):
             inputs = {}
             tensor_types = {}
             for name, tensor in feed_dict.items():
@@ -281,7 +283,7 @@ class OnnxrtCUDARunner(_BaseOnnxrtRunner):
                     inputs[name] = tensor
                     tensor_types[name] = tensor_type
 
-        with InferenceStepTimer(self._inference_time, InferenceStep.H2D_MEMCPY, enabled=self._enable_timer):
+        with self._inference_step_timer.measure_step(InferenceStep.H2D_MEMCPY):
             if self._torch is not None:
                 for name, tensor in inputs.items():
                     assert tensor_types[name] == TensorType.TORCH

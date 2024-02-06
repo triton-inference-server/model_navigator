@@ -576,7 +576,7 @@ def get_tensor_type(tensor: Any) -> TensorType:
     """Get tensor type from tensor."""
     if isinstance(tensor, np.ndarray):
         return TensorType.NUMPY
-    elif is_torch_available() and torch.is_tensor(tensor):
+    elif is_torch_available() and (torch.is_tensor(tensor) or isinstance(tensor, DeviceView)):
         return TensorType.TORCH
     elif is_tf_available() and tf.is_tensor(tensor):
         return TensorType.TENSORFLOW

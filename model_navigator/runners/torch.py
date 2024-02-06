@@ -72,6 +72,10 @@ class _BaseTorchRunner(NavigatorRunner):
         else:
             self.device = self._target_device.value
 
+        self._inference_step_timer = InferenceStepTimer(
+            self._inference_time, enabled=self._enable_timer, callbacks=[lambda: torch.cuda.synchronize()]
+        )
+
     def activate_impl(self):
         """Activation implementation."""
         self._loaded_model = self.model
@@ -88,10 +92,10 @@ class _BaseTorchRunner(NavigatorRunner):
         if self.output_metadata is None:
             return outputs
 
-        with InferenceStepTimer(self._inference_time, InferenceStep.POSTPROCESSING, enabled=self._enable_timer):
+        with self._inference_step_timer.measure_step(InferenceStep.POSTPROCESSING):
             out_dict = self.output_metadata.flatten_sample(outputs)
 
-        with InferenceStepTimer(self._inference_time, InferenceStep.D2H_MEMCPY, enabled=self._enable_timer):
+        with self._inference_step_timer.measure_step(InferenceStep.D2H_MEMCPY):
             out_dict = self._prepare_outputs(out_dict)
 
         return out_dict
@@ -110,9 +114,9 @@ class _BaseTorchRunner(NavigatorRunner):
         with torch.inference_mode(mode=self._inference_mode):
             args, kwargs = self._prepare_inputs(feed_dict)
 
-            with InferenceStepTimer(
-                self._inference_time, InferenceStep.COMPUTE, enabled=self._enable_timer
-            ), torch.autocast(device_type=self.device, enabled=self._autocast):
+            with self._inference_step_timer.measure_step(InferenceStep.COMPUTE), torch.autocast(
+                device_type=self.device, enabled=self._autocast
+            ):
                 outputs = self._loaded_model(*args, **kwargs)
         return outputs
 
@@ -120,9 +124,9 @@ class _BaseTorchRunner(NavigatorRunner):
         with torch.no_grad():
             args, kwargs = self._prepare_inputs(feed_dict)
 
-            with InferenceStepTimer(
-                self._inference_time, InferenceStep.COMPUTE, enabled=self._enable_timer
-            ), torch.autocast(device_type=self.device, enabled=self._autocast):
+            with self._inference_step_timer.measure_step(InferenceStep.COMPUTE), torch.autocast(
+                device_type=self.device, enabled=self._autocast
+            ):
                 outputs = self._loaded_model(*args, **kwargs)
 
         return outputs
@@ -142,18 +146,18 @@ class _BaseTorchRunner(NavigatorRunner):
 
     def _prepare_inputs(self, feed_dict):
         """Prepare inputs for inference."""
-        with InferenceStepTimer(self._inference_time, InferenceStep.PREPROCESSING, enabled=self._enable_timer):
+        with self._inference_step_timer.measure_step(InferenceStep.PREPROCESSING):
             inputs = {}
             for input_name, spec in self.input_metadata.items():
                 value = feed_dict[input_name]
                 value = self._to_torch_tensor(value, spec.dtype)
                 inputs[input_name] = value
 
-        with InferenceStepTimer(self._inference_time, InferenceStep.H2D_MEMCPY, enabled=self._enable_timer):
+        with self._inference_step_timer.measure_step(InferenceStep.H2D_MEMCPY):
             for input_name, value in inputs.items():
                 inputs[input_name] = value.to(self.device)
 
-        with InferenceStepTimer(self._inference_time, InferenceStep.PREPROCESSING, enabled=self._enable_timer):
+        with self._inference_step_timer.measure_step(InferenceStep.PREPROCESSING):
             unflatten_inputs = self.input_metadata.unflatten_sample(inputs, wrap_input=True)
             if isinstance(unflatten_inputs[-1], dict):
                 args, kwargs = unflatten_inputs[:-1], unflatten_inputs[-1]

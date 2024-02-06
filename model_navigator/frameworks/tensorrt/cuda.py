@@ -24,6 +24,7 @@ import numpy as np
 import model_navigator.utils.common as utils
 from model_navigator.core.logger import LOGGER
 from model_navigator.exceptions import ModelNavigatorError, ModelNavigatorUserInputError
+from model_navigator.frameworks import is_torch_available
 from model_navigator.utils import module
 
 torch = module.lazy_import("torch")
@@ -459,14 +460,13 @@ class DeviceView:
         self.dtype = dtype
         """np.dtype: The data type of the device buffer"""
 
-        self._torch = None
+        self._torch_array = None
 
-    @property
-    def torch_array(self):
+    def torch(self):
         """Returns a torch array of the device buffer."""
-        if self._torch is None:
-            self._torch = self.torch()
-        return self._torch
+        if self._torch_array is None:
+            self._torch_array = self._torch()
+        return self._torch_array
 
     @property
     def dtype(self):
@@ -484,13 +484,20 @@ class DeviceView:
         """The number of bytes in the memory region."""
         return utils.volume(self.shape) * self.itemsize
 
+    @property
+    def __class__(self):
+        """Returns the class of the device buffer."""
+        if is_torch_available():
+            return torch.Tensor
+        return type(self)
+
     def __getattr__(self, __name: str) -> Any:
         """Returns the attribute of the torch array."""
-        return getattr(self.torch_array, __name)
+        return getattr(self.torch(), __name)
 
     def __getitem__(self, key: Any) -> Any:
         """Returns the item of the torch array."""
-        return self.torch_array[key]
+        return self.torch()[key]
 
     def __str__(self):
         """Returns a string representation of the device buffer."""
@@ -525,6 +532,25 @@ class DeviceView:
         )
         return host_buffer
 
+    def copy_to_device(self, device_buffer: "DeviceView", stream: Optional[Stream] = None) -> "DeviceView":
+        """Copies from this device buffer to the provided device buffer.
+
+        Args:
+            device_buffer: The device buffer to copy into.
+            stream: A Stream instance. Performs a synchronous copy if no stream is provided.
+
+        Returns:
+            The host buffer
+        """
+        wrapper().memcpy(
+            dst=device_buffer.ptr,
+            src=self.ptr,
+            nbytes=self.nbytes,
+            kind=MemcpyKind.DeviceToDevice,
+            stream_ptr=try_get_stream_handle(stream),
+        )
+        return device_buffer
+
     def numpy(self) -> np.ndarray:
         """Create a new NumPy array containing the contents of this device buffer.
 
@@ -535,14 +561,23 @@ class DeviceView:
         self.copy_to(arr)
         return arr
 
-    def torch(self, stream=None):
-        """Create a new NumPy array containing the contents of this device buffer.
+    @classmethod
+    def __torch_function__(cls, func, types, args=(), kwargs=None):
+        """Dispatches torch functions to the underlying torch array."""
+        if kwargs is None:
+            kwargs = {}
 
-        Returns:
-            The newly created NumPy array.
-        """
+        args = tuple(arg.torch() if isinstance(arg, cls) else arg for arg in args)
+        kwargs = {k: v.torch() if isinstance(v, cls) else v for k, v in kwargs.items()}
+        return func(*args, **kwargs)
+
+    def _torch(self, stream=None):
+        LOGGER.debug(
+            f"Creating torch array from device buffer.\n"
+            f"Note: dtype={self.dtype}, shape={self.shape}, nbytes={self.nbytes}, ptr={hex(self.ptr)}"
+        )
+
         arr = torch.empty(self.shape, dtype=utils.numpy_to_torch_dtype(self.dtype), device="cuda")
-
         wrapper().memcpy(
             dst=arr.data_ptr(),
             src=self.ptr,

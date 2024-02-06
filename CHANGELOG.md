@@ -18,6 +18,7 @@ limitations under the License.
 
 ## 0.8.0 (unreleased)
 - new: Allow to select device for TensorRT runner
+- new: Add device output buffers to TensorRT runner
 - fix: Passing inputs for Torch to ONNX export
 
 ## 0.7.6

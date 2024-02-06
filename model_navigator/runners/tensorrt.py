@@ -34,6 +34,7 @@ from model_navigator.utils import common as utils
 from model_navigator.utils import module
 
 trt = module.lazy_import("tensorrt")
+torch = module.lazy_import("torch")
 
 
 class FormattedArray:
@@ -119,6 +120,7 @@ class TensorRTRunner(NavigatorRunner):
         self.output_allocator = None
         self.device_buffers = None
         self.host_output_buffers = None
+        self.device_output_buffers = None
         self.use_cuda_graphs = False
         self._trt_input_metadata = None
 
@@ -126,6 +128,12 @@ class TensorRTRunner(NavigatorRunner):
             self._torch = module.lazy_import("torch")
         else:
             self._torch = None
+
+        self._inference_step_timer = InferenceStepTimer(
+            inference_time=self._inference_time,
+            enabled=self._enable_timer,
+            callbacks=[lambda: self.stream.synchronize()],
+        )
 
     @classmethod
     def format(cls) -> Format:
@@ -239,12 +247,13 @@ class TensorRTRunner(NavigatorRunner):
                         host_output_buffers[binding] = np.empty(shape=(), dtype=dtype)
 
                 LOGGER.debug(f"Initialized device buffers: {device_buffers}")
-                return device_buffers, host_output_buffers, None
+                return device_buffers, host_output_buffers, {}, None
 
             def make_buffers():
                 """Creates empty host buffers for outputs and empty device buffers for inputs."""
                 device_buffers = OrderedDict()
                 host_output_buffers = OrderedDict()
+                device_output_buffers = OrderedDict()
                 output_allocator = _make_output_allocator()
 
                 for idx in range(self.engine.num_io_tensors):
@@ -255,6 +264,7 @@ class TensorRTRunner(NavigatorRunner):
                         device_buffers[name] = cuda_utils.DeviceArray.raw(shape=())
                     elif self.engine.get_tensor_mode(name) == trt.TensorIOMode.OUTPUT:
                         host_output_buffers[name] = np.empty(shape=(), dtype=np.byte)
+                        device_output_buffers[name] = cuda_utils.DeviceArray.raw(shape=())
                         if not self.context.set_output_allocator(name, output_allocator):
                             raise ModelNavigatorError(f"For output: {name}, failed to set output allocator")
                     else:
@@ -265,9 +275,9 @@ class TensorRTRunner(NavigatorRunner):
                         )
 
                 LOGGER.debug(f"Initialized device buffers: {device_buffers}")
-                return device_buffers, host_output_buffers, output_allocator
+                return device_buffers, host_output_buffers, device_output_buffers, output_allocator
 
-            self.device_buffers, self.host_output_buffers, self.output_allocator = (
+            self.device_buffers, self.host_output_buffers, self.device_output_buffers, self.output_allocator = (
                 make_buffers() if trt_utils._should_use_v3_api() else make_buffers_legacy()
             )
             self.stream = cuda_utils.Stream()
@@ -380,7 +390,7 @@ class TensorRTRunner(NavigatorRunner):
         return output_buffers
 
     def _infer_impl_v3(self, feed_dict):  # noqa C901
-        with InferenceStepTimer(self._inference_time, InferenceStep.PREPROCESSING, enabled=self._enable_timer):
+        with self._inference_step_timer.measure_step(InferenceStep.PREPROCESSING):
             reshape = False
             for idx in range(self.engine.num_io_tensors):
                 name = self.engine.get_tensor_name(idx)
@@ -445,7 +455,7 @@ class TensorRTRunner(NavigatorRunner):
                 self.cuda_graph = None
                 self.graph_exe = None
 
-        with InferenceStepTimer(self._inference_time, InferenceStep.COMPUTE, enabled=self._enable_timer):
+        with self._inference_step_timer.measure_step(InferenceStep.COMPUTE):
             if self.use_cuda_graphs:
                 if self.cuda_graph is None:
                     # do inference before CUDA graph capture
@@ -474,9 +484,12 @@ class TensorRTRunner(NavigatorRunner):
                         "`execute_async_v3()` failed. Please see the logging output above for details."
                     )
 
-        output_buffers = OrderedDict()
-        for name in self.host_output_buffers.keys():
-            output_buffers[name] = self._output_tensor_view(name, self.return_type)
+        with self._inference_step_timer.measure_step(
+            InferenceStep.D2H_MEMCPY if self.return_type == TensorType.NUMPY else InferenceStep.D2D_MEMCPY
+        ):
+            output_buffers = OrderedDict()
+            for name in self.host_output_buffers.keys():
+                output_buffers[name] = self._output_tensor_view(name, self.return_type)
 
         self.stream.synchronize()
         return output_buffers
@@ -496,30 +509,35 @@ class TensorRTRunner(NavigatorRunner):
     def _output_tensor_view(self, name, return_type):
         # If we're dealing with vectorized formats, we need to return a FormattedArray.
         # Otherwise, we create a view instead with the correct shape/dtype.
-        with InferenceStepTimer(self._inference_time, InferenceStep.POSTPROCESSING, enabled=self._enable_timer):
-            raw_array = self.output_allocator.buffers[name]
-            shape = self.output_allocator.shapes[name]
-            dtype = np.dtype(trt.nptype(self.engine.get_tensor_dtype(name)))
+        raw_array = self.output_allocator.buffers[name]
+        shape = self.output_allocator.shapes[name]
+        dtype = np.dtype(trt.nptype(self.engine.get_tensor_dtype(name)))
 
-            using_nonlinear_format = self.engine.get_tensor_format(name) != trt.TensorFormat.LINEAR
-            if using_nonlinear_format:
-                raise NotImplementedError("Nonlinear formats are not yet supported.")
-            # The memory allocated by the output allocator may be larger than actually required.
-            # If we're using a vectorized format, then we need to copy the whole thing.
-            # Otherwise, we can determine how much we actually need.
-            nbytes = raw_array.nbytes if using_nonlinear_format else (utils.volume(shape) * dtype.itemsize)
+        # commented out because we are never using nonlinear format and this takes time
+        # using_nonlinear_format = self.engine.get_tensor_format(name) != trt.TensorFormat.LINEAR
+        # if using_nonlinear_format:
+        #     raise NotImplementedError("Nonlinear formats are not yet supported.")
+        # nbytes = raw_array.nbytes if using_nonlinear_format else (utils.volume(shape) * dtype.itemsize)
+        nbytes = utils.volume(shape) * dtype.itemsize
 
-        with InferenceStepTimer(self._inference_time, InferenceStep.D2H_MEMCPY, enabled=self._enable_timer):
-            if return_type == TensorType.NUMPY:
-                self.host_output_buffers[name] = utils.resize_buffer(self.host_output_buffers[name], (nbytes,))
-                raw_array.view(shape=(nbytes,)).copy_to(self.host_output_buffers[name], stream=self.stream)
-                raw_array = self.host_output_buffers[name]
+        # The memory allocated by the output allocator may be larger than actually required.
+        # If we're using a vectorized format, then we need to copy the whole thing.
+        # Otherwise, we can determine how much we actually need.
 
-                array = FormattedArray(raw_array, shape=shape, dtype=dtype)
-                array = raw_array.view(dtype).reshape(shape)
-            else:
-                assert return_type == TensorType.TORCH
-                array = cuda_utils.DeviceView(raw_array.ptr, shape, dtype).torch(stream=self.stream)
+        if return_type == TensorType.NUMPY:
+            self.host_output_buffers[name] = utils.resize_buffer(self.host_output_buffers[name], (nbytes,))
+            raw_array.view(shape=(nbytes,)).copy_to(self.host_output_buffers[name], stream=self.stream)
+            raw_array = self.host_output_buffers[name]
+
+            array = FormattedArray(raw_array, shape=shape, dtype=dtype)
+            array = raw_array.view(dtype).reshape(shape)
+        else:
+            assert return_type == TensorType.TORCH
+            array = self.device_output_buffers[name]
+            array.resize((nbytes,))
+            array = (
+                raw_array.view(shape=(nbytes,)).copy_to_device(array, stream=self.stream).view(shape=shape, dtype=dtype)
+            )
 
         return array
 
@@ -543,7 +561,7 @@ class TensorRTRunner(NavigatorRunner):
                     or DeviceViews.
         """
         with cuda_utils.CudaDeviceSelector(self.device):
-            with InferenceStepTimer(self._inference_time, InferenceStep.PREPROCESSING, enabled=self._enable_timer):
+            with self._inference_step_timer.measure_step(InferenceStep.PREPROCESSING):
                 feed_dict = {name: feed_dict[name] for name in self._trt_input_metadata}
                 inputs = {}
                 tensor_types = {}
@@ -555,23 +573,26 @@ class TensorRTRunner(NavigatorRunner):
                     else:
                         inputs[name] = tensor
 
-            with InferenceStepTimer(self._inference_time, InferenceStep.H2D_MEMCPY, enabled=self._enable_timer):
+            with self._inference_step_timer.measure_step(InferenceStep.H2D_MEMCPY):
                 for name, tensor in inputs.items():
-                    if tensor_types[name] == TensorType.TORCH:
+                    if tensor_types[name] == TensorType.TORCH and not isinstance(tensor, cuda_utils.DeviceView):
                         inputs[name] = tensor.cuda()
 
-            with InferenceStepTimer(self._inference_time, InferenceStep.PREPROCESSING, enabled=self._enable_timer):
+            with self._inference_step_timer.measure_step(InferenceStep.PREPROCESSING):
                 for name, dtype in self._type_casts.items():
-                    inputs[name] = trt_utils.cast_tensor(inputs[name], dtype)
+                    if not isinstance(inputs[name], cuda_utils.DeviceView):
+                        inputs[name] = trt_utils.cast_tensor(inputs[name], dtype)
 
             if trt_utils._should_use_v3_api():
                 out_dict = self._infer_impl_v3(inputs)
             else:
                 out_dict = self._infer_impl_legacy(inputs, True)
 
-            with InferenceStepTimer(self._inference_time, InferenceStep.POSTPROCESSING, enabled=self._enable_timer):
+            with self._inference_step_timer.measure_step(InferenceStep.POSTPROCESSING):
                 if self.output_metadata:  # filter outputs if output_metadata is set
                     out_dict = {name: out_dict[name] for name in self.output_metadata}
+
+            self.stream.synchronize()
 
         return out_dict
 
