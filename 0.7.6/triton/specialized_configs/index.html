@@ -16,7 +16,7 @@
       
       
       <link rel="icon" href="../../assets/favicon.png">
-      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.6">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.8">
     
     
       
@@ -24,7 +24,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.50c56a3b.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.f2e4d321.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
@@ -2121,9 +2121,7 @@ available options for the given type of model.</p>
 
           <details class="quote">
             <summary>Source code in <code>model_navigator/triton/specialized_configs/base_model_config.py</code></summary>
-            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-52">52</a></span>
-<span class="normal"><a href="#__codelineno-0-53">53</a></span>
-<span class="normal"><a href="#__codelineno-0-54">54</a></span>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-54">54</a></span>
 <span class="normal"><a href="#__codelineno-0-55">55</a></span>
 <span class="normal"><a href="#__codelineno-0-56">56</a></span>
 <span class="normal"><a href="#__codelineno-0-57">57</a></span>
@@ -2132,18 +2130,20 @@ available options for the given type of model.</p>
 <span class="normal"><a href="#__codelineno-0-60">60</a></span>
 <span class="normal"><a href="#__codelineno-0-61">61</a></span>
 <span class="normal"><a href="#__codelineno-0-62">62</a></span>
-<span class="normal"><a href="#__codelineno-0-63">63</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-52" name="__codelineno-0-52"></a><span class="k">def</span> <span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-53" name="__codelineno-0-53"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate the configuration for early error handling.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-54" name="__codelineno-0-54"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">batching</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_batch_size</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-<a id="__codelineno-0-55" name="__codelineno-0-55"></a>        <span class="k">raise</span> <span class="n">ModelNavigatorWrongParameterError</span><span class="p">(</span><span class="s2">&quot;The `max_batch_size` must be greater or equal to 1.&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-56" name="__codelineno-0-56"></a>
-<a id="__codelineno-0-57" name="__codelineno-0-57"></a>    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batcher</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="n">DynamicBatcher</span><span class="p">,</span> <span class="n">SequenceBatcher</span><span class="p">]:</span>
-<a id="__codelineno-0-58" name="__codelineno-0-58"></a>        <span class="k">raise</span> <span class="n">ModelNavigatorWrongParameterError</span><span class="p">(</span><span class="s2">&quot;Unsupported batcher type provided.&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-59" name="__codelineno-0-59"></a>
-<a id="__codelineno-0-60" name="__codelineno-0-60"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span> <span class="o">!=</span> <span class="n">Backend</span><span class="o">.</span><span class="n">TensorRT</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span><span class="n">group</span><span class="o">.</span><span class="n">profile</span> <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">instance_groups</span><span class="p">):</span>
-<a id="__codelineno-0-61" name="__codelineno-0-61"></a>        <span class="k">raise</span> <span class="n">ModelNavigatorWrongParameterError</span><span class="p">(</span>
-<a id="__codelineno-0-62" name="__codelineno-0-62"></a>            <span class="s2">&quot;Invalid `profile` option. The value can be set only for `backend=Backend.TensorRT`&quot;</span>
-<a id="__codelineno-0-63" name="__codelineno-0-63"></a>        <span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-63">63</a></span>
+<span class="normal"><a href="#__codelineno-0-64">64</a></span>
+<span class="normal"><a href="#__codelineno-0-65">65</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-54" name="__codelineno-0-54"></a><span class="k">def</span> <span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate the configuration for early error handling.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-56" name="__codelineno-0-56"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">batching</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_batch_size</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+<a id="__codelineno-0-57" name="__codelineno-0-57"></a>        <span class="k">raise</span> <span class="n">ModelNavigatorWrongParameterError</span><span class="p">(</span><span class="s2">&quot;The `max_batch_size` must be greater or equal to 1.&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-58" name="__codelineno-0-58"></a>
+<a id="__codelineno-0-59" name="__codelineno-0-59"></a>    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batcher</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="n">DynamicBatcher</span><span class="p">,</span> <span class="n">SequenceBatcher</span><span class="p">]:</span>
+<a id="__codelineno-0-60" name="__codelineno-0-60"></a>        <span class="k">raise</span> <span class="n">ModelNavigatorWrongParameterError</span><span class="p">(</span><span class="s2">&quot;Unsupported batcher type provided.&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-61" name="__codelineno-0-61"></a>
+<a id="__codelineno-0-62" name="__codelineno-0-62"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span> <span class="o">!=</span> <span class="n">Backend</span><span class="o">.</span><span class="n">TensorRT</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span><span class="n">group</span><span class="o">.</span><span class="n">profile</span> <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">instance_groups</span><span class="p">):</span>
+<a id="__codelineno-0-63" name="__codelineno-0-63"></a>        <span class="k">raise</span> <span class="n">ModelNavigatorWrongParameterError</span><span class="p">(</span>
+<a id="__codelineno-0-64" name="__codelineno-0-64"></a>            <span class="s2">&quot;Invalid `profile` option. The value can be set only for `backend=Backend.TensorRT`&quot;</span>
+<a id="__codelineno-0-65" name="__codelineno-0-65"></a>        <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
           </details>
   </div>
@@ -2622,21 +2622,21 @@ available options for the given type of model.</p>
 
           <details class="quote">
             <summary>Source code in <code>model_navigator/triton/specialized_configs/pytorch_model_config.py</code></summary>
-            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-40">40</a></span>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-38">38</a></span>
+<span class="normal"><a href="#__codelineno-0-39">39</a></span>
+<span class="normal"><a href="#__codelineno-0-40">40</a></span>
 <span class="normal"><a href="#__codelineno-0-41">41</a></span>
 <span class="normal"><a href="#__codelineno-0-42">42</a></span>
 <span class="normal"><a href="#__codelineno-0-43">43</a></span>
 <span class="normal"><a href="#__codelineno-0-44">44</a></span>
-<span class="normal"><a href="#__codelineno-0-45">45</a></span>
-<span class="normal"><a href="#__codelineno-0-46">46</a></span>
-<span class="normal"><a href="#__codelineno-0-47">47</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-40" name="__codelineno-0-40"></a><span class="k">def</span> <span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-41" name="__codelineno-0-41"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate the configuration for early error handling.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-42" name="__codelineno-0-42"></a>    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__post_init__</span><span class="p">()</span>
-<a id="__codelineno-0-43" name="__codelineno-0-43"></a>    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Model inputs definition is required for PyTorch backend.&quot;</span>
-<a id="__codelineno-0-44" name="__codelineno-0-44"></a>    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Model outputs definition is required for PyTorch backend.&quot;</span>
-<a id="__codelineno-0-45" name="__codelineno-0-45"></a>
-<a id="__codelineno-0-46" name="__codelineno-0-46"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">platform</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">platform</span> <span class="o">!=</span> <span class="n">Platform</span><span class="o">.</span><span class="n">PyTorchLibtorch</span><span class="p">:</span>
-<a id="__codelineno-0-47" name="__codelineno-0-47"></a>        <span class="k">raise</span> <span class="n">ModelNavigatorWrongParameterError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported platform provided. Use: </span><span class="si">{</span><span class="n">Platform</span><span class="o">.</span><span class="n">PyTorchLibtorch</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-45">45</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-38" name="__codelineno-0-38"></a><span class="k">def</span> <span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-39" name="__codelineno-0-39"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate the configuration for early error handling.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-40" name="__codelineno-0-40"></a>    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__post_init__</span><span class="p">()</span>
+<a id="__codelineno-0-41" name="__codelineno-0-41"></a>    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Model inputs definition is required for PyTorch backend.&quot;</span>
+<a id="__codelineno-0-42" name="__codelineno-0-42"></a>    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Model outputs definition is required for PyTorch backend.&quot;</span>
+<a id="__codelineno-0-43" name="__codelineno-0-43"></a>
+<a id="__codelineno-0-44" name="__codelineno-0-44"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">platform</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">platform</span> <span class="o">!=</span> <span class="n">Platform</span><span class="o">.</span><span class="n">PyTorchLibtorch</span><span class="p">:</span>
+<a id="__codelineno-0-45" name="__codelineno-0-45"></a>        <span class="k">raise</span> <span class="n">ModelNavigatorWrongParameterError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported platform provided. Use: </span><span class="si">{</span><span class="n">Platform</span><span class="o">.</span><span class="n">PyTorchLibtorch</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
           </details>
   </div>
@@ -3191,7 +3191,7 @@ Copyright © 2023 NVIDIA Corporation
     <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.top"], "search": "../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.e1c3ead8.min.js"></script>
+      <script src="../../assets/javascripts/bundle.8fd75fb4.min.js"></script>
       
     
   </body>
