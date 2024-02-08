@@ -73,7 +73,13 @@ def cast_type(dtype: np.dtype) -> np.dtype:
 
 
 def _types_casts():
-    if get_version() >= LooseVersion("9.0"):
+    try:
+        is_int64_supported = get_version() >= LooseVersion("9.0")
+    except AttributeError:
+        LOGGER.warning("TensorRT not found. Using default type casts including int64 to int32.")
+        is_int64_supported = False
+
+    if is_int64_supported:
         return {
             np.dtype(np.float64): np.dtype(np.float32),
             np.dtype(np.uint64): np.dtype(np.uint32),
