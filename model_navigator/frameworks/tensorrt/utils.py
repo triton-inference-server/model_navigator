@@ -73,7 +73,7 @@ def cast_type(dtype: np.dtype) -> np.dtype:
 
 
 def _types_casts():
-    if get_version() > LooseVersion("8.6"):
+    if get_version() >= LooseVersion("9.0"):
         return {
             np.dtype(np.float64): np.dtype(np.float32),
             np.dtype(np.uint64): np.dtype(np.uint32),

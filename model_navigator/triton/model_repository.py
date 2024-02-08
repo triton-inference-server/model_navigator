@@ -42,6 +42,7 @@ from model_navigator.exceptions import (
     ModelNavigatorWrongParameterError,
 )
 from model_navigator.frameworks import is_tf_available, is_torch_available  # noqa: F401
+from model_navigator.frameworks.tensorrt import utils as trt_utils
 from model_navigator.package.package import Package
 from model_navigator.runners.onnx import OnnxrtCPURunner, OnnxrtCUDARunner, OnnxrtTensorRTRunner
 from model_navigator.runners.tensorflow import (
@@ -249,10 +250,28 @@ def add_model_from_package(
             package=package,
         )
 
+    if runtime_result.model_status.model_config.format == Format.TENSORRT:
+        input_metadata, output_metadata = _prepare_tensorrt_metadata(
+            package.status.input_metadata
+        ), _prepare_tensorrt_metadata(package.status.output_metadata)
+    else:
+        input_metadata, output_metadata = package.status.input_metadata, package.status.output_metadata
+
+    inputs = _input_tensor_from_metadata(
+        input_metadata,
+        batching=batching,
+    )
+    outputs = _output_tensor_from_metadata(
+        output_metadata,
+        batching=batching,
+    )
+
     if runtime_result.model_status.model_config.format == Format.ONNX:
         config = _onnx_config_from_runtime_result(
             batching=batching,
             max_batch_size=max_batch_size,
+            inputs=inputs,
+            outputs=outputs,
             response_cache=response_cache,
             runtime_result=runtime_result,
             warmup=model_warmup,
@@ -262,20 +281,13 @@ def add_model_from_package(
         config = _tensorflow_config_from_runtime_result(
             batching=batching,
             max_batch_size=max_batch_size,
+            inputs=inputs,
+            outputs=outputs,
             response_cache=response_cache,
             runtime_result=runtime_result,
             warmup=model_warmup,
         )
     elif runtime_result.model_status.model_config.format in [Format.TORCHSCRIPT, Format.TORCH_TRT]:
-        inputs = _input_tensor_from_metadata(
-            package.status.input_metadata,
-            batching=batching,
-        )
-        outputs = _output_tensor_from_metadata(
-            package.status.output_metadata,
-            batching=batching,
-        )
-
         config = _pytorch_config_from_runtime_result(
             batching=batching,
             max_batch_size=max_batch_size,
@@ -289,6 +301,8 @@ def add_model_from_package(
         config = _tensorrt_config_from_runtime_result(
             batching=batching,
             max_batch_size=max_batch_size,
+            inputs=inputs,
+            outputs=outputs,
             response_cache=response_cache,
             warmup=model_warmup,
         )
@@ -475,6 +489,8 @@ def _onnx_config_from_runtime_result(
     batching: bool,
     max_batch_size: int,
     response_cache: bool,
+    inputs: List[InputTensorSpec],
+    outputs: List[OutputTensorSpec],
     runtime_result: RuntimeAnalyzerResult,
     warmup: Dict[str, ModelWarmup],
 ):
@@ -489,6 +505,8 @@ def _onnx_config_from_runtime_result(
     config = ONNXModelConfig(
         batching=batching,
         max_batch_size=max_batch_size,
+        inputs=inputs,
+        outputs=outputs,
         response_cache=response_cache,
         optimization=optimization,
         instance_groups=instance_groups,
@@ -501,6 +519,8 @@ def _tensorflow_config_from_runtime_result(
     batching: bool,
     max_batch_size: int,
     response_cache: bool,
+    inputs: List[InputTensorSpec],
+    outputs: List[OutputTensorSpec],
     runtime_result: RuntimeAnalyzerResult,
     warmup: Dict[str, ModelWarmup],
 ):
@@ -513,6 +533,8 @@ def _tensorflow_config_from_runtime_result(
     config = TensorFlowModelConfig(
         batching=batching,
         max_batch_size=max_batch_size,
+        inputs=inputs,
+        outputs=outputs,
         response_cache=response_cache,
         instance_groups=instance_groups,
         warmup=warmup,
@@ -549,11 +571,15 @@ def _tensorrt_config_from_runtime_result(
     batching: bool,
     max_batch_size: int,
     response_cache: bool,
+    inputs: List[InputTensorSpec],
+    outputs: List[OutputTensorSpec],
     warmup: Dict[str, ModelWarmup],
 ):
     config = TensorRTModelConfig(
         batching=batching,
         max_batch_size=max_batch_size,
+        inputs=inputs,
+        outputs=outputs,
         response_cache=response_cache,
         instance_groups=[InstanceGroup(kind=DeviceKind.KIND_GPU)],
         warmup=warmup,
@@ -674,3 +700,14 @@ def _generate_warmup_file(workspace: Workspace, filename: str, input_data: np.nd
         fp.write(input_data.tobytes(order="C"))
 
     return file_path
+
+
+def _prepare_tensorrt_metadata(metadata: TensorMetadata):
+    updated_metadata = TensorMetadata()
+    for name, tensor_spec in metadata.items():
+        if trt_utils.cast_type(tensor_spec.dtype) != tensor_spec.dtype:
+            new_dtype = trt_utils.cast_type(tensor_spec.dtype)
+        else:
+            new_dtype = tensor_spec.dtype
+        updated_metadata.add(name, dtype=new_dtype, shape=tensor_spec.shape)
+    return updated_metadata

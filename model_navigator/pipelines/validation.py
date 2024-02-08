@@ -57,7 +57,6 @@ class PipelineManagerConfigurationValidator:
         for custom_config in config.custom_configs.values():
             if isinstance(custom_config, (TensorRTConfig, TorchTensorRTConfig, TensorFlowTensorRTConfig)):
                 cls._validate_trt_profile_input_names(custom_config.trt_profiles, config._input_names)
-                cls._validate_trt_profile_batch_dimension(custom_config.trt_profiles, config.batch_dim)
                 for onnx_custom_config in config.custom_configs.values():
                     if isinstance(onnx_custom_config, OnnxConfig):
                         cls._validate_if_trt_profile_aligns_with_dynamic_axes(
@@ -119,22 +118,6 @@ class PipelineManagerConfigurationValidator:
                         f"trt_profile input names: {trt_profile.keys()} are not "
                         f"matching model input names: {input_names}."
                     )
-
-    @classmethod
-    def _validate_trt_profile_batch_dimension(
-        cls, trt_profiles: Optional[List[TensorRTProfile]], batch_dim: Optional[int]
-    ):
-        """Validate if batch dimension min, max, opt is matching for all inputs."""
-        if batch_dim is not None and trt_profiles:
-            for trt_profile in trt_profiles:
-                first_shape_tuple = list(trt_profile.values())[0]
-                for shape_tuple in trt_profile.values():
-                    for ref_shape, shape in zip(first_shape_tuple, shape_tuple):
-                        if ref_shape[batch_dim] != shape[batch_dim]:
-                            raise ModelNavigatorConfigurationError(
-                                f"Shape values are not matching on the batch dimension: {batch_dim} "
-                                f"for all inputs in trt_profile: {trt_profile}."
-                            )
 
     @classmethod
     def _validate_if_target_formats_sources_are_available_in_package(

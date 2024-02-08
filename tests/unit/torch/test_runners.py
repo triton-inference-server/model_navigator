@@ -31,7 +31,7 @@ def test_torch_tensorrt_to_torch_dtype_cast_int64():
     casted_tensor = TorchTensorRTRunner(model=None, input_metadata=None, output_metadata=None)._to_torch_tensor(
         torch_tensor, np.int64
     )
-    if tensorrt_utils.get_version() > LooseVersion("8.6"):
+    if tensorrt_utils.get_version() >= LooseVersion("9.0"):
         assert casted_tensor.dtype == torch.int64
     else:
         assert casted_tensor.dtype == torch.int32
@@ -40,7 +40,7 @@ def test_torch_tensorrt_to_torch_dtype_cast_int64():
     casted_tensor = TorchTensorRTRunner(model=None, input_metadata=None, output_metadata=None)._to_torch_tensor(
         numpy_tensor, np.int64
     )
-    if tensorrt_utils.get_version() > LooseVersion("8.6"):
+    if tensorrt_utils.get_version() >= LooseVersion("9.0"):
         assert casted_tensor.dtype == torch.int64
     else:
         assert casted_tensor.dtype == torch.int32
