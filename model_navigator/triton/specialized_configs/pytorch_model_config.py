@@ -13,12 +13,12 @@
 # limitations under the License.
 """Configuration of Pytorch backend supported models on Triton Inference Server."""
 import dataclasses
-from typing import Optional, Sequence
+from typing import Optional
 
 from model_navigator.exceptions import ModelNavigatorWrongParameterError
 
 from .base_model_config import BaseSpecializedModelConfig
-from .common import InputTensorSpec, OutputTensorSpec, Platform
+from .common import Platform
 from .internal import Backend
 
 
@@ -34,8 +34,6 @@ class PyTorchModelConfig(BaseSpecializedModelConfig):
     """
 
     platform: Optional[Platform] = None
-    inputs: Sequence[InputTensorSpec] = dataclasses.field(default_factory=lambda: [])
-    outputs: Sequence[OutputTensorSpec] = dataclasses.field(default_factory=lambda: [])
 
     def __post_init__(self) -> None:
         """Validate the configuration for early error handling."""

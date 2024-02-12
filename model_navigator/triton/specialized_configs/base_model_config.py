@@ -14,11 +14,11 @@
 """Configuration of base model config on Triton Inference Server."""
 import abc
 import dataclasses
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Sequence, Union
 
 from model_navigator.exceptions import ModelNavigatorWrongParameterError
 
-from .common import DynamicBatcher, InstanceGroup, ModelWarmup, SequenceBatcher
+from .common import DynamicBatcher, InputTensorSpec, InstanceGroup, ModelWarmup, OutputTensorSpec, SequenceBatcher
 from .internal import Backend
 
 
@@ -48,6 +48,8 @@ class BaseSpecializedModelConfig(abc.ABC):
     parameters: Dict[str, str] = dataclasses.field(default_factory=lambda: {})
     response_cache: bool = False
     warmup: Dict[str, ModelWarmup] = dataclasses.field(default_factory=lambda: {})
+    inputs: Sequence[InputTensorSpec] = dataclasses.field(default_factory=lambda: [])
+    outputs: Sequence[OutputTensorSpec] = dataclasses.field(default_factory=lambda: [])
 
     def __post_init__(self) -> None:
         """Validate the configuration for early error handling."""
