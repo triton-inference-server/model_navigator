@@ -21,6 +21,7 @@ limitations under the License.
 - new: Allow to select device for TensorRT runner
 - new: Add device output buffers to TensorRT runner
 - fix: Passing inputs for Torch to ONNX export
+- fix: Lower peak memory usage when loading Torch inplace optimized model
 
 
 ## 0.7.7

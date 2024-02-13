@@ -245,6 +245,9 @@ class OptimizedModule(BaseModule):
         super().__init__(*args, **kwargs)
 
         self._module.to("cpu")
+        if torch.cuda.is_available():
+            # empty torch cuda buffers after moving module to cpu i.e. more free vram
+            torch.cuda.empty_cache()
 
         self._packages = []
         self._runners = {}
