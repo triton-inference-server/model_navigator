@@ -32,6 +32,7 @@ from model_navigator.utils import module
 from model_navigator.utils.common import invoke_if_callable, numpy_to_torch_dtype, torch_to_numpy_dtype
 
 trt = module.lazy_import("tensorrt")
+torch = module.lazy_import("torch")
 
 T = TypeVar("T")
 
@@ -344,8 +345,15 @@ def _get_metadata_from_engine(engine, mode):
         name = engine.get_tensor_name(idx)
         if engine.get_tensor_mode(name) != mode:
             continue
-
-        meta.add(name=name, dtype=np_dtype_from_trt(engine.get_tensor_dtype(name)), shape=engine.get_tensor_shape(name))
+        # TODO: remove bfloat16 special case once torch.bfloat16 is supported
+        dtype = engine.get_tensor_dtype(name)
+        if dtype.name == "BF16":
+            dtype = torch.bfloat16
+        else:
+            dtype = np_dtype_from_trt(engine.get_tensor_dtype(name))
+        # meta.add(name=name, dtype=np_dtype_from_trt(engine.get_tensor_dtype(name)), shape=engine.get_tensor_shape(name))
+        # meta.add(name=name, dtype=engine.get_tensor_dtype(name), shape=engine.get_tensor_shape(name))
+        meta.add(name=name, dtype=dtype, shape=engine.get_tensor_shape(name))
     return meta
 
 

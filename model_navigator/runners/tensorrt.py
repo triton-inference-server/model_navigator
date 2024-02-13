@@ -27,6 +27,7 @@ from model_navigator.core.tensor import get_tensor_type
 from model_navigator.exceptions import ModelNavigatorError, ModelNavigatorUserInputError
 from model_navigator.frameworks import is_torch_available
 from model_navigator.frameworks.tensorrt import cuda as cuda_utils
+from model_navigator.frameworks.tensorrt import type_mapping
 from model_navigator.frameworks.tensorrt import utils as trt_utils
 from model_navigator.runners.base import DeviceKind, InferenceStep, InferenceStepTimer, NavigatorRunner
 from model_navigator.runners.registry import register_runner
@@ -34,6 +35,7 @@ from model_navigator.utils import common as utils
 from model_navigator.utils import module
 
 trt = module.lazy_import("tensorrt")
+torch = module.lazy_import("torch")
 torch = module.lazy_import("torch")
 
 
@@ -511,32 +513,49 @@ class TensorRTRunner(NavigatorRunner):
         # Otherwise, we create a view instead with the correct shape/dtype.
         raw_array = self.output_allocator.buffers[name]
         shape = self.output_allocator.shapes[name]
-        dtype = np.dtype(trt.nptype(self.engine.get_tensor_dtype(name)))
+        trt_datatype = self.engine.get_tensor_dtype(name)
+        # dtype = np.dtype(trt.nptype(self.engine.get_tensor_dtype(name)))
 
         # commented out because we are never using nonlinear format and this takes time
         # using_nonlinear_format = self.engine.get_tensor_format(name) != trt.TensorFormat.LINEAR
         # if using_nonlinear_format:
         #     raise NotImplementedError("Nonlinear formats are not yet supported.")
         # nbytes = raw_array.nbytes if using_nonlinear_format else (utils.volume(shape) * dtype.itemsize)
-        nbytes = utils.volume(shape) * dtype.itemsize
+        nbytes = utils.volume(shape) * trt_datatype.itemsize
 
         # The memory allocated by the output allocator may be larger than actually required.
         # If we're using a vectorized format, then we need to copy the whole thing.
         # Otherwise, we can determine how much we actually need.
 
         if return_type == TensorType.NUMPY:
-            self.host_output_buffers[name] = utils.resize_buffer(self.host_output_buffers[name], (nbytes,))
-            raw_array.view(shape=(nbytes,)).copy_to(self.host_output_buffers[name], stream=self.stream)
-            raw_array = self.host_output_buffers[name]
+            # TODO: remove bfloat16 special case once torch.bfloat16 is supported
+            if trt_datatype.name == "BF16":
+                array = self.device_output_buffers[name]
+                array.resize((nbytes,))
+                array = (
+                    raw_array.view(shape=(nbytes,))
+                    .copy_to_device(array, stream=self.stream)
+                    .view(shape=shape, dtype=trt_datatype)
+                )
+                array = array.to(torch.float32)
+                array = array.numpy(force=True)
+            else:
+                dtype = np.dtype(trt.nptype(trt_datatype))
+                self.host_output_buffers[name] = utils.resize_buffer(self.host_output_buffers[name], (nbytes,))
+                raw_array.view(shape=(nbytes,)).copy_to(self.host_output_buffers[name], stream=self.stream)
+                raw_array = self.host_output_buffers[name]
 
-            array = FormattedArray(raw_array, shape=shape, dtype=dtype)
-            array = raw_array.view(dtype).reshape(shape)
+                array = FormattedArray(raw_array, shape=shape, dtype=dtype)
+                array = raw_array.view(dtype).reshape(shape)
         else:
             assert return_type == TensorType.TORCH
             array = self.device_output_buffers[name]
             array.resize((nbytes,))
+            torch_dtype = type_mapping.trt_to_torch_dtype(trt_datatype)
             array = (
-                raw_array.view(shape=(nbytes,)).copy_to_device(array, stream=self.stream).view(shape=shape, dtype=dtype)
+                raw_array.view(shape=(nbytes,))
+                .copy_to_device(array, stream=self.stream)
+                .view(shape=shape, dtype=torch_dtype)
             )
 
         return array

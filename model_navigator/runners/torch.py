@@ -150,7 +150,10 @@ class _BaseTorchRunner(NavigatorRunner):
             inputs = {}
             for input_name, spec in self.input_metadata.items():
                 value = feed_dict[input_name]
-                value = self._to_torch_tensor(value, spec.dtype)
+                if spec.dtype != torch.bfloat16:
+                    value = self._to_torch_tensor(value, spec.dtype)
+                else:
+                    value = torch.from_numpy(value).to(torch.bfloat16)
                 inputs[input_name] = value
 
         with self._inference_step_timer.measure_step(InferenceStep.H2D_MEMCPY):
@@ -169,7 +172,12 @@ class _BaseTorchRunner(NavigatorRunner):
         """Prepare outputs for inference."""
         for name, outputs in out_dict.items():
             if self.return_type == TensorType.NUMPY:
-                out_dict[name] = outputs.cpu().numpy()
+                out_dict[name] = (
+                    # TODO: remove to(torch.float32) once torch.bfloat16 is supported
+                    outputs.cpu().detach().numpy()
+                    if outputs.dtype != torch.bfloat16
+                    else outputs.to(torch.float32).cpu().detach().numpy()
+                )
         return out_dict
 
     def _to_torch_tensor(self, value, dtype):

@@ -22,6 +22,7 @@ import torch  # pytype: disable=import-error
 
 from model_navigator.core.dataloader import load_samples
 from model_navigator.core.tensor import TensorMetadata
+from model_navigator.utils.common import numpy_to_torch_dtype
 
 
 def get_model() -> torch.nn.Module:
@@ -71,6 +72,16 @@ def export(
     input_metadata = TensorMetadata.from_json(input_metadata)
 
     dummy_input = {n: torch.from_numpy(val).to(target_device) for n, val in profiling_sample.items()}
+
+    # adjust input dtypes to match input_metadata
+    # TODO: Remove when torch.bfloat16 will be supported
+    for n, spec in input_metadata.items():
+        if not isinstance(spec.dtype, torch.dtype):
+            torch_dtype = numpy_to_torch_dtype(spec.dtype)
+        else:
+            torch_dtype = spec.dtype
+        dummy_input[n] = dummy_input[n].to(torch_dtype)
+
     dummy_input = input_metadata.unflatten_sample(dummy_input)
 
     # torch.onnx.export requires inputs to be a tuple or tensor

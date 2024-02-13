@@ -30,6 +30,7 @@ from model_navigator.utils import module
 
 onnxrt = module.lazy_import("onnxruntime")
 np = module.lazy_import("numpy")
+torch = module.lazy_import("torch")
 
 provider2device = {
     "CPUExecutionProvider": DeviceKind.CPU,
@@ -208,7 +209,11 @@ class OnnxrtCPURunner(_BaseOnnxrtRunner):
         if tensor_type == TensorType.NUMPY:
             return tensor
         elif tensor_type == TensorType.TORCH:
-            return tensor.detach().cpu().numpy()
+            return (
+                tensor.detach().cpu().numpy()
+                if tensor.dtype != torch.bfloat16
+                else tensor.to(torch.float32).cpu().detach().numpy()
+            )
         else:
             raise ValueError(f"Unsupported tensor type: {tensor_type}")
 

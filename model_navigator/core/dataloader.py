@@ -23,7 +23,10 @@ from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata, is_tensor
 from model_navigator.exceptions import ModelNavigatorUserInputError
 from model_navigator.frameworks import Framework
+from model_navigator.utils import module
 from model_navigator.utils.common import PYTHON_PRIMITIVE_TYPES
+
+torch = module.lazy_import("torch")
 
 SAMPLE_FILE_SUFFIX = ".npz"
 
@@ -270,7 +273,13 @@ def to_numpy(tensor: Any, from_framework: Framework) -> np.ndarray:
     if isinstance(tensor, np.ndarray):
         return tensor
     if from_framework == Framework.TORCH:
-        return tensor.detach().cpu().numpy()
+        # If torch.bfloat16 is used in dataloader perform loseless upcast to torch.float32 before conversion to numpy
+        # TODO: remove to(torch.float32) once torch.bfloat16 is supported
+        return (
+            tensor.detach().cpu().numpy()
+            if tensor.dtype != torch.bfloat16
+            else tensor.to(torch.float32).detach().cpu().numpy()
+        )
     if from_framework == Framework.TENSORFLOW:
         return tensor.numpy()
     return np.asarray(tensor)

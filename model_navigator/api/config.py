@@ -139,12 +139,14 @@ class TensorRTPrecision(Enum):
         INT8 (str): 8-bit integer precision.
         FP8 (str): 8-bit floating point precision.
         FP16 (str): 16-bit floating point precision.
+        BF16 (str): 16-bit brain floating point precision.
         FP32 (str): 32-bit floating point precision.
     """
 
     INT8 = "int8"
     FP8 = "fp8"
     FP16 = "fp16"
+    BF16 = "bf16"
     FP32 = "fp32"
 
 

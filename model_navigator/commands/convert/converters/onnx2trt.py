@@ -29,25 +29,31 @@ def _get_precisions(precision, precision_mode):
     precision = TensorRTPrecision(precision)
     precision_mode = TensorRTPrecisionMode(precision_mode)
     if precision_mode == TensorRTPrecisionMode.HIERARCHY:
-        tf32, fp16, fp8, int8 = {
-            TensorRTPrecision.FP32: [True, False, False, False],
-            TensorRTPrecision.FP16: [True, True, False, False],
-            TensorRTPrecision.FP8: [True, True, True, False],
-            TensorRTPrecision.INT8: [True, True, False, True],
+        tf32, fp16, bf16, fp8, int8 = {
+            # TODO: Enable hierarchical BF16 for FP16, FP8 and INT8 after it's supported
+            TensorRTPrecision.FP32: [True, False, False, False, False],
+            # TensorRTPrecision.FP16: [True, True, True, False, False],
+            TensorRTPrecision.FP16: [True, True, False, False, False],
+            TensorRTPrecision.BF16: [True, True, True, False, False],
+            # TensorRTPrecision.FP8: [True, True, True, True, False],
+            TensorRTPrecision.FP8: [True, True, False, True, False],
+            # TensorRTPrecision.INT8: [True, True, True, False, True],
+            TensorRTPrecision.INT8: [True, True, False, False, True],
         }[precision]
     elif precision_mode == TensorRTPrecisionMode.SINGLE:
-        tf32, fp16, fp8, int8 = {
-            TensorRTPrecision.FP32: [True, False, False, False],
-            TensorRTPrecision.FP16: [False, True, False, False],
-            TensorRTPrecision.FP8: [False, False, True, False],
-            TensorRTPrecision.INT8: [False, False, False, True],
+        tf32, fp16, bf16, fp8, int8 = {
+            TensorRTPrecision.FP32: [True, False, False, False, False],
+            TensorRTPrecision.FP16: [False, True, False, False, False],
+            TensorRTPrecision.BF16: [False, False, True, False, False],
+            TensorRTPrecision.FP8: [False, False, False, True, False],
+            TensorRTPrecision.INT8: [False, False, False, False, True],
         }[precision]
     else:
         raise ValueError(
             f"Unsupported precision mode {precision_mode}. Only {TensorRTPrecisionMode.HIERARCHY} and "
             f"{TensorRTPrecisionMode.SINGLE} are allowed"
         )
-    return tf32, fp16, fp8, int8
+    return tf32, fp16, bf16, fp8, int8
 
 
 def convert(
@@ -104,7 +110,7 @@ def convert(
         trt_profiles.append(trt_profile)
     if not trt_profiles:
         trt_profiles = [Profile()]
-    tf32, fp16, fp8, int8 = _get_precisions(precision, precision_mode)
+    tf32, fp16, bf16, fp8, int8 = _get_precisions(precision, precision_mode)
 
     network = network_from_onnx_path(exported_model_path.as_posix(), flags=onnx_parser_flags)
 
@@ -124,6 +130,7 @@ def convert(
         config=CreateConfig(
             tf32=tf32,
             fp16=fp16,
+            bf16=bf16,
             fp8=fp8,
             int8=int8,
             profiles=trt_profiles,

@@ -25,9 +25,11 @@ import model_navigator.utils.common as utils
 from model_navigator.core.logger import LOGGER
 from model_navigator.exceptions import ModelNavigatorError, ModelNavigatorUserInputError
 from model_navigator.frameworks import is_torch_available
+from model_navigator.frameworks.tensorrt import type_mapping as trt_type_mapping
 from model_navigator.utils import module
 
 torch = module.lazy_import("torch")
+trt = module.lazy_import("tensorrt")
 
 
 def void_ptr(val=None):
@@ -477,7 +479,11 @@ class DeviceView:
     def dtype(self, new):
         """Set the data type of the device buffer."""
         self._dtype = new
-        self.itemsize = np.dtype(new).itemsize
+
+        if isinstance(new, trt.tensorrt.DataType) or (is_torch_available() and isinstance(new, torch.dtype)):
+            self.itemsize = self._dtype.itemsize
+        else:
+            self.itemsize = np.dtype(new).itemsize
 
     @property
     def nbytes(self):
@@ -577,7 +583,14 @@ class DeviceView:
             f"Note: dtype={self.dtype}, shape={self.shape}, nbytes={self.nbytes}, ptr={hex(self.ptr)}"
         )
 
-        arr = torch.empty(self.shape, dtype=utils.numpy_to_torch_dtype(self.dtype), device="cuda")
+        if isinstance(self.dtype, trt.tensorrt.DataType):
+            dtype = trt_type_mapping.trt_to_torch_dtype(self.dtype)
+        elif is_torch_available() and not isinstance(self.dtype, torch.dtype):
+            dtype = utils.numpy_to_torch_dtype(self.dtype)
+        else:
+            dtype = self.dtype
+
+        arr = torch.empty(self.shape, dtype=dtype, device="cuda")
         wrapper().memcpy(
             dst=arr.data_ptr(),
             src=self.ptr,

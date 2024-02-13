@@ -58,7 +58,7 @@ class TensorSpec:
 
     name: str
     shape: Tuple
-    dtype: Optional[np.dtype] = dataclasses.field(default=None)
+    dtype: Optional[Union[np.dtype, "torch.dtype"]] = dataclasses.field(default=None)
     optional: Optional[bool] = False
 
     def __post_init__(self):
@@ -74,7 +74,11 @@ class TensorSpec:
 
         _expect_type("name", self.name, str)
         _expect_type("shape", self.shape, tuple)
-        _expect_type("dtype", self.dtype, np.dtype, optional=True)
+        if is_torch_available():
+            expected_types = (np.dtype, torch.dtype)
+        else:
+            expected_types = (np.dtype,)
+        _expect_type("dtype", self.dtype, expected_types, optional=True)
         _expect_type("optional", self.optional, bool, optional=True)
         if not all(_is_dim_correct(dim) for dim in self.shape):
             raise TypeError(f"Shape items should be integers equal to -1 or positive numbers. Got {self.shape}")
@@ -169,7 +173,8 @@ class PyTorchTensorUtils(TensorUtils):
     @staticmethod
     def to_numpy(a):
         """Cast tensor to numpy format."""
-        return a.cpu().detach().numpy()
+        # TODO: remove bfloat16 special case once torch.bfloat16 is supported
+        return a.cpu().detach().numpy() if a.dtype != torch.bfloat16 else a.to(torch.float32).cpu().detach().numpy()
 
 
 class TensorFlowTensorUtils(TensorUtils):
@@ -480,7 +485,12 @@ class TensorMetadata(Dict[str, TensorSpec]):
         self._pytree_metadata = pytree_metadata
         self.is_legacy = is_legacy
 
-    def add(self, name: str, shape: Sequence[int], dtype: Union[np.dtype, Type[np.dtype]]) -> "TensorMetadata":
+    def add(
+        self,
+        name: str,
+        shape: Sequence[int],
+        dtype: Union[np.dtype, Type[np.dtype], "torch.dtype", "Type[torch.dtype]"],
+    ) -> "TensorMetadata":
         """Add new item to metadata.
 
         Args:
@@ -488,7 +498,12 @@ class TensorMetadata(Dict[str, TensorSpec]):
             shape: Shape of tensor
             dtype: Type of tensor data
         """
-        self[name] = TensorSpec(name, tuple(shape), np.dtype(dtype))
+        # TODO: remove bfloat16 special case once torch.bfloat16 is supported
+        if dtype == "torch.bfloat16":
+            dtype = torch.bfloat16
+        elif not (is_torch_available() and isinstance(dtype, torch.dtype)):
+            dtype = np.dtype(dtype)
+        self[name] = TensorSpec(name, tuple(shape), dtype)
         return self
 
     @property

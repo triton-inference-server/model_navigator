@@ -178,3 +178,65 @@ def test_pyt_export_onnx():
         )
         assert command_output.status == CommandStatus.OK
         onnx.checker.check_model(exported_model_path.as_posix())
+
+
+def test_pyt_export_torchscript_script_bf16():
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        workspace = pathlib.Path(tmp_dir) / "navigator_workspace"
+
+        bf16_dataloader = [torch.full((1, 1), VALUE_IN_TENSOR, dtype=torch.bfloat16) for _ in range(5)]
+        bf16_model = MyModule().to(torch.bfloat16)
+
+        model_relative_path = pathlib.Path("torchscript-script") / "model.pt"
+        exported_model_path = workspace / model_relative_path
+        input_data = next(iter(bf16_dataloader))
+        numpy_data = input_data.to(torch.float32).cpu().numpy()
+        samples_to_npz([{"input__1": numpy_data}], workspace / "model_input" / "profiling", None)
+
+        command_output = ExportTorch2TorchScript().run(
+            model=bf16_model,
+            workspace=Workspace(workspace),
+            path=model_relative_path,
+            jit_type=JitType.SCRIPT,
+            input_metadata=TensorMetadata(
+                {"input__1": TensorSpec("input__1", (1, 1), numpy.dtype("float32"))},
+                pytree_metadata=PyTreeMetadata("input__1", TensorType.NUMPY),
+            ),
+            target_device=DeviceKind.CPU,
+            strict=True,
+            verbose=False,
+            custom_args={},
+        )
+        assert command_output.status == CommandStatus.OK
+        torch.jit.load(exported_model_path.as_posix())
+
+
+def test_pyt_export_torchscript_trace_bf16():
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        workspace = pathlib.Path(tmp_dir) / "navigator_workspace"
+
+        bf16_dataloader = [torch.full((1, 1), VALUE_IN_TENSOR, dtype=torch.bfloat16) for _ in range(5)]
+        bf16_model = MyModule().to(torch.bfloat16)
+
+        model_relative_path = pathlib.Path("torchscript-script") / "model.pt"
+        exported_model_path = workspace / model_relative_path
+        input_data = next(iter(bf16_dataloader))
+        numpy_data = input_data.to(torch.float32).cpu().numpy()
+        samples_to_npz([{"input__1": numpy_data}], workspace / "model_input" / "profiling", None)
+
+        command_output = ExportTorch2TorchScript().run(
+            model=bf16_model,
+            workspace=Workspace(workspace),
+            path=model_relative_path,
+            jit_type=JitType.TRACE,
+            input_metadata=TensorMetadata(
+                {"input__1": TensorSpec("input__1", (1, 1), numpy.dtype("float32"))},
+                pytree_metadata=PyTreeMetadata("input__1", TensorType.NUMPY),
+            ),
+            target_device=DeviceKind.CPU,
+            strict=True,
+            verbose=False,
+            custom_args={},
+        )
+        assert command_output.status == CommandStatus.OK
+        torch.jit.load(exported_model_path.as_posix())

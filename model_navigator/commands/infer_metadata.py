@@ -25,11 +25,14 @@ from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import FRAMEWORK_TO_TENSOR_TYPE, PyTreeMetadata, TensorMetadata, TensorSpec
 from model_navigator.core.workspace import Workspace
 from model_navigator.exceptions import ModelNavigatorUserInputError
-from model_navigator.frameworks import Framework
+from model_navigator.frameworks import Framework, is_torch_available
 from model_navigator.frameworks.onnx.utils import get_onnx_io_names
 from model_navigator.frameworks.tensorrt.utils import get_tensorrt_io_names
 from model_navigator.runners.utils import get_format_default_runners
+from model_navigator.utils import module
 from model_navigator.utils.format_helpers import FRAMEWORK2BASE_FORMAT
+
+torch = module.lazy_import("torch")
 
 
 def _extract_axes_shapes(
@@ -151,12 +154,19 @@ class InferInputMetadata(Command, is_required=True):
             sample, tensor_type=FRAMEWORK_TO_TENSOR_TYPE[framework], names=_input_names, prefix="input"
         )
         _assert_all_inputs_have_same_pytree_metadata(dataloader, pytree_metadata)
+        input_sample = {}
+        input_dtypes = {}
+        for n, t in pytree_metadata.flatten_sample(sample).items():
+            input_sample[n] = to_numpy(t, framework)
 
-        input_sample = {n: to_numpy(t, framework) for n, t in pytree_metadata.flatten_sample(sample).items()}
+            # TODO: Remove this check once torch.bfloat16 is supported
+            if not is_torch_available() or t.dtype != torch.bfloat16:
+                input_dtypes[n] = input_sample[n].dtype
+            else:
+                input_dtypes[n] = torch.bfloat16
         input_names = list(input_sample.keys())
 
         input_ndims = [t.ndim for t in input_sample.values()]
-        input_dtypes = {n: t.dtype for n, t in input_sample.items()}
         num_samples = len(dataloader)
         axes_shapes = _extract_axes_shapes(
             dataloader, pytree_metadata, input_names, input_ndims, num_samples, framework
@@ -170,7 +180,6 @@ class InferInputMetadata(Command, is_required=True):
             pd_input_sample = extract_sample(pd_sample, input_metadata, framework)
             pd_input_ndims = [t.ndim for t in pd_input_sample.values()]
             pd_input_dtypes = {n: t.dtype for n, t in pd_input_sample.items()}
-
             if pd_input_ndims != input_ndims:
                 raise ModelNavigatorUserInputError(
                     "Provided performance dataloader does not match dataset dataloader size."
@@ -269,7 +278,6 @@ class InferOutputMetadata(Command, is_required=True):
             temp_output_metadata = TensorMetadata({out_name: TensorSpec(out_name, ()) for out_name in _output_names})
         else:
             temp_output_metadata = None
-
         runner = get_format_default_runners(FRAMEWORK2BASE_FORMAT[framework])[0](
             model=model,
             input_metadata=input_metadata,

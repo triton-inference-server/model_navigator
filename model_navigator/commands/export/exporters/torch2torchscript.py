@@ -23,6 +23,7 @@ from model_navigator.api.config import JitType
 from model_navigator.core.dataloader import load_samples
 from model_navigator.core.tensor import TensorMetadata
 from model_navigator.exceptions import ModelNavigatorUserInputError
+from model_navigator.utils.common import numpy_to_torch_dtype
 
 
 def get_model() -> torch.nn.Module:
@@ -71,7 +72,18 @@ def export(
     if target_jit_type == JitType.SCRIPT:
         script_module = torch.jit.script(model)
     else:
+
         dummy_input = {n: torch.from_numpy(val).to(target_device) for n, val in profiling_sample.items()}
+
+        # adjust input dtypes to match input_metadata
+        # TODO: Remove when torch.bfloat16 will be supported
+        for n, spec in input_metadata.items():
+            if not isinstance(spec.dtype, torch.dtype):
+                torch_dtype = numpy_to_torch_dtype(spec.dtype)
+            else:
+                torch_dtype = spec.dtype
+            dummy_input[n] = dummy_input[n].to(torch_dtype)
+
         dummy_input = input_metadata.unflatten_sample(dummy_input, wrap_input=True)
         if isinstance(dummy_input[-1], dict):
             args, kwargs = dummy_input[:-1], dummy_input[-1]
