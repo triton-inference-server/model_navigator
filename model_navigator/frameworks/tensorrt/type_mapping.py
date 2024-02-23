@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Utilities for mapping dtypes bettwen TensorRT and frameworks."""
-from distutils.version import LooseVersion
+from packaging.version import Version
 
 from model_navigator.utils import module
 
@@ -29,7 +29,10 @@ def _get_trt_to_torch_dtype_dict():
         trt.DataType.BOOL: torch.bool,
     }
 
-    if LooseVersion(trt.__version__) > LooseVersion("9.2"):
+    if Version(trt.__version__) >= Version("9.0"):
+        trt_to_torch_dtype[trt.DataType.INT64] = torch.int64
+
+    if Version(trt.__version__) >= Version("9.2"):
         trt_to_torch_dtype[trt.DataType.BF16] = torch.bfloat16
 
     return trt_to_torch_dtype
@@ -47,6 +50,10 @@ def trt_to_torch_dtype(trt_dtype: "trt.DataType") -> "torch.dtype":
     return _get_trt_to_torch_dtype_dict()[trt_dtype]
 
 
+def _get_torch_to_trt_dtype_dict():
+    return {v: k for k, v in _get_trt_to_torch_dtype_dict().items()}
+
+
 def torch_to_trt_dtype(torch_dtype: "torch.dtype") -> "trt.DataType":
     """Cast torch.dtype to TensorRT DataType.
 
@@ -56,5 +63,4 @@ def torch_to_trt_dtype(torch_dtype: "torch.dtype") -> "trt.DataType":
     Returns:
         trt.DataType: TensorRT DataType
     """
-    torch_to_trt_dtype = {v: k for k, v in _get_trt_to_torch_dtype_dict().items()}
-    return torch_to_trt_dtype[torch_dtype]
+    return _get_torch_to_trt_dtype_dict()[torch_dtype]
