@@ -1,0 +1,7 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "Triton Model Navigator: A tool for optimizing and deploying machine learning models on the Triton Inference Server and PyTriton."
+url: https://github.com/triton-inference-server/model_navigator
+repository-code: https://github.com/triton-inference-server/model_navigator
+authors:
+  - name: "NVIDIA Corporation"
