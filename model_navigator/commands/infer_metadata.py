@@ -84,18 +84,18 @@ def _extract_max_batch_size(axes_shapes: Dict[str, Dict[int, List[int]]], batch_
     return 0
 
 
-def _get_trt_profile_from_axes_shapes(axes_shapes, batch_dim, max_batch_size=None):
+def _get_trt_profile_from_axes_shapes(axes_shapes, batch_dim, config_max_batch_size=None):
     trt_profile = TensorRTProfile()
     for name, axes in axes_shapes.items():
         min_opt_max = []
         for ax, shapes in axes.items():
             if ax == batch_dim:  # min bs = 1
-                if max_batch_size and max_batch_size < max(shapes):
+                if config_max_batch_size and (config_max_batch_size < max(shapes)):
                     raise ModelNavigatorUserInputError(
-                        f"Given maximum batch size ({max_batch_size}) "
+                        f"Given configuration maximum batch size ({config_max_batch_size}) "
                         f"is smaller than the encountered batch size ({max(shapes)})."
                     )
-                max_batch_size = max_batch_size or max(shapes)
+                max_batch_size = config_max_batch_size or max(shapes)
                 min_opt_max.append((1, int(np.median(shapes)), max_batch_size))
             else:
                 min_opt_max.append((min(shapes), int(np.median(shapes)), max(shapes)))

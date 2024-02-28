@@ -45,22 +45,52 @@ def test_extract_max_batch_size_return_correct_value_when_multiple_values_passed
 
 
 def test_get_trt_profile_return_correct_shapes_when_axes_shapes_passed():
-    input_name = "input_0"
+    input_names = ["input_0", "input_1"]
     axes_shapes = {
-        input_name: {0: [1, 1, 1, 1, 1], 1: [224, 224, 224, 224, 224], 2: [224, 224, 224, 224, 224], 3: [3, 3, 3, 3, 3]}
+        input_names[0]: {0: [1, 2, 2], 1: [1, 2, 3]},
+        input_names[1]: {0: [1, 2, 3], 1: [224, 356, 448], 2: [224, 356, 448], 3: [3, 3, 3]},
     }
     batch_dim = 0
 
-    expected_trt_profile = TensorRTProfile().add(
-        input_name, min=(1, 224, 224, 3), opt=(1, 224, 224, 3), max=(1, 224, 224, 3)
+    expected_trt_profile = (
+        TensorRTProfile()
+        .add(input_names[0], min=(1, 1), opt=(2, 2), max=(2, 3))
+        .add(input_names[1], min=(1, 224, 224, 3), opt=(2, 356, 356, 3), max=(3, 448, 448, 3))
     )
 
     trt_profile = _get_trt_profile_from_axes_shapes(axes_shapes=axes_shapes, batch_dim=batch_dim)
 
-    assert input_name in trt_profile
-    assert trt_profile[input_name].min == expected_trt_profile[input_name].min
-    assert trt_profile[input_name].opt == expected_trt_profile[input_name].opt
-    assert trt_profile[input_name].max == expected_trt_profile[input_name].max
+    for input_name in input_names:
+        assert input_name in trt_profile
+        assert trt_profile[input_name].min == expected_trt_profile[input_name].min
+        assert trt_profile[input_name].opt == expected_trt_profile[input_name].opt
+        assert trt_profile[input_name].max == expected_trt_profile[input_name].max
+
+
+def test_get_trt_profile_return_correct_shapes_when_axes_shapes_and_config_max_batch_size_passed():
+    input_names = ["input_0", "input_1"]
+    axes_shapes = {
+        input_names[0]: {0: [1, 2, 2], 1: [1, 2, 3]},
+        input_names[1]: {0: [1, 2, 3], 1: [224, 356, 448], 2: [224, 356, 448], 3: [3, 3, 3]},
+    }
+    batch_dim = 0
+    config_max_batch_size = 5
+
+    expected_trt_profile = (
+        TensorRTProfile()
+        .add(input_names[0], min=(1, 1), opt=(2, 2), max=(config_max_batch_size, 3))
+        .add(input_names[1], min=(1, 224, 224, 3), opt=(2, 356, 356, 3), max=(config_max_batch_size, 448, 448, 3))
+    )
+
+    trt_profile = _get_trt_profile_from_axes_shapes(
+        axes_shapes=axes_shapes, batch_dim=batch_dim, config_max_batch_size=config_max_batch_size
+    )
+
+    for input_name in input_names:
+        assert input_name in trt_profile
+        assert trt_profile[input_name].min == expected_trt_profile[input_name].min
+        assert trt_profile[input_name].opt == expected_trt_profile[input_name].opt
+        assert trt_profile[input_name].max == expected_trt_profile[input_name].max
 
 
 def test_get_metadata_return_correct_data_from_axes_shapes_when_with_valid_shapes_passed():
