@@ -56,9 +56,10 @@ def get_pipeline():
         target_formats=(nav.Format.TENSORRT,),
         runners=(
             "TorchCUDA",
+            "TorchScriptCUDA",
             "TensorRT",
         ),
-        custom_configs=[nav.TensorRTConfig(precision=nav.TensorRTPrecision.FP16)],
+        custom_configs=[nav.TensorRTConfig(precision=nav.TensorRTPrecision.FP16), nav.TorchScriptConfig(strict=False)],
     )
 
     # For outputs that are not primitive types (float, int, bool, str) or tensors and list, dict, tuples combinations of those.
