@@ -20,13 +20,14 @@ import dataclasses
 import inspect
 import pathlib
 import tempfile
-from typing import Any, Callable, List
+from typing import Any, Callable, List, Optional
 
 from model_navigator.api.config import Framework, OnnxConfig, TensorRTConfig, TensorType, TorchTensorRTConfig
 from model_navigator.api.package import load_from_workspace
 from model_navigator.core.dataloader import to_numpy
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import PyTreeMetadata
+from model_navigator.runtime_analyzer.strategy import RuntimeSearchStrategy
 from model_navigator.utils.module import lazy_import
 
 from .config import OptimizeConfig, inplace_config
@@ -236,7 +237,9 @@ class RecordAndOptimizeModule(RecordModule):
 class OptimizedModule(BaseModule):
     """Module that runs the optimized module."""
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(
+        self, *args, strategy: Optional[RuntimeSearchStrategy] = None, activate_runners: bool = True, **kwargs
+    ) -> None:
         """Initialize OptimizedModule.
 
         Load the optimized module from the Model Navigator workspace
@@ -251,16 +254,39 @@ class OptimizedModule(BaseModule):
 
         self._packages = []
         self._runners = {}
+
+        strategy = strategy or inplace_config.strategy
+
         for package_workspace in self._workspace.iterdir():
             package = load_from_workspace(package_workspace)
             package.load_source_model(self._module)
 
-            runner = package.get_runner(return_type=TensorType.TORCH, strategy=inplace_config.strategy)
-            runner.activate()
+            runner = package.get_runner(return_type=TensorType.TORCH, strategy=strategy)
             pytree_metadata = package.status.input_metadata.pytree_metadata
 
             self._packages.append(package)
             self._runners[pytree_metadata] = runner
+
+        if activate_runners:
+            self.activate_runners()
+            self.runner_active = True
+        else:
+            self.runner_active = False
+
+    def __del__(self):
+        """Deactivate runners and delete packages."""
+        if hasattr(self, "runner_active") and self.runner_active:
+            self.deactivate_runners()
+
+    def activate_runners(self):
+        """Activate all runners."""
+        for runner in self._runners.values():
+            runner.activate()
+
+    def deactivate_runners(self):
+        """Deactivate all runners."""
+        for runner in self._runners.values():
+            runner.deactivate()
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         """Run the call through the optimized module."""

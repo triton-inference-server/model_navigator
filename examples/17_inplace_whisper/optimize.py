@@ -13,9 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 import logging
-import os
-import time
 
 # pytype: disable=import-error
 import torch
@@ -29,12 +28,6 @@ import model_navigator as nav
 # pytype: enable=import-error
 
 
-nav.inplace_config.mode = os.environ.get("MODEL_NAVIGATOR_INPLACE_MODE", nav.inplace_config.mode)
-nav.inplace_config.min_num_samples = int(
-    os.environ.get("MODEL_NAVIGATOR_MIN_NUM_SAMPLES", nav.inplace_config.min_num_samples)
-)
-
-
 LOGGER = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
@@ -46,11 +39,14 @@ BATCH_SIZE = 8
 # workaround to make transformers use the same device as model navigator
 transformers.modeling_utils.get_parameter_device = lambda parameter: DEVICE
 
+target_formats = (nav.Format.TENSORRT, nav.Format.ONNX)
+runners = ("TensorRT", "OnnxCUDA")
+
 
 def get_pipeline():
     optimize_config = nav.OptimizeConfig(
-        target_formats=(nav.Format.TENSORRT,),
-        runners=("TensorRT",),
+        target_formats=target_formats,
+        runners=runners,
         custom_configs=[nav.TensorRTConfig(precision=nav.TensorRTPrecision.FP16)],
         optimization_profile=nav.OptimizationProfile(max_batch_size=BATCH_SIZE),
     )
@@ -80,42 +76,48 @@ def get_pipeline():
     return pipe
 
 
+# Whisper is deleting samples, allways return copy for inference
+class CopyList(list):
+    def __getitem__(self, index):
+        item = super().__getitem__(index)
+        return copy.deepcopy(item)
+
+    def __iter__(self):
+        for item in super().__iter__():
+            yield copy.deepcopy(item)
+
+
 def main():
     LOGGER.info("Loading pipeline...")
     pipe = get_pipeline()
     LOGGER.info("Pipeline loaded")
     LOGGER.info("Loading dataset...")
     dataset = load_dataset("hf-internal-testing/librispeech_asr_dummy", "clean", split="validation")
-    dataset = [dataset[i] for i in range(5)]
+
+    dataloader = CopyList()
+    for i in range(5):
+        dataloader.append((BATCH_SIZE, {"inputs": dataset[i]["audio"]}))
+
     LOGGER.info(f"Dataset loaded. Dataset length: {len(dataset)}")
 
-    if nav.inplace_config.mode == nav.Mode.RECORDING:
-        LOGGER.info("Recording")
-        for batch in dataset:
-            pipe(batch["audio"].copy(), batch_size=BATCH_SIZE)
+    LOGGER.info("Optimizing")
+    nav.optimize(pipe, dataloader)
 
-        # additional inference to record max output sequence length
-        pipe(dataset[0]["audio"].copy(), batch_size=BATCH_SIZE, generate_kwargs={"min_new_tokens": 512})
-        LOGGER.info("Optimizing")
-        nav.optimize()
+    def copy_wrapper(*args, **kwargs):
+        return pipe(*args, **copy.deepcopy(kwargs))
 
-    LOGGER.info("Warmup")
-    for i, batch in enumerate(dataset):
-        pipe(batch["audio"].copy(), batch_size=BATCH_SIZE)
-        if (i := i + 1) > 5:
-            break
-
-    LOGGER.info("Inference")
-
-    times = []
-    for _ in range(10):
-        for batch in dataset:
-            start = time.monotonic()
-            prediction = pipe(batch["audio"].copy(), batch_size=BATCH_SIZE)["text"]
-            end = time.monotonic()
-            times.append(end - start)
-    LOGGER.info(prediction)
-    LOGGER.info(f"Inference time: {sum(times):.2f} seconds")
+    LOGGER.info("Profiling")
+    nav.profile(
+        copy_wrapper,
+        dataloader,
+        target_formats=target_formats,
+        runners=runners,
+        window_size=3,
+        max_trials=3,
+        min_trials=1,
+        stabilization_windows=3,
+        stability_percentage=50,
+    )
 
 
 if __name__ == "__main__":

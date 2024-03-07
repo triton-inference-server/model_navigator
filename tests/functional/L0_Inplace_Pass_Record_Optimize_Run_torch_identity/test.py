@@ -92,20 +92,17 @@ def main():
         ),
     )
 
-    @nav.module(optimize_config=optimize_config)
+    @nav.module()
     def get_model():
         return torch.nn.Identity()
 
     model = get_model()
 
-    for batch in dataloader:
-        model(batch)
-
     if nav.inplace_config.mode == nav.Mode.PASSTHROUGH:
         return
 
     if nav.inplace_config.mode == nav.Mode.RECORDING:
-        nav.optimize()
+        nav.optimize(func=model, dataloader=dataloader, config=optimize_config)
         return
 
     assert nav.inplace_config.mode == nav.Mode.RUN, f"Unexpected mode: {nav.inplace_config.mode}"

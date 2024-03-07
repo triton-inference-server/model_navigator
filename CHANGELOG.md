@@ -20,6 +20,8 @@ limitations under the License.
 ## 0.8.0 (unreleased)
 - new: Allow to select device for TensorRT runner
 - new: Add device output buffers to TensorRT runner
+- new: Updated API for inplace optimization
+- new: nav.profile added for profiling any Python function
 - fix: Passing inputs for Torch to ONNX export
 - fix: Parse args to kwargs in torchscript-trace export
 - fix: Lower peak memory usage when loading Torch inplace optimized model

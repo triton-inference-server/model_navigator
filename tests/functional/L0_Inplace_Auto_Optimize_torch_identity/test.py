@@ -66,7 +66,7 @@ def main():
     LOGGER.debug(f"CLI args: {args}")
 
     model = torch.nn.Identity()
-    dataloader = [torch.randn(2, 3) for _ in range(2)]
+    dataloader = [(1, torch.randn(2, 3)) for _ in range(2)]
 
     def verify_func(ys_runner, ys_expected):
         for y_runner, y_expected in zip(ys_runner, ys_expected):
@@ -86,10 +86,8 @@ def main():
             "TensorRT",
         ),
     )
-    model = nav.Module(model, optimize_config=optimize_config)
-
-    for batch in dataloader:
-        model(batch)
+    model = nav.Module(model)
+    nav.optimize(func=model, dataloader=dataloader, config=optimize_config)
 
     packages = getattr(model._wrapper, "_packages", [])
     assert len(packages) == 1, "Package is not created."

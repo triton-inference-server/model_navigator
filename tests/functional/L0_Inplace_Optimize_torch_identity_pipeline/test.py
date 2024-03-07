@@ -50,8 +50,6 @@ def main():
     from tests import utils
     from tests.functional.common.utils import collect_optimize_statuses, validate_status
 
-    nav.inplace_config.mode = nav.Mode.RECORDING
-
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--status",
@@ -85,7 +83,7 @@ def main():
 
     pipe = Pipeline()
     t = torch.randn(2, 3)
-    dataloader = [t] * 5
+    dataloader = [(1, t)] * 5
 
     def verify_func(ys_runner, ys_expected):
         for y_runner, y_expected in zip(ys_runner, ys_expected):
@@ -105,17 +103,11 @@ def main():
             "TensorRT",
         ),
     )
-    pipe.model_a = nav.Module(pipe.model_a, optimize_config=optimize_config, name="model_a")
-    pipe.model_b = nav.Module(pipe.model_b, optimize_config=optimize_config, name="model_b")
-    pipe.model_c = nav.Module(pipe.model_c, optimize_config=optimize_config, name="model_c")
+    pipe.model_a = nav.Module(pipe.model_a, name="model_a")
+    pipe.model_b = nav.Module(pipe.model_b, name="model_b")
+    pipe.model_c = nav.Module(pipe.model_c, name="model_c")
 
-    for batch in dataloader:
-        pipe(batch)
-
-    nav.optimize()
-
-    for batch in dataloader:
-        pipe(batch)
+    nav.optimize(func=pipe, dataloader=dataloader, config=optimize_config)
 
     names, packages = [], []
     for name, module in module_registry.items():

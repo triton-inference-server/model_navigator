@@ -176,9 +176,9 @@ class TimeData:
         """Create from dict."""
         return dacite.from_dict(cls, data_dict)
 
-    def save(self):
+    def save(self, mode: Optional[Mode] = None):
         """Save to json."""
-        with open(self.get_save_path(), "w") as fp:
+        with open(self.get_save_path(mode), "w") as fp:
             yaml.dump(self.to_dict(), fp, sort_keys=False)
 
     @classmethod

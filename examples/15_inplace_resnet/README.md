@@ -19,19 +19,10 @@ limitations under the License.
 In this example we show how to Model Navigator Inplace Optimize to run optimized models in place of the original Python models.
 
 We recommend running this example in NVIDIA NGC [PyTorch containter](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch).
-The Python script `optimize.py` wraps the Python model using Inplace Optimize and then runs it without any chagnes.
+The Python script `optimize.py` wraps the Python model using Inplace Optimize and then runs profiling.
 
-To run the original Python code without any modifications run:
-```bash
-./pass.sh
-```
+To run the optimization and profiling run the script:
 
-To record the models inputs and run optimizations when enough data has been collected run:
 ```bash
-./optimize.sh
-```
-
-To load optimized models and use them in place of the original ones run:
-```bash
-./run.sh
+./optimize.py
 ```

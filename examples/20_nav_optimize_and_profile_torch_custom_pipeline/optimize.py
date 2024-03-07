@@ -12,23 +12,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-import logging
-
 import torch  # pytype: disable=import-error
 
 import model_navigator as nav
 
-LOGGER = logging.getLogger("model_navigator.inplace")
-logging.basicConfig(level=logging.INFO)
+device = torch.device("cuda:0")
+model_a = nav.Module(torch.nn.Linear(2, 2, device=device), name="model_a")
+model_b = nav.Module(torch.nn.Linear(2, 2, device=device), name="model_b")
+model_c = nav.Module(torch.nn.Linear(2, 2, device=device), name="model_c")
 
 
-def get_dataloader():
-    return [(1, torch.rand(1, 3, 224, 224, device="cuda")) for _ in range(150)]
-
-
-def get_model():
-    return torch.hub.load("pytorch/vision:v0.10.0", "resnet18", pretrained=True).to("cuda").eval()
+def call(input_):
+    x = model_a(input_)
+    x = model_b(x)
+    x = model_c(x)
+    return x
 
 
 config = nav.OptimizeConfig(
@@ -37,15 +35,17 @@ config = nav.OptimizeConfig(
     optimization_profile=nav.OptimizationProfile(max_batch_size=8),
 )
 
-model = nav.Module(get_model(), name="resnet50")
+dataloader = [(1, torch.randn(1, 2, device=device))]
 
+nav.optimize(
+    call,
+    dataloader,
+    config,
+)
 
-def main():
-    dataloader = get_dataloader()
-    nav.optimize(model, dataloader, config=config)
-
-    nav.profile(model, dataloader)
-
-
-if __name__ == "__main__":
-    main()
+nav.profile(
+    call,
+    dataloader,
+    target_formats=(nav.Format.ONNX, nav.Format.TORCH),
+    runners=("OnnxCUDA", "TorchCUDA"),
+)

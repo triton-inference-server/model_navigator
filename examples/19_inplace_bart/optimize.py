@@ -14,8 +14,6 @@
 # limitations under the License.
 
 import logging
-import os
-import time
 
 # pytype: disable=import-error
 import torch
@@ -26,13 +24,6 @@ import model_navigator as nav
 
 # pytype: enable=import-error
 
-
-nav.inplace_config.mode = os.environ.get("MODEL_NAVIGATOR_INPLACE_MODE", nav.inplace_config.mode)
-nav.inplace_config.min_num_samples = int(
-    os.environ.get("MODEL_NAVIGATOR_MIN_NUM_SAMPLES", nav.inplace_config.min_num_samples)
-)
-
-
 LOGGER = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
@@ -40,6 +31,7 @@ logging.basicConfig(level=logging.INFO)
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 MODEL_NAME = "facebook/bart-large-cnn"
 
+batch_size = 1
 ARTICLE = """ New York (CNN)When Liana Barrientos was 23 years old, she got married in Westchester County, New York.
 A year later, she got married again in Westchester County, but to a different man and without divorcing her first husband.
 Only 18 days after that marriage, she got hitched yet again. Then, Barrientos declared "I do" five more times, sometimes only within two weeks of each other.
@@ -58,36 +50,34 @@ Investigation Division. Seven of the men are from so-called "red-flagged" countr
 Her eighth husband, Rashid Rajput, was deported in 2006 to his native Pakistan after an investigation by the Joint Terrorism Task Force.
 If convicted, Barrientos faces up to four years in prison.  Her next court appearance is scheduled for May 18.
 """
+dataloader = [(batch_size, ARTICLE)]
+
+target_formats = (nav.Format.TENSORRT,)
+runners = ("TorchCUDA", "TensorRT")
+
+optimize_config = nav.OptimizeConfig(
+    batching=False,
+    target_formats=target_formats,
+    runners=runners,
+    custom_configs=[nav.TensorRTConfig(precision=nav.TensorRTPrecision.FP16)],
+)
 
 
 def get_pipeline():
-    optimize_config = nav.OptimizeConfig(
-        batching=False,
-        target_formats=(nav.Format.TENSORRT,),
-        runners=(
-            "TorchCUDA",
-            "TensorRT",
-        ),
-        custom_configs=[nav.TensorRTConfig(precision=nav.TensorRTPrecision.FP16)],
-    )
-
     summarizer = pipeline("summarization", model="facebook/bart-large-cnn", device=DEVICE)
     summarizer.model.model.encoder = nav.Module(
         summarizer.model.model.encoder,
         name="encoder",
-        optimize_config=optimize_config,
         output_mapping=lambda x: BaseModelOutput(**x),
     )
     summarizer.model.model.decoder = nav.Module(
         summarizer.model.model.decoder,
         name="decoder",
-        optimize_config=optimize_config,
         output_mapping=lambda x: BaseModelOutputWithPastAndCrossAttentions(**x),
     )
     summarizer.model.lm_head = nav.Module(
         summarizer.model.lm_head,
         name="lm_head",
-        optimize_config=optimize_config,
     )
     return summarizer
 
@@ -97,27 +87,11 @@ def main():
     pipe = get_pipeline()
     LOGGER.info("Model loaded")
 
-    if nav.inplace_config.mode == nav.Mode.RECORDING:
-        LOGGER.info("Recording")
-        for _ in range(2):
-            pipe(ARTICLE, max_length=130, min_length=30, do_sample=False)
-        LOGGER.info("Optimizing")
-        nav.optimize()
+    LOGGER.info("Optimizing")
+    nav.optimize(pipe, dataloader, config=optimize_config)
 
-    LOGGER.info("Warmup")
-    for _ in range(2):
-        pipe(ARTICLE, max_length=130, min_length=30, do_sample=False)
-
-    LOGGER.info("Inference")
-
-    times = []
-    for _ in range(10):
-        start = time.monotonic()
-        outputs = pipe(ARTICLE, max_length=30, min_length=30, do_sample=False)
-        end = time.monotonic()
-        times.append(end - start)
-    LOGGER.info(f"{outputs=}")
-    LOGGER.info(f"Inference time: {sum(times):.2f} seconds")
+    LOGGER.info("Profiling")
+    nav.profile(pipe, dataloader, target_formats=target_formats, runners=runners, window_size=5)
 
 
 if __name__ == "__main__":

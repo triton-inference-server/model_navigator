@@ -28,10 +28,8 @@ limitations under the License.
   - [Deploy model in Triton Inference Server](#deploy-model-in-triton-inference-server)
   - [Using Navigator Package](#using-navigator-package)
   - [Inplace Optimize (alpha)](#inplace-optimize-alpha)
-    - [Inplace Modes](#inplace-modes)
-      - [Optimize mode](#optimize-mode)
-      - [Other modes](#other-modes)
     - [Stable Diffusion example](#stable-diffusion-example)
+  - [Profiling](#profiling)
 - [Examples](#examples)
 - [Useful Links](#useful-links)
 
@@ -249,8 +247,12 @@ All that is required is to wrap a module with a single line of code:
 ```python
 import model_navigator as nav
 
+dataloader = [(1, "<a photo of an astronaut riding a horse on mars>")] # batch_size, sample
+
 pipeline = Pipeline(...)
 pipeline.model = nav.Module(pipeline.model)
+
+nav.optimize(pipeline, dataloader)
 
 pipeline(...)
 
@@ -258,34 +260,22 @@ pipeline(...)
 
 Inplace Optimize is currently in alpha and not all modules might be supported. Specifically, modules with data dependent control flow are currently not supported.
 
-#### Inplace Modes
-
-##### Optimize mode
-
-Inplace feature has 4 modes it can be run in. The most common one is `nav.Mode.OPTIMIZE`:
-
-```python
-
-import model_navigator as nav
-
-model, dataloader = ...
-
-nav.inplace_config.mode = nav.Mode.OPTIMIZE
-nav.inplace_config.min_num_samples = ... # defaults to 100
-
-...
-```
-In this mode Model Navigator will wait until it records `nav.inplace_config.min_num_samples` samples for each `nav.Module` and then optimize them and replace the original modules with the optimized ones.
-
-##### Other modes
-
-- `nav.Mode.PASSTHROUGH` will simply passthrough all the module calls to the origianl models without making any changes.
-- `nav.Mode.RECORD` will only record mnodules inputs but will not run any optimizations without explicitly calling `nav.optimize()`.
-- `nav.Mode.RUN` will load previously optimized models from cache and raise an error if optimization was not run previously.
-
 #### Stable Diffusion example
 
 The provided [example](examples/13_inplace_stable_diffusion/) demonstrates how to use the API to optimize a Stable Diffusion Pipeline model by converting it to TensorRT, thereby accelerating its inference on NVIDIA GPUs.
+
+
+### Profiling
+
+Model Navigator provides `nav.profile` functionality that helps with meaasuring performance of any Python function or pipelines optimized with Inplace Optimize functionality
+
+```python
+nav.profile(func=pipeline, dataloader)
+```
+
+This code will profile provided callable with samples from dataloader. In case of pipeline optimized with Inplace Optimize, it will iterate all successfully exported and converted formats.
+
+Profiling results will be saved in yaml file report.
 
 
 ## Examples

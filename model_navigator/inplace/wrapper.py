@@ -19,6 +19,7 @@ from typing import Any, Callable, Optional
 import wrapt
 
 from model_navigator.inplace.timer import Timer
+from model_navigator.runtime_analyzer.strategy import RuntimeSearchStrategy
 from model_navigator.utils.module import lazy_import
 
 from .config import Mode, OptimizeConfig, inplace_config
@@ -41,7 +42,6 @@ class Module(wrapt.ObjectProxy):
 
     Args:
         module: torch module to wrap.
-        optimize_config: optimization configuration.
         name: module name.
         input_mapping: function to map module inputs to the expected input.
         output_mapping: function to map module outputs to the expected output.
@@ -57,7 +57,6 @@ class Module(wrapt.ObjectProxy):
     def __init__(
         self,
         module: torch.nn.Module,
-        optimize_config: Optional[OptimizeConfig] = None,
         name: Optional[str] = None,
         input_mapping: Optional[Callable] = None,
         output_mapping: Optional[Callable] = None,
@@ -66,12 +65,11 @@ class Module(wrapt.ObjectProxy):
     ) -> None:
         """Initialize Module."""
         super().__init__(module)
-        self._optimize_config = optimize_config or OptimizeConfig()
         self._name = name or get_object_name(module)
         self._input_mapping = input_mapping or (lambda x: x)
         self._output_mapping = output_mapping or (lambda x: x)
         if timer:
-            self._module_timer = timer.register_module(self._name)
+            self.add_timer(timer=timer)
         else:
             self._module_timer = None
 
@@ -83,13 +81,17 @@ class Module(wrapt.ObjectProxy):
         }[inplace_config.mode]
         self._wrapper = wrapper_cls(
             module,
-            self._optimize_config,
+            OptimizeConfig(),
             self._name,
             self._input_mapping,
             self._output_mapping,
         )
 
         module_registry.register(self._name, self)
+
+    def add_timer(self, timer: Timer) -> None:
+        """Add timer to module."""
+        self._module_timer = timer.register_module(self._name)
 
     @property
     def name(self) -> str:
@@ -100,6 +102,12 @@ class Module(wrapt.ObjectProxy):
     def optimize_config(self) -> OptimizeConfig:
         """Module optimize config."""
         return self._optimize_config
+
+    @optimize_config.setter
+    def optimize_config(self, value: OptimizeConfig) -> None:
+        """Module optimize config."""
+        self._optimize_config = value
+        self._wrapper._optimize_config = value
 
     def __call__(self, *args, **kwargs) -> Any:
         """Call the wrapped module.
@@ -139,23 +147,45 @@ class Module(wrapt.ObjectProxy):
         assert hasattr(self.wrapper, "optimize"), f"Module {self.name} does not have an optimize method."
         self.wrapper.optimize()
 
-    def load_optimized(self) -> None:
+    def load_optimized(self, strategy: Optional[RuntimeSearchStrategy] = None, activate_runners: bool = True) -> None:
         """Load optimized module."""
-        assert self.is_optimized, f"Module {self.name} is not optimized."
+        # TODO: Consider another validation for optimization status here. is_optimized propery is modified by loading passthrough.
+        # if not self.is_optimized:
+        #     raise ModelNavigatorModuleNotOptimizedError(f"Module {self.name} is not optimized.")
 
-        if not isinstance(self.wrapper, OptimizedModule):
-            self._wrapper = OptimizedModule(
-                self._wrapper._module,
-                self._optimize_config,
-                self._name,
-                self._input_mapping,
-                self._output_mapping,
-            )
+        self._wrapper = OptimizedModule(
+            self._wrapper._module,
+            self._optimize_config,
+            self._name,
+            self._input_mapping,
+            self._output_mapping,
+            strategy=strategy,
+            activate_runners=activate_runners,
+        )
+
+    def load_recorded(self) -> None:
+        """Load recorded module."""
+        self._wrapper = RecordModule(
+            self._wrapper._module,
+            self._optimize_config,
+            self._name,
+            self._input_mapping,
+            self._output_mapping,
+        )
+
+    def load_passthrough(self) -> None:
+        """Load passthrough module."""
+        self._wrapper = PassthroughModule(
+            self._wrapper._module,
+            self._optimize_config,
+            self._name,
+            self._input_mapping,
+            self._output_mapping,
+        )
 
 
 def module(
     module_callable: Optional[Callable[[Any], torch.nn.Module]] = None,
-    optimize_config: Optional[OptimizeConfig] = None,
     name: Optional[str] = None,
     input_mapping: Optional[Callable] = None,
     output_mapping: Optional[Callable] = None,
@@ -171,7 +201,6 @@ def module(
 
     Args:
         module_callable: decorated callable.
-        optimize_config: optimization configuration.
         name: module name.
         input_mapping: function to map module inputs to the expected input.
         output_mapping: function to map module outputs to the expected output.
@@ -187,7 +216,6 @@ def module(
     if module_callable is None:
         return functools.partial(
             module,
-            optimize_config=optimize_config,
             name=name,
             input_mapping=input_mapping,
             output_mapping=output_mapping,
@@ -197,7 +225,6 @@ def module(
     def wrap_module(wrapped, instance, args, kwargs):
         return Module(
             wrapped(*args, **kwargs),
-            optimize_config=optimize_config,
             name=name,
             input_mapping=input_mapping,
             output_mapping=output_mapping,

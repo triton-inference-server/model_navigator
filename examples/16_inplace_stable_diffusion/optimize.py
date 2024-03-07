@@ -14,8 +14,6 @@
 # limitations under the License.
 
 import logging
-import os
-import time
 
 # pytype: disable=import-error
 import diffusers
@@ -27,12 +25,6 @@ from transformers.modeling_outputs import BaseModelOutputWithPooling
 import model_navigator as nav
 
 # pytype: enable=import-error
-
-
-nav.inplace_config.mode = os.environ.get("MODEL_NAVIGATOR_INPLACE_MODE", nav.inplace_config.mode)
-nav.inplace_config.min_num_samples = int(
-    os.environ.get("MODEL_NAVIGATOR_MIN_NUM_SAMPLES", nav.inplace_config.min_num_samples)
-)
 
 
 LOGGER = logging.getLogger(__name__)
@@ -51,17 +43,6 @@ def get_pipeline():
     pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
     pipe = pipe.to(DEVICE)
 
-    optimize_config = nav.OptimizeConfig(
-        batching=False,
-        target_formats=(nav.Format.TENSORRT,),
-        runners=(
-            "TorchCUDA",
-            "TorchScriptCUDA",
-            "TensorRT",
-        ),
-        custom_configs=[nav.TensorRTConfig(precision=nav.TensorRTPrecision.FP16), nav.TorchScriptConfig(strict=False)],
-    )
-
     # For outputs that are not primitive types (float, int, bool, str) or tensors and list, dict, tuples combinations of those.
     # we need to provide a mapping to a desired output type. CLIP output is BaseModelOutputWithPooling, which inherits from dict.
     # Model Navigator will recognize that the return type is a dict and will return it, but we need to provide a mapping to BaseModelOutputWithPooling.
@@ -70,34 +51,45 @@ def get_pipeline():
 
     pipe.text_encoder = nav.Module(
         pipe.text_encoder,
-        optimize_config=optimize_config,
         output_mapping=clip_output_mapping,
     )
     pipe.unet = nav.Module(
         pipe.unet,
-        optimize_config=optimize_config,
     )
     pipe.vae.decoder = nav.Module(
         pipe.vae.decoder,
-        optimize_config=optimize_config,
     )
 
     return pipe
 
 
-def get_dataloader():
-    return ["a photo of an astronaut riding a horse on mars"]
+def get_dataloader(batched=False):
+    return [(1, "a photo of an astronaut riding a horse on mars")]
+
+
+def get_config():
+    return nav.OptimizeConfig(
+        batching=False,
+        target_formats=(nav.Format.TENSORRT,),
+        runners=(
+            "TorchCUDA",
+            "TensorRT",
+            "TorchScriptCUDA",
+        ),
+        custom_configs=[nav.TensorRTConfig(precision=nav.TensorRTPrecision.FP16), nav.TorchScriptConfig(strict=False)],
+    )
 
 
 def main():
     pipe = get_pipeline()
     dataloader = get_dataloader()
+    config = get_config()
 
-    start = time.monotonic()
+    nav.optimize(pipe, dataloader, config=config)
+
+    nav.profile(pipe, dataloader)
+
     image = pipe(dataloader[0]).images[0]
-    end = time.monotonic()
-    LOGGER.info(f"Elapsed time: {end - start:.2f} seconds")
-
     image.save(f"astronaut_rides_horse_{nav.inplace_config.mode.value}.png")  # pytype: disable=attribute-error
 
 

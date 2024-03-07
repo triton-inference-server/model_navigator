@@ -153,3 +153,9 @@ class ModelNavigatorCommandNotExecutable(ModelNavigatorError):
     """Raised when command execution is not possible."""
 
     pass
+
+
+class ModelNavigatorModuleNotOptimizedError(ModelNavigatorError):
+    """Raised when the module is not optimized and is required to be optimized."""
+
+    pass
