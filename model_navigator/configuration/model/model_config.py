@@ -401,6 +401,7 @@ class ONNXConfig(_SerializedModelConfig, format=Format.ONNX):
         parent: Optional[ModelConfig] = None,
         custom_args: Optional[Dict[str, Any]] = None,
         device: Optional[str] = None,
+        export_device: Optional[str] = None,
     ) -> None:
         """Initializes ONNX model configuration class.
 
@@ -412,6 +413,7 @@ class ONNXConfig(_SerializedModelConfig, format=Format.ONNX):
             parent: Parent model configuration
             custom_args: Custom arguments passed to ONNX export
             device: runtime device e.g. "cuda:0"
+            export_device: Device used for export
         """
         super().__init__(parent=parent)
         self.opset = opset
@@ -419,6 +421,7 @@ class ONNXConfig(_SerializedModelConfig, format=Format.ONNX):
         self.graph_surgeon_optimization = graph_surgeon_optimization
         self.dynamic_axes = dynamic_axes
         self.custom_args = custom_args
+        self.export_device = export_device
         self.runner_config = DeviceRunnerConfig(device=device)
 
     def _get_path_params_as_array_of_strings(self) -> List[str]:
@@ -433,6 +436,7 @@ class ONNXConfig(_SerializedModelConfig, format=Format.ONNX):
             dynamic_axes=data_dict.get("dynamic_axes"),
             custom_args=data_dict.get("custom_args"),
             device=data_dict.get("device"),
+            export_device=data_dict.get("export_device"),
         )
 
 

@@ -42,7 +42,7 @@ def export(
     output_names: List[str],
     dynamic_axes: Dict[str, Dict[int, str]],
     batch_dim: Optional[int],
-    target_device: str,
+    export_device: str,
     custom_args: Dict[str, Any],
     navigator_workspace: Optional[str] = None,
 ) -> None:
@@ -56,13 +56,14 @@ def export(
         output_names (List[str]): List of model output names.
         dynamic_axes (Dict[str, Dict[int, str]]): Configuration of the dynamic axes.
         batch_dim (Optional[int]): Batch dimension.
-        target_device (str): Device to load TorchScript model on.
+        export_device (str): Device to export model to ONNX on.
         navigator_workspace (Optional[str], optional): Model Navigator workspace path.
             When None use current workdir. Defaults to None.
         custom_args (Optional[Dict[str, Any]], optional): Passthrough parameters for torch.onnx.export
             For available arguments check PyTorch documentation: https://pytorch.org/docs/stable/onnx.html#torch.onnx.export
     """
     model = get_model()
+    model = model.to(export_device)
 
     if not navigator_workspace:
         navigator_workspace = pathlib.Path.cwd()
@@ -71,7 +72,7 @@ def export(
     profiling_sample = load_samples("profiling_sample", navigator_workspace, batch_dim)[0]
     input_metadata = TensorMetadata.from_json(input_metadata)
 
-    dummy_input = {n: torch.from_numpy(val).to(target_device) for n, val in profiling_sample.items()}
+    dummy_input = {n: torch.from_numpy(val).to(export_device) for n, val in profiling_sample.items()}
 
     # adjust input dtypes to match input_metadata
     # TODO: Remove when torch.bfloat16 will be supported

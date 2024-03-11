@@ -17,7 +17,7 @@ import ctypes
 import math
 import os
 import sys
-from typing import Any, Optional, Sequence, Tuple
+from typing import Any, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -573,9 +573,19 @@ class DeviceView:
         if kwargs is None:
             kwargs = {}
 
-        args = tuple(arg.torch() if isinstance(arg, cls) else arg for arg in args)
-        kwargs = {k: v.torch() if isinstance(v, cls) else v for k, v in kwargs.items()}
+        args = cls._to_torch(args)
+        kwargs = cls._to_torch(kwargs)
         return func(*args, **kwargs)
+
+    @classmethod
+    def _to_torch(cls, obj):
+        if isinstance(obj, cls):
+            return obj.torch()
+        if isinstance(obj, Mapping):
+            return {k: cls._to_torch(v) for k, v in obj.items()}
+        if isinstance(obj, Sequence):
+            return [cls._to_torch(v) for v in obj]
+        return obj
 
     def _torch(self, stream=None):
         LOGGER.debug(

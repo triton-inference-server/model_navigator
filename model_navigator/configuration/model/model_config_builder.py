@@ -363,6 +363,7 @@ class ModelConfigBuilder:
                         dynamic_axes=onnx_config.dynamic_axes,
                         custom_args=onnx_config.custom_args,
                         device=onnx_config.device,
+                        export_device=onnx_config.export_device,
                     )
                 )
         if framework == Framework.ONNX:
@@ -375,6 +376,7 @@ class ModelConfigBuilder:
                     dynamic_axes=onnx_config.dynamic_axes,
                     custom_args=onnx_config.custom_args,
                     device=onnx_config.device,
+                    export_device=onnx_config.export_device,
                 )
             )
 
@@ -389,6 +391,7 @@ class ModelConfigBuilder:
                         dynamic_axes=onnx_config.dynamic_axes,
                         custom_args=onnx_config.custom_args,
                         device=onnx_config.device,
+                        export_device=onnx_config.export_device,
                     )
                 )
 
@@ -403,6 +406,7 @@ class ModelConfigBuilder:
                         dynamic_axes=onnx_config.dynamic_axes,
                         custom_args=onnx_config.custom_args,
                         device=onnx_config.device,
+                        export_device=onnx_config.export_device,
                     )
                 )
 

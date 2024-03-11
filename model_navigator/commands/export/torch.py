@@ -154,6 +154,7 @@ class ExportTorch2ONNX(Command):
         model: Optional[Any] = None,
         batch_dim: Optional[int] = None,
         dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None,
+        export_device: Optional[str] = None,
     ) -> CommandOutput:
         """Execute command.
 
@@ -170,6 +171,7 @@ class ExportTorch2ONNX(Command):
             dynamic_axes: Definition of model inputs dynamic axes
             custom_args (Optional[Dict[str, Any]], optional): Passthrough parameters for torch.onnx.export
                 For available arguments check PyTorch documentation: https://pytorch.org/docs/stable/onnx.html#torch.onnx.export
+            export_device: Device to export model to ONNX on. If None use target_device.
 
         Returns:
             CommandOutput object with status
@@ -190,8 +192,6 @@ class ExportTorch2ONNX(Command):
             LOGGER.warning(f"No dynamic axes provided. Using values derived from the dataloader: {dynamic_axes}")
         else:
             _validate_if_dynamic_axes_aligns_with_dataloader_shapes(dynamic_axes, input_metadata, output_metadata)
-
-        model.to(target_device.value)
 
         exporters.torch2onnx.get_model = lambda: model
 
@@ -218,7 +218,7 @@ class ExportTorch2ONNX(Command):
                 "output_names": list(output_metadata.keys()),
                 "dynamic_axes": dynamic_axes,
                 "batch_dim": batch_dim,
-                "target_device": target_device.value,
+                "export_device": export_device or target_device.value,
                 "custom_args": custom_args,
             }
 

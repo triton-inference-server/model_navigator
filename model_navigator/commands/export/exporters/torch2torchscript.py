@@ -73,7 +73,6 @@ def export(
     if target_jit_type == JitType.SCRIPT:
         script_module = torch.jit.script(model)
     else:
-
         dummy_input = {n: torch.from_numpy(val).to(target_device) for n, val in profiling_sample.items()}
 
         # adjust input dtypes to match input_metadata
@@ -90,6 +89,7 @@ def export(
             args, kwargs = dummy_input[:-1], dummy_input[-1]
         else:
             args, kwargs = dummy_input, {}
+
         if args:
             if kwargs:
                 try:
@@ -97,17 +97,22 @@ def export(
                     forward_args = list(forward_signature.parameters.keys())[1:]  # skip self
                     for i, arg in enumerate(args):
                         kwargs[forward_args[i]] = arg
+                    input_kwargs = {
+                        "example_kwarg_inputs": kwargs,
+                    }
                 except BaseException as e:
                     raise ModelNavigatorUserInputError(
                         "TorchScript trace does not support both args and kwargs and Model Navigator was unable to convert the input to kwargs. Please provide the input as only kwargs or only args."
                     ) from e
-            input_kwargs = {
-                "example_inputs": args,
-            }
+            else:
+                input_kwargs = {
+                    "example_inputs": args,
+                }
         else:
             input_kwargs = {
                 "example_kwarg_inputs": kwargs,
             }
+
         script_module = torch.jit.trace(model, strict=strict, **input_kwargs, **custom_args)
 
     exported_model_path = pathlib.Path(exported_model_path)
