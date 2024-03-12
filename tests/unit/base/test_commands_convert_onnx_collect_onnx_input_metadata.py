@@ -17,7 +17,7 @@ import pathlib
 import tempfile
 
 import pytest
-from onnxruntime.capi.onnxruntime_pybind11_state import NoSuchFile
+from onnxruntime.capi.onnxruntime_pybind11_state import NoSuchFile  # pytype: disable=import-error
 
 from model_navigator.commands.convert.onnx.collect_onnx_input_metadata import collect_onnx_input_metadata
 from tests.utils import get_assets_path

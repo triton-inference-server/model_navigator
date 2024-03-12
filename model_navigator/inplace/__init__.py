@@ -15,6 +15,7 @@
 
 import copy
 import pathlib
+import traceback
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Type, Union
 
 import yaml
@@ -23,7 +24,7 @@ from model_navigator.api.config import DEFAULT_TORCH_TARGET_FORMATS_FOR_PROFILIN
 from model_navigator.commands.correctness.correctness import Correctness
 from model_navigator.commands.performance.nvml_handler import NvmlHandler
 from model_navigator.commands.performance.performance import Performance
-from model_navigator.core.logger import LOGGER
+from model_navigator.core.logger import LOGGER, pad_string
 from model_navigator.exceptions import ModelNavigatorModuleNotOptimizedError
 from model_navigator.package.status import CommandStatus
 from model_navigator.runners.base import NavigatorRunner
@@ -86,6 +87,7 @@ def profile(
     stabilization_windows: int = 3,
     window_size: int = 50,
     stability_percentage: float = 10.0,
+    verbose: bool = False,
 ) -> None:
     """Profile `func` and all registered modules.
 
@@ -100,6 +102,7 @@ def profile(
         stabilization_windows: Number of stabilization windows.
         window_size: Number of inference queries performed in measurement window
         stability_percentage: Allowed percentage of variation from the mean in three consecutive windows.
+        verbose: Provide verbose logging
     """
     if target_formats is None:
         target_formats = DEFAULT_TORCH_TARGET_FORMATS_FOR_PROFILING
@@ -113,13 +116,14 @@ def profile(
     modelkeys_runners = [("torch", "eager")] + list(modelkeys_runners)
 
     profiling_results = ProfilingResults()
-    for modelkey, runner_name in modelkeys_runners:
-        _load_modules(modelkey, runner_name)
+    for model_key, runner_name in modelkeys_runners:
+        LOGGER.info(pad_string(f"Profiling of {model_key} and {runner_name}"))
+        _load_modules(model_key, runner_name)
         runner_profiling_results = RunnerProfilingResults()
         try:
             for sample_id, input_ in enumerate(dataloader):
                 with NvmlHandler() as nvml_handler:
-                    runner_profiling_results.detailed[sample_id] = run_measurement(
+                    profiling_result = run_measurement(
                         func=func,
                         sample=input_,
                         nvml_handler=nvml_handler,
@@ -129,18 +133,26 @@ def profile(
                         window_size=window_size,
                         stability_percentage=stability_percentage,
                     )
+                    LOGGER.info(
+                        f"Performance profiling result for {runner_name} "
+                        f"and sample id: {sample_id}:\n{profiling_result}"
+                    )
+                    runner_profiling_results.detailed[sample_id] = profiling_result
             runner_profiling_results.status = CommandStatus.OK
         except Exception as e:
-            LOGGER.error(f"Profiling failed for modelkey {modelkey} and runner {runner_name}.")
-            LOGGER.error(e)
+            LOGGER.error(f"Profiling failed for model_key {model_key} and runner {runner_name}.")
+            LOGGER.error(str(e))
+            if verbose:
+                LOGGER.error(f"Traceback: {traceback.format_exc()}")
+
             runner_profiling_results.status = CommandStatus.FAIL
 
-        if modelkey not in profiling_results.models:
-            profiling_results.models[modelkey] = RunnerResults()
-            profiling_results.models[modelkey].runners[runner_name] = RunnerProfilingResults()
-        elif runner_name not in profiling_results.models[modelkey].runners:
-            profiling_results.models[modelkey].runners[runner_name] = RunnerProfilingResults()
-        profiling_results.models[modelkey].runners[runner_name] = runner_profiling_results
+        if model_key not in profiling_results.models:
+            profiling_results.models[model_key] = RunnerResults()
+            profiling_results.models[model_key].runners[runner_name] = RunnerProfilingResults()
+        elif runner_name not in profiling_results.models[model_key].runners:
+            profiling_results.models[model_key].runners[runner_name] = RunnerProfilingResults()
+        profiling_results.models[model_key].runners[runner_name] = runner_profiling_results
 
     if status_path is None:
         status_path = pathlib.Path.cwd() / PROFILING_RESULTS_FILE_NAME
@@ -200,21 +212,21 @@ def _status_serializable_dict(status) -> Dict:
     return data
 
 
-def _load_modules(modelkey, runner_name):
+def _load_modules(model_key, runner_name):
     for module_name, module in module_registry.items():
         try:
-            if modelkey == "torch" and runner_name == "eager":
+            if model_key == "torch" and runner_name == "eager":
                 module.load_passthrough()
                 module._wrapper._module.to("cuda")  # TODO: remove this line when passthrough is fixed
             else:
-                module.load_optimized(strategy=SelectedRuntimeStrategy(model_key=modelkey, runner_name=runner_name))
+                module.load_optimized(strategy=SelectedRuntimeStrategy(model_key=model_key, runner_name=runner_name))
         except ModelNavigatorModuleNotOptimizedError:
             LOGGER.info(
-                f"Module {module_name} not optimized for modelkey {modelkey} and runner {runner_name}. Unoptimized module will be used."
+                f"Module {module_name} not optimized for modelkey {model_key} and runner {runner_name}. Unoptimized module will be used."
             )
             module.load_passthrough()
         except Exception:
-            LOGGER.warn(f"Failed to load module {module_name} for modelkey {modelkey} and runner {runner_name}.")
+            LOGGER.warn(f"Failed to load module {module_name} for modelkey {model_key} and runner {runner_name}.")
             LOGGER.warn("Unoptimized module will be used.")
             module.load_passthrough()
 

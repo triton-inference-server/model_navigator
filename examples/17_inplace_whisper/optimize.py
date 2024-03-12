@@ -44,12 +44,6 @@ runners = ("TensorRT", "OnnxCUDA")
 
 
 def get_pipeline():
-    optimize_config = nav.OptimizeConfig(
-        target_formats=target_formats,
-        runners=runners,
-        custom_configs=[nav.TensorRTConfig(precision=nav.TensorRTPrecision.FP16)],
-        optimization_profile=nav.OptimizationProfile(max_batch_size=BATCH_SIZE),
-    )
     pipe = pipeline(
         "automatic-speech-recognition",
         model=MODEL_NAME,
@@ -59,19 +53,16 @@ def get_pipeline():
     pipe.model.model.encoder = nav.Module(
         pipe.model.model.encoder,
         name="encoder",
-        optimize_config=optimize_config,
         output_mapping=lambda x: BaseModelOutput(**x),
     )
     pipe.model.model.decoder = nav.Module(
         pipe.model.model.decoder,
         name="decoder",
-        optimize_config=optimize_config,
         output_mapping=lambda x: BaseModelOutputWithPastAndCrossAttentions(**x),
     )
     pipe.model.proj_out = nav.Module(
         pipe.model.proj_out,
         name="proj_out",
-        optimize_config=optimize_config,
     )
     return pipe
 
@@ -100,8 +91,15 @@ def main():
 
     LOGGER.info(f"Dataset loaded. Dataset length: {len(dataset)}")
 
+    optimize_config = nav.OptimizeConfig(
+        target_formats=target_formats,
+        runners=runners,
+        custom_configs=[nav.TensorRTConfig(precision=nav.TensorRTPrecision.FP16)],
+        optimization_profile=nav.OptimizationProfile(max_batch_size=BATCH_SIZE),
+    )
+
     LOGGER.info("Optimizing")
-    nav.optimize(pipe, dataloader)
+    nav.optimize(pipe, dataloader, config=optimize_config)
 
     def copy_wrapper(*args, **kwargs):
         return pipe(*args, **copy.deepcopy(kwargs))

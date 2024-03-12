@@ -22,7 +22,7 @@ pip install requests \
   tqdm \
   horovod \
   sentencepiece \
-  tensorflow_hub \
+  "tensorflow_hub<=0.15.0" \
   pynvml \
   wget \
   progressbar \

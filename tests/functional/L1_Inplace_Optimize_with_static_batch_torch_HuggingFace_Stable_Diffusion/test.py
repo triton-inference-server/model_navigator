@@ -16,6 +16,7 @@
 import argparse
 import logging
 import pathlib
+from typing import List, Tuple
 
 import yaml
 
@@ -54,7 +55,38 @@ def get_pipeline():
     pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
     pipe = pipe.to("cuda")
 
-    optimize_config = nav.OptimizeConfig(
+    def clip_output_mapping(output):
+        return BaseModelOutputWithPooling(**output)
+
+    pipe.text_encoder = nav.Module(
+        pipe.text_encoder,
+        name="clip",
+        output_mapping=clip_output_mapping,
+    )
+    pipe.unet = nav.Module(
+        pipe.unet,
+        name="unet",
+    )
+    pipe.vae.decoder = nav.Module(
+        pipe.vae.decoder,
+        name="vae",
+    )
+
+    return pipe
+
+
+def get_dataloader() -> List[Tuple[int, List[str]]]:
+    return [
+        (1, ["a photo of an astronaut riding a horse on mars"]),
+        (1, ["a dog"]),
+    ]
+
+
+def get_config():
+
+    import model_navigator as nav
+
+    return nav.OptimizeConfig(
         batching=False,  # because timestep input to the unet is not batched
         verbose=True,
         runners=(
@@ -65,35 +97,6 @@ def get_pipeline():
             "TensorRT",
         ),
     )
-
-    def clip_output_mapping(output):
-        return BaseModelOutputWithPooling(**output)
-
-    pipe.text_encoder = nav.Module(
-        pipe.text_encoder,
-        name="clip",
-        optimize_config=optimize_config,
-        output_mapping=clip_output_mapping,
-    )
-    pipe.unet = nav.Module(
-        pipe.unet,
-        name="unet",
-        optimize_config=optimize_config,
-    )
-    pipe.vae.decoder = nav.Module(
-        pipe.vae.decoder,
-        name="vae",
-        optimize_config=optimize_config,
-    )
-
-    return pipe
-
-
-def get_dataloader():
-    return [
-        ["a photo of an astronaut riding a horse on mars"],
-        ["a dog"],
-    ]
 
 
 def main():
@@ -109,8 +112,6 @@ def main():
     device = torch.device("cuda")
     transformers.modeling_utils.get_parameter_device = lambda parameter: device
     diffusers.models.modeling_utils.get_parameter_device = lambda parameter: device
-
-    nav.inplace_config.mode = nav.Mode.RECORDING
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -133,27 +134,27 @@ def main():
 
     pipe = get_pipeline()
     dataloader = get_dataloader()
+    config = get_config()
 
-    for batch in dataloader:
-        pipe(batch)
-
-    nav.optimize()
-
-    for batch in dataloader:
-        pipe(batch)
+    nav.optimize(pipe, dataloader, config=config)
 
     names, packages = [], []
     for name, module in module_registry.items():
         for i, package in enumerate(getattr(module._wrapper, "_packages", [])):
             names.append(f"{name}.{i}")
             packages.append(package)
-    assert len(packages) == EXPECTED_PACKAGES, "Wrong number of packages."
+    assert (
+        len(packages) == EXPECTED_PACKAGES
+    ), f"Wrong number of packages. Got {len(packages)}. Expected: {EXPECTED_PACKAGES}"
 
-    status_file = args.status
     status = collect_optimize_statuses([package.status for package in packages], names)
+
+    # Profile
+    nav.profile(pipe, dataloader, window_size=5, verbose=True)
 
     validate_status(status, expected_statuses=EXPECTED_STATUSES)
 
+    status_file = args.status
     with status_file.open("w") as fp:
         yaml.safe_dump(status, fp)
 

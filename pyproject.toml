@@ -48,14 +48,14 @@ dependencies = [
     "onnxruntime-gpu~=1.16;platform_machine == 'x86_64'",
     "onnx_graphsurgeon>=0.3.14",
     "protobuf>=3.18.3,<3.21.0",
-    "polygraphy==0.49.0",
+    "polygraphy>=0.49.0",
     "psutil>=5.7",
     "py-cpuinfo>=8.0",
     "pynvml",
     "python-slugify",
     "pyyaml~=6.0",
     "tabulate>=0.8",
-    "tensorrt",
+    "tensorrt;platform_machine == 'x86_64'",
     "tritonclient[all]",
     "wrapt>=1.11.0,<1.15",
     "dacite>=1.8.0",
@@ -68,10 +68,16 @@ dependencies = [
 "Tracker" = "https://github.com/triton-inference-server/model_navigator/issues"
 
 [project.optional-dependencies]
+torch = [
+    "torch"
+]
 tensorflow = [
+    "tensorflow",
     "tf2onnx>=1.9.3"
 ]
 jax = [
+    "jax[cuda12_pip]",
+    "tensorflow",
     "tf2onnx>=1.9.3"
 ]
 test = [

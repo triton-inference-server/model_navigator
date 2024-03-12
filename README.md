@@ -22,6 +22,10 @@ limitations under the License.
 - [Documentation](#documentation)
 - [Support Matrix](#support-matrix)
 - [Installation](#installation)
+  - [Installing for PyTorch](#installing-for-pytorch)
+  - [Installing for TensorFlow](#installing-for-tensorflow)
+  - [Installing for JAX](#installing-for-jax)
+  - [Installing from source](#installing-from-source)
 - [Quick Start](#quick-start)
   - [Optimize Model](#optimize-model)
   - [Deploy model in PyTriton](#deploy-model-in-pytriton)
@@ -123,18 +127,42 @@ pip install nvidia-pyindex
 pip install -U triton-model-navigator[<extras,>]
 ```
 
+### Installing for PyTorch
+
+To install Model Navigator with PyTorch dependencies use:
+
+```shell
+pip install nvidia-pyindex
+pip install -U triton-model-navigator[torch]
+```
+
+### Installing for TensorFlow
+
+To install Model Navigator with TensorFlow dependencies use:
+
+```shell
+pip install nvidia-pyindex
+pip install -U triton-model-navigator[tensorflow]
+```
+
+### Installing for JAX
+
+To install Model Navigator with JAX dependencies use:
+
+```shell
+pip install nvidia-pyindex
+pip install -U -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html triton-model-navigator[jax]
+```
+
+### Installing from source
+
 To install Triton Model Navigator from source use pip command:
 
 ```shell
 $ pip install --extra-index-url https://pypi.ngc.nvidia.com .[<extras,>]
 ```
 
-Extras:
-
-- `tensorflow` - Model Navigator with dependencies for TensorFlow2
-- `jax` - Model Navigator with dependencies for JAX
-
-For using with PyTorch no extras are needed.
+In place of `extras` select the desired framework.
 
 ## Quick Start
 

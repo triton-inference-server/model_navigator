@@ -114,7 +114,9 @@ def main():
         for i, package in enumerate(getattr(module._wrapper, "_packages", [])):
             names.append(f"{name}.{i}")
             packages.append(package)
-    assert len(packages) == EXPECTED_PACKAGES, "Wrong number of packages."
+    assert (
+        len(packages) == EXPECTED_PACKAGES
+    ), f"Wrong number of packages. Got {len(packages)}. Expected: {EXPECTED_PACKAGES}"
 
     status_file = args.status
     status = collect_optimize_statuses([package.status for package in packages], names)

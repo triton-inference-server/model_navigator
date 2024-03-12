@@ -131,6 +131,22 @@ class ProfilingResult:
         """
         return cls(**data)
 
+    def __str__(self) -> str:
+        """Get string representation."""
+        avg_gpu_clock = f"{self.avg_gpu_clock:.4f}" if self.avg_gpu_clock is not None else "-"
+        return (
+            f"Batch: {self.batch_size}\n"
+            f"Request count: {self.request_count}\n"
+            f"Throughput: {self.throughput:.4f} [infer/sec]\n"
+            f"Avg Latency: {self.avg_latency:.4f} [ms]\n"
+            f"Std Latency: {self.std_latency:.4f} [ms]\n"
+            f"p50 Latency: {self.p50_latency:.4f} [ms]\n"
+            f"p90 Latency: {self.p90_latency:.4f} [ms]\n"
+            f"p95 Latency: {self.p95_latency:.4f} [ms]\n"
+            f"p99 Latency: {self.p99_latency:.4f} [ms]\n"
+            f"Avg GPU clock: {avg_gpu_clock} [MHz]"
+        )
+
 
 @dataclasses.dataclass
 class RunnerProfilingResults:

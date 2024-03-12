@@ -14,6 +14,7 @@
 # limitations under the License.
 """e2e tests for exporting PyTorch identity model"""
 import argparse
+import copy
 import logging
 import pathlib
 
@@ -24,7 +25,7 @@ METADATA = {
     "image_name": "nvcr.io/nvidia/pytorch:{version}-py3",
 }
 
-EXPECTED_PACKAGES = 4
+EXPECTED_PACKAGES = 3
 EXPECTED_STATUSES_TEMPLATE = [
     "{name}.{ind}.onnx.OnnxCUDA",
     "{name}.{ind}.onnx.OnnxTensorRT",
@@ -37,13 +38,24 @@ EXPECTED_STATUSES_TEMPLATE = [
 EXPECTED_STATUSES = [
     status.format(name=name, ind=ind)
     for status in EXPECTED_STATUSES_TEMPLATE
-    for name, range_ind in (("encoder", 1), ("decoder", 2), ("proj_out", 1))
+    for name, range_ind in (("encoder", 1), ("decoder", 2))
     for ind in range(range_ind)
 ]
 
 DEVICE = "cuda"
 MODEL_NAME = "openai/whisper-tiny"
 BATCH_SIZE = 8
+
+
+# Whisper is deleting samples, allways return copy for inference
+class CopyList(list):
+    def __getitem__(self, index):
+        item = super().__getitem__(index)
+        return copy.deepcopy(item)
+
+    def __iter__(self):
+        for item in super().__iter__():
+            yield copy.deepcopy(item)
 
 
 def get_pipeline():
@@ -53,18 +65,6 @@ def get_pipeline():
 
     import model_navigator as nav
 
-    # pytype: enable=import-error
-    optimize_config = nav.OptimizeConfig(
-        runners=(
-            "OnnxCUDA",
-            "OnnxTensorRT",
-            "TorchCUDA",
-            "TorchScriptCUDA",
-            "TensorRT",
-        ),
-        verbose=True,
-        optimization_profile=nav.OptimizationProfile(max_batch_size=BATCH_SIZE),
-    )
     pipe = pipeline(
         "automatic-speech-recognition",
         model=MODEL_NAME,
@@ -72,31 +72,51 @@ def get_pipeline():
         device=DEVICE,
     )
     # WAR: reorder modules
-    pipe.model.proj_out = nav.Module(
-        pipe.model.proj_out,
-        name="proj_out",
-        optimize_config=optimize_config,
-    )
+    # pipe.model.proj_out = nav.Module(
+    #     pipe.model.proj_out,
+    #     name="proj_out",
+    # )
     pipe.model.model.encoder = nav.Module(
         pipe.model.model.encoder,
         name="encoder",
-        optimize_config=optimize_config,
         output_mapping=lambda x: BaseModelOutput(**x),
     )
     pipe.model.model.decoder = nav.Module(
         pipe.model.model.decoder,
         name="decoder",
-        optimize_config=optimize_config,
         output_mapping=lambda x: BaseModelOutputWithPastAndCrossAttentions(**x),
     )
 
     return pipe
 
 
+def get_dataloader():
+    from datasets import load_dataset  # pytype: disable=import-error
+
+    dataset = load_dataset("hf-internal-testing/librispeech_asr_dummy", "clean", split="validation")
+
+    dataloader = CopyList()
+    for i in range(5):
+        dataloader.append((BATCH_SIZE, {"inputs": dataset[i]["audio"]}))
+
+    return dataloader
+
+
+def get_config():
+    import model_navigator as nav
+
+    # pytype: enable=import-error
+    optimize_config = nav.OptimizeConfig(
+        verbose=True,
+        optimization_profile=nav.OptimizationProfile(max_batch_size=BATCH_SIZE),
+    )
+
+    return optimize_config
+
+
 def main():
     import torch  # pytype: disable=import-error
     import transformers  # pytype: disable=import-error
-    from datasets import load_dataset  # pytype: disable=import-error
 
     import model_navigator as nav
     from model_navigator.inplace.registry import module_registry
@@ -104,8 +124,6 @@ def main():
     from tests.functional.common.utils import collect_optimize_statuses, validate_status
 
     transformers.modeling_utils.get_parameter_device = lambda parameter: torch.device(DEVICE)
-
-    nav.inplace_config.mode = nav.Mode.RECORDING
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -129,35 +147,32 @@ def main():
     LOGGER.info("Loading model...")
     pipe = get_pipeline()
     LOGGER.info("Model loaded")
+
     LOGGER.info("Loading dataset...")
-    dataset = load_dataset("hf-internal-testing/librispeech_asr_dummy", "clean", split="validation")
-    LOGGER.info(f"Dataset loaded. Dataset length: {len(dataset)}")
+    dataloader = get_dataloader()
+    LOGGER.info(f"Dataset loaded. Dataset length: {len(dataloader)}")
 
-    for batch in dataset:
-        sample = batch["audio"]
-        pipe(sample.copy(), batch_size=BATCH_SIZE)
+    config = get_config()
 
-    # additional inference to capture max sequence length output
-    pipe(dataset[0]["audio"].copy(), batch_size=BATCH_SIZE, generate_kwargs={"min_new_tokens": 512})
-
-    nav.optimize()
-
-    for batch in dataset:
-        sample = batch["audio"]
-        pipe(sample.copy(), batch_size=BATCH_SIZE)
+    nav.optimize(pipe, dataloader=dataloader, config=config)
 
     names, packages = [], []
     for name, module in module_registry.items():
         for i, package in enumerate(getattr(module._wrapper, "_packages", [])):
             names.append(f"{name}.{i}")
             packages.append(package)
-    assert len(packages) == EXPECTED_PACKAGES, "Wrong number of packages."
+    assert (
+        len(packages) == EXPECTED_PACKAGES
+    ), f"Wrong number of packages. Got {len(packages)}. Expected: {EXPECTED_PACKAGES}"
 
-    status_file = args.status
     status = collect_optimize_statuses([package.status for package in packages], names)
+
+    # Profile
+    nav.profile(pipe, dataloader, verbose=True)
 
     validate_status(status, expected_statuses=EXPECTED_STATUSES)
 
+    status_file = args.status
     with status_file.open("w") as fp:
         yaml.safe_dump(status, fp)
 
