@@ -114,7 +114,9 @@ class UpdateSavedModelSignature(Command):
         assert exported_model_path.exists()
         exported_model_path.parent.mkdir(parents=True, exist_ok=True)
 
-        exporters.savedmodel2savedmodel.get_model = lambda: tf.keras.models.load_model(exported_model_path)
+        exporters.savedmodel2savedmodel.get_model = lambda: tf.keras.models.load_model(  # pytype: disable=module-attr
+            exported_model_path
+        )
 
         with ExecutionContext(
             workspace=workspace,

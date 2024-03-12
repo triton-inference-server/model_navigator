@@ -75,7 +75,9 @@ def test_tf2_correctness():
         model_dir.mkdir(parents=True, exist_ok=True)
         model_path = model_dir / "model.savedmodel"
         model_relative_path = pathlib.Path("tf-savedmodel") / "model.savedmodel"
-        tensorflow.keras.models.save_model(model=model, filepath=model_path, overwrite=True)
+        tensorflow.keras.models.save_model(  # pytype: disable=module-attr
+            model=model, filepath=model_path, overwrite=True
+        )
 
         input_data = next(iter(dataloader))
         numpy_output = model.predict(input_data)
@@ -132,7 +134,7 @@ def test_tf2_export_savedmodel():
             verbose=True,
         )
         assert command_output.status == CommandStatus.OK
-        tensorflow.keras.models.load_model(exported_model_path)
+        tensorflow.keras.models.load_model(exported_model_path)  # pytype: disable=module-attr
 
 
 @pytest.mark.skipif(
@@ -150,7 +152,9 @@ def test_tf2_convert_tf_trt():
         converted_model_path = workspace / model_relative_path
         model_dir.mkdir(parents=True, exist_ok=True)
         input_model_path = model_dir / "model.savedmodel"
-        tensorflow.keras.models.save_model(model=model, filepath=input_model_path, overwrite=True)
+        tensorflow.keras.models.save_model(  # pytype: disable=module-attr
+            model=model, filepath=input_model_path, overwrite=True
+        )
 
         input_data = next(iter(dataloader))
         samples_to_npz([{"input__1": input_data.numpy()}], workspace / "model_input" / "conversion", None)
@@ -168,4 +172,4 @@ def test_tf2_convert_tf_trt():
         )
 
         assert command_output.status == CommandStatus.OK
-        tensorflow.keras.models.load_model(converted_model_path)
+        tensorflow.keras.models.load_model(converted_model_path)  # pytype: disable=module-attr

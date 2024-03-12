@@ -120,7 +120,7 @@ def _dle_bert_tf_test(
 
     if checkpoint_file.exists():
         checkpoint = tf.train.Checkpoint(model=squad_model)
-        checkpoint.restore(checkpoint_file).expect_partial()
+        checkpoint.restore(checkpoint_file.as_posix()).expect_partial()
 
     squad_model(dataloader[0])
 

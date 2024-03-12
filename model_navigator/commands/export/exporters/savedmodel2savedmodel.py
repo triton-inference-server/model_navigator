@@ -78,7 +78,7 @@ def update_signature(
     if not exported_model_path.is_absolute():
         exported_model_path = navigator_workspace / exported_model_path
 
-    tf.keras.models.save_model(
+    tf.keras.models.save_model(  # pytype: disable=module-attr
         model=model, filepath=exported_model_path.as_posix(), overwrite=True, signatures=signatures
     )
 
