@@ -217,7 +217,6 @@ def _run_window_measurement(
     nvml_handler: NvmlHandler,
     window_size: int,
 ) -> ProfilingResult:
-    gpu_clocks = []
     if not isinstance(sample, tuple):
         sample = (sample,)
     if not isinstance(sample[-1], dict):
@@ -270,11 +269,12 @@ def run_measurement(
             func=func, sample=sample, batch_size=batch_size, window_size=window_size, nvml_handler=nvml_handler
         )
         profiling_results.append(profiling_result)
-    LOGGER.debug(f"Measurement [{measurement_id}], avg_latency: {profiling_result.avg_latency} ms")
-    is_stable = _is_measurement_stable(profiling_results, count=3, stability_percentage=stability_percentage)
-    if measurement_id >= min_trials and is_stable:
-        count_from_idx = min(stabilization_windows, max_trials)
-        return ProfilingResult.from_profiling_results(profiling_results[-count_from_idx:])
+        LOGGER.debug(f"Measurement [{measurement_id}], avg_latency: {profiling_result.avg_latency} ms")
+        is_stable = _is_measurement_stable(profiling_results, count=3, stability_percentage=stability_percentage)
+        if measurement_id >= min_trials and is_stable:
+            count_from_idx = min(stabilization_windows, max_trials)
+            return ProfilingResult.from_profiling_results(profiling_results[-count_from_idx:])
+
     raise RuntimeError(
         "Unable to get stable performance results. Consider increasing "
         "window_size | stability_percentage | max_trials"

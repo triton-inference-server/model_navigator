@@ -25,7 +25,7 @@ METADATA = {
     "image_name": "nvcr.io/nvidia/pytorch:{version}-py3",
 }
 
-EXPECTED_PACKAGES = 3
+EXPECTED_PACKAGES = 4
 EXPECTED_STATUSES_TEMPLATE = [
     "{name}.{ind}.onnx.OnnxCUDA",
     "{name}.{ind}.onnx.OnnxTensorRT",
@@ -38,7 +38,7 @@ EXPECTED_STATUSES_TEMPLATE = [
 EXPECTED_STATUSES = [
     status.format(name=name, ind=ind)
     for status in EXPECTED_STATUSES_TEMPLATE
-    for name, range_ind in (("encoder", 1), ("decoder", 2))
+    for name, range_ind in (("encoder", 1), ("decoder", 2), ("proj_out", 1))
     for ind in range(range_ind)
 ]
 
@@ -58,6 +58,19 @@ class CopyList(list):
             yield copy.deepcopy(item)
 
 
+class CopyDict(dict):
+    def __getitem__(self, key):
+        item = super().__getitem__(key)
+        return copy.deepcopy(item)
+
+    def items(self):
+        for key, value in super().items():
+            yield copy.deepcopy(key), copy.deepcopy(value)
+
+    def __iter__(self):
+        return iter(self.items())
+
+
 def get_pipeline():
     # pytype: disable=import-error
     from transformers import pipeline
@@ -72,10 +85,10 @@ def get_pipeline():
         device=DEVICE,
     )
     # WAR: reorder modules
-    # pipe.model.proj_out = nav.Module(
-    #     pipe.model.proj_out,
-    #     name="proj_out",
-    # )
+    pipe.model.proj_out = nav.Module(
+        pipe.model.proj_out,
+        name="proj_out",
+    )
     pipe.model.model.encoder = nav.Module(
         pipe.model.model.encoder,
         name="encoder",
@@ -97,7 +110,7 @@ def get_dataloader():
 
     dataloader = CopyList()
     for i in range(5):
-        dataloader.append((BATCH_SIZE, {"inputs": dataset[i]["audio"]}))
+        dataloader.append((BATCH_SIZE, CopyDict(**{"inputs": dataset[i]["audio"]})))
 
     return dataloader
 

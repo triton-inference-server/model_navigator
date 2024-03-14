@@ -222,7 +222,7 @@ def numpy_to_torch_dtype(np_dtype: numpy.dtype) -> "torch.dtype":
     return numpy_to_torch_dtype_dict[np_dtype]
 
 
-def torch_to_numpy_dtype(torch_dtype: "torch.dtype") -> numpy.dtype:
+def torch_to_numpy_dtype(torch_dtype: "torch.dtype") -> Type[numpy.dtype]:
     """Cast torch dtype to numpy dtype.
 
     Args:

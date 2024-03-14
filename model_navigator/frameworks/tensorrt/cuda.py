@@ -17,7 +17,7 @@ import ctypes
 import math
 import os
 import sys
-from typing import Any, Mapping, Optional, Sequence, Tuple
+from typing import Any, Mapping, Optional, Sequence, Tuple, Type, Union
 
 import numpy as np
 
@@ -445,7 +445,7 @@ class Stream:
 class DeviceView:
     """A read-only view of a GPU memory region."""
 
-    def __init__(self, ptr: int, shape: Tuple[int], dtype: np.dtype):
+    def __init__(self, ptr: int, shape: Tuple[int], dtype: Union[np.dtype, Type[np.dtype]]):
         """Initializes a device view.
 
         Args:
@@ -480,8 +480,11 @@ class DeviceView:
         """Set the data type of the device buffer."""
         self._dtype = new
 
-        if isinstance(new, trt.tensorrt.DataType) or (is_torch_available() and isinstance(new, torch.dtype)):
+        if isinstance(new, trt.tensorrt.DataType):
             self.itemsize = self._dtype.itemsize
+        elif is_torch_available() and isinstance(new, torch.dtype):
+            np_dtype = utils.torch_to_numpy_dtype(new)
+            self.itemsize = np_dtype().itemsize
         else:
             self.itemsize = np.dtype(new).itemsize
 

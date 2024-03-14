@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Inplace Optimize."""
+"""Inplace Optimize API."""
 
 import copy
 import pathlib
@@ -118,7 +118,8 @@ def profile(
     profiling_results = ProfilingResults()
     for model_key, runner_name in modelkeys_runners:
         LOGGER.info(pad_string(f"Profiling of {model_key} and {runner_name}"))
-        _load_modules(model_key, runner_name)
+
+        _load_modules(model_key, runner_name, verbose=verbose)
         runner_profiling_results = RunnerProfilingResults()
         try:
             for sample_id, input_ in enumerate(dataloader):
@@ -212,7 +213,7 @@ def _status_serializable_dict(status) -> Dict:
     return data
 
 
-def _load_modules(model_key, runner_name):
+def _load_modules(model_key: str, runner_name: str, verbose: bool = False):
     for module_name, module in module_registry.items():
         try:
             if model_key == "torch" and runner_name == "eager":
@@ -220,15 +221,26 @@ def _load_modules(model_key, runner_name):
                 module._wrapper._module.to("cuda")  # TODO: remove this line when passthrough is fixed
             else:
                 module.load_optimized(strategy=SelectedRuntimeStrategy(model_key=model_key, runner_name=runner_name))
+                if (
+                    model_key == "torch" and "cpu" not in runner_name.lower()
+                ):  # TODO: remove after fixing torch runner device handling
+                    module._wrapper._module.to("cuda")
+
         except ModelNavigatorModuleNotOptimizedError:
             LOGGER.info(
-                f"Module {module_name} not optimized for modelkey {model_key} and runner {runner_name}. Unoptimized module will be used."
+                f"Module {module_name} not optimized for modelkey {model_key} and runner {runner_name}. "
+                f"Unoptimized module will be used."
             )
             module.load_passthrough()
-        except Exception:
-            LOGGER.warn(f"Failed to load module {module_name} for modelkey {model_key} and runner {runner_name}.")
-            LOGGER.warn("Unoptimized module will be used.")
+            module._wrapper._module.to("cuda")  # TODO: remove this line when passthrough is fixed
+        except Exception as e:
+            LOGGER.warn(f"Failed to load module {module_name} for model key {model_key} and runner {runner_name}.")
+            LOGGER.warn(f"Unoptimized module will be used. Error message: {str(e)}")
+            if verbose:
+                LOGGER.warn(f"Traceback: {traceback.format_exc()}")
+
             module.load_passthrough()
+            module._wrapper._module.to("cuda")  # TODO: remove this line when passthrough is fixed
 
 
 def _format_to_modelkey(format: Union[str, Format]):
