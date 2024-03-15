@@ -33,7 +33,6 @@ from model_navigator.utils.config_helpers import _do_run_max_batch_size_search, 
 
 
 def test__do_run_max_batch_size_search_return_false_when_batch_dim_is_none():
-
     config = CommonConfig(
         framework=Framework.TORCH,
         dataloader=[{"input_name": [idx]} for idx in range(10)],
@@ -57,7 +56,6 @@ def test__do_run_max_batch_size_search_return_false_when_batch_dim_is_none():
 
 
 def test__do_run_max_batch_size_search_return_false_when_tensorrt_model_config_and_trt_profile_set():
-
     config = CommonConfig(
         framework=Framework.TORCH,
         dataloader=[{"input_name": [idx]} for idx in range(10)],
@@ -81,7 +79,6 @@ def test__do_run_max_batch_size_search_return_false_when_tensorrt_model_config_a
 
 
 def test__do_run_max_batch_size_search_return_false_when_tftrt_model_config_and_trt_profile_set():
-
     config = CommonConfig(
         framework=Framework.TORCH,
         dataloader=[{"input_name": [idx]} for idx in range(10)],
@@ -103,7 +100,6 @@ def test__do_run_max_batch_size_search_return_false_when_tftrt_model_config_and_
 
 
 def test__do_run_max_batch_size_search_return_false_when_torchtrt_model_config_and_trt_profile_set():
-
     config = CommonConfig(
         framework=Framework.TORCH,
         dataloader=[{"input_name": [idx]} for idx in range(10)],
@@ -152,7 +148,6 @@ def test_do_find_device_max_batch_size_return_false_when_no_cuda_device():
 
 
 def test_do_find_device_max_batch_size_return_false_when_no_adaptive_formats():
-
     config = CommonConfig(
         framework=Framework.TORCH,
         dataloader=[{"input_name": [idx]} for idx in range(10)],
@@ -173,7 +168,6 @@ def test_do_find_device_max_batch_size_return_false_when_no_adaptive_formats():
 
 
 def test_do_find_device_max_batch_size_return_false_when_no_adaptive_conversion_needed():
-
     config = CommonConfig(
         framework=Framework.TORCH,
         dataloader=[{"input_name": [idx]} for idx in range(10)],

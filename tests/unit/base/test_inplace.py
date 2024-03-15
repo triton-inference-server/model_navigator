@@ -17,6 +17,7 @@ Note:
      Those test do not execute the conversion.
      The tests are checking if correct paths are executed on input arguments.
 """
+
 from unittest.mock import MagicMock
 
 import pytest

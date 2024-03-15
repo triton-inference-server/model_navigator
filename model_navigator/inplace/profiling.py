@@ -56,6 +56,7 @@ class ProfilingResult:
         Args:
             measurements: List of time measurements.
             batch_size: Batch size.
+            gpu_clocks: List of GPU clocks.
 
         Returns:
             ProfilingResults: Profiling results.

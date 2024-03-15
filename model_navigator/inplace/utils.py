@@ -57,7 +57,6 @@ def _extract_axes_shapes(
     shapes: List[Dict[str, List[int]]],
     pytree_metadata: PyTreeMetadata,
 ) -> Dict[str, Dict[int, List[int]]]:
-
     axes_shapes = {name: defaultdict(list) for name in pytree_metadata.get_names()}
     for sample_shapes in shapes:
         for name, tensor_shape in sample_shapes.items():

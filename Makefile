@@ -76,7 +76,7 @@ docs-serve: docs
 	mkdocs serve
 
 lint: ## check style with pre-commit and pytype
-	tox -e pytype,pre-commit --develop
+	tox -e pre-commit,pytype --develop
 
 test: ## run tests on every Python version with tox
 	tox --develop --skip-missing-interpreters

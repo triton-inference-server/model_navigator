@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Definition of Pipeline module - Direct Acyclic Graph (DAG) of commands execution."""
+
 import contextlib
 import traceback
 from typing import List

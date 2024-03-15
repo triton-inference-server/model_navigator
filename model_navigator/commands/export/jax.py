@@ -51,6 +51,7 @@ class ExportJAX2SavedModel(Command):
             jit_compile (bool): jax2tf parameter.
             enable_xla (bool): jax2tf parameter.
             input_metadata (TensorMetadata): Input metadata.
+            output_metadata (TensorMetadata): Output metadata.
             verbose (bool): If True verbose logging.
             model (Optional[JaxModel], optional): JAX model. Defaults to None.
 

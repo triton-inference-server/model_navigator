@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Test for Torch API"""
+
 from model_navigator.api.config import Format, TensorRTConfig, TorchTensorRTConfig
 from model_navigator.frameworks.torch.utils import update_allowed_batching_parameters
 

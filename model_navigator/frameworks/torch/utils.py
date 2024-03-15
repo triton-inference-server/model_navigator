@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Torch utils."""
+
 from typing import Optional, Sequence, Tuple
 
 from model_navigator.api.config import CustomConfig, Format, TorchTensorRTConfig

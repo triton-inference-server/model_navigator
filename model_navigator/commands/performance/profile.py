@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Command for profiling."""
+
 import pathlib
 import shutil
 import tempfile
@@ -60,7 +61,9 @@ class Profile(Command):
         Args:
             workspace: Model Navigator workspace path.
             path: Model path, relative to the workspace.
+            framework: Framework used to profile the model.
             format: Model format.
+            dataloader: Dataloader to use for profiling.
             optimization_profile: Optimization profile used during conversion and profiling.
             input_metadata: Input metadata.
             output_metadata: Output metadata.

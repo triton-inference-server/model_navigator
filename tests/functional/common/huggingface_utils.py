@@ -39,21 +39,18 @@ class HFDataLoaderFactory:
         max_sequence_length,
         return_tensors,
     ):
-
         self._inputs = inputs
         self._data_collator = DataCollatorWithPadding(
             tokenizer=tokenizer, padding=padding, max_length=max_sequence_length, return_tensors=return_tensors
         )
 
         tokenized_dataset = dataset.map(preprocess_function, batched=True)
-        self._dataset = tokenized_dataset.remove_columns(
-            [c for c in tokenized_dataset.column_names if c not in self._inputs]
-        )
+        self._dataset = tokenized_dataset.remove_columns([
+            c for c in tokenized_dataset.column_names if c not in self._inputs
+        ])
 
     def __call__(self, batch_size: int = 1, framework: Framework = Framework.TORCH):
-
         if framework == Framework.TORCH:
-
             from torch.utils.data import DataLoader  # pytype: disable=import-error
 
             return DataLoader(

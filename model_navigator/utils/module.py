@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Module related utilities."""
+
 import importlib
 from types import ModuleType
 from typing import Any, Optional

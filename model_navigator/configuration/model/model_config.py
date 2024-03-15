@@ -42,6 +42,7 @@ class ModelConfig(ABC, DataObject):
 
         Args:
             format: Model format of initialized ModelConfig subclass
+            kwargs: Additional subclass keyword arguments
         """
         super().__init_subclass__(**kwargs)
         if format:
@@ -105,17 +106,15 @@ class ModelConfig(ABC, DataObject):
             else:
                 params[key] = value
 
-        return DataObject._from_dict(
-            {
-                "format": self.format,
-                "key": self.key,
-                "path": self.path,
-                "parent_path": self.parent_path,
-                "parent_key": self.parent_key,
-                "log_path": self.log_path,
-                **params,
-            }
-        )
+        return DataObject._from_dict({
+            "format": self.format,
+            "key": self.key,
+            "path": self.path,
+            "parent_path": self.parent_path,
+            "parent_key": self.parent_key,
+            "log_path": self.log_path,
+            **params,
+        })
 
     def get_config_dict_for_command(self) -> dict:
         """Returns dictionary with ModelConfig data required for Command execution.

@@ -72,7 +72,7 @@ class BaseModule(abc.ABC):
         return self._name
 
     @abc.abstractclassmethod
-    def __call__(self, *args, **kwargs) -> Any:
+    def __call__(cls, *args, **kwargs) -> Any:
         """Module forward method."""
         pass
 

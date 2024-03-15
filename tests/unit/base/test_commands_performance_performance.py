@@ -43,7 +43,6 @@ def test_performance_command_returns_status_ok_when_profiling_results_found_and_
         sample_file.touch()
 
         with tempfile.NamedTemporaryFile() as tmpfile:
-
             mock = MagicMock()
             mock.__enter__.return_value.name = tmpfile.name
             mocker.patch("tempfile.NamedTemporaryFile", return_value=mock)
@@ -82,7 +81,6 @@ def test_performance_command_returns_status_ok_when_profiling_results_found_and_
         sample_file.touch()
 
         with tempfile.NamedTemporaryFile() as tmpfile:
-
             mock_tempfile = MagicMock()
             mock_tempfile.__enter__.return_value.name = tmpfile.name
             mocker.patch("tempfile.NamedTemporaryFile", return_value=mock_tempfile)

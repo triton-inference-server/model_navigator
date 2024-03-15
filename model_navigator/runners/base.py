@@ -96,7 +96,7 @@ class NavigatorRunner(abc.ABC):
         output_metadata: Optional[TensorMetadata],
         return_type: TensorType = TensorType.NUMPY,
         enable_timer: bool = False,
-        **kwargs,
+        **_kwargs,
     ) -> None:
         """Initialize object.
 
@@ -188,6 +188,8 @@ class NavigatorRunner(abc.ABC):
 
         Args:
             feed_dict: A dictionary with profiling samples
+            args: Additional inference implementation arguments
+            kwargs: Additional inference implementation keywords arguments
         """
         raise NotImplementedError("NavigatorRunner is an abstract class")
 
@@ -267,6 +269,8 @@ class NavigatorRunner(abc.ABC):
             check_inputs: Whether to check that the provided ``feed_dict`` and generated outputs includes the expected
                 inputs / outputs with the expected data types and shapes. Disabling this may improve performance.
                 Defaults to True.
+            args: Additional infer implementation arguments
+            kwargs: Additional infer implementation keywords arguments
 
         Returns:
             A dictionary with mapping of output tensor names to their corresponding NumPy arrays.

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Command for performance measurement."""
+
 import pathlib
 import shutil
 import tempfile

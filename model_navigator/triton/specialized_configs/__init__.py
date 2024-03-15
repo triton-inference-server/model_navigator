@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# noqa: D104
+
 from .base_model_config import *  # noqa: F401, F403
 from .common import *  # noqa: F401, F403
 from .onnx_model_config import *  # noqa: F401, F403

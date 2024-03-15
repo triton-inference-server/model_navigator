@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Internal configuration classes and methods."""
+
 import enum
 from typing import Any, Optional, Tuple, Type, Union
 

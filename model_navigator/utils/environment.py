@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Collect information about current system and environment."""
+
 import locale
 import logging
 import os

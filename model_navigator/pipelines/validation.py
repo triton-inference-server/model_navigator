@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Pipeline manager submodule."""
+
 import warnings
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union, get_args, get_origin
 
@@ -147,7 +148,6 @@ class PipelineManagerConfigurationValidator:
 
     @classmethod
     def _validate_config_types(cls, config: CommonConfig) -> None:
-
         for field_name, field in config.__dataclass_fields__.items():
             expected_type = field.type
             if get_origin(expected_type) is Union:

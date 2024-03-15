@@ -53,7 +53,6 @@ class GraphSurgeonOptimize(Command):
             cmd_path=onnx_path.parent / "reproduce_graph_surgeon.sh",
             verbose=verbose,
         ) as context:
-
             kwargs = {
                 "onnx_path": onnx_path.relative_to(workspace.path).as_posix(),
             }

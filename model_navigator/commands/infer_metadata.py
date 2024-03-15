@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Inputs and outputs metadata commands."""
+
 import pathlib
 from typing import Dict, Iterator, List, Optional, Sequence, Tuple, Union
 
@@ -135,6 +136,7 @@ class InferInputMetadata(Command, is_required=True):
             framework: Framework of model to run inference
             model: A model object or path to file
             dataloader: Dataloader for providing samples
+            optimization_profile: Optimization profile
             _input_names: Name of model inputs
             batch_dim: Location of batch dimension in data samples
 

@@ -25,7 +25,7 @@ from model_navigator.runners.registry import register_runner
 class JAXRunner(NavigatorRunner):
     """Runs inference using JAX."""
 
-    def infer_impl(self, feed_dict, *args, **kwargs):
+    def infer_impl(self, feed_dict, *_args, **_kwargs):
         """Run inference in JAX.
 
         Args:

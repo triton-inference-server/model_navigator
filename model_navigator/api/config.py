@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Definition of enums and classes representing configuration for Model Navigator."""
+
 import abc
 import dataclasses
 import inspect
@@ -548,9 +549,9 @@ class CustomConfigForTensorRT(CustomConfigForFormat):
 
     trt_profiles: Optional[List[TensorRTProfile]] = None
     trt_profile: Optional[TensorRTProfile] = None  # TODO: Remove before 1.0.0 release
-    precision: Union[
-        Union[str, TensorRTPrecision], Tuple[Union[str, TensorRTPrecision], ...]
-    ] = DEFAULT_TENSORRT_PRECISION
+    precision: Union[Union[str, TensorRTPrecision], Tuple[Union[str, TensorRTPrecision], ...]] = (
+        DEFAULT_TENSORRT_PRECISION
+    )
     precision_mode: Optional[Union[str, TensorRTPrecisionMode]] = DEFAULT_TENSORRT_PRECISION_MODE
     max_workspace_size: Optional[int] = DEFAULT_MAX_WORKSPACE_SIZE
     run_max_batch_size_search: Optional[bool] = None  # TODO this parameter is currently not used

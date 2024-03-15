@@ -33,7 +33,6 @@ def get_model(model_name: str):
 
 
 def get_dataloader(model_name: str, dataset_name: str, max_batch_size: int, num_samples: int):
-
     model_config = AutoConfig.from_pretrained(model_name)
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     max_sequence_length = getattr(tokenizer, "model_max_length", None)
@@ -46,9 +45,9 @@ def get_dataloader(model_name: str, dataset_name: str, max_batch_size: int, num_
         return tokenizer(examples["text"], truncation=True, max_length=max_sequence_length)
 
     tokenized_dataset = dataset.map(preprocess_function, batched=True)
-    tokenized_dataset = tokenized_dataset.remove_columns(
-        [c for c in tokenized_dataset.column_names if c not in input_names]
-    )
+    tokenized_dataset = tokenized_dataset.remove_columns([
+        c for c in tokenized_dataset.column_names if c not in input_names
+    ])
     dataloader = DataLoader(
         tokenized_dataset,
         batch_size=max_batch_size,
@@ -75,7 +74,6 @@ def get_verify_function():
 
 
 def get_configuration(model_name: str):
-
     model_config = AutoConfig.from_pretrained(model_name)
     onnx_config = DistilBertOnnxConfig(model_config)
     input_names = tuple(onnx_config.inputs.keys())

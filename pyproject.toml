@@ -101,15 +101,14 @@ doc = [
 dev = [
     "triton-model-navigator[test]",
     "triton-model-navigator[doc]",
-    "black >= 22.8",
     "build >= 0.8",
     "ipython >= 7.16",
-    "isort >= 5.10",
     "pdbpp >= 0.10",
     "pip >= 21.1",
     "pre-commit >= 2.20.0",
     "psutil ~= 5.1",
-    "twine >= 4.0"
+    "twine >= 4.0",
+    "ruff >= 0.3.0",
 ]
 
 [build-system]
@@ -141,31 +140,38 @@ model_navigator = [
 [tool.setuptools.dynamic]
 version = {attr = "model_navigator.__version__.__version__"}
 
-[tool.black]
+[tool.ruff]
+preview = true
 line-length = 120
-target-version = ['py38']
-include = '\.pyi?$'
-exclude = '''
+indent-width = 4
+target-version = "py38"
 
-(
-  /(
-      \.eggs         # exclude a few common directories in the
-    | \.git          # root of the project
-    | \.hg
-    | \.mypy_cache
-    | \.tox
-    | \.venv
-    | _build
-    | buck-out
-    | build
-    | dist
-  )/
-)
-'''
+[tool.ruff.lint]
+select = ["B", "C", "C4", "C90", "D", "E", "F", "I", "N", "W", "T", "T10", "T20", "UP", "CPY"]
+ignore = ["E266", "E501", "N818"]
+exclude = []
 
-[tool.isort]
-profile = "black"
-line_length = 120
+[tool.ruff.lint.per-file-ignores]
+"**/__init__.py" = ["D104"]
+"**/__version__.py" = ["D100"]
+"**/{tests,docs,tools,examples}/*" = ["C416", "D"]
+"**/tests/*" = ["CPY"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.mccabe]
+max-complexity = 18
+
+[tool.ruff.lint.flake8-copyright]
+author = "NVIDIA CORPORATION"
+notice-rgx = 'Copyright \(c\) \d{4}(-\d{4})*,'
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "lf"
 
 [tool.vulture]
 exclude = []

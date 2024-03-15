@@ -17,7 +17,7 @@
 .pytest_cache/
 .venv/
 .gitignore
-.flake8
+.ruff/
 .tox/
 .pytype/
 .mypy_cache/

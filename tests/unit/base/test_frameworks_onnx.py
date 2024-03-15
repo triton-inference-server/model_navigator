@@ -17,6 +17,7 @@ Note:
      Those test do not execute the conversion.
      The tests are checking if correct paths are executed on input arguments.
 """
+
 from model_navigator.frameworks.onnx.utils import get_onnx_io_names
 from tests.utils import get_assets_path
 

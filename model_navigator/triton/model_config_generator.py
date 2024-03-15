@@ -22,6 +22,7 @@ dict or file.
         generator = ModelConfigGenerator(model_config)
         generator.to_file("/path/to/config.pbtxt")
 """
+
 import json
 import logging
 import pathlib
@@ -190,7 +191,6 @@ class ModelConfigGenerator:
             dynamic_batching_config["defaultQueuePolicy"] = priority_queue_policy_config
 
         if batcher.priority_queue_policy:
-
             priority_queue_policy_config = {}
             for priority, queue_policy in batcher.priority_queue_policy.items():
                 priority_queue_policy_config[priority] = {
@@ -605,14 +605,12 @@ class ModelConfigGenerator:
         if self._config.warmup:
             warmups = []
             for name, warmup in self._config.warmup.items():
-                warmups.append(
-                    {
-                        "name": name,
-                        "batch_size": warmup.batch_size,
-                        "count": warmup.iterations,
-                        "inputs": {name: self._set_warmup_input(data) for name, data in warmup.inputs.items()},
-                    }
-                )
+                warmups.append({
+                    "name": name,
+                    "batch_size": warmup.batch_size,
+                    "count": warmup.iterations,
+                    "inputs": {name: self._set_warmup_input(data) for name, data in warmup.inputs.items()},
+                })
 
             model_config["model_warmup"] = warmups
 

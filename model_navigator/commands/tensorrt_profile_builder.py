@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Definition of TensorRT profile builders."""
+
 from enum import Enum
 from typing import List, Optional
 

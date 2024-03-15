@@ -15,6 +15,7 @@
 
 Those classes are used to store information about the Model Navigator process.
 """
+
 import collections
 import dataclasses
 import datetime

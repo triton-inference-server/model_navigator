@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Pipeline manager submodule."""
+
 from typing import Dict, List, Optional, Sequence
 
 from model_navigator.api.config import Format

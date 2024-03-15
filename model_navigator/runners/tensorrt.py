@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """TensorRT runners."""
+
 import contextlib
 import copy
 from collections import OrderedDict
@@ -103,7 +104,9 @@ class TensorRTRunner(NavigatorRunner):
             optimization_profile: The index of the optimization profile to set each time this runner is activated.
                 When this is not provided, the profile is not set explicitly and will default to the 0th profile.
                 You can also change the profile after the runner is active using the ``set_profile()`` method.
+            args: Navigator runner arguments
             device: torch-like device string identifying cuda device to use for inference.
+            kwargs: Navigator runner keyword arguments
         """
         super().__init__(*args, **kwargs)
 
@@ -172,7 +175,7 @@ class TensorRTRunner(NavigatorRunner):
             raise ModelNavigatorError(f"{self.name:35} | Must be activated prior to calling set_profile()")
 
         try:
-            self.context.set_optimization_profile_async
+            self.context.set_optimization_profile_async  # noqa: B018
         except AttributeError:
             self.context.active_optimization_profile = index
         else:
@@ -560,7 +563,7 @@ class TensorRTRunner(NavigatorRunner):
 
         return array
 
-    def infer_impl(self, feed_dict, *args, **kwargs):
+    def infer_impl(self, feed_dict, *_args, **_kwargs):
         """Implementation for running inference with TensorRT.
 
         Do not call this method directly - use ``infer()`` instead,

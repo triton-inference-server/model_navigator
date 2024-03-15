@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Builders for Torch based models."""
+
 from typing import Dict, List
 
 from model_navigator.api.config import Format

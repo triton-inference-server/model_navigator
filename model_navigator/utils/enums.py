@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Enums utils."""
+
 from typing import Callable, Iterable, Tuple, TypeVar, Union
 
 T = TypeVar("T")

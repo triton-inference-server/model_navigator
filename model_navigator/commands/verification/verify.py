@@ -13,7 +13,6 @@
 # limitations under the License.
 """Runtime verification command."""
 
-
 import pathlib
 from typing import Any, Optional, Type
 

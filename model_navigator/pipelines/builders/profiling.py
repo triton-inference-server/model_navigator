@@ -13,7 +13,6 @@
 # limitations under the License.
 """Profiling pipelines builders."""
 
-
 from typing import Dict, List
 
 from model_navigator.api.config import Format

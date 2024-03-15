@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Dataloader and samples core functionality."""
+
 import math
 import pathlib
 from typing import Any, Iterable, List, Mapping, Optional, Sequence, Tuple, Union
@@ -245,7 +246,7 @@ def get_tensor_type_name(tensor_type: TensorType) -> str:
     """Obtain name of tensor type for given framework.
 
     Args:
-        framework: A framework for which tensor type name has to be obtained
+        tensor_type: A framework for which tensor type name has to be obtained
 
     Returns:
         Name of tensor type in form o string
@@ -290,7 +291,7 @@ def validate_sample_input(sample: Any, tensor_type: TensorType = TensorType.NUMP
 
     Args:
         sample: A sample to validate
-        framework: A framework for which the validation is performed
+        tensor_type: A framework for which the validation is performed
 
     Raises:
         ModelNavigatorUserInputError when provided sample if not a valid input object
@@ -309,7 +310,7 @@ def validate_sample_output(sample, tensor_type: TensorType = TensorType.NUMPY):
 
     Args:
         sample: A sample to validate
-        framework: A framework for which the validation is performed
+        tensor_type: A framework for which the validation is performed
 
     Raises:
         ModelNavigatorUserInputError when provided sample if not a valid output object
@@ -376,7 +377,7 @@ def _is_valid_io(sample: Any, tensor_type: TensorType) -> bool:
 
     Args:
         sample: A sample to validate
-        framework: A framework for which the validation is performed
+        tensor_type: A framework for which the validation is performed
 
     Returns:
         True if sample is valid I/O, False otherwise

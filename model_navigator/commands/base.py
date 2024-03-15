@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Base module for commands common classes and helpers."""
+
 import abc
 import dataclasses
 from enum import Enum
@@ -175,6 +176,7 @@ class ExecutionUnit:
             model_config: Optional configuration of model that has to be produced by command
             runner_cls: Optional runner for correctness or performance evaluation
             results_lookup_runner_cls: Optional runner for results lookup
+            kwargs: Additional arguments for command
         """
         self.command = command
         self.model_config = model_config

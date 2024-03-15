@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Saved Model conversions."""
+
 import pathlib
 from typing import Any, Dict, List, Optional
 
@@ -177,7 +178,6 @@ class ConvertSavedModel2TFTRT(Convert2TensorRTWithMaxBatchSizeSearch):
             cmd_path=converted_model_path.parent / "reproduce_conversion.sh",
             verbose=verbose,
         ) as context:
-
             conversion_max_batch_size = self._execute_conversion(
                 convert_func=lambda args: context.execute_external_runtime_script(sm2tftrt.__file__, args),
                 get_args=get_args,

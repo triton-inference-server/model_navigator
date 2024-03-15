@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Functionality to perform search of max possible batch size that model can be loaded with on device."""
+
 import dataclasses
 import logging
 import pathlib

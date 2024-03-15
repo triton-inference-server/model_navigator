@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Runners profiling."""
+
 import collections
 import dataclasses
 import warnings
@@ -114,6 +115,7 @@ class ProfilingResults(DataObject):
 
         Args:
             measurements: List of measurements.
+            gpu_clocks: List of GPU clocks.
             batch_size: Batch size.
             sample_id: Sample id
 

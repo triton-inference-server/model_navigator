@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Common configurations for public and internal API."""
+
 import dataclasses
 import enum
 import pathlib
@@ -352,9 +353,11 @@ class SequenceBatcherControl:
         if self.kind == SequenceBatcherControlKind.CONTROL_SEQUENCE_CORRID and self.dtype is None:
             raise ModelNavigatorWrongParameterError(f"The {self.kind} control type requires `dtype` to be specified.")
 
-        if self.kind == SequenceBatcherControlKind.CONTROL_SEQUENCE_CORRID and any(
-            [self.int32_false_true, self.fp32_false_true, self.bool_false_true]
-        ):
+        if self.kind == SequenceBatcherControlKind.CONTROL_SEQUENCE_CORRID and any([
+            self.int32_false_true,
+            self.fp32_false_true,
+            self.bool_false_true,
+        ]):
             raise ModelNavigatorWrongParameterError(
                 f"The {self.kind} control type requires `dtype` to be specified only."
             )

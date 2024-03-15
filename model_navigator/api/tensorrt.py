@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """TensorRT optimize API."""
+
 from pathlib import Path
 from typing import Optional, Tuple, Type, Union
 

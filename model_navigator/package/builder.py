@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Build package from pipeline context."""
+
 import os
 import pathlib
 import uuid
@@ -202,7 +203,6 @@ class PackageBuilder:
         model_commands = commands.models_commands
         model_status = {}
         for model_key, model_command in model_commands.items():
-
             runners_status = {}
             for runner_name, runner_command in model_command.runners_commands.items():
                 status = {}

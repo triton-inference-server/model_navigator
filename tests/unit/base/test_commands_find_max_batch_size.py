@@ -17,6 +17,7 @@ Note:
      Those test do not execute the profiling with search.
      The tests are checking if correct paths are executed on input arguments.
 """
+
 import pathlib
 import tempfile
 from unittest.mock import MagicMock
@@ -34,7 +35,6 @@ from model_navigator.runners.onnx import OnnxrtCPURunner
 
 
 def test_find_max_batch_size_return_none_when_model_not_support_batching(mocker):
-
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = pathlib.Path(tmpdir)
         workspace = tmpdir / "navigator_workspace"
@@ -46,12 +46,12 @@ def test_find_max_batch_size_return_none_when_model_not_support_batching(mocker)
             result = FindMaxBatchSize().run(
                 configurations=[FindMaxBatchSizeConfig(model_path=model_path, runner_cls=OnnxrtCPURunner)],
                 workspace=Workspace(workspace),
-                input_metadata=TensorMetadata(
-                    {"input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))}
-                ),
-                output_metadata=TensorMetadata(
-                    {"output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))}
-                ),
+                input_metadata=TensorMetadata({
+                    "input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))
+                }),
+                output_metadata=TensorMetadata({
+                    "output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))
+                }),
                 optimization_profile=OptimizationProfile(),
                 batch_dim=None,
                 verbose=True,
@@ -64,7 +64,6 @@ def test_find_max_batch_size_return_none_when_model_not_support_batching(mocker)
 
 
 def test_find_max_batch_size_return_max_batch_when_model_support_batching(mocker):
-
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = pathlib.Path(tmpdir)
         workspace = tmpdir / "navigator_workspace"
@@ -125,12 +124,12 @@ def test_find_max_batch_size_return_max_batch_when_model_support_batching(mocker
             result = FindMaxBatchSize().run(
                 configurations=[FindMaxBatchSizeConfig(model_path=model_path, runner_cls=OnnxrtCPURunner)],
                 workspace=Workspace(workspace),
-                input_metadata=TensorMetadata(
-                    {"input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))}
-                ),
-                output_metadata=TensorMetadata(
-                    {"output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))}
-                ),
+                input_metadata=TensorMetadata({
+                    "input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))
+                }),
+                output_metadata=TensorMetadata({
+                    "output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))
+                }),
                 optimization_profile=OptimizationProfile(),
                 batch_dim=0,
                 verbose=True,
@@ -145,7 +144,6 @@ def test_find_max_batch_size_return_max_batch_when_model_support_batching(mocker
 def test_find_max_batch_size_return_none_when_batch_dim_none_and_max_batch_size_provided_in_optimization_profile(
     mocker,
 ):
-
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = pathlib.Path(tmpdir)
         workspace = tmpdir / "navigator_workspace"
@@ -157,12 +155,12 @@ def test_find_max_batch_size_return_none_when_batch_dim_none_and_max_batch_size_
             result = FindMaxBatchSize().run(
                 configurations=[FindMaxBatchSizeConfig(model_path=model_path, runner_cls=OnnxrtCPURunner)],
                 workspace=Workspace(workspace),
-                input_metadata=TensorMetadata(
-                    {"input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))}
-                ),
-                output_metadata=TensorMetadata(
-                    {"output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))}
-                ),
+                input_metadata=TensorMetadata({
+                    "input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))
+                }),
+                output_metadata=TensorMetadata({
+                    "output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))
+                }),
                 optimization_profile=OptimizationProfile(max_batch_size=16),
                 batch_dim=None,
                 verbose=True,
@@ -175,7 +173,6 @@ def test_find_max_batch_size_return_none_when_batch_dim_none_and_max_batch_size_
 
 
 def test_find_max_batch_size_return_max_batch_when_max_batch_size_provided_in_optimization_profile(mocker):
-
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = pathlib.Path(tmpdir)
         workspace = tmpdir / "navigator_workspace"
@@ -187,12 +184,12 @@ def test_find_max_batch_size_return_max_batch_when_max_batch_size_provided_in_op
             result = FindMaxBatchSize().run(
                 configurations=[FindMaxBatchSizeConfig(model_path=model_path, runner_cls=OnnxrtCPURunner)],
                 workspace=Workspace(workspace),
-                input_metadata=TensorMetadata(
-                    {"input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))}
-                ),
-                output_metadata=TensorMetadata(
-                    {"output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))}
-                ),
+                input_metadata=TensorMetadata({
+                    "input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))
+                }),
+                output_metadata=TensorMetadata({
+                    "output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))
+                }),
                 optimization_profile=OptimizationProfile(max_batch_size=16),
                 batch_dim=[0],
                 verbose=True,
@@ -205,7 +202,6 @@ def test_find_max_batch_size_return_max_batch_when_max_batch_size_provided_in_op
 
 
 def test_find_max_batch_size_return_max_batch_when_batch_sizes_provided_in_optimization_profile(mocker):
-
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = pathlib.Path(tmpdir)
         workspace = tmpdir / "navigator_workspace"
@@ -217,12 +213,12 @@ def test_find_max_batch_size_return_max_batch_when_batch_sizes_provided_in_optim
             result = FindMaxBatchSize().run(
                 configurations=[FindMaxBatchSizeConfig(model_path=model_path, runner_cls=OnnxrtCPURunner)],
                 workspace=Workspace(workspace),
-                input_metadata=TensorMetadata(
-                    {"input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))}
-                ),
-                output_metadata=TensorMetadata(
-                    {"output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))}
-                ),
+                input_metadata=TensorMetadata({
+                    "input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))
+                }),
+                output_metadata=TensorMetadata({
+                    "output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))
+                }),
                 optimization_profile=OptimizationProfile(batch_sizes=[1, 2, 4]),
                 batch_dim=[0],
                 verbose=True,

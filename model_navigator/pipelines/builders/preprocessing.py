@@ -43,14 +43,12 @@ def preprocessing_builder(config: CommonConfig, models_config: Dict[Format, List
     """
     execution_units: List[ExecutionUnit] = []
     if config.from_source:
-        execution_units.extend(
-            [
-                ExecutionUnit(command=InferInputMetadata),
-                ExecutionUnit(command=FetchInputModelData),
-                ExecutionUnit(command=InferOutputMetadata),
-                ExecutionUnit(command=FetchOutputModelData),
-            ]
-        )
+        execution_units.extend([
+            ExecutionUnit(command=InferInputMetadata),
+            ExecutionUnit(command=FetchInputModelData),
+            ExecutionUnit(command=InferOutputMetadata),
+            ExecutionUnit(command=FetchOutputModelData),
+        ])
     else:
         execution_units.extend([ExecutionUnit(command=LoadMetadata)])
 

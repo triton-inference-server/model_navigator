@@ -19,6 +19,7 @@ The class provide builder interfaces to create generic ModelConfig from speciali
 
         model_config = ModelConfigBuilder.from_onnx_config(ONNXModelConfig())
 """
+
 import dataclasses
 from typing import Dict, Union
 

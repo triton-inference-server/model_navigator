@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ConvertONNX2TRT command."""
+
 import pathlib
 from typing import Any, Dict, List, Optional
 
@@ -143,7 +144,6 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
             cmd_path=converted_model_path.parent / "reproduce_conversion.sh",
             verbose=verbose,
         ) as context:
-
             from model_navigator.commands.convert.converters import onnx2trt
 
             conversion_max_batch_size = self._execute_conversion(

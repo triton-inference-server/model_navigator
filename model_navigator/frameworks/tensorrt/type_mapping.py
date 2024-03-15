@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Utilities for mapping dtypes bettwen TensorRT and frameworks."""
+
 from packaging.version import Version
 
 from model_navigator.utils import module

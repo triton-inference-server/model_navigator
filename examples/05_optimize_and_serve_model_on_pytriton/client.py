@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Example client for linear model"""
+
 import logging
 
 import torch  # pytype: disable=import-error

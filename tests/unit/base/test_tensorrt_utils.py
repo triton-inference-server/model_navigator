@@ -56,7 +56,6 @@ def test_cast_tensor_is_changed_when_tensor_cast_type_before_8_6(mocker):
         ("float64", "float32"),
     ]
     for input_type, expected_type in test_cases:
-
         tensor = np.zeros(shape=(1,), dtype=np.dtype(input_type))
         modified_tensor = tensorrt_utils.cast_tensor(tensor)
 
@@ -72,7 +71,6 @@ def test_cast_tensor_is_changed_when_tensor_cast_type_after_8_6(mocker):
         ("float64", "float32"),
     ]
     for input_type, expected_type in test_cases:
-
         tensor = np.zeros(shape=(1,), dtype=np.dtype(input_type))
         modified_tensor = tensorrt_utils.cast_tensor(tensor)
 
@@ -103,18 +101,14 @@ def test_opt_batch_size_return_valid_result_when_various_max_bs_passed():
 
 def test_get_trt_profile_return_updates_batch_size_when_max_bs_equal_to_1():
     batch_dim = 0
-    ref_profile = TensorRTProfile(
-        {
-            "input__0": ShapeTuple((1, 2), (1, 3), (1, 4)),
-            "input__1": ShapeTuple((1, 3), (1, 4), (1, 5)),
-        }
-    )
-    old_profile = TensorRTProfile(
-        {
-            "input__0": ShapeTuple((1, 2), (1, 3), (1, 4)),
-            "input__1": ShapeTuple((1, 3), (1, 4), (1, 5)),
-        }
-    )
+    ref_profile = TensorRTProfile({
+        "input__0": ShapeTuple((1, 2), (1, 3), (1, 4)),
+        "input__1": ShapeTuple((1, 3), (1, 4), (1, 5)),
+    })
+    old_profile = TensorRTProfile({
+        "input__0": ShapeTuple((1, 2), (1, 3), (1, 4)),
+        "input__1": ShapeTuple((1, 3), (1, 4), (1, 5)),
+    })
     updated_profile = tensorrt_utils.get_trt_profile_with_new_max_batch_size(old_profile, 1, batch_dim)
     for old_shape, updated_shape, ref_shape in zip(
         old_profile.values(), updated_profile.values(), ref_profile.values()
@@ -127,18 +121,14 @@ def test_get_trt_profile_return_updates_batch_size_when_max_bs_equal_to_1():
 def test_get_trt_profile_return_updates_batch_size_when_max_bs_greater_than_1():
     batch_dim = 0
     old_max_bs, new_max_bs = 16, 32
-    ref_profile = TensorRTProfile(
-        {
-            "input__0": ShapeTuple((1, 2), (2, 3), (old_max_bs, 4)),
-            "input__1": ShapeTuple((1, 3), (1, 4), (old_max_bs, 5)),
-        }
-    )
-    old_profile = TensorRTProfile(
-        {
-            "input__0": ShapeTuple((1, 2), (2, 3), (old_max_bs, 4)),
-            "input__1": ShapeTuple((1, 3), (1, 4), (old_max_bs, 5)),
-        }
-    )
+    ref_profile = TensorRTProfile({
+        "input__0": ShapeTuple((1, 2), (2, 3), (old_max_bs, 4)),
+        "input__1": ShapeTuple((1, 3), (1, 4), (old_max_bs, 5)),
+    })
+    old_profile = TensorRTProfile({
+        "input__0": ShapeTuple((1, 2), (2, 3), (old_max_bs, 4)),
+        "input__1": ShapeTuple((1, 3), (1, 4), (old_max_bs, 5)),
+    })
     updated_profile = tensorrt_utils.get_trt_profile_with_new_max_batch_size(old_profile, new_max_bs, batch_dim)
     for old_shape, updated_shape, ref_shape in zip(
         old_profile.values(), updated_profile.values(), ref_profile.values()

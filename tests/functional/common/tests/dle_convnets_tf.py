@@ -55,16 +55,14 @@ def dle_convnets_tf(
 
     custom_configs = [nav.OnnxConfig(opset=13)]
     if trt_profiles:
-        custom_configs.extend(
-            [
-                nav.TensorRTConfig(
-                    trt_profiles=trt_profiles,
-                ),
-                nav.TensorFlowTensorRTConfig(
-                    trt_profiles=trt_profiles,
-                ),
-            ]
-        )
+        custom_configs.extend([
+            nav.TensorRTConfig(
+                trt_profiles=trt_profiles,
+            ),
+            nav.TensorFlowTensorRTConfig(
+                trt_profiles=trt_profiles,
+            ),
+        ])
 
     package = nav.tensorflow.optimize(
         model=model,

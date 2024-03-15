@@ -24,6 +24,7 @@ Example of use:
         )
     )
 """
+
 import logging
 import pathlib
 import shutil
@@ -251,9 +252,10 @@ def add_model_from_package(
         )
 
     if runtime_result.model_status.model_config.format == Format.TENSORRT:
-        input_metadata, output_metadata = _prepare_tensorrt_metadata(
-            package.status.input_metadata
-        ), _prepare_tensorrt_metadata(package.status.output_metadata)
+        input_metadata, output_metadata = (
+            _prepare_tensorrt_metadata(package.status.input_metadata),
+            _prepare_tensorrt_metadata(package.status.output_metadata),
+        )
     else:
         input_metadata, output_metadata = package.status.input_metadata, package.status.output_metadata
 
@@ -659,6 +661,7 @@ def _warmup_input_from_metadata(
 
     Args:
         workspace: Current workspace for package
+        input_metadata: Model inputs metadata
         trt_profile: TensorRT profile to get maximal shape of input
         profiling_samples: sample used for generating data for inputs
         batching: Flag indicating if output metadata contain batch in shape

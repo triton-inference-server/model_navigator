@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Configuration of base model config on Triton Inference Server."""
+
 import abc
 import dataclasses
 from typing import Dict, List, Optional, Sequence, Union

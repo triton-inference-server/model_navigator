@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """e2e tests for exporting TensorFlow identity model"""
+
 import argparse
 import logging
 import pathlib

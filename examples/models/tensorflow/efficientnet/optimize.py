@@ -84,7 +84,6 @@ def parse_args():
 
 
 def main():
-
     args = parse_args()
 
     model = get_model(args.model_name)

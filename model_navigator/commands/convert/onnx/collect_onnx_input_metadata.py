@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Script for obtaining ONNX metadata from model."""
+
 import json
 import pathlib
 from typing import Dict

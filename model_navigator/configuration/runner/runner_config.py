@@ -44,11 +44,9 @@ class RunnerConfig(ABC, DataObject):
         Returns:
             Dictionary representation of RunnerConfig
         """
-        return DataObject._from_dict(
-            {
-                **{k: v for k, v in self.__dict__.items() if v is not None},
-            }
-        )
+        return DataObject._from_dict({
+            **{k: v for k, v in self.__dict__.items() if v is not None},
+        })
 
     def get_config_dict_for_command(self) -> dict:
         """Returns dictionary with RunnerConfig data required for Command execution.

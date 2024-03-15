@@ -133,13 +133,13 @@ class ConvertTorchScript2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearch):
             verbose (bool): If True verbose logging.
             debug (bool): If True print debug logs.
             dataloader_trt_profile (TensorRTProfile): Dataloader TensorRT profile.
-            dataloader_max_batch_size (Optional[int], optional): Maximum batch size from the dataloader.
+            custom_args (Dict[str, Any]): Custom arguments for conversion.
             batch_dim (Optional[int], optional): Batch dimension. Defaults to None.
             dataloader_max_batch_size (Optional[int], optional): Maximum batch size form the dataloader.
                 Defaults to None.
             device_max_batch_size (Optional[int], optional): Device maximum batch size.
                 Defaults to None.
-            trt_profile (Optional[TensorRTProfile], optional): User specified TensorRT profile. Defaults to None.
+            optimized_trt_profiles (Optional[TensorRTProfile], optional): User specified TensorRT profile. Defaults to None.
 
         Raises:
             RuntimeError: When no GPU is available.
@@ -190,7 +190,6 @@ class ConvertTorchScript2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearch):
             cmd_path=converted_model_path.parent / "reproduce_conversion.sh",
             verbose=verbose,
         ) as context:
-
             conversion_max_batch_size = self._execute_conversion(
                 convert_func=lambda args: context.execute_external_runtime_script(ts2torchtrt.__file__, args),
                 get_args=get_args,

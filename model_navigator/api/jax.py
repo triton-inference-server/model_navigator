@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """JAX optimize API."""
+
 import pathlib
 from typing import Any, Callable, Optional, Sequence, Tuple, Type, Union
 

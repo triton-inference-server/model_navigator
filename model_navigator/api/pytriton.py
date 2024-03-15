@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API definition for PyTriton related functionality."""
+
 import dataclasses
 import enum
 from typing import Dict, List, Optional, Type, Union

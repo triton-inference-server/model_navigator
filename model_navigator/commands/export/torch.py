@@ -15,6 +15,7 @@
 
 The module provide functionality to export model to TorchScript and/or ONNX.
 """
+
 import pathlib
 from typing import Any, Dict, List, Optional, Union
 
@@ -101,7 +102,6 @@ class ExportTorch2TorchScript(Command):
             verbose=verbose,
             on_exit=on_exit,
         ) as context:
-
             kwargs = {
                 "exported_model_path": exported_model_path.relative_to(workspace.path).as_posix(),
                 "target_jit_type": jit_type.value,
@@ -206,7 +206,6 @@ class ExportTorch2ONNX(Command):
             verbose=verbose,
             on_exit=on_exit,
         ) as context:
-
             # import json # TODO fix that
 
             kwargs = {
@@ -290,7 +289,6 @@ class ExportExportedProgram(Command):
             verbose=verbose,
             on_exit=on_exit,
         ) as context:
-
             kwargs = {
                 "exported_model_path": exported_model_path.relative_to(workspace.path).as_posix(),
                 "input_metadata": input_metadata.to_json(),
@@ -368,7 +366,6 @@ class ExportTorch2DynamoONNX(Command):
             verbose=verbose,
             on_exit=on_exit,
         ) as context:
-
             kwargs = {
                 "exported_model_path": exported_model_path.relative_to(workspace.path).as_posix(),
                 "input_metadata": input_metadata.to_json(),

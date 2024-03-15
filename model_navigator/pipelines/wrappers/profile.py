@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Execute package profiling pipelines and return profiling results."""
+
 from typing import Dict, List, Optional, Sequence
 
 from model_navigator.api.config import Format
@@ -97,7 +98,7 @@ class ProfilingResultsBuilder:
                 profiling_results = command.output["profiling_results"]
                 profiling_samples = command.output["profiling_samples"]
                 if len(samples_data) < len(profiling_samples):
-                    samples_data = {idx: metadata for idx, metadata in enumerate(profiling_samples)}
+                    samples_data = dict(enumerate(profiling_samples))
 
                 detailed = {}
                 for result in profiling_results:

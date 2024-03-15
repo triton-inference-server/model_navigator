@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Utilities for working with tensors in different environments."""
+
 import abc
 import dataclasses
 import itertools
@@ -225,7 +226,7 @@ def is_tensor(tensor: Any, tensor_type: TensorType) -> bool:
 
     Args:
         tensor: An object to validate
-        framework: A framework for which the object has to be tested
+        tensor_type: A framework for which the object has to be tested
 
     Returns:
         True if object is a valid tensor, False otherwise
@@ -582,7 +583,7 @@ class TensorMetadata(Dict[str, TensorSpec]):
         if isinstance(sample, Mapping):
             sample = sample.values()
 
-        flattened_sample = {name: value for name, value in zip(self.keys(), sample)}
+        flattened_sample = dict(zip(self.keys(), sample))
 
         return flattened_sample
 

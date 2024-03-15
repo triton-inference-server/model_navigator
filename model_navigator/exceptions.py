@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Model Navigator exceptions module."""
+
 import pathlib
 from typing import Optional
 

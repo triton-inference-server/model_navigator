@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ONNX runners."""
+
 from collections import OrderedDict
 from typing import Any, Dict, List, Optional, Sequence, Union
 
@@ -275,7 +276,6 @@ class OnnxrtCUDARunner(_BaseOnnxrtRunner):
         return out_dict
 
     def _prepare_inputs(self, feed_dict):
-
         with self._inference_step_timer.measure_step(InferenceStep.PREPROCESSING):
             inputs = {}
             tensor_types = {}

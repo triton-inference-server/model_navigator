@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Find Max Batch size pipelines builders."""
+
 from typing import Dict, List
 
 from model_navigator.api.config import Format

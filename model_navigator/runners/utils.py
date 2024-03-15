@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Helper function for runners."""
+
 from typing import List, Type
 
 from model_navigator.api.config import Format

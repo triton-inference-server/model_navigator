@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Execution context module responsible for handling internal and extrnal commands."""
+
 import contextlib
 import copy
 import logging

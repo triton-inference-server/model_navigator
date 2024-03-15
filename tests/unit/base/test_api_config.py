@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Test for API configs"""
+
 import pytest
 
 from model_navigator.api.config import (
@@ -200,12 +201,10 @@ def test_map_custom_configs_return_dict_when_passed_list_of_configs():
         precision=(TensorRTPrecision.FP32,),
         precision_mode=TensorRTPrecisionMode.MIXED,
     )
-    data = map_custom_configs(
-        [
-            tensorrt_config,
-            torch_tensorrt_config,
-        ]
-    )
+    data = map_custom_configs([
+        tensorrt_config,
+        torch_tensorrt_config,
+    ])
 
     assert len(data) == 2
     assert data[tensorrt_config.name()] == tensorrt_config

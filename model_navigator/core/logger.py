@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Logger module."""
+
 import contextlib
 import json
 import logging

@@ -50,12 +50,12 @@ def test_run_execute_conversion_when_model_not_support_batching(mocker):
                 workspace=Workspace(workspace),
                 parent_path=input_model_path,
                 path=output_model_path,
-                input_metadata=TensorMetadata(
-                    {"input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))}
-                ),
-                output_metadata=TensorMetadata(
-                    {"output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))}
-                ),
+                input_metadata=TensorMetadata({
+                    "input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))
+                }),
+                output_metadata=TensorMetadata({
+                    "output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))
+                }),
                 batch_dim=None,
                 dataloader_trt_profile=TensorRTProfile(),
                 precision=TensorRTPrecision.FP16,
@@ -88,12 +88,12 @@ def test_run_execute_conversion_with_max_bs_search_when_trt_profile_not_provided
                 workspace=Workspace(workspace),
                 parent_path=input_model_path,
                 path=output_model_path,
-                input_metadata=TensorMetadata(
-                    {"input__1": TensorSpec(name="input__1", shape=(-1, -1), dtype=np.dtype("float32"))}
-                ),
-                output_metadata=TensorMetadata(
-                    {"output__1": TensorSpec(name="output__1", shape=(-1, -1), dtype=np.dtype("float32"))}
-                ),
+                input_metadata=TensorMetadata({
+                    "input__1": TensorSpec(name="input__1", shape=(-1, -1), dtype=np.dtype("float32"))
+                }),
+                output_metadata=TensorMetadata({
+                    "output__1": TensorSpec(name="output__1", shape=(-1, -1), dtype=np.dtype("float32"))
+                }),
                 dataloader_trt_profile=TensorRTProfile().add("input__0", (1, 224), (16, 224), (128, 224)),
                 batch_dim=0,
                 precision=TensorRTPrecision.FP16,
@@ -125,12 +125,12 @@ def test_run_execute_conversion_when_dataloader_and_device_max_batch_size_is_inv
                 workspace=Workspace(workspace),
                 parent_path=input_model_path,
                 path=output_model_path,
-                input_metadata=TensorMetadata(
-                    {"input__1": TensorSpec(name="input__1", shape=(-1, -1), dtype=np.dtype("float32"))}
-                ),
-                output_metadata=TensorMetadata(
-                    {"output__1": TensorSpec(name="output__1", shape=(-1, -1), dtype=np.dtype("float32"))}
-                ),
+                input_metadata=TensorMetadata({
+                    "input__1": TensorSpec(name="input__1", shape=(-1, -1), dtype=np.dtype("float32"))
+                }),
+                output_metadata=TensorMetadata({
+                    "output__1": TensorSpec(name="output__1", shape=(-1, -1), dtype=np.dtype("float32"))
+                }),
                 dataloader_max_batch_size=-1,
                 device_max_batch_size=0,
                 batch_dim=0,
@@ -164,12 +164,12 @@ def test_run_execute_single_conversion_when_only_dataloader_max_batch_size_provi
                 workspace=Workspace(workspace),
                 parent_path=input_model_path,
                 path=output_model_path,
-                input_metadata=TensorMetadata(
-                    {"input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))}
-                ),
-                output_metadata=TensorMetadata(
-                    {"output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))}
-                ),
+                input_metadata=TensorMetadata({
+                    "input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))
+                }),
+                output_metadata=TensorMetadata({
+                    "output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))
+                }),
                 batch_dim=0,
                 dataloader_max_batch_size=16,
                 dataloader_trt_profile=TensorRTProfile(),
@@ -202,12 +202,12 @@ def test_run_execute_single_conversion_when_only_device_max_batch_size_provided(
                 workspace=Workspace(workspace),
                 parent_path=input_model_path,
                 path=output_model_path,
-                input_metadata=TensorMetadata(
-                    {"input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))}
-                ),
-                output_metadata=TensorMetadata(
-                    {"output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))}
-                ),
+                input_metadata=TensorMetadata({
+                    "input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))
+                }),
+                output_metadata=TensorMetadata({
+                    "output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))
+                }),
                 batch_dim=0,
                 device_max_batch_size=16,
                 dataloader_trt_profile=TensorRTProfile(),
@@ -240,12 +240,12 @@ def test_run_execute_conversion_with_max_batch_size_search_when_both_max_batch_s
                 workspace=Workspace(workspace),
                 parent_path=input_model_path,
                 path=output_model_path,
-                input_metadata=TensorMetadata(
-                    {"input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))}
-                ),
-                output_metadata=TensorMetadata(
-                    {"output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))}
-                ),
+                input_metadata=TensorMetadata({
+                    "input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))
+                }),
+                output_metadata=TensorMetadata({
+                    "output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))
+                }),
                 batch_dim=0,
                 dataloader_max_batch_size=16,
                 device_max_batch_size=32,

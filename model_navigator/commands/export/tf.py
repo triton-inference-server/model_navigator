@@ -68,7 +68,6 @@ class ExportTF2SavedModel(Command):
             cmd_path=exported_model_path.parent / "reproduce_export.sh",
             verbose=verbose,
         ) as context:
-
             kwargs = {
                 "exported_model_path": exported_model_path.relative_to(workspace.path).as_posix(),
                 "input_metadata": input_metadata.to_json(),
@@ -124,7 +123,6 @@ class UpdateSavedModelSignature(Command):
             cmd_path=exported_model_path.parent / "reproduce_export.sh",
             verbose=verbose,
         ) as context:
-
             kwargs = {
                 "exported_model_path": exported_model_path.relative_to(workspace.path).as_posix(),
                 "input_metadata": input_metadata.to_json(),

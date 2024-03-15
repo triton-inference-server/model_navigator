@@ -86,9 +86,9 @@ def empty_package(workspace) -> Package:
                             },
                             result={
                                 "Correctness": {
-                                    "per_output_tolerance": TolerancePerOutputName(
-                                        {"output__0": Tolerance(atol=0.0, rtol=0.0)}
-                                    )
+                                    "per_output_tolerance": TolerancePerOutputName({
+                                        "output__0": Tolerance(atol=0.0, rtol=0.0)
+                                    })
                                 },
                                 "Performance": {
                                     "profiling_results": [
@@ -230,9 +230,9 @@ def trochscript_package_without_source(workspace) -> Package:
                             },
                             result={
                                 "Correctness": {
-                                    "per_output_tolerance": TolerancePerOutputName(
-                                        {"output__0": Tolerance(atol=0.0, rtol=0.0)}
-                                    )
+                                    "per_output_tolerance": TolerancePerOutputName({
+                                        "output__0": Tolerance(atol=0.0, rtol=0.0)
+                                    })
                                 },
                                 "Performance": {
                                     "profiling_results": [
@@ -354,9 +354,9 @@ def trochscript_package_with_source(workspace) -> Package:
                             },
                             result={
                                 "Correctness": {
-                                    "per_output_tolerance": TolerancePerOutputName(
-                                        {"output__0": Tolerance(atol=0.0, rtol=0.0)}
-                                    )
+                                    "per_output_tolerance": TolerancePerOutputName({
+                                        "output__0": Tolerance(atol=0.0, rtol=0.0)
+                                    })
                                 },
                                 "Performance": {
                                     "profiling_results": [
@@ -435,9 +435,9 @@ def onnx_package_with_tensorrt_runner(workspace) -> Package:
                             },
                             result={
                                 "Correctness": {
-                                    "per_output_tolerance": TolerancePerOutputName(
-                                        {"output__0": Tolerance(atol=0.0, rtol=0.0)}
-                                    )
+                                    "per_output_tolerance": TolerancePerOutputName({
+                                        "output__0": Tolerance(atol=0.0, rtol=0.0)
+                                    })
                                 },
                                 "Performance": {
                                     "profiling_results": [
@@ -467,9 +467,9 @@ def onnx_package_with_tensorrt_runner(workspace) -> Package:
                             },
                             result={
                                 "Correctness": {
-                                    "per_output_tolerance": TolerancePerOutputName(
-                                        {"output__0": Tolerance(atol=0.0, rtol=0.0)}
-                                    )
+                                    "per_output_tolerance": TolerancePerOutputName({
+                                        "output__0": Tolerance(atol=0.0, rtol=0.0)
+                                    })
                                 },
                                 "Performance": {
                                     "profiling_results": [
@@ -547,9 +547,9 @@ def onnx_package_with_cuda_runner(workspace) -> Package:
                             },
                             result={
                                 "Correctness": {
-                                    "per_output_tolerance": TolerancePerOutputName(
-                                        {"output__0": Tolerance(atol=0.0, rtol=0.0)}
-                                    )
+                                    "per_output_tolerance": TolerancePerOutputName({
+                                        "output__0": Tolerance(atol=0.0, rtol=0.0)
+                                    })
                                 },
                                 "Performance": {
                                     "profiling_results": [
@@ -579,9 +579,9 @@ def onnx_package_with_cuda_runner(workspace) -> Package:
                             },
                             result={
                                 "Correctness": {
-                                    "per_output_tolerance": TolerancePerOutputName(
-                                        {"output__0": Tolerance(atol=0.0, rtol=0.0)}
-                                    )
+                                    "per_output_tolerance": TolerancePerOutputName({
+                                        "output__0": Tolerance(atol=0.0, rtol=0.0)
+                                    })
                                 },
                                 "Performance": {
                                     "profiling_results": [
@@ -659,9 +659,9 @@ def onnx_package_with_cpu_runner_only(workspace) -> Package:
                             },
                             result={
                                 "Correctness": {
-                                    "per_output_tolerance": TolerancePerOutputName(
-                                        {"output__0": Tolerance(atol=0.0, rtol=0.0)}
-                                    )
+                                    "per_output_tolerance": TolerancePerOutputName({
+                                        "output__0": Tolerance(atol=0.0, rtol=0.0)
+                                    })
                                 },
                                 "Performance": {
                                     "profiling_results": [

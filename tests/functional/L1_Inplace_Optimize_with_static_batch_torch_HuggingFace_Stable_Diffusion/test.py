@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """e2e tests for exporting PyTorch identity model"""
+
 import argparse
 import logging
 import pathlib
@@ -41,7 +42,6 @@ EXPECTED_STATUSES = [
 
 
 def get_pipeline():
-
     # pytype: disable=import-error
     from diffusers import DPMSolverMultistepScheduler, StableDiffusionPipeline
     from transformers.modeling_outputs import BaseModelOutputWithPooling
@@ -83,7 +83,6 @@ def get_dataloader() -> List[Tuple[int, List[str]]]:
 
 
 def get_config():
-
     import model_navigator as nav
 
     return nav.OptimizeConfig(

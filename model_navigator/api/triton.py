@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API definition for Triton related functionality."""
+
 from model_navigator.triton import model_repository  # noqa: F401
 from model_navigator.triton.specialized_configs import (  # noqa: F401
     AutoMixedPrecisionAccelerator,

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """CUDA utils."""
+
 import copy
 import ctypes
 import math
@@ -815,19 +816,19 @@ def _handle_special_repr(obj):
 
     obj = copy.copy(obj)
     # Tuple needs special handling since it doesn't support assignment.
-    if type(obj) is tuple:
+    if isinstance(obj, tuple):
         args = tuple(_handle_special_repr(elem) for elem in obj)
         obj = type(obj)(args)
-    elif type(obj) is list:
+    elif isinstance(obj, list):
         for index, elem in enumerate(obj):
             obj[index] = _handle_special_repr(elem)
-    elif type(obj) is dict:
+    elif isinstance(obj, dict):
         new_items = {}
         for key, value in obj.items():
             new_items[_handle_special_repr(key)] = _handle_special_repr(value)
         obj.clear()
         obj.update(new_items)
-    elif type(obj) is set:
+    elif isinstance(obj, set):
         new_elems = set()
         for value in obj:
             new_elems.add(_handle_special_repr(value))
@@ -854,6 +855,8 @@ def _make_repr(type_str, *args, **kwargs):
     Args:
         type_str (str):
                 The name of the type to create a representation for.
+        args: Arguments to represent
+        kwargs: Keyword arguments to represent
 
     Returns:
         Tuple[str, bool, bool]:

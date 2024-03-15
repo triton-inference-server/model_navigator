@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Package module - structure to snapshot optimization result."""
+
 import copy
 import pathlib
 from typing import Dict, Optional, Union
@@ -135,7 +136,7 @@ class Package:
         try:
             model_config = self.status.models_status[model_key].model_config
         except KeyError:
-            raise ModelNavigatorNotFoundError(f"Model {model_key} not found.")
+            raise ModelNavigatorNotFoundError(f"Model {model_key} not found.") from None
         return self.workspace.path / model_config.path
 
     def load_source_model(self, model: object) -> None:
@@ -243,7 +244,7 @@ class Package:
         try:
             model_config = self.status.models_status[model_key].model_config
         except KeyError:
-            raise ModelNavigatorNotFoundError(f"Model {model_key} not found.")
+            raise ModelNavigatorNotFoundError(f"Model {model_key} not found.") from None
 
         if is_source_format(model_config.format):
             model = self._model

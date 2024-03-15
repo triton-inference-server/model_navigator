@@ -89,7 +89,7 @@ def get_gpus(gpus: Optional[List[Union[int, str]]]):
             navigator_gpus.append(devices[device])
         except (ValueError, IndexError):
             if gpu not in devices:
-                raise ModelNavigatorError(f"GPU {gpu} was not found.")
+                raise ModelNavigatorError(f"GPU {gpu} was not found.") from None
             navigator_gpus.append(gpu)
     return navigator_gpus
 

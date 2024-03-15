@@ -133,7 +133,11 @@ def find_max_batch_size_till_oom(
         )  # pytype: disable=not-instantiable
         try:
             LOGGER.info("Starting max batch size search.")
-            MaxBatchSizeFinder(profile=optimization_profile, batch_dim=batch_dim, results_path=results_path,).run(
+            MaxBatchSizeFinder(
+                profile=optimization_profile,
+                batch_dim=batch_dim,
+                results_path=results_path,
+            ).run(
                 runner=runner,
                 profiling_sample=profiling_sample,
                 sample_id=0,

@@ -226,7 +226,7 @@ def torch_to_numpy_dtype(torch_dtype: "torch.dtype") -> Type[numpy.dtype]:
     """Cast torch dtype to numpy dtype.
 
     Args:
-        np_dtype (torch.dtype): torch dtype.
+        torch_dtype (torch.dtype): torch dtype.
 
     Returns:
         numpy.dtype: numpy dtype.
@@ -325,6 +325,7 @@ def invoke_if_callable(func, *args, **kwargs):
 
 def warn_if_wrong_mode(file_like, mode: str):
     """Warn if file-like object has a different mode than requested."""
+
     # pytype: disable=attribute-error
     def binary(mode):
         return "b" in mode
@@ -357,8 +358,8 @@ def is_file_like(obj):
         bool: True if the object is file-like, False otherwise.
     """
     try:
-        obj.read  # pytype: disable=attribute-error
-        obj.write  # pytype: disable=attribute-error
+        obj.read  # pytype: disable=attribute-error #noqa: B018
+        obj.write  # pytype: disable=attribute-error #noqa: B018
     except AttributeError:
         return False
     else:

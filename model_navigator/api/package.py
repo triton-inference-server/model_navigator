@@ -13,7 +13,6 @@
 # limitations under the License.
 """Package operations related API."""
 
-
 import pathlib
 from typing import Dict, List, Optional, Tuple, Type, Union
 
@@ -292,7 +291,7 @@ def profile(
     if target_formats is None:
         target_formats = get_target_formats(framework=package.framework, is_source_available=is_source_available)
         if package.framework == Framework.TORCH and config.batch_dim is not None:
-            target_formats, custom_configs = update_allowed_batching_parameters(
+            target_formats, _custom_configs = update_allowed_batching_parameters(
                 target_formats=target_formats,
                 custom_configs=(),
             )
@@ -362,7 +361,7 @@ def set_verified(
     try:
         runner_results = package.status.models_status[model_key].runners_status[runner_name]
     except KeyError:
-        raise ModelNavigatorNotFoundError(f"Model {model_key} and runner {runner_name} not found.")
+        raise ModelNavigatorNotFoundError(f"Model {model_key} and runner {runner_name} not found.") from None
     runner_results.status[VerifyModel.__name__] = CommandStatus.OK
 
 

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Commands for fetching and dumping model IO."""
+
 from typing import Any, Optional
 
 import numpy as np

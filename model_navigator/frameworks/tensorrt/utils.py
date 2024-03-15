@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """TensorRT utils."""
+
 import contextlib
 import logging
 import math
@@ -131,7 +132,7 @@ def get_new_profile_with_static_batch_size(
 
     Args:
         trt_profile (TensorRTProfile): TensorRT Profile.
-        max_batch_size (int): new maximum batch size.
+        batch_size (int): new maximum batch size.
         batch_dim (int): Batch dimension.
 
     Returns:
@@ -283,7 +284,7 @@ class EngineFromBytes:
         with contextlib.ExitStack() as stack, trt.Runtime(get_trt_logger()) as runtime:
             if owns_buffer:
                 try:
-                    buffer.__enter__  # IHostMemory is freed only in __exit__
+                    buffer.__enter__  # noqa: B018 IHostMemory is freed only in __exit__
                 except AttributeError:
                     pass
                 else:
