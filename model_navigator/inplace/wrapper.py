@@ -22,7 +22,7 @@ from model_navigator.inplace.timer import Timer
 from model_navigator.runtime_analyzer.strategy import RuntimeSearchStrategy
 from model_navigator.utils.module import lazy_import
 
-from .config import Mode, OptimizeConfig, inplace_config
+from .config import OptimizeConfig
 from .model import BaseModule, OptimizedModule, PassthroughModule, RecordAndOptimizeModule, RecordModule
 from .registry import module_registry
 from .utils import get_object_name
@@ -68,25 +68,19 @@ class Module(wrapt.ObjectProxy):
         self._name = name or get_object_name(module)
         self._input_mapping = input_mapping or (lambda x: x)
         self._output_mapping = output_mapping or (lambda x: x)
+        self._optimize_config = OptimizeConfig()
         if timer:
             self.add_timer(timer=timer)
         else:
             self._module_timer = None
 
-        wrapper_cls = {
-            Mode.OPTIMIZE: RecordAndOptimizeModule,
-            Mode.RECORDING: RecordModule,
-            Mode.RUN: OptimizedModule,
-            Mode.PASSTHROUGH: PassthroughModule,
-        }[inplace_config.mode]
-        self._wrapper = wrapper_cls(
+        self._wrapper = RecordAndOptimizeModule(
             module,
-            OptimizeConfig(),
+            # OptimizeConfig(),
             self._name,
             self._input_mapping,
             self._output_mapping,
         )
-
         module_registry.register(self._name, self)
 
     def add_timer(self, timer: Timer) -> None:
@@ -152,13 +146,12 @@ class Module(wrapt.ObjectProxy):
         # TODO: Consider another validation for optimization status here. is_optimized propery is modified by loading passthrough.
         # if not self.is_optimized:
         #     raise ModelNavigatorModuleNotOptimizedError(f"Module {self.name} is not optimized.")
-
         self._wrapper = OptimizedModule(
-            self._wrapper._module,
-            self._optimize_config,
-            self._name,
-            self._input_mapping,
-            self._output_mapping,
+            module=self._wrapper._module,
+            # self._optimize_config,
+            name=self._name,
+            input_mapping=self._input_mapping,
+            output_mapping=self._output_mapping,
             strategy=strategy,
             activate_runners=activate_runners,
         )
@@ -166,21 +159,21 @@ class Module(wrapt.ObjectProxy):
     def load_recorded(self) -> None:
         """Load recorded module."""
         self._wrapper = RecordModule(
-            self._wrapper._module,
-            self._optimize_config,
-            self._name,
-            self._input_mapping,
-            self._output_mapping,
+            module=self._wrapper._module,
+            name=self._name,
+            input_mapping=self._input_mapping,
+            output_mapping=self._output_mapping,
+            optimize_config=self._optimize_config,
         )
 
     def load_passthrough(self) -> None:
         """Load passthrough module."""
         self._wrapper = PassthroughModule(
-            self._wrapper._module,
-            self._optimize_config,
-            self._name,
-            self._input_mapping,
-            self._output_mapping,
+            module=self._wrapper._module,
+            name=self._name,
+            input_mapping=self._input_mapping,
+            output_mapping=self._output_mapping,
+            optimize_config=self._optimize_config,
         )
 
 

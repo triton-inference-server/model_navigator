@@ -45,26 +45,29 @@ class BaseModule(abc.ABC):
     def __init__(
         self,
         module,
-        optimize_config: OptimizeConfig,
         name: str,
         input_mapping: Callable,
         output_mapping: Callable,
+        optimize_config: Optional[OptimizeConfig] = None,
     ) -> None:
         """Initialize BaseModule.
 
         Args:
             module: module to be optimized.
-            optimize_config: configuration for module optimization.
             name: name of the module.
             input_mapping: function mapping module input to runner input.
             output_mapping: function mapping runner output to module output.
+            optimize_config: configuration for module optimization.
         """
         self._module = module
         self._name = name
         self._signature = self._get_signature()
         self._input_mapping = input_mapping
         self._output_mapping = output_mapping
-        self._optimize_config = self._update_optimize_config(optimize_config)
+        if optimize_config:
+            self._optimize_config = self._update_optimize_config(optimize_config)
+        else:
+            self._optimize_config = optimize_config
 
     @property
     def name(self) -> str:

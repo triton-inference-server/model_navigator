@@ -30,7 +30,7 @@ from model_navigator.core.constants import DEFAULT_COMPARISON_REPORT_FILE
 from model_navigator.inplace.registry import module_registry
 from model_navigator.utils.environment import get_env
 
-from .config import Mode, inplace_config
+from .config import inplace_config
 
 format2string = {
     Format.TORCH: "Torch",
@@ -157,15 +157,9 @@ class TimeData:
         return list(self.modules.keys())
 
     @classmethod
-    def get_save_path(cls, mode: Optional[Mode] = None) -> pathlib.Path:
-        """Get save path.
-
-        Args:
-            mode: Mode of the inplace Optimize. If None use the current mode from inplace_config
-        """
-        if mode is None:
-            mode = inplace_config.mode
-        return pathlib.Path(inplace_config.cache_dir) / f"time_data_{mode.value}.yaml"
+    def get_save_path(cls) -> pathlib.Path:
+        """Get save path."""
+        return pathlib.Path(inplace_config.cache_dir) / "time_data.yaml"
 
     def to_dict(self) -> Dict:
         """Convert to dict."""
@@ -176,19 +170,15 @@ class TimeData:
         """Create from dict."""
         return dacite.from_dict(cls, data_dict)
 
-    def save(self, mode: Optional[Mode] = None):
+    def save(self):
         """Save to json."""
-        with open(self.get_save_path(mode), "w") as fp:
+        with open(self.get_save_path(), "w") as fp:
             yaml.dump(self.to_dict(), fp, sort_keys=False)
 
     @classmethod
-    def load(cls, mode: Optional[Mode] = None):
-        """Load from json.
-
-        Args:
-            mode: Mode of the inplace Optimize. If None use the current mode from inplace_config
-        """
-        with open(cls.get_save_path(mode=mode)) as fp:
+    def load(cls):
+        """Load from json."""
+        with open(cls.get_save_path()) as fp:
             data = yaml.safe_load(fp)
         return dacite.from_dict(cls, data)
 
@@ -330,7 +320,7 @@ class Timer(contextlib.AbstractContextManager):
 
         self._time_data.save()
 
-        if TimeData.get_save_path(mode=Mode.PASSTHROUGH).exists() and TimeData.get_save_path(mode=Mode.RUN).exists():
+        if TimeData.get_save_path().exists() and TimeData.get_save_path().exists():
             timer_comparator = TimerComparator()
             with open(comparison_report_path, "w") as fp:
                 fp.write(timer_comparator.get_report())
@@ -356,9 +346,9 @@ class TimerComparator:
     def __init__(self) -> None:
         """Initialize TimerComparator."""
         super().__init__()
-
-        self._original_timer_data = TimeData.load(mode=Mode.PASSTHROUGH)
-        self._optimized_timer_data = TimeData.load(mode=Mode.RUN)
+        # TODO: Fix missing mode paramter
+        self._original_timer_data = TimeData.load()
+        self._optimized_timer_data = TimeData.load()
 
     @property
     def total_speedup(self) -> float:

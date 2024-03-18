@@ -44,7 +44,6 @@ def main():
     from tests import utils
     from tests.functional.common.utils import collect_optimize_status, validate_status
 
-    nav.inplace_config.mode = nav.Mode.OPTIMIZE
     nav.inplace_config.min_num_samples = 1
 
     parser = argparse.ArgumentParser()

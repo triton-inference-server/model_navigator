@@ -22,7 +22,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from model_navigator.inplace.config import Mode, OptimizeConfig, inplace_config
+from model_navigator.inplace.config import OptimizeConfig, inplace_config
 from model_navigator.inplace.model import OptimizedModule, PassthroughModule, RecordModule
 from model_navigator.inplace.registry import module_registry
 from model_navigator.inplace.utils import get_object_name
@@ -30,11 +30,6 @@ from model_navigator.inplace.utils import get_object_name
 
 def test_get_object_name():
     assert get_object_name(MagicMock()) == "unittest.mock.MagicMock"
-
-
-def test_config_parse_mode_str():
-    inplace_config.mode = "optimize"
-    assert inplace_config.mode == Mode.OPTIMIZE
 
 
 def test_config_raise_error_on_invalid_num_samples():

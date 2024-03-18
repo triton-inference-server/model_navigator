@@ -39,6 +39,12 @@ from .registry import module_registry
 OPTIMIZATION_STATUS_FILE_NAME = "optimization_status.yaml"
 
 
+def load_optimized():
+    """Load optimized modules."""
+    for module in module_registry.values():
+        module.load_optimized()
+
+
 def optimize(
     func: Callable,
     dataloader: Sequence[Tuple[int, Any]],

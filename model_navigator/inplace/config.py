@@ -15,7 +15,6 @@
 
 import dataclasses
 import pathlib
-from enum import Enum
 from typing import Any, Dict, Optional, Sequence, Tuple, Type, Union
 
 from model_navigator.api.config import CustomConfig, DeviceKind, Format, OptimizationProfile, VerifyFunction
@@ -23,28 +22,9 @@ from model_navigator.core.constants import DEFAULT_SAMPLE_COUNT
 from model_navigator.runners.base import NavigatorRunner
 from model_navigator.runtime_analyzer.strategy import MinLatencyStrategy, RuntimeSearchStrategy
 
-from .registry import module_registry
-
-
-class Mode(Enum):
-    """Mode of the inplace Optimize.
-
-    OPTIMIZE: record registered models and optimize them when enough samples are collected.
-    RECORDING: record registered models.
-    RUN: replace registered models with optimized ones.
-    PASSTHROUGH: do nothing.
-    """
-
-    OPTIMIZE = "optimize"
-    RECORDING = "record"
-    RUN = "run"
-    PASSTHROUGH = "passthrough"
-
-
 DEFAULT_CACHE_DIR = pathlib.Path.home() / ".cache" / "model_navigator"
 DEFAULT_MIN_NUM_SAMPLES = 100
 DEFAULT_MAX_NUM_SAMPLES_STORED = 1
-DEFAULT_MODE = Mode.OPTIMIZE
 
 
 class InplaceConfig:
@@ -52,23 +32,10 @@ class InplaceConfig:
 
     def __init__(self) -> None:
         """Initialize InplaceConfig."""
-        self._mode: Mode = DEFAULT_MODE
         self._cache_dir: pathlib.Path = DEFAULT_CACHE_DIR
         self._min_num_samples: int = DEFAULT_MIN_NUM_SAMPLES
         self._max_num_samples_stored: int = DEFAULT_MAX_NUM_SAMPLES_STORED
         self.strategy: RuntimeSearchStrategy = MinLatencyStrategy()
-
-    @property
-    def mode(self) -> Mode:
-        """Get the mode of the inplace Optimize."""
-        return self._mode
-
-    @mode.setter
-    def mode(self, mode: Union[str, Mode]) -> None:
-        """Set the mode of the inplace Optimize."""
-        if not module_registry.is_empty():
-            raise ValueError("Cannot change mode when modules are already registered.")
-        self._mode = Mode(mode)
 
     @property
     def min_num_samples(self) -> int:
