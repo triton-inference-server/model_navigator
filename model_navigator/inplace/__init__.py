@@ -113,7 +113,7 @@ def profile(
 
     LOGGER.info(f"Profiling runners: {modelkeys_runners}")
 
-    modelkeys_runners = [("torch", "eager")] + list(modelkeys_runners)
+    modelkeys_runners = [("python", "eager")] + list(modelkeys_runners)
 
     profiling_results = ProfilingResults()
     for model_key, runner_name in modelkeys_runners:
@@ -216,7 +216,7 @@ def _status_serializable_dict(status) -> Dict:
 def _load_modules(model_key: str, runner_name: str, verbose: bool = False):
     for module_name, module in module_registry.items():
         try:
-            if model_key == "torch" and runner_name == "eager":
+            if model_key == "python" and runner_name == "eager":
                 module.load_passthrough()
                 module._wrapper._module.to("cuda")  # TODO: remove this line when passthrough is fixed
             else:

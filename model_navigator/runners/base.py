@@ -46,7 +46,8 @@ class InferenceTime(collections.defaultdict):
 
     def __init__(self, *args, **kwargs):
         """Initialize object."""
-        super().__init__(float, *args, **kwargs)
+        super().__init__(*args, **kwargs)
+        self.default_factory = float
 
 
 class InferenceStepTimer:
