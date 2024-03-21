@@ -26,7 +26,7 @@ METADATA = {
     "image_name": "nvcr.io/nvidia/pytorch:{version}-py3",
 }
 
-EXPECTED_PACKAGES = 4
+EXPECTED_PACKAGES = 3
 EXPECTED_STATUSES_TEMPLATE = [
     "{name}.{ind}.onnx.OnnxCUDA",
     "{name}.{ind}.onnx.OnnxTensorRT",
@@ -39,7 +39,7 @@ EXPECTED_STATUSES_TEMPLATE = [
 EXPECTED_STATUSES = [
     status.format(name=name, ind=ind)
     for status in EXPECTED_STATUSES_TEMPLATE
-    for name, range_ind in (("encoder", 1), ("decoder", 2), ("proj_out", 1))
+    for name, range_ind in (("encoder", 1), ("decoder", 2))
     for ind in range(range_ind)
 ]
 
@@ -48,7 +48,7 @@ MODEL_NAME = "openai/whisper-tiny"
 BATCH_SIZE = 8
 
 
-# Whisper is deleting samples, allways return copy for inference
+# Whisper is deleting samples, always return copy for inference
 class CopyList(list):
     def __getitem__(self, index):
         item = super().__getitem__(index)
@@ -85,11 +85,12 @@ def get_pipeline():
         chunk_length_s=30,
         device=DEVICE,
     )
-    # WAR: reorder modules
-    pipe.model.proj_out = nav.Module(
-        pipe.model.proj_out,
-        name="proj_out",
-    )
+    # TODO: Remove WAR when fixed
+    # WAR: Disable module optimization
+    # pipe.model.proj_out = nav.Module(
+    #     pipe.model.proj_out,
+    #     name="proj_out",
+    # )
     pipe.model.model.encoder = nav.Module(
         pipe.model.model.encoder,
         name="encoder",

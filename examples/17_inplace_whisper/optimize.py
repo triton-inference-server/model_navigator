@@ -60,10 +60,12 @@ def get_pipeline():
         name="decoder",
         output_mapping=lambda x: BaseModelOutputWithPastAndCrossAttentions(**x),
     )
-    pipe.model.proj_out = nav.Module(
-        pipe.model.proj_out,
-        name="proj_out",
-    )
+    # TODO: Remove WAR when fixed
+    # WAR: Disable module optimization
+    # pipe.model.proj_out = nav.Module(
+    #     pipe.model.proj_out,
+    #     name="proj_out",
+    # )
     return pipe
 
 
