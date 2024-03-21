@@ -16,8 +16,8 @@ limitations under the License.
 
 # Python Identity Model
 
-In this example we show how to optimize Python identity model.
-To run the example simply run the `optimize.py` script:
+In this example, we show how to optimize the Python identity model.
+To run the example, simply run the `optimize.py` script:
 
 ```bash
 ./optimize.py --output-path identity.nav

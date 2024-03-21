@@ -16,9 +16,9 @@ limitations under the License.
 
 # JAX Linear Model
 
-In this example we show how to optimize JAX linear model. We recommend running this example in NVIDIA NGC [TensorFlow2 containter](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/tensorflow).
+In this example, we show how to optimize JAX linear model. We recommend running this example in NVIDIA NGC [TensorFlow2 container](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/tensorflow).
 
-## Set-up the environment
+## Set up the environment
 
 ```bash
 . ./install.sh

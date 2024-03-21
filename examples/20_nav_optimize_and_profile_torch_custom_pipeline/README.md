@@ -16,12 +16,12 @@ limitations under the License.
 
 # Optimize and profile torch custom pipeline
 
-In this example we show how to build custom pipeline and optimize it with Model Navigator.
+In this example, we show how to build a custom pipeline and optimize it with Model Navigator.
 
-We recommend running this example in NVIDIA NGC [PyTorch containter](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch).
+We recommend running this example in NVIDIA NGC [PyTorch container](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch).
 The Python script `optimize.py` wraps the Python model using Inplace Optimize and then runs profiling.
 
-To run the optimization and profiling run the script:
+To run the optimization and profiling, run the script:
 
 ```bash
 ./optimize.py

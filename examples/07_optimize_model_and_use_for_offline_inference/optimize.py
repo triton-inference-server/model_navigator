@@ -32,7 +32,7 @@ def get_model():
 
 
 def get_dataloader():
-    """Returns a ramdom dataloader containing 10 batches of 3x5 tensors"""
+    """Returns a random dataloader containing 10 batches of 3x5 tensors"""
     return [torch.randn(3, 5) for _ in range(10)]
 
 

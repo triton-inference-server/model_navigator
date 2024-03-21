@@ -16,7 +16,7 @@ limitations under the License.
 
 # Triton Inference Server Linear model deployment
 
-This example show how to optimize simple linear model and deploy it to Triton Inference Server.
+This example, shows how to optimize a simple linear model and deploy it to Triton Inference Server.
 
 ## Requirements
 
@@ -31,7 +31,7 @@ Or you can use NVIDIA Torch container:
 docker run -it --gpus 1 --shm-size 8gb -v ${PWD}:${PWD} -w ${PWD} nvcr.io/nvidia/pytorch:23.01-py3 bash
 ```
 
-If you select to use container we recommend to install
+If you select to use container, we recommend installing
 [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/overview.html).
 
 ## Install the Model Navigator
@@ -42,18 +42,18 @@ Install the Triton Model Navigator following the installation guide for Torch:
 pip install --extra-index-url https://pypi.ngc.nvidia.com .[torch]
 ```
 
-**Note**: run this command from main catalog inside the repository
+**Note**: run this command from the main catalog inside the repository
 
 ## Run model optimization
 
-In next step the optimize process is going to be performed for the model.
+In the next step, the optimize process will be performed for the model.
 
 ```bash
 python examples/triton/optimize.py
 ```
 
-Once the process is done, the `model_repository` catalog is created in current working directory.
-At this point exit from the container.
+Once the process is done, the `model_repository` catalog is created in the current working directory.
+At this point, it exits the container.
 
 ```bash
 exit
@@ -61,8 +61,8 @@ exit
 
 ## Start Triton Inference Server
 
-Based on the created deployment in model repository the Triton Inference Server can be executed.
-The following command start the server in background mode and expose the HTTP and gRPC ports.
+Based on the created deployment in model repository, the Triton Inference Server can be executed.
+The following command starts the server in background mode and exposes the HTTP and gRPC ports.
 
 ```bash
 docker run --gpus=1 --rm -d \
@@ -90,7 +90,7 @@ perf_analyzer -m linear --concurrency-range 2:32:2
 
 ## Remove containers
 
-After finishing running example remove the Triton container working in the background:
+After finishing running the example, remove the Triton container working in the background:
 ```
 docker stop tritonserver
 ```

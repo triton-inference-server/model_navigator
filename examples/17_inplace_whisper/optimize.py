@@ -69,7 +69,7 @@ def get_pipeline():
     return pipe
 
 
-# Whisper is deleting samples, allways return copy for inference
+# Whisper is deleting samples, always return copy for inference
 class CopyList(list):
     def __getitem__(self, index):
         item = super().__getitem__(index)

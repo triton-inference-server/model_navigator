@@ -16,9 +16,9 @@ limitations under the License.
 
 # Optimize model and use zero-copy runners
 
-In this example we show how to use zero-copy runners for inference without unnecessary copying data from CPU to GPU and back.
+In this example, we show how to use zero-copy runners for inference without unnecessary copying data from CPU to GPU and back.
 
-We recommend running this example in NVIDIA NGC [PyTorch containter](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch). To run the example simply run the `optimize.py` script:
+We recommend running this example in NVIDIA NGC [PyTorch container](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch). To run the example, simply run the `optimize.py` script:
 
 ```bash
 ./optimize.py

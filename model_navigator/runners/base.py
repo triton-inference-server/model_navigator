@@ -322,7 +322,7 @@ class NavigatorRunner(abc.ABC):
         return output
 
     def last_inference_time(self) -> InferenceTime:
-        """Returns the total inference time in miliseconds required during the last call to ``infer()``.
+        """Returns the total inference time in milliseconds required during the last call to ``infer()``.
 
         Must be called only after ``activate()`` and before ``deactivate()``.
 

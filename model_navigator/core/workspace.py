@@ -22,7 +22,7 @@ from model_navigator.core.logger import LOGGER, add_log_file_handler
 
 
 class Workspace:
-    """Workspace class to maintain shared directory to store artefacts."""
+    """Workspace class to maintain shared directory to store artefact."""
 
     def __init__(self, path: Optional[Union[str, pathlib.Path]] = None):
         """Initialize workspace.

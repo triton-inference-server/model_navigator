@@ -14,9 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-# Huggingface BERT Model
+# HuggingFace BERT Model
 
-In this example we show how to optimize BERT model from Huggingface repository. We recommend running this example in NVIDIA NGC [TensorFlow2 containter](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/tensorflow).
+In this example, we show how to optimize BERT model from HuggingFace repository. We recommend running this example in NVIDIA NGC [TensorFlow2 container](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/tensorflow).
 
 ## Install dependencies
 

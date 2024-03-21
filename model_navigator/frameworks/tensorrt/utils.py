@@ -316,7 +316,7 @@ def add_binding_to_metadata(engine, binding, metadata, name_binding):
 
 
 def _get_input_metadata_from_engine(engine, start_binding, end_binding):
-    """Returns input metada from engine."""
+    """Returns input metadata from engine."""
     if _should_use_v3_api():
         LOGGER.error("This function should not be called when using the V3 API")
 
@@ -328,7 +328,7 @@ def _get_input_metadata_from_engine(engine, start_binding, end_binding):
 
 
 def _get_output_metadata_from_engine(engine, start_binding, end_binding):
-    """Returns input metada from engine."""
+    """Returns input metadata from engine."""
     if _should_use_v3_api():
         LOGGER.error("This function should not be called when using the V3 API")
 

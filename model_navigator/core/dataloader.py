@@ -33,14 +33,14 @@ SAMPLE_FILE_SUFFIX = ".npz"
 
 
 class IndiciesFilteredDataloader:
-    """Dataloader that filters indicies."""
+    """Dataloader that filters indices."""
 
     def __init__(self, dataloader: Any, indicies: List[int]):
         """Initialize IndiciesFilteredDataloader.
 
         Args:
             dataloader: A dataloader to filter
-            indicies: A list of indicies to filter
+            indicies: A list of indices to filter
         """
         self._dataloader = dataloader
         self._indicies = indicies
@@ -197,7 +197,7 @@ def extract_sample(sample, input_metadata, framework: Framework) -> Sample:
     Args:
         sample: A dataloader sample to extract from
         input_metadata: An input metadata
-        framework: A framework for which extraction is peformed
+        framework: A framework for which extraction is performed
 
     Returns:
         A formatted sample data
@@ -274,7 +274,7 @@ def to_numpy(tensor: Any, from_framework: Framework) -> np.ndarray:
     if isinstance(tensor, np.ndarray):
         return tensor
     if from_framework == Framework.TORCH:
-        # If torch.bfloat16 is used in dataloader perform loseless upcast to torch.float32 before conversion to numpy
+        # If torch.bfloat16 is used in dataloader perform lossless upcast to torch.float32 before conversion to numpy
         # TODO: remove to(torch.float32) once torch.bfloat16 is supported
         return (
             tensor.detach().cpu().numpy()

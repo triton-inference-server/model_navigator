@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,33 +18,40 @@ limitations under the License.
 
 ## Overview
 
-Model optimization plays a crucial role in unlocking the maximum performance capabilities of the underlying hardware. By
-applying various transformation techniques, models can be optimized to fully utilize the specific features offered by
-the hardware architecture to improve the inference performance and cost. Furthermore, in many cases allow for
-serialization of models, separating them from the source code. The serialization process enhances portability, allowing
-the models to be seamlessly deployed in production environments. The decoupling of models from the source code also
-facilitates maintenance, updates, and collaboration among developers. However, this process comprises multiple steps and
-offers various potential paths, making manual execution complicated and time-consuming.
+Welcome to the [Triton Model Navigator](https://github.com/triton-inference-server/model_navigator), an inference toolkit designed
+for optimizing and deploying Deep Learning models with a focus on NVIDIA GPUs. The Triton Model Navigator streamlines the
+process of moving models and pipelines implemented in [PyTorch](https://pytorch.org),
+[TensorFlow](https://www.tensorflow.org), and/or [ONNX](https://onnx.ai)
+to [TensorRT](https://github.com/NVIDIA/TensorRT).
 
-The [Triton Model Navigator](https://github.com/triton-inference-server/model_navigator) offers a user-friendly and
-automated solution for optimizing and deploying machine learning models. Using a single entry point for
-various supported frameworks, allowing users to start the process of searching for the best deployment option with a
-single call to the dedicated `optimize` function. Model Navigator handles model export, conversion, correctness testing,
-and profiling to select optimal model format and save generated artifacts for inference deployment on the
-[PyTriton](https://github.com/triton-inference-server/pytriton)
+The Triton Model Navigator automates several critical steps, including model export, conversion, correctness testing, and
+profiling. By providing a single entry point for various supported frameworks, users can efficiently search for the best
+deployment option using the per-framework optimize function. The resulting optimized models are ready for deployment on
+either [PyTriton](https://github.com/triton-inference-server/pytriton)
 or [Triton Inference Server](https://github.com/triton-inference-server/server).
 
-The high-level flowchart below illustrates the process of moving models from source code to deployment optimized formats
-with the support of the Model Navigator.
+## Features at Glance
 
-![Overview](assets/overview.svg)
+The distinct capabilities of the Triton Model Navigator are summarized in the feature matrix:
 
-## Support Matrix
+| Feature                     | Description                                                                                                                                      |
+|-----------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
+| Easy-of-use                 | A single line of code to run all possible optimization paths directly from your source code                                                         |
+| Wide Framework Support      | Compatible with various machine learning frameworks including PyTorch, TensorFlow, and ONNX                                                      |
+| Models Optimization         | Enhance the performance of models such as ResNET and BERT for efficient inference deployment                                                     |
+| Pipelines Optimization      | Streamline Python code pipelines for models such as Stable Diffusion and Whisper using Inplace Optimization, exclusive to PyTorch                |
+| Model Export and Conversion | Automate the process of exporting and converting models between various formats with focus on TensorRT and Torch-TensorRT                        |
+| Correctness Testing         | Ensures the converted model produces correct outputs validating against the original model                                                        |
+| Performance Profiling       | Profiles models to select the optimal format based on performance metrics such as latency and throughput to optimize target hardware utilization |
+| Models Deployment           | Automates models and pipelines deployment on PyTriton and the Triton Inference Server through a dedicated API                                                          |
 
-The Model Navigator generates multiple optimized and production-ready models. The table below illustrates the model
-formats that can be obtained by using the Model Navigator with various frameworks.
+## Support Matrix for Frameworks
 
-**Table:** Supported conversion target formats per each supported Python framework or file.
+The Triton Model Navigator efficiently produces various optimized models ready for deployment. The accompanying table
+showcases the diverse model formats achievable through the Triton Model Navigator across different frameworks, highlighting its
+versatility.
+
+**Table:** Supported conversion target formats per supported Python framework or file.
 
 | **PyTorch**        | **TensorFlow 2**       | **JAX**                | **ONNX** |
 |--------------------|------------------------|------------------------|----------|
@@ -55,28 +62,24 @@ formats that can be obtained by using the Model Navigator with various framework
 | ONNX               |                        |                        |          |
 | TensorRT           |                        |                        |          |
 
-**Note:** The Model Navigator has the capability to support any Python function as input. However, in this particular
+**Note:** The Triton Model Navigator has the capability to support any Python function as input. However, in this particular
 case, its role is limited to profiling the function without generating any serialized models.
 
-The Model Navigator stores all artifacts within the `navigator_workspace`. Additionally, it provides an option to save
-a portable and transferable `Navigator Package` - an artifact that includes only the models with minimal latency and
-maximal throughput. This package also includes base formats that can be used to regenerate the `TensorRT` plan on the
-target hardware.
+The Inplace Optimize feature is dedicated for PyTorch to optimize pipelines patching `nn.Modules` and optimize them to
+TensorRT. The table below highlights the possible optimization paths for Inplace Optimize:
 
-**Table:** Model formats that can be generated from saved `Navigator Package` and from model sources.
+**Table:** Supported conversion target formats for Inplace Optimize.
 
-| **From model source** | **From Navigator Package** |
-|-----------------------|----------------------------|
-| SavedModel            | TorchTensorRT              |
-| TensorFlowTensorRT    | TensorFlowTensorRT         |
-| TorchScript Trace     | ONNX                       |
-| TorchScript Script    | TensorRT                   |
-| Torch 2 Compile       |                            |
-| TorchTensorRT         |                            |
-| ONNX                  |                            |
-| TensorRT              |                            |
+| **PyTorch**        |
+|--------------------|
+| Torch Compile      |
+| TorchScript Trace  |
+| TorchScript Script |
+| Torch-TensorRT     |
+| ONNX               |
+| TensorRT           |
 
 ## What next?
 
-Learn more about using Model Navigator in [quick start](quick_start.md) where you will find more information about
+Learn more about using the Triton Model Navigator in [Quick Start](quick_start.md), where you will find more information about
 optimizing models and serving inference.

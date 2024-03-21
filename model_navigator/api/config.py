@@ -647,7 +647,7 @@ class TensorFlowTensorRTConfig(CustomConfigForTensorRT):
 
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "TensorFlowTensorRTConfig":
-        """Instantiate TensorFlowTensorRTConfig from  adictionary."""
+        """Instantiate TensorFlowTensorRTConfig from a dictionary."""
         if config_dict.get("trt_profiles") is not None:
             # if config_dict.get("trt_profiles") is not None and not isinstance(config_dict["trt_profile"], TensorRTProfile):
             parsed_trt_profiles = []
@@ -786,7 +786,7 @@ class TorchTensorRTConfig(CustomConfigForTensorRT):
 
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "TorchTensorRTConfig":
-        """Instantiate TorchTensorRTConfig from  adictionary."""
+        """Instantiate TorchTensorRTConfig from a dictionary."""
         if config_dict.get("trt_profiles") is not None:
             # if config_dict.get("trt_profiles") is not None and not isinstance(config_dict["trt_profile"], TensorRTProfile):
             parsed_trt_profiles = []
@@ -889,7 +889,7 @@ class TensorRTConfig(CustomConfigForTensorRT):
 
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "TensorRTConfig":
-        """Instantiate TensorRTConfig from  adictionary."""
+        """Instantiate TensorRTConfig from a dictionary."""
         if config_dict.get("trt_profiles") is not None:
             parsed_trt_profiles = []
             for trt_profile in config_dict.get("trt_profiles"):

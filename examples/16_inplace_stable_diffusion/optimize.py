@@ -51,13 +51,16 @@ def get_pipeline():
 
     pipe.text_encoder = nav.Module(
         pipe.text_encoder,
+        name="clip",
         output_mapping=clip_output_mapping,
     )
     pipe.unet = nav.Module(
         pipe.unet,
+        name="unet",
     )
     pipe.vae.decoder = nav.Module(
         pipe.vae.decoder,
+        name="vae",
     )
 
     return pipe
@@ -87,7 +90,7 @@ def main():
 
     nav.optimize(pipe, dataloader, config=config)
 
-    nav.profile(pipe, dataloader)
+    nav.load_optimized()
 
     image = pipe(dataloader[0]).images[0]
     image.save(f"astronaut_rides_horse_{nav.inplace_config.mode.value}.png")  # pytype: disable=attribute-error

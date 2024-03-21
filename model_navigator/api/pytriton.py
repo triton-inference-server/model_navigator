@@ -190,7 +190,7 @@ class PyTritonAdapter:
         """Returns outputs configuration.
 
         Returns:
-            List with Tensor objects describing outpus configuration of runner
+            List with Tensor objects describing outputs configuration of runner
         """
         outputs = []
         for output in self._runner._output_metadata.values():

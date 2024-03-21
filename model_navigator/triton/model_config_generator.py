@@ -475,7 +475,7 @@ class ModelConfigGenerator:
         model_config["optimization"] = optimization_config
 
     def _set_tensorrt_accelerator(self, accelerator: TensorRTAccelerator, optimization_config: Dict):
-        """Configur accelerator for optimization config.
+        """Configure accelerator for optimization config.
 
         Args:
             accelerator: Accelerator object with configuration

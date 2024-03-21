@@ -29,7 +29,7 @@ def get_model():
 
 
 def get_dataloader():
-    """Returns a ramdom dataloader containing a single sample"""
+    """Returns a random dataloader containing a single sample"""
     return [torch.randn(64 * 1024, 1024)]
 
 

@@ -16,13 +16,13 @@ limitations under the License.
 
 # Optimize model and use zero-copy runners
 
-In this example we show how to Model Navigator Inplace Optimize to run optimized models in place of the PyTorch models in the original pipeline.
-Depending on the mode the `optimize.py` script can run PyTorch text summarization BART pipeline or optimize and run BART models in TensorRT without any changes to the original pipeline.
+In this example, we show how to Model Navigator Inplace Optimize to run optimized models in place of the PyTorch models in the original pipeline.
+Depending on the mode, the `optimize.py` script can run PyTorch text summarization BART pipeline or optimize and run BART models in TensorRT without any changes to the original pipeline.
 
-We recommend running this example in NVIDIA NGC [PyTorch containter](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch).
+We recommend running this example in NVIDIA NGC [PyTorch container](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch).
 The Python script `optimize.py` wraps the Python model using Inplace Optimize and then runs profiling.
 
-To run the optimization and profiling run the script:
+To run the optimization and profiling, run the script:
 
 ```bash
 ./optimize.py

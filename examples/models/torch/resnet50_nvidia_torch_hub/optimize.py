@@ -24,7 +24,7 @@ def get_model():
 
 
 def get_dataloader():
-    """Returns a ramdom dataloader"""
+    """Returns a random dataloader"""
     return [torch.randn(1, 3, 256, 256) for _ in range(10)]
 
 

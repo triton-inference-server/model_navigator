@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ config = nav.OptimizeConfig(
     optimization_profile=nav.OptimizationProfile(max_batch_size=8),
 )
 
-model = nav.Module(get_model(), name="resnet50")
+model = nav.Module(get_model(), name="resnet18")
 
 
 def main():

@@ -16,51 +16,70 @@ limitations under the License.
 
 # Changelog
 
-
 ## 0.8.0 (unreleased)
+
 - new: Allow to select device for TensorRT runner
 - new: Add device output buffers to TensorRT runner
-- new: Updated API for inplace optimization
 - new: nav.profile added for profiling any Python function
+- change: API for Inplace optimization (breaking change)
 - fix: Passing inputs for Torch to ONNX export
 - fix: Parse args to kwargs in torchscript-trace export
 - fix: Lower peak memory usage when loading Torch inplace optimized model
 
-
-## 0.7.7
-- change: Add input and output specs for Triton model repositories generated from packages
+[//]: <> (put here on external component update with short summary what change or link to changelog)
 
 - Version of external components used during testing:
-  - [PyTorch 2.2.0a0+81ea7a48](https://github.com/pytorch/pytorch/commit/81ea7a48)
-  - [TensorFlow 2.14.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.14.0)
-  - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
-  - [ONNX Runtime 1.16.2](https://github.com/microsoft/onnxruntime/tree/v1.16.2)
-  - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.49.0
-  - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.27
-  - [tf2onnx v1.16.1](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.16.1)
-  - Other component versions depend on the used framework containers versions.
-    See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
-    for a detailed summary.
+    - [PyTorch 2.3.0a0+ebedce2](https://github.com/pytorch/pytorch/commit/ebedce2)
+    - [TensorFlow 2.15.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.15.0)
+    - [TensorRT 8.6.3](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+    - [Torch-TensorRT 2.0.0.dev0](https://github.com/NVIDIA/Torch-TensorRT)
+    - [ONNX Runtime 1.17.1](https://github.com/microsoft/onnxruntime/tree/v1.17.1)
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.49.4
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.4.6
+    - [tf2onnx v1.16.1](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.16.1)
+    - Other component versions depend on the used framework containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
 
+## 0.7.7
+
+- change: Add input and output specs for Triton model repositories generated from packages
+
+[//]: <> (put here on external component update with short summary what change or link to changelog)
+
+- Version of external components used during testing:
+    - [PyTorch 2.2.0a0+81ea7a48](https://github.com/pytorch/pytorch/commit/81ea7a48)
+    - [TensorFlow 2.14.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.14.0)
+    - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+    - [ONNX Runtime 1.16.2](https://github.com/microsoft/onnxruntime/tree/v1.16.2)
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.49.0
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.27
+    - [tf2onnx v1.16.1](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.16.1)
+    - Other component versions depend on the used framework containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
 
 ## 0.7.6
+
 - fix: Passing inputs for Torch to ONNX export
 - fix: Passing input data to OnnxCUDA runner
 
-- Version of external components used during testing:
-  - [PyTorch 2.2.0a0+81ea7a48](https://github.com/pytorch/pytorch/commit/81ea7a48)
-  - [TensorFlow 2.14.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.14.0)
-  - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
-  - [ONNX Runtime 1.16.2](https://github.com/microsoft/onnxruntime/tree/v1.16.2)
-  - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.49.0
-  - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.27
-  - [tf2onnx v1.16.1](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.16.1)
-  - Other component versions depend on the used framework containers versions.
-    See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
-    for a detailed summary.
+[//]: <> (put here on external component update with short summary what change or link to changelog)
 
+- Version of external components used during testing:
+    - [PyTorch 2.2.0a0+81ea7a48](https://github.com/pytorch/pytorch/commit/81ea7a48)
+    - [TensorFlow 2.14.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.14.0)
+    - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+    - [ONNX Runtime 1.16.2](https://github.com/microsoft/onnxruntime/tree/v1.16.2)
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.49.0
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.27
+    - [tf2onnx v1.16.1](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.16.1)
+    - Other component versions depend on the used framework containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
 
 ## 0.7.5
+
 - new: FP8 precision support for TensorRT
 - new: Support for autocast and inference mode configuration for Torch runners
 - new: Allow to select device for Torch and ONNX runners
@@ -71,19 +90,22 @@ limitations under the License.
 - fix: Execution of TensorRT optimize raise error during handling output metadata
 - fix: Limited Polygraphy version to work correctly with onnxruntime-gpu package
 
+[//]: <> (put here on external component update with short summary what change or link to changelog)
+
 - Version of external components used during testing:
-  - [PyTorch 2.2.0a0+6a974be](https://github.com/pytorch/pytorch/commit/6a974be)
-  - [TensorFlow 2.13.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.13.0)
-  - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
-  - [ONNX Runtime 1.16.2](https://github.com/microsoft/onnxruntime/tree/v1.16.2)
-  - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.49.0
-  - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.27
-  - [tf2onnx v1.15.1](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.15.1)
-  - Other component versions depend on the used framework containers versions.
-    See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
-    for a detailed summary.
+    - [PyTorch 2.2.0a0+6a974be](https://github.com/pytorch/pytorch/commit/6a974be)
+    - [TensorFlow 2.13.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.13.0)
+    - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+    - [ONNX Runtime 1.16.2](https://github.com/microsoft/onnxruntime/tree/v1.16.2)
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.49.0
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.27
+    - [tf2onnx v1.15.1](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.15.1)
+    - Other component versions depend on the used framework containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
 
 ## 0.7.4
+
 - new: decoupled mode configuration in Triton Model Config
 - new: support for PyTorch ExportedProgram and ONNX dynamo export
 - new: added GraphSurgeon ONNX optimization
@@ -94,19 +116,22 @@ limitations under the License.
 - change: move from Polygraphy CLI to Polygraphy Python API
 - change: removed Windows from support list
 
+[//]: <> (put here on external component update with short summary what change or link to changelog)
+
 - Version of external components used during testing:
-  - [PyTorch 2.1.0a0+32f93b1](https://github.com/pytorch/pytorch/commit/32f93b1)
-  - [TensorFlow 2.13.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.13.0)
-  - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
-  - [ONNX Runtime 1.16.2](https://github.com/microsoft/onnxruntime/tree/v1.16.2)
-  - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.49.0
-  - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.27
-  - [tf2onnx v1.15.1](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.15.1)
-  - Other component versions depend on the used framework containers versions.
-    See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
-    for a detailed summary.
+    - [PyTorch 2.1.0a0+32f93b1](https://github.com/pytorch/pytorch/commit/32f93b1)
+    - [TensorFlow 2.13.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.13.0)
+    - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+    - [ONNX Runtime 1.16.2](https://github.com/microsoft/onnxruntime/tree/v1.16.2)
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.49.0
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.27
+    - [tf2onnx v1.15.1](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.15.1)
+    - Other component versions depend on the used framework containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
 
 ## 0.7.3
+
 - new: Data dependent dynamic control flow support in nav.Module (multiple computation graphs per module)
 - new: Added find max batch size utility
 - new: Added utilities API documentation
@@ -116,151 +141,180 @@ limitations under the License.
 - change: in Inplace, store one sample by default per module and store shape info for all samples
 - change: always execute export for all supported formats
 
+
 - Known issues and limitations:
-  - nav.Module moves original torch.nn.Module to the CPU, in case of weight sharing that might result in unexpected behaviour
-  - For data dependent dynamic control flow (multiple computation graphs) nav.Module might copy the weights for each separate graph
+    - nav.Module moves original torch.nn.Module to the CPU, in case of weight sharing that might result in unexpected
+      behaviour
+    - For data dependent dynamic control flow (multiple computation graphs) nav.Module might copy the weights for each
+      separate graph
+
+[//]: <> (put here on external component update with short summary what change or link to changelog)
 
 - Version of external components used during testing:
-  - [PyTorch 2.1.0a0+29c30b1](https://github.com/pytorch/pytorch/commit/29c30b1)
-  - [TensorFlow 2.13.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.13.0)
-  - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
-  - [ONNX Runtime 1.15.1](https://github.com/microsoft/onnxruntime/tree/v1.15.1)
-  - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.47.1
-  - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.27
-  - [tf2onnx v1.15.1](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.15.1)
-  - Other component versions depend on the used framework containers versions.
-    See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
-    for a detailed summary.
+    - [PyTorch 2.1.0a0+29c30b1](https://github.com/pytorch/pytorch/commit/29c30b1)
+    - [TensorFlow 2.13.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.13.0)
+    - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+    - [ONNX Runtime 1.15.1](https://github.com/microsoft/onnxruntime/tree/v1.15.1)
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.47.1
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.27
+    - [tf2onnx v1.15.1](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.15.1)
+    - Other component versions depend on the used framework containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
 
 ## 0.7.2
+
 - fix: Obtaining inputs names from ONNX file for TensorRT conversion
 - change: Raise exception instead of exit with code when required command has failed
 
-- Version of external components used during testing:
-  - [PyTorch 2.1.0a0+b5021ba](https://github.com/pytorch/pytorch/commit/b5021ba9)
-  - [TensorFlow 2.12.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.12.0)
-  - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
-  - [ONNX Runtime 1.15.1](https://github.com/microsoft/onnxruntime/tree/v1.15.1)
-  - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.47.1
-  - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.27
-  - [tf2onnx v1.14.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0)
-  - Other component versions depend on the used framework containers versions.
-    See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
-    for a detailed summary.
+[//]: <> (put here on external component update with short summary what change or link to changelog)
 
+- Version of external components used during testing:
+    - [PyTorch 2.1.0a0+b5021ba](https://github.com/pytorch/pytorch/commit/b5021ba9)
+    - [TensorFlow 2.12.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.12.0)
+    - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+    - [ONNX Runtime 1.15.1](https://github.com/microsoft/onnxruntime/tree/v1.15.1)
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.47.1
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.27
+    - [tf2onnx v1.14.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0)
+    - Other component versions depend on the used framework containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
 
 ## 0.7.1
+
 - fix: gather onnx input names based on model's forward signature
 - fix: do not run TensorRT max batch size search when max batch size is None
 - fix: use pytree metadata to flatten torch complex outputs
 
+[//]: <> (put here on external component update with short summary what change or link to changelog)
+
 - Version of external components used during testing:
-  - [PyTorch 2.1.0a0+b5021ba](https://github.com/pytorch/pytorch/commit/b5021ba9)
-  - [TensorFlow 2.12.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.12.0)
-  - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
-  - [ONNX Runtime 1.15.1](https://github.com/microsoft/onnxruntime/tree/v1.15.1)
-  - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.47.1
-  - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.27
-  - [tf2onnx v1.14.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0)
-  - Other component versions depend on the used framework containers versions.
-    See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
-    for a detailed summary.
+    - [PyTorch 2.1.0a0+b5021ba](https://github.com/pytorch/pytorch/commit/b5021ba9)
+    - [TensorFlow 2.12.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.12.0)
+    - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+    - [ONNX Runtime 1.15.1](https://github.com/microsoft/onnxruntime/tree/v1.15.1)
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.47.1
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.27
+    - [tf2onnx v1.14.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0)
+    - Other component versions depend on the used framework containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
 
 ## 0.7.0
+
 - new: Inplace Optimize feature - optimize models directly in the Python code
 - new: Non-tensor inputs and outputs support
 - new: Model warmup support in Triton model configuration
 - new: nav.tensorrt.optimize api added for testing and measuring performance of TensorRT models
-- new: Extended custom configs to pass arguments directly to export and conversion operations like `torch.onnx.export` or `polygraphy convert`
+- new: Extended custom configs to pass arguments directly to export and conversion operations like `torch.onnx.export`
+  or `polygraphy convert`
 - new: Collect GPU clock during model profiling
 - new: Add option to configure minimal trials and stabilization windows for performance verification and profiling
-- change: Navigator package version change to 0.2.3. Custom configurations now use trt_profiles list instead single value
+- change: Navigator package version change to 0.2.3. Custom configurations now use trt_profiles list instead single
+  value
 - change: Store separate reproduction scripts for runners used during correctness and profiling
 
+[//]: <> (put here on external component update with short summary what change or link to changelog)
+
 - Version of external components used during testing:
-  - [PyTorch 2.1.0a0+b5021ba](https://github.com/pytorch/pytorch/commit/b5021ba9)
-  - [TensorFlow 2.12.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.12.0)
-  - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
-  - [ONNX Runtime 1.15.1](https://github.com/microsoft/onnxruntime/tree/v1.15.1)
-  - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.47.1
-  - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.27
-  - [tf2onnx v1.14.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0)
-  - Other component versions depend on the used framework containers versions.
-    See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
-    for a detailed summary.
+    - [PyTorch 2.1.0a0+b5021ba](https://github.com/pytorch/pytorch/commit/b5021ba9)
+    - [TensorFlow 2.12.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.12.0)
+    - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+    - [ONNX Runtime 1.15.1](https://github.com/microsoft/onnxruntime/tree/v1.15.1)
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.47.1
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.27
+    - [tf2onnx v1.14.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0)
+    - Other component versions depend on the used framework containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
 
 ## 0.6.3
+
 - fix: Conditional imports of supported frameworks in export commands
 
+[//]: <> (put here on external component update with short summary what change or link to changelog)
+
 - Version of external components used during testing:
-  - [PyTorch 2.1.0a0+4136153](https://github.com/pytorch/pytorch/commit/4136153)
-  - [TensorFlow 2.12.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.12.0)
-  - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
-  - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
-  - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.47.1
-  - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.26
-  - [tf2onnx v1.14.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0)
-  - Other component versions depend on the used framework containers versions.
-    See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
-    for a detailed summary.
+    - [PyTorch 2.1.0a0+4136153](https://github.com/pytorch/pytorch/commit/4136153)
+    - [TensorFlow 2.12.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.12.0)
+    - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+    - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.47.1
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.26
+    - [tf2onnx v1.14.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0)
+    - Other component versions depend on the used framework containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
 
 ## 0.6.2
+
 - new: Collect information about TensorRT shapes used during conversion
 - fix: Invalid link in documentation
 - change: Improved rendering documentation
 
+[//]: <> (put here on external component update with short summary what change or link to changelog)
+
 - Version of external components used during testing:
-  - [PyTorch 2.1.0a0+4136153](https://github.com/pytorch/pytorch/commit/4136153)
-  - [TensorFlow 2.12.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.12.0)
-  - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
-  - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
-  - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.47.1
-  - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.26
-  - [tf2onnx v1.14.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0)
-  - Other component versions depend on the used framework containers versions.
-    See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
-    for a detailed summary.
+    - [PyTorch 2.1.0a0+4136153](https://github.com/pytorch/pytorch/commit/4136153)
+    - [TensorFlow 2.12.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.12.0)
+    - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+    - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.47.1
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.26
+    - [tf2onnx v1.14.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0)
+    - Other component versions depend on the used framework containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
 
 ## 0.6.1
+
 - fix: Add model from package to Triton model store with custom configs
 
+[//]: <> (put here on external component update with short summary what change or link to changelog)
+
 - Version of external components used during testing:
-  - [PyTorch 2.1.0a0+4136153](https://github.com/pytorch/pytorch/commit/4136153)
-  - [TensorFlow 2.12.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.12.0)
-  - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
-  - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
-  - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.47.1
-  - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.26
-  - [tf2onnx v1.14.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0)
-  - Other component versions depend on the used framework containers versions.
-    See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
-    for a detailed summary.
+    - [PyTorch 2.1.0a0+4136153](https://github.com/pytorch/pytorch/commit/4136153)
+    - [TensorFlow 2.12.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.12.0)
+    - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+    - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.47.1
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.26
+    - [tf2onnx v1.14.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0)
+    - Other component versions depend on the used framework containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
 
 ## 0.6.0
+
 - new: Zero-copy runners for Torch, ONNX and TensorRT - omit H2D and D2H memory copy between runners execution
 - new: `nav.pacakge.profile` API method to profile generated models on provided dataloader
 - change: ProfilerConfig replaced with OptimizationProfile:
-  - new: OptimizationProfile impact the conversion for TensorRT
-  - new: `batch_sizes` and `max_batch_size` limit the max profile in TensorRT conversion
-  - new: Allow to provide separate dataloader for profiling - first sample used only
+    - new: OptimizationProfile impact the conversion for TensorRT
+    - new: `batch_sizes` and `max_batch_size` limit the max profile in TensorRT conversion
+    - new: Allow to provide separate dataloader for profiling - first sample used only
 - new: allow to run `nav.package.optimize` on empty package - status generation only
 - new: use `torch.inference_mode` for inference runner when PyTorch 2.x is available
-- fix: Missing `model` in config when passing package generated during `nav.{framework}.optimize` directly to `nav.package.optimize` command
+- fix: Missing `model` in config when passing package generated during `nav.{framework}.optimize` directly
+  to `nav.package.optimize` command
 - Other minor fixes and improvements
 
+[//]: <> (put here on external component update with short summary what change or link to changelog)
+
 - Version of external components used during testing:
-  - [PyTorch 2.1.0a0+4136153](https://github.com/pytorch/pytorch/commit/4136153)
-  - [TensorFlow 2.12.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.12.0)
-  - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
-  - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
-  - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.47.1
-  - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.26
-  - [tf2onnx v1.14.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0)
-  - Other component versions depend on the used framework containers versions.
-    See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
-    for a detailed summary.
+    - [PyTorch 2.1.0a0+4136153](https://github.com/pytorch/pytorch/commit/4136153)
+    - [TensorFlow 2.12.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.12.0)
+    - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+    - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.47.1
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.26
+    - [tf2onnx v1.14.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0)
+    - Other component versions depend on the used framework containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
 
 ## 0.5.6
+
 - fix: Load samples as sorted to keep valid order
 - fix: Execute conversion when model already exists in path
 - Other minor fixes and improvements
@@ -268,19 +322,19 @@ limitations under the License.
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 
 - Version of external components used during testing:
-  - [PyTorch 2.1.0a0+fe05266f](https://github.com/pytorch/pytorch/commit/fe05266f)
-  - [TensorFlow 2.12.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.12.0)
-  - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
-  - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
-  - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.47.1
-  - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.26
-  - [tf2onnx v1.14.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0)
-  - Other component versions depend on the used framework containers versions.
-    See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
-    for a detailed summary.
-
+    - [PyTorch 2.1.0a0+fe05266f](https://github.com/pytorch/pytorch/commit/fe05266f)
+    - [TensorFlow 2.12.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.12.0)
+    - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+    - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.47.1
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.26
+    - [tf2onnx v1.14.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0)
+    - Other component versions depend on the used framework containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
 
 ## 0.5.5
+
 - new: Public `nav.utilities` module with UnpackedDataloader wrapper
 - new: Added support for strict flag in Torch custom config
 - new: Extended TensorRT custom config to support builder optimization level and hardware compatibility flags
@@ -289,19 +343,19 @@ limitations under the License.
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 
 - Version of external components used during testing:
-  - [PyTorch 2.1.0a0+fe05266f](https://github.com/pytorch/pytorch/commit/fe05266f)
-  - [TensorFlow 2.12.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.12.0)
-  - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
-  - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
-  - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.47.1
-  - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.26
-  - [tf2onnx v1.14.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0)
-  - Other component versions depend on the used framework containers versions.
-    See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
-    for a detailed summary.
-
+    - [PyTorch 2.1.0a0+fe05266f](https://github.com/pytorch/pytorch/commit/fe05266f)
+    - [TensorFlow 2.12.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.12.0)
+    - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+    - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.47.1
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.26
+    - [tf2onnx v1.14.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0)
+    - Other component versions depend on the used framework containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
 
 ## 0.5.4
+
 - new: Custom implementation for ONNX and TensorRT runners
 - new: Use CUDA 12 for JAX in unit tests and functional tests
 - new: Step-by-step examples
@@ -314,33 +368,34 @@ limitations under the License.
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 
 - Version of external components used during testing:
-  - [PyTorch 2.1.0a0+fe05266f](https://github.com/pytorch/pytorch/commit/fe05266f)
-  - [TensorFlow 2.12.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.12.0)
-  - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
-  - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
-  - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.47.1
-  - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.26
-  - [tf2onnx v1.14.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0)
-  - Other component versions depend on the used framework containers versions.
-    See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
-    for a detailed summary.
+    - [PyTorch 2.1.0a0+fe05266f](https://github.com/pytorch/pytorch/commit/fe05266f)
+    - [TensorFlow 2.12.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.12.0)
+    - [TensorRT 8.6.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+    - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.47.1
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.26
+    - [tf2onnx v1.14.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0)
+    - Other component versions depend on the used framework containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
 
 ## 0.5.3
+
 - fix: filter outputs using output_metadata in ONNX runners
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 
 - Version of external components used during testing:
-  - [PyTorch 2.0.0a0+1767026](https://github.com/pytorch/pytorch/commit/1767026)
-  - [TensorFlow 2.11.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.11.0)
-  - [TensorRT 8.5.3.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
-  - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
-  - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.44.2
-  - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.26
-  - [tf2onnx v1.14.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0)
-  - Other component versions depend on the used framework containers versions.
-    See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
-    for a detailed summary.
+    - [PyTorch 2.0.0a0+1767026](https://github.com/pytorch/pytorch/commit/1767026)
+    - [TensorFlow 2.11.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.11.0)
+    - [TensorRT 8.5.3.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+    - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.44.2
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.26
+    - [tf2onnx v1.14.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0)
+    - Other component versions depend on the used framework containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
 
 ## 0.5.2
 
@@ -353,16 +408,16 @@ limitations under the License.
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 
 - Version of external components used during testing:
-  - [PyTorch 2.0.0a0+1767026](https://github.com/pytorch/pytorch/commit/1767026)
-  - [TensorFlow 2.11.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.11.0)
-  - [TensorRT 8.5.3.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
-  - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
-  - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.44.2
-  - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.26
-  - [tf2onnx v1.14.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0)
-  - Other component versions depend on the used framework containers versions.
-    See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
-    for a detailed summary.
+    - [PyTorch 2.0.0a0+1767026](https://github.com/pytorch/pytorch/commit/1767026)
+    - [TensorFlow 2.11.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.11.0)
+    - [TensorRT 8.5.3.1](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+    - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.44.2
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.3.26
+    - [tf2onnx v1.14.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.14.0)
+    - Other component versions depend on the used framework containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
 
 ## 0.5.1
 
@@ -373,16 +428,16 @@ limitations under the License.
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 
 - Version of external components used during testing:
-  - [PyTorch 1.14.0a0+410ce96](https://github.com/pytorch/pytorch/commit/410ce96)
-  - [TensorFlow 2.11.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.11.0)
-  - [TensorRT 8.5.3](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
-  - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
-  - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.44.2
-  - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.4.6
-  - [tf2onnx v1.13.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.13.0)
-  - Other component versions depend on the used framework containers versions.
-    See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
-    for a detailed summary.
+    - [PyTorch 1.14.0a0+410ce96](https://github.com/pytorch/pytorch/commit/410ce96)
+    - [TensorFlow 2.11.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.11.0)
+    - [TensorRT 8.5.3](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+    - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.44.2
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.4.6
+    - [tf2onnx v1.13.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.13.0)
+    - Other component versions depend on the used framework containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
 
 ## 0.5.0
 
@@ -398,91 +453,94 @@ limitations under the License.
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 
 - Version of external components used during testing:
-  - [PyTorch 1.14.0a0+410ce96](https://github.com/pytorch/pytorch/commit/410ce96)
-  - [TensorFlow 2.11.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.11.0)
-  - [TensorRT 8.5.3](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
-  - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
-  - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.44.2
-  - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.4.6
-  - [tf2onnx v1.13.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.13.0)
-  - Other component versions depend on the used framework containers versions.
-    See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
-    for a detailed summary.
-
+    - [PyTorch 1.14.0a0+410ce96](https://github.com/pytorch/pytorch/commit/410ce96)
+    - [TensorFlow 2.11.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.11.0)
+    - [TensorRT 8.5.3](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+    - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.44.2
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.4.6
+    - [tf2onnx v1.13.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.13.0)
+    - Other component versions depend on the used framework containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
 
 ## 0.4.4
- - fix: when exporting single input model to saved model, unwrap one element list with inputs
+
+- fix: when exporting single input model to saved model, unwrap one element list with inputs
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 
 - Version of external components used during testing:
-  - [PyTorch 1.14.0a0+410ce96](https://github.com/pytorch/pytorch/commit/410ce96)
-  - [TensorFlow 2.11.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.11.0)
-  - [TensorRT 8.5.3](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
-  - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
-  - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.44.2
-  - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.4.6
-  - [tf2onnx v1.13.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.13.0)
-  - Other component versions depend on the used framework containers versions.
-    See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
-    for a detailed summary.
-
+    - [PyTorch 1.14.0a0+410ce96](https://github.com/pytorch/pytorch/commit/410ce96)
+    - [TensorFlow 2.11.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.11.0)
+    - [TensorRT 8.5.3](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+    - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.44.2
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.4.6
+    - [tf2onnx v1.13.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.13.0)
+    - Other component versions depend on the used framework containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
 
 ## 0.4.3
- - fix: in Keras inference use model.predict(tensor) for single input models
+
+- fix: in Keras inference use model.predict(tensor) for single input models
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 
 - Version of external components used during testing:
-  - [PyTorch 1.14.0a0+410ce96](https://github.com/pytorch/pytorch/commit/410ce96)
-  - [TensorFlow 2.11.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.11.0)
-  - [TensorRT 8.5.3](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
-  - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
-  - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.44.2
-  - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.4.6
-  - [tf2onnx v1.13.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.13.0)
-  - Other component versions depend on the used framework containers versions.
-    See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
-    for a detailed summary.
+    - [PyTorch 1.14.0a0+410ce96](https://github.com/pytorch/pytorch/commit/410ce96)
+    - [TensorFlow 2.11.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.11.0)
+    - [TensorRT 8.5.3](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+    - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.44.2
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.4.6
+    - [tf2onnx v1.13.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.13.0)
+    - Other component versions depend on the used framework containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
 
 ## 0.4.2
- - fix: loading configuration for trt_profile from package
- - fix: missing reproduction scripts and logs inside package
- - fix: invalid model path in reproduction script for ONNX to TRT conversion
- - fix: collecting metadata from ONNX model in main thread during ONNX to TRT conversion
+
+- fix: loading configuration for trt_profile from package
+- fix: missing reproduction scripts and logs inside package
+- fix: invalid model path in reproduction script for ONNX to TRT conversion
+- fix: collecting metadata from ONNX model in main thread during ONNX to TRT conversion
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 
 - Version of external components used during testing:
-  - [PyTorch 1.14.0a0+410ce96](https://github.com/pytorch/pytorch/commit/410ce96)
-  - [TensorFlow 2.11.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.11.0)
-  - [TensorRT 8.5.3](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
-  - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
-  - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.44.2
-  - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.4.6
-  - [tf2onnx v1.13.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.13.0)
-  - Other component versions depend on the used framework containers versions.
-    See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
-    for a detailed summary.
+    - [PyTorch 1.14.0a0+410ce96](https://github.com/pytorch/pytorch/commit/410ce96)
+    - [TensorFlow 2.11.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.11.0)
+    - [TensorRT 8.5.3](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+    - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.44.2
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.4.6
+    - [tf2onnx v1.13.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.13.0)
+    - Other component versions depend on the used framework containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
 
 ## 0.4.1
- - fix: when specified use dynamic axes from custom OnnxConfig
+
+- fix: when specified use dynamic axes from custom OnnxConfig
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 
 - Version of external components used during testing:
-  - [PyTorch 1.14.0a0+410ce96](https://github.com/pytorch/pytorch/commit/410ce96)
-  - [TensorFlow 2.11.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.11.0)
-  - [TensorRT 8.5.2.2](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
-  - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
-  - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.43.1
-  - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.4.6
-  - [tf2onnx v1.13.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.13.0)
-  - Other component versions depend on the used framework containers versions.
-    See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
-    for a detailed summary.
+    - [PyTorch 1.14.0a0+410ce96](https://github.com/pytorch/pytorch/commit/410ce96)
+    - [TensorFlow 2.11.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.11.0)
+    - [TensorRT 8.5.2.2](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+    - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.43.1
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.4.6
+    - [tf2onnx v1.13.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.13.0)
+    - Other component versions depend on the used framework containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
 
 ## 0.4.0
+
 - new: `optimize` method that replace `export` and perform max batch size search and improved profiling during process
 - new: Introduced custom configs in `optimize` for better parametrization of export/conversion commands
 - new: Support for adding user runners for model correctness and profiling
@@ -496,16 +554,16 @@ limitations under the License.
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 
 - Version of external components used during testing:
-  - [PyTorch 1.14.0a0+410ce96](https://github.com/pytorch/pytorch/commit/410ce96)
-  - [TensorFlow 2.11.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.11.0)
-  - [TensorRT 8.5.2.2](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
-  - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
-  - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.43.1
-  - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.4.6
-  - [tf2onnx v1.13.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.13.0)
-  - Other component versions depend on the used framework containers versions.
-    See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
-    for a detailed summary.
+    - [PyTorch 1.14.0a0+410ce96](https://github.com/pytorch/pytorch/commit/410ce96)
+    - [TensorFlow 2.11.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.11.0)
+    - [TensorRT 8.5.2.2](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+    - [ONNX Runtime 1.13.1](https://github.com/microsoft/onnxruntime/tree/v1.13.1)
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.43.1
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.4.6
+    - [tf2onnx v1.13.0](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.13.0)
+    - Other component versions depend on the used framework containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
 
 ## 0.3.8
 
@@ -805,7 +863,7 @@ limitations under the License.
       process is interrupted by the user
     - TF-TRT conversion lost outputs shapes info
 
-## 0.2.4 (2021-12-07)
+## 0.2.4
 
 - Updated NVIDIA containers defaults to 21.10
 - Fixed generating profiling data when `dtypes` are not passed
@@ -838,7 +896,7 @@ limitations under the License.
       process is interrupted by the user
     - TF-TRT conversion lost outputs shapes info
 
-## 0.2.3 (2021-11-10)
+## 0.2.3
 
 - Updated NVIDIA containers defaults to 21.09
 - Improved naming of arguments specific for TensorRT conversion and acceleration with backward compatibility
@@ -883,7 +941,7 @@ limitations under the License.
     - no verification of conversion results for conversions: TF -> ONNX, TorchScript -> ONNX
     - possible to define a single profile for TensorRT
 
-## 0.2.2 (2021-09-06)
+## 0.2.2
 
 - Updated NVIDIA containers defaults to 21.08
 
@@ -908,7 +966,7 @@ limitations under the License.
     - no verification of conversion results for conversions: TF -> ONNX, TorchScript -> ONNX
     - possible to define a single profile for TensorRT
 
-## 0.2.1 (2021-08-17)
+## 0.2.1
 
 - Fixed triton-model-config error when tensorrt_capture_cuda_graph flag is not passed
 - Dump Conversion Comparator inputs and outputs into JSON files
@@ -939,7 +997,7 @@ limitations under the License.
     - possible to define a single profile for TensorRT
     - TensorRT backend acceleration not supported for ONNX Runtime in Triton Inference Server ver. 21.07
 
-## 0.2.0 (2021-07-05)
+## 0.2.0
 
 - comprehensive refactor of command-line API in order to provide more gradual
   pipeline steps execution
@@ -966,11 +1024,11 @@ limitations under the License.
         - workaround: use PyTorch containers newer than 21.03
     - possible to define a single profile for TensorRT
 
-## 0.1.1 (2021-04-12)
+## 0.1.1
 
 - documentation update
 
-## 0.1.0 (2021-04-09)
+## 0.1.0
 
 - Release of main components:
     - Model Converter - converts the model to a set of variants optimized for inference or to be later optimized by

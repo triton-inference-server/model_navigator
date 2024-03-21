@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 [project]
 name = "triton-model-navigator"
 readme = "docs/pypi.rst"
-description = "Triton Model Navigator provides tools supporting to create Deep Learning production ready inference models"
+description = "Triton Model Navigator: An inference toolkit for optimizing and deploying machine learning models and pipelines on the Triton Inference Server and PyTriton."
 dynamic = ["version"]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -34,7 +34,7 @@ classifiers = [
 ]
 authors = []
 maintainers = []
-keywords = ["triton", "inference", "server", "service", "nvidia", "tensorrt", "onnx", "tensorflow", "pytorch", "jax"]
+keywords = ["triton", "inference", "server", "pytriton", "inference", "optimization", "service", "nvidia", "tensorrt", "onnx", "tensorflow", "pytorch", "jax"]
 license = { text = "Apache 2.0" }
 requires-python = ">=3.8,<4"
 dependencies = [

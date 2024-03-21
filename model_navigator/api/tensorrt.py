@@ -53,7 +53,7 @@ def optimize(
     debug: bool = False,
     verify_func: Optional[VerifyFunction] = None,
 ) -> Package:
-    """Function executes correctness test, performance profling and optional verification on provided TensorRT model.
+    """Function executes correctness test, performance profiling and optional verification on provided TensorRT model.
 
     Args:
         model: TensorRT model path or string

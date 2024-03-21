@@ -32,7 +32,7 @@ Base formats are:
 * ONNX:
     * ONNX
 
-We recommend running this example in NVIDIA NGC [PyTorch containter](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch). To run the example simply run the `optimize.py` script:
+We recommend running this example in NVIDIA NGC [PyTorch container](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch). To run the example, simply run the `optimize.py` script:
 
 ```bash
 ./optimize.py --output-path linear.nav

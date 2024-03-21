@@ -46,7 +46,7 @@ def _get_custom_config(
 
 
 class ModelConfigBuilder:
-    """Class used for generating model configuraitons."""
+    """Class used for generating model configurations."""
 
     @staticmethod
     def generate_model_config(

@@ -68,5 +68,5 @@ class BaseSpecializedModelConfig(abc.ABC):
     @property
     @abc.abstractmethod
     def backend(self) -> Backend:
-        """Backend property that has to be overriden by specialized configs."""
+        """Backend property that has to be overridden by specialized configs."""
         raise NotImplementedError()

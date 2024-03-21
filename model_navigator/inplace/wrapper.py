@@ -34,7 +34,7 @@ class Module(wrapt.ObjectProxy):
     """Inplace Optimize module wrapper.
 
     This class wraps a torch module and provides inplace optimization functionality.
-    Depening on the configuration set in config, the module will be
+    Depending on the configuration set in config, the module will be
     optimized, recorded, or passed through.
 
     This wrapper can be used in place of a torch module, and will behave
@@ -143,7 +143,7 @@ class Module(wrapt.ObjectProxy):
 
     def load_optimized(self, strategy: Optional[RuntimeSearchStrategy] = None, activate_runners: bool = True) -> None:
         """Load optimized module."""
-        # TODO: Consider another validation for optimization status here. is_optimized propery is modified by loading passthrough.
+        # TODO: Consider another validation for optimization status here. is_optimized property is modified by loading passthrough.
         # if not self.is_optimized:
         #     raise ModelNavigatorModuleNotOptimizedError(f"Module {self.name} is not optimized.")
         self._wrapper = OptimizedModule(
@@ -186,7 +186,7 @@ def module(
     """Inplace Optimize module wrapper decorator.
 
     This decorator wraps a torch module and provides inplace optimization functionality.
-    Depening on the configuration set in config, the module will be
+    Depending on the configuration set in config, the module will be
     optimized, recorded, or passed through.
 
     This wrapper can be used in place of a torch module, and will behave

@@ -16,9 +16,9 @@ limitations under the License.
 
 # Optimize model and use for offline inference
 
-In this example we show to obtain runner from `.nav` package and use it for inference.
+In this example, we show to obtain runner from `.nav` package and use it for inference.
 
-We recommend running this example in NVIDIA NGC [PyTorch containter](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch). To run the example simply run the `optimize.py` script:
+We recommend running this example in NVIDIA NGC [PyTorch container](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch). To run the example, simply run the `optimize.py` script:
 
 ```bash
 ./optimize.py

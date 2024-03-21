@@ -113,8 +113,8 @@ class ConvertSavedModel2TFTRT(Convert2TensorRTWithMaxBatchSizeSearch):
         """Run conversion from SavedModel to Tensorflow-TensorRT.
 
         Args:
-            max_workspace_size (int): TRT max workspaze size in bytes.
-            minimum_segment_size (int): TRT minimu segment size.
+            max_workspace_size (int): TRT max workspace size in bytes.
+            minimum_segment_size (int): TRT minium segment size.
             workspace (Path): navigator workspace.
             path (Path): Tensorflow-TensorRT target path.
             parent_path (Path): SavedModel path.
@@ -124,7 +124,7 @@ class ConvertSavedModel2TFTRT(Convert2TensorRTWithMaxBatchSizeSearch):
             batch_dim (Optional[int], optional): Batching axis.. Defaults to None.
             dataloader_max_batch_size (Optional[int], optional): Maximum batch size from the dataloader.
                 Defaults to None.
-            device_max_batch_size (Optional[int], optional): Maximu batch size that fits on the device.
+            device_max_batch_size (Optional[int], optional): Maximum batch size that fits on the device.
                 Defaults to None.
             optimized_trt_profiles: List of TensorRT profiles that will be used by Model Navigator for conversion, user provided or optimized by TensorRTProfileBuilder command.
             custom_args (Optional[Dict[str, Any]], optional): Passthrough parameters for TrtGraphConverterV2

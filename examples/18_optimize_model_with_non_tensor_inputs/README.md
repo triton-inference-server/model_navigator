@@ -16,14 +16,14 @@ limitations under the License.
 
 # Optimize model with non-tensor inputs.
 
-In this example we show how to optimize a model with non-tensor inputs. We differentiate two categories of non-tensor inputs:
+In this example, we show how to optimize a model with non-tensor inputs. We differentiate two categories of non-tensor inputs:
 
 - tuples, lists and dictionaries - those are fully supported by the Model Navigator, but might not be supported by the underlying technologies (e.g. torchscript).
-- primitive types (integers, floats, strings and booleans) - those are currently only supported when they are consistent across all samples in the dataloader. For example if the first sample is `{"input_1": <some tensor>, "input_2": False}` all other samples also must have `input_2` set to `False`. This restriction will be lifted in the future.
+- primitive types (integers, floats, strings and booleans) - those are currently only supported when they are consistent across all samples in the dataloader. For example, if the first sample is `{"input_1": <some tensor>, "input_2": False}` all other samples also must have `input_2` set to `False`. This restriction will be lifted in the future.
 
 In the `optimize.py` both categories are used.
 
-We recommend running this example in NVIDIA NGC [PyTorch containter](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch). To run the example simply run the `optimize.py` script:
+We recommend running this example in NVIDIA NGC [PyTorch container](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch). To run the example, simply run the `optimize.py` script:
 
 ```bash
 ./optimize.py

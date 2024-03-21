@@ -28,7 +28,7 @@ def get_model():
 
 
 def get_dataloader():
-    """Returns a ramdom dataloader containing 10 batches of 3x5 tensors"""
+    """Returns a random dataloader containing 10 batches of 3x5 tensors"""
     return [torch.randn(3, 5) for _ in range(10)]
 
 
@@ -76,7 +76,7 @@ def get_onnx_config():
 def get_tensortrt_config():
     """Get TensorRT config for the model export and conversion
 
-    Use only FP32 precision and 8589934592 byts (8 GB) of workspace size.
+    Use only FP32 precision and 8589934592 bytes (8 GB) of workspace size.
     """
     return nav.TensorRTConfig(
         precision=(nav.TensorRTPrecision.FP32,),

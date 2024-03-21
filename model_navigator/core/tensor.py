@@ -48,7 +48,7 @@ class TensorSpec:
     Both arguments should be passed as keyword arguments.
 
     Example of use:
-        tensor_sepc = TensorSpec(
+        tensor_spec = TensorSpec(
         name="images",
         dtype=np.dtype("uint8"),
         shape=(-1, 28, 28, 1)
@@ -254,7 +254,7 @@ class PyTreeMetadata:
         return str(self._metadata)
 
     def __eq__(self, __value: object) -> bool:
-        """Compare PyTree metadatas."""
+        """Compare PyTree metadata."""
         if not isinstance(__value, type(self)):
             return False
         return self._metadata == __value._metadata
@@ -546,7 +546,7 @@ class TensorMetadata(Dict[str, TensorSpec]):
 
     @property
     def dynamic_axes(self) -> Dict:
-        """Return information for shapes with dynamic axies per each tensor."""
+        """Return information for shapes with dynamic axes per each tensor."""
         dynamic_axes = defaultdict(list)
         for name, tensor_spec in self.items():
             for ax, d in enumerate(tensor_spec.shape):

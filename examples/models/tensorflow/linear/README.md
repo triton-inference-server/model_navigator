@@ -16,7 +16,7 @@ limitations under the License.
 
 # TensorFlow Linear Model
 
-In this example we show how to optimize tensorflow linear model. We recommend running this example in NVIDIA NGC [TensorFlow2 containter](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/tensorflow). To run the example simply run the `optimize.py` script:
+In this example, we show how to optimize TensorFlow linear model. We recommend running this example in NVIDIA NGC [TensorFlow2 container](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/tensorflow). To run the example, simply run the `optimize.py` script:
 
 ```bash
 ./optimize.py --output-path linear.nav

@@ -35,7 +35,7 @@ def convert(
 ) -> None:
     """Convert SavedModel to Tensorflow-TensorRT model.
 
-    For detaild explenation of TensorRT arguments please refer to [documentation]
+    For detailed explanation of TensorRT arguments please refer to [documentation]
     [documentation]: https://docs.nvidia.com/deeplearning/frameworks/tf-trt-user-guide/index.html
 
 

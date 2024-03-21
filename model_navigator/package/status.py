@@ -269,7 +269,7 @@ class StatusDictUpdater:
             data_dict["export_config"]["optimization_profile"] = default_val
         if (
             "git_info" not in data_dict
-        ):  # FIXME problably git_info should be removed from package updater - git_info no longer saved in status.yaml
+        ):  # FIXME probably git_info should be removed from package updater - git_info no longer saved in status.yaml
             data_dict["git_info"] = {}
 
     def _update_from_v0_1_2(self, data_dict: Dict[str, Any]):

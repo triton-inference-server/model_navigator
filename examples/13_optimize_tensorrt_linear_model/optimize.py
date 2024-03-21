@@ -20,7 +20,7 @@ import model_navigator as nav
 
 
 def get_dataloader():
-    """Returns a ramdom dataloader containing 10 batches of 3x5 tensors"""
+    """Returns a random dataloader containing 10 batches of 3x5 tensors"""
     return [{"input": np.random.rand(3, 5).astype("float32")} for _ in range(10)]
 
 

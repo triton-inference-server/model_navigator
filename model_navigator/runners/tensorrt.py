@@ -41,7 +41,7 @@ torch = module.lazy_import("torch")
 
 
 class FormattedArray:
-    """Representes an array whose semantic shape differs from its physical size in memory.
+    """Represents an array whose semantic shape differs from its physical size in memory.
 
     [EXPERIMENTAL, UNTESTED] This API is experimental and untested and may be significantly
     modified in future releases. Use with caution!
@@ -623,7 +623,7 @@ class TensorRTRunner(NavigatorRunner):
 
         Do not call this method directly - use ``deactivate()`` instead,
 
-        Deactive the runner by freeing all resources.
+        Deactivate the runner by freeing all resources.
         """
         with contextlib.ExitStack() as stack:
             if self.owns_engine:

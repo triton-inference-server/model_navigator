@@ -64,9 +64,9 @@ def main():
 
     logger.info("Optimize package.")
     """
-    Re-run the conversions, correctmness tests and profiling from existing package.
+    Re-run the conversions, correctness tests and profiling from existing package.
     Optimization creates new package.
-    `package` API together with `save`, `load' and `optimize` methods helps with transfering models.
+    `package` API together with `save`, `load' and `optimize` methods helps with transferring models.
     It is possible to save the package, load it on different machine and run the optimization again.
     """
     package = nav.package.optimize(

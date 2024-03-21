@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,17 +16,15 @@ limitations under the License.
 
 # Installation
 
-This section describes how to install the tool. We assume you are comfortable with Python programming language
-and familiar with Machine Learning models.
-
 ## Prerequisites
 
-The following prerequisites must be fulfilled to use Triton Model Navigator
+Before proceeding with the installation of the Triton Model Navigator, ensure your system meets the following criteria:
 
-- Installed Python `3.8+`
-- Installed [NVIDIA TensorRT](https://developer.nvidia.com/tensorrt) for TensorRT models export.
+- **Operating System**: Linux (Ubuntu 20.04+ recommended)
+- **Python**: Version `3.8` or newer
+- NVIDIA GPU
 
-We recommend to use NGC Containers for PyTorch and TensorFlow which provide have all necessary dependencies:
+You can use NGC Containers for PyTorch and TensorFlow which contain all necessary dependencies:
 
 - [PyTorch](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch)
 - [TensorFlow](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/tensorflow)
@@ -40,50 +38,74 @@ The library can be installed in:
 The NVIDIA optimized Docker images for Python frameworks could be obtained
 from [NVIDIA NGC Catalog](https://catalog.ngc.nvidia.com/containers).
 
-For using NVIDIA optimized Docker images we recommend to
-install [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/overview.html) to
+For using NVIDIA optimized Docker images, we recommend installing
+[NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/overview.html) to
 run model inference on NVIDIA GPU.
 
-## Installation
-The package can be installed from `pypi.org` using extra index url:
+## Install
 
+The Triton Model Navigator can be installed from `pypi.org`.
+
+### Installing with PyTorch extras
+
+For installing with PyTorch dependencies, use:
 
 ```shell
-pip install -U --extra-index-url https://pypi.ngc.nvidia.com triton-model-navigator[<extras,>]
+pip install -U --extra-index-url https://pypi.ngc.nvidia.com triton-model-navigator[torch]
 ```
 
 or with nvidia-pyindex:
 
 ```shell
 pip install nvidia-pyindex
-pip install -U triton-model-navigator[<extras,>]
+pip install -U triton-model-navigator[torch]
 ```
 
-To install Triton Model Navigator from source use pip command:
+### Installing with TensorFlow extras
+
+For installing with TensorFlow dependencies, use:
 
 ```shell
-$ pip install --extra-index-url https://pypi.ngc.nvidia.com .[<extras,>]
+pip install -U --extra-index-url https://pypi.ngc.nvidia.com triton-model-navigator[tensorflow]
 ```
 
-Extras:
+or with nvidia-pyindex:
 
-- `tensorflow` - Model Navigator with dependencies for TensorFlow2
-- `jax` - Model Navigator with dependencies for JAX
+```shell
+pip install nvidia-pyindex
+pip install -U triton-model-navigator[tensorflow]
+```
 
-For using with PyTorch no extras are needed.
+
+
+### Installing with JAX extras (experimental)
+
+For installing with JAX dependencies, use:
+
+```shell
+pip install -U --extra-index-url https://pypi.ngc.nvidia.com triton-model-navigator[jax]
+```
+
+or with nvidia-pyindex:
+
+```shell
+pip install nvidia-pyindex
+pip install -U triton-model-navigator[jax]
+```
 
 ## Building the wheel
 
-The Triton Model Navigator can be built as a wheel. For that purpose the `Makefile` provides necessary commands.
+The Triton Model Navigator can be built as a wheel. We have prepared all necessary steps under `Makefile` command.
 
-The first is required to install necessary packages to perform build.
-```
+Firstly, install the Triton Model Navigator with development packages:
+```shell
 make install-dev
 ```
 
-Once the environment contain required packages run:
+Next, simply run:
+
 ```shell
 make dist
 ```
 
-The wheel is going to be generated in the `dist` catalog.
+The wheel will be generated in the `dist` catalog.

@@ -16,7 +16,7 @@ limitations under the License.
 
 # PyTriton Torch linear model deployment
 
-This example show how to optimize simple linear model and deploy it to PyTriton.
+This example, shows how to optimize a simple linear model and deploy it to PyTriton.
 
 ## Requirements
 
@@ -31,7 +31,7 @@ Or you can use NVIDIA Torch container:
 docker run -it --gpus 1 --shm-size 8gb -v ${PWD}:${PWD} -w ${PWD} nvcr.io/nvidia/pytorch:23.01-py3 bash
 ```
 
-If you select to use container we recommend to install
+If you select to use container, we recommend installing
 [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/overview.html).
 
 ## Install the Model Navigator
@@ -46,17 +46,17 @@ pip install --extra-index-url https://pypi.ngc.nvidia.com .[torch]
 
 ## Run model optimization
 
-In next step the optimize process is going to be performed for the model.
+In the next step, the optimize process will be performed for the model.
 
 ```bash
 python examples/triton/optimize.py
 ```
 
-Once the process is done, the `linear.nav` package is created in current working directory.
+Once the process is done, the `linear.nav` package is created in the current working directory.
 
 ## Start PyTriton server
 
-This step starts PyTriton server with package generated in previous step.
+This step starts PyTriton server with the package generated in the previous step.
 
 ```bash
 ./serve.py

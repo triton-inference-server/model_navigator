@@ -14,9 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-# Huggingface BERT Model
+# HuggingFace BERT Model
 
-In this example we show how to optimize BERT model from Huggingface repository. We recommend running this example in NVIDIA NGC [PyTorch containter](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch).
+In this example, we show how to optimize the BERT model from HuggingFace repository. We recommend running this example in NVIDIA NGC [PyTorch container](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch).
 
 ## Install dependencies
 

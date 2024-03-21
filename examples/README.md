@@ -38,7 +38,7 @@ the [PyTriton](https://github.com/triton-inference-server/pytriton) and [Triton 
 
 
 ## Example models
-Inside [example/models](../examples/models/) directory you can find ready to use example models in various frameworks.
+Inside the [example/models](../examples/models/) directory you can find ready to use example models in various frameworks.
 
 `Python`:
 - [Identity Model](../examples/models/python/identity)

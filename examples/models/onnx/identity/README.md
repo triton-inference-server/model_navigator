@@ -16,7 +16,7 @@ limitations under the License.
 
 # Torch Linear Model
 
-In this example we show how to optimize onnx identity model. We recommend running this example in NVIDIA NGC [PyTorch](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch) or [TensorFlow2](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/tensorflow) container. To run the example simply run the `optimize.py` script:
+In this example, we show how to optimize ONNX identity model. We recommend running this example in NVIDIA NGC [PyTorch](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch) or [TensorFlow2](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/tensorflow) container. To run the example, simply run the `optimize.py` script:
 
 ```bash
 ./optimize.py

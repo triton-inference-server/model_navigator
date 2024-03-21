@@ -16,7 +16,7 @@ limitations under the License.
 
 # NVIDIA Deep Learning Examples ResNet50 Model
 
-In this example we show how to optimize ResNet50 model from [Deep Learning Examples](https://github.com/NVIDIA/DeepLearningExamples) repository. We recommend running this example in NVIDIA NGC [PyTorch containter](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch).
+In this example, we show how to optimize the ResNet50 model from the [Deep Learning Examples](https://github.com/NVIDIA/DeepLearningExamples) repository. We recommend running this example in NVIDIA NGC [PyTorch container](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch).
 
 ## Install dependencies and download the model repository and the dataset
 
@@ -24,7 +24,7 @@ In this example we show how to optimize ResNet50 model from [Deep Learning Examp
 . ./install.sh
 ```
 
-This script downloads the model repository and dummy version of ImageNet dataset. To use the origina ImageNet dataset on which the model was trained on please follow [instructions](https://github.com/NVIDIA/DeepLearningExamples/blob/master/PyTorch/Classification/ConvNets/resnet50v1.5/README.md#2-download-and-preprocess-the-dataset) from the model repository and in the next step specify the dataset directory with `--data-path` argument.
+This script downloads the model repository and dummy version of ImageNet dataset. To use the original ImageNet dataset on which the model was trained on, please follow [instructions](https://github.com/NVIDIA/DeepLearningExamples/blob/master/PyTorch/Classification/ConvNets/resnet50v1.5/README.md#2-download-and-preprocess-the-dataset) from the model repository and in the next step specify the dataset directory with `--data-path` argument.
 
 ## Run optimization
 

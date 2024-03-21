@@ -67,7 +67,7 @@ class TolerancePerOutputName(Dict[str, Tolerance]):
 
     @classmethod
     def from_json(cls, data: List[Dict]) -> "TolerancePerOutputName":
-        """Intantiate TolerancePerOutputName from a list of ditionaries.
+        """Instantiate TolerancePerOutputName from a list of dictionaries.
 
         Args:
             data (List): TolerancePerOutputName data.

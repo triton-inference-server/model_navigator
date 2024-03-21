@@ -16,12 +16,12 @@ limitations under the License.
 
 # Profile Python function
 
-In this example we show how to profile any Python function.
+In this example, we show how to profile any Python function.
 
-We recommend running this example in NVIDIA NGC [PyTorch containter](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch).
+We recommend running this example in NVIDIA NGC [PyTorch container](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch).
 The Python script `profile.py` runs profiling of provided Python function.
 
-To run the profiling run the script:
+To run the profiling, run the script:
 
 ```bash
 ./profile.py

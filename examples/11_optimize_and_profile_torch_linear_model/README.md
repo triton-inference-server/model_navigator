@@ -16,12 +16,12 @@ limitations under the License.
 
 # Optimize and Profile Torch linear model
 
-In this example we show how to optimize torch linear model and profile the generated models on separate dataloader.
+In this example, we show how to optimize torch linear model and profile the generated models on a separate dataloader.
 
 We recommend running this example in NVIDIA
-NGC [PyTorch containter](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch).
+NGC [PyTorch container](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch).
 
-To run the example simply run the `optimize.py` script:
+To run the example, simply run the `optimize.py` script:
 
 ```bash
 ./optimize.py

@@ -16,12 +16,12 @@ limitations under the License.
 
 # Optimize model and use zero-copy runners
 
-In this example we show how to Model Navigator Inplace Optimize to run optimized models in place of the original Python models.
+In this example, we show how to Model Navigator Inplace Optimize to run optimized models in place of the original Python models.
 
-We recommend running this example in NVIDIA NGC [PyTorch containter](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch).
+We recommend running this example in NVIDIA NGC [PyTorch container](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch).
 The Python script `optimize.py` wraps the Python model using Inplace Optimize and then runs profiling.
 
-To run the optimization and profiling run the script:
+To run the optimization and profiling, run the script:
 
 ```bash
 ./optimize.py

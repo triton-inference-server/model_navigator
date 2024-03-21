@@ -16,7 +16,7 @@ limitations under the License.
 
 # Torch Linear Model
 
-In this example we show how to optimize torch linear model. We recommend running this example in NVIDIA NGC [PyTorch containter](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch). To run the example simply run the `optimize.py` script:
+In this example, we show how to optimize Torch linear model. We recommend running this example in NVIDIA NGC [PyTorch container](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch). To run the example, simply run the `optimize.py` script:
 
 ```bash
 ./optimize.py --output-path linear.nav

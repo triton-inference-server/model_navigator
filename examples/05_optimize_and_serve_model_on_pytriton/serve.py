@@ -20,7 +20,7 @@ import model_navigator as nav
 
 
 def main():
-    """Load pacakge and serve it on PyTriton"""
+    """Load package and serve it on PyTriton"""
 
     package = nav.package.load("linear.nav", "load_workspace")
 

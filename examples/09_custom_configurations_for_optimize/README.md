@@ -16,12 +16,12 @@ limitations under the License.
 
 # Custom configurations for Model Navigator optimize
 
-In this example we show how to customize paramters of Model Navigator optimization process.
-User can control paramters of exported and converted models, profiling options and more.
+In this example, we show how to customize parameters of the Model Navigator optimization process.
+User can control parameters of exported and converted models, profiling options and more.
 
-Example shows some configuration options and the rest can be found in documentation.
+The example shows some configuration options, and the rest can be found in the documentation.
 
-We recommend running this example in NVIDIA NGC [PyTorch containter](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch). To run the example simply run the `optimize.py` script:
+We recommend running this example in NVIDIA NGC [PyTorch container](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch). To run the example, simply run the `optimize.py` script:
 
 ```bash
 ./optimize.py

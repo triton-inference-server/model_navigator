@@ -36,12 +36,12 @@ class ProfileType(Enum):
         MIN_LATENCY: Profile with minimum latency, min = 1, opt = 1, max = 1
         OPT_LATENCY: Profile with optimal latency. Shapes are calculated based on the latency cutoff threshold.
             This profile gives maximal throughput with latency below the cutoff threshold.
-            Default latency cutoff treshold is equal to 0.1 (10%) and it's mean that if latency increase by at least 10% then threshold is exceeded.
+            Default latency cutoff threshold is equal to 0.1 (10%) and it's mean that if latency increase by at least 10% then threshold is exceeded.
             Latency cutoff threshold is used to find profile producing model with optimal latency. Shapes larger that this one cause latency to rapidly increase (more than 10%).
         LATENCY_BUDGET: Profile with latency constrained by latency budget.
             This profiles gives maximal throughput with latency below the latency budget.
         MAX_THROUGHPUT: Profile optimized for high throughput. Shapes are calculated based on the throughput cutoff threshold equal to 0.05 (5%).
-            This profile is selected based on comparioson of current batch size throughput and next batch size throughput and the difference must be smaller than 5% to select current batch size.
+            This profile is selected based on comparison of current batch size throughput and next batch size throughput and the difference must be smaller than 5% to select current batch size.
         MAX_THROUGHPUT_STATIC: Profile optimized for high throughput. Similar to MAX_THROUGHPUT except all shapes (min, opt, max) are equal.
         FALLBACK: Profile with fallback shape. Safe shape that tried to utilize all memory available on the device.
     """

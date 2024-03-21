@@ -1,4 +1,4 @@
-# Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,101 +13,115 @@
 # limitations under the License.
 site_name: Triton Model Navigator
 theme:
-  name: material
-  custom_dir: docs/overrides
-  logo: assets/logo.png
-  favicon: assets/favicon.png
-  palette:
-      primary: black
-  features:
-    - navigation.top
+    name: material
+    custom_dir: docs/overrides
+    logo: assets/logo.png
+    favicon: assets/favicon.png
+    palette:
+        primary: black
+    features:
+        - navigation.top
+        - navigation.tabs
+        - navigation.tabs.sticky
+        - navigation.expand
+        - navigation.sections
 extra_css:
-  - assets/styles.css
+    - assets/styles.css
 repo_url: https://github.com/triton-inference-server/model_navigator
 repo_name: Git Repository
 plugins:
-  - autorefs
-  - htmlproofer
-  - mike
-  - mkdocstrings:
-      enable_inventory: true
-      handlers:
-        python:
-          import:
-            - https://docs.python.org/3/objects.inv
-          options:
-            docstring_style: google
-            show_root_heading: true
-            heading_level: 2
-            line_length: 120
-            docstring_section_style: list
-            merge_init_into_class: true
-            separate_signature: true
-            inherited_members: true
-  - search
+    - autorefs
+    - htmlproofer
+    - mike
+    -   mkdocstrings:
+            enable_inventory: true
+            handlers:
+                python:
+                    import:
+                        - https://docs.python.org/3/objects.inv
+                    options:
+                        docstring_style: google
+                        show_root_heading: true
+                        heading_level: 2
+                        line_length: 120
+                        docstring_section_style: list
+                        merge_init_into_class: true
+                        separate_signature: true
+                        inherited_members: true
+                        signature_crossrefs: true
+    - search
 watch:
-  - model_navigator
-  - docs
-  - mkdocs.yml
-  - LICENSE
-  - README.md
-  - CHANGELOG.md
-  - CONTRIBUTING.md
+    - model_navigator
+    - docs
+    - mkdocs.yml
+    - LICENSE
+    - README.md
+    - CHANGELOG.md
+    - CONTRIBUTING.md
 view_uri_template: blob/{ref}/{path}  # used by scripts/rewrite_links_to_repo.py hook
 hooks:
-  - scripts/rewrite_links_to_repo.py
+    - scripts/rewrite_links_to_repo.py
 extra:
-  version:
-    provider: mike
+    version:
+        provider: mike
 markdown_extensions:
-  - admonition
-  - pymdownx.details
-  - pymdownx.highlight:
-      anchor_linenums: true
-  - pymdownx.inlinehilite
-  - pymdownx.snippets
-  - pymdownx.superfences
+    - admonition
+    - pymdownx.details
+    -   pymdownx.highlight:
+            anchor_linenums: true
+    - pymdownx.inlinehilite
+    - pymdownx.snippets
+    - pymdownx.superfences
 nav:
-  - Home: README.md
-  - Installation: installation.md
-  - Quick start: quick_start.md
-  - Optimize Model:
-    - Using optimize: optimize/optimize.md
-    - Optimize API:
-      -   Config: optimize/config.md
-      -   JAX: optimize/jax.md
-      -   ONNX: optimize/onnx.md
-      -   TensorFlow 2: optimize/tensorflow.md
-      -   TensorRT: optimize/tensorrt.md
-      -   PyTorch: optimize/torch.md
-      -   Python: optimize/python.md
-    - Inplace Optimize: optimize/inplace.md
-  - Navigator Package:
-    - Using package: package/package.md
-    - Package API:
-      - Package: package/package_api.md
-      - Load: package/package_load_api.md
-      - Save: package/package_save_api.md
-      - Optimize: package/package_optimize_api.md
-      - Profile: package/package_profile_api.md
-  - Inference Deployment:
-    - PyTriton:
-        - Deploying models: pytriton/pytriton_deployment.md
-        - PyTritonAdapter API: pytriton/pytriton_adapter.md
-    - Triton Inference Server:
-        - Deploying models: triton/triton_deployment.md
-        - Model Store API:
-            - Adding Model: triton/adding_model.md
-            - Specialized Configs: triton/specialized_configs.md
-            - Instance Group: triton/instance_groups.md
-            - Inputs and Outputs: triton/inputs_and_outputs.md
-            - Dynamic Batcher: triton/dynamic_batcher.md
-            - Sequence Batcher: triton/sequence_batcher.md
-            - Accelerators: triton/accelerators.md
-            - Model Warmup: triton/warmup.md
-  - Utilities: utilities.md
-  - Examples: examples.md
-  - Changelog: CHANGELOG.md
-  - Known Issues: known_issues.md
-  - Contributing: CONTRIBUTING.md
-  - License: LICENSE.md
+    -   Learn:
+            -   Overview: README.md
+            -   Installation: installation.md
+            -   Quick start: quick_start.md
+            -   Support Matrix: support_matrix.md
+    -   Guides:
+            - Optimize Pipelines: pipelines_optimize/optimize/optimize.md
+            - Optimize Models: models_optimize/optimize/optimize.md
+            - Profile model or callable : pipelines_optimize/profile/profile.md
+            - Navigator Package: models_optimize/package/package.md
+            - Deployment on Pytriton: inference_deployment/pytriton/deployment.md
+            - Deployment on Triton Inference Server: inference_deployment/triton/deployment.md
+    -   Tutorials: examples.md
+    -   References:
+            -   Pipeline Optimize API:
+                    -   Module: pipelines_optimize/optimize/api/module.md
+                    -   Optimize: pipelines_optimize/optimize/api/optimize.md
+                    -   Config: pipelines_optimize/optimize/api/config.md
+            -   Profile API:
+                    -   Profile: pipelines_optimize/profile/api/profile.md
+            -   Model Optimize API:
+                    -   Config: models_optimize/optimize/api/config.md
+                    -   JAX: models_optimize/optimize/api/jax.md
+                    -   ONNX: models_optimize/optimize/api/onnx.md
+                    -   TensorFlow 2: models_optimize/optimize/api/tensorflow.md
+                    -   TensorRT: models_optimize/optimize/api/tensorrt.md
+                    -   PyTorch: models_optimize/optimize/api/torch.md
+                    -   Python: models_optimize/optimize/api/python.md
+            -   Navigator Package API:
+                    -   Package: models_optimize/package/api/package.md
+                    -   Load: models_optimize/package/api/package_load.md
+                    -   Save: models_optimize/package/api/package_save.md
+                    -   Optimize: models_optimize/package/api/package_optimize.md
+                    -   Profile: models_optimize/package/api/package_profile.md
+            -   PyTriton API:
+                    - Adapter: inference_deployment/pytriton/api/adapter.md
+                    - Deployment Config: inference_deployment/pytriton/api/config.md
+            -   Triton Model Store API:
+                    -   Adding Model: inference_deployment/triton/api/adding_model.md
+                    -   Specialized Configs: inference_deployment/triton/api/specialized_configs.md
+                    -   Instance Group: inference_deployment/triton/api/instance_groups.md
+                    -   Inputs and Outputs: inference_deployment/triton/api/inputs_and_outputs.md
+                    -   Dynamic Batcher: inference_deployment/triton/api/dynamic_batcher.md
+                    -   Sequence Batcher: inference_deployment/triton/api/sequence_batcher.md
+                    -   Accelerators: inference_deployment/triton/api/accelerators.md
+                    -   Model Warmup: inference_deployment/triton/api/warmup.md
+    -   Resources:
+
+            -   Changelog: CHANGELOG.md
+            -   Known Issues: known_issues.md
+            -   Contributing: CONTRIBUTING.md
+            -   License: LICENSE.md

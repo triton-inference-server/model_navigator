@@ -16,23 +16,23 @@ limitations under the License.
 
 # Optimize Torch linear model
 
-In this example we show how to optimize TensorRT linear model. We recommend running this example in NVIDIA NGC [PyTorch containter](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch).
+In this example, we show how to optimize TensorRT linear model. We recommend running this example in NVIDIA NGC [PyTorch container](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch).
 
 
-## Exmaple must be executed from it's directory
+## Example must be executed from its directory
 ```bash
 cd examples/13_optimize_tensorrt_linear_model
 ```
 
 ## Generate TensorRT model
-TensorRT plan must be generated on target machine.
+TensorRT plan must be generated on the target machine.
 
 ```bash
 python ./generate_tensorrt_model.py
 ```
 
 ## Run model optimization
-To run the example simply run the `optimize.py` script:
+To run the example, simply run the `optimize.py` script:
 
 ```bash
 python ./optimize.py

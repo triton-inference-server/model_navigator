@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Script for epxorting JAX model to SavedModel."""
+"""Script for exporting JAX model to SavedModel."""
 
 import pathlib
 from typing import Callable, Dict, List, Optional
@@ -23,7 +23,7 @@ from jax.experimental import jax2tf  # pytype: disable=import-error
 
 
 def get_model() -> Callable:
-    """Get model inferece function.
+    """Get model inference function.
 
     Returns:
         Function to be exported.
@@ -35,7 +35,7 @@ def get_model_params():  # TODO what return type?
     """Get model parameters.
 
     Returns:
-        Model paramteres.
+        Model parameters.
     """
     raise NotImplementedError("Please implement the get_model_params() function to reproduce the export error.")
 

@@ -35,7 +35,7 @@ from model_navigator.utils.common import parse_kwargs_to_cmd
 
 
 class MaxBatchSizeFinder(Profiler):
-    """Overriden profiled for max batch size search."""
+    """Overridden profiled for max batch size search."""
 
     @property
     def _profiling_results_logging_level(self):

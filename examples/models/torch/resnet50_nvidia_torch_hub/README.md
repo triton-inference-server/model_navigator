@@ -16,7 +16,7 @@ limitations under the License.
 
 # Torch Hub NVIDIA ResNet50 Model
 
-In this example we show how to optimize NVIDIA ResNet50 model from Torch Hub. We recommend running this example in NVIDIA NGC [PyTorch containter](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch).
+In this example, we show how to optimize NVIDIA ResNet50 model from Torch Hub. We recommend running this example in NVIDIA NGC [PyTorch container](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch).
 
 ## Run optimization
 

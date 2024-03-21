@@ -346,7 +346,7 @@ class TimerComparator:
     def __init__(self) -> None:
         """Initialize TimerComparator."""
         super().__init__()
-        # TODO: Fix missing mode paramter
+        # TODO: Fix missing mode parameter
         self._original_timer_data = TimeData.load()
         self._optimized_timer_data = TimeData.load()
 

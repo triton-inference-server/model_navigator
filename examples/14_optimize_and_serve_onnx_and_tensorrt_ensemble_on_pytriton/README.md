@@ -14,9 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-# Optimize and serve ONXX and TensorRT ensemble on PyTriton
+# Optimize and serve ONNX and TensorRT ensemble on PyTriton
 
-In this example we show how optimize ONNX and TensorRT models and build zero-copy ensemble in PyTriton server.
+In this example, we show how to optimize ONNX and TensorRT models and build a zero-copy ensemble in PyTriton server.
 
 ## Requirements
 
@@ -31,7 +31,7 @@ Or you can use NVIDIA Torch container:
 docker run -it --gpus 1 --shm-size 8gb -v ${PWD}:${PWD} -w ${PWD} nvcr.io/nvidia/pytorch:22.12-py3 bash
 ```
 
-If you select to use container we recommend to install
+If you select to use container, we recommend installing
 [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/overview.html).
 
 ## Install the Model Navigator
@@ -42,15 +42,15 @@ Install the Triton Model Navigator following the installation guide for Torch:
 pip install --extra-index-url https://pypi.ngc.nvidia.com .[torch]
 ```
 
-**Note**: run this command from main catalog inside the repository
+**Note**: run this command from the main catalog inside the repository
 
-## Exmaple must be executed from it's directory
+## Example must be executed from its directory
 ```bash
 cd examples/14_optimize_and_serve_onnx_and_tensorrt_ensemble_on_pytriton
 ```
 
 ## Generate TensorRT model
-TensorRT plan must be generated on target machine.
+TensorRT plan must be generated on the target machine.
 
 ```bash
 python ./generate_tensorrt_model.py
@@ -58,7 +58,7 @@ python ./generate_tensorrt_model.py
 
 ## Run model optimization
 
-In next step the optimize process is going to be performed for the models.
+In the next step, the optimize process will be performed for the models.
 
 ```bash
 python ./optimize.py
@@ -68,12 +68,12 @@ Once the process is done, the `onnx_linear.nav` and `tensorrt_linear.nav` packag
 
 ## Serving model with NVIDIA PyTriton
 
-Before running server and client install the NVIDIA PyTriton:
+Before running the server and client, install the NVIDIA PyTriton:
 ```shell
 pip install nvidia-pytriton
 ```
 
-Next start the PyTriton server with package generated in previous step.
+Next, start the PyTriton server with the package generated in the previous step.
 ```bash
 python ./serve.py
 ```

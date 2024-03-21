@@ -16,7 +16,7 @@ limitations under the License.
 
 # Optimize Torch linear model with custom arguments for conversion
 
-In this example we show how to use custom_args to pass additional arguments for model export and conversion. We recommend running this example in NVIDIA NGC [PyTorch containter](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch). To run the example simply run the `optimize.py` script:
+In this example, we show how to use `custom_args` to pass additional arguments for model export and conversion. We recommend running this example in NVIDIA NGC [PyTorch container](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch). To run the example, simply run the `optimize.py` script:
 
 ```bash
 ./optimize.py

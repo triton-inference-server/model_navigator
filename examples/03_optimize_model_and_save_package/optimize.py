@@ -29,7 +29,7 @@ def get_model():
 
 
 def get_dataloader():
-    """Returns a ramdom dataloader containing 10 batches of 3x5 tensors"""
+    """Returns a random dataloader containing 10 batches of 3x5 tensors"""
     return [torch.randn(3, 5) for _ in range(10)]
 
 
@@ -74,7 +74,7 @@ def main():
     """
     Saves the package to the specified path.
 
-    This proces create zipped directory with `.nav` extension.
+    This process create zipped directory with `.nav` extension.
     It contains all the information about performed optimizations and the models itself.
 
     Only base models and those with minimal latency and maximal throughput are saved.

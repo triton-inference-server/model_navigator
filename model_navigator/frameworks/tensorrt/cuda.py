@@ -331,7 +331,7 @@ class GraphExec:
     """
 
     def __init__(self, ptr):
-        """Creates a new CUDA graph execution wrapper. Never call this directly - use `Grap.launch` instead.
+        """Creates a new CUDA graph execution wrapper. Never call this directly - use `Graph.launch` instead.
 
         Args:
             ptr (int): The memory address of the CUDA graph execution, i.e. a pointer.
@@ -522,7 +522,7 @@ class DeviceView:
 
         Args:
             host_buffer: The host buffer to copy into. The buffer must be contiguous in
-                    memory (see np.ascontiguousarray) and large enough to accomodate
+                    memory (see np.ascontiguousarray) and large enough to accommodate
                     the device buffer.
             stream: A Stream instance. Performs a synchronous copy if no stream is provided.
 
@@ -627,8 +627,8 @@ class DeviceView:
                 "Hint: Use `util.make_contiguous()` or `np.ascontiguousarray()` to make the array contiguous in memory."
             )
 
-        # If the host buffer is an input, the device buffer should be large enough to accomodate it.
-        # Otherwise, the host buffer needs to be large enough to accomodate the device buffer.
+        # If the host buffer is an input, the device buffer should be large enough to accommodate it.
+        # Otherwise, the host buffer needs to be large enough to accommodate the device buffer.
         if copying_from:
             if host_buffer.nbytes > self.nbytes:
                 raise ModelNavigatorUserInputError(

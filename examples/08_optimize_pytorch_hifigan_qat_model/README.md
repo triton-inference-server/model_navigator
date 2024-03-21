@@ -16,7 +16,7 @@ limitations under the License.
 
 # NeMo HiFiGAN Model
 
-In this example we show how to optimize [NeMo HiFiGAN](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/nemo/models/tts_hifigan) model. We recommend running this example in NVIDIA NGC [PyTorch containter](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch).
+In this example, we show how to optimize [NeMo HiFiGAN](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/nemo/models/tts_hifigan) model. We recommend running this example in NVIDIA NGC [PyTorch container](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch).
 
 **Installation**
 
@@ -29,7 +29,7 @@ python3 -m pip install git+https://github.com/NVIDIA/NeMo.git@r1.7.2#egg=nemo_to
 
 **Usage**
 
-To run the example simply run the `optimize.py` script:
+To run the example, simply run the `optimize.py` script:
 
 ```bash
 ./optimize.py --output-path tts_hifigan.nav

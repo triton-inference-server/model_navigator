@@ -16,9 +16,9 @@ limitations under the License.
 
 # Flax GPT-2 HuggingFace Model
 
-In this example we show how to optimize Flax GPT-2 model from the HuggingFace repository. We recommend running this example in NVIDIA NGC [TensorFlow2 containter](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/tensorflow).
+In this example, we show how to optimize Flax GPT-2 model from the HuggingFace repository. We recommend running this example in NVIDIA NGC [TensorFlow2 container](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/tensorflow).
 
-## Install dependencies and set-up the environment
+## Install dependencies and set up the environment
 
 ```bash
 . ./install.sh

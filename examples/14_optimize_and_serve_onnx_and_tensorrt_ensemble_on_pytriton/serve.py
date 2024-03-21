@@ -23,7 +23,7 @@ from model_navigator.api.config import TensorType
 
 
 def main():
-    """Load pacakge and serve it on PyTriton"""
+    """Load package and serve it on PyTriton"""
 
     onnx_package = nav.package.load("onnx_linear.nav", pathlib.Path("onnx_load_workspace"))
     tensort_package = nav.package.load("tensorrt_linear.nav", pathlib.Path("tensorrt_load_workspace"))

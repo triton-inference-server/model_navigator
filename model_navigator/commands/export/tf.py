@@ -101,7 +101,7 @@ class UpdateSavedModelSignature(Command):
             path (Path): SavedModel path relative to workspace path.
             input_metadata (TensorMetadata): Input metadata.
             output_metadata (TensorMetadata): Output metadata.
-            workspace (Path): Model Navigator worskapce path.
+            workspace (Path): Model Navigator workspace path.
             verbose (bool): If True verbose logging.
 
         Returns:
