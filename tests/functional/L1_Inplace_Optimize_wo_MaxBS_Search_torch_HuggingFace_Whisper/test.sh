@@ -19,7 +19,7 @@ THIS_SCRIPT_PATH="$(realpath --relative-to="$(pwd)" "$0")"
 TEST_MODULE="$(dirname "${THIS_SCRIPT_PATH}"|sed 's/\//./g').test"
 
 
-pip install transformers datasets librosa --upgrade
+pip install "transformers<=4.38.2" datasets librosa --upgrade
 pip install "numpy<=1.24.0"
 
 python -m"${TEST_MODULE}" \

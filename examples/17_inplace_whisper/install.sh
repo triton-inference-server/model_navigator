@@ -13,5 +13,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-python3 -m pip install --upgrade pip transformers datasets
+python3 -m pip install --upgrade pip "transformers<=4.38.2" datasets
 # python3 -m pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu121
