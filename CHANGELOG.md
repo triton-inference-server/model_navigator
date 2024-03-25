@@ -16,7 +16,9 @@ limitations under the License.
 
 # Changelog
 
-## 0.8.0 (unreleased)
+## 0.9.0 (unreleased)
+
+## 0.8.0
 
 - new: Allow to select device for TensorRT runner
 - new: Add device output buffers to TensorRT runner
