@@ -446,7 +446,7 @@ class TensorRTRunner(NavigatorRunner):
                 if tensor_shape != array.shape:
                     LOGGER.debug(f"Setting {name} input shape from {tensor_shape} to: {array.shape}")
                     reshape = True
-                    if not self.context.set_input_shape(name, array.shape):
+                    if array.shape and not self.context.set_input_shape(name, array.shape):
                         raise ModelNavigatorError(
                             f"""For input: {name}, failed to set shape from {tensor_shape} to: {array.shape}."""
                             f"""Please, review if input data shape match the maximal input size which is {tensor_shape}."""
@@ -648,6 +648,8 @@ class TensorRTRunner(NavigatorRunner):
 
 class TensorRTCUDAGraphRunner(TensorRTRunner):
     """TensorRT runner that uses CUDA graphs for faster inference."""
+
+    is_default = False
 
     def __init__(self, *args, **kwargs):
         """Initialization of TensorRT runner that uses CUDA graphs for faster inference."""

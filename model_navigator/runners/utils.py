@@ -31,7 +31,7 @@ def default_runners(device_kind: DeviceKind) -> List:
     """
     _default_runners = set()
     for name, runner in runner_registry.items():
-        if device_kind in runner.devices_kind():
+        if device_kind in runner.devices_kind() and runner.is_default:
             _default_runners.add(name)
 
     return list(_default_runners)

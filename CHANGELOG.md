@@ -18,6 +18,10 @@ limitations under the License.
 
 ## 0.8.1
 
+- fix: Inference with TensorRT when model has input with empty shape
+- fix: Using stabilized runners when model has no batching
+- change: Remove TensorRTCUDAGraph from default runners
+
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 
 - Version of external components used during testing:
