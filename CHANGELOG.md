@@ -20,12 +20,14 @@ limitations under the License.
 
 - fix: Inference with TensorRT when model has input with empty shape
 - fix: Using stabilized runners when model has no batching
+- fix: Invalid dependencies for cuDNN - review [known issues](docs/known_issues.md)
 - change: Remove TensorRTCUDAGraph from default runners
+- change: updated ONNX package to 1.16
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 
 - Version of external components used during testing:
-    - [PyTorch 2.3.0a0+ebedce2](https://github.com/pytorch/pytorch/commit/ebedce2)
+    - [PyTorch 2.3.0a0+40ec155e58](https://github.com/pytorch/pytorch/commit/40ec155e58)
     - [TensorFlow 2.15.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.15.0)
     - [TensorRT 8.6.3](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
     - [Torch-TensorRT 2.0.0.dev0](https://github.com/NVIDIA/Torch-TensorRT)
