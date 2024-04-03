@@ -21,6 +21,7 @@ limitations under the License.
 - fix: Inference with TensorRT when model has input with empty shape
 - fix: Using stabilized runners when model has no batching
 - fix: Invalid dependencies for cuDNN - review [known issues](docs/known_issues.md)
+- fix: Make ONNX Graph Surgeon produce artifacts within protobuf Limit (2G)
 - change: Remove TensorRTCUDAGraph from default runners
 - change: updated ONNX package to 1.16
 

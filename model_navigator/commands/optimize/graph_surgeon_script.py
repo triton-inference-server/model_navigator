@@ -71,7 +71,12 @@ class _Optimizer:
 
         graph = self.get_graph()
         external_weights = self.exceeds_protobuf_limit(graph)
-        onnx.save(graph, str(temp_dir / target_path.name), save_as_external_data=external_weights)
+        onnx.save(
+            graph,
+            str(temp_dir / target_path.name),
+            save_as_external_data=external_weights,
+            all_tensors_to_one_file=not external_weights,
+        )
 
         for file in target_path.parent.iterdir():
             if not file.name.endswith((".py", ".sh")):
