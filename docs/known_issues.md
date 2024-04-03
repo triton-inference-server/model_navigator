@@ -21,3 +21,5 @@ limitations under the License.
 - Verify command could potentially experience CUDA OOM errors while trying to run inference on two models at the same time.
 - Dependencies between modules in optimized pipelines may lead to unexpected behavior and failure in Inplace Optimize
 - TensorRT might require manual installation of correct version of `nvidia-cudnn-cu12` package
+- ONNXRuntime 1.17.x does not support ONNX IR 10 (onnx ver 1.16.0)
+- ONNXRuntime 1.17.x requires cuDNN 8.x

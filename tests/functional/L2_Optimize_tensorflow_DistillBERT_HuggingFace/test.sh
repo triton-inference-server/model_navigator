@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ set -ex
 THIS_SCRIPT_PATH="$(realpath --relative-to="$(pwd)" "$0")"
 TEST_MODULE="$(dirname "${THIS_SCRIPT_PATH}"|sed 's/\//./g').test"
 
-pip install transformers datasets --upgrade
+pip install "transformers<=4.38.2" datasets --upgrade
 
 python -m"${TEST_MODULE}" \
     --status $(pwd)/status.yaml \

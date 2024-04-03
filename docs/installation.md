@@ -76,8 +76,6 @@ pip install nvidia-pyindex
 pip install -U triton-model-navigator[tensorflow]
 ```
 
-
-
 ### Installing with JAX extras (experimental)
 
 For installing with JAX dependencies, use:
@@ -91,6 +89,13 @@ or with nvidia-pyindex:
 ```shell
 pip install nvidia-pyindex
 pip install -U triton-model-navigator[jax]
+```
+
+### Installing with onnxruntime-gpu for CUDA 12
+
+The default CUDA version for ONNXRuntime is CUDA 11.8. To install with CUDA 12 support use following extra index url:
+```shell
+.. --extra-index-url https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/ ..
 ```
 
 ## Building the wheel

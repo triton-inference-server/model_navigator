@@ -80,6 +80,13 @@ For installing with TensorFlow dependencies, use:
 pip install -U --extra-index-url https://pypi.ngc.nvidia.com triton-model-navigator[tensorflow]
 ```
 
+### Installing with onnxruntime-gpu for CUDA 12
+
+The default CUDA version for ONNXRuntime is CUDA 11.8. To install with CUDA 12 support use following extra index url:
+```shell
+.. --extra-index-url https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/ ..
+```
+
 ## Quick Start
 
 The quick start section provides examples of possible optimization and deployment paths provided in Triton Model Navigator.
