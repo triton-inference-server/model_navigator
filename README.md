@@ -34,7 +34,7 @@ The distinct capabilities of Triton Model Navigator are summarized in the featur
 
 | Feature                     | Description                                                                                                                                      |
 |-----------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
-| Easy-of-use                 | Single line of code to run all possible optimization paths directly from your source code                                                        |
+| Ease-of-use                 | Single line of code to run all possible optimization paths directly from your source code                                                        |
 | Wide Framework Support      | Compatible with various machine learning frameworks including PyTorch, TensorFlow, and ONNX                                                      |
 | Models Optimization         | Enhance the performance of models such as ResNET and BERT for efficient inference deployment                                                     |
 | Pipelines Optimization      | Streamline Python code pipelines for models such as Stable Diffusion and Whisper using Inplace Optimization, exclusive to PyTorch                |
@@ -80,6 +80,13 @@ For installing with TensorFlow dependencies, use:
 pip install -U --extra-index-url https://pypi.ngc.nvidia.com triton-model-navigator[tensorflow]
 ```
 
+### Installing with onnxruntime-gpu for CUDA 12
+
+The default CUDA version for ONNXRuntime is CUDA 11.8. To install with CUDA 12 support use following extra index url:
+```shell
+.. --extra-index-url https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/ ..
+```
+
 ## Quick Start
 
 The quick start section provides examples of possible optimization and deployment paths provided in Triton Model Navigator.
@@ -89,7 +96,15 @@ The quick start section provides examples of possible optimization and deploymen
 The Inplace Optimize allows seamless optimization of models for deployment, such as converting
 them to TensorRT, without requiring any changes to the original Python pipelines.
 
-For the Stable Diffusion model, initialize the pipeline and wrap the model components with `nav.Module`:
+
+The below code presents Stable Diffusion pipeline optimization. But first, before you run the example install the required
+packages:
+
+```shell
+pip install transformers diffusers torch
+```
+
+Then, initialize the pipeline and wrap the model components with `nav.Module`::
 
 ```python
 import model_navigator as nav
@@ -143,9 +158,17 @@ Once the pipeline has been optimized, you can load explicit the most performant 
 nav.load_optimized()
 ```
 
-After executing this method, when the optimized version of module exists, it will be used in your pipeline execution
-directly in Python. An example of how to serve the Stable Diffusion pipeline through PyTriton can be
-found [here](https://github.com/triton-inference-server/pytriton/tree/main/examples/huggingface_stable_diffusion).
+At this point, you can simply use the original pipeline to generate prediction with optimized models directly in Python:
+```python
+pipe.to("cuda")
+
+images = pipe(["a photo of an astronaut riding a horse on mars"])
+image = images[0][0]
+
+image.save("an_astronaut_riding_a_horse.png")
+```
+
+An example of how to serve a Stable Diffusion pipeline through PyTriton can be found [here](https://github.com/triton-inference-server/pytriton/tree/main/examples/huggingface_stable_diffusion).
 
 ### Optimize ResNET and deploy on Triton
 

@@ -90,6 +90,8 @@ class NavigatorRunner(abc.ABC):
                 runner.infer(...)
     """
 
+    is_default = True
+
     def __init__(
         self,
         model: Any,

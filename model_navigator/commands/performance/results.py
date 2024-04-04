@@ -232,7 +232,7 @@ class ProfilingResults(DataObject):
             p90_latency=runner.p90_latency(),
             p95_latency=runner.p95_latency(),
             p99_latency=runner.p99_latency(),
-            throughput=float(1000 * max(1, batch_size) / runner.avg_latency()),
+            throughput=float(1000 * (batch_size or 1) / runner.avg_latency()),
             avg_gpu_clock=runner.avg_gpu_clock(),
             request_count=runner.request_count(),
         )

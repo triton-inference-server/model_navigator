@@ -41,8 +41,14 @@ The concept is built around the pipeline and dataloader:
    as determine the maximum and minimum shapes of the model inputs and create output samples that are used during
    the optimization process.
 
-The below code presents Stable Diffusion pipeline optimization. First, initialize the pipeline and wrap the model components
-with `nav.Module`:
+The below code presents Stable Diffusion pipeline optimization. But first, before you run the example install the required
+packages:
+
+```shell
+pip install transformers diffusers torch
+```
+
+Then, initialize the pipeline and wrap the model components with `nav.Module`:
 
 ```python
 import model_navigator as nav
@@ -96,9 +102,17 @@ Once the pipeline has been optimized, you can load explicit the most performant 
 nav.load_optimized()
 ```
 
-After executing this method, when the optimized version of module exists, it will be used in your pipeline execution
-directly in Python. An example of how to serve a Stable Diffusion pipeline through PyTriton can be
-found [here](https://github.com/triton-inference-server/pytriton/tree/main/examples/huggingface_stable_diffusion).
+At this point, you can simply use the original pipeline to generate prediction with optimized models directly in Python:
+```python
+pipe.to("cuda")
+
+images = pipe(["a photo of an astronaut riding a horse on mars"])
+image = images[0][0]
+
+image.save("an_astronaut_riding_a_horse.png")
+```
+
+An example of how to serve a Stable Diffusion pipeline through PyTriton can be found [here](https://github.com/triton-inference-server/pytriton/tree/main/examples/huggingface_stable_diffusion).
 
 ## Optimize Model
 

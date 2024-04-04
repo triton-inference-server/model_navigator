@@ -55,9 +55,6 @@ def get_pipeline():
     pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
     pipe = pipe.to("cuda")
 
-    def clip_output_mapping(output):
-        return BaseModelOutputWithPooling(**output)
-
     pipe.text_encoder = nav.Module(
         pipe.text_encoder,
         name="clip",

@@ -36,7 +36,7 @@ The distinct capabilities of the Triton Model Navigator are summarized in the fe
 
 | Feature                     | Description                                                                                                                                      |
 |-----------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
-| Easy-of-use                 | A single line of code to run all possible optimization paths directly from your source code                                                         |
+| Ease-of-use                 | A single line of code to run all possible optimization paths directly from your source code                                                         |
 | Wide Framework Support      | Compatible with various machine learning frameworks including PyTorch, TensorFlow, and ONNX                                                      |
 | Models Optimization         | Enhance the performance of models such as ResNET and BERT for efficient inference deployment                                                     |
 | Pipelines Optimization      | Streamline Python code pipelines for models such as Stable Diffusion and Whisper using Inplace Optimization, exclusive to PyTorch                |

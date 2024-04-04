@@ -36,7 +36,7 @@ The distinct capabilities of the Triton Model Navigator are summarized in the fe
 
    * - Feature
      - Description
-   * - Easy-of-use
+   * - Ease-of-use
      - Single line of code to run all possible optimization paths directly from your source code
    * - Wide Framework Support
      - Compatible with various machine learning frameworks including PyTorch, TensorFlow, and ONNX
