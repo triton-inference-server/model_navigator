@@ -18,6 +18,7 @@ limitations under the License.
 
 ## 0.9.0 (unreleased)
 - change: Disable TensorRT profile builder
+- change: `nav.optimize()` does not override module configuration
 
 ## 0.8.1
 

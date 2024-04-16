@@ -138,3 +138,38 @@ Once optimization is done, you can use the pipeline for deployment directly from
 how to serve Stable Diffusion pipeline through PyTriton can be
 found [here](https://github.com/triton-inference-server/pytriton/tree/main/examples/huggingface_stable_diffusion).
 
+
+## Per module configuration
+
+`nav.optimize` sets its configuration to all pipeline modules that do not have the configuration already specified. So, if you need a different configuration for a given module, just set the `module.optimize_config` property.
+
+```python
+
+pipe = nemo_asr.models.EncDecCTCModelBPE.from_pretrained("nvidia/parakeet-ctc-0.6b")
+
+pipe.encoder = nav.Module(pipe.encoder, name="encoder")
+pipe.encoder.optimize_config = nav.OptimizeConfig(
+    target_formats=(
+        nav.Format.TENSORRT,
+    ),
+    runners=(
+        "TensorRT",
+    )
+)
+
+pipe.decoder = nav.Module(pipe.decoder, name="decoder")
+pipe.decoder.optimize_config = nav.OptimizeConfig(
+    target_formats=(
+        nav.Format.TENSORRT,
+        nav.Format.ONNX,
+    ),
+    runners=(
+        "TensorRT",
+        "OnnxCUDA", # try also other runner
+    )
+)
+
+nav.optimize(pipe, dataloader)
+```
+
+

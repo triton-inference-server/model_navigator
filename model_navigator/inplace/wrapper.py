@@ -68,7 +68,7 @@ class Module(wrapt.ObjectProxy):
         self._name = name or get_object_name(module)
         self._input_mapping = input_mapping or (lambda x: x)
         self._output_mapping = output_mapping or (lambda x: x)
-        self._optimize_config = OptimizeConfig()
+        self._optimize_config = None
         if timer:
             self.add_timer(timer=timer)
         else:
@@ -93,7 +93,7 @@ class Module(wrapt.ObjectProxy):
         return self._name
 
     @property
-    def optimize_config(self) -> OptimizeConfig:
+    def optimize_config(self) -> Optional[OptimizeConfig]:
         """Module optimize config."""
         return self._optimize_config
 

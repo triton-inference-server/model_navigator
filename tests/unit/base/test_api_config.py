@@ -42,6 +42,7 @@ from model_navigator.configuration.validation.device import (
     validate_device_string_for_cuda,
 )
 from model_navigator.exceptions import ModelNavigatorConfigurationError
+from model_navigator.inplace.config import OptimizeConfig
 
 
 def test_tensorrt_config_raise_exception_when_trt_profile_and_trt_profiles_are_both_set():
@@ -372,3 +373,41 @@ def test_get_id_from_device_string_returns_none_when_device_id_is_not_available(
     assert get_id_from_device_string("2") is None
     assert get_id_from_device_string("cpu:1") is None
     assert get_id_from_device_string("cuda:") is None
+
+
+def test_optimization_config_is_cloning_correctly():
+    opt_config = OptimizeConfig(
+        target_formats=(
+            Format.TORCH,
+            Format.TORCHSCRIPT,
+            Format.ONNX,
+            Format.TENSORRT,
+        ),
+        runners=(
+            "TensorRT",
+            "TorchCUDA",
+            "OnnxCUDA",
+            "TorchScriptCUDA",
+            "TorchCompileCUDA",
+            "TorchTensorRTCompile",
+        ),
+        optimization_profile=OptimizationProfile(max_batch_size=64),
+        custom_configs=[
+            TorchConfig(autocast=True),
+            TorchScriptConfig(autocast=True),
+            TensorRTConfig(
+                precision=(TensorRTPrecision.BF16, TensorRTPrecision.FP16),
+                onnx_parser_flags=[1],
+            ),
+        ],
+    )
+
+    cloned_opt_config = opt_config.clone()
+    cloned_opt_config.runners = ("TensorRT",)
+    cloned_opt_config.optimization_profile.max_batch_size = 32
+    cloned_opt_config.custom_configs[0].autocast = False
+
+    # noting changed in original object
+    assert len(opt_config.runners) == 6
+    assert opt_config.optimization_profile.max_batch_size == 64
+    assert opt_config.custom_configs[0].autocast is True

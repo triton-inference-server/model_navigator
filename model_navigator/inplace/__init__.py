@@ -63,7 +63,9 @@ def optimize(
         config = OptimizeConfig()
 
     for module in module_registry.values():
-        module.optimize_config = config
+        # set main config if user did not provide one for a module
+        if module.optimize_config is None:
+            module.optimize_config = config
         module.load_recorded()
 
     for input_ in dataloader:

@@ -13,6 +13,7 @@
 # limitations under the License.
 """Inplace Optimize configuration."""
 
+import copy
 import dataclasses
 import pathlib
 from typing import Any, Dict, Optional, Sequence, Tuple, Type, Union
@@ -111,6 +112,10 @@ class OptimizeConfig:
             value = getattr(self, field.name)
             config_dict[field.name] = value
         return config_dict
+
+    def clone(self) -> "OptimizeConfig":
+        """Clone the current OptimizeConfig using deepcopy."""
+        return copy.deepcopy(self)
 
 
 inplace_config = InplaceConfig()

@@ -16,7 +16,6 @@
 import abc
 import collections
 import copy
-import dataclasses
 import inspect
 import pathlib
 import tempfile
@@ -84,7 +83,7 @@ class BaseModule(abc.ABC):
         return pathlib.Path(inplace_config.cache_dir) / f"{self._name}"
 
     def _update_optimize_config(self, optimize_config: OptimizeConfig) -> OptimizeConfig:
-        config = dataclasses.replace(optimize_config)
+        config = optimize_config.clone()
         if config.workspace is None:
             config.workspace = self._workspace
             LOGGER.info(f"Setting workspace to {config.workspace}")
