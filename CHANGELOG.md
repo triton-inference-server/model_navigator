@@ -17,6 +17,7 @@ limitations under the License.
 # Changelog
 
 ## 0.9.0 (unreleased)
+- change: Disable TensorRT profile builder
 
 ## 0.8.1
 
