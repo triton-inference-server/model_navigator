@@ -23,3 +23,4 @@ limitations under the License.
 - TensorRT might require manual installation of correct version of `nvidia-cudnn-cu12` package
 - ONNXRuntime 1.17.x does not support ONNX IR 10 (onnx ver 1.16.0)
 - ONNXRuntime 1.17.x requires cuDNN 8.x
+- DistillBERT ONNX dynamo export does not support dynamic shapes

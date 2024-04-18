@@ -17,8 +17,13 @@ limitations under the License.
 # Changelog
 
 ## 0.9.0 (unreleased)
+
+- fix: torch dynamo export and torch dynamo onnx export
 - change: Disable TensorRT profile builder
 - change: `nav.optimize()` does not override module configuration
+
+- Known issues and limitations
+  - DistillERT ONNX dynamo export does not support dynamic shapes
 
 ## 0.8.1
 

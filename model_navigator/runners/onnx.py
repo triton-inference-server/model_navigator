@@ -144,6 +144,15 @@ class _BaseOnnxrtRunner(NavigatorRunner):
             input_metadata.add(node.name, shape, dtype)
         return input_metadata
 
+    def get_onnx_output_metadata(self):
+        assert self.is_active and hasattr(self, "sess"), "Runner must be activated."
+        output_metadata = TensorMetadata()
+        for node in self.sess.get_outputs():
+            dtype = ONNX_RT_TYPE_TO_NP[node.type] if node.type in ONNX_RT_TYPE_TO_NP else None
+            shape = tuple(dim if isinstance(dim, int) else -1 for dim in node.shape)
+            output_metadata.add(node.name, shape, dtype)
+        return output_metadata
+
     def check_input_metadata(self):
         assert self.input_metadata is not None, "Set `input_metadata`."
         onnx_input_metadata = self.get_onnx_input_metadata()
@@ -248,7 +257,7 @@ class OnnxrtCUDARunner(_BaseOnnxrtRunner):
 
         with self._inference_step_timer.measure_step(InferenceStep.PREPROCESSING):
             input_metadata = self.get_onnx_input_metadata()
-            feed_dict = {name: tensor for name, tensor in feed_dict.items() if name in input_metadata}
+            feed_dict = dict(zip(input_metadata.keys(), feed_dict.values()))
 
         inputs, tensor_types = self._prepare_inputs(feed_dict)
 
@@ -266,12 +275,13 @@ class OnnxrtCUDARunner(_BaseOnnxrtRunner):
                 out_dict[node.name] = (
                     device_view.torch() if self.return_type == TensorType.TORCH else device_view.numpy()
                 )
-
         if self.output_metadata is None:
             return out_dict
 
         with self._inference_step_timer.measure_step(InferenceStep.POSTPROCESSING):
-            out_dict = {k: v for k, v in out_dict.items() if k in self.output_metadata}
+            sess_output_metadata = self.get_onnx_output_metadata()
+            out_dict = {k: v for k, v in out_dict.items() if k in sess_output_metadata}
+            out_dict = dict(zip(self.output_metadata.keys(), out_dict.values()))
 
         return out_dict
 
@@ -299,8 +309,10 @@ class OnnxrtCUDARunner(_BaseOnnxrtRunner):
     def _get_io_bindings(self, inputs, tensor_types):
         assert self.is_active and hasattr(self, "sess"), "Runner must be activated."
 
+        input_names = self.get_onnx_input_metadata().keys()
+
         io_binding = self.sess.io_binding()
-        for name, tensor in inputs.items():
+        for name, tensor in zip(input_names, inputs.values()):
             if tensor_types[name] == TensorType.TORCH:
                 io_binding.bind_input(
                     name,
@@ -315,7 +327,8 @@ class OnnxrtCUDARunner(_BaseOnnxrtRunner):
                 io_binding.bind_cpu_input(name, tensor)
         io_binding.synchronize_inputs()
 
-        for name in self.output_metadata:
+        output_names = self.get_onnx_output_metadata().keys()
+        for name in output_names:
             io_binding.bind_output(name, DeviceKind.CUDA.value, self.device_id)
 
         return io_binding

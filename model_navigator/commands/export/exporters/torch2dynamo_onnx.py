@@ -64,10 +64,17 @@ def export(
     dummy_input = {n: torch.from_numpy(val).to(target_device) for n, val in profiling_sample.items()}
     dummy_input = input_metadata.unflatten_sample(dummy_input, wrap_input=False)
 
+    if not isinstance(dummy_input, tuple):
+        dummy_input = (dummy_input,)
+    if not isinstance(dummy_input[-1], dict):
+        dummy_input = (*dummy_input, {})
+    *args, kwargs = dummy_input
+
     exported_model = torch.onnx.dynamo_export(
         model,
-        dummy_input,
+        *args,
         **custom_args,
+        **kwargs,
     )
 
     exported_model_path = pathlib.Path(exported_model_path)

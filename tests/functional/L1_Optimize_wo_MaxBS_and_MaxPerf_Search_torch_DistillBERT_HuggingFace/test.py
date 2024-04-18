@@ -109,6 +109,7 @@ def main():
             nav.OnnxConfig(
                 opset=opset,
                 dynamic_axes=dynamic_axes,
+                dynamo_export=True,
             ),
             nav.TensorRTConfig(trt_profiles=trt_profiles),
             nav.TorchTensorRTConfig(trt_profiles=trt_profiles),
