@@ -29,8 +29,6 @@ EXPECTED_STATUES = [
     "onnx.OnnxTensorRT",
     "tensorflow.TensorFlowCUDA",
     "tf-savedmodel.TensorFlowSavedModelCUDA",
-    "tf-trt-fp16.TensorFlowTensorRT",
-    "tf-trt-fp32.TensorFlowTensorRT",
     "trt-fp16.TensorRT",
     "trt-fp32.TensorRT",
 ]

@@ -30,10 +30,6 @@ EXPECTED_STATUES = [
     "onnx.OnnxTensorRT",
     "torchscript-script.TorchScriptCUDA",
     "torchscript-trace.TorchScriptCUDA",
-    "torch-trt-script-fp16.TorchTensorRT",
-    "torch-trt-script-fp32.TorchTensorRT",
-    "torch-trt-trace-fp16.TorchTensorRT",
-    "torch-trt-trace-fp32.TorchTensorRT",
     "trt-fp16.TensorRT",
     "trt-fp32.TensorRT",
 ]

@@ -435,12 +435,10 @@ DEFAULT_JAX_TARGET_FORMATS = (
     Format.TF_SAVEDMODEL,
     Format.ONNX,
     Format.TENSORRT,
-    Format.TF_TRT,
 )
 
 DEFAULT_TENSORFLOW_TARGET_FORMATS = (
     Format.TF_SAVEDMODEL,
-    Format.TF_TRT,
     Format.ONNX,
     Format.TENSORRT,
 )
@@ -449,7 +447,6 @@ DEFAULT_TORCH_TARGET_FORMATS = (
     Format.TORCHSCRIPT,
     Format.TORCH_EXPORTEDPROGRAM,
     Format.ONNX,
-    Format.TORCH_TRT,
     Format.TENSORRT,
 )
 
@@ -458,7 +455,6 @@ DEFAULT_TORCH_TARGET_FORMATS_FOR_PROFILING = (
     Format.TORCHSCRIPT,
     Format.TORCH_EXPORTEDPROGRAM,
     Format.ONNX,
-    Format.TORCH_TRT,
     Format.TENSORRT,
 )
 
