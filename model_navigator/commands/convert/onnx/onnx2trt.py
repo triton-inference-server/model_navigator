@@ -53,6 +53,7 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
         compatibility_level: Optional[TensorRTCompatibilityLevel] = None,
         optimized_trt_profiles: Optional[List[TensorRTProfile]] = None,
         onnx_parser_flags: Optional[List[int]] = None,
+        timing_cache_dir: Optional[str] = None,
         verbose: bool = False,
     ) -> CommandOutput:
         """Run the ConvertONNX2TRT Command.
@@ -79,6 +80,7 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
             compatibility_level: Hardware compatibility level for generated engine
             optimized_trt_profiles: List of TensorRT profiles that will be used by Model Navigator for conversion, user provided or optimized by TensorRTProfileBuilder command.
             onnx_parser_flags (Optional[List[trt.OnnxParserFlag]], optional): List of flags to set ONNX parser behavior.
+            timing_cache_dir: (Optional[str]): Directory to save timing cache. Defaults to None which means it will be saved in workspace root.
             verbose: enable verbose logging for command
             custom_args (Optional[Dict[str, Any]], optional): Passthrough parameters for Polygraphy convert command
                 For available arguments check Polygraphy documentation: https://docs.nvidia.com/deeplearning/tensorrt/developer-guide/index.html#polygraphy
@@ -127,6 +129,7 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
                 "precision": precision.value,
                 "precision_mode": precision_mode.value,
                 "navigator_workspace": workspace.path.as_posix(),
+                "model_name": workspace.path.parent.name,
                 "custom_args": custom_args,
             }
             if optimization_level is not None:
@@ -135,6 +138,8 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
                 kwargs["compatibility_level"] = compatibility_level.value
             if onnx_parser_flags:
                 kwargs["onnx_parser_flags"] = onnx_parser_flags
+            if timing_cache_dir is not None:
+                kwargs["timing_cache_dir"] = str(timing_cache_dir)
             args = parse_kwargs_to_cmd(kwargs)
             return args
 

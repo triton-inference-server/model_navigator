@@ -21,6 +21,8 @@ from polygraphy import mod
 from polygraphy.backend.trt import CreateConfig, Profile, engine_from_network, network_from_onnx_path, save_engine
 
 from model_navigator.api.config import TensorRTPrecision, TensorRTPrecisionMode
+from model_navigator.frameworks.tensorrt.timing_tactics import TimingCacheManager
+from model_navigator.inplace.config import DEFAULT_CACHE_DIR
 
 trt = mod.lazy_import("tensorrt")
 
@@ -67,6 +69,8 @@ def convert(
     compatibility_level: Optional[str] = None,
     navigator_workspace: Optional[str] = None,
     onnx_parser_flags: Optional[List[int]] = None,
+    timing_cache_dir: Optional[str] = None,
+    model_name: Optional[str] = None,
     custom_args: Optional[Dict[str, Any]] = None,
 ) -> None:
     """Run conversion from TorchScript to Torch-TensorRT.
@@ -85,6 +89,8 @@ def convert(
         optimization_level: Optimization level for TensorRT engine
         compatibility_level: Hardware compatibility level for generated engine
         onnx_parser_flags (Optional[List[trt.OnnxParserFlag]], optional): List of flags to set ONNX parser behavior.
+        timing_cache_dir: (Optional[str]): Directory to save timing cache. Defaults to None which means it will be saved in workspace root.
+        model_name: (Optional[str]): Model name for the timing cache. Defaults to None which means it will be named after the model file.
         custom_args (Optional[Dict[str, str]], optional): Dictionary with passthrough parameters.
             For available arguments check PyTorch documentation: https://pytorch.org/TensorRT/py_api/torch_tensorrt.html
     """
@@ -95,6 +101,9 @@ def convert(
     exported_model_path = pathlib.Path(exported_model_path)
     if not exported_model_path.is_absolute():
         exported_model_path = navigator_workspace / exported_model_path
+
+    if model_name is None:
+        model_name = exported_model_path.stem
 
     converted_model_path = pathlib.Path(converted_model_path)
     if not converted_model_path.is_absolute():
@@ -125,20 +134,31 @@ def convert(
             trt.MemoryPoolType.WORKSPACE: max_workspace_size,
         }
 
-    engine = engine_from_network(
-        network,
-        config=CreateConfig(
-            tf32=tf32,
-            fp16=fp16,
-            bf16=bf16,
-            fp8=fp8,
-            int8=int8,
-            profiles=trt_profiles,
-            **config_kwargs,
-            **custom_args,
-        ),
-    )
-    save_engine(engine, path=converted_model_path.as_posix())
+    # saving timing cache in model_navigator workspace root
+    timing_cache = DEFAULT_CACHE_DIR / "timing_cache"
+
+    # .. or in user provided directory
+    if timing_cache_dir is not None:
+        timing_cache = pathlib.Path(timing_cache_dir)
+
+    with TimingCacheManager(model_name=model_name, cache_path=timing_cache) as timing_cache:
+        timing_cache = timing_cache.as_posix() if timing_cache else None
+        engine = engine_from_network(
+            network,
+            config=CreateConfig(
+                tf32=tf32,
+                fp16=fp16,
+                bf16=bf16,
+                fp8=fp8,
+                int8=int8,
+                profiles=trt_profiles,
+                load_timing_cache=timing_cache,
+                **config_kwargs,
+                **custom_args,
+            ),
+            save_timing_cache=timing_cache,
+        )
+        save_engine(engine, path=converted_model_path.as_posix())
 
 
 if __name__ == "__main__":

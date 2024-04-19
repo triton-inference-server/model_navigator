@@ -21,6 +21,7 @@ limitations under the License.
 - fix: torch dynamo export and torch dynamo onnx export
 - change: Disable TensorRT profile builder
 - change: `nav.optimize()` does not override module configuration
+- new: TensorRT Timing Tactics Cache Management - using timing tactics cache files for optimization performance improvements
 
 - Known issues and limitations
   - DistillERT ONNX dynamo export does not support dynamic shapes

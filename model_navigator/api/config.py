@@ -17,6 +17,7 @@ import abc
 import dataclasses
 import inspect
 import itertools
+import pathlib
 import warnings
 from enum import Enum
 from typing import (
@@ -852,11 +853,13 @@ class TensorRTConfig(CustomConfigForTensorRT):
                             3 based on TensorRT API documentation.
         compatibility_level: Compatibility level for TensorRT conversion.
         onnx_parser_flags: List of TensorRT OnnxParserFlags used for conversion.
+        timing_cache_dir: Storage directory for TRT tactic timing info collected from builder
     """
 
     optimization_level: Optional[int] = None
     compatibility_level: Optional[TensorRTCompatibilityLevel] = None
     onnx_parser_flags: Optional[List[int]] = None
+    timing_cache_dir: Optional[Union[str, pathlib.Path]] = None
 
     def __post_init__(self) -> None:
         """Parse dataclass enums."""
@@ -886,6 +889,7 @@ class TensorRTConfig(CustomConfigForTensorRT):
         self.optimization_level = None
         self.compatibility_level = None
         self.onnx_parser_flags = None
+        self.timing_cache_dir = None
 
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "TensorRTConfig":

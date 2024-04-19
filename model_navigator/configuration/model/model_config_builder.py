@@ -437,6 +437,7 @@ class ModelConfigBuilder:
                     onnx_parser_flags=trt_config.onnx_parser_flags,
                     custom_args=trt_config.custom_args,
                     device=trt_config.device,
+                    timing_cache_dir=trt_config.timing_cache_dir,
                 )
             )
         else:
@@ -453,5 +454,6 @@ class ModelConfigBuilder:
                         onnx_parser_flags=trt_config.onnx_parser_flags,
                         custom_args=trt_config.custom_args,
                         device=trt_config.device,
+                        timing_cache_dir=trt_config.timing_cache_dir,
                     )
                 )

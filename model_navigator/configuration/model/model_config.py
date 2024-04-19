@@ -454,6 +454,7 @@ class TensorRTConfig(_SerializedModelConfig, format=Format.TENSORRT):
         onnx_parser_flags: Optional[List[int]] = None,
         custom_args: Optional[Dict[str, Any]] = None,
         device: Optional[str] = None,
+        timing_cache_dir: Optional[str] = None,
     ) -> None:
         """Initializes TensorRT (plan) model configuration class.
 
@@ -468,6 +469,7 @@ class TensorRTConfig(_SerializedModelConfig, format=Format.TENSORRT):
             onnx_parser_flags: ONNX parser flags
             custom_args: Custom arguments passed to TensorRT conversion
             device: runtime device e.g. "cuda:0"
+            timing_cache_dir: Directory to store timing cache
         """
         super().__init__(parent=parent)
         self.precision = precision
@@ -479,6 +481,7 @@ class TensorRTConfig(_SerializedModelConfig, format=Format.TENSORRT):
         self.onnx_parser_flags = onnx_parser_flags
         self.custom_args = custom_args
         self.runner_config = DeviceRunnerConfig(device=device)
+        self.timing_cache_dir = timing_cache_dir
 
     def _get_path_params_as_array_of_strings(self) -> List[str]:
         return [self.precision.value] if self.precision else []
@@ -499,6 +502,7 @@ class TensorRTConfig(_SerializedModelConfig, format=Format.TENSORRT):
             optimization_level=cls._parse_string(int, data_dict.get("optimization_level")),
             compatibility_level=cls._parse_string(TensorRTCompatibilityLevel, data_dict.get("compatibility_level")),
             onnx_parser_flags=onnx_parser_flags,
+            timing_cache_dir=data_dict.get("timing_cache_dir"),
         )
 
 
