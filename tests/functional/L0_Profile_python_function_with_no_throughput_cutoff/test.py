@@ -55,7 +55,9 @@ def main():
     dataloader = [(1, "This is example input"), (1, "This is example input")]
 
     profiling_status_path = pathlib.Path("profile_status.yaml")
-    nav.profile(call, dataloader, status_path=profiling_status_path)
+    nav.profile(call, dataloader, status_path=profiling_status_path, throughput_cutoff_threshold=None)
+
+    detailed_results = None
 
     try:
         with open(profiling_status_path) as file:
@@ -65,6 +67,7 @@ def main():
 
         python_eager_status = eager_results.get("status", "FAIL")
         detailed_results = eager_results.get("detailed")
+
     except Exception:
         python_eager_status = "FAIL"
 

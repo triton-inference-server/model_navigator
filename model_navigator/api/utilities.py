@@ -118,7 +118,7 @@ def find_max_batch_size_till_oom(
         stabilization_windows=1,
         min_trials=1,
         max_trials=1,
-        throughput_cutoff_threshold=-2,
+        throughput_cutoff_threshold=None,
     )
 
     with tempfile.NamedTemporaryFile() as temp_file:

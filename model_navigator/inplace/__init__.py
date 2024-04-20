@@ -24,6 +24,8 @@ from model_navigator.api.config import DEFAULT_TORCH_TARGET_FORMATS_FOR_PROFILIN
 from model_navigator.commands.correctness.correctness import Correctness
 from model_navigator.commands.performance.nvml_handler import NvmlHandler
 from model_navigator.commands.performance.performance import Performance
+from model_navigator.commands.performance.utils import is_throughput_saturated
+from model_navigator.core.constants import DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD
 from model_navigator.core.logger import LOGGER, pad_string
 from model_navigator.exceptions import ModelNavigatorModuleNotOptimizedError
 from model_navigator.package.status import CommandStatus
@@ -95,6 +97,7 @@ def profile(
     stabilization_windows: int = 3,
     window_size: int = 50,
     stability_percentage: float = 10.0,
+    throughput_cutoff_threshold: Optional[float] = DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD,
     verbose: bool = False,
 ) -> None:
     """Profile `func` and all registered modules.
@@ -110,6 +113,8 @@ def profile(
         stabilization_windows: Number of stabilization windows.
         window_size: Number of inference queries performed in measurement window
         stability_percentage: Allowed percentage of variation from the mean in three consecutive windows.
+        throughput_cutoff_threshold: Minimum throughput increase to continue profiling. If None is provided,
+                                     profiling run through whole dataloader
         verbose: Provide verbose logging
     """
     if target_formats is None:
@@ -130,6 +135,7 @@ def profile(
         _load_modules(model_key, runner_name, verbose=verbose)
         runner_profiling_results = RunnerProfilingResults()
         try:
+            prev_result = None
             for sample_id, input_ in enumerate(dataloader):
                 with NvmlHandler() as nvml_handler:
                     profiling_result = run_measurement(
@@ -141,12 +147,19 @@ def profile(
                         stabilization_windows=stabilization_windows,
                         window_size=window_size,
                         stability_percentage=stability_percentage,
+                        throughput_cutoff_threshold=throughput_cutoff_threshold,
                     )
+
                     LOGGER.info(
                         f"Performance profiling result for {runner_name} "
                         f"and sample id: {sample_id}:\n{profiling_result}"
                     )
                     runner_profiling_results.detailed[sample_id] = profiling_result
+
+                    if is_throughput_saturated(profiling_result, prev_result, throughput_cutoff_threshold):
+                        break
+                    prev_result = profiling_result
+
             runner_profiling_results.status = CommandStatus.OK
         except Exception as e:
             LOGGER.error(f"Profiling failed for model_key {model_key} and runner {runner_name}.")

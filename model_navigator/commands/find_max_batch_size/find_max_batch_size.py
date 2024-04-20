@@ -142,7 +142,7 @@ class FindMaxBatchSize(Command):
             max_trials=1,
             window_size=1,
             stabilization_windows=1,
-            throughput_cutoff_threshold=-2,
+            throughput_cutoff_threshold=None,
         )
 
         with ExecutionContext(

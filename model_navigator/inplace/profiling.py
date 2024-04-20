@@ -245,6 +245,7 @@ def run_measurement(
     stabilization_windows: int,
     window_size: int,
     stability_percentage: float,
+    throughput_cutoff_threshold: Optional[float],
 ) -> ProfilingResult:
     """Run profiling measurement.
 
@@ -257,6 +258,8 @@ def run_measurement(
         stabilization_windows: Number of stabilization windows.
         window_size: Number of inference queries performed in measurement window
         stability_percentage: Allowed percentage of variation from the mean in three consecutive windows.
+        throughput_cutoff_threshold: Minimum throughput increase to continue profiling. If None is provided,
+                                     profiling run through whole dataloader
 
     Returns:
         ProfilingResult: Profiling results.
@@ -269,6 +272,7 @@ def run_measurement(
         profiling_result = _run_window_measurement(
             func=func, sample=sample, batch_size=batch_size, window_size=window_size, nvml_handler=nvml_handler
         )
+
         profiling_results.append(profiling_result)
         LOGGER.debug(f"Measurement [{measurement_id}], avg_latency: {profiling_result.avg_latency} ms")
         is_stable = _is_measurement_stable(profiling_results, count=3, stability_percentage=stability_percentage)

@@ -24,6 +24,7 @@ from jsonlines import jsonlines
 from model_navigator.api.config import OptimizationProfile, Sample
 from model_navigator.commands.performance.nvml_handler import NvmlHandler
 from model_navigator.commands.performance.results import ProfilingResults
+from model_navigator.commands.performance.utils import is_throughput_saturated
 from model_navigator.core.dataloader import expand_sample
 from model_navigator.core.logger import LOGGER
 from model_navigator.exceptions import ModelNavigatorError
@@ -121,9 +122,7 @@ class Profiler:
                     f.write(profiling_result.to_dict(parse=True))
 
                 results.append(profiling_result)
-                if prev_result is not None and profiling_result.throughput < prev_result.throughput * (
-                    1 + self._profile.throughput_cutoff_threshold
-                ):
+                if is_throughput_saturated(profiling_result, prev_result, self._profile.throughput_cutoff_threshold):
                     break
                 prev_result = profiling_result
 

@@ -246,7 +246,7 @@ class OptimizationProfile(DataObject):
     stabilization_windows: int = 3
     min_trials: int = 3
     max_trials: int = 10
-    throughput_cutoff_threshold: float = DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD
+    throughput_cutoff_threshold: Optional[float] = DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD
     dataloader: Optional[SizedDataLoader] = None
 
     def __post_init__(self):
