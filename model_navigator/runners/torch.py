@@ -103,7 +103,8 @@ class _BaseTorchRunner(NavigatorRunner):
 
     def inplace_infer(self, *args, **kwargs):
         """Inplace inference handler implementation."""
-        return self._loaded_model(*args, **kwargs)
+        args, kwargs = self._prepare_inplace_inputs(*args, **kwargs)
+        return self._inplace_infer(*args, **kwargs)
 
     def get_available_input_types(self) -> List[TensorType]:
         return [TensorType.NUMPY, TensorType.TORCH]
@@ -144,6 +145,24 @@ class _BaseTorchRunner(NavigatorRunner):
                 outputs = self._loaded_model(*args, **kwargs)
 
         return outputs
+
+    def _prepare_inplace_inputs(self, *args, **kwargs):
+        """Prepare inputs for inplace inference."""
+        device_args = []
+        device_kwargs = {}
+        for value in args:
+            if isinstance(value, torch.Tensor):
+                value = value.to(self.device)
+
+            device_args.append(value)
+
+        for key, value in kwargs.values():
+            if isinstance(value, torch.Tensor):
+                value = value.to(self.device)
+
+            device_kwargs[key] = value
+
+        return device_args, device_kwargs
 
     def _prepare_inputs(self, feed_dict):
         """Prepare inputs for inference."""

@@ -24,7 +24,7 @@ from jsonlines import jsonlines
 from model_navigator.api.config import OptimizationProfile, Sample
 from model_navigator.commands.performance.nvml_handler import NvmlHandler
 from model_navigator.commands.performance.results import ProfilingResults
-from model_navigator.commands.performance.utils import is_throughput_saturated
+from model_navigator.commands.performance.utils import is_measurement_stable, is_throughput_saturated
 from model_navigator.core.dataloader import expand_sample
 from model_navigator.core.logger import LOGGER
 from model_navigator.exceptions import ModelNavigatorError
@@ -149,25 +149,14 @@ class Profiler:
 
         return ProfilingResults.from_measurements(measurements, gpu_clocks, batch_size, sample_id)
 
-    def _is_measurement_stable(self, profiling_results: List[ProfilingResults], count: int = 3) -> bool:
-        if len(profiling_results) < count:
-            return False
+    def _measurements_result(self, profiling_results: List[ProfilingResults], last_n: int = 3) -> ProfilingResults:
+        if len(profiling_results) < last_n:
+            raise ModelNavigatorError(
+                f"Measurements results requires at least {last_n} consecutive stable measurements."
+            )
 
-        profiling_results = profiling_results[-count:]
-        avg_latencies = [result.avg_latency for result in profiling_results]
-        avg_latency = np.mean(avg_latencies)
-        deviation_perc = np.abs((avg_latencies - avg_latency) / avg_latency * 100)
-
-        return np.all(deviation_perc < self._profile.stability_percentage)
-
-    def _measurements_result(self, profiling_results: List[ProfilingResults], count: int = 3) -> ProfilingResults:
-        if len(profiling_results) < count:
-            raise ModelNavigatorError("Measurements results requires at least 3 consecutive stable measurements.")
-
-        profiling_results = profiling_results[-count:]
-        profiling_result = ProfilingResults.from_profiling_results(profiling_results)
-
-        return profiling_result
+        profiling_results = profiling_results[-last_n:]
+        return ProfilingResults.from_profiling_results(profiling_results)
 
     def _run_measurement(
         self,
@@ -192,13 +181,10 @@ class Profiler:
                 LOGGER.debug(
                     f"Measurement [{measurement_id}]: {profiling_result.throughput} infer/sec, {profiling_result.avg_latency} ms"
                 )
-                is_stable = self._is_measurement_stable(
-                    profiling_results, count=min(self._profile.stabilization_windows, self._profile.max_trials)
-                )
+                last_n = min(self._profile.stabilization_windows, self._profile.max_trials)
+                is_stable = is_measurement_stable(profiling_results, last_n, self._profile.stability_percentage)
                 if measurement_id >= self._profile.min_trials and is_stable:
-                    return self._measurements_result(
-                        profiling_results, count=min(self._profile.stabilization_windows, self._profile.max_trials)
-                    )
+                    return self._measurements_result(profiling_results, last_n)
 
         raise RuntimeError(
             "Unable to get stable performance results. Consider increasing "

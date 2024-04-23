@@ -24,7 +24,9 @@ import yaml
 
 from model_navigator.commands.base import CommandStatus
 from model_navigator.commands.performance.nvml_handler import NvmlHandler
+from model_navigator.commands.performance.utils import is_measurement_stable
 from model_navigator.core.logger import LOGGER
+from model_navigator.exceptions import ModelNavigatorError
 from model_navigator.utils.common import dataclass2dict
 
 
@@ -200,17 +202,6 @@ class ProfilingResults:
             yaml.safe_dump(data, f, sort_keys=False)
 
 
-def _is_measurement_stable(profiling_results: List[ProfilingResult], count: int, stability_percentage: float) -> bool:
-    if len(profiling_results) < count:
-        return False
-    profiling_results = profiling_results[-count:]
-    avg_latencies = [result.avg_latency for result in profiling_results]
-    avg_latency = np.mean(avg_latencies)
-    deviation_perc = np.abs((avg_latencies - avg_latency) / avg_latency * 100)
-
-    return np.all(deviation_perc < stability_percentage)
-
-
 def _run_window_measurement(
     func: Callable,
     sample: Any,
@@ -236,6 +227,14 @@ def _run_window_measurement(
     return ProfilingResult.from_measurements(measurements=measurements, batch_size=batch_size, gpu_clocks=gpu_clocks)
 
 
+def _measurements_result(profiling_results: List[ProfilingResult], last_n: int = 3) -> ProfilingResult:
+    if len(profiling_results) < last_n:
+        raise ModelNavigatorError(f"Measurements results requires at least {last_n} consecutive stable measurements.")
+
+    profiling_results = profiling_results[-last_n:]
+    return ProfilingResult.from_profiling_results(profiling_results)
+
+
 def run_measurement(
     func: Callable,
     sample: Any,
@@ -245,7 +244,6 @@ def run_measurement(
     stabilization_windows: int,
     window_size: int,
     stability_percentage: float,
-    throughput_cutoff_threshold: Optional[float],
 ) -> ProfilingResult:
     """Run profiling measurement.
 
@@ -258,8 +256,6 @@ def run_measurement(
         stabilization_windows: Number of stabilization windows.
         window_size: Number of inference queries performed in measurement window
         stability_percentage: Allowed percentage of variation from the mean in three consecutive windows.
-        throughput_cutoff_threshold: Minimum throughput increase to continue profiling. If None is provided,
-                                     profiling run through whole dataloader
 
     Returns:
         ProfilingResult: Profiling results.
@@ -275,10 +271,11 @@ def run_measurement(
 
         profiling_results.append(profiling_result)
         LOGGER.debug(f"Measurement [{measurement_id}], avg_latency: {profiling_result.avg_latency} ms")
-        is_stable = _is_measurement_stable(profiling_results, count=3, stability_percentage=stability_percentage)
+
+        last_n = min(stabilization_windows, max_trials)
+        is_stable = is_measurement_stable(profiling_results, last_n=last_n, stability_percentage=stability_percentage)
         if measurement_id >= min_trials and is_stable:
-            count_from_idx = min(stabilization_windows, max_trials)
-            return ProfilingResult.from_profiling_results(profiling_results[-count_from_idx:])
+            return _measurements_result(profiling_results, last_n)
 
     raise RuntimeError(
         "Unable to get stable performance results. Consider increasing "

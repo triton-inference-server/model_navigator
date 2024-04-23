@@ -21,6 +21,8 @@ limitations under the License.
 - new: TensorRT Timing Tactics Cache Management - using timing tactics cache files for optimization performance improvements
 - new: Added throughput saturation verification in `nav.profile()` (enabled by default)
 - fix: torch dynamo export and torch dynamo onnx export
+- fix: measurement stabilization in `nav.profile()`
+- fix: inplace inference through Torch
 - change: Disable TensorRT profile builder
 - change: `nav.optimize()` does not override module configuration
 

@@ -18,6 +18,7 @@ from unittest.mock import MagicMock
 import numpy as np
 
 from model_navigator.commands.performance.profiler import OptimizationProfile, Profiler, ProfilingResults
+from model_navigator.commands.performance.utils import is_measurement_stable
 from model_navigator.runners.base import InferenceTime
 
 
@@ -88,21 +89,10 @@ def test_batch_size_is_set_correctly_when_max_batch_size_which_is_not_power_of_2
 
 
 def test_is_measurement_stable_return_false_when_window_is_empty():
-    optimization_profile = OptimizationProfile(batch_sizes=[1])
-    profiler = Profiler(
-        profile=optimization_profile,
-        results_path=MagicMock(),
-    )
-
-    assert profiler._is_measurement_stable([]) is False
+    assert is_measurement_stable([], last_n=3, stability_percentage=10.0) is False
 
 
-def test_is_measurement_stable_return_false_when_window_size_less_than_count():
-    optimization_profile = OptimizationProfile(batch_sizes=[1])
-    profiler = Profiler(
-        profile=optimization_profile,
-        results_path=MagicMock(),
-    )
+def test_is_measurement_stable_return_false_when_window_size_less_than_last_n():
     sample_id = 0
     batch_size = 1
     measurements = [InferenceTime(total=measurement) for measurement in [25, 24, 23]]
@@ -112,16 +102,10 @@ def test_is_measurement_stable_return_false_when_window_size_less_than_count():
         ProfilingResults.from_measurements(measurements, gpu_clocks, batch_size, sample_id),
     ]
 
-    assert profiler._is_measurement_stable(windows) is False
+    assert is_measurement_stable(windows, last_n=3, stability_percentage=10.0) is False
 
 
 def test_is_measurement_stable_return_false_when_avg_latencies_are_out_of_stability_range():
-    optimization_profile = OptimizationProfile(batch_sizes=[1])
-    profiler = Profiler(
-        profile=optimization_profile,
-        results_path=MagicMock(),
-    )
-
     sample_id = 0
     batch_size = 1
     windows = [
@@ -145,16 +129,10 @@ def test_is_measurement_stable_return_false_when_avg_latencies_are_out_of_stabil
         ),
     ]
 
-    assert bool(profiler._is_measurement_stable(windows)) is False
+    assert bool(is_measurement_stable(windows, last_n=3, stability_percentage=10.0)) is False
 
 
 def test_is_measurement_stable_return_true_when_avg_latencies_are_in_stability_range():
-    optimization_profile = OptimizationProfile(batch_sizes=[1])
-    profiler = Profiler(
-        profile=optimization_profile,
-        results_path=MagicMock(),
-    )
-
     sample_id = 0
     batch_size = 1
     windows = [
@@ -190,7 +168,7 @@ def test_is_measurement_stable_return_true_when_avg_latencies_are_in_stability_r
         ),
     ]
 
-    assert bool(profiler._is_measurement_stable(windows)) is True
+    assert bool(is_measurement_stable(windows, last_n=3, stability_percentage=10.0)) is True
 
 
 def test_profiler_run_return_batch_sizes_upto_4_when_batch_size_4_saturates_throughput(mocker):

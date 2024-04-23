@@ -147,7 +147,6 @@ def profile(
                         stabilization_windows=stabilization_windows,
                         window_size=window_size,
                         stability_percentage=stability_percentage,
-                        throughput_cutoff_threshold=throughput_cutoff_threshold,
                     )
 
                     LOGGER.info(

@@ -13,7 +13,31 @@
 # limitations under the License.
 """Profiling utilities."""
 
-from typing import Any, Optional
+from typing import Any, List, Optional
+
+import numpy as np
+
+
+def is_measurement_stable(profiling_results: List, last_n: int, stability_percentage: float) -> bool:
+    """Validate if measurement is stable.
+
+    Args:
+        profiling_results: List of profiling results.
+        last_n: Number of measurement to check.
+        stability_percentage: Percentage of stability.
+
+    Returns:
+        True if measurement is stable, False otherwise.
+    """
+    if len(profiling_results) < last_n:
+        return False
+
+    profiling_results = profiling_results[-last_n:]
+    avg_latencies = [result.avg_latency for result in profiling_results]
+    avg_latency = np.mean(avg_latencies)
+    deviation_perc = np.abs((avg_latencies - avg_latency) / avg_latency * 100)
+
+    return np.all(deviation_perc < stability_percentage)
 
 
 def is_throughput_saturated(
