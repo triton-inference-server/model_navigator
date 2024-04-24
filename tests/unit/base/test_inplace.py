@@ -18,11 +18,13 @@ Note:
      The tests are checking if correct paths are executed on input arguments.
 """
 
-from unittest.mock import MagicMock
+import os
+import pathlib
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from model_navigator.inplace.config import OptimizeConfig, inplace_config
+from model_navigator.inplace.config import DEFAULT_CACHE_DIR, OptimizeConfig, inplace_cache_dir
 from model_navigator.inplace.model import OptimizedModule, PassthroughModule, RecordModule
 from model_navigator.inplace.registry import module_registry
 from model_navigator.inplace.utils import get_object_name
@@ -32,7 +34,21 @@ def test_get_object_name():
     assert get_object_name(MagicMock()) == "unittest.mock.MagicMock"
 
 
+@patch.dict(os.environ, {"MODEL_NAVIGATOR_DEFAULT_CACHE_DIR": "/tmp/model_navigator"})
+def test_inplace_cache_dir_return_env_variable_value():
+    cache_dir = inplace_cache_dir()
+    assert cache_dir == pathlib.Path("/tmp/model_navigator")
+
+
+def test_inplace_config_cache_dir_return_default_value():
+    from model_navigator.inplace.config import inplace_config
+
+    assert inplace_config.cache_dir == pathlib.Path(DEFAULT_CACHE_DIR)
+
+
 def test_config_raise_error_on_invalid_num_samples():
+    from model_navigator.inplace.config import inplace_config
+
     with pytest.raises(ValueError):
         inplace_config.min_num_samples = -1
 
@@ -110,6 +126,8 @@ def test_recording_model_is_ready_for_optimization_returns_false_when_not_enough
 
 
 def test_recording_model_is_ready_for_optimization_returns_true_when_enough_samples():
+    from model_navigator.inplace.config import inplace_config
+
     module = RecordModule(
         module=MagicMock(),
         name="model_name",

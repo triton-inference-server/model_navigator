@@ -15,6 +15,7 @@
 
 import copy
 import dataclasses
+import os
 import pathlib
 from typing import Any, Dict, Optional, Sequence, Tuple, Type, Union
 
@@ -28,12 +29,22 @@ DEFAULT_MIN_NUM_SAMPLES = 100
 DEFAULT_MAX_NUM_SAMPLES_STORED = 1
 
 
+def inplace_cache_dir() -> pathlib.Path:
+    """Configure cache dir location based on environment variable.
+
+    Returns:
+        Cache dir from environment variable or DEFAULT_CACHE_DIR.
+    """
+    cache_dir = os.environ.get("MODEL_NAVIGATOR_DEFAULT_CACHE_DIR", DEFAULT_CACHE_DIR)
+    return pathlib.Path(cache_dir)
+
+
 class InplaceConfig:
     """Inplace Optimize configuration."""
 
     def __init__(self) -> None:
         """Initialize InplaceConfig."""
-        self._cache_dir: pathlib.Path = DEFAULT_CACHE_DIR
+        self._cache_dir: pathlib.Path = inplace_cache_dir()
         self._min_num_samples: int = DEFAULT_MIN_NUM_SAMPLES
         self._max_num_samples_stored: int = DEFAULT_MAX_NUM_SAMPLES_STORED
         self.strategy: RuntimeSearchStrategy = MinLatencyStrategy()
