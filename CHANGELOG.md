@@ -24,6 +24,7 @@ limitations under the License.
 - fix: torch dynamo export and torch dynamo onnx export
 - fix: measurement stabilization in `nav.profile()`
 - fix: inplace inference through Torch
+- fix: trt_profiles argument handling in ONNX to TRT conversion
 - change: Disable TensorRT profile builder
 - change: `nav.optimize()` does not override module configuration
 

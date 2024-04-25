@@ -51,7 +51,7 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
         device_max_batch_size: Optional[int] = None,
         optimization_level: Optional[int] = None,
         compatibility_level: Optional[TensorRTCompatibilityLevel] = None,
-        optimized_trt_profiles: Optional[List[TensorRTProfile]] = None,
+        trt_profiles: Optional[List[TensorRTProfile]] = None,
         onnx_parser_flags: Optional[List[int]] = None,
         timing_cache_dir: Optional[str] = None,
         verbose: bool = False,
@@ -78,7 +78,7 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
                 Defaults to None.
             optimization_level: Optimization level for TensorRT engine
             compatibility_level: Hardware compatibility level for generated engine
-            optimized_trt_profiles: List of TensorRT profiles that will be used by Model Navigator for conversion, user provided or optimized by TensorRTProfileBuilder command.
+            trt_profiles: List of TensorRT profiles that will be used by Model Navigator for conversion, user provided.
             onnx_parser_flags (Optional[List[trt.OnnxParserFlag]], optional): List of flags to set ONNX parser behavior.
             timing_cache_dir: (Optional[str]): Directory to save timing cache. Defaults to None which means it will be saved in workspace root.
             verbose: enable verbose logging for command
@@ -105,8 +105,8 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
         onnx_input_names, _ = get_onnx_io_names(onnx_path=input_model_path)
 
         def get_args(max_batch_size=None):
-            if optimized_trt_profiles:
-                profiles = optimized_trt_profiles
+            if trt_profiles:
+                profiles = trt_profiles
             else:
                 profiles = [
                     self._get_conversion_profiles(
@@ -157,11 +157,11 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
                 batch_dim=batch_dim,
                 device_max_batch_size=device_max_batch_size,
                 dataloader_max_batch_size=dataloader_max_batch_size,
-                custom_trt_profile_available=bool(optimized_trt_profiles),
+                custom_trt_profile_available=bool(trt_profiles),
             )
 
         conversion_profiles = self._get_conversion_profiles(
-            trt_profile=optimized_trt_profiles[0] if optimized_trt_profiles else dataloader_trt_profile,
+            trt_profile=trt_profiles[0] if trt_profiles else dataloader_trt_profile,
             batch_dim=batch_dim,
             max_batch_size=conversion_max_batch_size,
         )
