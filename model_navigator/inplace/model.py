@@ -48,6 +48,7 @@ class BaseModule(abc.ABC):
         input_mapping: Callable,
         output_mapping: Callable,
         optimize_config: Optional[OptimizeConfig] = None,
+        forward: Optional[Callable] = None,
     ) -> None:
         """Initialize BaseModule.
 
@@ -57,6 +58,7 @@ class BaseModule(abc.ABC):
             input_mapping: function mapping module input to runner input.
             output_mapping: function mapping runner output to module output.
             optimize_config: configuration for module optimization.
+            forward: method to replace navigator default __call__
         """
         self._module = module
         self._name = name
@@ -67,6 +69,7 @@ class BaseModule(abc.ABC):
             self._optimize_config = self._update_optimize_config(optimize_config)
         else:
             self._optimize_config = optimize_config
+        self._forward_call = forward or self._module
 
     @property
     def name(self) -> str:
@@ -135,7 +138,7 @@ class RecordModule(BaseModule):
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         """Record a sample and run the module."""
         self.record_sample(*args, **kwargs)
-        output = self._module(*args, **kwargs)
+        output = self._forward_call(*args, **kwargs)
         return output
 
     def optimize(self):
@@ -321,4 +324,4 @@ class PassthroughModule(BaseModule):
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         """Pass through the original module."""
-        return self._module(*args, **kwargs)
+        return self._forward_call(*args, **kwargs)

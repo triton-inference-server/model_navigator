@@ -172,4 +172,46 @@ pipe.decoder.optimize_config = nav.OptimizeConfig(
 nav.optimize(pipe, dataloader)
 ```
 
+## Model custom forwarding function
 
+Model Navigator expects that the models are using `__call__` function to propagate the data through the model as it binds to this method. If the model is not using `__call__` function, you can wrap the model with `nav.Module` and set the `forward_func_name` argument to the function that is actually used, that will allow Model Navigator to collect data for optimization.
+
+The problem is not visible at first glance, but it can present itself when running `nav.optimize` with following error:
+
+```
+FileNotFoundError Traceback (most recent call last)
+...
+1 nav.optimize(model.encode, dataloader, config)
+...
+FileNotFoundError: [Errno 2] No such file or directory: '/home/usr/.cache/model_navigator/transformer'
+```
+
+That may mean Model Navigator was not called properly and did not save any input/output data for the optimization.
+
+In below example, we want to use `encode` function as it contains "complicated" preprocessing of input data. But we see that
+`forward` function is used instead of `__call__` which will cause the error in the optimization. That is why we instruct `nav.Module` to use non-standard function.
+
+```python
+
+class SentenceTransformer(nn.Module):
+
+    def forward(self, x):
+        return x
+
+    def encode(self, x):
+        x1 = self.preprocessing(x)
+
+        x2 = self.forward(x1) # instead of self(1)
+
+        return x2
+
+    def preprocessing(self, x):
+        return x + 1
+
+# wrapping the module for optimization, with non-standard forward function
+pipe = nav.Module(SentenceTransformer(), name="transformer", forward_func="forward")
+
+# we want to use the encode function as it contains preprocessing step and maybe other important steps
+nav.optimize(pipe.encode, dataloader, config)
+
+```

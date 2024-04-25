@@ -21,6 +21,7 @@ limitations under the License.
 - new: TensorRT Timing Tactics Cache Management - using timing tactics cache files for optimization performance improvements
 - new: Added throughput saturation verification in `nav.profile()` (enabled by default)
 - new: Allow to override Inplace cache dir through `MODEL_NAVIGATOR_DEFAULT_CACHE_DIR` env variable
+- new: inplace `nav.Module` can now receive a function name to be used instead of __call__ in modules/submodules, allows customizing modules with non-standard calls
 - fix: torch dynamo export and torch dynamo onnx export
 - fix: measurement stabilization in `nav.profile()`
 - fix: inplace inference through Torch

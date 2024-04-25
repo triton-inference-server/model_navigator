@@ -18,6 +18,7 @@ from typing import Any, Callable, Optional
 
 import wrapt
 
+from model_navigator.exceptions import ModelNavigatorUserInputError
 from model_navigator.inplace.timer import Timer
 from model_navigator.runtime_analyzer.strategy import RuntimeSearchStrategy
 from model_navigator.utils.module import lazy_import
@@ -46,6 +47,7 @@ class Module(wrapt.ObjectProxy):
         input_mapping: function to map module inputs to the expected input.
         output_mapping: function to map module outputs to the expected output.
         offload_parameters_to_cpu: offload parameters to cpu.
+        forward_func: forwarding function name used by the module, if None, the module __call__ is used.
 
     Example:
         >>> import torch
@@ -56,12 +58,13 @@ class Module(wrapt.ObjectProxy):
 
     def __init__(
         self,
-        module: torch.nn.Module,
+        module: "torch.nn.Module",
         name: Optional[str] = None,
         input_mapping: Optional[Callable] = None,
         output_mapping: Optional[Callable] = None,
         timer: Optional[Timer] = None,
         offload_parameters_to_cpu: bool = False,
+        forward_func: Optional[str] = None,
     ) -> None:
         """Initialize Module."""
         super().__init__(module)
@@ -74,12 +77,21 @@ class Module(wrapt.ObjectProxy):
         else:
             self._module_timer = None
 
+        current_forward = None
+        if forward_func:
+            try:
+                current_forward = getattr(module, forward_func)
+            except AttributeError as e:
+                raise ModelNavigatorUserInputError(f"Forward method must exist, got {forward_func}.") from e
+            setattr(module, forward_func, self.__call__)
+
         self._wrapper = RecordAndOptimizeModule(
             module,
             # OptimizeConfig(),
             self._name,
             self._input_mapping,
             self._output_mapping,
+            forward=current_forward,
         )
         module_registry.register(self._name, self)
 
@@ -178,10 +190,11 @@ class Module(wrapt.ObjectProxy):
 
 
 def module(
-    module_callable: Optional[Callable[[Any], torch.nn.Module]] = None,
+    module_callable: Optional[Callable[[Any], "torch.nn.Module"]] = None,
     name: Optional[str] = None,
     input_mapping: Optional[Callable] = None,
     output_mapping: Optional[Callable] = None,
+    forward_func: Optional[str] = None,
 ):
     """Inplace Optimize module wrapper decorator.
 
@@ -197,6 +210,7 @@ def module(
         name: module name.
         input_mapping: function to map module inputs to the expected input.
         output_mapping: function to map module outputs to the expected output.
+        forward_func: forwarding function name used by the module, if None, the module __call__ is used.
 
     Example:
         >>> import torch
@@ -212,6 +226,7 @@ def module(
             name=name,
             input_mapping=input_mapping,
             output_mapping=output_mapping,
+            forward_func=forward_func,
         )
 
     @wrapt.decorator
@@ -221,6 +236,7 @@ def module(
             name=name,
             input_mapping=input_mapping,
             output_mapping=output_mapping,
+            forward_func=forward_func,
         )
 
     return wrap_module(module_callable)
