@@ -15,6 +15,7 @@
 
 import dataclasses
 import glob
+import math
 import os
 import pathlib
 from enum import Enum
@@ -23,6 +24,7 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 import numpy
 from polygraphy.backend.trt.profile import Profile, ShapeTuple
 
+from model_navigator.core.constants import OPT_MAX_SHAPE_RATIO
 from model_navigator.core.logger import LOGGER
 from model_navigator.utils import module
 
@@ -497,3 +499,18 @@ def find_in_dirs(name_glob: str, dirs: Sequence[str]) -> List[str]:
         if paths:
             return paths
     return []
+
+
+def optimal_batch_size(max_batch_size: int) -> int:
+    """Estimate the optimal shape based on batch size.
+
+    Args:
+        max_batch_size: The maximum batch size used during optimization.
+
+    Returns:
+        The optimal batch size.
+    """
+    magnitude = math.floor(math.log2(max_batch_size))
+    opt_batch_size = int(2 ** int(math.ceil(magnitude * OPT_MAX_SHAPE_RATIO)))
+
+    return opt_batch_size

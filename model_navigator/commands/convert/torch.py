@@ -114,7 +114,7 @@ class ConvertTorchScript2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearch):
         batch_dim: Optional[int] = None,
         dataloader_max_batch_size: Optional[int] = None,
         device_max_batch_size: Optional[int] = None,
-        optimized_trt_profiles: Optional[List[TensorRTProfile]] = None,
+        trt_profiles: Optional[List[TensorRTProfile]] = None,
     ) -> CommandOutput:
         """Run Torchscript ot Torch-TensorRT conversion.
 
@@ -139,7 +139,7 @@ class ConvertTorchScript2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearch):
                 Defaults to None.
             device_max_batch_size (Optional[int], optional): Device maximum batch size.
                 Defaults to None.
-            optimized_trt_profiles (Optional[TensorRTProfile], optional): User specified TensorRT profile. Defaults to None.
+            trt_profiles (Optional[TensorRTProfile], optional): User specified TensorRT profile. Defaults to None.
 
         Raises:
             RuntimeError: When no GPU is available.
@@ -165,7 +165,7 @@ class ConvertTorchScript2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearch):
         def get_args(max_batch_size=None):
             # NOTE: Torch-TensorRT does not support multiple profiles. Use first profile.
             # TODO: Add support for multiple profiles when Torch-TensorRT supports it.
-            profile = optimized_trt_profiles[0] if optimized_trt_profiles else dataloader_trt_profile
+            profile = trt_profiles[0] if trt_profiles else dataloader_trt_profile
             shapes = self._get_shape_args(trt_profile=profile, batch_dim=batch_dim, max_batch_size=max_batch_size)
 
             kwargs = {
@@ -196,11 +196,11 @@ class ConvertTorchScript2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearch):
                 batch_dim=batch_dim,
                 device_max_batch_size=device_max_batch_size,
                 dataloader_max_batch_size=dataloader_max_batch_size,
-                custom_trt_profile_available=bool(optimized_trt_profiles),
+                custom_trt_profile_available=bool(trt_profiles),
             )
 
         conversion_profiles = self._get_shape_args(
-            trt_profile=optimized_trt_profiles[0] if optimized_trt_profiles else dataloader_trt_profile,
+            trt_profile=trt_profiles[0] if trt_profiles else dataloader_trt_profile,
             batch_dim=batch_dim,
             max_batch_size=conversion_max_batch_size,
         )

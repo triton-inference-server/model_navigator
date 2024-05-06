@@ -15,7 +15,7 @@ import numpy as np
 
 from model_navigator.api.config import ShapeTuple, TensorRTProfile
 from model_navigator.frameworks.tensorrt import utils as tensorrt_utils
-from model_navigator.frameworks.tensorrt.utils import _opt_batch_size
+from model_navigator.utils.common import optimal_batch_size
 
 
 def test_cast_type_return_current_type_when_has_no_cast(mocker):
@@ -78,27 +78,6 @@ def test_cast_tensor_is_changed_when_tensor_cast_type_after_8_6(mocker):
         assert modified_tensor.shape == tensor.shape
 
 
-def test_opt_batch_size_return_valid_result_when_various_max_bs_passed():
-    pairs = [
-        (1, 1),
-        (2, 2),
-        (3, 2),
-        (5, 4),
-        (16, 16),
-        (31, 16),
-        (32, 16),
-        (35, 16),
-        (63, 16),
-        (512, 256),
-        (4096, 1024),
-        (16348, 2048),
-        (65536, 8192),
-    ]
-    for max_bs, opt_bs in pairs:
-        result = _opt_batch_size(max_batch_size=max_bs)
-        assert result == opt_bs
-
-
 def test_get_trt_profile_return_updates_batch_size_when_max_bs_equal_to_1():
     batch_dim = 0
     ref_profile = TensorRTProfile({
@@ -138,7 +117,7 @@ def test_get_trt_profile_return_updates_batch_size_when_max_bs_greater_than_1():
         for i in range(len(old_shape.opt)):
             if i == batch_dim:
                 assert old_shape.opt[i] == ref_shape.opt[i]
-                assert updated_shape.opt[i] == _opt_batch_size(new_max_bs)
+                assert updated_shape.opt[i] == optimal_batch_size(new_max_bs)
             else:
                 assert old_shape.opt[i] == updated_shape.opt[i] == ref_shape.opt[i]
 

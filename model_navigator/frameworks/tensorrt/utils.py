@@ -15,7 +15,6 @@
 
 import contextlib
 import logging
-import math
 import os
 import pathlib
 import signal
@@ -25,12 +24,16 @@ from typing import Callable, List, Optional, Tuple, TypeVar, Union
 import numpy as np
 
 from model_navigator.api.config import ShapeTuple, TensorRTProfile, TensorType
-from model_navigator.core.constants import OPT_MAX_SHAPE_RATIO
 from model_navigator.core.tensor import TensorMetadata, get_tensor_type
 from model_navigator.exceptions import ModelNavigatorNotFoundError
 from model_navigator.utils import common as utils
 from model_navigator.utils import module
-from model_navigator.utils.common import invoke_if_callable, numpy_to_torch_dtype, torch_to_numpy_dtype
+from model_navigator.utils.common import (
+    invoke_if_callable,
+    numpy_to_torch_dtype,
+    optimal_batch_size,
+    torch_to_numpy_dtype,
+)
 
 trt = module.lazy_import("tensorrt")
 torch = module.lazy_import("torch")
@@ -171,17 +174,10 @@ def get_trt_profile_with_new_max_batch_size(
         opt_shapes = list(trt_profile[input_name].opt)
 
         max_shapes[batch_dim] = max_batch_size
-        opt_shapes[batch_dim] = _opt_batch_size(max_batch_size)
+        opt_shapes[batch_dim] = optimal_batch_size(max_batch_size)
 
         new_profile[input_name] = ShapeTuple(trt_profile[input_name].min, tuple(opt_shapes), tuple(max_shapes))
     return new_profile
-
-
-def _opt_batch_size(max_batch_size):
-    magnitude = math.floor(math.log2(max_batch_size))
-    opt_batch_size = 2 ** int(math.ceil(magnitude * OPT_MAX_SHAPE_RATIO))
-
-    return opt_batch_size
 
 
 def _should_use_v3_api():

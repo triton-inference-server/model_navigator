@@ -31,6 +31,7 @@ from model_navigator.frameworks.onnx.utils import get_onnx_io_names
 from model_navigator.frameworks.tensorrt.utils import get_tensorrt_io_names
 from model_navigator.runners.utils import get_format_default_runners
 from model_navigator.utils import module
+from model_navigator.utils.common import optimal_batch_size
 from model_navigator.utils.format_helpers import FRAMEWORK2BASE_FORMAT
 
 torch = module.lazy_import("torch")
@@ -97,7 +98,8 @@ def _get_trt_profile_from_axes_shapes(axes_shapes, batch_dim, config_max_batch_s
                         f"is smaller than the encountered batch size ({max(shapes)})."
                     )
                 max_batch_size = config_max_batch_size or max(shapes)
-                min_opt_max.append((1, int(np.median(shapes)), max_batch_size))
+                opt_shape = optimal_batch_size(max_batch_size)
+                min_opt_max.append((1, opt_shape, max_batch_size))
             else:
                 min_opt_max.append((min(shapes), int(np.median(shapes)), max(shapes)))
         if min_opt_max:

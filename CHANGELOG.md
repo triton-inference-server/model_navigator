@@ -26,6 +26,7 @@ limitations under the License.
 - fix: measurement stabilization in `nav.profile()`
 - fix: inplace inference through Torch
 - fix: trt_profiles argument handling in ONNX to TRT conversion
+- fix: optimal shape configuration for batch size in Inplace API
 - change: Disable TensorRT profile builder
 - change: `nav.optimize()` does not override module configuration
 

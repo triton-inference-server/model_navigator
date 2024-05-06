@@ -108,7 +108,7 @@ class ConvertSavedModel2TFTRT(Convert2TensorRTWithMaxBatchSizeSearch):
         batch_dim: Optional[int] = None,
         dataloader_max_batch_size: Optional[int] = None,
         device_max_batch_size: Optional[int] = None,
-        optimized_trt_profiles: Optional[List[TensorRTProfile]] = None,
+        trt_profiles: Optional[List[TensorRTProfile]] = None,
     ) -> CommandOutput:
         """Run conversion from SavedModel to Tensorflow-TensorRT.
 
@@ -126,7 +126,7 @@ class ConvertSavedModel2TFTRT(Convert2TensorRTWithMaxBatchSizeSearch):
                 Defaults to None.
             device_max_batch_size (Optional[int], optional): Maximum batch size that fits on the device.
                 Defaults to None.
-            optimized_trt_profiles: List of TensorRT profiles that will be used by Model Navigator for conversion, user provided or optimized by TensorRTProfileBuilder command.
+            trt_profiles: List of TensorRT profiles that will be used by Model Navigator for conversion, user provided or optimized by TensorRTProfileBuilder command.
             custom_args (Optional[Dict[str, Any]], optional): Passthrough parameters for TrtGraphConverterV2
         Raises:
             RuntimeError: When no GPUs are available.
@@ -148,12 +148,12 @@ class ConvertSavedModel2TFTRT(Convert2TensorRTWithMaxBatchSizeSearch):
 
         if batch_dim is not None:
             # NOTE: TenserFlow-TensorRT does not support custom profiles. Use first profile to get max batch size.
-            profile = optimized_trt_profiles[0] if optimized_trt_profiles else dataloader_trt_profile
+            profile = trt_profiles[0] if trt_profiles else dataloader_trt_profile
             max_batch_size = list(profile.values())[0].max[batch_dim]
         else:
             max_batch_size = None
 
-        if optimized_trt_profiles is not None:
+        if trt_profiles is not None:
             LOGGER.info("TensorFlow-TensorRT conversion currently does not support custom profiles.")
 
         def get_args(max_batch_size: int = max_batch_size):
@@ -184,7 +184,7 @@ class ConvertSavedModel2TFTRT(Convert2TensorRTWithMaxBatchSizeSearch):
                 batch_dim=batch_dim,
                 device_max_batch_size=device_max_batch_size,
                 dataloader_max_batch_size=dataloader_max_batch_size,
-                custom_trt_profile_available=bool(optimized_trt_profiles),
+                custom_trt_profile_available=bool(trt_profiles),
             )
 
         LOGGER.info("Converted SavedModel to Tensorflow-TensorRT.")

@@ -22,7 +22,7 @@ from typing import Any, Dict, Optional, Sequence, Tuple, Type, Union
 from model_navigator.api.config import CustomConfig, DeviceKind, Format, OptimizationProfile, VerifyFunction
 from model_navigator.core.constants import DEFAULT_SAMPLE_COUNT
 from model_navigator.runners.base import NavigatorRunner
-from model_navigator.runtime_analyzer.strategy import MinLatencyStrategy, RuntimeSearchStrategy
+from model_navigator.runtime_analyzer.strategy import MaxThroughputStrategy, RuntimeSearchStrategy
 
 DEFAULT_CACHE_DIR = pathlib.Path.home() / ".cache" / "model_navigator"
 DEFAULT_MIN_NUM_SAMPLES = 100
@@ -47,7 +47,7 @@ class InplaceConfig:
         self._cache_dir: pathlib.Path = inplace_cache_dir()
         self._min_num_samples: int = DEFAULT_MIN_NUM_SAMPLES
         self._max_num_samples_stored: int = DEFAULT_MAX_NUM_SAMPLES_STORED
-        self.strategy: RuntimeSearchStrategy = MinLatencyStrategy()
+        self.strategy: RuntimeSearchStrategy = MaxThroughputStrategy()
 
     @property
     def min_num_samples(self) -> int:

@@ -24,6 +24,7 @@ from model_navigator.commands.infer_metadata import (
 )
 from model_navigator.core.tensor import PyTreeMetadata, TensorSpec
 from model_navigator.exceptions import ModelNavigatorUserInputError
+from model_navigator.utils.common import optimal_batch_size
 
 
 def test_extract_max_batch_size_return_correct_value_when_multiple_values_passed():
@@ -75,11 +76,17 @@ def test_get_trt_profile_return_correct_shapes_when_axes_shapes_and_config_max_b
     }
     batch_dim = 0
     config_max_batch_size = 5
+    opt_batch_size = optimal_batch_size(config_max_batch_size)
 
     expected_trt_profile = (
         TensorRTProfile()
-        .add(input_names[0], min=(1, 1), opt=(2, 2), max=(config_max_batch_size, 3))
-        .add(input_names[1], min=(1, 224, 224, 3), opt=(2, 356, 356, 3), max=(config_max_batch_size, 448, 448, 3))
+        .add(input_names[0], min=(1, 1), opt=(opt_batch_size, 2), max=(config_max_batch_size, 3))
+        .add(
+            input_names[1],
+            min=(1, 224, 224, 3),
+            opt=(opt_batch_size, 356, 356, 3),
+            max=(config_max_batch_size, 448, 448, 3),
+        )
     )
 
     trt_profile = _get_trt_profile_from_axes_shapes(

@@ -146,10 +146,13 @@ class RecordModule(BaseModule):
         from model_navigator.api.torch import optimize
 
         batch_dim = 0 if self._optimize_config.batching else None
+        max_batch_size = None
         if self._optimize_config.optimization_profile is not None:
-            max_batch_size = self._optimize_config.optimization_profile.max_batch_size
-        else:
-            max_batch_size = None
+            if self._optimize_config.optimization_profile.max_batch_size:
+                max_batch_size = self._optimize_config.optimization_profile.max_batch_size
+            elif self._optimize_config.optimization_profile.batch_sizes:
+                max_batch_size = max(self._optimize_config.optimization_profile.batch_sizes)
+
         config_dict = {k: v for k, v in self._optimize_config.to_dict().items() if k != "workspace"}
 
         for i, pytree_metadata in enumerate(self._samples):
