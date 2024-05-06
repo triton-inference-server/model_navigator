@@ -156,7 +156,7 @@ class _BaseTorchRunner(NavigatorRunner):
 
             device_args.append(value)
 
-        for key, value in kwargs.values():
+        for key, value in kwargs.items():
             if isinstance(value, torch.Tensor):
                 value = value.to(self.device)
 

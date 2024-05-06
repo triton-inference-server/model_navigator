@@ -300,4 +300,6 @@ def _get_modelkeys_runners(formats, runners):
                         and runner_name in runners
                     ):
                         modelkeys_runners.add((modelkey, runner_name))
+
+    modelkeys_runners = sorted(modelkeys_runners)
     return modelkeys_runners
