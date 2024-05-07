@@ -16,7 +16,7 @@ limitations under the License.
 
 # Changelog
 
-## 0.9.0 (unreleased)
+## 0.9.0
 
 - new: TensorRT Timing Tactics Cache Management - using timing tactics cache files for optimization performance improvements
 - new: Added throughput saturation verification in `nav.profile()` (enabled by default)
@@ -32,6 +32,21 @@ limitations under the License.
 
 - Known issues and limitations
   - DistillERT ONNX dynamo export does not support dynamic shapes
+
+[//]: <> (put here on external component update with short summary what change or link to changelog)
+
+- Version of external components used during testing:
+    - [PyTorch 2.3.0a0+6ddf5cf85e](https://github.com/pytorch/pytorch/commit/40ec155e58ee1a1921377ff921b55e61502e4fb3)
+    - [TensorFlow 2.15.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.15.0)
+    - [TensorRT 8.6.3](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+    - [Torch-TensorRT 2.0.0.dev0](https://github.com/NVIDIA/Torch-TensorRT)
+    - [ONNX Runtime 1.17.1](https://github.com/microsoft/onnxruntime/tree/v1.17.1)
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.49.4
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.4.6
+    - [tf2onnx v1.16.1](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.16.1)
+    - Other component versions depend on the used framework containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
 
 ## 0.8.1
 
