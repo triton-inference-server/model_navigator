@@ -16,6 +16,8 @@ limitations under the License.
 
 # Changelog
 
+## 0.10.0 (unreleased)
+
 ## 0.9.0
 
 - new: TensorRT Timing Tactics Cache Management - using timing tactics cache files for optimization performance improvements
@@ -29,9 +31,6 @@ limitations under the License.
 - fix: optimal shape configuration for batch size in Inplace API
 - change: Disable TensorRT profile builder
 - change: `nav.optimize()` does not override module configuration
-
-- Known issues and limitations
-  - DistillERT ONNX dynamo export does not support dynamic shapes
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 
