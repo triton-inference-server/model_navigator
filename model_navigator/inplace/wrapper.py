@@ -14,10 +14,15 @@
 """Inplace Optimize model wrapper."""
 
 import functools
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Literal, Optional
 
 import wrapt
 
+from model_navigator.api.config import (
+    CustomConfigForTensorRT,
+    TensorRTConfig,
+    TensorRTPrecisionMode,
+)
 from model_navigator.exceptions import ModelNavigatorUserInputError
 from model_navigator.inplace.timer import Timer
 from model_navigator.runtime_analyzer.strategy import RuntimeSearchStrategy
@@ -29,6 +34,8 @@ from .registry import module_registry
 from .utils import get_object_name
 
 torch = lazy_import("torch")
+
+PrecisionType = Literal["int8", "fp8", "fp16", "bf16", "fp32"]
 
 
 class Module(wrapt.ObjectProxy):
@@ -48,6 +55,12 @@ class Module(wrapt.ObjectProxy):
         output_mapping: function to map module outputs to the expected output.
         offload_parameters_to_cpu: offload parameters to cpu.
         forward_func: forwarding function name used by the module, if None, the module __call__ is used.
+        batching: enable or disable batching on first (index 0) dimension of the model
+        precision: precision of the module
+
+    Note:
+        batching if specified takes precedense over corresponding values in the
+        configuration specified in nav.profile.
 
     Example:
         >>> import torch
@@ -63,8 +76,9 @@ class Module(wrapt.ObjectProxy):
         input_mapping: Optional[Callable] = None,
         output_mapping: Optional[Callable] = None,
         timer: Optional[Timer] = None,
-        offload_parameters_to_cpu: bool = False,
         forward_func: Optional[str] = None,
+        batching: Optional[bool] = None,
+        precision: PrecisionType = "fp32",
     ) -> None:
         """Initialize Module."""
         super().__init__(module)
@@ -84,6 +98,9 @@ class Module(wrapt.ObjectProxy):
             except AttributeError as e:
                 raise ModelNavigatorUserInputError(f"Forward method must exist, got {forward_func}.") from e
             setattr(module, forward_func, self.__call__)
+
+        self.batching = batching
+        self.precision = precision
 
         self._wrapper = RecordAndOptimizeModule(
             module,
@@ -112,8 +129,32 @@ class Module(wrapt.ObjectProxy):
     @optimize_config.setter
     def optimize_config(self, value: OptimizeConfig) -> None:
         """Module optimize config."""
+        value = value.clone()
+        self._override_config_with_module_tags(value)
+
         self._optimize_config = value
         self._wrapper._optimize_config = value
+
+    def _override_config_with_module_tags(self, config: OptimizeConfig):
+        """Overrides given configuration with batching and precision.
+
+        Note:
+        - batching is overriden if specified during model initialization
+        - precision is applied only if TensortRT custom configuration have not been already specified.
+        """
+        if self.batching is not None:
+            config.batching = self.batching
+
+        config.custom_configs = config.custom_configs or []
+        trt_config_provided = False
+        for cc in config.custom_configs:
+            if isinstance(cc, CustomConfigForTensorRT):
+                trt_config_provided = True
+                break
+        if not trt_config_provided:
+            precision = ("fp32", "fp16") if self.precision == "fp32" else self.precision
+            new_trt_config = TensorRTConfig(precision=precision, precision_mode=TensorRTPrecisionMode.HIERARCHY)
+            config.custom_configs = list(config.custom_configs) + [new_trt_config]
 
     def __call__(self, *args, **kwargs) -> Any:
         """Call the wrapped module.
@@ -195,6 +236,8 @@ def module(
     input_mapping: Optional[Callable] = None,
     output_mapping: Optional[Callable] = None,
     forward_func: Optional[str] = None,
+    batching: Optional[bool] = None,
+    precision: PrecisionType = "fp32",
 ):
     """Inplace Optimize module wrapper decorator.
 
@@ -211,6 +254,12 @@ def module(
         input_mapping: function to map module inputs to the expected input.
         output_mapping: function to map module outputs to the expected output.
         forward_func: forwarding function name used by the module, if None, the module __call__ is used.
+        batching: enable or disable batching on first (index 0) dimension of the model
+        precision: precision of the module
+
+    Note:
+        batching if specified takes precedense over corresponding values in the
+        configuration specified in nav.profile.
 
     Example:
         >>> import torch
@@ -227,6 +276,8 @@ def module(
             input_mapping=input_mapping,
             output_mapping=output_mapping,
             forward_func=forward_func,
+            batching=batching,
+            precision=precision,
         )
 
     @wrapt.decorator
@@ -237,6 +288,8 @@ def module(
             input_mapping=input_mapping,
             output_mapping=output_mapping,
             forward_func=forward_func,
+            batching=batching,
+            precision=precision,
         )
 
     return wrap_module(module_callable)

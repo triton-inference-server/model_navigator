@@ -95,6 +95,48 @@ nav.optimize(pipe, dataloader)
 
 Review all possible options in the [optimize API](api/optimize.md).
 
+## Optimizing a quantized module
+If you don not specify any configuration for `nav.optimize` function, Module Navigator will try to optimize with some sensible defaults. Still, you can add some arguments to give hints for the optimization process like `batching` or `precision`. One usefull scenario may be related to pipelines with different modules' precisions due to quantization. In such a case:
+- load the whole pipeline in `fp16`
+- quantize the most time consuming module e.g. unet into `int8` precision using for example [NVIDIA TensorRT Model Optimizer](https://github.com/NVIDIA/TensorRT-Model-Optimizer) library
+- let Model Navigator optimize the whole pipeline
+
+The sample code snippet below shows how to achieve that. Notice that for clarity we assumed we have a given function
+to quantize `quantize_int_8_bits` and the quantized module takes an extra parameter specifying its precision i.e.
+`precision="int8"`.
+
+Model Navigator will try by default export `text_encoder` and `vae.decoder` into `fp32` and `fp16` TensorRT precisions but
+the `unet` will be exported into `int8`.
+
+```python
+    pipe = StableDiffusionPipeline.from_pretrained("stabilityai/stable-diffusion-2-1",
+                                                            torch_dtype=torch.float16,
+                                                            variant="fp16").to("cuda")
+
+    pipe.unet = quantize_int_8_bits(pipe.unet)
+
+    pipe.text_encoder = nav.Module(
+        pipe.text_encoder,
+        name="clip",
+        output_mapping=lambda output: BaseModelOutputWithPooling(**output),
+    )
+    pipe.unet = nav.Module(
+        pipe.unet,
+        name="unet",
+        precision="int8",
+    )
+    pipe.vae.decoder = nav.Module(
+        pipe.vae.decoder,
+        name="vae",
+    )
+```
+
+If you would like to have more granular control over the configuration you can either create it for the whole pipeline i.e.
+```python
+nav.optimize(model, dataloader, config=config)
+```
+or specify it for [each module](#per-module-configuration).
+
 ## Optimizing ResNet18 model
 
 The Inplace Optimize can be easily used to optimize a single `nn.Module`. The below example shows how to optimize a

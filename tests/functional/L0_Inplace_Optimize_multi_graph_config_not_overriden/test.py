@@ -99,8 +99,7 @@ def main():
     model.mod2 = nav.Module(model.mod2, name="identity2")
 
     model.mod1.optimize_config = optimize_config
-
-    model.mod2.optimize_config = optimize_config.clone()
+    model.mod2.optimize_config = optimize_config
     model.mod2.optimize_config.runners = ("TensorRT", "TorchCUDA")
 
     nav.optimize(func=model, dataloader=dataloader)

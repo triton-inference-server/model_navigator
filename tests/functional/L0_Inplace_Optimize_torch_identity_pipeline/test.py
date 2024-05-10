@@ -104,8 +104,8 @@ def main():
             "TensorRT",
         ),
     )
-    pipe.model_a = nav.Module(pipe.model_a, name="model_a")
-    pipe.model_b = nav.Module(pipe.model_b, name="model_b")
+    pipe.model_a = nav.Module(pipe.model_a, name="model_a", precision="fp16")
+    pipe.model_b = nav.Module(pipe.model_b, name="model_b", batching=True)
     pipe.model_c = nav.Module(pipe.model_c, name="model_c")
 
     nav.optimize(func=pipe, dataloader=dataloader, config=optimize_config)
@@ -122,6 +122,8 @@ def main():
     status_file = args.status
     status = collect_optimize_statuses([package.status for package in packages], names)
 
+    # remove module_a fp32 as the model precision is only fp16
+    EXPECTED_STATUSES.remove("model_a.0.trt-fp32.TensorRT")
     validate_status(status, expected_statuses=EXPECTED_STATUSES)
 
     with status_file.open("w") as fp:

@@ -21,16 +21,32 @@ Note:
 import os
 import pathlib
 from importlib.util import find_spec
-from unittest.mock import MagicMock, patch
+from typing import cast
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
+from model_navigator.api.config import (
+    TensorRTConfig,
+    TensorRTPrecision,
+    TensorRTPrecisionMode,
+    TorchConfig,
+)
 from model_navigator.exceptions import ModelNavigatorUserInputError
 from model_navigator.inplace.config import DEFAULT_CACHE_DIR, OptimizeConfig, inplace_cache_dir
 from model_navigator.inplace.model import OptimizedModule, PassthroughModule, RecordModule
 from model_navigator.inplace.registry import module_registry
 from model_navigator.inplace.utils import get_object_name
-from model_navigator.inplace.wrapper import Module
+from model_navigator.inplace.wrapper import Module, module
+
+
+@pytest.fixture
+def clean_up_registry():
+    """Clears registry after test case."""
+    try:
+        yield
+    finally:
+        module_registry.clear()
 
 
 def test_get_object_name():
@@ -56,19 +72,15 @@ def test_config_raise_error_on_invalid_num_samples():
         inplace_config.min_num_samples = -1
 
 
-def test_model_registry_check_all_ready_returns_true_when_all_models_ready():
-    module_registry._registry = {
-        "model1": MagicMock(is_optimized=False, is_ready_for_optimization=True),
-        "model2": MagicMock(is_optimized=True, is_ready_for_optimization=False),
-    }
+def test_model_registry_check_all_ready_returns_true_when_all_models_ready(clean_up_registry):
+    module_registry.register("model1", MagicMock(is_optimized=False, is_ready_for_optimization=True))
+    module_registry.register("model2", MagicMock(is_optimized=True, is_ready_for_optimization=False))
     assert module_registry.check_all_ready()
 
 
-def test_model_registry_check_all_ready_returns_false_when_not_all_models_ready():
-    module_registry._registry = {
-        "model1": MagicMock(is_optimized=False, is_ready_for_optimization=False),
-        "model2": MagicMock(is_optimized=True, is_ready_for_optimization=True),
-    }
+def test_model_registry_check_all_ready_returns_false_when_not_all_models_ready(clean_up_registry):
+    module_registry.register("model1", MagicMock(is_optimized=False, is_ready_for_optimization=False))
+    module_registry.register("model2", MagicMock(is_optimized=True, is_ready_for_optimization=True))
     assert not module_registry.check_all_ready()
 
 
@@ -197,3 +209,88 @@ def test_module_wrapper_complain_on_missing_custom_func_name():
 
     with pytest.raises(ModelNavigatorUserInputError):
         Module(TestModule(), "model5", forward_func="non_existing_func")
+
+
+def test_module_tags_should_override_config(clean_up_registry):
+    # given
+    config = OptimizeConfig(batching=False)
+    config_copy = config.clone()
+
+    model_a = Module(Mock(), name="model_a", precision="fp16")
+    model_b = Module(Mock(), name="model_b", precision="fp32", batching=True)
+    model_c = Module(Mock(), name="model_c")
+
+    # when
+    model_a.optimize_config = config
+    model_b.optimize_config = config
+    model_c.optimize_config = config
+
+    # then
+    assert_correct_overrides_in_configs(config, config_copy, model_a, model_b, model_c)
+
+
+def test_module_factory_tags_should_override_config(clean_up_registry):
+    # given
+    custom_configs = (TorchConfig(),)
+    config = OptimizeConfig(batching=False, custom_configs=custom_configs)
+    config_copy = config.clone()
+
+    @module(name="model_a", precision="fp16")
+    def module_a():
+        return Mock()
+
+    @module(name="model_b", precision="fp32", batching=True)
+    def module_b():
+        return Mock()
+
+    @module(name="model_c")
+    def module_c():
+        return Mock()
+
+    model_a = module_a()
+    model_b = module_b()
+    model_c = module_c()
+
+    # when
+    model_a.optimize_config = config
+    model_b.optimize_config = config
+    model_c.optimize_config = config
+
+    # then
+    assert_correct_overrides_in_configs(config, config_copy, model_a, model_b, model_c)
+
+
+def assert_correct_overrides_in_configs(config, config_copy, model_a, model_b, model_c):
+    # then
+    assert config == config_copy, "Config must not be altered by any module"
+    assert not model_a.optimize_config.batching
+    custom_config = cast(TensorRTConfig, model_a.optimize_config.custom_configs[-1])
+    assert custom_config.precision == (TensorRTPrecision.FP16,)
+    assert custom_config.precision_mode == TensorRTPrecisionMode.HIERARCHY
+
+    assert model_b.optimize_config.batching
+    custom_config = cast(TensorRTConfig, model_b.optimize_config.custom_configs[-1])
+    assert custom_config.precision == (TensorRTPrecision.FP32, TensorRTPrecision.FP16)
+    assert custom_config.precision_mode == TensorRTPrecisionMode.HIERARCHY
+
+    assert not model_c.optimize_config.batching
+
+
+def test_module_tags_should_partially_override_config(clean_up_registry):
+    # given
+    custom_configs = (TensorRTConfig(precision="fp32", precision_mode="single"),)
+    config = OptimizeConfig(batching=False, custom_configs=custom_configs)
+
+    model_a = Module(Mock(), name="model_a", precision="fp16")
+    model_b = Module(Mock(), name="model_b", precision="fp32", batching=True)
+
+    # when
+    model_a.optimize_config = config
+    model_b.optimize_config = config
+
+    # then
+    assert not model_a.optimize_config.batching
+    assert model_a.optimize_config.custom_configs == config.custom_configs
+
+    assert model_b.optimize_config.batching
+    assert model_b.optimize_config.custom_configs == config.custom_configs

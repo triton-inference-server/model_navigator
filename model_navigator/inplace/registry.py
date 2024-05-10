@@ -13,6 +13,7 @@
 # limitations under the License.
 """Inplace model registry."""
 
+import gc
 from typing import TYPE_CHECKING, Dict
 
 if TYPE_CHECKING:
@@ -31,6 +32,15 @@ class ModuleRegistry:
         if name in self._registry:
             raise ValueError(f"Module {name} already registered.")
         self._registry[name] = module
+
+    def clear(self) -> None:
+        """Removes already registered modules.
+
+        Warning: this should only be called when you want to optimize already registered modules once again
+        from scratch.
+        """
+        self._registry = {}
+        gc.collect()
 
     @property
     def modules(self) -> Dict[str, "Module"]:

@@ -18,6 +18,8 @@ limitations under the License.
 
 ## 0.10.0 (unreleased)
 
+- new: inplace `nav.Module` accepts `batching` flag which overrides a config setting and `precision` which allows setting appriopriate configuration for TensorRT
+
 ## 0.9.0
 
 - new: TensorRT Timing Tactics Cache Management - using timing tactics cache files for optimization performance improvements
