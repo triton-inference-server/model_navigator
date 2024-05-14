@@ -13,10 +13,11 @@
 # limitations under the License.
 """Runners global registry."""
 
-from typing import Dict, Type, Union
+from typing import Dict, Optional, Type, Union
 
 import pkg_resources
 
+from model_navigator.api.config import DeviceKind
 from model_navigator.core.logger import LOGGER
 from model_navigator.runners.base import NavigatorRunner
 
@@ -47,11 +48,14 @@ def register_runner(runner_cls: Type[NavigatorRunner]) -> None:
     LOGGER.debug(f"Registered runner: {runner_cls.name()}")
 
 
-def get_runner(runner_name: Union[str, Type[NavigatorRunner]]) -> Type[NavigatorRunner]:
+def get_runner(
+    runner_name: Union[str, Type[NavigatorRunner]], device_kind: Optional[DeviceKind] = None
+) -> Type[NavigatorRunner]:
     """Return runner with given name.
 
     Args:
         runner_name: Name of runner that has to be returned
+        device_kind: Optional device kind of runner
 
     Returns:
         NavigatorRunner object
@@ -64,4 +68,8 @@ def get_runner(runner_name: Union[str, Type[NavigatorRunner]]) -> Type[Navigator
     runner = runner_registry.get(runner_name, None)
     if runner is None:
         raise ValueError(f"Runner `{runner_name}` not available.")
+
+    if device_kind is not None and device_kind not in runner.devices_kind():
+        raise ValueError(f"Runner `{runner_name}` not supported on {device_kind}.")
+
     return runner

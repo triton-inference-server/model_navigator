@@ -17,6 +17,9 @@ from typing import Optional, Sequence, Tuple
 
 from model_navigator.api.config import CustomConfig, Format, TorchTensorRTConfig
 from model_navigator.core.logger import LOGGER
+from model_navigator.utils.module import lazy_import
+
+torch = lazy_import("torch")
 
 
 def update_allowed_batching_parameters(
@@ -33,3 +36,18 @@ def update_allowed_batching_parameters(
     )
 
     return target_formats, custom_configs
+
+
+def get_module_device(module: "torch.nn.Module") -> Optional["torch.device"]:
+    """Get the device of the given module.
+
+    Args:
+        module: Module to get the device of.
+
+    Returns:
+        The device of module based on parameters. If not parameters, returns None.
+    """
+    try:
+        return next(module.parameters()).device
+    except StopIteration:
+        return None

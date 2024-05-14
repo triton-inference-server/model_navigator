@@ -122,7 +122,7 @@ class RuntimeAnalyzer:
         if not result:
             raise ModelNavigatorRuntimeAnalyzerError("No matching results found.")
 
-        LOGGER.info(
+        LOGGER.debug(
             f"\n"
             f"Strategy: {strategy}\n"
             f"  Latency: {result.latency:.4f} [ms]\n"
@@ -281,6 +281,15 @@ class RuntimeAnalyzer:
         runner_status = model_status.runners_status.get(runner_name)
         if not runner_status:
             raise ModelNavigatorRuntimeAnalyzerError(f"Status for model {model_key} and runner {runner_name} not found")
+
+        if not (
+            runner_status.status.get(Correctness.__name__)
+            == runner_status.status.get(Performance.__name__)
+            == CommandStatus.OK
+        ):
+            raise ModelNavigatorRuntimeAnalyzerError(
+                f"Model {model_key} has not evaluated successfully on runner {runner_name}"
+            )
 
         profiling_results = runner_status.result[Performance.__name__]["profiling_results"]
         if len(profiling_results) == 0:

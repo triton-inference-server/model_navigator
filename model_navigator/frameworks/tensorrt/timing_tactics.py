@@ -96,12 +96,12 @@ class TimingCacheStrategy(Enum):
     """When user specifies the cache path."""
 
 
-DEFAULT_CACHE_TYPE = os.environ.get("NAV_TRT_TIMING_CACHE_TYPE", TimingCacheType.DISK.value)
+DEFAULT_CACHE_TYPE = os.environ.get("MODEL_NAVIGATOR_TENSORRT_TIMING_CACHE_TYPE", TimingCacheType.DISK.value)
 #: Default cache type of the timing tactics cache manager.
 #: It can be changed using environment variable NAV_TRT_TIMING_CACHE_TYPE.
 
 DEFAULT_CACHE_STRATEGY = TimingCacheStrategy(
-    os.environ.get("NAV_TRT_TIMING_CACHE_STRATEGY", TimingCacheStrategy.GLOBAL.value)
+    os.environ.get("MODEL_NAVIGATOR_TENSORRT_TIMING_CACHE_STRATEGY", TimingCacheStrategy.GLOBAL.value)
 )
 #: Default cache strategy of the timing tactics cache manager.
 #:  It can be changed using environment variable TRT_TIMING_CACHE_STRATEGY.

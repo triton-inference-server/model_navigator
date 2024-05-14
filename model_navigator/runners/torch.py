@@ -18,12 +18,16 @@ from copy import deepcopy
 from typing import List, Optional
 
 from model_navigator.api.config import Format, TensorType
-from model_navigator.configuration.validation.device import get_id_from_device_string, validate_device_string
+from model_navigator.configuration.validation.device import (
+    get_id_from_device_string,
+    validate_device_string,
+)
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import get_tensor_type
 from model_navigator.exceptions import ModelNavigatorConfigurationError
 from model_navigator.frameworks import is_torch2_available
 from model_navigator.frameworks.tensorrt import utils as tensorrt_utils
+from model_navigator.frameworks.torch.utils import get_module_device
 from model_navigator.runners.base import DeviceKind, InferenceStep, InferenceStepTimer, NavigatorRunner
 from model_navigator.runners.registry import register_runner
 from model_navigator.utils import module
@@ -76,9 +80,11 @@ class _BaseTorchRunner(NavigatorRunner):
         self._inference_step_timer = InferenceStepTimer(
             self._inference_time, enabled=self._enable_timer, callbacks=[lambda: torch.cuda.synchronize()]
         )
+        self._input_module_device = None
 
     def activate_impl(self):
         """Activation implementation."""
+        self._input_module_device = get_module_device(self.model) or torch.device("cpu")
         self._loaded_model = self.model
         self._loaded_model.to(self.device).eval()
 
@@ -243,7 +249,8 @@ class TorchCUDARunner(_BaseTorchRunner):
         """Deactivation implementation."""
         super().deactivate_impl()
         # offload the model from the gpu so other processes can use the memory
-        self.model.to("cpu")
+        if not self._inplace:
+            self.model.to(self._input_module_device)
         torch.cuda.empty_cache()
 
 
@@ -367,8 +374,9 @@ class TorchCompileCUDARunner(_BaseTorchRunner):
         """Runner activation implementation."""
         super().activate_impl()
         model_copy = deepcopy(self._loaded_model)
-        # offload original model from the gpu so other processes can use the memory
-        self.model.to("cpu")
+        if not self._inplace:
+            # offload original model from the gpu so other processes can use the memory
+            self.model.to("cpu")
         model_copy.to(self.device).eval()
         LOGGER.info(
             f"Using torch.compile with config: fullgraph={self.fullgraph}, dynamic={self.dynamic}, backend={self.backend}, mode={self.mode}, options={self.options}"
@@ -387,7 +395,8 @@ class TorchCompileCUDARunner(_BaseTorchRunner):
         super().deactivate_impl()
         torch._dynamo.reset()
         # offload the model from the gpu so other processes can use the memory
-        self.model.to("cpu")
+        if not self._inplace:
+            self.model.to(self._input_module_device)
         torch.cuda.empty_cache()
         gc.collect()
 

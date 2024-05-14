@@ -27,24 +27,32 @@ from model_navigator.commands.performance.performance import Performance
 from model_navigator.commands.performance.utils import is_throughput_saturated
 from model_navigator.core.constants import DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD
 from model_navigator.core.logger import LOGGER, pad_string
-from model_navigator.exceptions import ModelNavigatorModuleNotOptimizedError
+from model_navigator.exceptions import ModelNavigatorModuleNotOptimizedError, ModelNavigatorRuntimeAnalyzerError
 from model_navigator.package.status import CommandStatus
 from model_navigator.runners.base import NavigatorRunner
 from model_navigator.runners.registry import runner_registry
 from model_navigator.runtime_analyzer.strategy import SelectedRuntimeStrategy
 from model_navigator.utils.common import DataObject
+from model_navigator.utils.module import lazy_import
 
+from ..configuration.validation.device import validate_device_string
 from .config import OptimizeConfig
 from .profiling import ProfilingResults, RunnerProfilingResults, RunnerResults, run_measurement
 from .registry import module_registry
 
 OPTIMIZATION_STATUS_FILE_NAME = "optimization_status.yaml"
 
+torch = lazy_import("torch")
 
-def load_optimized():
-    """Load optimized modules."""
+
+def load_optimized(device: Union[str, "torch.device"] = "cuda"):
+    """Load optimized modules.
+
+    Args:
+        device: Device on which optimized models are loaded.
+    """
     for module in module_registry.values():
-        module.load_optimized()
+        module.load_optimized(device=device)
 
 
 def optimize(
@@ -98,6 +106,7 @@ def profile(
     window_size: int = 50,
     stability_percentage: float = 10.0,
     throughput_cutoff_threshold: Optional[float] = DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD,
+    device: str = "cuda",
     verbose: bool = False,
 ) -> None:
     """Profile `func` and all registered modules.
@@ -115,12 +124,15 @@ def profile(
         stability_percentage: Allowed percentage of variation from the mean in three consecutive windows.
         throughput_cutoff_threshold: Minimum throughput increase to continue profiling. If None is provided,
                                      profiling run through whole dataloader
+        device: Default device used for loading unoptimized model.
         verbose: Provide verbose logging
     """
     if target_formats is None:
         target_formats = DEFAULT_TORCH_TARGET_FORMATS_FOR_PROFILING
     if runners is None:
         runners = list(runner_registry.values())
+
+    validate_device_string(device)
 
     modelkeys_runners = _get_modelkeys_runners(target_formats, runners)
 
@@ -132,12 +144,13 @@ def profile(
     for model_key, runner_name in modelkeys_runners:
         LOGGER.info(pad_string(f"Profiling of {model_key} and {runner_name}"))
 
-        _load_modules(model_key, runner_name, verbose=verbose)
+        _load_modules(model_key, runner_name, device=device, verbose=verbose)
         runner_profiling_results = RunnerProfilingResults()
         try:
             prev_result = None
             for sample_id, input_ in enumerate(dataloader):
                 with NvmlHandler() as nvml_handler:
+                    LOGGER.info(f"Profiling {runner_name} on sample id: {sample_id}")
                     profiling_result = run_measurement(
                         func=func,
                         sample=input_,
@@ -185,9 +198,17 @@ def profile(
 
 def _build_optimize_status(optimization_status_path):
     """Build optimize status."""
-    module = list(module_registry.values())[0]
-    pkg = getattr(module._wrapper, "_packages", [])[0]
-    status = _status_serializable_dict(pkg.status)
+    modules = list(module_registry.values())
+    if len(modules) == 0:
+        raise ValueError("No module was found")
+
+    module = modules[0]
+    packages = module._wrapper._packages
+    if len(packages) == 0:
+        raise ValueError(f"Module {module.name()} has no packages")
+
+    package = packages[0]
+    status = _status_serializable_dict(package.status)
     optimize_status = {
         "format_version": status["format_version"],
         "model_navigator_version": status["model_navigator_version"],
@@ -233,34 +254,26 @@ def _status_serializable_dict(status) -> Dict:
     return data
 
 
-def _load_modules(model_key: str, runner_name: str, verbose: bool = False):
+def _load_modules(model_key: str, runner_name: str, device: str, verbose: bool = False):
     for module_name, module in module_registry.items():
         try:
             if model_key == "python" and runner_name == "eager":
-                module.load_passthrough()
-                module._wrapper._module.to("cuda")  # TODO: remove this line when passthrough is fixed
+                module.load_eager()
             else:
-                module.load_optimized(strategy=SelectedRuntimeStrategy(model_key=model_key, runner_name=runner_name))
-                if (
-                    model_key == "torch" and "cpu" not in runner_name.lower()
-                ):  # TODO: remove after fixing torch runner device handling
-                    module._wrapper._module.to("cuda")
+                module.load_optimized(
+                    strategy=SelectedRuntimeStrategy(model_key=model_key, runner_name=runner_name), device=device
+                )
 
-        except ModelNavigatorModuleNotOptimizedError:
-            LOGGER.info(
-                f"Module {module_name} not optimized for modelkey {model_key} and runner {runner_name}. "
-                f"Unoptimized module will be used."
-            )
-            module.load_passthrough()
-            module._wrapper._module.to("cuda")  # TODO: remove this line when passthrough is fixed
+        except (ModelNavigatorModuleNotOptimizedError, ModelNavigatorRuntimeAnalyzerError) as e:
+            LOGGER.info(f"{str(e)}" f"Loading eager module.")
+            module.load_eager(device=device)
         except Exception as e:
             LOGGER.warn(f"Failed to load module {module_name} for model key {model_key} and runner {runner_name}.")
-            LOGGER.warn(f"Unoptimized module will be used. Error message: {str(e)}")
+            LOGGER.warn(f"Eager module will be used. Error message: {str(e)}")
             if verbose:
                 LOGGER.warn(f"Traceback: {traceback.format_exc()}")
 
-            module.load_passthrough()
-            module._wrapper._module.to("cuda")  # TODO: remove this line when passthrough is fixed
+            module.load_eager(device=device)
 
 
 def _format_to_modelkey(format: Union[str, Format]):

@@ -42,22 +42,20 @@ def test_timing_manager_should_provide_cache_name_defaults(mocker, tmp_path):
         "model_navigator.frameworks.tensorrt.timing_tactics.get_gpu_info",
         return_value={"name": "RTX_3090", "cuda_version": "12.100"},
     )
-    mocker.patch(
-        "model_navigator.frameworks.tensorrt.timing_tactics.get_trt_version",
-        return_value="100.0.0.0",
-    )
+    mocker.patch("model_navigator.frameworks.tensorrt.timing_tactics.get_trt_version", return_value="10.0.0")
 
     with trt_ttc.TimingCacheManager(model_name="navtest", cache_path=tmp_path / "cache") as cache_file:
         assert cache_file is not None
         assert "rtx_3090" in cache_file.name
         assert "12_100" in cache_file.name
-        assert "100_0_0_0" in cache_file.name
+        assert "10_0_0" in cache_file.name
         assert "global" in cache_file.name
 
         assert not cache_file.exists()
 
 
-def test_timing_manager_should_provide_cache_name_per_model(tmp_path):
+def test_timing_manager_should_provide_cache_name_per_model(mocker, tmp_path):
+    mocker.patch("model_navigator.frameworks.tensorrt.timing_tactics.get_trt_version", return_value="10.0.0")
     with trt_ttc.TimingCacheManager(
         model_name="navtest", cache_path=tmp_path / "cache", strategy=trt_ttc.TimingCacheStrategy.PER_MODEL
     ) as cache_file:
@@ -65,17 +63,21 @@ def test_timing_manager_should_provide_cache_name_per_model(tmp_path):
 
 
 def test_timing_manager_should_provide_cache_name_per_model_env(mocker, tmp_path):
-    mocker.patch("os.environ", {"NAV_TRT_TIMING_CACHE_STRATEGY": trt_ttc.TimingCacheStrategy.PER_MODEL.value})
+    mocker.patch(
+        "os.environ", {"MODEL_NAVIGATOR_TENSORRT_TIMING_CACHE_STRATEGY": trt_ttc.TimingCacheStrategy.PER_MODEL.value}
+    )
     importlib.reload(trt_ttc)
 
+    mocker.patch("model_navigator.frameworks.tensorrt.timing_tactics.get_trt_version", return_value="10.0.0")
     with trt_ttc.TimingCacheManager(model_name="navtest", cache_path=tmp_path / "cache") as cache_file:
         assert cache_file.name.startswith("navtest_")
 
 
-def test_timing_manager_should_provide_cache_name_user(tmp_path):
+def test_timing_manager_should_provide_cache_name_user(mocker, tmp_path):
     # FIXME(kn): it is unclear how to detect user is providing a directory or a file
     # FIXME(kn): it automatically switches to USER mode, thats not good
     # FIXME(kn): should user always provide a file?
+    mocker.patch("model_navigator.frameworks.tensorrt.timing_tactics.get_trt_version", return_value="10.0.0")
     with trt_ttc.TimingCacheManager(model_name="navtest", cache_path=tmp_path / "my.cache") as cache_file:
         assert cache_file.name == "my.cache"
 
@@ -85,7 +87,8 @@ def test_timing_manager_should_provide_none():
         assert cache_file is None
 
 
-def test_timing_manager_should_provide_same_cache(tmp_path):
+def test_timing_manager_should_provide_same_cache(mocker, tmp_path):
+    mocker.patch("model_navigator.frameworks.tensorrt.timing_tactics.get_trt_version", return_value="10.0.0")
     opts = {"cache_path": tmp_path / "cache", "strategy": trt_ttc.TimingCacheStrategy.PER_MODEL}
 
     with trt_ttc.TimingCacheManager(model_name="navtest1", **opts) as cache_file:

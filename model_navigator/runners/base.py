@@ -91,6 +91,7 @@ class NavigatorRunner(abc.ABC):
     """
 
     is_default = True
+    is_inplace = True
 
     def __init__(
         self,
@@ -99,6 +100,7 @@ class NavigatorRunner(abc.ABC):
         output_metadata: Optional[TensorMetadata],
         return_type: TensorType = TensorType.NUMPY,
         enable_timer: bool = False,
+        inplace: bool = False,
         **_kwargs,
     ) -> None:
         """Initialize object.
@@ -109,6 +111,7 @@ class NavigatorRunner(abc.ABC):
             output_metadata: A model outputs metadata
             return_type: A type of return value
             enable_timer: Flag indicating if timer should be enabled
+            inplace: Indicate the runner is in inplace mode
         """
         self._model = model
         self._input_metadata = input_metadata
@@ -116,6 +119,8 @@ class NavigatorRunner(abc.ABC):
 
         self._check_return_type(return_type)
         self._return_type = return_type
+
+        self._inplace = inplace
 
         self._enable_timer = enable_timer
         self._inference_time = InferenceTime()
@@ -244,7 +249,7 @@ class NavigatorRunner(abc.ABC):
         The method do basic activation and call `activate_impl` method.
         """
         if self.is_active:
-            LOGGER.warning(
+            LOGGER.debug(
                 f"{self.name()} | Already active; will not activate again. "
                 "If you really want to activate this runner again, call activate_impl() directly"
             )
@@ -342,7 +347,7 @@ class NavigatorRunner(abc.ABC):
     def deactivate(self):
         """Deactivate the runner. For example, this may involve freeing CPU or GPU memory."""
         if not self.is_active:
-            LOGGER.warning(
+            LOGGER.debug(
                 f"{self.name()} | Not active; will not deactivate. "
                 "If you really want to deactivate this runner, "
                 "call deactivate_impl() directly"
@@ -388,7 +393,7 @@ class NavigatorRunner(abc.ABC):
         """Cleanup of object removal. Log warning when `deactivate` was not called before runner was removed."""
         if self.is_active:
             # __del__ is not guaranteed to be called, but when it is, this could be a useful warning.
-            LOGGER.warning(f"{self.name()} | Was activated but never deactivated. This could cause a memory leak!")
+            LOGGER.debug(f"{self.name()} | Was activated but never deactivated. This could cause a memory leak!")
 
     def _check_return_type(self, return_type: TensorType) -> None:
         """Check if return type is available.
@@ -408,6 +413,8 @@ class NavigatorRunner(abc.ABC):
 
 class NavigatorStabilizedRunner(NavigatorRunner):
     """Stabilized runner base class."""
+
+    is_inplace = False
 
     @classmethod
     def is_stabilized(cls) -> bool:

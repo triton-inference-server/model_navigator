@@ -22,7 +22,7 @@ import os
 import pathlib
 from importlib.util import find_spec
 from typing import cast
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -34,7 +34,7 @@ from model_navigator.api.config import (
 )
 from model_navigator.exceptions import ModelNavigatorUserInputError
 from model_navigator.inplace.config import DEFAULT_CACHE_DIR, OptimizeConfig, inplace_cache_dir
-from model_navigator.inplace.model import OptimizedModule, PassthroughModule, RecordModule
+from model_navigator.inplace.model import EagerModule, OptimizedModule, RecordingModule
 from model_navigator.inplace.registry import module_registry
 from model_navigator.inplace.utils import get_object_name
 from model_navigator.inplace.wrapper import Module, module
@@ -85,7 +85,7 @@ def test_model_registry_check_all_ready_returns_false_when_not_all_models_ready(
 
 
 def test_pass_model_is_optimized_returns_false():
-    module = PassthroughModule(
+    module = EagerModule(
         module=MagicMock(),
         name="model_name",
         input_mapping=lambda x: x,
@@ -108,7 +108,7 @@ def test_optimized_model_is_optimized_returns_true(mocker):
 
 
 def test_recording_model_is_optimized_returns_false():
-    module = RecordModule(
+    module = RecordingModule(
         module=MagicMock(),
         name="model_name",
         input_mapping=lambda x: x,
@@ -119,7 +119,7 @@ def test_recording_model_is_optimized_returns_false():
 
 
 def test_pass_model_is_ready_for_optimization_returns_false():
-    module = PassthroughModule(
+    module = EagerModule(
         module=MagicMock(),
         name="model_name",
         input_mapping=lambda x: x,
@@ -130,7 +130,7 @@ def test_pass_model_is_ready_for_optimization_returns_false():
 
 
 def test_recording_model_is_ready_for_optimization_returns_false_when_not_enough_samples():
-    module = RecordModule(
+    module = RecordingModule(
         module=MagicMock(),
         name="model_name",
         input_mapping=lambda x: x,
@@ -143,7 +143,7 @@ def test_recording_model_is_ready_for_optimization_returns_false_when_not_enough
 def test_recording_model_is_ready_for_optimization_returns_true_when_enough_samples():
     from model_navigator.inplace.config import inplace_config
 
-    module = RecordModule(
+    module = RecordingModule(
         module=MagicMock(),
         name="model_name",
         input_mapping=lambda x: x,
@@ -162,10 +162,10 @@ def test_record_module_alt_forward():
     module.side_effect = lambda _: torch.Tensor([1])
     module.forward.side_effect = lambda _: torch.Tensor([2])
 
-    module1 = RecordModule(module=module, name="model1", input_mapping=lambda x: x, output_mapping=lambda x: x)
+    module1 = RecordingModule(module=module, name="model1", input_mapping=lambda x: x, output_mapping=lambda x: x)
     assert module1(torch.Tensor([0])) == torch.ones(1)
 
-    module1 = RecordModule(
+    module1 = RecordingModule(
         module=module, name="model2", input_mapping=lambda x: x, output_mapping=lambda x: x, forward=module.forward
     )
     assert module1(torch.Tensor([0])) == torch.Tensor([2])
@@ -211,14 +211,21 @@ def test_module_wrapper_complain_on_missing_custom_func_name():
         Module(TestModule(), "model5", forward_func="non_existing_func")
 
 
+@pytest.mark.skipif(not find_spec("torch"), reason="PyTorch is not installed.")
 def test_module_tags_should_override_config(clean_up_registry):
     # given
+    import torch  # pytype: disable=import-error
+
+    class TestModule(torch.nn.Module):
+        def forward(self, x):
+            return x + 1
+
     config = OptimizeConfig(batching=False)
     config_copy = config.clone()
 
-    model_a = Module(Mock(), name="model_a", precision="fp16")
-    model_b = Module(Mock(), name="model_b", precision="fp32", batching=True)
-    model_c = Module(Mock(), name="model_c")
+    model_a = Module(TestModule(), name="model_a", precision="fp16")
+    model_b = Module(TestModule(), name="model_b", precision="fp32", batching=True)
+    model_c = Module(TestModule(), name="model_c")
 
     # when
     model_a.optimize_config = config
@@ -229,23 +236,30 @@ def test_module_tags_should_override_config(clean_up_registry):
     assert_correct_overrides_in_configs(config, config_copy, model_a, model_b, model_c)
 
 
+@pytest.mark.skipif(not find_spec("torch"), reason="PyTorch is not installed.")
 def test_module_factory_tags_should_override_config(clean_up_registry):
     # given
+    import torch  # pytype: disable=import-error
+
+    class TestModule(torch.nn.Module):
+        def forward(self, x):
+            return x + 1
+
     custom_configs = (TorchConfig(),)
     config = OptimizeConfig(batching=False, custom_configs=custom_configs)
     config_copy = config.clone()
 
     @module(name="model_a", precision="fp16")
     def module_a():
-        return Mock()
+        return TestModule()
 
     @module(name="model_b", precision="fp32", batching=True)
     def module_b():
-        return Mock()
+        return TestModule()
 
     @module(name="model_c")
     def module_c():
-        return Mock()
+        return TestModule()
 
     model_a = module_a()
     model_b = module_b()
@@ -276,13 +290,20 @@ def assert_correct_overrides_in_configs(config, config_copy, model_a, model_b, m
     assert not model_c.optimize_config.batching
 
 
+@pytest.mark.skipif(not find_spec("torch"), reason="PyTorch is not installed.")
 def test_module_tags_should_partially_override_config(clean_up_registry):
     # given
+    import torch  # pytype: disable=import-error
+
+    class TestModule(torch.nn.Module):
+        def forward(self, x):
+            return x + 1
+
     custom_configs = (TensorRTConfig(precision="fp32", precision_mode="single"),)
     config = OptimizeConfig(batching=False, custom_configs=custom_configs)
 
-    model_a = Module(Mock(), name="model_a", precision="fp16")
-    model_b = Module(Mock(), name="model_b", precision="fp32", batching=True)
+    model_a = Module(TestModule(), name="model_a", precision="fp16")
+    model_b = Module(TestModule(), name="model_b", precision="fp32", batching=True)
 
     # when
     model_a.optimize_config = config

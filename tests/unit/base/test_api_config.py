@@ -359,7 +359,7 @@ def test_get_id_from_device_string_returns_device_id_when_available():
 
 def test_get_id_from_device_string_returns_none_when_device_id_is_not_available():
     assert get_id_from_device_string("cpu") is None
-    assert get_id_from_device_string("cuda") is None
+    assert get_id_from_device_string("cuda") == 0
     assert get_id_from_device_string("cuda:1a") is None
     assert get_id_from_device_string("cuda:1:2") is None
     assert get_id_from_device_string("cuda:1,2") is None
@@ -389,7 +389,6 @@ def test_optimization_config_is_cloning_correctly():
             "OnnxCUDA",
             "TorchScriptCUDA",
             "TorchCompileCUDA",
-            "TorchTensorRTCompile",
         ),
         optimization_profile=OptimizationProfile(max_batch_size=64),
         custom_configs=[
@@ -408,6 +407,6 @@ def test_optimization_config_is_cloning_correctly():
     cloned_opt_config.custom_configs[0].autocast = False
 
     # noting changed in original object
-    assert len(opt_config.runners) == 6
+    assert len(opt_config.runners) == 5
     assert opt_config.optimization_profile.max_batch_size == 64
     assert opt_config.custom_configs[0].autocast is True

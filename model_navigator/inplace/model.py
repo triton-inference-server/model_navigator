@@ -16,6 +16,7 @@
 import abc
 import collections
 import copy
+import gc
 import inspect
 import pathlib
 import tempfile
@@ -29,8 +30,8 @@ from model_navigator.core.tensor import PyTreeMetadata
 from model_navigator.runtime_analyzer.strategy import RuntimeSearchStrategy
 from model_navigator.utils.module import lazy_import
 
+from ..utils.format_helpers import is_source_format
 from .config import OptimizeConfig, inplace_config
-from .registry import module_registry
 from .utils import TorchDataloader, get_dynamic_axes_from_shapes, get_trt_profile_from_shapes
 
 torch = lazy_import("torch")
@@ -49,6 +50,7 @@ class BaseModule(abc.ABC):
         output_mapping: Callable,
         optimize_config: Optional[OptimizeConfig] = None,
         forward: Optional[Callable] = None,
+        device: Optional[str] = None,
     ) -> None:
         """Initialize BaseModule.
 
@@ -59,27 +61,44 @@ class BaseModule(abc.ABC):
             output_mapping: function mapping runner output to module output.
             optimize_config: configuration for module optimization.
             forward: method to replace navigator default __call__
+            device: Device on which optimized module has to be executed.
         """
         self._module = module
         self._name = name
         self._signature = self._get_signature()
         self._input_mapping = input_mapping
         self._output_mapping = output_mapping
-        if optimize_config:
-            self._optimize_config = self._update_optimize_config(optimize_config)
-        else:
-            self._optimize_config = optimize_config
+        self._device = device
         self._forward_call = forward or self._module
+        if optimize_config:
+            self.optimize_config = self._update_optimize_config(optimize_config)
+        else:
+            self.optimize_config = optimize_config
 
     @property
     def name(self) -> str:
         """Module name."""
         return self._name
 
+    @property
+    def module(self) -> "torch.nn.Module":
+        """Module object."""
+        return self._module
+
     @abc.abstractclassmethod
     def __call__(cls, *args, **kwargs) -> Any:
         """Module forward method."""
         pass
+
+    @property
+    def is_ready_for_optimization(self) -> bool:
+        """Check if the module is ready for optimization."""
+        return False
+
+    @property
+    def is_optimized(self) -> bool:
+        """Check if the module is optimized."""
+        return False
 
     @property
     def _workspace(self):
@@ -97,22 +116,12 @@ class BaseModule(abc.ABC):
         """Get signature of the module forward method."""
         return inspect.getfullargspec(self._module.forward).args[1:]
 
-    @property
-    def is_ready_for_optimization(self) -> bool:
-        """Check if the module is ready for optimization."""
-        return False
 
-    @property
-    def is_optimized(self) -> bool:
-        """Check if the module is optimized."""
-        return False
-
-
-class RecordModule(BaseModule):
+class RecordingModule(BaseModule):
     """Module that records samples for optimization."""
 
     def __init__(self, *args, **kwargs) -> None:
-        """Initialize RecordModule."""
+        """Initialize RecordingModule."""
         super().__init__(*args, **kwargs)
         self._samples = collections.defaultdict(list)
         self._samples_shapes = collections.defaultdict(list)
@@ -145,18 +154,18 @@ class RecordModule(BaseModule):
         """Optimize the module using the recorded samples."""
         from model_navigator.api.torch import optimize
 
-        batch_dim = 0 if self._optimize_config.batching else None
+        batch_dim = 0 if self.optimize_config.batching else None
         max_batch_size = None
-        if self._optimize_config.optimization_profile is not None:
-            if self._optimize_config.optimization_profile.max_batch_size:
-                max_batch_size = self._optimize_config.optimization_profile.max_batch_size
-            elif self._optimize_config.optimization_profile.batch_sizes:
-                max_batch_size = max(self._optimize_config.optimization_profile.batch_sizes)
+        if self.optimize_config.optimization_profile is not None:
+            if self.optimize_config.optimization_profile.max_batch_size:
+                max_batch_size = self.optimize_config.optimization_profile.max_batch_size
+            elif self.optimize_config.optimization_profile.batch_sizes:
+                max_batch_size = max(self.optimize_config.optimization_profile.batch_sizes)
 
-        config_dict = {k: v for k, v in self._optimize_config.to_dict().items() if k != "workspace"}
+        config_dict = {k: v for k, v in self.optimize_config.to_dict().items() if k != "workspace"}
 
         for i, pytree_metadata in enumerate(self._samples):
-            config_dict["workspace"] = self._optimize_config.workspace / str(i)
+            config_dict["workspace"] = self.optimize_config.workspace / str(i)
             samples = self._samples[pytree_metadata]
             samples_shapes = self._samples_shapes[pytree_metadata]
             dynamic_axes = get_dynamic_axes_from_shapes(samples_shapes, pytree_metadata, batch_dim)
@@ -228,20 +237,6 @@ class RecordModule(BaseModule):
         return config_dict
 
 
-class RecordAndOptimizeModule(RecordModule):
-    """Module that records samples for optimization and runs optimization."""
-
-    def __call__(self, *args: Any, **kwargs: Any) -> Any:
-        """Record a sample and run the module.
-
-        If enough samples are collected for all registered modules, optimize them.
-        """
-        output = super().__call__(*args, **kwargs)
-        if not self._optimized and module_registry.check_all_ready():
-            module_registry.optimize()
-        return output
-
-
 class OptimizedModule(BaseModule):
     """Module that runs the optimized module."""
 
@@ -255,25 +250,33 @@ class OptimizedModule(BaseModule):
         """
         super().__init__(*args, **kwargs)
 
-        self._module.to("cpu")
-        if torch.cuda.is_available():
-            # empty torch cuda buffers after moving module to cpu i.e. more free vram
-            torch.cuda.empty_cache()
-
         self._packages = []
         self._runners = {}
-
         strategy = strategy or inplace_config.strategy
 
         for package_workspace in self._workspace.iterdir():
             package = load_from_workspace(package_workspace)
             package.load_source_model(self._module)
 
-            runner = package.get_runner(return_type=TensorType.TORCH, strategy=strategy)
+            runner = package.get_runner(
+                return_type=TensorType.TORCH, strategy=strategy, device=self._device, inplace=True
+            )
             pytree_metadata = package.status.input_metadata.pytree_metadata
 
             self._packages.append(package)
             self._runners[pytree_metadata] = runner
+
+        # Fix for multi-graph models
+        duplicated_runners = {}
+        for pytree_metadata, runner in self._runners.items():
+            if is_source_format(runner.format()):
+                if runner.name() in duplicated_runners:
+                    self._runners[pytree_metadata] = duplicated_runners[runner.name()]
+                else:
+                    duplicated_runners[runner.name()] = runner
+
+        if not all(is_source_format(runner.format()) for runner in self._runners.values()):
+            self._offload_module()
 
         if activate_runners:
             self.activate_runners()
@@ -321,8 +324,16 @@ class OptimizedModule(BaseModule):
         """Check if the module is optimized."""
         return True
 
+    def _offload_module(self):
+        self._module.to("cpu")
+        if torch.cuda.is_available():
+            # empty torch cuda buffers after moving module to cpu i.e. more free vram
+            torch._dynamo.reset()
+            torch.cuda.empty_cache()
+            gc.collect()
 
-class PassthroughModule(BaseModule):
+
+class EagerModule(BaseModule):
     """Module that passes through the original module."""
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:

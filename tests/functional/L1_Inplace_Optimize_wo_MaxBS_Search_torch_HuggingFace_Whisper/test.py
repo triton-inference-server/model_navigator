@@ -183,7 +183,7 @@ def main():
     status = collect_optimize_statuses([package.status for package in packages], names)
 
     # Profile
-    nav.profile(pipe, dataloader, verbose=True)
+    nav.profile(pipe, dataloader, device=DEVICE, verbose=True)
 
     validate_status(status, expected_statuses=EXPECTED_STATUSES)
 

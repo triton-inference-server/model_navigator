@@ -60,7 +60,7 @@ dependencies = [
     "tritonclient[all]",
     "wrapt>=1.11.0,<1.15",
     "dacite>=1.8.0",
-    "onnxscript>=0.1.0.dev20231019",
+    "onnxscript>=0.1.0.dev20240513",
 ]
 
 [project.urls]

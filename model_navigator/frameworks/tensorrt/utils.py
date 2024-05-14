@@ -228,17 +228,18 @@ def get_trt_logger() -> "trt.Logger":
 
             def log(self, severity, msg):
                 try:
-                    log_func = {
+                    log_level = {
                         # This function cannot throw, so `critical` should not be used here!
-                        trt.Logger.INTERNAL_ERROR: LOGGER.error,
-                        trt.Logger.ERROR: LOGGER.error,
+                        trt.Logger.INTERNAL_ERROR: logging.ERROR,
+                        trt.Logger.ERROR: logging.ERROR,
                         # Reduce warning spam from TRT.
-                        trt.Logger.WARNING: LOGGER.warning,
-                        trt.Logger.INFO: LOGGER.info,
-                        trt.Logger.VERBOSE: LOGGER.info,
-                    }.get(severity, LOGGER.info)
+                        trt.Logger.WARNING: logging.WARNING,
+                        trt.Logger.INFO: logging.INFO,
+                        trt.Logger.VERBOSE: logging.DEBUG,
+                    }.get(severity, logging.INFO)
 
-                    log_func(msg)
+                    if log_level >= logging.WARNING:
+                        LOGGER.log(log_level, msg)
                 except KeyboardInterrupt:
                     # `log()` is `noexcept` so we need to convert exceptions to signals so that
                     # ctrl-C will work as expected.
@@ -276,8 +277,9 @@ class EngineFromBytes:
         """
         buffer, owns_buffer = invoke_if_callable(self._serialized_engine)
 
-        trt.init_libnvinfer_plugins(get_trt_logger(), "")
-        with contextlib.ExitStack() as stack, trt.Runtime(get_trt_logger()) as runtime:
+        trt_logger = get_trt_logger()
+        trt.init_libnvinfer_plugins(trt_logger, "")
+        with contextlib.ExitStack() as stack, trt.Runtime(trt_logger) as runtime:
             if owns_buffer:
                 try:
                     buffer.__enter__  # noqa: B018 IHostMemory is freed only in __exit__

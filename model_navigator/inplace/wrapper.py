@@ -14,7 +14,7 @@
 """Inplace Optimize model wrapper."""
 
 import functools
-from typing import Any, Callable, Literal, Optional
+from typing import Any, Callable, Literal, Optional, Union
 
 import wrapt
 
@@ -28,8 +28,9 @@ from model_navigator.inplace.timer import Timer
 from model_navigator.runtime_analyzer.strategy import RuntimeSearchStrategy
 from model_navigator.utils.module import lazy_import
 
+from ..frameworks.torch.utils import get_module_device
 from .config import OptimizeConfig
-from .model import BaseModule, OptimizedModule, PassthroughModule, RecordAndOptimizeModule, RecordModule
+from .model import BaseModule, EagerModule, OptimizedModule, RecordingModule
 from .registry import module_registry
 from .utils import get_object_name
 
@@ -102,7 +103,8 @@ class Module(wrapt.ObjectProxy):
         self.batching = batching
         self.precision = precision
 
-        self._wrapper = RecordAndOptimizeModule(
+        self._device = get_module_device(module) or torch.device("cpu")
+        self._wrapper = RecordingModule(
             module,
             # OptimizeConfig(),
             self._name,
@@ -133,7 +135,7 @@ class Module(wrapt.ObjectProxy):
         self._override_config_with_module_tags(value)
 
         self._optimize_config = value
-        self._wrapper._optimize_config = value
+        self._wrapper.optimize_config = value
 
     def _override_config_with_module_tags(self, config: OptimizeConfig):
         """Overrides given configuration with batching and precision.
@@ -189,45 +191,54 @@ class Module(wrapt.ObjectProxy):
 
     def optimize(self) -> None:
         """Optimize the module."""
-        assert isinstance(self.wrapper, RecordModule), f"Module {self.name} must be in recording mode to optimize."
+        assert isinstance(self.wrapper, RecordingModule), f"Module {self.name} must be in recording mode to optimize."
         assert not self.is_optimized, f"Module {self.name} is already optimized."
         assert hasattr(self.wrapper, "optimize"), f"Module {self.name} does not have an optimize method."
-        self.wrapper.optimize()
+        self._wrapper.optimize()
+        self.load_optimized(activate_runners=False)
 
-    def load_optimized(self, strategy: Optional[RuntimeSearchStrategy] = None, activate_runners: bool = True) -> None:
+    def load_optimized(
+        self,
+        strategy: Optional[RuntimeSearchStrategy] = None,
+        device: Union[str, "torch.device"] = "cuda",
+        activate_runners: bool = True,
+    ) -> None:
         """Load optimized module."""
-        # TODO: Consider another validation for optimization status here. is_optimized property is modified by loading passthrough.
-        # if not self.is_optimized:
-        #     raise ModelNavigatorModuleNotOptimizedError(f"Module {self.name} is not optimized.")
+        if isinstance(self._wrapper, OptimizedModule):
+            self._wrapper.deactivate_runners()
+
         self._wrapper = OptimizedModule(
-            module=self._wrapper._module,
+            module=self._wrapper.module,
             # self._optimize_config,
             name=self._name,
             input_mapping=self._input_mapping,
             output_mapping=self._output_mapping,
             strategy=strategy,
             activate_runners=activate_runners,
+            device=str(device),
         )
 
     def load_recorded(self) -> None:
         """Load recorded module."""
-        self._wrapper = RecordModule(
-            module=self._wrapper._module,
+        self._wrapper = RecordingModule(
+            module=self._wrapper.module,
             name=self._name,
             input_mapping=self._input_mapping,
             output_mapping=self._output_mapping,
             optimize_config=self._optimize_config,
         )
 
-    def load_passthrough(self) -> None:
-        """Load passthrough module."""
-        self._wrapper = PassthroughModule(
-            module=self._wrapper._module,
+    def load_eager(self, device: Optional[str] = None) -> None:
+        """Load eager module."""
+        self._wrapper = EagerModule(
+            module=self._wrapper.module,
             name=self._name,
             input_mapping=self._input_mapping,
             output_mapping=self._output_mapping,
             optimize_config=self._optimize_config,
         )
+        device = device or self._device
+        self._wrapper.module.to(device)
 
 
 def module(

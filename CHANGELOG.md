@@ -17,8 +17,10 @@ limitations under the License.
 # Changelog
 
 ## 0.10.0 (unreleased)
+- new: inplace `nav.Module` accepts `batching` flag which overrides a config setting and `precision` which allows setting appropriate configuration for TensorRT
+- new: Allow to set device when loading optimized modules using `nav.load_optimized()`
+- fix: Maintaining modules device in `nav.profile()`
 
-- new: inplace `nav.Module` accepts `batching` flag which overrides a config setting and `precision` which allows setting appriopriate configuration for TensorRT
 
 ## 0.9.0
 

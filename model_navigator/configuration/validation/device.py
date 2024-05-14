@@ -16,6 +16,7 @@
 import re
 from typing import Optional
 
+from model_navigator.api.config import DeviceKind
 from model_navigator.exceptions import ModelNavigatorConfigurationError
 
 
@@ -41,6 +42,21 @@ def validate_device_string_for_cuda(device: str):
         raise ModelNavigatorConfigurationError("device must be 'cuda' or in format 'cuda:<device_id>'")
 
 
+def get_device_kind_from_device_string(device: str) -> DeviceKind:
+    """Convert device string to DeviceKind.
+
+    Args:
+         device: Device string e.g. cuda:0, cuda:1, cpu
+
+    Returns:
+        DeviceKind or raise error
+    """
+    validate_device_string(device)
+
+    device_kind = device.split(":")[0]
+    return DeviceKind(device_kind)
+
+
 def get_id_from_device_string(device: str) -> Optional[int]:
     """Get device id from device string.
 
@@ -54,4 +70,10 @@ def get_id_from_device_string(device: str) -> Optional[int]:
     match = re.match(pattern, device)
     if match:
         return int(match.group(1))
+
+    pattern = r"^cuda$"
+    match = re.match(pattern, device)
+    if match:
+        return 0
+
     return None

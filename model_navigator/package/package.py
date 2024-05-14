@@ -37,12 +37,13 @@ from model_navigator.core.workspace import Workspace
 from model_navigator.exceptions import ModelNavigatorMissingSourceModelError, ModelNavigatorNotFoundError
 from model_navigator.frameworks import Framework
 from model_navigator.runners.base import NavigatorRunner
-from model_navigator.runners.registry import get_runner
+from model_navigator.runners.registry import get_runner, runner_registry
 from model_navigator.runtime_analyzer.analyzer import RuntimeAnalyzer
 from model_navigator.runtime_analyzer.strategy import MaxThroughputAndMinLatencyStrategy, RuntimeSearchStrategy
 from model_navigator.utils.common import DataObject, get_default_status_filename
 from model_navigator.utils.format_helpers import is_source_format
 
+from ..configuration.validation.device import get_device_kind_from_device_string
 from .status import ModelStatus, Status
 
 
@@ -154,6 +155,8 @@ class Package:
         strategy: Optional[RuntimeSearchStrategy] = None,
         include_source: bool = True,
         return_type: TensorType = TensorType.NUMPY,
+        device: str = "cuda",
+        inplace: bool = False,
     ) -> NavigatorRunner:
         """Get the runner according to the strategy.
 
@@ -163,11 +166,13 @@ class Package:
             return_type: The type of the output tensor. Defaults to `TensorType.NUMPY`.
                 If the return_type supports CUDA tensors (e.g. TensorType.TORCH) and the input tensors are on CUDA,
                 there will be no additional data transfer between CPU and GPU.
+            device: Device where model is going to be executed. Defaults to `"cuda"`.
+            inplace: Indicate that runner is in inplace mode.
 
         Returns:
             The optimal runner for the optimized model.
         """
-        runtime_result = self._get_best_runtime(strategy=strategy, include_source=include_source)
+        runtime_result = self._get_best_runtime(strategy=strategy, include_source=include_source, inplace=inplace)
 
         model_config = runtime_result.model_status.model_config
         runner_status = runtime_result.runner_status
@@ -186,7 +191,9 @@ class Package:
                 "with `package.get_runner(include_source=False)`."
             )
 
-        return self._get_runner(model_config.key, runner_status.runner_name, return_type=return_type)
+        return self._get_runner(
+            model_config.key, runner_status.runner_name, return_type=return_type, device=device, inplace=inplace
+        )
 
     def get_best_model_status(
         self,
@@ -223,17 +230,16 @@ class Package:
         return True
 
     def _get_runner(
-        self,
-        model_key: str,
-        runner_name: str,
-        return_type: TensorType = TensorType.NUMPY,
+        self, model_key: str, runner_name: str, device: str, return_type: TensorType, inplace: bool = False
     ) -> NavigatorRunner:
         """Load runner.
 
         Args:
-            model_key (str): Unique key of the model.
-            runner_name (str): Name of the runner.
-            return_type (TensorType): Type of the runner output.
+            model_key: Unique key of the model.
+            runner_name: Name of the runner.
+            return_type: Type of the runner output.
+            device: Device on which the model has been executed
+            inplace: Indicate if runner is in inplace mode.
 
         Raises:
             ModelNavigatorNotFoundError when no runner found for provided constraints.
@@ -250,17 +256,23 @@ class Package:
             model = self._model
         else:
             model = self.workspace.path / model_config.path
-        return get_runner(runner_name)(
+
+        device_kind = get_device_kind_from_device_string(device)
+        LOGGER.info(f"Loading model `{model_key}` on runner `{runner_name}` and device `{device}`")
+        return get_runner(runner_name, device_kind)(
             model=model,
             input_metadata=self.status.input_metadata,
             output_metadata=self.status.output_metadata,
             return_type=return_type,
+            device=device,
+            inplace=inplace,
         )  # pytype: disable=not-instantiable
 
     def _get_best_runtime(
         self,
         strategy: Optional[RuntimeSearchStrategy] = None,
         include_source: bool = True,
+        inplace: bool = False,
     ):
         if strategy is None:
             strategy = MaxThroughputAndMinLatencyStrategy()
@@ -269,7 +281,16 @@ class Package:
         if not include_source:
             formats = [fmt.value for fmt in SERIALIZED_FORMATS]
 
-        runtime_result = RuntimeAnalyzer.get_runtime(self.status.models_status, strategy=strategy, formats=formats)
+        runners = None
+        if inplace:
+            runners = [name for name, runner in runner_registry.items() if runner.is_inplace]
+
+        runtime_result = RuntimeAnalyzer.get_runtime(
+            self.status.models_status,
+            strategy=strategy,
+            formats=formats,
+            runners=runners,
+        )
         return runtime_result
 
     def _status_serializable_dict(self) -> Dict:

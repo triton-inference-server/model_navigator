@@ -30,13 +30,15 @@ def test_optimized_model_releases_torch_cuda_memory(tmp_path):
     inplace_config.cache_dir = tmp_path
     (tmp_path / module_name).mkdir(parents=True, exist_ok=True)
     # when
-    _ = OptimizedModule(
+    wrapped = OptimizedModule(
         module=module,
         name=module_name,
         input_mapping=lambda x: x,
         output_mapping=lambda x: x,
         optimize_config=OptimizeConfig(),
     )
+    wrapped._offload_module()
+
     # then
     assert torch.cuda.memory_allocated() == initial_memory_allocated  # did not grow
     # ideally reserved should be 0, but on some devices it does not drop to zero, use less strict checking i.e. <=
