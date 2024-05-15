@@ -15,12 +15,12 @@
 
 from typing import Dict, List
 
-from model_navigator.api.config import Format
 from model_navigator.commands.base import ExecutionUnit
 from model_navigator.commands.copy.copy_model import CopyModel
 from model_navigator.commands.data_dump.samples import FetchInputModelData, FetchOutputModelData
 from model_navigator.commands.infer_metadata import InferInputMetadata, InferOutputMetadata
 from model_navigator.commands.load import LoadMetadata
+from model_navigator.configuration import Format
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig
 from model_navigator.frameworks import Framework

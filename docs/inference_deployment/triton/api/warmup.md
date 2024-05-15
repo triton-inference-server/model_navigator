@@ -15,6 +15,6 @@ limitations under the License.
 -->
 # Model Warmup
 
-::: model_navigator.api.triton.ModelWarmup
-::: model_navigator.api.triton.ModelWarmupInput
-::: model_navigator.api.triton.ModelWarmupInputDataType
+::: model_navigator.triton.ModelWarmup
+::: model_navigator.triton.ModelWarmupInput
+::: model_navigator.triton.ModelWarmupInputDataType

@@ -19,17 +19,17 @@ limitations under the License.
 The Python API provides specialized configuration classes that help provide only
 available options for the given type of model.
 
-::: model_navigator.api.triton.BaseSpecializedModelConfig
+::: model_navigator.triton.BaseSpecializedModelConfig
 
-::: model_navigator.api.triton.ONNXModelConfig
-::: model_navigator.api.triton.ONNXOptimization
+::: model_navigator.triton.ONNXModelConfig
+::: model_navigator.triton.ONNXOptimization
 
-::: model_navigator.api.triton.PythonModelConfig
+::: model_navigator.triton.PythonModelConfig
 
-::: model_navigator.api.triton.PyTorchModelConfig
+::: model_navigator.triton.PyTorchModelConfig
 
-::: model_navigator.api.triton.TensorFlowModelConfig
-::: model_navigator.api.triton.TensorFlowOptimization
+::: model_navigator.triton.TensorFlowModelConfig
+::: model_navigator.triton.TensorFlowOptimization
 
-::: model_navigator.api.triton.TensorRTModelConfig
-::: model_navigator.api.triton.TensorRTOptimization
+::: model_navigator.triton.TensorRTModelConfig
+::: model_navigator.triton.TensorRTOptimization

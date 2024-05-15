@@ -20,23 +20,24 @@ from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Type, Union
 
 import yaml
 
-from model_navigator.api.config import DEFAULT_TORCH_TARGET_FORMATS_FOR_PROFILING, Format
 from model_navigator.commands.correctness.correctness import Correctness
 from model_navigator.commands.performance.nvml_handler import NvmlHandler
 from model_navigator.commands.performance.performance import Performance
 from model_navigator.commands.performance.utils import is_throughput_saturated
+from model_navigator.configuration import DEFAULT_TORCH_TARGET_FORMATS_FOR_PROFILING, Format, SelectedRuntimeStrategy
+from model_navigator.configuration.validation.device import validate_device_string
 from model_navigator.core.constants import DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD
 from model_navigator.core.logger import LOGGER, pad_string
 from model_navigator.exceptions import ModelNavigatorModuleNotOptimizedError, ModelNavigatorRuntimeAnalyzerError
+from model_navigator.inplace.config import InplaceConfig, OptimizeConfig, inplace_config  # noqa: F401
+from model_navigator.inplace.timer import Timer, TimerComparator  # noqa: F401
+from model_navigator.inplace.wrapper import Module, module  # noqa: F401
 from model_navigator.package.status import CommandStatus
 from model_navigator.runners.base import NavigatorRunner
 from model_navigator.runners.registry import runner_registry
-from model_navigator.runtime_analyzer.strategy import SelectedRuntimeStrategy
 from model_navigator.utils.common import DataObject
 from model_navigator.utils.module import lazy_import
 
-from ..configuration.validation.device import validate_device_string
-from .config import OptimizeConfig
 from .profiling import ProfilingResults, RunnerProfilingResults, RunnerResults, run_measurement
 from .registry import module_registry
 
@@ -51,8 +52,8 @@ def load_optimized(device: Union[str, "torch.device"] = "cuda"):
     Args:
         device: Device on which optimized models are loaded.
     """
-    for module in module_registry.values():
-        module.load_optimized(device=device)
+    for m in module_registry.values():
+        m.load_optimized(device=device)
 
 
 def optimize(
@@ -72,11 +73,11 @@ def optimize(
     if config is None:
         config = OptimizeConfig()
 
-    for module in module_registry.values():
+    for m in module_registry.values():
         # set main config if user did not provide one for a module
-        if module.optimize_config is None:
-            module.optimize_config = config
-        module.load_recorded()
+        if m.optimize_config is None:
+            m.optimize_config = config
+        m.load_recorded()
 
     for input_ in dataloader:
         _, sample = input_  # unpack batch_size and sample
@@ -202,10 +203,10 @@ def _build_optimize_status(optimization_status_path):
     if len(modules) == 0:
         raise ValueError("No module was found")
 
-    module = modules[0]
-    packages = module._wrapper._packages
+    m = modules[0]
+    packages = m._wrapper._packages
     if len(packages) == 0:
-        raise ValueError(f"Module {module.name()} has no packages")
+        raise ValueError(f"Module {m.name()} has no packages")
 
     package = packages[0]
     status = _status_serializable_dict(package.status)
@@ -217,8 +218,8 @@ def _build_optimize_status(optimization_status_path):
         "module_status": {},
     }
 
-    for name, module in module_registry.items():
-        for i, package in enumerate(getattr(module._wrapper, "_packages", [])):
+    for name, m in module_registry.items():
+        for i, package in enumerate(getattr(m._wrapper, "_packages", [])):
             module_name = f"{name}.{i}"
             module_status = _status_serializable_dict(package.status)
             module_status.pop("format_version")
@@ -255,25 +256,25 @@ def _status_serializable_dict(status) -> Dict:
 
 
 def _load_modules(model_key: str, runner_name: str, device: str, verbose: bool = False):
-    for module_name, module in module_registry.items():
+    for module_name, m in module_registry.items():
         try:
             if model_key == "python" and runner_name == "eager":
-                module.load_eager()
+                m.load_eager()
             else:
-                module.load_optimized(
+                m.load_optimized(
                     strategy=SelectedRuntimeStrategy(model_key=model_key, runner_name=runner_name), device=device
                 )
 
         except (ModelNavigatorModuleNotOptimizedError, ModelNavigatorRuntimeAnalyzerError) as e:
             LOGGER.info(f"{str(e)}" f"Loading eager module.")
-            module.load_eager(device=device)
+            m.load_eager(device=device)
         except Exception as e:
             LOGGER.warn(f"Failed to load module {module_name} for model key {model_key} and runner {runner_name}.")
             LOGGER.warn(f"Eager module will be used. Error message: {str(e)}")
             if verbose:
                 LOGGER.warn(f"Traceback: {traceback.format_exc()}")
 
-            module.load_eager(device=device)
+            m.load_eager(device=device)
 
 
 def _format_to_modelkey(format: Union[str, Format]):
@@ -295,14 +296,14 @@ def _get_modelkeys_runners(formats, runners):
         modelkeys.update(_format_to_modelkey(format))
 
     modelkeys_runners = set()
-    for name, module in module_registry.items():
+    for name, m in module_registry.items():
         try:
-            module.load_optimized(activate_runners=False)
+            m.load_optimized(activate_runners=False)
         except ModelNavigatorModuleNotOptimizedError as e:
             raise ModelNavigatorModuleNotOptimizedError(
                 f"Module {name} not optimized. Please optimize the nav.optimize command first."
             ) from e
-        for package in module._wrapper._packages:
+        for package in m._wrapper._packages:
             for modelkey, model_status in package.status.models_status.items():
                 for runner_name, runner_status in model_status.runners_status.items():
                     if (

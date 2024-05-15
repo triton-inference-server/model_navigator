@@ -41,7 +41,7 @@ EXPECTED_STATUES = [
 
 def main():
     import model_navigator as nav
-    from model_navigator.api.config import DEFAULT_TORCH_TARGET_FORMATS
+    from model_navigator.configuration import DEFAULT_TORCH_TARGET_FORMATS
     from tests import utils
     from tests.functional.common.utils import collect_optimize_status, validate_status
     from tests.utils import get_assets_path

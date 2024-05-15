@@ -25,7 +25,7 @@ import dacite
 import tabulate
 import yaml
 
-from model_navigator.api.config import Format
+from model_navigator.configuration import Format
 from model_navigator.core.constants import DEFAULT_COMPARISON_REPORT_FILE
 from model_navigator.inplace.registry import module_registry
 from model_navigator.utils.environment import get_env

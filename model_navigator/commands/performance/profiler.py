@@ -21,10 +21,10 @@ from typing import List, Optional
 import numpy as np
 from jsonlines import jsonlines
 
-from model_navigator.api.config import OptimizationProfile, Sample
 from model_navigator.commands.performance.nvml_handler import NvmlHandler
 from model_navigator.commands.performance.results import ProfilingResults
 from model_navigator.commands.performance.utils import is_measurement_stable, is_throughput_saturated
+from model_navigator.configuration import OptimizationProfile, Sample
 from model_navigator.core.dataloader import expand_sample
 from model_navigator.core.logger import LOGGER
 from model_navigator.exceptions import ModelNavigatorError

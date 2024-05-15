@@ -18,10 +18,10 @@ import numpy as np
 import pytest
 import torch  # pytype: disable=import-error
 
-from model_navigator.api.config import TensorType
 from model_navigator.commands.base import CommandStatus
 from model_navigator.commands.data_dump.samples import samples_to_npz
 from model_navigator.commands.infer_metadata import InferOutputMetadata
+from model_navigator.configuration import TensorType
 from model_navigator.core.tensor import PyTreeMetadata, TensorMetadata
 from model_navigator.core.workspace import Workspace
 from model_navigator.exceptions import ModelNavigatorUserInputError

@@ -20,11 +20,11 @@ import numpy
 import onnx
 import torch  # pytype: disable=import-error
 
-from model_navigator.api.config import DeviceKind, Format, JitType, TensorType
 from model_navigator.commands.base import CommandStatus
 from model_navigator.commands.correctness import Correctness
 from model_navigator.commands.data_dump.samples import samples_to_npz
 from model_navigator.commands.export.torch import ExportTorch2ONNX, ExportTorch2TorchScript
+from model_navigator.configuration import DeviceKind, Format, JitType, TensorType
 from model_navigator.core.tensor import PyTreeMetadata, TensorMetadata, TensorSpec
 from model_navigator.core.workspace import Workspace
 from model_navigator.runners.torch import TorchScriptCPURunner, TorchScriptCUDARunner

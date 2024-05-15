@@ -16,11 +16,11 @@
 import pathlib
 from typing import Any, Dict, List, Optional
 
-from model_navigator.api.config import DeviceKind, TensorRTPrecision, TensorRTPrecisionMode, TensorRTProfile
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.convert.base import Convert2TensorRTWithMaxBatchSizeSearch
 from model_navigator.commands.convert.converters import ts2onnx, ts2torchtrt
 from model_navigator.commands.execution_context import ExecutionContext
+from model_navigator.configuration import DeviceKind, TensorRTPrecision, TensorRTPrecisionMode, TensorRTProfile
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata
 from model_navigator.core.workspace import Workspace

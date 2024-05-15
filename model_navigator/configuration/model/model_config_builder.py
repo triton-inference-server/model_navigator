@@ -19,8 +19,8 @@ import collections
 from itertools import product
 from typing import Dict, List, Optional, Sequence, Type, TypeVar
 
-from model_navigator.api import Format
-from model_navigator.api import config as config_api
+import model_navigator.configuration as config_api
+from model_navigator import Format
 from model_navigator.configuration.model import model_config
 from model_navigator.frameworks import Framework
 from model_navigator.utils.format_helpers import get_base_format, get_export_formats

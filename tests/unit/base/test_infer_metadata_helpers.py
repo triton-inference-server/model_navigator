@@ -15,13 +15,13 @@
 import numpy
 import pytest
 
-from model_navigator.api.config import TensorRTProfile, TensorType
 from model_navigator.commands.infer_metadata import (
     _assert_all_inputs_have_same_pytree_metadata,
     _extract_max_batch_size,
     _get_metadata_from_axes_shapes,
     _get_trt_profile_from_axes_shapes,
 )
+from model_navigator.configuration import TensorRTProfile, TensorType
 from model_navigator.core.tensor import PyTreeMetadata, TensorSpec
 from model_navigator.exceptions import ModelNavigatorUserInputError
 from model_navigator.utils.common import optimal_batch_size

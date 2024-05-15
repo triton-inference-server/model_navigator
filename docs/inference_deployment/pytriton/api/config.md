@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-::: model_navigator.api.pytriton.ModelConfig
-::: model_navigator.api.pytriton.DynamicBatcher
-::: model_navigator.api.pytriton.Tensor
-::: model_navigator.api.pytriton.QueuePolicy
-::: model_navigator.api.pytriton.TimeoutAction
+::: model_navigator.pytriton.ModelConfig
+::: model_navigator.pytriton.DynamicBatcher
+::: model_navigator.pytriton.Tensor
+::: model_navigator.pytriton.QueuePolicy
+::: model_navigator.pytriton.TimeoutAction

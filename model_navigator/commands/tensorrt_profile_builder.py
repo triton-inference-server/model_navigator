@@ -16,9 +16,9 @@
 from enum import Enum
 from typing import List, Optional
 
-from model_navigator.api.config import TensorRTProfile
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.performance.performance import ProfilingResults
+from model_navigator.configuration import TensorRTProfile
 from model_navigator.core.constants import (
     DEFAULT_PROFILING_LATENCY_CUTOFF_THRESHOLD,
     DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD,

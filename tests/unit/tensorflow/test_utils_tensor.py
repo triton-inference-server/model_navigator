@@ -14,7 +14,7 @@
 
 import tensorflow as tf  # pytype: disable=import-error
 
-from model_navigator.api.config import TensorType
+from model_navigator.configuration import TensorType
 from model_navigator.core.tensor import get_tensor_type
 
 

@@ -17,7 +17,7 @@ from typing import List
 
 import numpy
 
-from model_navigator.api.config import Format
+from model_navigator.configuration import Format
 from model_navigator.runners.base import DeviceKind, NavigatorRunner
 from model_navigator.runners.registry import register_runner
 

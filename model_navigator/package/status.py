@@ -24,7 +24,11 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from packaging import version
 
-from model_navigator.api.config import (
+from model_navigator.commands.base import CommandStatus
+from model_navigator.commands.correctness.correctness import Correctness, TolerancePerOutputName
+from model_navigator.commands.performance.performance import Performance, ProfilingResults
+from model_navigator.commands.verification.verify import VerifyModel
+from model_navigator.configuration import (
     Format,
     OnnxConfig,
     OptimizationProfile,
@@ -34,10 +38,6 @@ from model_navigator.api.config import (
     TensorRTProfile,
     TorchTensorRTConfig,
 )
-from model_navigator.commands.base import CommandStatus
-from model_navigator.commands.correctness.correctness import Correctness, TolerancePerOutputName
-from model_navigator.commands.performance.performance import Performance, ProfilingResults
-from model_navigator.commands.verification.verify import VerifyModel
 from model_navigator.configuration.model.model_config import ModelConfig
 from model_navigator.core.constants import NAVIGATOR_PACKAGE_VERSION, NAVIGATOR_VERSION
 from model_navigator.core.logger import LOGGER

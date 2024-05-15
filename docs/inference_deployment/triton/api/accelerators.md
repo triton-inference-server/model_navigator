@@ -15,9 +15,9 @@ limitations under the License.
 -->
 # Accelerators
 
-::: model_navigator.api.triton.AutoMixedPrecisionAccelerator
-::: model_navigator.api.triton.GPUIOAccelerator
-::: model_navigator.api.triton.OpenVINOAccelerator
-::: model_navigator.api.triton.OpenVINOAccelerator
-::: model_navigator.api.triton.TensorRTAccelerator
-::: model_navigator.api.triton.TensorRTOptPrecision
+::: model_navigator.triton.AutoMixedPrecisionAccelerator
+::: model_navigator.triton.GPUIOAccelerator
+::: model_navigator.triton.OpenVINOAccelerator
+::: model_navigator.triton.OpenVINOAccelerator
+::: model_navigator.triton.TensorRTAccelerator
+::: model_navigator.triton.TensorRTOptPrecision

@@ -13,6 +13,65 @@
 # limitations under the License.
 
 from model_navigator.__version__ import __version__  # noqa: F401
-from model_navigator.api import *  # noqa: F401, F403
+from model_navigator.configuration import (  # noqa: F401  # noqa: F401
+    DeviceKind,
+    Format,
+    Framework,
+    JitType,
+    MaxThroughputAndMinLatencyStrategy,
+    MaxThroughputStrategy,
+    MaxThroughputWithLatencyBudgetStrategy,
+    MinLatencyStrategy,
+    OnnxConfig,
+    OptimizationProfile,
+    SelectedRuntimeStrategy,
+    TensorFlowConfig,
+    TensorFlowTensorRTConfig,
+    TensorRTConfig,
+    TensorRTPrecision,
+    TensorRTPrecisionMode,
+    TensorRTProfile,
+    TensorType,
+    TorchConfig,
+    TorchExportConfig,
+    TorchScriptConfig,
+    TorchTensorRTConfig,
+)
+from model_navigator.frameworks import (  # noqa: F401
+    is_jax_available,
+    is_tf_available,
+    is_torch_available,
+    is_trt_available,
+)
 from model_navigator.runners import register_runner  # noqa: F401
-from model_navigator.runtime_analyzer import strategy  # noqa: F401
+
+if is_torch_available():
+    from model_navigator import torch  # noqa: F401, F403
+    from model_navigator.inplace import (  # noqa: F401, F403
+        InplaceConfig,
+        Module,
+        OptimizeConfig,
+        inplace_config,
+        load_optimized,
+        module,
+        optimize,
+        profile,
+    )
+if is_tf_available():
+    from model_navigator import tensorflow  # noqa: F401
+
+if is_tf_available() and is_jax_available():
+    from model_navigator import jax  # noqa: F401
+
+if is_trt_available():
+    from model_navigator import tensorrt  # noqa: F401
+
+from model_navigator import (  # noqa: F401
+    onnx,
+    package,
+    python,
+    pytriton,
+    triton,
+    utilities,
+)
+from model_navigator.commands.base import CommandStatus  # noqa: F401

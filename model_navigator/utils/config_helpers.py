@@ -15,7 +15,7 @@
 
 from typing import Dict, List, Union
 
-from model_navigator.api.config import DeviceKind, Format
+from model_navigator.configuration import DeviceKind, Format
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import (
     ModelConfig,

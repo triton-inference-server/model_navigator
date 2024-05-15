@@ -23,7 +23,7 @@ from typing import Callable, List, Optional, Tuple, TypeVar, Union
 
 import numpy as np
 
-from model_navigator.api.config import ShapeTuple, TensorRTProfile, TensorType
+from model_navigator.configuration import ShapeTuple, TensorRTProfile, TensorType
 from model_navigator.core.tensor import TensorMetadata, get_tensor_type
 from model_navigator.exceptions import ModelNavigatorNotFoundError
 from model_navigator.utils import common as utils

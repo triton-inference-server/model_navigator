@@ -16,7 +16,7 @@
 
 # import numpy as np
 
-# from model_navigator.api.config import TensorRTProfile
+# from model_navigator.configuration import TensorRTProfile
 # from model_navigator.commands.base import CommandStatus
 # from model_navigator.commands.performance.profiler import ProfilingResults
 # from model_navigator.commands.tensorrt_profile_builder import ProfileType, TensorRTProfileBuilder

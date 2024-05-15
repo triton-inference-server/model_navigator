@@ -16,7 +16,7 @@
 import pathlib
 from typing import Any, Dict, List, Optional, Sequence
 
-from model_navigator.api.config import Format
+from model_navigator.configuration import Format
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model import model_config
 from model_navigator.core.workspace import Workspace

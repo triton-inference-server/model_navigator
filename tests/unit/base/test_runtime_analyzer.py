@@ -13,20 +13,22 @@
 # limitations under the License.
 import pytest
 
-from model_navigator.api.config import JitType, TensorRTPrecision, TensorRTPrecisionMode
 from model_navigator.commands.correctness.correctness import Tolerance
 from model_navigator.commands.performance.performance import ProfilingResults
-from model_navigator.configuration.model.model_config import ONNXConfig, TensorRTConfig, TorchScriptConfig
-from model_navigator.core.constants import DEFAULT_MAX_WORKSPACE_SIZE
-from model_navigator.exceptions import ModelNavigatorRuntimeAnalyzerError, ModelNavigatorUserInputError
-from model_navigator.package.status import CommandStatus, ModelStatus, RunnerStatus
-from model_navigator.runtime_analyzer import (
+from model_navigator.configuration import (
+    JitType,
     MaxThroughputAndMinLatencyStrategy,
     MaxThroughputStrategy,
     MaxThroughputWithLatencyBudgetStrategy,
     MinLatencyStrategy,
-    RuntimeAnalyzer,
+    TensorRTPrecision,
+    TensorRTPrecisionMode,
 )
+from model_navigator.configuration.model.model_config import ONNXConfig, TensorRTConfig, TorchScriptConfig
+from model_navigator.core.constants import DEFAULT_MAX_WORKSPACE_SIZE
+from model_navigator.exceptions import ModelNavigatorRuntimeAnalyzerError, ModelNavigatorUserInputError
+from model_navigator.package.status import CommandStatus, ModelStatus, RunnerStatus
+from model_navigator.runtime_analyzer import RuntimeAnalyzer
 
 onnx_config = ONNXConfig(opset=13, dynamic_axes=None, dynamo_export=False, graph_surgeon_optimization=True)
 tensorrt_config = TensorRTConfig(

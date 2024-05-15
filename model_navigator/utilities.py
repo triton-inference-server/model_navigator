@@ -20,14 +20,14 @@ import pathlib
 import tempfile
 from typing import Any, Callable, Dict, Optional
 
-from model_navigator.api.config import Framework, OptimizationProfile, SizedDataLoader
 from model_navigator.commands.find_max_batch_size.find_max_batch_size import MaxBatchSizeFinder
+from model_navigator.configuration import Framework, OptimizationProfile, SizedDataLoader
 from model_navigator.core.dataloader import to_numpy
 from model_navigator.core.tensor import FRAMEWORK_TO_TENSOR_TYPE, PyTreeMetadata, TensorMetadata
 from model_navigator.exceptions import ModelNavigatorError, ModelNavigatorProfilingError
 from model_navigator.runners.registry import get_runner
 
-logger_name = "model_navigator.api.utilities"
+logger_name = "model_navigator.utilities"
 LOGGER = logging.getLogger(logger_name)
 logging.basicConfig(level=logging.INFO)
 

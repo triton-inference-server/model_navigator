@@ -18,9 +18,9 @@ import tempfile
 
 import pytest
 
-from model_navigator.api.config import Format, JitType, OptimizationProfile, TorchScriptConfig
-from model_navigator.api.package import _get_model_configs, _update_config, optimize
+from model_navigator.configuration import Format, JitType, OptimizationProfile, TorchScriptConfig
 from model_navigator.exceptions import ModelNavigatorEmptyPackageError, ModelNavigatorMissingSourceModelError
+from model_navigator.package import _get_model_configs, _update_config, optimize
 from model_navigator.runners.registry import runner_registry
 from model_navigator.utils import enums
 from tests.unit.base.mocks.packages import (

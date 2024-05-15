@@ -15,7 +15,7 @@
 
 from typing import Optional, Sequence, Tuple
 
-from model_navigator.api.config import CustomConfig, Format, TorchTensorRTConfig
+from model_navigator.configuration import CustomConfig, Format, TorchTensorRTConfig
 from model_navigator.core.logger import LOGGER
 from model_navigator.utils.module import lazy_import
 

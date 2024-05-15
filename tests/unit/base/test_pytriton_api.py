@@ -19,8 +19,8 @@ import tempfile
 import numpy as np
 import pytest
 
-from model_navigator.api.pytriton import DynamicBatcher, PyTritonAdapter
 from model_navigator.exceptions import ModelNavigatorNotFoundError
+from model_navigator.pytriton import DynamicBatcher, PyTritonAdapter
 from tests.unit.base.mocks.packages import empty_package, onnx_package_with_cuda_runner
 
 

@@ -15,11 +15,11 @@ limitations under the License.
 -->
 # Sequence Batcher
 
-::: model_navigator.api.triton.SequenceBatcher
-::: model_navigator.api.triton.SequenceBatcherControl
-::: model_navigator.api.triton.SequenceBatcherControlInput
-::: model_navigator.api.triton.SequenceBatcherControlKind
-::: model_navigator.api.triton.SequenceBatcherInitialState
-::: model_navigator.api.triton.SequenceBatcherState
-::: model_navigator.api.triton.SequenceBatcherStrategyDirect
-::: model_navigator.api.triton.SequenceBatcherStrategyOldest
+::: model_navigator.triton.SequenceBatcher
+::: model_navigator.triton.SequenceBatcherControl
+::: model_navigator.triton.SequenceBatcherControlInput
+::: model_navigator.triton.SequenceBatcherControlKind
+::: model_navigator.triton.SequenceBatcherInitialState
+::: model_navigator.triton.SequenceBatcherState
+::: model_navigator.triton.SequenceBatcherStrategyDirect
+::: model_navigator.triton.SequenceBatcherStrategyOldest

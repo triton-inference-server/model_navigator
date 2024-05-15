@@ -19,18 +19,20 @@ from typing import Dict, Optional, Union
 
 import yaml
 
-from model_navigator.api.config import (
+from model_navigator.commands.base import CommandStatus
+from model_navigator.commands.correctness.correctness import Correctness
+from model_navigator.commands.performance.performance import Performance
+from model_navigator.configuration import (
     CUSTOM_CONFIGS_MAPPING,
     SERIALIZED_FORMATS,
     CustomConfigForFormat,
     DeviceKind,
     Format,
+    MaxThroughputAndMinLatencyStrategy,
     OptimizationProfile,
+    RuntimeSearchStrategy,
     TensorType,
 )
-from model_navigator.commands.base import CommandStatus
-from model_navigator.commands.correctness.correctness import Correctness
-from model_navigator.commands.performance.performance import Performance
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.workspace import Workspace
@@ -39,7 +41,6 @@ from model_navigator.frameworks import Framework
 from model_navigator.runners.base import NavigatorRunner
 from model_navigator.runners.registry import get_runner, runner_registry
 from model_navigator.runtime_analyzer.analyzer import RuntimeAnalyzer
-from model_navigator.runtime_analyzer.strategy import MaxThroughputAndMinLatencyStrategy, RuntimeSearchStrategy
 from model_navigator.utils.common import DataObject, get_default_status_filename
 from model_navigator.utils.format_helpers import is_source_format
 

@@ -15,9 +15,9 @@
 
 from typing import Dict, List, Optional, Sequence
 
-from model_navigator.api.config import Format
 from model_navigator.commands.base import CommandStatus
 from model_navigator.commands.performance import Profile
+from model_navigator.configuration import Format
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model import model_config
 from model_navigator.package.package import Package

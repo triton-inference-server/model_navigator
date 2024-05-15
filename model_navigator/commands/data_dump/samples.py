@@ -17,8 +17,8 @@ from typing import Any, Optional
 
 import numpy as np
 
-from model_navigator.api.config import OptimizationProfile, SizedDataLoader, TensorRTProfile
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
+from model_navigator.configuration import OptimizationProfile, SizedDataLoader, TensorRTProfile
 from model_navigator.core.dataloader import IndiciesFilteredDataloader, extract_sample, load_samples, samples_to_npz
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata

@@ -15,5 +15,5 @@ limitations under the License.
 -->
 # Model Instance Group
 
-::: model_navigator.api.triton.InstanceGroup
-::: model_navigator.api.triton.DeviceKind
+::: model_navigator.triton.InstanceGroup
+::: model_navigator.triton.DeviceKind

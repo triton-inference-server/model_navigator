@@ -16,7 +16,7 @@
 import re
 from typing import Optional
 
-from model_navigator.api.config import DeviceKind
+from model_navigator.configuration import DeviceKind
 from model_navigator.exceptions import ModelNavigatorConfigurationError
 
 

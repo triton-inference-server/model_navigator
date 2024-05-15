@@ -18,8 +18,8 @@ from typing import Dict, Optional
 
 import fire
 
-from model_navigator.api.config import OptimizationProfile
 from model_navigator.commands.find_max_batch_size.find_max_batch_size import MaxBatchSizeFinder
+from model_navigator.configuration import OptimizationProfile
 from model_navigator.core.dataloader import load_samples
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata

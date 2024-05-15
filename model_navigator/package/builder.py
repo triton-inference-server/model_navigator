@@ -19,18 +19,17 @@ import uuid
 import zipfile
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from model_navigator.api.config import Format, TensorRTProfile
 from model_navigator.commands.base import CommandStatus
 from model_navigator.commands.infer_metadata import InferInputMetadata, InferOutputMetadata
 from model_navigator.commands.load import LoadMetadata
 from model_navigator.commands.verification.verify import VerifyModel
+from model_navigator.configuration import Format, MaxThroughputStrategy, MinLatencyStrategy, TensorRTProfile
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.core.constants import NAVIGATOR_PACKAGE_VERSION
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata
 from model_navigator.exceptions import ModelNavigatorRuntimeAnalyzerError, ModelNavigatorRuntimeError
 from model_navigator.pipelines.pipeline_context import PipelineCommands, PipelineContext
-from model_navigator.runtime_analyzer.strategy import MaxThroughputStrategy, MinLatencyStrategy
 from model_navigator.utils.format_helpers import FORMAT2SUFFIX, get_framework_export_formats
 
 from .package import Package

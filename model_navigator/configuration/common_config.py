@@ -16,7 +16,7 @@
 import dataclasses
 from typing import Dict, Optional, Sequence
 
-from model_navigator.api.config import (
+from model_navigator.configuration import (
     CustomConfig,
     DeviceKind,
     Format,

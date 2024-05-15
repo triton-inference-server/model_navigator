@@ -21,7 +21,7 @@ import fire
 import numpy as np
 import torch  # pytype: disable=import-error
 
-from model_navigator.api.config import TensorRTPrecision, TensorRTPrecisionMode
+from model_navigator.configuration import TensorRTPrecision, TensorRTPrecisionMode
 from model_navigator.utils.common import numpy_to_torch_dtype
 
 LOGGER = logging.getLogger(__name__)

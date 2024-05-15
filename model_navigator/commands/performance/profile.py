@@ -20,11 +20,11 @@ from typing import Any, Optional, Type
 
 from jsonlines import jsonlines
 
-from model_navigator.api.config import Format, OptimizationProfile, SizedDataLoader
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.data_dump.samples import samples_to_npz
 from model_navigator.commands.execution_context import ExecutionContext
 from model_navigator.commands.performance.results import ProfilingResults
+from model_navigator.configuration import Format, OptimizationProfile, SizedDataLoader
 from model_navigator.configuration.runner.runner_config import RunnerConfig
 from model_navigator.core.dataloader import extract_bs1, extract_sample, load_samples
 from model_navigator.core.logger import LOGGER

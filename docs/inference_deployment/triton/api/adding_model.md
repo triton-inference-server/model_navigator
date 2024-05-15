@@ -16,5 +16,5 @@ limitations under the License.
 
 # Model Store API
 
-::: model_navigator.api.triton.model_repository.add_model
-::: model_navigator.api.triton.model_repository.add_model_from_package
+::: model_navigator.triton.model_repository.add_model
+::: model_navigator.triton.model_repository.add_model_from_package

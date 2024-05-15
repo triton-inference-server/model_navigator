@@ -15,7 +15,7 @@
 
 from typing import List, Optional, Set
 
-from model_navigator.api.config import AVAILABLE_TARGET_FORMATS, DEFAULT_TARGET_FORMATS, Format
+from model_navigator.configuration import AVAILABLE_TARGET_FORMATS, DEFAULT_TARGET_FORMATS, Format
 from model_navigator.frameworks import Framework
 
 

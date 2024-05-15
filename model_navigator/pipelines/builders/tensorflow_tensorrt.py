@@ -15,9 +15,9 @@
 
 from typing import Dict, List
 
-from model_navigator.api.config import DeviceKind, Format
 from model_navigator.commands.base import ExecutionUnit
 from model_navigator.commands.convert.tf import ConvertSavedModel2TFTRT
+from model_navigator.configuration import DeviceKind, Format
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig
 from model_navigator.pipelines.pipeline import Pipeline

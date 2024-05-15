@@ -15,6 +15,6 @@ limitations under the License.
 -->
 # Dynamic Batcher
 
-::: model_navigator.api.triton.DynamicBatcher
-::: model_navigator.api.triton.QueuePolicy
-::: model_navigator.api.triton.TimeoutAction
+::: model_navigator.triton.DynamicBatcher
+::: model_navigator.triton.QueuePolicy
+::: model_navigator.triton.TimeoutAction

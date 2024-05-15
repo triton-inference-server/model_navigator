@@ -99,7 +99,7 @@ def main():
             LOGGER.info(f"Skipping {key} due to {runner_status} status")
             continue
         model_name, runner_name = key.split(".")
-        runner = package.get_runner(nav.runtime_analyzer.strategy.SelectedRuntimeStrategy(model_name, runner_name))
+        runner = package.get_runner(nav.SelectedRuntimeStrategy(model_name, runner_name))
 
         assert nav.TensorType.TORCH in runner.get_available_input_types()
         assert nav.TensorType.TORCH in runner.get_available_return_types()

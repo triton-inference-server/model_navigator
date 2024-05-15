@@ -20,7 +20,7 @@ import numpy as np
 import torch  # pytype: disable=import-error
 
 import model_navigator as nav
-from model_navigator.api.config import Sample
+from model_navigator.configuration import Sample
 from model_navigator.exceptions import ModelNavigatorRuntimeAnalyzerError
 
 logging.basicConfig(format="%(message)s", level=logging.INFO)

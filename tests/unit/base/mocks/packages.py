@@ -14,9 +14,9 @@
 
 import numpy as np
 
-from model_navigator.api.config import Format, JitType, TensorRTPrecision, TensorRTPrecisionMode, TensorRTProfile
 from model_navigator.commands.correctness.correctness import Tolerance, TolerancePerOutputName
 from model_navigator.commands.performance.performance import ProfilingResults
+from model_navigator.configuration import Format, JitType, TensorRTPrecision, TensorRTPrecisionMode, TensorRTProfile
 from model_navigator.configuration.model.model_config import (
     ONNXConfig,
     TensorFlowSavedModelConfig,

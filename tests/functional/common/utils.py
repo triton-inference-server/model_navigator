@@ -18,8 +18,8 @@ import zipfile
 from typing import Dict, List, Union
 
 from model_navigator import CommandStatus
-from model_navigator.api.config import INPUT_FORMATS, Format
 from model_navigator.commands.performance.performance import Performance
+from model_navigator.configuration import INPUT_FORMATS, Format
 from model_navigator.frameworks import Framework
 from model_navigator.package.status import ModelStatus, Status
 from model_navigator.pipelines.wrappers.profile import ProfilingResults

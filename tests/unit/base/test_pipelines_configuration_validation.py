@@ -23,7 +23,7 @@ import tempfile
 
 import pytest
 
-from model_navigator.api.config import (
+from model_navigator.configuration import (
     Format,
     OnnxConfig,
     TensorRTConfig,

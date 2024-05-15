@@ -14,7 +14,7 @@
 
 from typing import Callable, Dict, List
 
-from model_navigator.api.config import Format
+from model_navigator.configuration import Format
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig
 from model_navigator.frameworks import is_jax_available, is_tf_available, is_torch_available

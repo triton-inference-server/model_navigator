@@ -19,10 +19,10 @@ The module provide functionality to export model to TorchScript and/or ONNX.
 import pathlib
 from typing import Any, Dict, List, Optional, Union
 
-from model_navigator.api.config import DeviceKind, JitType
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.execution_context import ExecutionContext
 from model_navigator.commands.export import exporters
+from model_navigator.configuration import DeviceKind, JitType
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata
 from model_navigator.core.workspace import Workspace

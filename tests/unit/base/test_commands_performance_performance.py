@@ -19,9 +19,9 @@ import pytest
 from jsonlines import jsonlines
 
 import model_navigator as nav
-from model_navigator.api.config import OptimizationProfile
 from model_navigator.commands.performance.performance import Performance
 from model_navigator.commands.performance.profiler import ProfilingResults
+from model_navigator.configuration import OptimizationProfile
 from model_navigator.core.workspace import Workspace
 from model_navigator.exceptions import ModelNavigatorProfilingError
 from model_navigator.runners.base import InferenceTime

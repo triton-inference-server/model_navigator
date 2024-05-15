@@ -26,7 +26,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from model_navigator.api.config import (
+from model_navigator.configuration import (
     TensorRTConfig,
     TensorRTPrecision,
     TensorRTPrecisionMode,

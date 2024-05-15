@@ -19,10 +19,17 @@ import os
 import pathlib
 from typing import Any, Dict, Optional, Sequence, Tuple, Type, Union
 
-from model_navigator.api.config import CustomConfig, DeviceKind, Format, OptimizationProfile, VerifyFunction
+from model_navigator.configuration import (
+    CustomConfig,
+    DeviceKind,
+    Format,
+    MaxThroughputStrategy,
+    OptimizationProfile,
+    RuntimeSearchStrategy,
+    VerifyFunction,
+)
 from model_navigator.core.constants import DEFAULT_SAMPLE_COUNT
 from model_navigator.runners.base import NavigatorRunner
-from model_navigator.runtime_analyzer.strategy import MaxThroughputStrategy, RuntimeSearchStrategy
 
 DEFAULT_CACHE_DIR = pathlib.Path.home() / ".cache" / "model_navigator"
 DEFAULT_MIN_NUM_SAMPLES = 100

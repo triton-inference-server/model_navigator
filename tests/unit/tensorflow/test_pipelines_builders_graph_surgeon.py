@@ -11,8 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 
-from model_navigator.api.config import DeviceKind, Format, OptimizationProfile
 from model_navigator.commands.optimize.graph_surgeon import GraphSurgeonOptimize
+from model_navigator.configuration import DeviceKind, Format, OptimizationProfile
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ONNXConfig
 from model_navigator.frameworks import Framework

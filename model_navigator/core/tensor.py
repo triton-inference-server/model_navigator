@@ -24,7 +24,7 @@ from typing import Any, Dict, Iterable, Mapping, Optional, Sequence, Tuple, Type
 
 import numpy as np
 
-from model_navigator.api.config import TensorType
+from model_navigator.configuration import TensorType
 from model_navigator.frameworks import Framework, is_jax_available, is_tf_available, is_torch_available
 from model_navigator.frameworks.tensorrt.cuda import DeviceView
 from model_navigator.utils import common, module

@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-::: model_navigator.api.package.profile
-::: model_navigator.api.package.ProfilingResults
+::: model_navigator.package.profile
+::: model_navigator.package.ProfilingResults
 ::: model_navigator.package.profiling_results.RunnerResults
 ::: model_navigator.package.profiling_results.RunnerProfilingResults
 ::: model_navigator.package.profiling_results.ProfilingResult

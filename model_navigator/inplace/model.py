@@ -22,12 +22,18 @@ import pathlib
 import tempfile
 from typing import Any, Callable, List, Optional
 
-from model_navigator.api.config import Framework, OnnxConfig, TensorRTConfig, TensorType, TorchTensorRTConfig
-from model_navigator.api.package import load_from_workspace
+from model_navigator.configuration import (
+    Framework,
+    OnnxConfig,
+    RuntimeSearchStrategy,
+    TensorRTConfig,
+    TensorType,
+    TorchTensorRTConfig,
+)
 from model_navigator.core.dataloader import to_numpy
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import PyTreeMetadata
-from model_navigator.runtime_analyzer.strategy import RuntimeSearchStrategy
+from model_navigator.package import load_from_workspace
 from model_navigator.utils.module import lazy_import
 
 from ..utils.format_helpers import is_source_format
@@ -152,7 +158,7 @@ class RecordingModule(BaseModule):
 
     def optimize(self):
         """Optimize the module using the recorded samples."""
-        from model_navigator.api.torch import optimize
+        from model_navigator.torch import optimize
 
         batch_dim = 0 if self.optimize_config.batching else None
         max_batch_size = None

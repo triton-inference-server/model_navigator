@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from model_navigator.api.config import (
+from model_navigator.configuration import (
     Format,
     JitType,
     OnnxConfig,

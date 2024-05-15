@@ -13,7 +13,7 @@
 # limitations under the License.
 import numpy as np
 
-from model_navigator.api.config import ShapeTuple, TensorRTProfile
+from model_navigator.configuration import ShapeTuple, TensorRTProfile
 from model_navigator.frameworks.tensorrt import utils as tensorrt_utils
 from model_navigator.utils.common import optimal_batch_size
 

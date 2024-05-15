@@ -19,7 +19,7 @@ from pytriton.decorators import batch  # pytype: disable=import-error
 from pytriton.triton import Triton  # pytype: disable=import-error
 
 import model_navigator as nav
-from model_navigator.api.config import TensorType
+from model_navigator.configuration import TensorType
 
 
 def main():

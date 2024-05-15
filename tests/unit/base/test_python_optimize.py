@@ -18,7 +18,7 @@ import tempfile
 import numpy as np
 
 import model_navigator as nav
-from model_navigator.api.config import (
+from model_navigator.configuration import (
     AVAILABLE_NONE_FRAMEWORK_TARGET_FORMATS,
     AVAILABLE_TARGET_FORMATS,
     DEFAULT_NONE_FRAMEWORK_TARGET_FORMATS,

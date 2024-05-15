@@ -15,7 +15,7 @@
 import numpy as np
 import pytest
 
-from model_navigator.api.config import TensorType
+from model_navigator.configuration import TensorType
 from model_navigator.core.tensor import TensorSpec, TensorUtils, get_tensor_type
 
 

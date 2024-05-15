@@ -16,7 +16,7 @@ limitations under the License.
 
 Classes, enums and types used to configure the Triton Model Navigator.
 
-::: model_navigator.api.config
-::: model_navigator.api.MaxThroughputAndMinLatencyStrategy
-::: model_navigator.api.MaxThroughputStrategy
-::: model_navigator.api.MinLatencyStrategy
+::: model_navigator.configuration
+::: model_navigator.MaxThroughputAndMinLatencyStrategy
+::: model_navigator.MaxThroughputStrategy
+::: model_navigator.MinLatencyStrategy

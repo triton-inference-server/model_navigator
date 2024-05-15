@@ -19,9 +19,9 @@ import pathlib
 import tempfile
 from typing import Any, Dict, List, Optional, Type
 
-from model_navigator.api.config import Format
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.execution_context import ExecutionContext
+from model_navigator.configuration import Format
 from model_navigator.configuration.runner.runner_config import RunnerConfig
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata

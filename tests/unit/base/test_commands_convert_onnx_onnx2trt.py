@@ -24,9 +24,9 @@ import tempfile
 import numpy as np
 
 from model_navigator import TensorRTPrecision, TensorRTPrecisionMode
-from model_navigator.api.config import TensorRTProfile
 from model_navigator.commands.base import CommandStatus
 from model_navigator.commands.convert.onnx import ConvertONNX2TRT
+from model_navigator.configuration import TensorRTProfile
 from model_navigator.core.tensor import TensorMetadata, TensorSpec
 from model_navigator.core.workspace import Workspace
 

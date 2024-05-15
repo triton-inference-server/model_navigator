@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from model_navigator.api.config import Format, Framework
+from model_navigator.configuration import Format, Framework
 from model_navigator.utils.format_helpers import (
     FORMAT2SUFFIX,
     FRAMEWORK2BASE_FORMAT,

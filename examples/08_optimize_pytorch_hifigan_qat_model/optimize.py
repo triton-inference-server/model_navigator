@@ -72,7 +72,7 @@ def main():
         model=model_hifigan_qat(),
         dataloader=dataloader,
         custom_configs=[
-            nav.TensorRTConfig(precision=nav.api.config.TensorRTPrecision.INT8),
+            nav.TensorRTConfig(precision=nav.TensorRTPrecision.INT8),
             nav.OnnxConfig(opset=17, dynamic_axes=tts_dynamic_axes(with_z=False)),
         ],
     )

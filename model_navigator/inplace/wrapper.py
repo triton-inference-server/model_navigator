@@ -18,14 +18,14 @@ from typing import Any, Callable, Literal, Optional, Union
 
 import wrapt
 
-from model_navigator.api.config import (
+from model_navigator.configuration import (
     CustomConfigForTensorRT,
+    RuntimeSearchStrategy,
     TensorRTConfig,
     TensorRTPrecisionMode,
 )
 from model_navigator.exceptions import ModelNavigatorUserInputError
 from model_navigator.inplace.timer import Timer
-from model_navigator.runtime_analyzer.strategy import RuntimeSearchStrategy
 from model_navigator.utils.module import lazy_import
 
 from ..frameworks.torch.utils import get_module_device

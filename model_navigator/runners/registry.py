@@ -17,7 +17,7 @@ from typing import Dict, Optional, Type, Union
 
 import pkg_resources
 
-from model_navigator.api.config import DeviceKind
+from model_navigator.configuration import DeviceKind
 from model_navigator.core.logger import LOGGER
 from model_navigator.runners.base import NavigatorRunner
 

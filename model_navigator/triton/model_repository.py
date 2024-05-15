@@ -32,8 +32,14 @@ from typing import Dict, List, Optional, Union
 
 import numpy as np
 
-from model_navigator.api.config import Format, Sample, TensorRTProfile
 from model_navigator.commands.performance import Performance
+from model_navigator.configuration import (
+    Format,
+    MaxThroughputAndMinLatencyStrategy,
+    RuntimeSearchStrategy,
+    Sample,
+    TensorRTProfile,
+)
 from model_navigator.core.dataloader import load_samples
 from model_navigator.core.tensor import TensorMetadata
 from model_navigator.core.workspace import Workspace
@@ -55,7 +61,6 @@ from model_navigator.runners.tensorrt import TensorRTRunner
 from model_navigator.runners.torch import TorchScriptCPURunner, TorchScriptCUDARunner, TorchTensorRTRunner
 from model_navigator.runtime_analyzer import RuntimeAnalyzer
 from model_navigator.runtime_analyzer.analyzer import RuntimeAnalyzerResult
-from model_navigator.runtime_analyzer.strategy import MaxThroughputAndMinLatencyStrategy, RuntimeSearchStrategy
 from model_navigator.triton.model_config import ModelConfig
 from model_navigator.triton.model_config_builder import ModelConfigBuilder
 from model_navigator.triton.model_config_generator import ModelConfigGenerator

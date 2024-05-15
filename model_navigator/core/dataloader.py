@@ -19,7 +19,7 @@ from typing import Any, Iterable, List, Mapping, Optional, Sequence, Tuple, Unio
 
 import numpy as np
 
-from model_navigator.api.config import Sample, TensorType
+from model_navigator.configuration import Sample, TensorType
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata, is_tensor
 from model_navigator.exceptions import ModelNavigatorUserInputError

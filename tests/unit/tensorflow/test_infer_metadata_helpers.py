@@ -14,8 +14,8 @@
 
 import tensorflow  # pytype: disable=import-error
 
-from model_navigator.api.config import TensorType
 from model_navigator.commands.infer_metadata import _extract_axes_shapes
+from model_navigator.configuration import TensorType
 from model_navigator.core.tensor import PyTreeMetadata
 from model_navigator.frameworks import Framework
 

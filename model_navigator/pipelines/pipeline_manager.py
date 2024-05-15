@@ -15,7 +15,7 @@
 
 from typing import Dict, List, Optional, Sequence
 
-from model_navigator.api.config import Format
+from model_navigator.configuration import Format
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig
 from model_navigator.core.logger import LOGGER, log_dict

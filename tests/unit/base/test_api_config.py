@@ -15,7 +15,7 @@
 
 import pytest
 
-from model_navigator.api.config import (
+from model_navigator.configuration import (
     DEFAULT_TENSORRT_PRECISION,
     DEFAULT_TENSORRT_PRECISION_MODE,
     CustomConfigForFormat,

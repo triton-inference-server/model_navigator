@@ -15,6 +15,6 @@ limitations under the License.
 -->
 # Model Inputs and Outputs
 
-::: model_navigator.api.triton.InputTensorSpec
-::: model_navigator.api.triton.InputTensorFormat
-::: model_navigator.api.triton.OutputTensorSpec
+::: model_navigator.triton.InputTensorSpec
+::: model_navigator.triton.InputTensorFormat
+::: model_navigator.triton.OutputTensorSpec

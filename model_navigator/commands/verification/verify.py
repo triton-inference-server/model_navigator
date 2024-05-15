@@ -16,10 +16,10 @@
 import pathlib
 from typing import Any, Optional, Type
 
-from model_navigator.api.config import Format, SizedDataLoader, VerifyFunction
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.correctness import Correctness
 from model_navigator.commands.performance import Performance
+from model_navigator.configuration import Format, SizedDataLoader, VerifyFunction
 from model_navigator.configuration.runner.runner_config import RunnerConfig
 from model_navigator.core.dataloader import extract_sample
 from model_navigator.core.logger import LOGGER

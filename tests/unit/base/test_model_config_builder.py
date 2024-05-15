@@ -13,7 +13,7 @@
 # limitations under the License.
 import itertools
 
-from model_navigator.api.config import (
+from model_navigator.configuration import (
     Format,
     JitType,
     OnnxConfig,

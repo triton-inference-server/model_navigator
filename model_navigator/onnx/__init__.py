@@ -11,17 +11,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""TensorRT optimize API."""
+"""ONNX optimize API."""
 
-from pathlib import Path
-from typing import Optional, Tuple, Type, Union
+import pathlib
+from typing import Optional, Sequence, Tuple, Type, Union
 
-from model_navigator.api.config import (
-    DEFAULT_TENSORRT_TARGET_FORMATS,
+from model_navigator.configuration import (
+    DEFAULT_ONNX_TARGET_FORMATS,
+    CustomConfig,
     DeviceKind,
+    Format,
     OptimizationProfile,
     SizedDataLoader,
     VerifyFunction,
+    map_custom_configs,
 )
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config_builder import ModelConfigBuilder
@@ -32,6 +35,7 @@ from model_navigator.pipelines.builders import (
     correctness_builder,
     performance_builder,
     preprocessing_builder,
+    tensorrt_conversion_builder,
     verify_builder,
 )
 from model_navigator.pipelines.builders.find_device_max_batch_size import find_device_max_batch_size_builder
@@ -42,38 +46,47 @@ from model_navigator.utils import enums
 
 
 def optimize(
-    model: Union[Path, str],
+    model: Union[pathlib.Path, str],
     dataloader: SizedDataLoader,
     sample_count: Optional[int] = DEFAULT_SAMPLE_COUNT,
     batching: Optional[bool] = True,
-    runners: Optional[Union[Union[str, Type[NavigatorRunner]], Tuple[Union[str, Type[NavigatorRunner]], ...]]] = None,
+    target_formats: Optional[Tuple[Union[str, Format], ...]] = None,
+    target_device: Optional[DeviceKind] = DeviceKind.CUDA,
+    runners: Optional[Tuple[Union[str, Type[NavigatorRunner]], ...]] = None,
     optimization_profile: Optional[OptimizationProfile] = None,
-    workspace: Optional[Path] = None,
+    workspace: Optional[pathlib.Path] = None,
     verbose: bool = False,
     debug: bool = False,
     verify_func: Optional[VerifyFunction] = None,
+    custom_configs: Optional[Sequence[CustomConfig]] = None,
 ) -> Package:
-    """Function executes correctness test, performance profiling and optional verification on provided TensorRT model.
+    """Entrypoint for ONNX optimize.
+
+    Perform conversion, correctness testing, profiling and model verification.
 
     Args:
-        model: TensorRT model path or string
+        model: ONNX model path or string
         dataloader: Sized iterable with data that will be feed to the model
         sample_count: Limits how many samples will be used from dataloader
         batching: Enable or disable batching on first (index 0) dimension of the model
+        target_formats: Target model formats for optimize process
+        target_device: Target device for optimize process, default is CUDA
         runners: Use only runners provided as parameter
         optimization_profile: Optimization profile for conversion and profiling
         workspace: Workspace where packages will be extracted
         verbose: Enable verbose logging
         debug: Enable debug logging from commands
         verify_func: Function for additional model verification
+        custom_configs: Sequence of CustomConfigs used to control produced artifacts
 
     Returns:
         Package descriptor representing created package.
     """
     if isinstance(model, str):
-        model = Path(model)
-    target_formats = DEFAULT_TENSORRT_TARGET_FORMATS
-    target_device = DeviceKind.CUDA
+        model = pathlib.Path(model)
+
+    if target_formats is None:
+        target_formats = DEFAULT_ONNX_TARGET_FORMATS
 
     if runners is None:
         runners = default_runners(device_kind=target_device)
@@ -81,13 +94,17 @@ def optimize(
     if optimization_profile is None:
         optimization_profile = OptimizationProfile()
 
+    target_formats_enums = enums.parse(target_formats, Format)
     runner_names = enums.parse(runners, lambda runner: runner if isinstance(runner, str) else runner.name())
 
+    if Format.ONNX not in target_formats_enums:
+        target_formats_enums = (Format.ONNX,) + target_formats_enums
+
     config = CommonConfig(
-        Framework.TENSORRT,
+        Framework.ONNX,
         model=model,
         dataloader=dataloader,
-        target_formats=target_formats,
+        target_formats=target_formats_enums,
         target_device=target_device,
         sample_count=sample_count,
         batch_dim=0 if batching else None,
@@ -96,17 +113,19 @@ def optimize(
         verbose=verbose,
         debug=debug,
         verify_func=verify_func,
+        custom_configs=map_custom_configs(custom_configs=custom_configs),
     )
 
     models_config = ModelConfigBuilder.generate_model_config(
-        framework=Framework.TENSORRT,
-        target_formats=target_formats,
-        custom_configs=None,
+        framework=Framework.ONNX,
+        target_formats=target_formats_enums,
+        custom_configs=custom_configs,
     )
 
     builders = [
         preprocessing_builder,
         find_device_max_batch_size_builder,
+        tensorrt_conversion_builder,
         correctness_builder,
         performance_builder,
         verify_builder,

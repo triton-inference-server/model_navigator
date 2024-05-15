@@ -21,8 +21,8 @@ from typing import Any, Dict, List
 import yaml
 from tabulate import tabulate
 
-from model_navigator.api.config import Format
 from model_navigator.commands.base import CommandOutput, CommandStatus, ExecutionUnit
+from model_navigator.configuration import Format
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig
 from model_navigator.core.constants import NAVIGATOR_VERSION

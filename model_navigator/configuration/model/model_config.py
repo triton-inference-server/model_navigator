@@ -18,7 +18,7 @@ import pathlib
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Dict, List, Optional, Union
 
-from model_navigator.api.config import (
+from model_navigator.configuration import (
     Format,
     JitType,
     TensorRTCompatibilityLevel,

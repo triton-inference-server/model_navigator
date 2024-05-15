@@ -20,7 +20,7 @@ import fire
 from polygraphy import mod
 from polygraphy.backend.trt import CreateConfig, Profile, engine_from_network, network_from_onnx_path, save_engine
 
-from model_navigator.api.config import TensorRTPrecision, TensorRTPrecisionMode
+from model_navigator.configuration import TensorRTPrecision, TensorRTPrecisionMode
 from model_navigator.frameworks.tensorrt.timing_tactics import TimingCacheManager
 from model_navigator.inplace.config import DEFAULT_CACHE_DIR
 

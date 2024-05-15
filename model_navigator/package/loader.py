@@ -20,7 +20,7 @@ from typing import List, Union
 import yaml
 from packaging import version
 
-from model_navigator.api.config import Format
+from model_navigator.configuration import Format
 from model_navigator.configuration.model.model_config import ModelConfig
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata

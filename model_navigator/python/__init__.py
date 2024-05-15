@@ -16,7 +16,7 @@
 import pathlib
 from typing import Callable, Optional, Sequence, Tuple, Type, Union
 
-from model_navigator.api.config import (
+from model_navigator.configuration import (
     DEFAULT_NONE_FRAMEWORK_TARGET_FORMATS,
     CustomConfig,
     DeviceKind,

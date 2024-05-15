@@ -19,10 +19,7 @@ from typing import Dict, Optional, Sequence
 
 from model_navigator.commands.correctness.correctness import Correctness
 from model_navigator.commands.performance.performance import Performance
-from model_navigator.core.logger import LOGGER
-from model_navigator.exceptions import ModelNavigatorRuntimeAnalyzerError, ModelNavigatorUserInputError
-from model_navigator.package.status import CommandStatus, ModelStatus, RunnerStatus
-from model_navigator.runtime_analyzer.strategy import (
+from model_navigator.configuration import (
     MaxThroughputAndMinLatencyStrategy,
     MaxThroughputStrategy,
     MaxThroughputWithLatencyBudgetStrategy,
@@ -30,6 +27,9 @@ from model_navigator.runtime_analyzer.strategy import (
     RuntimeSearchStrategy,
     SelectedRuntimeStrategy,
 )
+from model_navigator.core.logger import LOGGER
+from model_navigator.exceptions import ModelNavigatorRuntimeAnalyzerError, ModelNavigatorUserInputError
+from model_navigator.package.status import CommandStatus, ModelStatus, RunnerStatus
 
 
 @dataclasses.dataclass

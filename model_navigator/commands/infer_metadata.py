@@ -18,9 +18,9 @@ from typing import Dict, Iterator, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 
-from model_navigator.api.config import OptimizationProfile, SizedDataLoader, SizedIterable, TensorRTProfile
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.execution_context import ExecutionContext
+from model_navigator.configuration import OptimizationProfile, SizedDataLoader, SizedIterable, TensorRTProfile
 from model_navigator.core.dataloader import extract_sample, load_samples, to_numpy, validate_sample_input
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import FRAMEWORK_TO_TENSOR_TYPE, PyTreeMetadata, TensorMetadata, TensorSpec

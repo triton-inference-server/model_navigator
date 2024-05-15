@@ -20,7 +20,7 @@ from typing import Any, Dict, Optional
 import fire
 import torch  # pytype: disable=import-error
 
-from model_navigator.api.config import JitType
+from model_navigator.configuration import JitType
 from model_navigator.core.dataloader import load_samples
 from model_navigator.core.tensor import TensorMetadata
 from model_navigator.exceptions import ModelNavigatorUserInputError
