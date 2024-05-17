@@ -184,7 +184,7 @@ class ProfilingResults:
     """
 
     models: Dict[str, RunnerResults] = dataclasses.field(default_factory=dict)
-    samples_data: Dict[int, Dict] = dataclasses.field(default_factory=dict)
+    # samples_data: Dict[int, Dict] = dataclasses.field(default_factory=dict) TODO: enable when sample collecting is implemented
 
     def to_dict(self):
         """Return results in form of dictionary."""
