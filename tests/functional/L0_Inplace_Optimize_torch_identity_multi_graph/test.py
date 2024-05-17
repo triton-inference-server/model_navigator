@@ -17,6 +17,7 @@
 import argparse
 import logging
 import pathlib
+import tempfile
 
 import yaml
 
@@ -102,7 +103,10 @@ def main():
     )
     model = nav.Module(model, name="identity")
 
-    nav.optimize(func=model, dataloader=dataloader, config=optimize_config)
+    optimize_status = nav.optimize(func=model, dataloader=dataloader, config=optimize_config)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_file = pathlib.Path(tmpdir) / "optimized_status.yaml"
+        optimize_status.to_file(tmp_file)
 
     names, packages = [], []
     for name, module in module_registry.items():

@@ -18,8 +18,8 @@ Those classes are used to store information about the Model Navigator process.
 
 import collections
 import dataclasses
-import datetime
 import pathlib
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from packaging import version
@@ -139,7 +139,7 @@ class Status(DataObject):
     dataloader_max_batch_size: int
     status: Dict[str, CommandStatus] = dataclasses.field(default_factory=lambda: {})
     result: Dict = dataclasses.field(default_factory=lambda: {})
-    timestamp: str = dataclasses.field(default_factory=lambda: f"{datetime.datetime.utcnow():%Y-%m-%dT%H:%M:%S.%f}")
+    timestamp: str = dataclasses.field(default_factory=lambda: f"{datetime.now(timezone.utc):%Y-%m-%dT%H:%M:%S.%f}")
 
     @classmethod
     def from_dict(cls, data_dict: Dict) -> "Status":

@@ -17,6 +17,7 @@
 import argparse
 import logging
 import pathlib
+import tempfile
 
 import yaml
 
@@ -87,7 +88,10 @@ def main():
         ),
     )
     model = nav.Module(model)
-    nav.optimize(func=model, dataloader=dataloader, config=optimize_config)
+    optimize_status = nav.optimize(func=model, dataloader=dataloader, config=optimize_config)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_file = pathlib.Path(tmpdir) / "optimized_status.yaml"
+        optimize_status.to_file(tmp_file)
 
     packages = getattr(model._wrapper, "_packages", [])
     assert len(packages) == 1, "Package is not created."

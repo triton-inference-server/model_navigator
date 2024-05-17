@@ -55,13 +55,20 @@ def main():
     dataloader = [(1, "This is example input"), (1, "This is example input")]
 
     profiling_status_path = pathlib.Path("profile_status.yaml")
-    nav.profile(call, dataloader, status_path=profiling_status_path)
+    profile_status = nav.profile(call, dataloader)
+    profile_status.to_file(profiling_status_path)
 
     try:
         with open(profiling_status_path) as file:
-            profiling_status = yaml.safe_load(file.read())
+            profile_status = yaml.safe_load(file.read())
 
-        eager_results = profiling_status.get("models", {}).get("python", {}).get("runners", {}).get("eager", {})
+        eager_results = (
+            profile_status.get("profiling_results")
+            .get("models", {})
+            .get("python", {})
+            .get("runners", {})
+            .get("eager", {})
+        )
 
         python_eager_status = eager_results.get("status", "FAIL")
         detailed_results = eager_results.get("detailed")

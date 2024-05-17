@@ -17,6 +17,7 @@
 import argparse
 import logging
 import pathlib
+import tempfile
 from typing import List, Tuple
 
 import yaml
@@ -132,7 +133,10 @@ def main():
     dataloader = get_dataloader()
     config = get_config()
 
-    nav.optimize(pipe, dataloader, config=config)
+    optimize_status = nav.optimize(pipe, dataloader, config=config)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_file = pathlib.Path(tmpdir) / "optimized_status.yaml"
+        optimize_status.to_file(tmp_file)
 
     names, packages = [], []
     for name, module in module_registry.items():
@@ -146,7 +150,10 @@ def main():
     status = collect_optimize_statuses([package.status for package in packages], names)
 
     # Profile
-    nav.profile(pipe, dataloader, window_size=5, verbose=True)
+    profile_status = nav.profile(pipe, dataloader, window_size=5, verbose=True)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_file = pathlib.Path(tmpdir) / "profiling_results.yaml"
+        profile_status.to_file(tmp_file)
 
     validate_status(status, expected_statuses=EXPECTED_STATUSES)
 

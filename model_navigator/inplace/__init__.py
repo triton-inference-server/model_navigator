@@ -13,12 +13,9 @@
 # limitations under the License.
 """Inplace Optimize API."""
 
-import copy
-import pathlib
 import traceback
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Type, Union
-
-import yaml
+import uuid
+from typing import Any, Callable, Optional, Sequence, Tuple, Type, Union
 
 from model_navigator.commands.correctness.correctness import Correctness
 from model_navigator.commands.performance.nvml_handler import NvmlHandler
@@ -26,7 +23,12 @@ from model_navigator.commands.performance.performance import Performance
 from model_navigator.commands.performance.utils import is_throughput_saturated
 from model_navigator.configuration import DEFAULT_TORCH_TARGET_FORMATS_FOR_PROFILING, Format, SelectedRuntimeStrategy
 from model_navigator.configuration.validation.device import validate_device_string
-from model_navigator.core.constants import DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD
+from model_navigator.core.constants import (
+    DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD,
+    NAVIGATOR_INPLACE_OPTIMIZE_VERSION,
+    NAVIGATOR_INPLACE_PROFILE_VERSION,
+    NAVIGATOR_VERSION,
+)
 from model_navigator.core.logger import LOGGER, pad_string
 from model_navigator.exceptions import ModelNavigatorModuleNotOptimizedError, ModelNavigatorRuntimeAnalyzerError
 from model_navigator.inplace.config import InplaceConfig, OptimizeConfig, inplace_config  # noqa: F401
@@ -35,13 +37,12 @@ from model_navigator.inplace.wrapper import Module, module  # noqa: F401
 from model_navigator.package.status import CommandStatus
 from model_navigator.runners.base import NavigatorRunner
 from model_navigator.runners.registry import runner_registry
-from model_navigator.utils.common import DataObject
 from model_navigator.utils.module import lazy_import
 
+from ..utils.environment import get_env
 from .profiling import ProfilingResults, RunnerProfilingResults, RunnerResults, run_measurement
 from .registry import module_registry
-
-OPTIMIZATION_STATUS_FILE_NAME = "optimization_status.yaml"
+from .status import InplaceOptimizeStatus, InplaceProfileStatus, ModuleStatus
 
 torch = lazy_import("torch")
 
@@ -60,15 +61,13 @@ def optimize(
     func: Callable,
     dataloader: Sequence[Tuple[int, Any]],
     config: Optional[OptimizeConfig] = None,
-    status_path: Optional[Union[pathlib.Path, str]] = None,
-) -> None:
+) -> InplaceOptimizeStatus:
     """Optimize all registered modules.
 
     Args:
         func: Function to optimize.
         dataloader: List of tuples with batch size and input.
         config: Optimize config.
-        status_path: Path to store the optimization status.
     """
     if config is None:
         config = OptimizeConfig()
@@ -89,10 +88,7 @@ def optimize(
         func(*args, **kwargs)
 
     module_registry.optimize()
-    _build_optimize_status(status_path)
-
-
-PROFILING_RESULTS_FILE_NAME = "profiling_status.yaml"
+    return _build_optimize_status()
 
 
 def profile(
@@ -100,7 +96,6 @@ def profile(
     dataloader: Sequence[Tuple[int, Any]],
     target_formats: Optional[Tuple[Union[str, Format], ...]] = None,
     runners: Optional[Tuple[Union[str, Type[NavigatorRunner]], ...]] = None,
-    status_path: Optional[Union[pathlib.Path, str]] = None,
     min_trials: int = 3,
     max_trials: int = 10,
     stabilization_windows: int = 3,
@@ -109,7 +104,7 @@ def profile(
     throughput_cutoff_threshold: Optional[float] = DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD,
     device: str = "cuda",
     verbose: bool = False,
-) -> None:
+) -> InplaceProfileStatus:
     """Profile `func` and all registered modules.
 
     Args:
@@ -117,7 +112,6 @@ def profile(
         dataloader: List of tuples with batch size and input.
         target_formats: Target model formats for optimize process
         runners: Use only runners provided as parameter
-        status_path: Path to store the profiling results.
         min_trials: Minimum number of trials.
         max_trials: Maximum number of trials.
         stabilization_windows: Number of stabilization windows.
@@ -189,15 +183,12 @@ def profile(
             profiling_results.models[model_key].runners[runner_name] = RunnerProfilingResults()
         profiling_results.models[model_key].runners[runner_name] = runner_profiling_results
 
-    if status_path is None:
-        status_path = pathlib.Path.cwd() / PROFILING_RESULTS_FILE_NAME
-    elif isinstance(status_path, str):
-        status_path = pathlib.Path(status_path)
+    status = _build_profile_status(profiling_results)
 
-    profiling_results.to_file(status_path)
+    return status
 
 
-def _build_optimize_status(optimization_status_path):
+def _build_optimize_status() -> InplaceOptimizeStatus:
     """Build optimize status."""
     modules = list(module_registry.values())
     if len(modules) == 0:
@@ -208,51 +199,33 @@ def _build_optimize_status(optimization_status_path):
     if len(packages) == 0:
         raise ValueError(f"Module {m.name()} has no packages")
 
-    package = packages[0]
-    status = _status_serializable_dict(package.status)
-    optimize_status = {
-        "format_version": status["format_version"],
-        "model_navigator_version": status["model_navigator_version"],
-        "environment": status["environment"],
-        "config": status["config"],
-        "module_status": {},
-    }
-
+    modules_status = {}
     for name, m in module_registry.items():
         for i, package in enumerate(getattr(m._wrapper, "_packages", [])):
             module_name = f"{name}.{i}"
-            module_status = _status_serializable_dict(package.status)
-            module_status.pop("format_version")
-            module_status.pop("model_navigator_version")
-            module_status.pop("environment")
-            module_status.pop("config")
-            optimize_status["module_status"][module_name] = module_status
+            module_status = ModuleStatus.from_package_status(package.status)
+            modules_status[module_name] = module_status
 
-    if optimization_status_path is None:
-        optimization_status_path = pathlib.Path.cwd() / OPTIMIZATION_STATUS_FILE_NAME
-    elif isinstance(optimization_status_path, str):
-        optimization_status_path = pathlib.Path(optimization_status_path)
-
-    with open(optimization_status_path, "w") as f:
-        yaml.safe_dump(optimize_status, f, sort_keys=False)
-
-
-def _status_serializable_dict(status) -> Dict:
-    """Convert status to serializable dict."""
-    config = DataObject.filter_data(
-        data=status.config,
-        filter_fields=[
-            "model",
-            "dataloader",
-            "verify_func",
-            "workspace",
-        ],
+    status = InplaceOptimizeStatus(
+        status_version=NAVIGATOR_INPLACE_OPTIMIZE_VERSION,
+        model_navigator_version=NAVIGATOR_VERSION,
+        uuid=str(uuid.uuid1()),
+        environment=get_env(),
+        module_status=modules_status,
     )
-    config = DataObject.parse_data(config)
-    status = copy.copy(status)
-    status.config = config
-    data = status.to_dict(parse=True)
-    return data
+    return status
+
+
+def _build_profile_status(profiling_results: ProfilingResults) -> InplaceProfileStatus:
+    """Build profile status."""
+    status = InplaceProfileStatus(
+        status_version=NAVIGATOR_INPLACE_PROFILE_VERSION,
+        model_navigator_version=NAVIGATOR_VERSION,
+        uuid=str(uuid.uuid1()),
+        environment=get_env(),
+        profiling_results=profiling_results,
+    )
+    return status
 
 
 def _load_modules(model_key: str, runner_name: str, device: str, verbose: bool = False):

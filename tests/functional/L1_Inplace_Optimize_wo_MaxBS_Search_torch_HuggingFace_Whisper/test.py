@@ -18,6 +18,7 @@ import argparse
 import copy
 import logging
 import pathlib
+import tempfile
 
 import yaml
 
@@ -169,7 +170,10 @@ def main():
 
     config = get_config()
 
-    nav.optimize(pipe, dataloader=dataloader, config=config)
+    optimize_status = nav.optimize(pipe, dataloader=dataloader, config=config)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_file = pathlib.Path(tmpdir) / "optimized_status.yaml"
+        optimize_status.to_file(tmp_file)
 
     names, packages = [], []
     for name, module in module_registry.items():
@@ -183,7 +187,10 @@ def main():
     status = collect_optimize_statuses([package.status for package in packages], names)
 
     # Profile
-    nav.profile(pipe, dataloader, device=DEVICE, verbose=True)
+    profile_status = nav.profile(pipe, dataloader, device=DEVICE, verbose=True)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_file = pathlib.Path(tmpdir) / "profiling_results.yaml"
+        profile_status.to_file(tmp_file)
 
     validate_status(status, expected_statuses=EXPECTED_STATUSES)
 

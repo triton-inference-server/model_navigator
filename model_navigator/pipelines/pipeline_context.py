@@ -15,7 +15,7 @@
 
 import collections
 import dataclasses
-import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List
 
 import yaml
@@ -136,7 +136,7 @@ class PipelineMetadata(DataObject):
 
     model_navigator_version: str
     environment: Dict
-    timestamp: str = dataclasses.field(default_factory=lambda: f"{datetime.datetime.utcnow():%Y-%m-%dT%H:%M:%S.%f}")
+    timestamp: str = dataclasses.field(default_factory=lambda: f"{datetime.now(timezone.utc):%Y-%m-%dT%H:%M:%S.%f}")
 
     @classmethod
     def from_dict(cls, data_dict: Dict) -> "PipelineMetadata":

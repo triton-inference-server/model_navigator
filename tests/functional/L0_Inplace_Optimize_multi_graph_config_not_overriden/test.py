@@ -17,6 +17,7 @@
 import argparse
 import logging
 import pathlib
+import tempfile
 
 import yaml
 
@@ -102,7 +103,10 @@ def main():
     model.mod2.optimize_config = optimize_config
     model.mod2.optimize_config.runners = ("TensorRT", "TorchCUDA")
 
-    nav.optimize(func=model, dataloader=dataloader)
+    optimize_status = nav.optimize(func=model, dataloader=dataloader)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_file = pathlib.Path(tmpdir) / "optimized_status.yaml"
+        optimize_status.to_file(tmp_file)
 
     assert model.mod1.optimize_config.runners == ("TensorRT",), "Optimization should not override the module config."
     assert model.mod2.optimize_config.runners == (

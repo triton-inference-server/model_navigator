@@ -27,11 +27,11 @@ from model_navigator.commands.performance.nvml_handler import NvmlHandler
 from model_navigator.commands.performance.utils import is_measurement_stable
 from model_navigator.core.logger import LOGGER
 from model_navigator.exceptions import ModelNavigatorError
-from model_navigator.utils.common import dataclass2dict
+from model_navigator.utils.common import DataObject
 
 
 @dataclasses.dataclass
-class ProfilingResult:
+class ProfilingResult(DataObject):
     """Profiling results."""
 
     batch_size: int
@@ -45,10 +45,6 @@ class ProfilingResult:
     request_count: int
     avg_gpu_clock: Optional[float] = None  # MHz
 
-    def to_dict(self) -> Dict:
-        """Convert to dict."""
-        return dataclasses.asdict(self)
-
     @classmethod
     def from_measurements(
         cls, measurements: List[float], batch_size: int, gpu_clocks: Optional[List[float]] = None
@@ -61,7 +57,7 @@ class ProfilingResult:
             gpu_clocks: List of GPU clocks.
 
         Returns:
-            ProfilingResults: Profiling results.
+            Profiling result.
 
         """
         with warnings.catch_warnings():
@@ -93,8 +89,7 @@ class ProfilingResult:
             profiling_results: List of profiling results.
 
         Returns:
-            ProfilingResults: Profiling results.
-
+            Profiling result.
         """
         batch_size = profiling_results[0].batch_size
         assert all(
@@ -152,7 +147,7 @@ class ProfilingResult:
 
 
 @dataclasses.dataclass
-class RunnerProfilingResults:
+class RunnerProfilingResults(DataObject):
     """Profiling results for runner.
 
     Args:
@@ -165,7 +160,7 @@ class RunnerProfilingResults:
 
 
 @dataclasses.dataclass
-class RunnerResults:
+class RunnerResults(DataObject):
     """Result for runners.
 
     Args:
@@ -176,7 +171,7 @@ class RunnerResults:
 
 
 @dataclasses.dataclass
-class ProfilingResults:
+class ProfilingResults(DataObject):
     """Profiling results for models.
 
     Args:
@@ -184,11 +179,8 @@ class ProfilingResults:
     """
 
     models: Dict[str, RunnerResults] = dataclasses.field(default_factory=dict)
-    # samples_data: Dict[int, Dict] = dataclasses.field(default_factory=dict) TODO: enable when sample collecting is implemented
 
-    def to_dict(self):
-        """Return results in form of dictionary."""
-        return dataclass2dict(self)
+    # samples_data: Dict[int, Dict] = dataclasses.field(default_factory=dict) TODO: enable when sample collecting is implemented
 
     def to_file(self, path: Union[str, pathlib.Path]):
         """Save results to file.
@@ -197,7 +189,7 @@ class ProfilingResults:
             path: A path to yaml files
         """
         path = pathlib.Path(path)
-        data = self.to_dict()
+        data = self.to_dict(parse=True)
         with path.open("w") as f:
             yaml.safe_dump(data, f, sort_keys=False)
 
