@@ -80,7 +80,7 @@ def optimize(
 
     for input_ in dataloader:
         _, sample = input_  # unpack batch_size and sample
-        if not isinstance(sample, tuple):
+        if not isinstance(sample, (list, tuple)):
             sample = (sample,)
         if not isinstance(sample[-1], dict):
             sample = (*sample, {})

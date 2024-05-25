@@ -201,7 +201,7 @@ def _run_window_measurement(
     nvml_handler: NvmlHandler,
     window_size: int,
 ) -> ProfilingResult:
-    if not isinstance(sample, tuple):
+    if not isinstance(sample, (list, tuple)):
         sample = (sample,)
     if not isinstance(sample[-1], dict):
         sample = (*sample, {})
@@ -254,7 +254,7 @@ def run_measurement(
     """
     profiling_results = []
     batch_size = sample[0]
-    sample = sample[1:]
+    _, sample = sample  # skip first element - batch_size
     for idx in range(max_trials):
         measurement_id = idx + 1
         profiling_result = _run_window_measurement(
