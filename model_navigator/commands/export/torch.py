@@ -315,7 +315,10 @@ class ExportTorch2DynamoONNX(Command):
         workspace: Workspace,
         path: pathlib.Path,
         input_metadata: TensorMetadata,
+        output_metadata: TensorMetadata,
         target_device: DeviceKind,
+        dynamic_axes: Dict[str, Union[Dict[int, str], List[int]]],
+        dynamo_dynamic_shapes: Optional[bool],
         verbose: bool,
         custom_args: Dict[str, Any],
         model: Optional[Any] = None,
@@ -328,7 +331,10 @@ class ExportTorch2DynamoONNX(Command):
             path: Path inside the workspace where exported model is stored
             opset: ONNX opset
             input_metadata: Model inputs metadata
+            output_metadata: Model outputs metadata
             target_device: Target device for export - determine the exported model
+            dynamic_axes: Definition of model inputs dynamic axes
+            dynamo_dynamic_shapes: Enable dynamo dynamic shapes
             verbose: Enable verbose logging
             model: The model that has to be exported
             batch_dim: Location of batch position in shapes
@@ -359,6 +365,11 @@ class ExportTorch2DynamoONNX(Command):
         def on_exit():
             model.to("cpu")
 
+        if dynamo_dynamic_shapes is None:
+            dynamic_shapes = batch_dim is not None or dynamic_axes
+        else:
+            dynamic_shapes = dynamo_dynamic_shapes
+
         with ExecutionContext(
             workspace=workspace,
             script_path=exported_model_path.parent / "reproduce_export.py",
@@ -369,10 +380,14 @@ class ExportTorch2DynamoONNX(Command):
             kwargs = {
                 "exported_model_path": exported_model_path.relative_to(workspace.path).as_posix(),
                 "input_metadata": input_metadata.to_json(),
+                "input_names": list(input_metadata.keys()),
+                "output_names": list(output_metadata.keys()),
                 "batch_dim": batch_dim,
                 "target_device": target_device.value,
+                "dynamic_shapes": dynamic_shapes,
                 "navigator_workspace": workspace.path.as_posix(),
                 "custom_args": custom_args,
+                "verbose": verbose,
             }
 
             args = parse_kwargs_to_cmd(kwargs)

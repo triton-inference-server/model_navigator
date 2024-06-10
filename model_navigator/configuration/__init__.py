@@ -806,6 +806,8 @@ class OnnxConfig(CustomConfigForFormat):
         opset: ONNX opset used for conversion.
         dynamo_export: Enable additional dynamo export.
         dynamic_axes: Dynamic axes for ONNX conversion.
+        dynamo_dynamic_shapes: Enable dynamic shapes for dynamo export.
+            By default dynamic shapes are enabled if dynamic_axes are set or batching is enabled.
         onnx_extended_conversion: Enables additional conversions from TorchScript to ONNX.
         graph_surgeon_optimization: Enables polygraphy graph surgeon optimization: fold_constants, infer_shapes, toposort, cleanup.
         export_device: Device used for ONNX export.
@@ -814,6 +816,7 @@ class OnnxConfig(CustomConfigForFormat):
     opset: Optional[int] = DEFAULT_ONNX_OPSET
     dynamo_export: Optional[bool] = False
     dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None
+    dynamo_dynamic_shapes: Optional[bool] = None
     onnx_extended_conversion: bool = False
     graph_surgeon_optimization: bool = True
     export_device: Optional[str] = None
@@ -838,6 +841,7 @@ class OnnxConfig(CustomConfigForFormat):
         self.opset = DEFAULT_ONNX_OPSET
         self.dynamo_export = False
         self.dynamic_axes = None
+        self.dynamo_dynamic_shapes = None
         self.extended_conversion = False
         self.graph_surgeon_optimization = True
         self.export_device = None

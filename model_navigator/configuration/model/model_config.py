@@ -397,6 +397,7 @@ class ONNXConfig(_SerializedModelConfig, format=Format.ONNX):
         dynamo_export: bool,
         graph_surgeon_optimization: bool,
         dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]],
+        dynamo_dynamic_shapes: Optional[bool] = None,
         parent: Optional[ModelConfig] = None,
         custom_args: Optional[Dict[str, Any]] = None,
         device: Optional[str] = None,
@@ -409,6 +410,7 @@ class ONNXConfig(_SerializedModelConfig, format=Format.ONNX):
             dynamo_export: True if dynamo export should be enabled, default: True
             graph_surgeon_optimization: Enable or Disable Graph Surgeon optimization
             dynamic_axes: Dynamic axes definition for ONNXConfig
+            dynamo_dynamic_shapes: Enable or Disable dynamic shapes in dynamo export
             parent: Parent model configuration
             custom_args: Custom arguments passed to ONNX export
             device: runtime device e.g. "cuda:0"
@@ -419,6 +421,7 @@ class ONNXConfig(_SerializedModelConfig, format=Format.ONNX):
         self.dynamo_export = dynamo_export
         self.graph_surgeon_optimization = graph_surgeon_optimization
         self.dynamic_axes = dynamic_axes
+        self.dynamo_dynamic_shapes = dynamo_dynamic_shapes
         self.custom_args = custom_args
         self.export_device = export_device
         self.runner_config = DeviceRunnerConfig(device=device)
@@ -433,6 +436,7 @@ class ONNXConfig(_SerializedModelConfig, format=Format.ONNX):
             dynamo_export=data_dict.get("dynamo_export", False),
             graph_surgeon_optimization=data_dict.get("graph_surgeon_optimization"),
             dynamic_axes=data_dict.get("dynamic_axes"),
+            dynamo_dynamic_shapes=data_dict.get("dynamo_dynamic_shapes"),
             custom_args=data_dict.get("custom_args"),
             device=data_dict.get("device"),
             export_device=data_dict.get("export_device"),
