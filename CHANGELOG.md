@@ -22,6 +22,7 @@ limitations under the License.
 - new: Add support for custom i/o names and dynamic shapes in Torch ONNX Dynamo path
 - change: Improved optimize and profile status in inplace mode
 - fix: Maintaining modules device in `nav.profile()`
+- fix: Add support for all precisions for TensorRT in `nav.profile()`
 
 
 ## 0.9.0

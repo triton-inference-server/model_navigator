@@ -21,7 +21,12 @@ from model_navigator.commands.correctness.correctness import Correctness
 from model_navigator.commands.performance.nvml_handler import NvmlHandler
 from model_navigator.commands.performance.performance import Performance
 from model_navigator.commands.performance.utils import is_throughput_saturated
-from model_navigator.configuration import DEFAULT_TORCH_TARGET_FORMATS_FOR_PROFILING, Format, SelectedRuntimeStrategy
+from model_navigator.configuration import (
+    DEFAULT_TORCH_TARGET_FORMATS_FOR_PROFILING,
+    Format,
+    SelectedRuntimeStrategy,
+    TensorRTPrecision,
+)
 from model_navigator.configuration.validation.device import validate_device_string
 from model_navigator.core.constants import (
     DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD,
@@ -254,7 +259,7 @@ def _format_to_modelkey(format: Union[str, Format]):
     if isinstance(format, Format):
         format = format.value
     if format in (Format.TENSORRT, Format.TENSORRT.value):
-        return ("trt-fp16", "trt-fp32")
+        return tuple(f"trt-{p.value}" for p in TensorRTPrecision)
     return (format,)
 
 
