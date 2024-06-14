@@ -51,6 +51,7 @@ if is_torch_available():
         InplaceConfig,
         Module,
         OptimizeConfig,
+        bundle,
         inplace_config,
         load_optimized,
         module,

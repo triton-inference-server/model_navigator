@@ -17,6 +17,7 @@ import traceback
 import uuid
 from typing import Any, Callable, Optional, Sequence, Tuple, Type, Union
 
+import model_navigator.inplace.bundle as bundle  # noqa: F401
 from model_navigator.commands.correctness.correctness import Correctness
 from model_navigator.commands.performance.nvml_handler import NvmlHandler
 from model_navigator.commands.performance.performance import Performance

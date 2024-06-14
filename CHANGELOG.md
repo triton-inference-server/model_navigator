@@ -23,6 +23,8 @@ limitations under the License.
 - change: Improved optimize and profile status in inplace mode
 - fix: Maintaining modules device in `nav.profile()`
 - fix: Add support for all precisions for TensorRT in `nav.profile()`
+- new: Added `nav.bundle.save` and `nav.bundle.load` to save and load optimized models from cache
+
 
 
 ## 0.9.0
