@@ -20,11 +20,11 @@ limitations under the License.
 - new: inplace `nav.Module` accepts `batching` flag which overrides a config setting and `precision` which allows setting appropriate configuration for TensorRT
 - new: Allow to set device when loading optimized modules using `nav.load_optimized()`
 - new: Add support for custom i/o names and dynamic shapes in Torch ONNX Dynamo path
+- new: Added `nav.bundle.save` and `nav.bundle.load` to save and load optimized models from cache
 - change: Improved optimize and profile status in inplace mode
+- change: Improved handling defaults for ONNX Dynamo when executing `nav.pacakge.optimize`
 - fix: Maintaining modules device in `nav.profile()`
 - fix: Add support for all precisions for TensorRT in `nav.profile()`
-- new: Added `nav.bundle.save` and `nav.bundle.load` to save and load optimized models from cache
-
 
 
 ## 0.9.0
