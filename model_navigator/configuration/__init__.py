@@ -836,13 +836,13 @@ class OnnxConfig(CustomConfigForFormat):
         return "Onnx"
 
     def defaults(self) -> None:
-        """Update parameters to defaults."""
+        """Update parameters to defaults.
+
+        Only configuration related to ONNX export and conversion parameters are updated. We leave the dynamo and
+        extended conversion flags as are set during config initialization.
+        """
         super().defaults()
         self.opset = DEFAULT_ONNX_OPSET
-        self.dynamo_export = False
-        self.dynamic_axes = None
-        self.dynamo_dynamic_shapes = None
-        self.extended_conversion = False
         self.graph_surgeon_optimization = True
         self.export_device = None
 
