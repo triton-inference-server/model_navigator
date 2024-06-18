@@ -23,7 +23,7 @@ limitations under the License.
 - new: Add support for custom i/o names and dynamic shapes in Torch ONNX Dynamo path
 - new: Added `nav.bundle.save` and `nav.bundle.load` to save and load optimized models from cache
 - change: Improved optimize and profile status in inplace mode
-- change: Improved handling defaults for ONNX Dynamo when executing `nav.pacakge.optimize`
+- change: Improved handling defaults for ONNX Dynamo when executing `nav.package.optimize`
 - fix: Maintaining modules device in `nav.profile()`
 - fix: Add support for all precisions for TensorRT in `nav.profile()`
 
