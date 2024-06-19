@@ -75,7 +75,7 @@ class BaseModule(abc.ABC):
         self._input_mapping = input_mapping
         self._output_mapping = output_mapping
         self._device = device
-        self._forward_call = forward or self._module
+        self._forward_call = forward if forward is not None else self._module
         if optimize_config:
             self.optimize_config = self._update_optimize_config(optimize_config)
         else:

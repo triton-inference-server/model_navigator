@@ -26,6 +26,7 @@ limitations under the License.
 - change: Improved handling defaults for ONNX Dynamo when executing `nav.package.optimize`
 - fix: Maintaining modules device in `nav.profile()`
 - fix: Add support for all precisions for TensorRT in `nav.profile()`
+- fix: Forward method not passed to other inplace modules.
 
 [//]: <> (put here on external component update with short summary what change or link to changelog)
 
