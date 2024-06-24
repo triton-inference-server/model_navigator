@@ -98,7 +98,7 @@ class Module(wrapt.ObjectProxy):
                 current_forward = getattr(module, forward_func)
             except AttributeError as e:
                 raise ModelNavigatorUserInputError(f"Forward method must exist, got {forward_func}.") from e
-            setattr(module, forward_func, self.__call__)
+            setattr(module, forward_func, lambda *args, **kwargs: Module.__call__(self, *args, **kwargs))
 
         self.batching = batching
         self.precision = precision
@@ -216,6 +216,7 @@ class Module(wrapt.ObjectProxy):
             strategy=strategy,
             activate_runners=activate_runners,
             device=str(device),
+            forward=self._wrapper._forward_call,
         )
 
     def load_recorded(self) -> None:
@@ -226,6 +227,7 @@ class Module(wrapt.ObjectProxy):
             input_mapping=self._input_mapping,
             output_mapping=self._output_mapping,
             optimize_config=self._optimize_config,
+            forward=self._wrapper._forward_call,
         )
 
     def load_eager(self, device: Optional[str] = None) -> None:
@@ -236,6 +238,7 @@ class Module(wrapt.ObjectProxy):
             input_mapping=self._input_mapping,
             output_mapping=self._output_mapping,
             optimize_config=self._optimize_config,
+            forward=self._wrapper._forward_call,
         )
         device = device or self._device
         self._wrapper.module.to(device)
@@ -269,7 +272,7 @@ def module(
         precision: precision of the module
 
     Note:
-        batching if specified takes precedense over corresponding values in the
+        batching if specified takes precedence over corresponding values in the
         configuration specified in nav.profile.
 
     Example:
