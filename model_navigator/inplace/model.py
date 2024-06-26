@@ -33,6 +33,7 @@ from model_navigator.configuration import (
 from model_navigator.core.dataloader import to_numpy
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import PyTreeMetadata
+from model_navigator.frameworks import is_torch2_available
 from model_navigator.package import load_from_workspace
 from model_navigator.utils.module import lazy_import
 
@@ -334,7 +335,8 @@ class OptimizedModule(BaseModule):
         self._module.to("cpu")
         if torch.cuda.is_available():
             # empty torch cuda buffers after moving module to cpu i.e. more free vram
-            torch._dynamo.reset()
+            if is_torch2_available():
+                torch._dynamo.reset()
             torch.cuda.empty_cache()
             gc.collect()
 

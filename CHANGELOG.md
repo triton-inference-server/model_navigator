@@ -16,6 +16,9 @@ limitations under the License.
 
 # Changelog
 
+## 0.10.1
+- fix
+
 ## 0.10.0
 
 - new: inplace `nav.Module` accepts `batching` flag which overrides a config setting and `precision` which allows setting appropriate configuration for TensorRT
