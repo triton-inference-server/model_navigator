@@ -90,6 +90,7 @@ test = [
     "pytype!=2021.11.18,!=2022.2.17",
     "pre-commit >= 2.20.0",
     "pytest-unordered ~= 0.5",
+    "tenacity ~= 8.4.2",
     "tox >= 3.23.1",
     "tqdm >= 4.64.1",
 ]

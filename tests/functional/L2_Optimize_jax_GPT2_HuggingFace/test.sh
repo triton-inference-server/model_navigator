@@ -18,7 +18,7 @@ set -ex
 THIS_SCRIPT_PATH="$(realpath --relative-to="$(pwd)" "$0")"
 TEST_MODULE="$(dirname "${THIS_SCRIPT_PATH}"|sed 's/\//./g').test"
 
-pip install --upgrade torch transformers flax "jax[cuda12_pip]<0.4.16" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+pip install --upgrade "numpy<2" transformers flax "jax[cuda12_pip]<0.4.16" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
 
 
 python -m"${TEST_MODULE}" \

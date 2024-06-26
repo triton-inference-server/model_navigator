@@ -17,6 +17,9 @@ import re
 import zipfile
 from typing import Dict, List, Union
 
+from git import Repo
+from tenacity import retry, stop_after_attempt, wait_exponential
+
 from model_navigator import CommandStatus
 from model_navigator.commands.performance.performance import Performance
 from model_navigator.configuration import INPUT_FORMATS, Format
@@ -213,3 +216,8 @@ def validate_model_repository(model_repository: Union[str, pathlib.Path], model_
     assert version_path.exists() is True
     assert version_path.is_dir() is True
     assert any(version_path.iterdir()) is True
+
+
+@retry(wait=wait_exponential(multiplier=15, min=15, max=300), stop=stop_after_attempt(5))
+def clone_with_retry(git_url: str, path: pathlib.Path):
+    Repo.clone_from(git_url, path)

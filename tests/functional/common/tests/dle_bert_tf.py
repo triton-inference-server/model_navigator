@@ -148,16 +148,15 @@ def dle_bert_tf(
     input_names: Optional[Tuple] = None,
     trt_profiles: Optional[List[nav.TensorRTProfile]] = None,
 ):
-    from git import Repo
-
     from tests import utils
+    from tests.functional.common.utils import clone_with_retry
 
     with tempfile.TemporaryDirectory() as tmp:
         repo = pathlib.Path(tmp)
-        Repo.clone_from(git_url, repo)
+        clone_with_retry(git_url, repo)
 
         pubmed_parser_dir = repo / "pubmed_parser"
-        Repo.clone_from("https://github.com/titipata/pubmed_parser", pubmed_parser_dir)
+        clone_with_retry("https://github.com/titipata/pubmed_parser", pubmed_parser_dir)
 
         model_dir = repo / model_dir
         bert_prep_dir = model_dir / "bert_prep"

@@ -33,11 +33,10 @@ METADATA = {
 
 def main():
     import torch  # pytype: disable=import-error
-    from git import Repo
 
     from tests import utils
     from tests.functional.common.tests.dle_convnets_pyt import dle_convnets_pyt
-    from tests.functional.common.utils import collect_optimize_status
+    from tests.functional.common.utils import clone_with_retry, collect_optimize_status
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -63,7 +62,7 @@ def main():
         git_url = METADATA["repository"]
 
         repo = pathlib.Path(tmp)
-        Repo.clone_from(git_url, repo)
+        clone_with_retry(git_url, repo)
 
         model_dir = repo / model_dir
 
