@@ -17,7 +17,8 @@ limitations under the License.
 # Changelog
 
 ## 0.10.1
-- fix
+
+- fix: Check if torch 2 is available before doing dynamo cleanup
 
 ## 0.10.0
 
