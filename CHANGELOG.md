@@ -19,6 +19,10 @@ limitations under the License.
 
 - new: Python 3.12 support added
 
+## 0.10.1
+
+- fix: Check if torch 2 is available before doing dynamo cleanup
+
 ## 0.10.0
 
 - new: inplace `nav.Module` accepts `batching` flag which overrides a config setting and `precision` which allows setting appropriate configuration for TensorRT
