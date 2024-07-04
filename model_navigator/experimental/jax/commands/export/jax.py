@@ -18,12 +18,13 @@ from typing import Optional
 
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.execution_context import ExecutionContext
-from model_navigator.commands.export import exporters
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata
 from model_navigator.core.workspace import Workspace
-from model_navigator.frameworks.jax import JaxModel
+from model_navigator.experimental.jax.model import JaxModel
 from model_navigator.utils.common import parse_kwargs_to_cmd
+
+from . import exporters
 
 
 class ExportJAX2SavedModel(Command):

@@ -57,11 +57,10 @@ dependencies = [
     "pyyaml~=6.0",
     "tabulate>=0.8",
     "tensorrt;platform_machine == 'x86_64'",
-    "nvidia-cudnn-cu12~=8.9",
     "tritonclient[all]",
     "wrapt>=1.11.0,<1.15",
     "dacite>=1.8.0",
-    "onnxscript>=0.1.0.dev20240513",
+    "onnxscript>=0.1.0.dev20240702",
 ]
 
 [project.urls]

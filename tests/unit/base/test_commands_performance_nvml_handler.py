@@ -16,11 +16,7 @@ from importlib.util import find_spec
 import pytest
 
 from model_navigator.commands.performance.nvml_handler import NvmlHandler
-
-
-def _gpu_count() -> int:
-    with NvmlHandler() as nvm_handler:
-        return nvm_handler.gpu_count
+from tests.utils import gpu_count
 
 
 def test_commands_performance_nvml_handler_not_initialized() -> None:
@@ -30,7 +26,7 @@ def test_commands_performance_nvml_handler_not_initialized() -> None:
 
 
 @pytest.mark.skipif(
-    _gpu_count() == 0 or not find_spec("torch"), reason="GPU is not available or PyTorch is not installed."
+    gpu_count() == 0 or not find_spec("torch"), reason="GPU is not available or PyTorch is not installed."
 )
 def test_commands_performance_nvml_handler_gpu_torch() -> None:
     import torch  # type: ignore

@@ -18,8 +18,15 @@ import select
 import subprocess
 from typing import Optional
 
+from model_navigator.commands.performance.nvml_handler import NvmlHandler
+
 LOGGER = logging.getLogger(__name__)
 DEFAULT_LOG_FORMAT = "%(asctime)s - %(levelname)8s - %(name)s: %(message)s"
+
+
+def gpu_count() -> int:
+    with NvmlHandler() as nvm_handler:
+        return nvm_handler.gpu_count
 
 
 def exec_command(cmd, workspace=None, name=None, shell=False) -> Optional[int]:

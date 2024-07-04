@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from importlib.util import find_spec
 
 import jax.numpy as jnp  # pytype: disable=import-error
 import numpy
@@ -19,6 +20,7 @@ import tensorflow  # pytype: disable=import-error
 
 import model_navigator as nav
 from model_navigator.exceptions import ModelNavigatorConfigurationError
+from tests.utils import gpu_count
 
 gpus = tensorflow.config.experimental.list_physical_devices("GPU")
 for gpu in gpus:
@@ -33,21 +35,21 @@ def predict(inputs, params):
     return outputs
 
 
+@pytest.mark.skipif(gpu_count() == 0 or not find_spec("jax"), reason="GPU is not available or JAX is not installed.")
 def test_raise_error_when_target_device_cpu_and_gpu_available():
     # Check if GPU is available
-    if any(device.device_type == "GPU" for device in tensorflow.config.get_visible_devices()):
-        with pytest.raises(ModelNavigatorConfigurationError):
-            nav.jax.optimize(
-                model=predict,
-                model_params=params,
-                dataloader=dataloader,
-                target_device=nav.DeviceKind.CPU,
-            )
+    with pytest.raises(ModelNavigatorConfigurationError):
+        nav.experimental.jax.optimize(
+            model=predict,
+            model_params=params,
+            dataloader=dataloader,
+            target_device=nav.DeviceKind.CPU,
+        )
 
 
 def test_raise_error_when_target_device_cuda_and_savedmodel_cpu_runner_passed():
     with pytest.raises(ModelNavigatorConfigurationError):
-        nav.jax.optimize(
+        nav.experimental.jax.optimize(
             model=predict,
             model_params=params,
             dataloader=dataloader,

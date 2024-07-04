@@ -15,9 +15,12 @@ limitations under the License.
 -->
 
 # Changelog
+
 ## 0.11.0 (unreleased)
 
 - new: Python 3.12 support added
+- change: filter unsupported runners instead of raising an error when running optimize
+- change: moved JAX to support to experimental module and limited support
 
 ## 0.10.1
 

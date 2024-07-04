@@ -80,7 +80,7 @@ def export(
         dummy_input = (*dummy_input, {})
     *args, kwargs = dummy_input
 
-    loglevel = logging.INFO if verbose else logging.WARNING
+    loglevel = logging.WARNING if verbose else logging.ERROR
     export_options_kwargs = {}
     export_options_kwargs["op_level_debug"] = verbose
     export_options_kwargs["diagnostic_options"] = torch.onnx.DiagnosticOptions(verbosity_level=loglevel)

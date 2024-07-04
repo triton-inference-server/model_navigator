@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from model_navigator.frameworks import is_jax_available, is_tf_available, is_torch2_available, is_torch_available
+from model_navigator.frameworks import is_tf_available, is_torch2_available, is_torch_available
 
 if is_torch_available():
     from . import (
@@ -31,6 +31,3 @@ if is_tf_available():
         keras2savedmodel,  # noqa: F401
         savedmodel2savedmodel,  # noqa: F401
     )
-
-if is_tf_available() and is_jax_available():
-    from . import jax2savedmodel  # noqa: F401

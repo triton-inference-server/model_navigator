@@ -13,7 +13,7 @@
 # limitations under the License.
 """Helper function for runners."""
 
-from typing import List, Type
+from typing import Iterable, List, Type, Union
 
 from model_navigator.configuration import Format
 from model_navigator.core.logger import LOGGER
@@ -23,7 +23,7 @@ from model_navigator.utils.devices import is_cuda_available
 from model_navigator.utils.format_helpers import is_source_format
 
 
-def default_runners(device_kind: DeviceKind) -> List:
+def default_runners(device_kind: DeviceKind) -> List[str]:
     """Select default runners defined for the process.
 
     Returns:
@@ -96,3 +96,30 @@ def get_format_default_runners(format: Format) -> List[Type[NavigatorRunner]]:
         )
         return runners
     raise ValueError(f"No runner available for format `{format.value}`.")
+
+
+def filter_runners(runners: Iterable[Union[str, Type[NavigatorRunner]]], device_kind: DeviceKind) -> List[str]:
+    """Filter unsupported runners.
+
+    Args:
+        runners: List of runner names
+        device_kind: Kind of device
+
+    Returns:
+        List of supported runners
+    """
+    filtered_runners = set()
+    for runner in runners:
+        runner_name = runner if isinstance(runner, str) else runner.name()
+        if runner_name not in runner_registry:
+            LOGGER.warning(f"Unsupported runner {runner} in for current framework")
+            continue
+
+        r = runner_registry[runner_name]
+        if device_kind not in r.devices_kind():
+            LOGGER.warning(f"Unsupported runner {runner_name} on device {device_kind}")
+            continue
+
+        filtered_runners.add(runner_name)
+
+    return list(filtered_runners)

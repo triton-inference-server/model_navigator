@@ -16,11 +16,12 @@
 from typing import Dict, List
 
 from model_navigator.commands.base import ExecutionUnit
-from model_navigator.commands.export.jax import ExportJAX2SavedModel
 from model_navigator.configuration import Format
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig
 from model_navigator.pipelines.pipeline import Pipeline
+
+from .commands import ExportJAX2SavedModel
 
 
 def jax_export_builder(config: CommonConfig, models_config: Dict[Format, List[ModelConfig]]) -> Pipeline:

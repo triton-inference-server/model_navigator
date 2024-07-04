@@ -31,7 +31,6 @@ from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.exceptions import ModelNavigatorConfigurationError, ModelNavigatorConfigurationWarning
 from model_navigator.frameworks import Framework
 from model_navigator.package.package import Package
-from model_navigator.runners.registry import get_runner
 from model_navigator.utils.format_helpers import get_base_format, get_framework_export_formats
 
 
@@ -50,7 +49,7 @@ class PipelineManagerConfigurationValidator:
             config: A configuration object
             package: Package to be optimized, if None package is yet to be built. Defaults to None.
         """
-        cls._validate_if_runners_match_target_device(config)
+        cls._validate_if_runners_are_not_empty(config)
         cls._validate_config_types(config)
         cls._validate_if_custom_configs_match_target_formats(config)
         cls._validate_if_target_formats_match_framework(config)
@@ -69,14 +68,12 @@ class PipelineManagerConfigurationValidator:
             )
 
     @classmethod
-    def _validate_if_runners_match_target_device(cls, config: CommonConfig):
-        for runner_name in config.runner_names:
-            runner = get_runner(runner_name)
-            if config.target_device not in runner.devices_kind():
-                raise ModelNavigatorConfigurationError(
-                    f"Runner {runner_name} is configured for devices {runner.devices_kind()}, "
-                    f"but target device is {config.target_device}."
-                )
+    def _validate_if_runners_are_not_empty(cls, config: CommonConfig):
+        if not config.runner_names:
+            raise ModelNavigatorConfigurationError(
+                f"Provided list of runners is empty. Please review `runners` argument"
+                f"or selected target device {config.target_device}."
+            )
 
     @classmethod
     def _validate_if_custom_configs_match_target_formats(cls, config: CommonConfig):

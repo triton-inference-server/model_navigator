@@ -17,7 +17,8 @@ from typing import Callable, Dict, List
 from model_navigator.configuration import Format
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig
-from model_navigator.frameworks import is_jax_available, is_tf_available, is_torch_available
+from model_navigator.frameworks import is_jax_available as is_jax_available
+from model_navigator.frameworks import is_tf_available, is_torch_available
 from model_navigator.pipelines.builders.correctness import correctness_builder  # noqa: F401
 from model_navigator.pipelines.builders.performance import performance_builder  # noqa: F401
 from model_navigator.pipelines.builders.preprocessing import preprocessing_builder  # noqa: F401
@@ -31,9 +32,6 @@ if is_torch_available():
 if is_tf_available():
     from .tensorflow import tensorflow_conversion_builder, tensorflow_export_builder  # noqa: F401;
     from .tensorflow_tensorrt import tensorflow_tensorrt_conversion_builder  # noqa: F401
-
-if is_tf_available() and is_jax_available():
-    from .jax import jax_export_builder  # noqa: F401
 
 from .tensorrt import tensorrt_conversion_builder  # noqa: F401
 

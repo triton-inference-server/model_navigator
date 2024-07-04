@@ -76,7 +76,7 @@ def main():
     verify_func = get_verify_function()
     configuration = get_configuration()
 
-    package = nav.jax.optimize(
+    package = nav.experimental.jax.optimize(
         model=model,
         model_params=params,
         dataloader=dataloader,

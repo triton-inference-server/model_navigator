@@ -38,7 +38,6 @@ from model_navigator.configuration import (  # noqa: F401  # noqa: F401
     TorchTensorRTConfig,
 )
 from model_navigator.frameworks import (  # noqa: F401
-    is_jax_available,
     is_tf_available,
     is_torch_available,
     is_trt_available,
@@ -61,13 +60,12 @@ if is_torch_available():
 if is_tf_available():
     from model_navigator import tensorflow  # noqa: F401
 
-if is_tf_available() and is_jax_available():
-    from model_navigator import jax  # noqa: F401
 
 if is_trt_available():
     from model_navigator import tensorrt  # noqa: F401
 
 from model_navigator import (  # noqa: F401
+    experimental,  # noqa: F401
     onnx,
     package,
     python,

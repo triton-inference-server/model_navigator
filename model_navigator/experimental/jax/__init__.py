@@ -33,11 +33,9 @@ from model_navigator.configuration.model.model_config_builder import ModelConfig
 from model_navigator.core.constants import DEFAULT_SAMPLE_COUNT
 from model_navigator.exceptions import ModelNavigatorConfigurationError
 from model_navigator.frameworks import Framework
-from model_navigator.frameworks.jax import JaxModel
 from model_navigator.package.package import Package
 from model_navigator.pipelines.builders import (
     correctness_builder,
-    jax_export_builder,
     performance_builder,
     preprocessing_builder,
     tensorflow_conversion_builder,
@@ -48,8 +46,11 @@ from model_navigator.pipelines.builders import (
 from model_navigator.pipelines.builders.find_device_max_batch_size import find_device_max_batch_size_builder
 from model_navigator.pipelines.wrappers.optimize import optimize_pipeline
 from model_navigator.runners.base import NavigatorRunner
-from model_navigator.runners.utils import default_runners
+from model_navigator.runners.utils import default_runners, filter_runners
 from model_navigator.utils import enums
+
+from .builders import jax_export_builder
+from .model import JaxModel
 
 
 def optimize(
@@ -109,6 +110,8 @@ def optimize(
 
     if runners is None:
         runners = default_runners(device_kind=target_device)
+    else:
+        runners = filter_runners(runners, device_kind=target_device)
 
     if optimization_profile is None:
         optimization_profile = OptimizationProfile()

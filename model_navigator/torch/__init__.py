@@ -48,7 +48,7 @@ from model_navigator.pipelines.builders import (
 from model_navigator.pipelines.builders.find_device_max_batch_size import find_device_max_batch_size_builder
 from model_navigator.pipelines.wrappers.optimize import optimize_pipeline
 from model_navigator.runners.base import NavigatorRunner
-from model_navigator.runners.utils import default_runners
+from model_navigator.runners.utils import default_runners, filter_runners
 from model_navigator.utils import enums
 
 
@@ -104,6 +104,8 @@ def optimize(
 
     if runners is None:
         runners = default_runners(device_kind=target_device)
+    else:
+        runners = filter_runners(runners, device_kind=target_device)
 
     target_formats = enums.parse(target_formats, Format)
     runner_names = enums.parse(runners, lambda runner: runner if isinstance(runner, str) else runner.name())
