@@ -811,6 +811,7 @@ class OnnxConfig(CustomConfigForFormat):
         onnx_extended_conversion: Enables additional conversions from TorchScript to ONNX.
         graph_surgeon_optimization: Enables polygraphy graph surgeon optimization: fold_constants, infer_shapes, toposort, cleanup.
         export_device: Device used for ONNX export.
+        model_path: optional path to onnx model file, if provided the model will be loaded from the file instead of exporting to onnx
     """
 
     opset: Optional[int] = DEFAULT_ONNX_OPSET
@@ -820,6 +821,7 @@ class OnnxConfig(CustomConfigForFormat):
     onnx_extended_conversion: bool = False
     graph_surgeon_optimization: bool = True
     export_device: Optional[str] = None
+    model_path: Optional[Union[str, pathlib.Path]] = None
 
     @property
     def format(self) -> Format:
@@ -845,6 +847,7 @@ class OnnxConfig(CustomConfigForFormat):
         self.opset = DEFAULT_ONNX_OPSET
         self.graph_surgeon_optimization = True
         self.export_device = None
+        self.model_path = None
 
 
 @dataclasses.dataclass
@@ -857,12 +860,14 @@ class TensorRTConfig(CustomConfigForTensorRT):
         compatibility_level: Compatibility level for TensorRT conversion.
         onnx_parser_flags: List of TensorRT OnnxParserFlags used for conversion.
         timing_cache_dir: Storage directory for TRT tactic timing info collected from builder
+        model_path: optional path to trt model file, if provided the model will be loaded from the file instead of converting onnx to trt
     """
 
     optimization_level: Optional[int] = None
     compatibility_level: Optional[TensorRTCompatibilityLevel] = None
     onnx_parser_flags: Optional[List[int]] = None
     timing_cache_dir: Optional[Union[str, pathlib.Path]] = None
+    model_path: Optional[Union[str, pathlib.Path]] = None
 
     def __post_init__(self) -> None:
         """Parse dataclass enums."""
@@ -893,6 +898,7 @@ class TensorRTConfig(CustomConfigForTensorRT):
         self.compatibility_level = None
         self.onnx_parser_flags = None
         self.timing_cache_dir = None
+        self.model_path = None
 
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "TensorRTConfig":

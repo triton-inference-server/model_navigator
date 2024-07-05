@@ -74,3 +74,12 @@ def _read_outputs(_process, _outputs):
 
 def get_assets_path():
     return pathlib.Path(__file__).parent / "assets"
+
+
+def onnx_to_trt(onnx_path, trt_output_path):
+    exec_command(
+        f"trtexec --onnx={onnx_path} --saveEngine={trt_output_path}",
+        workspace=os.path.dirname(onnx_path),
+        name="ONNX to TRT",
+        shell=True,
+    )

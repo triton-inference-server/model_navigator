@@ -15,7 +15,7 @@
 
 import pathlib
 import shutil
-from typing import Optional
+from typing import Optional, Union
 
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.core.workspace import Workspace
@@ -43,8 +43,41 @@ class CopyModel(Command):
         destination_model_path = workspace.path / path
         if destination_model_path.exists():
             return CommandOutput(status=CommandStatus.SKIPPED)
-        assert model is not None
+        assert model is not None, "model must be provided"
+
         destination_model_path.parent.mkdir(parents=True, exist_ok=True)
+
         shutil.copy(src=model, dst=destination_model_path)
+
+        return CommandOutput(status=CommandStatus.OK)
+
+
+class CopyModelFromPath(Command):
+    """Copy Model command."""
+
+    def _run(
+        self,
+        workspace: Workspace,
+        path: pathlib.Path,
+        model_path: Optional[Union[str, pathlib.Path]] = None,
+    ) -> CommandOutput:
+        """Run copy of the model.
+
+        Args:
+            workspace (Path): Model Navigator workspace path.
+            path (Path): model path to copy to. Relative to workspace path.
+            model_path:  Union[str, pathlib.Path]: path used for model overwrite
+
+        Returns:
+            CommandOutput: Status OK.
+        """
+        destination_model_path = workspace.path / path
+        if destination_model_path.exists():
+            return CommandOutput(status=CommandStatus.SKIPPED)
+        assert model_path is not None, "model_path must be provided"
+
+        destination_model_path.parent.mkdir(parents=True, exist_ok=True)
+
+        shutil.copy(src=model_path, dst=destination_model_path)
 
         return CommandOutput(status=CommandStatus.OK)

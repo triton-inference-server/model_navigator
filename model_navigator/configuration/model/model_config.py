@@ -402,6 +402,7 @@ class ONNXConfig(_SerializedModelConfig, format=Format.ONNX):
         custom_args: Optional[Dict[str, Any]] = None,
         device: Optional[str] = None,
         export_device: Optional[str] = None,
+        model_path: Optional[Union[str, pathlib.Path]] = None,
     ) -> None:
         """Initializes ONNX model configuration class.
 
@@ -415,6 +416,7 @@ class ONNXConfig(_SerializedModelConfig, format=Format.ONNX):
             custom_args: Custom arguments passed to ONNX export
             device: runtime device e.g. "cuda:0"
             export_device: Device used for export
+            model_path: optional path to onnx model file, if provided the model will be loaded from the file instead of exporting to ONNX
         """
         super().__init__(parent=parent)
         self.opset = opset
@@ -425,6 +427,7 @@ class ONNXConfig(_SerializedModelConfig, format=Format.ONNX):
         self.custom_args = custom_args
         self.export_device = export_device
         self.runner_config = DeviceRunnerConfig(device=device)
+        self.model_path = model_path
 
     def _get_path_params_as_array_of_strings(self) -> List[str]:
         return ["dynamo"] if self.dynamo_export else []
@@ -440,6 +443,7 @@ class ONNXConfig(_SerializedModelConfig, format=Format.ONNX):
             custom_args=data_dict.get("custom_args"),
             device=data_dict.get("device"),
             export_device=data_dict.get("export_device"),
+            model_path=data_dict.get("model_path"),
         )
 
 
@@ -459,6 +463,7 @@ class TensorRTConfig(_SerializedModelConfig, format=Format.TENSORRT):
         custom_args: Optional[Dict[str, Any]] = None,
         device: Optional[str] = None,
         timing_cache_dir: Optional[str] = None,
+        model_path: Optional[Union[str, pathlib.Path]] = None,
     ) -> None:
         """Initializes TensorRT (plan) model configuration class.
 
@@ -474,6 +479,7 @@ class TensorRTConfig(_SerializedModelConfig, format=Format.TENSORRT):
             custom_args: Custom arguments passed to TensorRT conversion
             device: runtime device e.g. "cuda:0"
             timing_cache_dir: Directory to store timing cache
+            model_path: optional path to trt model file, if provided the model will be loaded from the file instead of converting ONNX to TRT
         """
         super().__init__(parent=parent)
         self.precision = precision
@@ -486,6 +492,7 @@ class TensorRTConfig(_SerializedModelConfig, format=Format.TENSORRT):
         self.custom_args = custom_args
         self.runner_config = DeviceRunnerConfig(device=device)
         self.timing_cache_dir = timing_cache_dir
+        self.model_path = model_path
 
     def _get_path_params_as_array_of_strings(self) -> List[str]:
         return [self.precision.value] if self.precision else []
@@ -507,6 +514,7 @@ class TensorRTConfig(_SerializedModelConfig, format=Format.TENSORRT):
             compatibility_level=cls._parse_string(TensorRTCompatibilityLevel, data_dict.get("compatibility_level")),
             onnx_parser_flags=onnx_parser_flags,
             timing_cache_dir=data_dict.get("timing_cache_dir"),
+            model_path=data_dict.get("model_path"),
         )
 
 

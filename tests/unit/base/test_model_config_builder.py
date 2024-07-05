@@ -372,3 +372,39 @@ def test_get_trt_config_returns_model_configs_matching_custom_config():
         assert trt_model_configuration.parent_key == onnx_model_configuration.key
         assert trt_model_configuration.optimization_level == 1
         assert trt_model_configuration.compatibility_level == TensorRTCompatibilityLevel.AMPERE_PLUS
+
+
+def test_generate_model_config_remove_redundant_formats_when_model_path_passed_in_onnx_custom_config():
+    custom_configs = [OnnxConfig(model_path="model.onnx")]
+    target_formats = [Format.TORCH, Format.ONNX, Format.TENSORRT]
+    model_configs = ModelConfigBuilder().generate_model_config(
+        framework=Framework.TORCH, custom_configs=custom_configs, target_formats=target_formats
+    )
+
+    assert len(model_configs) == 3
+    assert Format.TORCH in model_configs
+    assert Format.ONNX in model_configs
+    assert Format.TENSORRT in model_configs
+
+    assert Format.TF_SAVEDMODEL not in model_configs
+    assert Format.TF_TRT not in model_configs
+    assert Format.TORCHSCRIPT not in model_configs
+    assert Format.TORCH_EXPORTEDPROGRAM not in model_configs
+
+
+def test_generate_model_config_remove_redundant_formats_when_model_path_passed_in_tensorrt_custom_config():
+    custom_configs = [TensorRTConfig(model_path="model.plan")]
+    target_formats = [Format.TORCH, Format.ONNX, Format.TENSORRT]
+    model_configs = ModelConfigBuilder().generate_model_config(
+        framework=Framework.TORCH, custom_configs=custom_configs, target_formats=target_formats
+    )
+
+    assert len(model_configs) == 2
+    assert Format.TORCH in model_configs
+    assert Format.TENSORRT in model_configs
+
+    assert Format.ONNX not in model_configs
+    assert Format.TF_SAVEDMODEL not in model_configs
+    assert Format.TF_TRT not in model_configs
+    assert Format.TORCHSCRIPT not in model_configs
+    assert Format.TORCH_EXPORTEDPROGRAM not in model_configs

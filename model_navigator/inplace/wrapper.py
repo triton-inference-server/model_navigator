@@ -14,12 +14,14 @@
 """Inplace Optimize model wrapper."""
 
 import functools
+import pathlib
 from typing import Any, Callable, Literal, Optional, Union
 
 import wrapt
 
 from model_navigator.configuration import (
     CustomConfigForTensorRT,
+    OnnxConfig,
     RuntimeSearchStrategy,
     TensorRTConfig,
     TensorRTPrecisionMode,
@@ -58,9 +60,10 @@ class Module(wrapt.ObjectProxy):
         forward_func: forwarding function name used by the module, if None, the module __call__ is used.
         batching: enable or disable batching on first (index 0) dimension of the model
         precision: precision of the module
+        model_path: optional path to ONNX or TensorRT model file, if provided the model will be loaded from the file instead of converting
 
     Note:
-        batching if specified takes precedense over corresponding values in the
+        batching if specified takes precedence over corresponding values in the
         configuration specified in nav.profile.
 
     Example:
@@ -80,6 +83,7 @@ class Module(wrapt.ObjectProxy):
         forward_func: Optional[str] = None,
         batching: Optional[bool] = None,
         precision: PrecisionType = "fp32",
+        model_path: Optional[Union[str, pathlib.Path]] = None,
     ) -> None:
         """Initialize Module."""
         super().__init__(module)
@@ -102,6 +106,19 @@ class Module(wrapt.ObjectProxy):
 
         self.batching = batching
         self.precision = precision
+
+        if isinstance(model_path, str):
+            self.model_path = pathlib.Path(model_path)
+        else:
+            self.model_path = model_path
+
+        if self.model_path is not None and self.model_path.suffix not in [
+            ".onnx",
+            ".plan",
+        ]:  # pytype: disable=attribute-error
+            raise ModelNavigatorUserInputError(
+                f"model_path must be either ONNX or TensorRT model file with .onnx or .plan extension, got {self.model_path}."
+            )
 
         self._device = get_module_device(module) or torch.device("cpu")
         self._wrapper = RecordingModule(
@@ -138,10 +155,15 @@ class Module(wrapt.ObjectProxy):
         self._wrapper.optimize_config = value
 
     def _override_config_with_module_tags(self, config: OptimizeConfig):
-        """Overrides given configuration with batching and precision.
+        """Overrides given configuration.
+
+          Overridden parameters:
+            batching
+            precision
+            model_path
 
         Note:
-        - batching is overriden if specified during model initialization
+        - batching is overridden if specified during model initialization
         - precision is applied only if TensortRT custom configuration have not been already specified.
         """
         if self.batching is not None:
@@ -157,6 +179,21 @@ class Module(wrapt.ObjectProxy):
             precision = ("fp32", "fp16") if self.precision == "fp32" else self.precision
             new_trt_config = TensorRTConfig(precision=precision, precision_mode=TensorRTPrecisionMode.HIERARCHY)
             config.custom_configs = list(config.custom_configs) + [new_trt_config]
+
+        if self.model_path:
+            if self.model_path.suffix == ".onnx":
+                config_class = OnnxConfig
+            elif self.model_path.suffix == ".plan":
+                config_class = TensorRTConfig
+
+            config_provided = False
+            for cc in config.custom_configs:
+                if isinstance(cc, config_class):
+                    cc.model_path = self.model_path
+                    config_provided = True
+                    break
+            if not config_provided:
+                config.custom_configs = list(config.custom_configs) + [config_class(model_path=self.model_path)]
 
     def __call__(self, *args, **kwargs) -> Any:
         """Call the wrapped module.

@@ -17,6 +17,7 @@ from typing import Dict, List
 
 from model_navigator.commands.base import ExecutionUnit
 from model_navigator.commands.convert.torch import ConvertTorchScript2ONNX
+from model_navigator.commands.copy.copy_model import CopyModelFromPath
 from model_navigator.commands.export.torch import (
     ExportExportedProgram,
     ExportTorch2DynamoONNX,
@@ -49,10 +50,17 @@ def torch_export_builder(config: CommonConfig, models_config: Dict[Format, List[
 
     for model_cfg in models_config.get(Format.ONNX, []):
         if model_cfg.parent_path in (None, Format.TORCH):
-            if not model_cfg.dynamo_export:  # pytype: disable=attribute-error
-                execution_units.append(ExecutionUnit(command=ExportTorch2ONNX, model_config=model_cfg))
+            #  If model_path provided in onnx config, copy this onnx instead of exporting.
+            if model_cfg.model_path:  # pytype: disable=attribute-error
+                execution_units.append(
+                    ExecutionUnit(command=CopyModelFromPath, model_config=models_config[Format.ONNX][0])
+                )
             else:
-                execution_units.append(ExecutionUnit(command=ExportTorch2DynamoONNX, model_config=model_cfg))
+                if model_cfg.dynamo_export:  # pytype: disable=attribute-error
+                    execution_units.append(ExecutionUnit(command=ExportTorch2DynamoONNX, model_config=model_cfg))
+                else:
+                    execution_units.append(ExecutionUnit(command=ExportTorch2ONNX, model_config=model_cfg))
+
             assert isinstance(model_cfg, ONNXConfig)
             if model_cfg.graph_surgeon_optimization:
                 execution_units.append(ExecutionUnit(command=GraphSurgeonOptimize, model_config=model_cfg))

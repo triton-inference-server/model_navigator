@@ -27,6 +27,10 @@ from model_navigator.utils.format_helpers import get_base_format, get_export_for
 
 C = TypeVar("C", bound=config_api.CustomConfigForFormat)
 
+ONNX_INPLACE_FORMATS_TO_REMOVE = {Format.TORCH_TRT, Format.TORCHSCRIPT, Format.TORCH_EXPORTEDPROGRAM}
+
+TRT_INPLACE_FORMATS_TO_REMOVE = {Format.TORCH_TRT, Format.TORCHSCRIPT, Format.TORCH_EXPORTEDPROGRAM, Format.ONNX}
+
 
 def _get_custom_config(
     custom_configs: Sequence[config_api.CustomConfigForFormat],
@@ -85,6 +89,19 @@ class ModelConfigBuilder:
             export_formats.extend(export_fmts)
 
         target_formats = tuple(set(base_formats + export_formats + list(target_formats)))
+
+        # if model_path provided for onnx or trt inplace, remove other formats to avoid unnecessary conversions
+        if custom_configs:
+            onnx_config = _get_custom_config(
+                custom_configs=custom_configs, custom_config_cls=config_api.OnnxConfig
+            )  # pytype: disable=wrong-arg-types
+            if onnx_config.model_path is not None:
+                target_formats = tuple(set(target_formats) - ONNX_INPLACE_FORMATS_TO_REMOVE)
+            trt_config = _get_custom_config(
+                custom_configs=custom_configs, custom_config_cls=config_api.TensorRTConfig
+            )  # pytype: disable=wrong-arg-types
+            if trt_config.model_path is not None:
+                target_formats = tuple(set(target_formats) - TRT_INPLACE_FORMATS_TO_REMOVE)
 
         model_configs = collections.defaultdict(list)
         if Format.PYTHON in target_formats:
@@ -379,7 +396,6 @@ class ModelConfigBuilder:
                     export_device=onnx_config.export_device,
                 )
             )
-
         if framework == Framework.TORCH:
             for dynamo_export in (True, False) if onnx_config.dynamo_export else (False,):
                 model_configs[Format.ONNX].append(
@@ -392,6 +408,7 @@ class ModelConfigBuilder:
                         custom_args=onnx_config.custom_args,
                         device=onnx_config.device,
                         export_device=onnx_config.export_device,
+                        model_path=onnx_config.model_path,
                     )
                 )
 
@@ -424,7 +441,7 @@ class ModelConfigBuilder:
             model_configs: Dictionary mapping model formats to lists of model configs
         """
         trt_config = _get_custom_config(custom_configs=custom_configs, custom_config_cls=config_api.TensorRTConfig)
-        if framework == Framework.TENSORRT:
+        if framework == Framework.TENSORRT or trt_config.model_path is not None:
             model_configs[Format.TENSORRT].append(
                 model_config.TensorRTConfig(
                     parent=None,
@@ -438,6 +455,7 @@ class ModelConfigBuilder:
                     custom_args=trt_config.custom_args,
                     device=trt_config.device,
                     timing_cache_dir=trt_config.timing_cache_dir,
+                    model_path=trt_config.model_path,
                 )
             )
         else:
@@ -455,5 +473,6 @@ class ModelConfigBuilder:
                         custom_args=trt_config.custom_args,
                         device=trt_config.device,
                         timing_cache_dir=trt_config.timing_cache_dir,
+                        model_path=trt_config.model_path,
                     )
                 )
