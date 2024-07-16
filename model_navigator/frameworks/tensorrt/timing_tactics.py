@@ -69,8 +69,18 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Type, TypeVar
 
 from model_navigator.frameworks.tensorrt.utils import get_version as get_trt_version
-from model_navigator.inplace.config import DEFAULT_CACHE_DIR
+from model_navigator.inplace.config import inplace_cache_dir
 from model_navigator.utils.environment import get_gpu_info
+
+
+def trt_cache_inplace_cache_dir() -> Path:
+    """Configure TRT timing cache dir location based on environment variable.
+
+    Returns:
+        Cache dir from environment variable or inplace_cache_dir().
+    """
+    cache_dir = os.environ.get("MODEL_NAVIGATOR_TRT_CUSTOM_TIMING_CACHE_DIR", inplace_cache_dir())
+    return Path(cache_dir)
 
 
 class TimingCacheType(Enum):
@@ -119,7 +129,7 @@ class TimingCache(ABC):
             strategy (TimingCacheStrategy, optional): See `TimingCacheStrategy`.
         """
         self.model_name = model_name or "global"
-        self.cache_path = cache_path or DEFAULT_CACHE_DIR
+        self.cache_path = cache_path or trt_cache_inplace_cache_dir()
         self.strategy = strategy
 
     @abstractmethod

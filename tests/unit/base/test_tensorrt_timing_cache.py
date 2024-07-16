@@ -13,19 +13,18 @@
 # limitations under the License.
 
 import importlib
+import os
+from pathlib import Path
 from typing import Optional
 
+import model_navigator as nav
 import model_navigator.frameworks.tensorrt.timing_tactics as trt_ttc
-
-
-def test_timing_manager_should_have_disk_cache_class_registered():
-    assert trt_ttc.TimingCacheManager._cache_classes.get(trt_ttc.TimingCacheType.DISK.value) is not None
 
 
 def test_timing_manager_can_register_new_cache_class():
     @trt_ttc._register_cache_class("test")
     class TestCache(trt_ttc.TimingCache):
-        def get(self) -> Optional[trt_ttc.Path]:
+        def get(self) -> Optional[Path]:
             return None
 
         def save(self):
@@ -35,6 +34,10 @@ def test_timing_manager_can_register_new_cache_class():
 
     trt_ttc._unregister_cache_class("test")
     assert trt_ttc.TimingCacheManager._cache_classes.get("test") is None
+
+
+def test_timing_manager_should_have_disk_cache_class_registered():
+    assert trt_ttc.TimingCacheManager._cache_classes.get(trt_ttc.TimingCacheType.DISK.value) is not None
 
 
 def test_timing_manager_should_provide_cache_name_defaults(mocker, tmp_path):
@@ -99,3 +102,10 @@ def test_timing_manager_should_provide_same_cache(mocker, tmp_path):
 
     with trt_ttc.TimingCacheManager(model_name="navtest1", **opts) as cache_file:
         assert cache_file.read_text() == "navtest1"
+
+
+def test_timing_cache_env_should_change(mocker):
+    assert trt_ttc.trt_cache_inplace_cache_dir() == nav.inplace.config.DEFAULT_CACHE_DIR
+
+    mocker.patch.dict(os.environ, {"MODEL_NAVIGATOR_TRT_CUSTOM_TIMING_CACHE_DIR": str(Path.home())})
+    assert trt_ttc.trt_cache_inplace_cache_dir() == Path.home()
