@@ -88,7 +88,5 @@ class ExportJAX2SavedModel(Command):
 
             args = parse_kwargs_to_cmd(kwargs)
 
-            context.execute_local_runtime_script(
-                exporters.jax2savedmodel.__file__, exporters.jax2savedmodel.export, args
-            )
+            context.execute_python_script(exporters.jax2savedmodel.__file__, exporters.jax2savedmodel.export, args)
         return CommandOutput(status=CommandStatus.OK)

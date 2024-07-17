@@ -163,12 +163,16 @@ class FindMaxBatchSize(Command):
                 "runner_config": runner_config.to_dict(parse=True) if runner_config else None,
             }
 
-            args = parse_kwargs_to_cmd(kwargs)
-
             from model_navigator.commands.find_max_batch_size import find_max_batch_size_script
 
             try:
-                context.execute_external_runtime_script(find_max_batch_size_script.__file__, args, allow_failure=True)
+                context.execute_python_script(
+                    find_max_batch_size_script.__file__,
+                    find_max_batch_size_script.find_max_batch_size,
+                    args=parse_kwargs_to_cmd(kwargs),
+                    allow_failure=True,
+                    run_in_isolation=True,
+                )
             except Exception:
                 pass
 

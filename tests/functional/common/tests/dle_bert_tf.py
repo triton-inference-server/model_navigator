@@ -13,7 +13,6 @@
 # limitations under the License.
 """e2e tests for exporting BERT TensorFlow model from Deep Learning Examples"""
 
-import logging
 import os
 import pathlib
 import sys
@@ -22,7 +21,6 @@ from typing import List, Optional, Tuple
 
 import model_navigator as nav
 
-LOGGER = logging.getLogger((__package__ or "main").split(".")[-1])
 METADATA = {
     "image_name": "nvcr.io/nvidia/tensorflow:{version}-tf2-py3",
     "repository": "https://github.com/NVIDIA/DeepLearningExamples",

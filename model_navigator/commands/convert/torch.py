@@ -89,7 +89,12 @@ class ConvertTorchScript2ONNX(Command):
 
             args = parse_kwargs_to_cmd(kwargs)
 
-            context.execute_external_runtime_script(ts2onnx.__file__, args)
+            context.execute_python_script(
+                ts2onnx.__file__,
+                ts2onnx.convert,
+                args,
+                run_in_isolation=True,
+            )
         LOGGER.info("Converted TorchScript to ONNX.")
         return CommandOutput(status=CommandStatus.OK)
 
@@ -191,7 +196,12 @@ class ConvertTorchScript2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearch):
             verbose=verbose,
         ) as context:
             conversion_max_batch_size = self._execute_conversion(
-                convert_func=lambda args: context.execute_external_runtime_script(ts2torchtrt.__file__, args),
+                convert_func=lambda args: context.execute_python_script(
+                    ts2torchtrt.__file__,
+                    ts2torchtrt.convert,
+                    args,
+                    run_in_isolation=True,
+                ),
                 get_args=get_args,
                 batch_dim=batch_dim,
                 device_max_batch_size=device_max_batch_size,

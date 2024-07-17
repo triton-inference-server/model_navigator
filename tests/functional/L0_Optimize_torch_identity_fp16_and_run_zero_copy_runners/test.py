@@ -15,12 +15,11 @@
 """e2e tests for exporting PyTorch identity model"""
 
 import argparse
-import logging
 import pathlib
 
 import yaml
+from loguru import logger
 
-LOGGER = logging.getLogger((__package__ or "main").split(".")[-1])
 METADATA = {
     "image_name": "nvcr.io/nvidia/pytorch:{version}-py3",
 }
@@ -39,7 +38,6 @@ def main():
 
     import model_navigator as nav
     from model_navigator.commands.base import CommandStatus
-    from tests import utils
     from tests.functional.common.utils import collect_optimize_status, validate_status
 
     parser = argparse.ArgumentParser()
@@ -49,17 +47,10 @@ def main():
         required=True,
         help="Status file where per path result is stored.",
     )
-    parser.add_argument(
-        "--verbose",
-        "-v",
-        action="store_true",
-        help="Timeout for test.",
-    )
+
     args = parser.parse_args()
 
-    log_level = logging.DEBUG if args.verbose else logging.INFO
-    logging.basicConfig(level=log_level, format=utils.DEFAULT_LOG_FORMAT)
-    LOGGER.debug(f"CLI args: {args}")
+    logger.debug(f"CLI args: {args}")
 
     model = torch.nn.Identity()
     dataloader = [{"input": torch.randn(2, 3, dtype=torch.half)} for _ in range(2)]
@@ -96,7 +87,7 @@ def main():
     torch_cuda_input = {k: v.to("cuda") for k, v in dataloader[0].items()}
     for key, runner_status in status.items():
         if runner_status != CommandStatus.OK.name:
-            LOGGER.info(f"Skipping {key} due to {runner_status} status")
+            logger.info(f"Skipping {key} due to {runner_status} status")
             continue
         model_name, runner_name = key.split(".")
         runner = package.get_runner(nav.SelectedRuntimeStrategy(model_name, runner_name))
@@ -134,12 +125,12 @@ def main():
         ]:
             assert all(np.allclose(a, b) for a, b in zip(numpy_output_from_numpy.values(), comp_output.values()))
 
-        LOGGER.info(f"Verified {runner.name()}")
+        logger.info(f"Verified {runner.name()}")
 
     with status_file.open("w") as fp:
         yaml.safe_dump(status, fp)
 
-    LOGGER.info(f"Status saved to {status_file}")
+    logger.info(f"Status saved to {status_file}")
 
 
 if __name__ == "__main__":

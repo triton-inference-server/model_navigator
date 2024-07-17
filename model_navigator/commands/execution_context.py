@@ -16,6 +16,7 @@
 import contextlib
 import copy
 import logging
+import multiprocessing as mp
 import os
 import pathlib
 import shutil
@@ -79,9 +80,8 @@ class ExecutionContext(contextlib.AbstractContextManager):
             cmd_path=reproduce_script_dir / "reproduce.sh",
             verbose=verbose,
         ) as context:
-            context.execute_local_runtime_script() # Execute local command using fire.Fire and prepare reproduction
-            context.execute_external_runtime_script() # Execute external command as subprocess and prepare reproduction
-            context.execute_cmd() # Execute command as subprocess
+            context.execute_python_script() # Execute python script using fire.Fire in main or child process and prepare reproduction
+            context.execute_cmd() # Execute command in separate system process
     """
 
     accepted_types = (int, float, bool, str)
@@ -141,12 +141,13 @@ class ExecutionContext(contextlib.AbstractContextManager):
         message = f"{str(exc_value)}\n{''.join(tb.format_tb(traceback))}"
         raise ModelNavigatorUserInputError(message=message)
 
-    def execute_local_runtime_script(
+    def execute_python_script(
         self,
         path: Union[str, pathlib.Path],
         func: Callable,
         args: List,
         allow_failure: bool = False,
+        run_in_isolation: bool = False,
     ):
         """Execute Python script in current runtime.
 
@@ -155,6 +156,7 @@ class ExecutionContext(contextlib.AbstractContextManager):
             func: A function that is executed by fire
             args: Additional arguments to be passed to function during execution
             allow_failure: if True, do not raise exception when script execution failed
+            run_in_isolation: if True, command is run in a child process
 
 
         Raises:
@@ -165,8 +167,31 @@ class ExecutionContext(contextlib.AbstractContextManager):
 
         filtered_args = self._filter_workspace_args(args)
         cmd = self._bake_command([sys.executable, script_path_relative.as_posix()] + filtered_args)
+        unwrapped_args = self._unwrap_args(args)
+
+        if run_in_isolation:
+            child_process = mp.Process(target=self._execute_function, args=(func, unwrapped_args, allow_failure, cmd))
+            child_process.start()
+            child_process.join()
+            if child_process.exitcode and not allow_failure:
+                raise ModelNavigatorUserInputError(
+                    f"Process exited with {child_process.exitcode}. Check previous logs for errors."
+                )
+        else:
+            self._execute_function(func, unwrapped_args, allow_failure, cmd)
+
+    def _execute_function(self, func, unwrapped_args, allow_failure, cmd):
+        """Execute the given function using Fire and provided args.
+
+        This can be run in the main or child process. For the latter the logging system
+        has to be configured (as the child is spawned i.e. no logging is configured).
+        """
+        process_name = mp.current_process().name
+        if process_name != "MainProcess":
+            self._workspace.configure_logging()
+            LOGGER.debug("Running command: {} in the child process: {}", cmd, process_name)
+
         try:
-            unwrapped_args = self._unwrap_args(args)
             fire.Fire(func, unwrapped_args)
         except Exception as e:
             if not allow_failure:
@@ -175,21 +200,6 @@ class ExecutionContext(contextlib.AbstractContextManager):
                 LOGGER.warning(
                     f"Command exited with error: {traceback.format_exc()}. Command to reproduce error: {' '.join(cmd)}"
                 )
-
-    def execute_external_runtime_script(self, path: str, args: List, allow_failure: bool = False) -> None:
-        """Execute a command as subprocess.
-
-        Args:
-            path: Path to script that has to be executed
-            args: Additional arguments to be passed to script during execution
-            allow_failure: if True, do not raise exception when command execution failed
-        """
-        shutil.copy(path, self._script_path)
-        script_path_relative = self._script_path.relative_to(self._workspace.path)
-
-        filtered_args = self._filter_workspace_args(args)
-        cmd = [sys.executable, script_path_relative.as_posix()] + filtered_args
-        self.execute_cmd(cmd, allow_failure=allow_failure)
 
     def execute_cmd(self, cmd: List, dry_run=False, allow_failure: bool = False):
         """Execute command as subprocess.

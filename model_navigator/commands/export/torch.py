@@ -115,7 +115,7 @@ class ExportTorch2TorchScript(Command):
 
             args = parse_kwargs_to_cmd(kwargs)
 
-            context.execute_local_runtime_script(
+            context.execute_python_script(
                 exporters.torch2torchscript.__file__, exporters.torch2torchscript.export, args
             )
 
@@ -222,7 +222,7 @@ class ExportTorch2ONNX(Command):
             }
 
             args = parse_kwargs_to_cmd(kwargs)
-            context.execute_local_runtime_script(exporters.torch2onnx.__file__, exporters.torch2onnx.export, args)
+            context.execute_python_script(exporters.torch2onnx.__file__, exporters.torch2onnx.export, args)
 
         return CommandOutput(status=CommandStatus.OK)
 
@@ -300,7 +300,7 @@ class ExportExportedProgram(Command):
 
             args = parse_kwargs_to_cmd(kwargs)
 
-            context.execute_local_runtime_script(
+            context.execute_python_script(
                 exporters.torch2exportedprogram.__file__, exporters.torch2exportedprogram.export, args
             )
 
@@ -392,7 +392,7 @@ class ExportTorch2DynamoONNX(Command):
 
             args = parse_kwargs_to_cmd(kwargs)
 
-            context.execute_local_runtime_script(
+            context.execute_python_script(
                 exporters.torch2dynamo_onnx.__file__, exporters.torch2dynamo_onnx.export, args
             )
 

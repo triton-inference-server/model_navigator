@@ -50,7 +50,7 @@ class _Optimizer:
         LOGGER.info("Inferring shapes")
         onnx_graph = gs.export_onnx(self.graph)
         if self.exceeds_protobuf_limit(onnx_graph):
-            LOGGER.warn("Model size exceeds supported 2GB limit, unable to infer shapes.")
+            LOGGER.warning("Model size exceeds supported 2GB limit, unable to infer shapes.")
         else:
             onnx_graph = shape_inference.infer_shapes(onnx_graph)
         self.graph = gs.import_onnx(onnx_graph)

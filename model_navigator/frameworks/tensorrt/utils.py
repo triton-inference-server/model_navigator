@@ -22,6 +22,7 @@ from distutils.version import LooseVersion
 from typing import Callable, List, Optional, Tuple, TypeVar, Union
 
 import numpy as np
+from loguru import logger
 
 from model_navigator.configuration import ShapeTuple, TensorRTProfile, TensorType
 from model_navigator.core.tensor import TensorMetadata, get_tensor_type
@@ -39,8 +40,6 @@ trt = module.lazy_import("tensorrt")
 torch = module.lazy_import("torch")
 
 T = TypeVar("T")
-
-LOGGER = logging.getLogger(__name__)
 
 
 def get_version():
@@ -81,7 +80,7 @@ def _types_casts():
     try:
         is_int64_supported = get_version() >= LooseVersion("9.0")
     except AttributeError:
-        LOGGER.warning("TensorRT not found. Using default type casts including int64 to int32.")
+        logger.warning("TensorRT not found. Using default type casts including int64 to int32.")
         is_int64_supported = False
 
     if is_int64_supported:
@@ -101,7 +100,7 @@ def _cast_torch_tensor(tensor, dtype):
     type_casts = _types_casts()
     target_dtype = dtype or type_casts.get(np.dtype(torch_to_numpy_dtype(tensor.dtype)))
     if target_dtype:
-        LOGGER.debug(f"Casting {dtype} tensor to {target_dtype}.")
+        logger.debug(f"Casting {dtype} tensor to {target_dtype}.")
         return tensor.to(numpy_to_torch_dtype(target_dtype))
     return tensor
 
@@ -110,7 +109,7 @@ def _cast_numpy_tensor(tensor, dtype):
     type_casts = _types_casts()
     target_dtype = dtype or type_casts.get(tensor.dtype)
     if target_dtype:
-        LOGGER.debug(f"Casting {dtype} tensor to {target_dtype}.")
+        logger.debug(f"Casting {dtype} tensor to {target_dtype}.")
         return tensor.astype(target_dtype.type)
     return tensor
 
@@ -187,7 +186,7 @@ def _should_use_v3_api():
 def get_bindings_per_profile(engine):
     """Return bindings per profile."""
     if _should_use_v3_api():
-        LOGGER.error("This function should not be called when using the V3 API")
+        logger.error("This function should not be called when using the V3 API")
 
     return engine.num_bindings // engine.num_optimization_profiles
 
@@ -239,7 +238,7 @@ def get_trt_logger() -> "trt.Logger":
                     }.get(severity, logging.INFO)
 
                     if log_level >= logging.WARNING:
-                        LOGGER.log(log_level, msg)
+                        logger.log(log_level, msg)
                 except KeyboardInterrupt:
                     # `log()` is `noexcept` so we need to convert exceptions to signals so that
                     # ctrl-C will work as expected.
@@ -302,7 +301,7 @@ def np_dtype_from_trt(trt_dtype):
 def add_binding_to_metadata(engine, binding, metadata, name_binding):
     """Add a binding to metadata."""
     if _should_use_v3_api():
-        LOGGER.error("This function should not be called when using the V3 API")
+        logger.error("This function should not be called when using the V3 API")
 
     # name_binding always comes from profile 0, since that's where we
     # get all binding names in the runner
@@ -316,7 +315,7 @@ def add_binding_to_metadata(engine, binding, metadata, name_binding):
 def _get_input_metadata_from_engine(engine, start_binding, end_binding):
     """Returns input metadata from engine."""
     if _should_use_v3_api():
-        LOGGER.error("This function should not be called when using the V3 API")
+        logger.error("This function should not be called when using the V3 API")
 
     inputs = TensorMetadata()
     for index, binding in enumerate(range(start_binding, end_binding)):
@@ -328,7 +327,7 @@ def _get_input_metadata_from_engine(engine, start_binding, end_binding):
 def _get_output_metadata_from_engine(engine, start_binding, end_binding):
     """Returns input metadata from engine."""
     if _should_use_v3_api():
-        LOGGER.error("This function should not be called when using the V3 API")
+        logger.error("This function should not be called when using the V3 API")
 
     inputs = TensorMetadata()
     for index, binding in enumerate(range(start_binding, end_binding)):
@@ -367,7 +366,7 @@ def get_active_profile_bindings(context):
         Tuple[int, int]: The start and end bindings indices, in that order
     """
     if _should_use_v3_api():
-        LOGGER.error("This function should not be called when using the V3 API")
+        logger.error("This function should not be called when using the V3 API")
 
     active_profile = context.active_optimization_profile
     if active_profile < 0:
@@ -380,7 +379,7 @@ def get_active_profile_bindings(context):
     start_binding = bindings_per_profile * active_profile
     end_binding = start_binding + bindings_per_profile
 
-    LOGGER.info(
+    logger.info(
         f"Total # of Profiles: {context.engine.num_optimization_profiles}, Bindings Per Profile: {bindings_per_profile}, "
         f"Active Profile: {active_profile}, Start Binding: {start_binding}, End Binding: {end_binding}"
     )

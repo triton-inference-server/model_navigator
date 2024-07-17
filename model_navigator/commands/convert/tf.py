@@ -179,7 +179,12 @@ class ConvertSavedModel2TFTRT(Convert2TensorRTWithMaxBatchSizeSearch):
             verbose=verbose,
         ) as context:
             conversion_max_batch_size = self._execute_conversion(
-                convert_func=lambda args: context.execute_external_runtime_script(sm2tftrt.__file__, args),
+                convert_func=lambda args: context.execute_python_script(
+                    sm2tftrt.__file__,
+                    sm2tftrt.convert,
+                    args,
+                    run_in_isolation=True,
+                ),
                 get_args=get_args,
                 batch_dim=batch_dim,
                 device_max_batch_size=device_max_batch_size,

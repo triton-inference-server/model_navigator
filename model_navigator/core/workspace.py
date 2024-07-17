@@ -17,8 +17,8 @@ import pathlib
 import shutil
 from typing import Optional, Union
 
-from model_navigator.core.constants import DEFAULT_WORKSPACE
-from model_navigator.core.logger import LOGGER, add_log_file_handler
+from model_navigator.core.constants import DEFAULT_WORKSPACE, NAVIGATOR_LOG_FILENAME
+from model_navigator.core.logger import LOGGER, reconfigure_logging_to_file
 
 
 class Workspace:
@@ -63,6 +63,8 @@ class Workspace:
 
         LOGGER.info(f"Creating workspace at {self.path}")
         self.create()
+        self.configure_logging()
 
-        LOGGER.info("Initializing log file.")
-        add_log_file_handler(log_dir=self.path)
+    def configure_logging(self):
+        """Configure logging for the workspace."""
+        reconfigure_logging_to_file(self.path / NAVIGATOR_LOG_FILENAME)

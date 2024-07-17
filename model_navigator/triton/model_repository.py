@@ -25,12 +25,12 @@ Example of use:
     )
 """
 
-import logging
 import pathlib
 import shutil
 from typing import Dict, List, Optional, Union
 
 import numpy as np
+from loguru import logger
 
 from model_navigator.commands.performance import Performance
 from model_navigator.configuration import (
@@ -82,8 +82,6 @@ from model_navigator.triton.specialized_configs import (
     TensorRTAccelerator,
     TensorRTModelConfig,
 )
-
-LOGGER = logging.getLogger(__name__)
 
 BACKEND2SUFFIX = {
     Backend.ONNXRuntime: ".onnx",
@@ -374,7 +372,7 @@ class _TritonModelRepository:
         Returns:
             Path to deployed model inside the model store
         """
-        LOGGER.info(
+        logger.info(
             f"Deploying model {model_path} of version {model_config.model_version} in "
             f"Triton Model Store {self._model_repository_path}/{model_config.model_name}"
         )
@@ -427,10 +425,10 @@ class _TritonModelRepository:
         model_version_path: pathlib.Path,
         model_filename: str,
     ):
-        LOGGER.debug(f"Creating version directory {model_version_path}")
+        logger.debug(f"Creating version directory {model_version_path}")
         model_version_path.mkdir(exist_ok=True, parents=True)
         dst_path = model_version_path / model_filename
-        LOGGER.debug(f"Copying {model_path} file to {dst_path}")
+        logger.debug(f"Copying {model_path} file to {dst_path}")
         if model_path.is_file():
             shutil.copy(model_path, dst_path)
         else:
@@ -448,9 +446,9 @@ class _TritonModelRepository:
         model_path: pathlib.Path,
         model_version_path: pathlib.Path,
     ):
-        LOGGER.debug(f"Creating model directory {model_version_path.parent}")
+        logger.debug(f"Creating model directory {model_version_path.parent}")
         model_version_path.parent.mkdir(exist_ok=True, parents=True)
-        LOGGER.debug(f"Copying {model_path} file to {model_version_path}")
+        logger.debug(f"Copying {model_path} file to {model_version_path}")
         try:
             shutil.copytree(model_path, model_version_path)
         except shutil.Error:

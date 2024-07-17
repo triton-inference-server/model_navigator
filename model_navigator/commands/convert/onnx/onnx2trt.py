@@ -152,7 +152,12 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
             from model_navigator.commands.convert.converters import onnx2trt
 
             conversion_max_batch_size = self._execute_conversion(
-                convert_func=lambda args: context.execute_external_runtime_script(onnx2trt.__file__, args),
+                convert_func=lambda args: context.execute_python_script(
+                    onnx2trt.__file__,
+                    onnx2trt.convert,
+                    args,
+                    run_in_isolation=True,
+                ),
                 get_args=get_args,
                 batch_dim=batch_dim,
                 device_max_batch_size=device_max_batch_size,

@@ -15,7 +15,6 @@
 """Public utilities for the Model Navigator API."""
 
 import json
-import logging
 import pathlib
 import tempfile
 from typing import Any, Callable, Dict, Optional
@@ -23,15 +22,13 @@ from typing import Any, Callable, Dict, Optional
 from model_navigator.commands.find_max_batch_size.find_max_batch_size import MaxBatchSizeFinder
 from model_navigator.configuration import Framework, OptimizationProfile, SizedDataLoader
 from model_navigator.core.dataloader import to_numpy
+from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import FRAMEWORK_TO_TENSOR_TYPE, PyTreeMetadata, TensorMetadata
 from model_navigator.exceptions import ModelNavigatorError, ModelNavigatorProfilingError
 from model_navigator.runners.registry import get_runner
 
-logger_name = "model_navigator.utilities"
-LOGGER = logging.getLogger(logger_name)
-logging.basicConfig(level=logging.INFO)
 
-
+# deprecated since used only in tests - will be moved to test package
 class UnpackedDataloader:
     """A wrapper around a SizedDataLoader that applies a function to each sample.
 
@@ -63,6 +60,7 @@ class UnpackedDataloader:
             yield self._unpack_fn(sample)
 
 
+# deprecated since used only in tests - will be moved to test package
 def find_max_batch_size_till_oom(
     framework: Framework,
     model: Any,

@@ -142,12 +142,17 @@ class Correctness(Command):
 
             if is_source_format(format):
                 correctness_script.get_model = lambda: model
-                args = parse_kwargs_to_cmd(kwargs)
-                context.execute_local_runtime_script(correctness_script.__file__, correctness_script.correctness, args)
+                run_in_isolation = False
             else:
                 kwargs["model_path"] = path
-                args = parse_kwargs_to_cmd(kwargs)
-                context.execute_external_runtime_script(correctness_script.__file__, args)
+                run_in_isolation = True
+
+            context.execute_python_script(
+                correctness_script.__file__,
+                correctness_script.correctness,
+                args=parse_kwargs_to_cmd(kwargs),
+                run_in_isolation=run_in_isolation,
+            )
             per_output_tolerance = TolerancePerOutputName.from_json(json.load(temp_file))
 
         return CommandOutput(status=CommandStatus.OK, output={"per_output_tolerance": per_output_tolerance})

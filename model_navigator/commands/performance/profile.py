@@ -116,14 +116,18 @@ class Profile(Command):
 
                 if is_source_format(format):
                     profile_script.get_model = lambda: model
-                    args = parse_kwargs_to_cmd(kwargs)
-                    context.execute_local_runtime_script(
-                        profile_script.__file__, profile_script.profile, args, allow_failure=True
-                    )
+                    run_in_isolation = False
                 else:
                     kwargs["model_path"] = path
-                    args = parse_kwargs_to_cmd(kwargs)
-                    context.execute_external_runtime_script(profile_script.__file__, args, allow_failure=True)
+                    run_in_isolation = True
+
+                context.execute_python_script(
+                    profile_script.__file__,
+                    profile_script.profile,
+                    args=parse_kwargs_to_cmd(kwargs),
+                    allow_failure=True,
+                    run_in_isolation=run_in_isolation,
+                )
 
                 with jsonlines.open(temp_file.name, "r") as f:
                     profiling_results.extend([ProfilingResults.from_dict(res) for res in f])

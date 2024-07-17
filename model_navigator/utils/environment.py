@@ -14,7 +14,6 @@
 """Collect information about current system and environment."""
 
 import locale
-import logging
 import os
 import platform
 import re
@@ -23,8 +22,7 @@ from typing import Dict, List, Optional, Union
 
 import cpuinfo
 import psutil
-
-LOGGER = logging.getLogger(__name__)
+from loguru import logger
 
 PACKAGES = [
     "tensorflow",
@@ -131,7 +129,7 @@ def get_gpu_info() -> Dict:
             "cuda_version": cuda_version,
         }
     except (FileNotFoundError, CalledProcessError) as e:
-        LOGGER.debug(str(e))
+        logger.debug(str(e))
         gpu_details = {
             "name": "n/a",
             "driver_version": "n/a",

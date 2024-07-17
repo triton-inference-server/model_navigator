@@ -140,7 +140,7 @@ def is_matching(bundle_path: Union[str, Path], tags: Optional[List[str]] = None)
             with zip_file.open("tags.yaml") as tags_file:
                 bundle_tags = yaml.safe_load(tags_file)
                 if set(bundle_tags["tags"]) != set(tags):
-                    LOGGER.warn(f"TAGS mismatch in bundle '{bundle_path}'")
+                    LOGGER.warning(f"TAGS mismatch in bundle '{bundle_path}'")
                     return False
 
         # expecting status.yaml files in the modules dirs
@@ -150,19 +150,19 @@ def is_matching(bundle_path: Union[str, Path], tags: Optional[List[str]] = None)
 
                 # basic check is if OS matches
                 if status["environment"]["os"]["platform"] != os_names:
-                    LOGGER.warn(f"OS mismatch in {status_file}")
+                    LOGGER.warning(f"OS mismatch in {status_file}")
                     return False
 
                 # TensorRT runners require plan optimized for specific GPU, CUDA, and TensorRT versions
                 if _has_module_trt_runner(status["module_status"]):
                     if status["environment"]["gpu"]["name"] != gpu_names:
-                        LOGGER.warn(f"GPU mismatch in {status_file}")
+                        LOGGER.warning(f"GPU mismatch in {status_file}")
                         return False
                     if _major_minor_version(status["environment"]["gpu"]["cuda_version"]) != cuda_versions:
-                        LOGGER.warn(f"CUDA version mismatch in {status_file}")
+                        LOGGER.warning(f"CUDA version mismatch in {status_file}")
                         return False
                     if _major_minor_version(status["environment"]["python_packages"]["tensorrt"]) != trt_versions:
-                        LOGGER.warn(f"TRT version mismatch in {status_file}")
+                        LOGGER.warning(f"TRT version mismatch in {status_file}")
                         return False
                 else:
                     LOGGER.debug(f"No TRT runner in {status_file}")

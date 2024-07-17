@@ -13,18 +13,16 @@
 # limitations under the License.
 """Convert TorchScript model to Torch-TensorRT model."""
 
-import logging
 import pathlib
 from typing import Any, Dict, List, Optional
 
 import fire
 import numpy as np
 import torch  # pytype: disable=import-error
+from loguru import logger
 
 from model_navigator.configuration import TensorRTPrecision, TensorRTPrecisionMode
 from model_navigator.utils.common import numpy_to_torch_dtype
-
-LOGGER = logging.getLogger(__name__)
 
 
 def _get_precision(precision, precision_mode):
@@ -63,7 +61,7 @@ def convert(
     target_device: str,
     debug: bool,
     custom_args: Dict[str, Any],
-    workspace: Optional[str] = None,
+    navigator_workspace: Optional[str] = None,
 ) -> None:
     """Run conversion from TorchScript to Torch-TensorRT.
 
@@ -79,19 +77,19 @@ def convert(
         precision_mode (str): TensorRT precision mode.
         target_device (str): _description_
         debug (bool): If True print debug logs.
-        workspace (Optional[str], optional): Model Navigator workspace path.
+        navigator_workspace (Optional[str], optional): Model Navigator workspace path.
             When None use current workdir. Defaults to None.
         custom_args (Optional[Dict[str, str]], optional): Dictionary with passthrough parameters.
             For available arguments check PyTorch documentation: https://pytorch.org/TensorRT/py_api/torch_tensorrt.html
     """
     import torch_tensorrt  # pytype: disable=import-error
 
-    if not workspace:
-        workspace = pathlib.Path.cwd()
-    workspace = pathlib.Path(workspace)
+    if not navigator_workspace:
+        navigator_workspace = pathlib.Path.cwd()
+    navigator_workspace = pathlib.Path(navigator_workspace)
 
-    LOGGER.info(f"Shapes types: {type(shapes)}, Shapes: {shapes}")
-    LOGGER.info(f"Input dtypes types: {type(input_dtypes)}, Input dtypes: {input_dtypes}")
+    logger.info(f"Shapes types: {type(shapes)}, Shapes: {shapes}")
+    logger.info(f"Input dtypes types: {type(input_dtypes)}, Input dtypes: {input_dtypes}")
 
     input_dtypes = [numpy_to_torch_dtype(np.dtype(input_dtype)) for input_dtype in input_dtypes]
     model_input_shapes = []
@@ -107,13 +105,13 @@ def convert(
 
     exported_model_path = pathlib.Path(exported_model_path)
     if not exported_model_path.is_absolute():
-        exported_model_path = workspace / exported_model_path
+        exported_model_path = navigator_workspace / exported_model_path
 
     model = torch.jit.load(exported_model_path.as_posix(), map_location=target_device)
 
     if debug:
         log_level = torch_tensorrt.logging.Level.Debug
-        LOGGER.info(f"Logging set to `debug` ({log_level})")
+        logger.info(f"Logging set to `debug` ({log_level})")
         torch_tensorrt.logging.set_reportable_log_level(log_level)
 
     tr_model_compiled = torch_tensorrt.compile(
@@ -127,7 +125,7 @@ def convert(
 
     converted_model_path = pathlib.Path(converted_model_path)
     if not converted_model_path.is_absolute():
-        converted_model_path = workspace / converted_model_path
+        converted_model_path = navigator_workspace / converted_model_path
 
     tr_model_compiled.save(converted_model_path.as_posix())
 

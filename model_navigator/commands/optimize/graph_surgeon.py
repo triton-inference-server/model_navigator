@@ -53,14 +53,15 @@ class GraphSurgeonOptimize(Command):
             cmd_path=onnx_path.parent / "reproduce_graph_surgeon.sh",
             verbose=verbose,
         ) as context:
-            kwargs = {
-                "onnx_path": onnx_path.relative_to(workspace.path).as_posix(),
-            }
-
-            args = parse_kwargs_to_cmd(kwargs)
+            kwargs = {"onnx_path": onnx_path}
 
             from model_navigator.commands.optimize import graph_surgeon_script
 
-            context.execute_external_runtime_script(graph_surgeon_script.__file__, args)
+            context.execute_python_script(
+                graph_surgeon_script.__file__,
+                graph_surgeon_script.optimize,
+                args=parse_kwargs_to_cmd(kwargs),
+                run_in_isolation=True,
+            )
 
         return CommandOutput(status=CommandStatus.OK)

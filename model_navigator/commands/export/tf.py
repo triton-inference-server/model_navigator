@@ -77,9 +77,7 @@ class ExportTF2SavedModel(Command):
 
             args = parse_kwargs_to_cmd(kwargs)
 
-            context.execute_local_runtime_script(
-                exporters.keras2savedmodel.__file__, exporters.keras2savedmodel.export, args
-            )
+            context.execute_python_script(exporters.keras2savedmodel.__file__, exporters.keras2savedmodel.export, args)
 
         return CommandOutput(status=CommandStatus.OK)
 
@@ -131,7 +129,7 @@ class UpdateSavedModelSignature(Command):
             }
 
             args = parse_kwargs_to_cmd(kwargs)
-            context.execute_local_runtime_script(
+            context.execute_python_script(
                 exporters.savedmodel2savedmodel.__file__, exporters.savedmodel2savedmodel.update_signature, args
             )
 

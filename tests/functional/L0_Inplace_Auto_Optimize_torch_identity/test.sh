@@ -18,6 +18,8 @@ set -ex
 THIS_SCRIPT_PATH="$(realpath --relative-to="$(pwd)" "$0")"
 TEST_MODULE="$(dirname "${THIS_SCRIPT_PATH}"|sed 's/\//./g').test"
 
+export NAVIGATOR_CONSOLE_OUTPUT=LOGS
+export NAVIGATOR_LOG_LEVEL=DEBUG
+
 python -m"${TEST_MODULE}" \
-    --status $(pwd)/status.yaml \
-    --verbose
+    --status $(pwd)/status.yaml

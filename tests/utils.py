@@ -11,17 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import logging
 import os
 import pathlib
 import select
 import subprocess
 from typing import Optional
 
-from model_navigator.commands.performance.nvml_handler import NvmlHandler
+from loguru import logger
 
-LOGGER = logging.getLogger(__name__)
-DEFAULT_LOG_FORMAT = "%(asctime)s - %(levelname)8s - %(name)s: %(message)s"
+from model_navigator.commands.performance.nvml_handler import NvmlHandler
 
 
 def gpu_count() -> int:
@@ -34,8 +32,8 @@ def exec_command(cmd, workspace=None, name=None, shell=False) -> Optional[int]:
     _output = []
     process = None
 
-    LOGGER.info(f"Command: {cmd}")
-    LOGGER.info(f"Current working directory: {workspace}")
+    logger.info(f"Command: {cmd}")
+    logger.info(f"Current working directory: {workspace}")
     os.environ.setdefault("PYTHONUNBUFFERED", "1")  # to not buffer logs
     try:
         with subprocess.Popen(
@@ -47,7 +45,7 @@ def exec_command(cmd, workspace=None, name=None, shell=False) -> Optional[int]:
     finally:
         if process:
             _read_outputs(process, _output)
-            LOGGER.info(f"{name} process finished with {process.returncode}")
+            logger.info(f"{name} process finished with {process.returncode}")
             returncode = process.returncode
         else:
             raise RuntimeError(f"Unable to execute command {cmd}")
@@ -64,7 +62,7 @@ def _read_outputs(_process, _outputs):
         for rd in rds:
             line = rd.readline().decode("utf-8").rstrip()
             if line:
-                LOGGER.info(line)
+                logger.info(line)
                 _outputs.append(line)
         try:
             (rds, _, _) = select.select([_process.stdout, _process.stderr], [], [], 1)

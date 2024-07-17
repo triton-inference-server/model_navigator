@@ -368,4 +368,5 @@ class PipelineContext:
         if runner_status:
             headers.append("Runner Status")
         table = tabulate(summary, headers, "grid")
-        LOGGER.info(f"\n{pad_string('Model Navigator Summary')}\n{table}")
+        title = pad_string("Model Navigator Summary", width=table.find("\n"))
+        LOGGER.info(f"\n{title}\n{table}")

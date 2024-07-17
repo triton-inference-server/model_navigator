@@ -248,10 +248,10 @@ def _load_modules(model_key: str, runner_name: str, device: str, verbose: bool =
             LOGGER.info(f"{str(e)}" f"Loading eager module.")
             m.load_eager(device=device)
         except Exception as e:
-            LOGGER.warn(f"Failed to load module {module_name} for model key {model_key} and runner {runner_name}.")
-            LOGGER.warn(f"Eager module will be used. Error message: {str(e)}")
+            LOGGER.warning(f"Failed to load module {module_name} for model key {model_key} and runner {runner_name}.")
+            LOGGER.warning(f"Eager module will be used. Error message: {str(e)}")
             if verbose:
-                LOGGER.warn(f"Traceback: {traceback.format_exc()}")
+                LOGGER.warning(f"Traceback: {traceback.format_exc()}")
 
             m.load_eager(device=device)
 

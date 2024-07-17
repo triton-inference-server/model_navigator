@@ -83,7 +83,6 @@ def _make_output_allocator():
                 self.buffers[tensor_name] = cuda_utils.DeviceArray.raw(shape)
             else:
                 self.buffers[tensor_name].resize(shape)
-            LOGGER.debug(f"Reallocated output tensor: {tensor_name} to: {self.buffers[tensor_name]}")
             return self.buffers[tensor_name].ptr
 
         def notify_shape(self, tensor_name, shape):

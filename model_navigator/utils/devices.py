@@ -14,14 +14,14 @@
 """Device utils."""
 
 import ctypes
-import logging
 import uuid
 from ctypes import c_uint8
 from typing import List, Optional, Sequence, Union
 
+from loguru import logger
+
 from model_navigator.exceptions import ModelNavigatorError
 
-LOGGER = logging.getLogger(__name__)
 UUID_SIZE = 16
 MAX_NAME_SIZE = 256
 CUDA_SUCCESS = 0
@@ -29,7 +29,7 @@ CUDA_SUCCESS = 0
 try:
     cuda = ctypes.cdll.LoadLibrary("libcuda.so")
 except OSError as e:
-    LOGGER.warning(f"CUDA not available: {e}")
+    logger.warning(f"CUDA not available: {e}")
     cuda = None
 
 

@@ -15,13 +15,12 @@
 """e2e tests for exporting PyTorch identity model"""
 
 import argparse
-import logging
 import pathlib
 import tempfile
 
 import yaml
+from loguru import logger
 
-LOGGER = logging.getLogger((__package__ or "main").split(".")[-1])
 METADATA = {
     "image_name": "nvcr.io/nvidia/pytorch:{version}-py3",
 }
@@ -60,16 +59,7 @@ def main():
         required=True,
         help="Status file where per path result is stored.",
     )
-    parser.add_argument(
-        "--verbose",
-        "-v",
-        action="store_true",
-        help="Timeout for test.",
-    )
     args = parser.parse_args()
-
-    log_level = logging.DEBUG if args.verbose else logging.INFO
-    logging.basicConfig(level=log_level, format=utils.DEFAULT_LOG_FORMAT)
 
     onnx_model_path = utils.get_assets_path() / "models" / "onnx_from_torch_linear.onnx"
 
@@ -107,7 +97,7 @@ def main():
     with status_file.open("w") as fp:
         yaml.safe_dump(status, fp)
 
-    LOGGER.info(f"Status saved to {status_file}")
+    logger.info(f"Status saved to {status_file}")
 
 
 if __name__ == "__main__":

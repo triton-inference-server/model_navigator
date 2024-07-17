@@ -15,14 +15,13 @@
 """e2e tests for exporting ONNX identity model"""
 
 import argparse
-import logging
 import pathlib
 
 import yaml
+from loguru import logger
 
 from tests.utils import get_assets_path
 
-LOGGER = logging.getLogger((__package__ or "main").split(".")[-1])
 METADATA = {
     "image_name": "nvcr.io/nvidia/pytorch:{version}-py3",
 }
@@ -39,7 +38,6 @@ def main():
     import numpy as np
 
     import model_navigator as nav
-    from tests import utils
     from tests.functional.common.utils import (
         collect_expected_files,
         collect_optimize_status,
@@ -54,17 +52,10 @@ def main():
         required=True,
         help="Status file where per path result is stored.",
     )
-    parser.add_argument(
-        "--verbose",
-        "-v",
-        action="store_true",
-        help="Timeout for test.",
-    )
+
     args = parser.parse_args()
 
-    log_level = logging.DEBUG if args.verbose else logging.INFO
-    logging.basicConfig(level=log_level, format=utils.DEFAULT_LOG_FORMAT)
-    LOGGER.debug(f"CLI args: {args}")
+    logger.debug(f"CLI args: {args}")
 
     onnx_model_path = get_assets_path() / "models" / "identity.onnx"
     dataloader = [
@@ -103,7 +94,7 @@ def main():
     with status_file.open("w") as fp:
         yaml.safe_dump(status, fp)
 
-    LOGGER.info(f"Status saved to {status_file}")
+    logger.info(f"Status saved to {status_file}")
 
 
 if __name__ == "__main__":

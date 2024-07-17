@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,35 +14,188 @@
 """Logger module."""
 
 import contextlib
+import inspect
 import json
 import logging
+import multiprocessing as mp
+import os
 import pathlib
-from typing import Dict, Optional
+import sys
+from functools import lru_cache
+from multiprocessing import current_process
+from typing import Dict, Optional, TextIO, Tuple, Union
 
-import coloredlogs
+from loguru import logger
 
-from model_navigator.core.constants import NAVIGATOR_LOG_NAME, NAVIGATOR_LOGGER_NAME
-
-LOGGER = logging.getLogger(NAVIGATOR_LOGGER_NAME)
-LOGGER.propagate = False
-log_format = "%(asctime)s %(levelname)-8s %(name)s: %(message)s"
-
-coloredlogs.install(
-    logger=LOGGER,
-    level="INFO",
-    fmt=log_format,
-    field_styles={
-        "asctime": {"color": "green"},
-        "hostname": {"color": "magenta"},
-        "levelname": {"bold": True, "color": "blue"},
-        "name": {"color": "blue"},
-        "programname": {"color": "cyan"},
-        "username": {"color": "yellow"},
-    },
-    reconfigure=True,
+from model_navigator.core.constants import (
+    NAVIGATOR_CONSOLE_OUTPUT_ENV,
+    NAVIGATOR_LOG_FORMAT_ENV,
+    NAVIGATOR_LOG_LEVEL_ENV,
+    NAVIGATOR_LOGGER_NAME,
+    NAVIGATOR_THIRD_PARTY_LOG_LEVEL_ENV,
+    OUTPUT_LOGS_FLAG,
 )
 
+LOGGER = logger.bind(**{NAVIGATOR_LOGGER_NAME: True})
 
+
+class InterceptHandler(logging.Handler):
+    """Handler to catch all logging module logs and push to loguru logger."""
+
+    def emit(self, record: logging.LogRecord) -> None:  # noqa: D102
+        # Get corresponding Loguru level if it exists.
+        level: Union[str, int]
+        try:
+            level = logger.level(record.levelname).name
+        except ValueError:
+            level = record.levelno
+
+        # Find caller from where <originated the logged message.
+        frame, depth = inspect.currentframe(), 0
+        while frame and (depth == 0 or frame.f_code.co_filename == logging.__file__):
+            frame = frame.f_back
+            depth += 1
+
+        logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
+
+
+@lru_cache
+def get_navigator_log_level() -> str:
+    """Returns logging level."""
+    return os.environ.get(NAVIGATOR_LOG_LEVEL_ENV, "INFO")
+
+
+@lru_cache
+def get_third_party_log_level() -> str:
+    """Returns logging level."""
+    return os.environ.get(NAVIGATOR_THIRD_PARTY_LOG_LEVEL_ENV, "INFO")
+
+
+@lru_cache
+def get_console_output() -> str:
+    """Returns what should be put on the console."""
+    return os.environ.get(NAVIGATOR_CONSOLE_OUTPUT_ENV, OUTPUT_LOGS_FLAG)
+
+
+@lru_cache
+def get_log_format():
+    """Returns log format."""
+    formats = {
+        "compact": (
+            "<green>{time:HH:mm:ss}</green>|"
+            "<level>{level:.1}</level>|"
+            "<cyan>{module}</cyan>|<level>{message}</level>"
+        ),
+        "normal": (
+            "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
+            "<level>{level: <8}</level> |  "
+            "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>"
+        ),
+        "verbose": (
+            "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
+            "<level>{level: <8}</level> | {process.name} | "
+            "<cyan>{file.path}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>"
+        ),
+    }
+
+    log_format = os.environ.get(NAVIGATOR_LOG_FORMAT_ENV, "verbose")
+    if log_format not in formats:
+        raise Exception(f"Illegal logging format specified. Use one of: {list(formats.keys())}")
+
+    return formats[log_format]
+
+
+def navigator_record_predicate(record: Dict) -> bool:
+    """Returns True if log emited by navigator logger."""
+    return NAVIGATOR_LOGGER_NAME in record["extra"]
+
+
+def third_party_record_predicate(record: Dict) -> bool:
+    """Returns True if log emited by 3rd party library."""
+    return not navigator_record_predicate(record)
+
+
+def forward_python_logging_to_loguru() -> None:
+    """Use intercept handler to capture all holds and forward to loguru."""
+    logging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)
+
+
+def forward_polygraphy_logging_to_python_logging() -> None:
+    """Reconfigures poligraphy logger to use python logging instead of stdout/stderr."""
+    # TODO: configure polygrapht logger
+    # from polygraphy.logger import G_LOGGER
+    # G_LOGGER.use_python_logging_system = True
+    ...
+
+
+def configure_logging_sink(sink: Union[TextIO, str, pathlib.Path]) -> Tuple[int, int]:
+    """Configures given sink for the loguru."""
+    navigator_sink_id = logger.add(
+        sink,
+        level=get_navigator_log_level(),
+        format=get_log_format(),
+        filter=navigator_record_predicate,
+        enqueue=True,
+    )
+    third_party_sink_id = logger.add(
+        sink,
+        level=get_third_party_log_level(),
+        format=get_log_format(),
+        filter=third_party_record_predicate,
+        enqueue=True,
+    )
+    return navigator_sink_id, third_party_sink_id
+
+
+def configure_initial_logging() -> None:
+    """Configures initial logging before workspace or anything else is ready.
+
+    This should be called on once in the main process only.
+    """
+    forward_polygraphy_logging_to_python_logging()
+    forward_python_logging_to_loguru()
+    logger.remove()  # remove preconfigured logger
+    configure_logging_sink(sys.stderr)
+    logger.debug("Initiall logging has been configured")
+
+
+def reconfigure_logging_to_file(log_path: pathlib.Path) -> None:
+    """Reconfigures logging system to log everything to the log_dir in the workspace.
+
+    Note: this can be called in the main process and in the child process.
+
+    Args:
+        log_path: A path where to store logs
+    """
+    forward_polygraphy_logging_to_python_logging()
+    forward_python_logging_to_loguru()
+
+    # inform user that we are now swiching logging to file only in parent process.
+    process_name = current_process().name
+    if process_name == "MainProcess":
+        logger.info("Logs will be stored to the file: {}", log_path)
+
+    # reconfigure logging
+    logger.remove()  # remove existing configuration
+    configure_logging_sink(log_path)
+
+    if OUTPUT_LOGS_FLAG in get_console_output():
+        configure_logging_sink(sys.stderr)
+
+    logger.info("{} starts logging to {}", process_name, log_path)
+
+
+if current_process().name == "MainProcess":
+    # configure main logging system in main process during imports
+    # spawn method must be used for windows and becuase of cuda initializaiton
+    mp.set_start_method("spawn")
+    configure_initial_logging()
+else:
+    # child processes must not log anything to stdout/stderr - remove all logers during initialization
+    logger.remove()
+
+
+# TODO:: should be deprecated once trt logging to python logger works
 class StdoutLogger:
     """Context manager to redirect stdout to logger."""
 
@@ -91,25 +244,11 @@ class LoggingContext(contextlib.AbstractContextManager):
         Args:
             log_dir: Optional path to directory where log file is stored.
         """
-        super().__init__()
-        self.log_dir = log_dir
-        self.loggers = list(logging.root.manager.loggerDict.keys())
-
-        if self.log_dir:
-            log_format = "%(asctime)s %(levelname)-8s %(name)s: %(message)s"
-            self.log_dir.mkdir(parents=True, exist_ok=True)
-            log_file = self.log_dir / "format.log"
-            self.log_file_handler = logging.FileHandler(log_file)
-            self.log_file_handler.setLevel(logging.INFO)
-            formatter = logging.Formatter(log_format)
-            self.log_file_handler.setFormatter(formatter)
-            LOGGER.addHandler(self.log_file_handler)
-
-            for logger in self.loggers:
-                if isinstance(logger, str):
-                    logger = logging.getLogger(logger)
-                if self.log_file_handler:
-                    logger.addHandler(self.log_file_handler)
+        if log_dir:
+            log_dir.mkdir(parents=True, exist_ok=True)
+            self.sink_ids = configure_logging_sink(log_dir / "format.log")
+        else:
+            self.sink_ids = None
 
     def __exit__(self, exc_type, exc_value, traceback):  # noqa: F841
         """Exit the context and clean handlers.
@@ -119,34 +258,8 @@ class LoggingContext(contextlib.AbstractContextManager):
             exc_value: type of exception
             traceback: traceback of exception
         """
-        if self.log_dir:
-            for logger in self.loggers:
-                if isinstance(logger, str):
-                    logger = logging.getLogger(logger)
-                logger.handlers = [h for h in logger.handlers if h != self.log_file_handler]
-            LOGGER.removeHandler(self.log_file_handler)
-            self.log_file_handler = None
-
-
-def add_log_file_handler(log_dir: pathlib.Path) -> None:
-    """Add log file handler to file in defined path.
-
-    Args:
-        log_dir: A path to log directory
-    """
-    log_file = log_dir / NAVIGATOR_LOG_NAME
-    fh = logging.FileHandler(log_file)
-    fh.setLevel(logging.DEBUG)
-    LOGGER.addHandler(fh)
-
-
-def get_logger_names() -> list:
-    """Collect logger names as list.
-
-    Returns:
-        List with names of the loggers
-    """
-    return list(logging.root.manager.loggerDict.keys())
+        if self.sink_ids is not None:
+            [logger.remove(sink_id) for sink_id in self.sink_ids]
 
 
 def log_dict(title: str, data: Dict):
@@ -161,14 +274,15 @@ def log_dict(title: str, data: Dict):
     LOGGER.info(json.dumps(data, indent=4))
 
 
-def pad_string(s: str) -> str:
+def pad_string(s: str, width: int = 60) -> str:
     """Pad string with `=` signs.
 
     Args:
         s (str): String.
+        width (int): Width of the string.
 
     Returns:
         str: Padded string.
     """
     s = f" {s} "
-    return s.center(118, "=")
+    return s.center(width, "=")
