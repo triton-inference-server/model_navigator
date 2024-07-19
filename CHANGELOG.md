@@ -21,6 +21,7 @@ limitations under the License.
 - new: Python 3.12 support added
 - change: filter unsupported runners instead of raising an error when running optimize
 - change: moved JAX to support to experimental module and limited support
+- change: use autocast=True for Torch based runners
 
 ## 0.10.1
 

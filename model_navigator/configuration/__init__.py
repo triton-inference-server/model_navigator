@@ -668,7 +668,7 @@ class TorchConfig(CustomConfigForFormat):
         inference_mode: Enable inference mode in runner (default: True).
     """
 
-    autocast: bool = False
+    autocast: bool = True
     inference_mode: bool = True
 
     @property
@@ -687,7 +687,7 @@ class TorchConfig(CustomConfigForFormat):
 
     def defaults(self) -> None:
         """Update parameters to defaults."""
-        self.autocast = False
+        self.autocast = True
         self.inference_mode = True
 
 
@@ -704,7 +704,7 @@ class TorchScriptConfig(CustomConfigForFormat):
 
     jit_type: Union[Union[str, JitType], Tuple[Union[str, JitType], ...]] = (JitType.SCRIPT, JitType.TRACE)
     strict: bool = True
-    autocast: bool = False
+    autocast: bool = True
     inference_mode: bool = True
 
     def __post_init__(self) -> None:
@@ -730,7 +730,7 @@ class TorchScriptConfig(CustomConfigForFormat):
         """Update parameters to defaults."""
         self.jit_type = (JitType.SCRIPT, JitType.TRACE)
         self.strict = True
-        self.autocast = False
+        self.autocast = True
         self.inference_mode = True
 
 
@@ -743,7 +743,7 @@ class TorchExportConfig(CustomConfigForFormat):
         inference_mode: Enable inference mode in runner (default: True).
     """
 
-    autocast: bool = False
+    autocast: bool = True
     inference_mode: bool = True
 
     @property
@@ -762,7 +762,7 @@ class TorchExportConfig(CustomConfigForFormat):
 
     def defaults(self) -> None:
         """Update parameters to defaults."""
-        self.autocast = False
+        self.autocast = True
         self.inference_mode = True
 
 

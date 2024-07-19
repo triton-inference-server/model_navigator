@@ -49,14 +49,14 @@ def test_default_values_for_tensorflow_tensorrt_custom_config():
 
 def test_default_values_for_torch_custom_config():
     config = TorchConfig()
-    assert config.autocast is False
+    assert config.autocast is True
     assert config.inference_mode is True
     assert config.format == Format.TORCH
 
 
 def test_default_values_for_torch_export_custom_config():
     config = TorchExportConfig()
-    assert config.autocast is False
+    assert config.autocast is True
     assert config.inference_mode is True
     assert config.format == Format.TORCH_EXPORTEDPROGRAM
 
@@ -64,7 +64,7 @@ def test_default_values_for_torch_export_custom_config():
 def test_default_values_for_torch_script_custom_config():
     config = TorchScriptConfig()
     assert config.jit_type == (JitType.SCRIPT, JitType.TRACE)
-    assert config.autocast is False
+    assert config.autocast is True
     assert config.inference_mode is True
     assert config.strict is True
     assert config.format == Format.TORCHSCRIPT

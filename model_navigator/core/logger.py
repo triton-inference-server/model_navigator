@@ -68,7 +68,7 @@ def get_navigator_log_level() -> str:
 @lru_cache
 def get_third_party_log_level() -> str:
     """Returns logging level."""
-    return os.environ.get(NAVIGATOR_THIRD_PARTY_LOG_LEVEL_ENV, "INFO")
+    return os.environ.get(NAVIGATOR_THIRD_PARTY_LOG_LEVEL_ENV, "WARNING")
 
 
 @lru_cache

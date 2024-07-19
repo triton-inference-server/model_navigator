@@ -45,13 +45,13 @@ def test_get_source_torch_config_returns_model_configs_matching_custom_config():
     assert isinstance(model_configuration, model_config.TorchModelConfig)
     assert model_configuration.parent_key is None
 
-    assert model_configuration.runner_config.autocast is False
+    assert model_configuration.runner_config.autocast is True
     assert model_configuration.runner_config.inference_mode is True
     assert model_configuration.runner_config.device is None
 
 
-def test_get_source_torch_config_returns_model_configs_matching_custom_config_when_overriden_arguments():
-    torch_config = TorchConfig(autocast=True, inference_mode=False, device="cpu")
+def test_get_source_torch_config_returns_model_configs_matching_custom_config_when_overridden_arguments():
+    torch_config = TorchConfig(autocast=False, inference_mode=False, device="cpu")
     model_configs = {Format.TORCH: []}
     custom_configs = [torch_config]
     ModelConfigBuilder().get_source_torch_config(custom_configs=custom_configs, model_configs=model_configs)
@@ -61,7 +61,7 @@ def test_get_source_torch_config_returns_model_configs_matching_custom_config_wh
     assert isinstance(model_configuration, model_config.TorchModelConfig)
     assert model_configuration.parent_key is None
 
-    assert model_configuration.runner_config.autocast is True
+    assert model_configuration.runner_config.autocast is False
     assert model_configuration.runner_config.inference_mode is False
     assert model_configuration.runner_config.device == "cpu"
 
@@ -99,15 +99,15 @@ def test_get_torchscript_config_returns_model_configs_matching_custom_config():
         assert model_configuration.format == torch_script_config.format
         assert model_configuration.parent_key is None
 
-        assert model_configuration.runner_config.autocast is False
+        assert model_configuration.runner_config.autocast is True
         assert model_configuration.runner_config.inference_mode is True
         assert model_configuration.runner_config.device is None
 
 
-def test_get_torchscript_config_returns_model_configs_matching_custom_config_when_overriden_arguments():
+def test_get_torchscript_config_returns_model_configs_matching_custom_config_when_overridden_arguments():
     torch_script_config = TorchScriptConfig(
         jit_type=(JitType.TRACE,),
-        autocast=True,
+        autocast=False,
         inference_mode=False,
         device="cpu",
     )
@@ -123,7 +123,7 @@ def test_get_torchscript_config_returns_model_configs_matching_custom_config_whe
     assert model_configuration.format == torch_script_config.format
     assert model_configuration.parent_key is None
 
-    assert model_configuration.runner_config.autocast is True
+    assert model_configuration.runner_config.autocast is False
     assert model_configuration.runner_config.inference_mode is False
     assert model_configuration.runner_config.device == "cpu"
 
@@ -139,13 +139,13 @@ def test_get_torch_export_config_returns_model_configs_matching_custom_config():
     assert isinstance(model_configuration, model_config.TorchExportedProgram)
     assert model_configuration.parent_key is None
 
-    assert model_configuration.runner_config.autocast is False
+    assert model_configuration.runner_config.autocast is True
     assert model_configuration.runner_config.inference_mode is True
     assert model_configuration.runner_config.device is None
 
 
 def test_get_torch_export_config_returns_model_configs_matching_custom_config_when_overriden_arguments():
-    torch_export_config = TorchExportConfig(autocast=True, inference_mode=False, device="cpu")
+    torch_export_config = TorchExportConfig(autocast=False, inference_mode=False, device="cpu")
     model_configs = {Format.TORCH_EXPORTEDPROGRAM: []}
     custom_configs = [torch_export_config]
     ModelConfigBuilder().get_torch_exportedprogram_config(custom_configs, model_configs)
@@ -155,7 +155,7 @@ def test_get_torch_export_config_returns_model_configs_matching_custom_config_wh
     assert isinstance(model_configuration, model_config.TorchExportedProgram)
     assert model_configuration.parent_key is None
 
-    assert model_configuration.runner_config.autocast is True
+    assert model_configuration.runner_config.autocast is False
     assert model_configuration.runner_config.inference_mode is False
     assert model_configuration.runner_config.device == "cpu"
 

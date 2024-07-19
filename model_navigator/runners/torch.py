@@ -44,7 +44,7 @@ class _BaseTorchRunner(NavigatorRunner):
         return Format.TORCH
 
     def __init__(
-        self, inference_mode: bool = True, autocast: bool = False, device: Optional[str] = None, *args, **kwargs
+        self, inference_mode: bool = True, autocast: bool = True, device: Optional[str] = None, *args, **kwargs
     ) -> None:
         """Initialization implementation."""
         super().__init__(*args, **kwargs)

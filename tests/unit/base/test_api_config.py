@@ -111,9 +111,9 @@ def test_torch_config_has_valid_name_and_format():
 
 
 def test_torch_config_defaults_reset_values_to_initial():
-    config = TorchConfig(inference_mode=False, autocast=True)
+    config = TorchConfig(inference_mode=False, autocast=False)
     config.defaults()
-    assert config.autocast is False
+    assert config.autocast is True
     assert config.inference_mode is True
 
 
@@ -129,11 +129,11 @@ def test_torch_script_config_has_strict_true_by_default():
 
 
 def test_torch_script_config_defaults_reset_values_to_initial():
-    config = TorchScriptConfig(strict=False, jit_type=(JitType.TRACE,), inference_mode=False, autocast=True)
+    config = TorchScriptConfig(strict=False, jit_type=(JitType.TRACE,), inference_mode=False, autocast=False)
     config.defaults()
     assert config.strict is True
     assert config.jit_type == (JitType.SCRIPT, JitType.TRACE)
-    assert config.autocast is False
+    assert config.autocast is True
     assert config.inference_mode is True
 
 
@@ -144,9 +144,9 @@ def test_torch_export_config_has_valid_name_and_format():
 
 
 def test_torch__export_config_defaults_reset_values_to_initial():
-    config = TorchExportConfig(inference_mode=False, autocast=True)
+    config = TorchExportConfig(inference_mode=False, autocast=False)
     config.defaults()
-    assert config.autocast is False
+    assert config.autocast is True
     assert config.inference_mode is True
 
 
@@ -392,8 +392,8 @@ def test_optimization_config_is_cloning_correctly():
         ),
         optimization_profile=OptimizationProfile(max_batch_size=64),
         custom_configs=[
-            TorchConfig(autocast=True),
-            TorchScriptConfig(autocast=True),
+            TorchConfig(autocast=False),
+            TorchScriptConfig(autocast=False),
             TensorRTConfig(
                 precision=(TensorRTPrecision.BF16, TensorRTPrecision.FP16),
                 onnx_parser_flags=[1],
@@ -404,9 +404,9 @@ def test_optimization_config_is_cloning_correctly():
     cloned_opt_config = opt_config.clone()
     cloned_opt_config.runners = ("TensorRT",)
     cloned_opt_config.optimization_profile.max_batch_size = 32
-    cloned_opt_config.custom_configs[0].autocast = False
+    cloned_opt_config.custom_configs[0].autocast = True
 
-    # noting changed in original object
+    # nothing changed in original object
     assert len(opt_config.runners) == 5
     assert opt_config.optimization_profile.max_batch_size == 64
-    assert opt_config.custom_configs[0].autocast is True
+    assert opt_config.custom_configs[0].autocast is False
