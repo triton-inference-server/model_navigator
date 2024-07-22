@@ -22,6 +22,8 @@ limitations under the License.
 - change: filter unsupported runners instead of raising an error when running optimize
 - change: moved JAX to support to experimental module and limited support
 - change: use autocast=True for Torch based runners
+- new: new API, optimized module can be stored to Triton model repository
+
 
 ## 0.10.1
 

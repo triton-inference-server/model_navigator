@@ -28,6 +28,7 @@ from model_navigator.configuration import (
 )
 from model_navigator.exceptions import ModelNavigatorUserInputError
 from model_navigator.inplace.timer import Timer
+from model_navigator.triton import model_repository
 from model_navigator.utils.module import lazy_import
 
 from ..frameworks.torch.utils import get_module_device
@@ -279,6 +280,56 @@ class Module(wrapt.ObjectProxy):
         )
         device = device or self._device
         self._wrapper.module.to(device)
+
+    def triton_model_store(
+        self,
+        model_repository_path: pathlib.Path,
+        strategy: Optional[RuntimeSearchStrategy] = None,
+        model_name: Optional[str] = None,
+        model_version: int = 1,
+        response_cache: bool = False,
+        warmup: bool = False,
+        package_idx: int = -1,
+    ):
+        """Store the optimized module in the Triton model store.
+
+        Args:
+            model_repository_path (pathlib.Path): Path to store the optimized module.
+            strategy (Optional[RuntimeSearchStrategy]): Strategy for finding the best runtime. When not set the `MaxThroughputStrategy` is used.
+            model_name (Optional[str]): Name of the module to use in the Triton model store, by default the module name is used.
+            model_version (int): Version of model that is deployed
+            response_cache(bool): Enable response cache for model
+            warmup (bool): Enable warmup for min and max batch size
+            package_idx (int): Index of package - pipeline execution status - to use for storing in Triton model store. Default is -1, which means the last package.
+        """
+        if not isinstance(self._wrapper, OptimizedModule):
+            raise ModelNavigatorUserInputError(
+                f"Module {self.name} must be optimized to store in Triton model store. Did you load_optimized()?"
+            )
+
+        if len(self._wrapper._packages) == 0:
+            raise ModelNavigatorUserInputError(
+                f"Module {self.name} must have packages to store in Triton model store. Did you optimize the module?"
+            )
+
+        try:
+            package = self._wrapper._packages[package_idx]
+        except IndexError as e:
+            raise ModelNavigatorUserInputError(
+                f"Incorrect package index {package_idx=} for module {self.name}. There are only {len(self._wrapper._packages)} packages."
+            ) from e
+
+        model_name = model_name or self.name
+
+        model_repository.add_model_from_package(
+            model_repository_path,
+            model_name,
+            package,
+            strategy=strategy,
+            model_version=model_version,
+            response_cache=response_cache,
+            warmup=warmup,
+        )
 
 
 def module(

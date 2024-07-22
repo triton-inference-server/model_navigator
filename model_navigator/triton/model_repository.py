@@ -35,7 +35,7 @@ from loguru import logger
 from model_navigator.commands.performance import Performance
 from model_navigator.configuration import (
     Format,
-    MaxThroughputAndMinLatencyStrategy,
+    MaxThroughputStrategy,
     RuntimeSearchStrategy,
     Sample,
     TensorRTProfile,
@@ -211,10 +211,10 @@ def add_model_from_package(
     Args:
         model_repository_path: Path where the model store is located
         model_name: Name under which model is deployed in Triton Inference Server
-        model_version: Version of model that is deployed
         package: Package for which model store is created
+        model_version: Version of model that is deployed
         strategy: Strategy for finding the best runtime.
-                  When not set the `MaxThroughputAndMinLatencyStrategy` is used.
+                  When not set the `MaxThroughputStrategy` is used.
         response_cache: Enable response cache for model
         warmup: Enable warmup for min and max batch size
 
@@ -230,7 +230,7 @@ def add_model_from_package(
         )
 
     if strategy is None:
-        strategy = MaxThroughputAndMinLatencyStrategy()
+        strategy = MaxThroughputStrategy()
 
     batching = package.config.batch_dim == 0
 

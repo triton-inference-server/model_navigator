@@ -694,8 +694,7 @@ def test_add_model_from_package_raise_error_when_unsupported_triton_runner_in_pa
         package = custom_runner_package(workspace)
         with pytest.raises(
             ModelNavigatorRuntimeAnalyzerError,
-            match="No runtime has both the minimal latency and the maximal throughput."
-            "Consider using different `RuntimeSearchStrategy`",
+            match="No matching results found.",
         ):
             add_model_from_package(
                 model_repository_path=model_repository_path,
