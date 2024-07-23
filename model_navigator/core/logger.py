@@ -106,12 +106,12 @@ def get_log_format():
 
 
 def navigator_record_predicate(record: Dict) -> bool:
-    """Returns True if log emited by navigator logger."""
+    """Returns True if log emitted by navigator logger."""
     return NAVIGATOR_LOGGER_NAME in record["extra"]
 
 
 def third_party_record_predicate(record: Dict) -> bool:
-    """Returns True if log emited by 3rd party library."""
+    """Returns True if log emitted by 3rd party library."""
     return not navigator_record_predicate(record)
 
 
@@ -121,8 +121,8 @@ def forward_python_logging_to_loguru() -> None:
 
 
 def forward_polygraphy_logging_to_python_logging() -> None:
-    """Reconfigures poligraphy logger to use python logging instead of stdout/stderr."""
-    # TODO: configure polygrapht logger
+    """Reconfigures polygraphy logger to use python logging instead of stdout/stderr."""
+    # TODO: configure polygraphy logger
     # from polygraphy.logger import G_LOGGER
     # G_LOGGER.use_python_logging_system = True
     ...
@@ -154,9 +154,9 @@ def configure_initial_logging() -> None:
     """
     forward_polygraphy_logging_to_python_logging()
     forward_python_logging_to_loguru()
-    logger.remove()  # remove preconfigured logger
+    logger.remove()  # remove pre-configured logger
     configure_logging_sink(sys.stderr)
-    logger.debug("Initiall logging has been configured")
+    logger.debug("Initial logging has been configured")
 
 
 def reconfigure_logging_to_file(log_path: pathlib.Path) -> None:
@@ -170,7 +170,7 @@ def reconfigure_logging_to_file(log_path: pathlib.Path) -> None:
     forward_polygraphy_logging_to_python_logging()
     forward_python_logging_to_loguru()
 
-    # inform user that we are now swiching logging to file only in parent process.
+    # inform user that we are now switching logging to file only in parent process.
     process_name = current_process().name
     if process_name == "MainProcess":
         logger.info("Logs will be stored to the file: {}", log_path)
@@ -187,11 +187,11 @@ def reconfigure_logging_to_file(log_path: pathlib.Path) -> None:
 
 if current_process().name == "MainProcess":
     # configure main logging system in main process during imports
-    # spawn method must be used for windows and becuase of cuda initializaiton
+    # spawn method must be used for windows and because of cuda initialization
     mp.set_start_method("spawn")
     configure_initial_logging()
 else:
-    # child processes must not log anything to stdout/stderr - remove all logers during initialization
+    # child processes must not log anything to stdout/stderr - remove all loggers during initialization
     logger.remove()
 
 
