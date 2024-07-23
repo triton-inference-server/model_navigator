@@ -33,10 +33,8 @@ from model_navigator.core.constants import (
     NAVIGATOR_LOG_LEVEL_ENV,
     NAVIGATOR_LOGGER_NAME,
     NAVIGATOR_THIRD_PARTY_LOG_LEVEL_ENV,
-    NAVIGATOR_USE_MULTIPROCESSING,
     OUTPUT_LOGS_FLAG,
 )
-from model_navigator.utils.environment import use_multiprocessing
 
 LOGGER = logger.bind(**{NAVIGATOR_LOGGER_NAME: True})
 
@@ -190,19 +188,7 @@ def reconfigure_logging_to_file(log_path: pathlib.Path) -> None:
 if current_process().name == "MainProcess":
     # configure main logging system in main process during imports
     # spawn method must be used for windows and because of cuda initialization
-    if (method := mp.get_start_method(allow_none=True)) is None:
-        mp.set_start_method("spawn")
-    elif method == "fork":
-        if use_multiprocessing():
-            raise Exception(
-                "Model Navigator requires running conversions and exports in child processes using spawn mode to "
-                "have better isolation for errors. However, some code has already set multiprocessing to fork mode. "
-                "You can either paste the following code at the beginning of your imports to force "
-                "spawn method: import multiprocessing:multiprocessing.set_start_method('spawn'). "
-                "Or you can set the following environment variable to force running everything in a single process "
-                f"(at the cost of no error isolation): {NAVIGATOR_USE_MULTIPROCESSING}=False"
-            )
-
+    mp.set_start_method("spawn")
     configure_initial_logging()
 else:
     # child processes must not log anything to stdout/stderr - remove all loggers during initialization
