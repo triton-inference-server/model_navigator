@@ -17,12 +17,15 @@ import locale
 import os
 import platform
 import re
+from functools import lru_cache
 from subprocess import CalledProcessError
 from typing import Dict, List, Optional, Union
 
 import cpuinfo
 import psutil
 from loguru import logger
+
+from model_navigator.core.constants import NAVIGATOR_USE_MULTIPROCESSING
 
 PACKAGES = [
     "tensorflow",
@@ -219,3 +222,9 @@ def _remove(input: str, regex: str) -> str:
         Formatted string
     """
     return re.sub(regex, "", input).strip()
+
+
+@lru_cache
+def use_multiprocessing() -> bool:
+    """Return flag whether to run subcommands in parent process."""
+    return os.environ.get(NAVIGATOR_USE_MULTIPROCESSING, "True") in {"True", "true"}
