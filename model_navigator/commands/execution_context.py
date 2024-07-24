@@ -31,6 +31,7 @@ import fire
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.workspace import Workspace
 from model_navigator.exceptions import ModelNavigatorUserInputError
+from model_navigator.utils.environment import use_multiprocessing
 
 
 class FileHandlersLogging:
@@ -158,6 +159,7 @@ class ExecutionContext(contextlib.AbstractContextManager):
             allow_failure: if True, do not raise exception when script execution failed
             run_in_isolation: if True, command is run in a child process
 
+        Note: isolation can be overridden by `use_multiprocessing`.
 
         Raises:
             ModelNavigatorUserInputError when command execution failed
@@ -169,7 +171,7 @@ class ExecutionContext(contextlib.AbstractContextManager):
         cmd = self._bake_command([sys.executable, script_path_relative.as_posix()] + filtered_args)
         unwrapped_args = self._unwrap_args(args)
 
-        if run_in_isolation:
+        if run_in_isolation and use_multiprocessing():
             child_process = mp.Process(target=self._execute_function, args=(func, unwrapped_args, allow_failure, cmd))
             child_process.start()
             child_process.join()
