@@ -105,16 +105,15 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
         onnx_input_names, _ = get_onnx_io_names(onnx_path=input_model_path)
 
         def get_args(max_batch_size=None):
+            profiles = [
+                self._get_conversion_profiles(
+                    trt_profile=dataloader_trt_profile,
+                    batch_dim=batch_dim,
+                    max_batch_size=max_batch_size,
+                )
+            ]
             if trt_profiles:
-                profiles = trt_profiles
-            else:
-                profiles = [
-                    self._get_conversion_profiles(
-                        trt_profile=dataloader_trt_profile,
-                        batch_dim=batch_dim,
-                        max_batch_size=max_batch_size,
-                    )
-                ]
+                profiles.extend(trt_profiles)
 
             profiles_dicts = []
             for profile in profiles:
@@ -165,16 +164,18 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
                 custom_trt_profile_available=bool(trt_profiles),
             )
 
-        conversion_profiles = self._get_conversion_profiles(
-            trt_profile=trt_profiles[0] if trt_profiles else dataloader_trt_profile,
-            batch_dim=batch_dim,
-            max_batch_size=conversion_max_batch_size,
-        )
+        profiles = [
+            self._get_conversion_profiles(
+                trt_profile=dataloader_trt_profile,
+                batch_dim=batch_dim,
+                max_batch_size=conversion_max_batch_size,
+            )
+        ]
 
         LOGGER.info("Converted ONNX to TensorRT.")
         return CommandOutput(
             status=CommandStatus.OK,
-            output={"conversion_max_batch_size": conversion_max_batch_size, "conversion_profiles": conversion_profiles},
+            output={"conversion_max_batch_size": conversion_max_batch_size, "conversion_profiles": profiles},
         )
 
     @staticmethod

@@ -15,7 +15,7 @@
 
 import contextlib
 import copy
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from distutils.version import LooseVersion
 from typing import List, Optional, Sequence
 
@@ -126,6 +126,9 @@ class TensorRTRunner(NavigatorRunner):
         self.device_output_buffers = None
         self.use_cuda_graphs = False
         self._trt_input_metadata = None
+        self.profiles_shapes = None
+        self.num_optimization_profiles = None
+        self.binding_tensor_mode = None
 
         if is_torch_available():
             self._torch = module.lazy_import("torch")
@@ -202,6 +205,98 @@ class TensorRTRunner(NavigatorRunner):
         """
         return trt_utils.get_input_metadata_impl(engine=self.engine, context=self.context)
 
+    def _build_profiles_shapes_cache(self):
+        if self.engine is not None:
+            self.profiles_shapes = defaultdict(dict)
+
+            num_profiles = self.get_num_optimization_profiles()
+
+            for profile_index in range(num_profiles):
+                num_bindings = len(self.get_input_metadata())
+                for binding_index in range(num_bindings):
+                    binding_name = self.engine[binding_index]
+                    if not self.engine.get_tensor_mode(binding_name) == trt.TensorIOMode.INPUT:
+                        continue
+                    profile_shape = self.engine.get_tensor_profile_shape(name=binding_name, profile_index=profile_index)
+                    self.profiles_shapes[profile_index][binding_name] = profile_shape
+        else:
+            raise ModelNavigatorError("Engine is not initialized. This method can be used only when runner is active.")
+
+    def get_profile_shape(self, profile_index, binding_name):
+        """Get shape of the binding for the given profile."""
+        if self.profiles_shapes is None:
+            self._build_profiles_shapes_cache()
+
+        return self.profiles_shapes[profile_index][binding_name]
+
+    def _build_binding_tensor_mode(self):
+        """Build a dictionary with binding names as keys and their tensor mode as values."""
+        if self.engine is not None:
+            self.binding_tensor_mode = {}
+            num_bindings = len(self.get_input_metadata())
+
+            for binding_index in range(num_bindings):
+                binding_name = self.engine[binding_index]
+                self.binding_tensor_mode[binding_name] = self.engine.get_tensor_mode(binding_name)
+        else:
+            raise ModelNavigatorError("Engine is not initialized. This method can be used only when runner is active.")
+
+    def get_binding_tensor_mode(self, binding_name):
+        """Get tensor mode of the binding."""
+        if self.binding_tensor_mode is None:
+            self._build_binding_tensor_mode()
+
+        return self.binding_tensor_mode[binding_name]
+
+    def get_num_optimization_profiles(self):
+        """Get number of optimization profiles."""
+        if self.engine is not None:
+            if self.num_optimization_profiles is None:
+                self.num_optimization_profiles = self.engine.num_optimization_profiles
+            return self.num_optimization_profiles
+        else:
+            raise ModelNavigatorError("Engine is not initialized. This method can be used only when runner is active.")
+
+    def get_binding_name(self, binding_index):
+        """Get binding name for the given binding index."""
+        if self.engine is not None:
+            return self.engine[binding_index]
+        else:
+            raise ModelNavigatorError("Engine is not initialized. This method can be used only when runner is active.")
+
+    def find_best_profile(self, input_tensors):
+        """Finds the best optimization profile for the given input tensors."""
+        num_profiles = self.get_num_optimization_profiles()
+
+        for profile_index in range(1, num_profiles):  # skip first (default) profile
+            is_fitting_profile = True
+
+            num_bindings = len(self.get_input_metadata())
+            for binding_index in range(num_bindings):
+                binding_name = self.get_binding_name(binding_index)
+                if not self.get_binding_tensor_mode(binding_name) == trt.TensorIOMode.INPUT:
+                    continue
+
+                profile_shape = self.get_profile_shape(profile_index, binding_name)
+
+                min_shape, _, max_shape = profile_shape
+
+                tensor_shape = input_tensors[binding_name].shape
+
+                if any(
+                    tensor_dim < min_dim or tensor_dim > max_dim
+                    for tensor_dim, min_dim, max_dim in zip(tensor_shape, min_shape, max_shape)
+                ):
+                    is_fitting_profile = False
+                    break
+
+            if is_fitting_profile:
+                LOGGER.debug(f"Fitting profile found with index: {profile_index}. It will be used for inference.")
+                return profile_index
+
+        LOGGER.debug("No fitting profile found. Using default profile with index: 0")
+        return 0
+
     def activate_impl(self):
         """Implementation of activate method.
 
@@ -209,7 +304,6 @@ class TensorRTRunner(NavigatorRunner):
         """
         with cuda_utils.CudaDeviceSelector(self.device):
             engine_or_context, owning = utils.invoke_if_callable(self._engine_or_context)
-
             if isinstance(engine_or_context, trt.ICudaEngine):
                 self.engine = engine_or_context
                 self.owns_engine = owning
@@ -226,7 +320,6 @@ class TensorRTRunner(NavigatorRunner):
                 raise RuntimeError(
                     "Invalid Engine or Context. Please ensure the engine was built correctly. See error log for details."
                 )
-
             self._trt_input_metadata = self.get_input_metadata_impl()
 
             self._type_casts = {}
@@ -602,6 +695,10 @@ class TensorRTRunner(NavigatorRunner):
                 for name, dtype in self._type_casts.items():
                     if not isinstance(inputs[name], cuda_utils.DeviceView):
                         inputs[name] = trt_utils.cast_tensor(inputs[name], dtype)
+
+            if self.get_num_optimization_profiles() > 1:
+                self.optimization_profile = self.find_best_profile(inputs)
+                self.set_profile(self.optimization_profile)
 
             if trt_utils._should_use_v3_api():
                 out_dict = self._infer_impl_v3(inputs)

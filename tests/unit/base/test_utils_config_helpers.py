@@ -55,7 +55,7 @@ def test__do_run_max_batch_size_search_return_false_when_batch_dim_is_none():
     assert _do_run_max_batch_size_search(config=config, model_cfg=model_cfg) is False
 
 
-def test__do_run_max_batch_size_search_return_false_when_tensorrt_model_config_and_trt_profile_set():
+def test_do_run_max_batch_size_search_return_true_when_tensorrt_model_config_and_trt_profile_set():
     config = CommonConfig(
         framework=Framework.TORCH,
         dataloader=[{"input_name": [idx]} for idx in range(10)],
@@ -75,10 +75,10 @@ def test__do_run_max_batch_size_search_return_false_when_tensorrt_model_config_a
         optimization_level=None,
         compatibility_level=None,
     )
-    assert _do_run_max_batch_size_search(config=config, model_cfg=model_cfg) is False
+    assert _do_run_max_batch_size_search(config=config, model_cfg=model_cfg) is True
 
 
-def test__do_run_max_batch_size_search_return_false_when_tftrt_model_config_and_trt_profile_set():
+def test_do_run_max_batch_size_search_return_true_when_tftrt_model_config_and_trt_profile_set():
     config = CommonConfig(
         framework=Framework.TORCH,
         dataloader=[{"input_name": [idx]} for idx in range(10)],
@@ -96,10 +96,10 @@ def test__do_run_max_batch_size_search_return_false_when_tftrt_model_config_and_
         max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
         trt_profiles=[TensorRTProfile().add("x", (1,), (2,), (3,))],
     )
-    assert _do_run_max_batch_size_search(config=config, model_cfg=model_cfg) is False
+    assert _do_run_max_batch_size_search(config=config, model_cfg=model_cfg) is True
 
 
-def test__do_run_max_batch_size_search_return_false_when_torchtrt_model_config_and_trt_profile_set():
+def test_do_run_max_batch_size_search_return_true_when_torchtrt_model_config_and_trt_profile_set():
     config = CommonConfig(
         framework=Framework.TORCH,
         dataloader=[{"input_name": [idx]} for idx in range(10)],
@@ -117,7 +117,7 @@ def test__do_run_max_batch_size_search_return_false_when_torchtrt_model_config_a
         max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
         trt_profiles=[TensorRTProfile().add("x", (1,), (2,), (3,))],
     )
-    assert _do_run_max_batch_size_search(config=config, model_cfg=model_cfg) is False
+    assert _do_run_max_batch_size_search(config=config, model_cfg=model_cfg) is True
 
 
 def test_do_find_device_max_batch_size_return_false_when_no_cuda_device():
@@ -167,7 +167,7 @@ def test_do_find_device_max_batch_size_return_false_when_no_adaptive_formats():
     assert do_find_device_max_batch_size(config, models_config) is False
 
 
-def test_do_find_device_max_batch_size_return_false_when_no_adaptive_conversion_needed():
+def test_do_find_device_max_batch_size_return_true_when_no_adaptive_conversion_needed():
     config = CommonConfig(
         framework=Framework.TORCH,
         dataloader=[{"input_name": [idx]} for idx in range(10)],
@@ -192,4 +192,4 @@ def test_do_find_device_max_batch_size_return_false_when_no_adaptive_conversion_
         ],
     }
 
-    assert do_find_device_max_batch_size(config, models_config) is False
+    assert do_find_device_max_batch_size(config, models_config) is True

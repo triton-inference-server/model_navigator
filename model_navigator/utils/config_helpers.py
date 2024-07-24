@@ -70,4 +70,4 @@ def _do_run_max_batch_size_search(
     Returns:
         bool: True if run max batch size.
     """
-    return bool(model_cfg.trt_profiles) is False and config.batch_dim is not None
+    return config.batch_dim is not None

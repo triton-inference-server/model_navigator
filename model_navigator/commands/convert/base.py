@@ -219,10 +219,6 @@ class Convert2TensorRTWithMaxBatchSizeSearch(Command):
         device_max_batch_size: Optional[int],
     ) -> bool:
         """Validate if conversion if fallback strategy has to be ran."""
-        if custom_trt_profile_available:
-            LOGGER.info("`trt_profile` has been provided by the user.")
-            return False
-
         if batch_dim is None:
             LOGGER.info("`batch_dim` is None. Model does not support batching.")
             return False
@@ -235,5 +231,10 @@ class Convert2TensorRTWithMaxBatchSizeSearch(Command):
                 f"    device_max_batch_size: {device_max_batch_size}\n"
             )
             return False
+
+        if custom_trt_profile_available:
+            LOGGER.info(
+                "`trt_profiles` has been provided by the user. User profiles will be used together with default wide profile."
+            )
 
         return True
