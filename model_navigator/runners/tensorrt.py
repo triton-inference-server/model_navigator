@@ -16,10 +16,10 @@
 import contextlib
 import copy
 from collections import OrderedDict, defaultdict
-from distutils.version import LooseVersion
 from typing import List, Optional, Sequence
 
 import numpy as np
+from packaging.version import Version
 
 from model_navigator.configuration import Format, TensorType
 from model_navigator.configuration.validation.device import get_id_from_device_string, validate_device_string_for_cuda
@@ -68,7 +68,7 @@ class FormattedArray:
 
 
 def _make_output_allocator():
-    if LooseVersion(trt.__version__) <= LooseVersion("8.5.0.9"):
+    if Version(trt.__version__) <= Version("8.5.0.9"):
         raise ModelNavigatorUserInputError("This function should only be called in TensorRT 8.5 and newer")
 
     class OutputAllocator(trt.IOutputAllocator):

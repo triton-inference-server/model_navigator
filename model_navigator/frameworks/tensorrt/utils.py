@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,11 +18,11 @@ import logging
 import os
 import pathlib
 import signal
-from distutils.version import LooseVersion
 from typing import Callable, List, Optional, Tuple, TypeVar, Union
 
 import numpy as np
 from loguru import logger
+from packaging.version import Version
 
 from model_navigator.configuration import ShapeTuple, TensorRTProfile, TensorType
 from model_navigator.core.tensor import TensorMetadata, get_tensor_type
@@ -44,7 +44,7 @@ T = TypeVar("T")
 
 def get_version():
     """Get TensorRT version."""
-    trt_version = LooseVersion(trt.__version__)
+    trt_version = Version(trt.__version__)
     return trt_version
 
 
@@ -78,7 +78,7 @@ def cast_type(dtype: np.dtype) -> np.dtype:
 
 def _types_casts():
     try:
-        is_int64_supported = get_version() >= LooseVersion("9.0")
+        is_int64_supported = get_version() >= Version("9.0")
     except AttributeError:
         logger.warning("TensorRT not found. Using default type casts including int64 to int32.")
         is_int64_supported = False
@@ -180,7 +180,7 @@ def get_trt_profile_with_new_max_batch_size(
 
 
 def _should_use_v3_api():
-    return LooseVersion(trt.__version__) > LooseVersion("8.5.0.9")
+    return Version(trt.__version__) > Version("8.5.0.9")
 
 
 def get_bindings_per_profile(engine):
@@ -219,7 +219,7 @@ def get_trt_logger() -> "trt.Logger":
     global TRT_LOGGER
 
     logger_type = trt.Logger
-    if LooseVersion(trt.__version__) >= LooseVersion("8.0"):
+    if Version(trt.__version__) >= Version("8.0"):
 
         class CustomTrtLogger(trt.ILogger):
             def __init__(self):

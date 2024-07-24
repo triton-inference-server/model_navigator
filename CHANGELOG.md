@@ -18,12 +18,14 @@ limitations under the License.
 
 ## 0.11.0 (unreleased)
 
-- new: Python 3.12 support added
+- new: Python 3.12 support
+- new: optimized in-place module can be stored to Triton model repository
+- new: multi-profile support for TensorRT model build and runtime
 - change: filter unsupported runners instead of raising an error when running optimize
 - change: moved JAX to support to experimental module and limited support
 - change: use autocast=True for Torch based runners
 - change: use torch.inference_mode or torch.no_grad context in `nav.profile` measurements
-- new: new API, optimized module can be stored to Triton model repository
+
 
 
 ## 0.10.1

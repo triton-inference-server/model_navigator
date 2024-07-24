@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,9 +13,9 @@
 # limitations under the License.
 """Runners global registry."""
 
+import importlib.metadata
+import sys
 from typing import Dict, Optional, Type, Union
-
-import pkg_resources
 
 from model_navigator.configuration import DeviceKind
 from model_navigator.core.logger import LOGGER
@@ -26,11 +26,17 @@ runner_registry: Dict[str, Type[NavigatorRunner]] = {}
 
 def load_runners_from_entry_points():
     """Load runners from package entrypoints."""
-    for entry_point in pkg_resources.iter_entry_points("model_navigator"):
+    if sys.version_info < (3, 10):
+        entry_points = importlib.metadata.entry_points()
+        model_navigator_entry_points = entry_points.get("model_navigator", [])
+    else:
+        model_navigator_entry_points = importlib.metadata.entry_points(group="model_navigator")
+
+    for entry_point in model_navigator_entry_points:
         try:
             entry_point.load()
         except Exception as e:
-            LOGGER.warning(f"Encoutered an error when loading entry point: {entry_point}.\n" f"Error message: {e}.")
+            LOGGER.warning(f"Encountered an error when loading entry point: {entry_point}.\n" f"Error message: {e}.")
 
 
 def register_runner(runner_cls: Type[NavigatorRunner]) -> None:

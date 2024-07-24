@@ -13,10 +13,9 @@
 # limitations under the License.
 """Test for Torch API"""
 
-from distutils.version import LooseVersion
-
 import numpy as np
 import pytest
+from packaging.version import Version
 
 from model_navigator.core.tensor import PyTreeMetadata, TensorMetadata, TensorType
 from model_navigator.frameworks.tensorrt import utils as tensorrt_utils
@@ -32,7 +31,7 @@ def test_torch_tensorrt_to_torch_dtype_cast_int64():
     casted_tensor = TorchTensorRTRunner(model=None, input_metadata=None, output_metadata=None)._to_torch_tensor(
         torch_tensor, np.int64
     )
-    if tensorrt_utils.get_version() >= LooseVersion("9.0"):
+    if tensorrt_utils.get_version() >= Version("9.0"):
         assert casted_tensor.dtype == torch.int64
     else:
         assert casted_tensor.dtype == torch.int32
@@ -41,7 +40,7 @@ def test_torch_tensorrt_to_torch_dtype_cast_int64():
     casted_tensor = TorchTensorRTRunner(model=None, input_metadata=None, output_metadata=None)._to_torch_tensor(
         numpy_tensor, np.int64
     )
-    if tensorrt_utils.get_version() >= LooseVersion("9.0"):
+    if tensorrt_utils.get_version() >= Version("9.0"):
         assert casted_tensor.dtype == torch.int64
     else:
         assert casted_tensor.dtype == torch.int32

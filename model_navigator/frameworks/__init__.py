@@ -13,8 +13,9 @@
 # limitations under the License.
 """Definition of Deep Learning frameworks related constants."""
 
-from distutils.version import LooseVersion
 from enum import Enum
+
+from packaging.version import Version
 
 try:
     import jax.experimental  # pytype: disable=import-error # noqa: F401
@@ -27,16 +28,16 @@ try:
     import torch  # pytype: disable=import-error # noqa: F401
 
     _TORCH_AVAILABLE = True
-    _TORCH_VERSION = LooseVersion(torch.__version__)
+    _TORCH_VERSION = Version(torch.__version__)
 except ModuleNotFoundError:
     _TORCH_AVAILABLE = False
 
 try:
     import tensorflow  # pytype: disable=import-error
 
-    _TF_VERSION = LooseVersion(tensorflow.__version__)
+    _TF_VERSION = Version(tensorflow.__version__)
 
-    if _TF_VERSION < LooseVersion("2.0.0"):
+    if _TF_VERSION < Version("2.0.0"):
         _TF_AVAILABLE = False
     else:
         _TF_AVAILABLE = True
@@ -87,7 +88,7 @@ def is_torch2_available() -> bool:
     Returns:
         bool: True if torch2 is available.
     """
-    return _TORCH_AVAILABLE and _TORCH_VERSION >= LooseVersion("2.0.0")
+    return _TORCH_AVAILABLE and _TORCH_VERSION >= Version("2.0.0")
 
 
 def is_tf_available() -> bool:
