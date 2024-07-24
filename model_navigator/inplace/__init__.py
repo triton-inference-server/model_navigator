@@ -45,6 +45,7 @@ from model_navigator.runners.base import NavigatorRunner
 from model_navigator.runners.registry import runner_registry
 from model_navigator.utils.module import lazy_import
 
+from ..frameworks import is_torch2_available
 from ..utils.environment import get_env
 from .profiling import ProfilingResults, RunnerProfilingResults, RunnerResults, run_measurement
 from .registry import module_registry
@@ -141,6 +142,11 @@ def profile(
 
     modelkeys_runners = [("python", "eager")] + list(modelkeys_runners)
 
+    if is_torch2_available():
+        inference_context = torch.inference_mode
+    else:
+        inference_context = torch.no_grad
+
     profiling_results = ProfilingResults()
     for model_key, runner_name in modelkeys_runners:
         LOGGER.info(pad_string(f"Profiling of {model_key} and {runner_name}"))
@@ -151,17 +157,18 @@ def profile(
             prev_result = None
             for sample_id, input_ in enumerate(dataloader):
                 with NvmlHandler() as nvml_handler:
-                    LOGGER.info(f"Profiling {runner_name} on sample id: {sample_id}")
-                    profiling_result = run_measurement(
-                        func=func,
-                        sample=input_,
-                        nvml_handler=nvml_handler,
-                        min_trials=min_trials,
-                        max_trials=max_trials,
-                        stabilization_windows=stabilization_windows,
-                        window_size=window_size,
-                        stability_percentage=stability_percentage,
-                    )
+                    with inference_context():
+                        LOGGER.info(f"Profiling {runner_name} on sample id: {sample_id}")
+                        profiling_result = run_measurement(
+                            func=func,
+                            sample=input_,
+                            nvml_handler=nvml_handler,
+                            min_trials=min_trials,
+                            max_trials=max_trials,
+                            stabilization_windows=stabilization_windows,
+                            window_size=window_size,
+                            stability_percentage=stability_percentage,
+                        )
 
                     LOGGER.info(
                         f"Performance profiling result for {runner_name} "
