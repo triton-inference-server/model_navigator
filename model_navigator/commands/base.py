@@ -41,6 +41,7 @@ class CommandOutput(DataObject):
 
     status: CommandStatus
     output: Optional[Dict[str, Any]] = None
+    execution_time: Optional[float] = None
 
     @classmethod
     def from_dict(cls, data_dict: Dict) -> "CommandOutput":
@@ -52,7 +53,11 @@ class CommandOutput(DataObject):
         Returns:
             CommandOutput
         """
-        return cls(status=CommandStatus(data_dict["status"]), output=data_dict["output"])
+        return cls(
+            status=CommandStatus(data_dict["status"]),
+            output=data_dict["output"],
+            execution_time=data_dict.get("execution_time"),
+        )
 
 
 class CommandMeta(abc.ABCMeta):  # noqa: B024

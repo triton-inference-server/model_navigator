@@ -14,6 +14,7 @@
 """Definition of Pipeline module - Direct Acyclic Graph (DAG) of commands execution."""
 
 import contextlib
+import time
 import traceback
 from typing import List
 
@@ -99,6 +100,7 @@ class Pipeline:
 
         with LoggingContext(log_dir=log_dir), redirect_stdout_context:
             LOGGER.info(pad_string(f"Command {execution_unit.command.name!r} started"))
+            start_time = time.perf_counter()
             try:
                 context.validate_execution(execution_unit=execution_unit)
                 input_parameters = context.command_args(
@@ -127,6 +129,8 @@ class Pipeline:
                 command_output = CommandOutput(status=CommandStatus.FAIL)
                 error = traceback.format_exc()
                 LOGGER.error(f"Command finished with unexpected error: {error}")
+            end_time = time.perf_counter()
+            command_output.execution_time = end_time - start_time
 
             if command_output.status != CommandStatus.OK and execution_unit.command.is_required():
                 raise ModelNavigatorRuntimeError(
