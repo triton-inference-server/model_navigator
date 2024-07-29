@@ -16,9 +16,6 @@
 from unittest.mock import MagicMock, patch
 
 from model_navigator.runners.tensorrt import TensorRTRunner
-from model_navigator.utils import module
-
-trt = module.lazy_import("tensorrt")
 
 
 def test_find_best_profile_for_single_input_return_idx_1():
@@ -37,7 +34,7 @@ def test_find_best_profile_for_single_input_return_idx_1():
         __del__=MagicMock(return_value=None),
         get_num_optimization_profiles=lambda x: 4,
         get_input_metadata=lambda s: [1],
-        get_binding_tensor_mode=lambda s, name: trt.TensorIOMode.INPUT,
+        is_binding_input=lambda s, name: True,
         get_binding_name=lambda s, idx: "input__0",
         get_profile_shape=lambda s, idx, name: shapes[idx][name],
     ):
@@ -63,7 +60,7 @@ def test_find_best_profile_for_single_input_return_idx_2():
         __del__=MagicMock(return_value=None),
         get_num_optimization_profiles=lambda x: 4,
         get_input_metadata=lambda s: [1],
-        get_binding_tensor_mode=lambda s, name: trt.TensorIOMode.INPUT,
+        is_binding_input=lambda s, name: True,
         get_binding_name=lambda s, idx: "input__0",
         get_profile_shape=lambda s, idx, name: shapes[idx][name],
     ):
@@ -89,7 +86,7 @@ def test_find_best_profile_for_single_input_return_default_profile_with_idx_0():
         __del__=MagicMock(return_value=None),
         get_num_optimization_profiles=lambda x: 4,
         get_input_metadata=lambda s: [1],
-        get_binding_tensor_mode=lambda s, name: trt.TensorIOMode.INPUT,
+        is_binding_input=lambda s, name: True,
         get_binding_name=lambda s, idx: "input__0",
         get_profile_shape=lambda s, idx, name: shapes[idx][name],
     ):

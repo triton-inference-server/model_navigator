@@ -248,6 +248,10 @@ class TensorRTRunner(NavigatorRunner):
 
         return self.binding_tensor_mode[binding_name]
 
+    def is_binding_input(self, binding_name):
+        """Check if the binding is an input."""
+        return self.get_binding_tensor_mode(binding_name) == trt.TensorIOMode.INPUT
+
     def get_num_optimization_profiles(self):
         """Get number of optimization profiles."""
         if self.engine is not None:
@@ -274,7 +278,7 @@ class TensorRTRunner(NavigatorRunner):
             num_bindings = len(self.get_input_metadata())
             for binding_index in range(num_bindings):
                 binding_name = self.get_binding_name(binding_index)
-                if not self.get_binding_tensor_mode(binding_name) == trt.TensorIOMode.INPUT:
+                if not self.is_binding_input(binding_name):
                     continue
 
                 profile_shape = self.get_profile_shape(profile_index, binding_name)
