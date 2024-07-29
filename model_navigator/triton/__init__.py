@@ -1,4 +1,4 @@
-# Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,12 +17,16 @@ from model_navigator.triton import model_repository  # noqa: F401
 from model_navigator.triton.specialized_configs import (  # noqa: F401
     AutoMixedPrecisionAccelerator,
     BaseSpecializedModelConfig,
+    BatchingStrategy,
+    BatchSchedulerPolicy,
+    DecodingMode,
     DeviceKind,
     DynamicBatcher,
     GPUIOAccelerator,
     InputTensorFormat,
     InputTensorSpec,
     InstanceGroup,
+    KVCacheConfig,
     ModelWarmup,
     ModelWarmupInput,
     ModelWarmupInputDataType,
@@ -30,6 +34,7 @@ from model_navigator.triton.specialized_configs import (  # noqa: F401
     ONNXOptimization,
     OpenVINOAccelerator,
     OutputTensorSpec,
+    PeftCacheConfig,
     Platform,
     PythonModelConfig,
     PyTorchModelConfig,
@@ -45,6 +50,7 @@ from model_navigator.triton.specialized_configs import (  # noqa: F401
     TensorFlowModelConfig,
     TensorFlowOptimization,
     TensorRTAccelerator,
+    TensorRTLLMModelConfig,
     TensorRTModelConfig,
     TensorRTOptimization,
     TensorRTOptPrecision,

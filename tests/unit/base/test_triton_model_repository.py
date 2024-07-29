@@ -28,7 +28,7 @@ from model_navigator.exceptions import (
 )
 from model_navigator.runtime_analyzer import RuntimeAnalyzer
 from model_navigator.runtime_analyzer.analyzer import RuntimeAnalyzerResult
-from model_navigator.triton import model_repository
+from model_navigator.triton import TensorRTLLMModelConfig, model_repository
 from model_navigator.triton.model_config import ModelConfig
 from model_navigator.triton.model_repository import (
     _input_tensor_from_metadata,
@@ -479,6 +479,30 @@ def test_add_model_create_catalog_in_repository_when_tensorrt_model_passed_and_d
 
         assert (model_repository_path / "TestModel" / "config.pbtxt").exists()
         assert (model_repository_path / "TestModel" / "1" / "mymodel.plan").exists()
+
+
+def test_add_model_create_catalog_in_repository_when_tensorrt_llm_model_passed():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir = pathlib.Path(tmpdir)
+        model_repository_path = tmpdir / "model-repository"
+        model_repository_path.mkdir()
+
+        model_path = tmpdir / "model"
+        model_path.mkdir()
+
+        config = TensorRTLLMModelConfig()
+
+        add_model(
+            model_repository_path=model_repository_path,
+            model_name="TestModel",
+            model_version=1,
+            model_path=model_path,
+            config=config,
+        )
+
+        assert config.engine_dir == model_repository_path / "TestModel" / "1" / "model"
+        assert (model_repository_path / "TestModel" / "config.pbtxt").exists()
+        assert (model_repository_path / "TestModel" / "1" / "model").exists()
 
 
 def test_add_model_create_catalog_in_repository_when_string_path_passed():

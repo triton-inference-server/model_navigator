@@ -1,4 +1,4 @@
-# Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ from .specialized_configs import (
     PythonModelConfig,
     PyTorchModelConfig,
     TensorFlowModelConfig,
+    TensorRTLLMModelConfig,
     TensorRTModelConfig,
 )
 
@@ -142,11 +143,43 @@ class ModelConfigBuilder:
         return model_config
 
     @classmethod
+    def from_tensorrt_llm_config(
+        cls, model_name: str, model_version: int, tensorrt_llm_config: TensorRTLLMModelConfig
+    ) -> ModelConfig:
+        """Create generic ModelConfig from specialized TensorRT-LLM config.
+
+        Args:
+            model_name: Name under which model is deployed
+            model_version: Version of model that is deployed
+            tensorrt_llm_config: Configuration of selected model type
+
+        Returns:
+            Generic ModelConfig object
+        """
+        data = cls._get_common_data(tensorrt_llm_config)
+        model_config = ModelConfig(
+            model_name=model_name,
+            model_version=model_version,
+            backend=tensorrt_llm_config.backend,
+            **data,
+        )
+        return model_config
+
+    @classmethod
     def _get_common_data(
         cls,
         config: Union[
-            ONNXModelConfig, PythonModelConfig, PyTorchModelConfig, TensorFlowModelConfig, TensorRTModelConfig
+            ONNXModelConfig,
+            PythonModelConfig,
+            PyTorchModelConfig,
+            TensorFlowModelConfig,
+            TensorRTModelConfig,
+            TensorRTLLMModelConfig,
         ],
     ) -> Dict:
-        data = {field.name: getattr(config, field.name) for field in dataclasses.fields(config)}
+        data = {
+            field.name: getattr(config, field.name)
+            for field in dataclasses.fields(config)
+            if field.name not in config.custom_fields
+        }
         return data

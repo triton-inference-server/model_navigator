@@ -1,4 +1,4 @@
-# Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,4 +18,5 @@ from .onnx_model_config import *  # noqa: F401, F403
 from .python_model_config import *  # noqa: F401, F403
 from .pytorch_model_config import *  # noqa: F401, F403
 from .tensorflow_model_config import *  # noqa: F401, F403
+from .tensorrt_llm_model_config import *  # noqa: F401, F403
 from .tensorrt_model_config import *  # noqa: F401, F403

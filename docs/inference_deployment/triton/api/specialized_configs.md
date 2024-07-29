@@ -33,3 +33,10 @@ available options for the given type of model.
 
 ::: model_navigator.triton.TensorRTModelConfig
 ::: model_navigator.triton.TensorRTOptimization
+
+::: model_navigator.triton.TensorRTLLMModelConfig
+::: model_navigator.triton.BatchingStrategy
+::: model_navigator.triton.BatchSchedulerPolicy
+::: model_navigator.triton.DecodingMode
+::: model_navigator.triton.KVCacheConfig
+::: model_navigator.triton.PeftCacheConfig

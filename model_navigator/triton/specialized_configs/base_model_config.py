@@ -1,4 +1,4 @@
-# Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -52,6 +52,8 @@ class BaseSpecializedModelConfig(abc.ABC):
     inputs: Sequence[InputTensorSpec] = dataclasses.field(default_factory=lambda: [])
     outputs: Sequence[OutputTensorSpec] = dataclasses.field(default_factory=lambda: [])
 
+    _CUSTOM_FIELDS = []
+
     def __post_init__(self) -> None:
         """Validate the configuration for early error handling."""
         if self.batching and self.max_batch_size <= 0:
@@ -70,3 +72,8 @@ class BaseSpecializedModelConfig(abc.ABC):
     def backend(self) -> Backend:
         """Backend property that has to be overridden by specialized configs."""
         raise NotImplementedError()
+
+    @property
+    def custom_fields(self) -> List[str]:
+        """Custom fields that are configured as parameters."""
+        return self._CUSTOM_FIELDS

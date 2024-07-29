@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,9 +20,9 @@ from packaging.version import Version
 try:
     import jax.experimental  # pytype: disable=import-error # noqa: F401
 
-    _JAX_AVILABLE = True
+    _JAX_AVAILABLE = True
 except ModuleNotFoundError:
-    _JAX_AVILABLE = False
+    _JAX_AVAILABLE = False
 
 try:
     import torch  # pytype: disable=import-error # noqa: F401
@@ -106,7 +106,7 @@ def is_jax_available() -> bool:
     Returns:
         bool: True if JAX is available.
     """
-    return _JAX_AVILABLE
+    return _JAX_AVAILABLE
 
 
 def is_trt_available() -> bool:

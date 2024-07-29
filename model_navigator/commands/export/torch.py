@@ -75,7 +75,7 @@ class ExportTorch2TorchScript(Command):
         Returns:
             CommandOutput object with status
         """
-        LOGGER.info("TorchScrip export started")
+        LOGGER.info("TorchScript export started")
 
         exported_model_path = workspace.path / path
         if exported_model_path.is_file() or exported_model_path.is_dir():

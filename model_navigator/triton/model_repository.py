@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -80,6 +80,7 @@ from model_navigator.triton.specialized_configs import (
     SequenceBatcher,
     TensorFlowModelConfig,
     TensorRTAccelerator,
+    TensorRTLLMModelConfig,
     TensorRTModelConfig,
 )
 
@@ -89,11 +90,13 @@ BACKEND2SUFFIX = {
     Backend.PyTorch: ".pt",
     Backend.TensorFlow: ".savedmodel",
     Backend.TensorRT: ".plan",
+    Backend.TensorRTLLM: "",
 }
 
 BACKEND2CATALOGBASEDMODEL = {
     Backend.PyTorch: True,
     Backend.TensorFlow: True,
+    Backend.TensorRTLLM: True,
 }
 
 TRITON_FORMATS = (
@@ -129,6 +132,7 @@ def add_model(
         PyTorchModelConfig,
         PythonModelConfig,
         TensorFlowModelConfig,
+        TensorRTLLMModelConfig,
     ],
     model_version: int = 1,
 ) -> pathlib.Path:
@@ -141,6 +145,7 @@ def add_model(
     - TorchScript or Torch-TensorRT models requires PyTorchModelConfig
     - TensorFlow SavedModel or TensorFlow-TensorRT models requires TensorFlowModelConfig
     - Python model requires PythonModelConfig
+    - TensorRT-LLM model requires TensorRTLLMModelConfig
 
     Args:
         model_repository_path: Path where deployment should be created
@@ -182,13 +187,41 @@ def add_model(
             model_version=model_version,
             tensorrt_config=config,
         )
+    elif isinstance(config, TensorRTLLMModelConfig):
+        model_config = ModelConfigBuilder.from_tensorrt_llm_config(
+            model_name=model_name,
+            model_version=model_version,
+            tensorrt_llm_config=config,
+        )
     else:
         raise ModelNavigatorWrongParameterError(f"Unsupported model config provided: {config.__class__}")
+
+    model_repository_path = pathlib.Path(model_repository_path)
+
+    # Collect model filename if default not provided
+    backend = model_config.backend or model_config.platform
+    model_filename = model_config.default_model_filename or _get_default_filename(backend=backend)
+
+    # Path to model version catalog
+    model_version_path = _get_version_path(
+        model_repository_path=model_repository_path,
+        model_name=model_config.model_name,
+        version=model_config.model_version,
+    )
+
+    if isinstance(config, TensorRTLLMModelConfig):
+        config.engine_dir = model_version_path / model_filename
 
     initial_state_files = _collect_initial_state_files(model_config=model_config)
     warmup_files = _collect_warmup_files(model_config=model_config)
 
-    triton_model_repository = _TritonModelRepository(model_repository_path=pathlib.Path(model_repository_path))
+    triton_model_repository = _TritonModelRepository(
+        model_repository_path=model_repository_path,
+        model_name=model_name,
+        model_version=model_version,
+        model_filename=model_filename,
+    )
+
     return triton_model_repository.deploy_model(
         model_path=pathlib.Path(model_path),
         model_config=model_config,
@@ -325,6 +358,15 @@ def add_model_from_package(
     )
 
 
+def _get_default_filename(*, backend: Backend):
+    suffix = BACKEND2SUFFIX[backend]
+    return f"model{suffix}"
+
+
+def _get_version_path(*, model_repository_path: pathlib.Path, model_name: str, version: int) -> pathlib.Path:
+    return model_repository_path / model_name / str(version)
+
+
 def _collect_warmup_files(model_config: ModelConfig):
     warmup_files = []
     for warmup in model_config.warmup.values():
@@ -349,9 +391,16 @@ def _collect_initial_state_files(model_config: ModelConfig):
 class _TritonModelRepository:
     """Class for deploying models inside the Triton Model Store."""
 
-    def __init__(self, model_repository_path: pathlib.Path):
+    def __init__(self, model_repository_path: pathlib.Path, model_name: str, model_version: int, model_filename: str):
         """Initialize model repository object."""
         self._model_repository_path = model_repository_path
+        self._model_name = model_name
+        self._model_version = model_version
+        self._model_filename = model_filename
+
+        self._model_version_path = _get_version_path(
+            model_repository_path=model_repository_path, model_name=model_name, version=model_version
+        )
 
     def deploy_model(
         self,
@@ -378,28 +427,19 @@ class _TritonModelRepository:
         )
         # Collect model filename if default not provided
         backend = model_config.backend or model_config.platform
-        model_filename = model_config.default_model_filename or self._get_default_filename(backend=backend)
-
-        # Path to model version catalog
-        model_version_path = self._get_version_path(
-            model_name=model_config.model_name, version=model_config.model_version
-        )
 
         # Order of model repository files might be important while using Triton server in polling model_control_mode
         if model_path.is_file() or self._allow_model_catalog(backend=backend):
             self._copy_model_file(
                 model_path=model_path,
-                model_version_path=model_version_path,
-                model_filename=model_filename,
             )
         else:
             self._copy_model_catalog(
                 model_path=model_path,
-                model_version_path=model_version_path,
             )
 
         # remove model filename and model version
-        model_store_dir = model_version_path.parent
+        model_store_dir = self._model_version_path.parent
 
         self._copy_initial_state_files(
             model_store_dir=model_store_dir,
@@ -422,12 +462,10 @@ class _TritonModelRepository:
         self,
         *,
         model_path: pathlib.Path,
-        model_version_path: pathlib.Path,
-        model_filename: str,
     ):
-        logger.debug(f"Creating version directory {model_version_path}")
-        model_version_path.mkdir(exist_ok=True, parents=True)
-        dst_path = model_version_path / model_filename
+        logger.debug(f"Creating version directory {self._model_version_path}")
+        self._model_version_path.mkdir(exist_ok=True, parents=True)
+        dst_path = self._model_version_path / self._model_filename
         logger.debug(f"Copying {model_path} file to {dst_path}")
         if model_path.is_file():
             shutil.copy(model_path, dst_path)
@@ -444,18 +482,17 @@ class _TritonModelRepository:
         self,
         *,
         model_path: pathlib.Path,
-        model_version_path: pathlib.Path,
     ):
-        logger.debug(f"Creating model directory {model_version_path.parent}")
-        model_version_path.parent.mkdir(exist_ok=True, parents=True)
-        logger.debug(f"Copying {model_path} file to {model_version_path}")
+        logger.debug(f"Creating model directory {self._model_version_path.parent}")
+        self._model_version_path.parent.mkdir(exist_ok=True, parents=True)
+        logger.debug(f"Copying {model_path} file to {self._model_version_path}")
         try:
-            shutil.copytree(model_path, model_version_path)
+            shutil.copytree(model_path, self._model_version_path)
         except shutil.Error:
             # due to error as reported on https://bugs.python.org/issue43743
             shutil._USE_CP_SENDFILE = False
-            shutil.rmtree(model_version_path)
-            shutil.copytree(model_path, model_version_path)
+            shutil.rmtree(self._model_version_path)
+            shutil.copytree(model_path, self._model_version_path)
 
     def _copy_initial_state_files(self, model_store_dir: pathlib.Path, initial_state_files: List[pathlib.Path]):
         if not initial_state_files:
@@ -478,13 +515,6 @@ class _TritonModelRepository:
         for warmup_file in warmup_files:
             warmup_file_repository_path = warmup_repository_dir / warmup_file.name
             shutil.copy(warmup_file, warmup_file_repository_path)
-
-    def _get_version_path(self, *, model_name: str, version: int) -> pathlib.Path:
-        return self._model_repository_path / model_name / str(version)
-
-    def _get_default_filename(self, *, backend: Backend):
-        suffix = BACKEND2SUFFIX[backend]
-        return f"model{suffix}"
 
     def _allow_model_catalog(self, *, backend: Backend):
         return BACKEND2CATALOGBASEDMODEL.get(backend, False)

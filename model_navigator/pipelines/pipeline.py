@@ -103,32 +103,38 @@ class Pipeline:
             start_time = time.perf_counter()
             try:
                 context.validate_execution(execution_unit=execution_unit)
-                input_parameters = context.command_args(
-                    workspace=workspace,
-                    config=config,
-                    execution_unit=execution_unit,
-                )
-                command_output = execution_unit.command().run(**input_parameters)  # pytype: disable=not-instantiable
-            except ModelNavigatorUserInputError as e:
-                command_output = CommandOutput(status=CommandStatus.FAIL)
+                try:
+                    LOGGER.info(pad_string(f"Command {execution_unit.command.name!r} started"))
+                    input_parameters = context.command_args(
+                        workspace=workspace,
+                        config=config,
+                        execution_unit=execution_unit,
+                    )
+                    command_output = execution_unit.command().run(
+                        **input_parameters
+                    )  # pytype: disable=not-instantiable
+                except ModelNavigatorUserInputError as e:
+                    command_output = CommandOutput(status=CommandStatus.FAIL)
 
-                if config.verbose and e.__context__:
-                    LOGGER.info(e.__context__)
+                    if config.verbose and e.__context__:
+                        LOGGER.info(e.__context__)
 
-                error = traceback.format_exc()
-                LOGGER.warning(
-                    "Command finished with ModelNavigatorUserInputError. "
-                    "The error is considered as external error. Usually caused by "
-                    "incompatibilities between the model and the target formats and/or runtimes. "
-                    "Please review the command output.\n"
-                    f"{error}"
-                )
+                    error = traceback.format_exc()
+                    LOGGER.warning(
+                        "Command finished with ModelNavigatorUserInputError. "
+                        "The error is considered as external error. Usually caused by "
+                        "incompatibilities between the model and the target formats and/or runtimes. "
+                        "Please review the command output.\n"
+                        f"{error}"
+                    )
+
+                except Exception:
+                    command_output = CommandOutput(status=CommandStatus.FAIL)
+                    error = traceback.format_exc()
+                    LOGGER.error(f"Command finished with unexpected error: {error}")
             except ModelNavigatorCommandNotExecutable:
                 command_output = CommandOutput(status=CommandStatus.SKIPPED)
-            except Exception:
-                command_output = CommandOutput(status=CommandStatus.FAIL)
-                error = traceback.format_exc()
-                LOGGER.error(f"Command finished with unexpected error: {error}")
+
             end_time = time.perf_counter()
             command_output.execution_time = end_time - start_time
 

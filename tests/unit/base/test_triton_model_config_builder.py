@@ -1,4 +1,4 @@
-# Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 # limitations under the License.
 import numpy as np
 
+from model_navigator.triton import TensorRTLLMModelConfig
 from model_navigator.triton.model_config_builder import ModelConfigBuilder
 from model_navigator.triton.specialized_configs import (
     AutoMixedPrecisionAccelerator,
@@ -118,3 +119,22 @@ def test_from_tensorrt_config_return_model_config_when_valid_data_passed():
     assert model_config.model_version == 1
     assert model_config.backend == Backend.TensorRT
     assert isinstance(model_config.optimization, TensorRTOptimization)
+
+
+def test_from_tensorrt_llm_config_return_model_config_when_valid_data_passed():
+    model_config = ModelConfigBuilder.from_tensorrt_llm_config(
+        model_name="TensorRTLLMModel",
+        model_version=1,
+        tensorrt_llm_config=TensorRTLLMModelConfig(),
+    )
+
+    assert model_config.model_name == "TensorRTLLMModel"
+    assert model_config.model_version == 1
+    assert model_config.backend == Backend.TensorRTLLM
+    assert model_config.parameters["gpt_model_type"] == "inflight_batching"
+    assert model_config.parameters["gpt_model_path"] is None
+    assert model_config.parameters["batch_scheduler_policy"] == "max_utilization"
+    assert model_config.parameters["FORCE_CPU_ONLY_INPUT_TENSORS"] == "no"
+    assert (
+        model_config.parameters["executor_worker_path"] == "/opt/tritonserver/backends/tensorrtllm/trtllmExecutorWorker"
+    )
