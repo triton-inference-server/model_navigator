@@ -90,10 +90,12 @@ def get_dataloader():
 Execute model optimization:
 
 ```python
-pipe = get_pipeline()
-dataloader = get_dataloader()
+if __name__ == "__main__":
+    # run optimization in the parent process only
+    pipe = get_pipeline()
+    dataloader = get_dataloader()
 
-nav.optimize(pipe, dataloader)
+    nav.optimize(pipe, dataloader)
 ```
 
 Once the pipeline has been optimized, you can load explicit the most performant version of the modules executing:
@@ -134,10 +136,12 @@ Here is an example of running `optimize` on the Torch Hub ResNet50 model:
 import torch
 import model_navigator as nav
 
-package = nav.torch.optimize(
-    model=torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_resnet50', pretrained=True).eval(),
-    dataloader=[torch.randn(1, 3, 256, 256) for _ in range(10)],
-)
+if __name__ == "__main__":
+    # run optimization in the parent process only
+    package = nav.torch.optimize(
+        model=torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_resnet50', pretrained=True).eval(),
+        dataloader=[torch.randn(1, 3, 256, 256) for _ in range(10)],
+    )
 ```
 
 Once the model has been optimized, the created artifacts are stored in `navigator_workspace` and a Package object is

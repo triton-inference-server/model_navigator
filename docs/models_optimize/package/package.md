@@ -81,9 +81,11 @@ The optimization from the package can be run using:
 ```python
 import model_navigator as nav
 
-optimized_package = nav.package.optimize(
-    package=package
-)
+if __name__ == "__main__":
+    # run optimization in the parent process only
+    optimized_package = nav.package.optimize(
+        package=package
+    )
 ```
 
 At the end of the process, the new optimized models are generated. Please be aware, the workspace is overridden in this step.

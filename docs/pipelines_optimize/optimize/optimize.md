@@ -87,11 +87,15 @@ def get_dataloader():
 Execute model optimization:
 
 ```python
-pipe = get_pipeline()
-dataloader = get_dataloader()
+if __name__ == "__main__":
+    # run optimization in the parent process only
+    pipe = get_pipeline()
+    dataloader = get_dataloader()
 
-nav.optimize(pipe, dataloader)
+    nav.optimize(pipe, dataloader)
 ```
+
+
 
 Review all possible options in the [optimize API](api/optimize.md).
 
@@ -109,6 +113,7 @@ Model Navigator will try by default export `text_encoder` and `vae.decoder` into
 the `unet` will be exported into `int8`.
 
 ```python
+if __name__ == "__main__":
     pipe = StableDiffusionPipeline.from_pretrained("stabilityai/stable-diffusion-2-1",
                                                             torch_dtype=torch.float16,
                                                             variant="fp16").to("cuda")
@@ -133,7 +138,9 @@ the `unet` will be exported into `int8`.
 
 If you would like to have more granular control over the configuration you can either create it for the whole pipeline i.e.
 ```python
-nav.optimize(model, dataloader, config=config)
+if __name__ == "__main__":
+    # run optimization in the parent process only
+    nav.optimize(model, dataloader, config=config)
 ```
 or specify it for [each module](#per-module-configuration).
 
@@ -158,9 +165,10 @@ Finally, wrap the model and run optimize:
 ```python
 import model_navigator as nav
 
-resnet18 = nav.Module(resnet18, name="resnet18")
-
-nav.optimize(resnet18, dataloader)
+if __name__ == "__main__":
+    # run optimization in the parent process only
+    resnet18 = nav.Module(resnet18, name="resnet18")
+    nav.optimize(resnet18, dataloader)
 ```
 
 ## Loading optimized modules
@@ -187,31 +195,33 @@ found [here](https://github.com/triton-inference-server/pytriton/tree/main/examp
 
 ```python
 
-pipe = nemo_asr.models.EncDecCTCModelBPE.from_pretrained("nvidia/parakeet-ctc-0.6b")
+if __name__ == "__main__":
+    # run optimization in the parent process only
+    pipe = nemo_asr.models.EncDecCTCModelBPE.from_pretrained("nvidia/parakeet-ctc-0.6b")
 
-pipe.encoder = nav.Module(pipe.encoder, name="encoder")
-pipe.encoder.optimize_config = nav.OptimizeConfig(
-    target_formats=(
-        nav.Format.TENSORRT,
-    ),
-    runners=(
-        "TensorRT",
+    pipe.encoder = nav.Module(pipe.encoder, name="encoder")
+    pipe.encoder.optimize_config = nav.OptimizeConfig(
+        target_formats=(
+            nav.Format.TENSORRT,
+        ),
+        runners=(
+            "TensorRT",
+        )
     )
-)
 
-pipe.decoder = nav.Module(pipe.decoder, name="decoder")
-pipe.decoder.optimize_config = nav.OptimizeConfig(
-    target_formats=(
-        nav.Format.TENSORRT,
-        nav.Format.ONNX,
-    ),
-    runners=(
-        "TensorRT",
-        "OnnxCUDA", # try also other runner
+    pipe.decoder = nav.Module(pipe.decoder, name="decoder")
+    pipe.decoder.optimize_config = nav.OptimizeConfig(
+        target_formats=(
+            nav.Format.TENSORRT,
+            nav.Format.ONNX,
+        ),
+        runners=(
+            "TensorRT",
+            "OnnxCUDA", # try also other runner
+        )
     )
-)
 
-nav.optimize(pipe, dataloader)
+    nav.optimize(pipe, dataloader)
 ```
 
 ## Model custom forwarding function
@@ -250,10 +260,30 @@ class SentenceTransformer(nn.Module):
     def preprocessing(self, x):
         return x + 1
 
-# wrapping the module for optimization, with non-standard forward function
-pipe = nav.Module(SentenceTransformer(), name="transformer", forward_func="forward")
+if __name__ == "__main__":
+    # run optimization in the parent process only
+    # wrapping the module for optimization, with non-standard forward function
+    pipe = nav.Module(SentenceTransformer(), name="transformer", forward_func="forward")
 
-# we want to use the encode function as it contains preprocessing step and maybe other important steps
-nav.optimize(pipe.encode, dataloader, config)
+    # we want to use the encode function as it contains preprocessing step and maybe other important steps
+    nav.optimize(pipe.encode, dataloader, config)
 
+```
+
+## Error isolation
+For better error isolation, some conversions and exports are run in separate child processes using multiprocessing in the `spawn`  mode.
+This means that everything in a global scope will be run in a child process. To prevent nested optimization, you have to either put the code in:
+```python
+if __name__ == "__main__":
+    # optimization goes here
+```
+or
+```python
+import multiprocessing as mp
+if mp.current_process().name == "MainProcess":
+    # optimization goes here
+```
+If none of the above works for you, you can run all optimization in a single process at the cost of error isolation by setting the following environment variable:
+```bash
+NAVIGATOR_USE_MULTIPROCESSING=False
 ```

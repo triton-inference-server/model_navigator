@@ -146,12 +146,13 @@ def get_dataloader():
 Execute model optimization:
 
 ```python
-pipe = get_pipeline()
-dataloader = get_dataloader()
+if __name__ == "__main__":
+    # run optimization in the parent process only
+    pipe = get_pipeline()
+    dataloader = get_dataloader()
 
-nav.optimize(pipe, dataloader)
+    nav.optimize(pipe, dataloader)
 ```
-
 Once the pipeline has been optimized, you can load explicit the most performant version of the modules executing:
 
 ```python
@@ -170,6 +171,24 @@ image.save("an_astronaut_riding_a_horse.png")
 
 An example of how to serve a Stable Diffusion pipeline through PyTriton can be found [here](https://github.com/triton-inference-server/pytriton/tree/main/examples/huggingface_stable_diffusion).
 
+#### Error isolation
+For better error isolation, some conversions and exports are run in separate child processes using multiprocessing in the `spawn`  mode.
+This means that everything in a global scope will be run in a child process. To prevent nested optimization, you have to either put the code in:
+```python
+if __name__ == "__main__":
+    # optimization goes here
+```
+or
+```python
+import multiprocessing as mp
+if mp.current_process().name == "MainProcess":
+    # optimization goes here
+```
+If none of the above works for you, you can run all optimization in a single process at the cost of error isolation by setting the following environment variable:
+```bash
+NAVIGATOR_USE_MULTIPROCESSING=False
+```
+
 ### Optimize ResNET and deploy on Triton
 
 Triton Model Navigator support also optimization path for deployment on Triton. This path is supported for nn.Module,
@@ -182,10 +201,12 @@ import torch
 import model_navigator as nav
 
 # Optimize Torch model loaded from TorchHub
-package = nav.torch.optimize(
-    model=torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_resnet50', pretrained=True).eval(),
-    dataloader=[torch.randn(1, 3, 256, 256) for _ in range(10)],
-)
+if __name__ == "__main__":
+    # run optimization in the parent process only
+    package = nav.torch.optimize(
+        model=torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_resnet50', pretrained=True).eval(),
+        dataloader=[torch.randn(1, 3, 256, 256) for _ in range(10)],
+    )
 ```
 
 Once optimization is done, creating a model store for deployment on Triton is simple as following code:
