@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ def main():
     This can be achieved by passing a `return_type` parameter to the `get_runner` method.
     Here we compare the runtime of the default runner and the runner that returns CUDA tensors when running inference in a loop.
     """
-    numpy_runner = package.get_runner(strategy=nav.MinLatencyStrategy())
+    numpy_runner = package.get_runner()
     numpy_feed_dict = {"input__0": dataloader[0].cpu().detach().numpy()}
     start_time = time.monotonic()
     with numpy_runner:
@@ -62,7 +62,7 @@ def main():
             numpy_feed_dict = {"input__0": out["output__0"]}
     numpy_runtime = time.monotonic() - start_time
 
-    torch_runner = package.get_runner(strategy=nav.MinLatencyStrategy(), return_type=nav.TensorType.TORCH)
+    torch_runner = package.get_runner(return_type=nav.TensorType.TORCH)
     torch_feed_dict = {"input__0": dataloader[0].cuda()}
     start_time = time.monotonic()
     with torch_runner:

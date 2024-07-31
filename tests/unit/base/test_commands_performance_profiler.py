@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ def test_batch_size_is_set_correctly_when_no_max_or_batch_sizes_passed():
     optimization_profile = OptimizationProfile()
     profiler = Profiler(
         profile=optimization_profile,
+        input_metadata=MagicMock(),
         results_path=MagicMock(),
     )
 
@@ -36,6 +37,7 @@ def test_batch_size_is_set_correctly_when_unsorted_batch_sizes_passed():
     optimization_profile = OptimizationProfile(batch_sizes=[1, 16, 4, 8])
     profiler = Profiler(
         profile=optimization_profile,
+        input_metadata=MagicMock(),
         results_path=MagicMock(),
     )
 
@@ -46,6 +48,7 @@ def test_batch_size_is_set_correctly_when_sorted_batch_sizes_passed():
     optimization_profile = OptimizationProfile(batch_sizes=[1, 4, 16])
     profiler = Profiler(
         profile=optimization_profile,
+        input_metadata=MagicMock(),
         results_path=MagicMock(),
     )
 
@@ -56,6 +59,7 @@ def test_batch_size_is_set_correctly_when_max_batch_size_passed():
     optimization_profile = OptimizationProfile(max_batch_size=1)
     profiler = Profiler(
         profile=optimization_profile,
+        input_metadata=MagicMock(),
         results_path=MagicMock(),
     )
 
@@ -64,6 +68,7 @@ def test_batch_size_is_set_correctly_when_max_batch_size_passed():
     optimization_profile = OptimizationProfile(max_batch_size=32)
     profiler = Profiler(
         profile=optimization_profile,
+        input_metadata=MagicMock(),
         results_path=MagicMock(),
     )
 
@@ -74,6 +79,7 @@ def test_batch_size_is_set_correctly_when_max_batch_size_which_is_not_power_of_2
     optimization_profile = OptimizationProfile(max_batch_size=3)
     profiler = Profiler(
         profile=optimization_profile,
+        input_metadata=MagicMock(),
         results_path=MagicMock(),
     )
 
@@ -82,6 +88,7 @@ def test_batch_size_is_set_correctly_when_max_batch_size_which_is_not_power_of_2
     optimization_profile = OptimizationProfile(max_batch_size=127)
     profiler = Profiler(
         profile=optimization_profile,
+        input_metadata=MagicMock(),
         results_path=MagicMock(),
     )
 
@@ -195,6 +202,7 @@ def test_profiler_run_return_batch_sizes_upto_4_when_batch_size_4_saturates_thro
     with tempfile.NamedTemporaryFile() as temp:
         profiler = Profiler(
             profile=optimization_profile,
+            input_metadata=MagicMock(),
             results_path=pathlib.Path(temp.name),
         )
 

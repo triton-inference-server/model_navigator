@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import fire
 from tensorflow.python.compiler.tensorrt import trt_convert as trtc  # pytype: disable=import-error
 
 from model_navigator.core.dataloader import expand_sample, load_samples
+from model_navigator.core.tensor import TensorMetadata
 
 
 def convert(
@@ -31,6 +32,7 @@ def convert(
     batch_dim: int,
     max_batch_size: int,
     custom_args: Dict[str, Any],
+    input_metadata: Dict,
     navigator_workspace: Optional[str] = None,
 ) -> None:
     """Convert SavedModel to Tensorflow-TensorRT model.
@@ -40,13 +42,14 @@ def convert(
 
 
     Args:
-        exported_model_path (str): Path of SavedModel.
-        converted_model_path (str): Output path of Tensorflow-TensorRT model.
-        max_workspace_size (int): TensorRT maximum workspace size in bytes.
-        target_precision (str): TensorRT precision. Could be "fp32" or "fp16".
-        minimum_segment_size (int): TensorRT minimum segment size.
-        batch_dim (int): Batch dimension.
-        max_batch_size (int): Maximum batch size.
+        exported_model_path: Path of SavedModel.
+        converted_model_path: Output path of Tensorflow-TensorRT model.
+        max_workspace_size: TensorRT maximum workspace size in bytes.
+        target_precision: TensorRT precision. Could be "fp32" or "fp16".
+        minimum_segment_size: TensorRT minimum segment size.
+        batch_dim: Batch dimension.
+        max_batch_size: Maximum batch size.
+        input_metadata: Dict of input metadata.
         navigator_workspace (Optional[str], optional): Model Navigator workspace path.
             If None use current workdir. Defaults to None.
         custom_args (Optional[Dict[str, Any]], optional): Passthrough parameters for TrtGraphConverterV2
@@ -61,10 +64,12 @@ def convert(
 
     conversion_samples = load_samples("conversion_samples", navigator_workspace, batch_dim)
 
+    input_metadata = TensorMetadata.from_json(input_metadata)
+
     def _dataloader():
         for sample in conversion_samples:
             yield sample
-            yield expand_sample(sample, batch_dim, max_batch_size)
+            yield expand_sample(sample, input_metadata, batch_dim, max_batch_size)
 
     params = trtc.DEFAULT_TRT_CONVERSION_PARAMS._replace(
         max_workspace_size_bytes=max_workspace_size,

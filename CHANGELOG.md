@@ -19,13 +19,17 @@ limitations under the License.
 ## 0.11.0 (unreleased)
 
 - new: Python 3.12 support
+- new: Improved logging
 - new: optimized in-place module can be stored to Triton model repository
 - new: multi-profile support for TensorRT model build and runtime
+- new: measure duration of each command executed in optimization pipeline
 - new: TensorRT-LLM model store generation for deployment on Triton Inference Server
 - change: filter unsupported runners instead of raising an error when running optimize
 - change: moved JAX to support to experimental module and limited support
 - change: use autocast=True for Torch based runners
 - change: use torch.inference_mode or torch.no_grad context in `nav.profile` measurements
+- change: use multiple strategies to select optimized runtime, defaults to [`MaxThroughputAndMinLatencyStrategy`, `MinLatencyStrategy`]
+- change: `trt_profiles` are not set automatically for module when using `nav.optimize`
 - fix: properly revert log level after torch onnx dynamo export
 
 

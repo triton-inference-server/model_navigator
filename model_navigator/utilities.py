@@ -133,6 +133,7 @@ def find_max_batch_size_till_oom(
             LOGGER.info("Starting max batch size search.")
             MaxBatchSizeFinder(
                 profile=optimization_profile,
+                input_metadata=input_metadata,
                 batch_dim=batch_dim,
                 results_path=results_path,
             ).run(

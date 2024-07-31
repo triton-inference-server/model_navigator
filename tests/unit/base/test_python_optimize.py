@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ def test_python_package_return_valid_runner():
             ),
             workspace=workspace,
         )
-        runner = package.get_runner(strategy=nav.MaxThroughputStrategy())
+        runner = package.get_runner(strategies=[nav.MaxThroughputStrategy()])
         assert runner is not None
         assert runner.format() == nav.Format.PYTHON
         assert runner.input_metadata.to_json() == {

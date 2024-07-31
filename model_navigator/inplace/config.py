@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,13 +17,14 @@ import copy
 import dataclasses
 import os
 import pathlib
-from typing import Any, Dict, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Type, Union
 
 from model_navigator.configuration import (
     CustomConfig,
     DeviceKind,
     Format,
-    MaxThroughputStrategy,
+    MaxThroughputAndMinLatencyStrategy,
+    MinLatencyStrategy,
     OptimizationProfile,
     RuntimeSearchStrategy,
     VerifyFunction,
@@ -54,7 +55,7 @@ class InplaceConfig:
         self._cache_dir: pathlib.Path = inplace_cache_dir()
         self._min_num_samples: int = DEFAULT_MIN_NUM_SAMPLES
         self._max_num_samples_stored: int = DEFAULT_MAX_NUM_SAMPLES_STORED
-        self.strategy: RuntimeSearchStrategy = MaxThroughputStrategy()
+        self.strategies: List[RuntimeSearchStrategy] = [MaxThroughputAndMinLatencyStrategy(), MinLatencyStrategy()]
 
     @property
     def min_num_samples(self) -> int:

@@ -1,4 +1,4 @@
-# Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ from model_navigator.core.tensor import TensorMetadata
 from model_navigator.exceptions import (
     ModelNavigatorEmptyPackageError,
     ModelNavigatorError,
-    ModelNavigatorRuntimeAnalyzerError,
     ModelNavigatorWrongParameterError,
 )
 from model_navigator.runtime_analyzer import RuntimeAnalyzer
@@ -717,8 +716,8 @@ def test_add_model_from_package_raise_error_when_unsupported_triton_runner_in_pa
 
         package = custom_runner_package(workspace)
         with pytest.raises(
-            ModelNavigatorRuntimeAnalyzerError,
-            match="No matching results found.",
+            ModelNavigatorError,
+            match="No optimized model found in package.",
         ):
             add_model_from_package(
                 model_repository_path=model_repository_path,

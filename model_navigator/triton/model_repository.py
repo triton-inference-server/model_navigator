@@ -35,17 +35,20 @@ from loguru import logger
 from model_navigator.commands.performance import Performance
 from model_navigator.configuration import (
     Format,
-    MaxThroughputStrategy,
+    MaxThroughputAndMinLatencyStrategy,
+    MinLatencyStrategy,
     RuntimeSearchStrategy,
     Sample,
     TensorRTProfile,
 )
 from model_navigator.core.dataloader import load_samples
+from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata
 from model_navigator.core.workspace import Workspace
 from model_navigator.exceptions import (
     ModelNavigatorEmptyPackageError,
     ModelNavigatorError,
+    ModelNavigatorRuntimeAnalyzerError,
     ModelNavigatorWrongParameterError,
 )
 from model_navigator.frameworks import is_tf_available, is_torch_available  # noqa: F401
@@ -235,7 +238,7 @@ def add_model_from_package(
     model_name: str,
     package: Package,
     model_version: int = 1,
-    strategy: Optional[RuntimeSearchStrategy] = None,
+    strategies: Optional[List[RuntimeSearchStrategy]] = None,
     response_cache: bool = False,
     warmup: bool = False,
 ):
@@ -246,8 +249,9 @@ def add_model_from_package(
         model_name: Name under which model is deployed in Triton Inference Server
         package: Package for which model store is created
         model_version: Version of model that is deployed
-        strategy: Strategy for finding the best runtime.
-                  When not set the `MaxThroughputStrategy` is used.
+        strategies: List of strategies for finding the best model. Strategies are selected in provided order. When
+                    first fails, next strategy from the list is used. When none provided the strategies
+                    defaults to [`MaxThroughputAndMinLatencyStrategy`, `MinLatencyStrategy`]
         response_cache: Enable response cache for model
         warmup: Enable warmup for min and max batch size
 
@@ -262,17 +266,26 @@ def add_model_from_package(
             "Only models without batching or batch dimension on first place in shape are supported for Triton."
         )
 
-    if strategy is None:
-        strategy = MaxThroughputStrategy()
+    if strategies is None:
+        strategies = [MaxThroughputAndMinLatencyStrategy(), MinLatencyStrategy()]
 
     batching = package.config.batch_dim == 0
 
-    runtime_result = RuntimeAnalyzer.get_runtime(
-        models_status=package.status.models_status,
-        strategy=strategy,
-        formats=[fmt.value for fmt in TRITON_FORMATS],
-        runners=[runner.name() for runner in TRITON_RUNNERS],
-    )
+    runtime_result = None
+    for strategy in strategies:
+        try:
+            runtime_result = RuntimeAnalyzer.get_runtime(
+                models_status=package.status.models_status,
+                strategy=strategy,
+                formats=[fmt.value for fmt in TRITON_FORMATS],
+                runners=[runner.name() for runner in TRITON_RUNNERS],
+            )
+            break
+        except ModelNavigatorRuntimeAnalyzerError:
+            LOGGER.debug(f"No model found with strategy: {strategy}")
+
+    if not runtime_result:
+        raise ModelNavigatorError("No optimized model found in package.")
 
     max_batch_size = max(
         profiling_results.batch_size if profiling_results.batch_size is not None else 0

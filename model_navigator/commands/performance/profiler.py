@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ from model_navigator.commands.performance.utils import is_measurement_stable, is
 from model_navigator.configuration import OptimizationProfile, Sample
 from model_navigator.core.dataloader import expand_sample
 from model_navigator.core.logger import LOGGER
+from model_navigator.core.tensor import TensorMetadata
 from model_navigator.exceptions import ModelNavigatorError
 from model_navigator.runners.base import InferenceStep, NavigatorRunner, NavigatorStabilizedRunner
 
@@ -47,6 +48,7 @@ class Profiler:
     def __init__(
         self,
         profile: OptimizationProfile,
+        input_metadata: TensorMetadata,
         results_path: pathlib.Path,
         batch_dim: Optional[int] = 0,
     ) -> None:
@@ -54,6 +56,7 @@ class Profiler:
 
         Args:
             profile: Optimization profile used for configuration.
+            input_metadata: Input metadata.
             results_path: Jsonlines path to store the results in.
             batch_dim: Batch dimension. Defaults to 0.
 
@@ -61,6 +64,7 @@ class Profiler:
             ValueError: When batch_dim is None, but profile.batch_sizes is not None.
         """
         self._profile = profile
+        self._input_metadata = input_metadata
         self._batch_dim = batch_dim
         self._results_path = results_path
 
@@ -100,7 +104,7 @@ class Profiler:
                 LOGGER.log(self._profiling_results_logging_level, f"Performance profiling for {runner.name()} started.")
                 if batch_size:
                     LOGGER.log(self._profiling_results_logging_level, f"Batch size: {batch_size}.")
-                sample = expand_sample(profiling_sample, self._batch_dim, batch_size)
+                sample = expand_sample(profiling_sample, self._input_metadata, self._batch_dim, batch_size)
                 profiling_result = self._run_measurement(runner, nvml_handler, sample, batch_size, sample_id)
                 LOGGER.log(
                     self._profiling_results_logging_level,

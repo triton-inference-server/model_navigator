@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -69,7 +69,14 @@ def main():
         verify_func=verify_func,
         input_names=("input_0",),
         verbose=True,
-        optimization_profile=nav.OptimizationProfile(batch_sizes=[1, 8, 16], stability_percentage=100),
+        optimization_profile=nav.OptimizationProfile(
+            batch_sizes=[1, 16],
+            stability_percentage=100,
+            window_size=10,
+            stabilization_windows=2,
+            min_trials=2,
+            max_trials=10,
+        ),
     )
 
     dataloader = [np.random.rand(2, 5).astype("float32") for _ in range(5)]
@@ -77,8 +84,12 @@ def main():
         package,
         verbose=True,
         dataloader=dataloader,
-        batch_sizes=[1, 32],
+        batch_sizes=[1, 16],
         stability_percentage=100,
+        window_size=10,
+        stabilization_windows=2,
+        min_trials=2,
+        max_trials=10,
     )
     results.to_file("profiling.yaml")
 

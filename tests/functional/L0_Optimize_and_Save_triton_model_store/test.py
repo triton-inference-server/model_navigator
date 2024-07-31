@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -106,20 +106,20 @@ def main():
         model_repo.mkdir(exist_ok=True, parents=True)
         model.triton_model_store(
             model_repository_path=model_repo,
-            strategy=SelectedRuntimeStrategy("trt-fp16", "TensorRT"),
+            strategies=[SelectedRuntimeStrategy("trt-fp16", "TensorRT")],
         )
 
         model_repo = model_store / "onnx"
         model_repo.mkdir(exist_ok=True, parents=True)
         model.triton_model_store(
             model_repository_path=model_repo,
-            strategy=SelectedRuntimeStrategy("onnx", "OnnxCUDA"),
+            strategies=[SelectedRuntimeStrategy("onnx", "OnnxCUDA")],
             model_name="identity2",
         )
         try:
             model.triton_model_store(
                 model_repository_path=model_repo,
-                strategy=SelectedRuntimeStrategy("onnx", "OnnxCUDA"),
+                strategies=[SelectedRuntimeStrategy("onnx", "OnnxCUDA")],
                 package_idx=100,
             )
             raise AssertionError("Expected ModelNavigatorUserInputError")

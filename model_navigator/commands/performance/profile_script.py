@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -88,6 +88,7 @@ def profile(
 
     Profiler(
         profile=OptimizationProfile.from_dict(optimization_profile),
+        input_metadata=TensorMetadata.from_json(input_metadata),
         batch_dim=batch_dim,
         results_path=pathlib.Path(results_path),
     ).run(

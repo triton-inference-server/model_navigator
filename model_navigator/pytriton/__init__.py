@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,7 +19,12 @@ from typing import Dict, List, Optional, Type, Union
 
 import numpy as np
 
-from model_navigator.configuration import MaxThroughputAndMinLatencyStrategy, RuntimeSearchStrategy, TensorType
+from model_navigator.configuration import (
+    MaxThroughputAndMinLatencyStrategy,
+    MinLatencyStrategy,
+    RuntimeSearchStrategy,
+    TensorType,
+)
 from model_navigator.exceptions import ModelNavigatorNotFoundError
 from model_navigator.package.package import Package
 from model_navigator.runners.base import NavigatorRunner
@@ -29,8 +34,8 @@ class TimeoutAction(enum.Enum):
     """Timeout action definition for timeout_action QueuePolicy field.
 
     Args:
-        REJECT (str): Reject the request and return error message accordingly.
-        DELAY (str): Delay the request until all other requests at the same (or higher) priority levels
+        REJECT: Reject the request and return error message accordingly.
+        DELAY: Delay the request until all other requests at the same (or higher) priority levels
             that have not reached their timeouts are processed.
     """
 
@@ -128,21 +133,23 @@ class PyTritonAdapter:
     def __init__(
         self,
         package: Package,
-        strategy: Optional[RuntimeSearchStrategy] = None,
+        strategies: Optional[List[RuntimeSearchStrategy]] = None,
         runner_return_type: TensorType = TensorType.NUMPY,
     ):
         """Initialize PyTritonAdapter.
 
         Args:
             package: A package object to be searched for best possible model.
-            strategy: Strategy for finding the best model. Defaults to `MaxThroughputAndMinLatencyStrategy`
+            strategies: List of strategies for finding the best model. Strategies are selected in provided order. When
+                        first fails, next strategy from the list is used. When none provided the strategies
+                        defaults to [`MaxThroughputAndMinLatencyStrategy`, `MinLatencyStrategy`]
             runner_return_type: The type of the output tensor. Defaults to `TensorType.NUMPY`.
                 If the return_type supports CUDA tensors (e.g. TensorType.TORCH) and the input tensors are on CUDA,
                 there will be no additional data transfer between CPU and GPU.
         """
         self._package = package
-        self._strategy = MaxThroughputAndMinLatencyStrategy() if strategy is None else strategy
-        self._runner = self._package.get_runner(strategy=self._strategy, return_type=runner_return_type)
+        self._strategies = strategies or [MaxThroughputAndMinLatencyStrategy(), MinLatencyStrategy()]
+        self._runner = self._package.get_runner(strategies=strategies, return_type=runner_return_type)
         self._batching = self._package.status.config.get("batch_dim", None) == 0
 
     @property
@@ -211,13 +218,13 @@ class PyTritonAdapter:
             ModelConfig with configuration for PyTrtion bind method.
 
         """
-        model_status = self._package.get_best_model_status(strategy=self._strategy)
+        model_status = self._package.get_best_model_status(strategies=self._strategies)
         if model_status:
             bs_from_profiling = max(
                 r.batch_size
                 for r in model_status.runners_status[self._runner.name()].result["Performance"]["profiling_results"]
             )
         else:
-            raise ModelNavigatorNotFoundError(f"Cannot find model status for strategy: {self._strategy}")
+            raise ModelNavigatorNotFoundError(f"Cannot find model status for strategies: {self._strategies}")
 
         return ModelConfig(max_batch_size=bs_from_profiling)

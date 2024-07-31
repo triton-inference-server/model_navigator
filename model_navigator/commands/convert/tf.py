@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ from model_navigator.commands.convert.converters import sm2tftrt
 from model_navigator.commands.execution_context import ExecutionContext
 from model_navigator.configuration import TensorRTPrecision, TensorRTProfile
 from model_navigator.core.logger import LOGGER
+from model_navigator.core.tensor import TensorMetadata
 from model_navigator.core.workspace import Workspace
 from model_navigator.utils import devices
 from model_navigator.utils.common import parse_kwargs_to_cmd
@@ -42,12 +43,12 @@ class ConvertSavedModel2ONNX(Command):
         """Run Conversion from SavedModel to ONNX.
 
         Args:
-            workspace (Path): Navigator workspace.
-            path (Path): ONNX target path.
-            parent_path (Path): Saved Model path.
-            opset (int): ONNX opset.
-            verbose (bool): If True verbose logging.
-            custom_args (Optional[Dict[str, Any]], optional): Passthrough parameters for tf2onnx convert.
+            workspace: Navigator workspace.
+            path: ONNX target path.
+            parent_path: Saved Model path.
+            opset: ONNX opset.
+            verbose: If True verbose logging.
+            custom_args: Passthrough parameters for tf2onnx convert.
                 For available arguments check tf2onnx documentation: https://github.com/onnx/tensorflow-onnx#cli-reference
 
         Returns:
@@ -103,6 +104,7 @@ class ConvertSavedModel2TFTRT(Convert2TensorRTWithMaxBatchSizeSearch):
         parent_path: pathlib.Path,
         precision: TensorRTPrecision,
         verbose: bool,
+        input_metadata: TensorMetadata,
         dataloader_trt_profile: TensorRTProfile,
         custom_args: Dict[str, Any],
         batch_dim: Optional[int] = None,
@@ -113,21 +115,23 @@ class ConvertSavedModel2TFTRT(Convert2TensorRTWithMaxBatchSizeSearch):
         """Run conversion from SavedModel to Tensorflow-TensorRT.
 
         Args:
-            max_workspace_size (int): TRT max workspace size in bytes.
-            minimum_segment_size (int): TRT minium segment size.
-            workspace (Path): navigator workspace.
-            path (Path): Tensorflow-TensorRT target path.
-            parent_path (Path): SavedModel path.
+            max_workspace_size: TRT max workspace size in bytes.
+            minimum_segment_size: TRT minium segment size.
+            workspace: navigator workspace.
+            path: Tensorflow-TensorRT target path.
+            parent_path: SavedModel path.
             precision (TensorRTPrecision): Tensorflow-TensorRT model precision.
-            verbose (bool): If True verbose logging.
-            dataloader_trt_profile (TensorRTProfile): Dataloader TensorRT profile.
-            batch_dim (Optional[int], optional): Batching axis.. Defaults to None.
-            dataloader_max_batch_size (Optional[int], optional): Maximum batch size from the dataloader.
+            verbose: If True verbose logging.
+            input_metadata: Tensorflow-TensorRT input metadata.
+            dataloader_trt_profile: Dataloader TensorRT profile.
+            batch_dim: Batching axis. Defaults to None.
+            dataloader_max_batch_size: Maximum batch size from the dataloader.
                 Defaults to None.
-            device_max_batch_size (Optional[int], optional): Maximum batch size that fits on the device.
+            device_max_batch_size: Maximum batch size that fits on the device.
                 Defaults to None.
-            trt_profiles: List of TensorRT profiles that will be used by Model Navigator for conversion, user provided or optimized by TensorRTProfileBuilder command.
-            custom_args (Optional[Dict[str, Any]], optional): Passthrough parameters for TrtGraphConverterV2
+            trt_profiles: List of TensorRT profiles that will be used by Model Navigator for conversion, user provided
+                          or optimized by TensorRTProfileBuilder command.
+            custom_args: Passthrough parameters for TrtGraphConverterV2
         Raises:
             RuntimeError: When no GPUs are available.
 
@@ -164,6 +168,7 @@ class ConvertSavedModel2TFTRT(Convert2TensorRTWithMaxBatchSizeSearch):
                 "target_precision": precision.value,
                 "minimum_segment_size": minimum_segment_size,
                 "batch_dim": batch_dim,
+                "input_metadata": input_metadata.to_json(),
                 "navigator_workspace": workspace.path.as_posix(),
                 "max_batch_size": max_batch_size,
                 "custom_args": custom_args,

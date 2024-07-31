@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -133,7 +133,7 @@ def save(
 
 def get_best_model_status(
     package: Package,
-    strategy: Optional[RuntimeSearchStrategy] = None,
+    strategies: Optional[List[RuntimeSearchStrategy]] = None,
     include_source: bool = True,
 ) -> Optional[ModelStatus]:
     """Returns ModelStatus of best model for given strategy.
@@ -143,13 +143,15 @@ def get_best_model_status(
 
     Args:
         package: A package object to be searched for best model.
-        strategy: Strategy for finding the best model. Defaults to `MaxThroughputAndMinLatencyStrategy`
+        strategies: List of strategies for finding the best model. Strategies are selected in provided order. When
+                        first fails, next strategy from the list is used. When none provided the strategies
+                        defaults to [`MaxThroughputAndMinLatencyStrategy`, `MinLatencyStrategy`]
         include_source: Flag if Python based model has to be included in analysis
 
     Returns:
         ModelStatus of best model for given strategy or None.
     """
-    return package.get_best_model_status(strategy=strategy, include_source=include_source)
+    return package.get_best_model_status(strategies=strategies, include_source=include_source)
 
 
 def optimize(

@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 
 import copy
 import pathlib
-from typing import Dict, Optional, Union
+from typing import Dict, List, Optional, Union
 
 import yaml
 
@@ -29,6 +29,7 @@ from model_navigator.configuration import (
     DeviceKind,
     Format,
     MaxThroughputAndMinLatencyStrategy,
+    MinLatencyStrategy,
     OptimizationProfile,
     RuntimeSearchStrategy,
     TensorType,
@@ -36,7 +37,11 @@ from model_navigator.configuration import (
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.workspace import Workspace
-from model_navigator.exceptions import ModelNavigatorMissingSourceModelError, ModelNavigatorNotFoundError
+from model_navigator.exceptions import (
+    ModelNavigatorMissingSourceModelError,
+    ModelNavigatorNotFoundError,
+    ModelNavigatorRuntimeAnalyzerError,
+)
 from model_navigator.frameworks import Framework
 from model_navigator.runners.base import NavigatorRunner
 from model_navigator.runners.registry import get_runner, runner_registry
@@ -153,7 +158,7 @@ class Package:
 
     def get_runner(
         self,
-        strategy: Optional[RuntimeSearchStrategy] = None,
+        strategies: Optional[List[RuntimeSearchStrategy]] = None,
         include_source: bool = True,
         return_type: TensorType = TensorType.NUMPY,
         device: str = "cuda",
@@ -162,7 +167,9 @@ class Package:
         """Get the runner according to the strategy.
 
         Args:
-            strategy: Strategy for finding the best runtime. Defaults to `MaxThroughputAndMinLatencyStrategy`.
+            strategies: List of strategies for finding the best model. Strategies are selected in provided order. When
+                        first fails, next strategy from the list is used. When none provided the strategies
+                        defaults to [`MaxThroughputAndMinLatencyStrategy`, `MinLatencyStrategy`]
             include_source: Flag if Python based model has to be included in analysis
             return_type: The type of the output tensor. Defaults to `TensorType.NUMPY`.
                 If the return_type supports CUDA tensors (e.g. TensorType.TORCH) and the input tensors are on CUDA,
@@ -173,7 +180,7 @@ class Package:
         Returns:
             The optimal runner for the optimized model.
         """
-        runtime_result = self._get_best_runtime(strategy=strategy, include_source=include_source, inplace=inplace)
+        runtime_result = self._get_best_runtime(strategies=strategies, include_source=include_source, inplace=inplace)
 
         model_config = runtime_result.model_status.model_config
         runner_status = runtime_result.runner_status
@@ -198,19 +205,21 @@ class Package:
 
     def get_best_model_status(
         self,
-        strategy: Optional[RuntimeSearchStrategy] = None,
+        strategies: Optional[List[RuntimeSearchStrategy]] = None,
         include_source: bool = True,
     ) -> ModelStatus:
         """Returns ModelStatus of best model for given strategy.
 
         Args:
-            strategy: Strategy for finding the best runtime. Defaults to `MaxThroughputAndMinLatencyStrategy`.
+            strategies: List of strategies for finding the best model. Strategies are selected in provided order. When
+                        first fails, next strategy from the list is used. When none provided the strategies
+                        defaults to [`MaxThroughputAndMinLatencyStrategy`, `MinLatencyStrategy`]
             include_source: Flag if Python based model has to be included in analysis
 
         Returns:
             ModelStatus of best model for given strategy or None.
         """
-        runtime_result = self._get_best_runtime(strategy=strategy, include_source=include_source)
+        runtime_result = self._get_best_runtime(strategies=strategies, include_source=include_source)
         return runtime_result.model_status
 
     def is_empty(self) -> bool:
@@ -271,12 +280,12 @@ class Package:
 
     def _get_best_runtime(
         self,
-        strategy: Optional[RuntimeSearchStrategy] = None,
+        strategies: Optional[List[RuntimeSearchStrategy]] = None,
         include_source: bool = True,
         inplace: bool = False,
     ):
-        if strategy is None:
-            strategy = MaxThroughputAndMinLatencyStrategy()
+        if strategies is None:
+            strategies = [MaxThroughputAndMinLatencyStrategy(), MinLatencyStrategy()]
 
         formats = None
         if not include_source:
@@ -286,12 +295,22 @@ class Package:
         if inplace:
             runners = [name for name, runner in runner_registry.items() if runner.is_inplace]
 
-        runtime_result = RuntimeAnalyzer.get_runtime(
-            self.status.models_status,
-            strategy=strategy,
-            formats=formats,
-            runners=runners,
-        )
+        runtime_result = None
+        for strategy in strategies:
+            try:
+                runtime_result = RuntimeAnalyzer.get_runtime(
+                    self.status.models_status,
+                    strategy=strategy,
+                    formats=formats,
+                    runners=runners,
+                )
+                break
+            except ModelNavigatorRuntimeAnalyzerError:
+                LOGGER.debug(f"No model found with strategy: {strategy}")
+
+        if runtime_result is None:
+            raise ModelNavigatorRuntimeAnalyzerError("No matching results found.")
+
         return runtime_result
 
     def _status_serializable_dict(self) -> Dict:

@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 
 import functools
 import pathlib
-from typing import Any, Callable, Literal, Optional, Union
+from typing import Any, Callable, List, Literal, Optional, Union
 
 import wrapt
 
@@ -57,7 +57,6 @@ class Module(wrapt.ObjectProxy):
         name: module name.
         input_mapping: function to map module inputs to the expected input.
         output_mapping: function to map module outputs to the expected output.
-        offload_parameters_to_cpu: offload parameters to cpu.
         forward_func: forwarding function name used by the module, if None, the module __call__ is used.
         batching: enable or disable batching on first (index 0) dimension of the model
         precision: precision of the module
@@ -237,7 +236,7 @@ class Module(wrapt.ObjectProxy):
 
     def load_optimized(
         self,
-        strategy: Optional[RuntimeSearchStrategy] = None,
+        strategies: Optional[List[RuntimeSearchStrategy]] = None,
         device: Union[str, "torch.device"] = "cuda",
         activate_runners: bool = True,
     ) -> None:
@@ -251,7 +250,7 @@ class Module(wrapt.ObjectProxy):
             name=self._name,
             input_mapping=self._input_mapping,
             output_mapping=self._output_mapping,
-            strategy=strategy,
+            strategies=strategies,
             activate_runners=activate_runners,
             device=str(device),
             forward=self._wrapper._forward_call,
@@ -284,7 +283,7 @@ class Module(wrapt.ObjectProxy):
     def triton_model_store(
         self,
         model_repository_path: pathlib.Path,
-        strategy: Optional[RuntimeSearchStrategy] = None,
+        strategies: Optional[List[RuntimeSearchStrategy]] = None,
         model_name: Optional[str] = None,
         model_version: int = 1,
         response_cache: bool = False,
@@ -295,7 +294,9 @@ class Module(wrapt.ObjectProxy):
 
         Args:
             model_repository_path (pathlib.Path): Path to store the optimized module.
-            strategy (Optional[RuntimeSearchStrategy]): Strategy for finding the best runtime. When not set the `MaxThroughputStrategy` is used.
+            strategies (Optional[List[RuntimeSearchStrategy]]): List of strategies for finding the best model.
+                    Strategies are selected in provided order. When first fails, next strategy from the list is used.
+                    When none provided the strategies defaults to [`MaxThroughputAndMinLatencyStrategy`, `MinLatencyStrategy`]
             model_name (Optional[str]): Name of the module to use in the Triton model store, by default the module name is used.
             model_version (int): Version of model that is deployed
             response_cache(bool): Enable response cache for model
@@ -325,7 +326,7 @@ class Module(wrapt.ObjectProxy):
             model_repository_path,
             model_name,
             package,
-            strategy=strategy,
+            strategies=strategies,
             model_version=model_version,
             response_cache=response_cache,
             warmup=warmup,

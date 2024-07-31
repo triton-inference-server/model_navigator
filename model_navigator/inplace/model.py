@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,9 +26,7 @@ from model_navigator.configuration import (
     Framework,
     OnnxConfig,
     RuntimeSearchStrategy,
-    TensorRTConfig,
     TensorType,
-    TorchTensorRTConfig,
 )
 from model_navigator.core.dataloader import to_numpy
 from model_navigator.core.logger import LOGGER
@@ -39,7 +37,7 @@ from model_navigator.utils.module import lazy_import
 
 from ..utils.format_helpers import is_source_format
 from .config import OptimizeConfig, inplace_config
-from .utils import TorchDataloader, get_dynamic_axes_from_shapes, get_trt_profile_from_shapes
+from .utils import TorchDataloader, get_dynamic_axes_from_shapes
 
 torch = lazy_import("torch")
 
@@ -162,13 +160,6 @@ class RecordingModule(BaseModule):
         from model_navigator.torch import optimize
 
         batch_dim = 0 if self.optimize_config.batching else None
-        max_batch_size = None
-        if self.optimize_config.optimization_profile is not None:
-            if self.optimize_config.optimization_profile.max_batch_size:
-                max_batch_size = self.optimize_config.optimization_profile.max_batch_size
-            elif self.optimize_config.optimization_profile.batch_sizes:
-                max_batch_size = max(self.optimize_config.optimization_profile.batch_sizes)
-
         config_dict = {k: v for k, v in self.optimize_config.to_dict().items() if k != "workspace"}
 
         for i, pytree_metadata in enumerate(self._samples):
@@ -176,8 +167,7 @@ class RecordingModule(BaseModule):
             samples = self._samples[pytree_metadata]
             samples_shapes = self._samples_shapes[pytree_metadata]
             dynamic_axes = get_dynamic_axes_from_shapes(samples_shapes, pytree_metadata, batch_dim)
-            trt_profile = get_trt_profile_from_shapes(samples_shapes, pytree_metadata, batch_dim, max_batch_size)
-            updated_config_dict = self._update_custom_configs(config_dict, dynamic_axes, trt_profile)
+            updated_config_dict = self._update_custom_configs(config_dict, dynamic_axes)
 
             optimize(model=self._module, dataloader=TorchDataloader(samples), **updated_config_dict)
 
@@ -203,43 +193,21 @@ class RecordingModule(BaseModule):
         """Check if the module is optimized."""
         return self._optimized
 
-    def _update_custom_configs(self, config_dict, dynamic_axes, trt_profile):
+    def _update_custom_configs(self, config_dict, dynamic_axes):
         config_dict = copy.deepcopy(config_dict)
 
         if config_dict["custom_configs"] is None:
             config_dict["custom_configs"] = []
 
-        onnx_config, trt_config, torch_trt_config = None, None, None
+        onnx_config = None
         for custom_config in config_dict["custom_configs"]:
             if isinstance(custom_config, OnnxConfig):
                 onnx_config = custom_config
-            elif isinstance(custom_config, TensorRTConfig):
-                trt_config = custom_config
-            elif isinstance(custom_config, TorchTensorRTConfig):
-                torch_trt_config = custom_config
 
         if onnx_config is not None and onnx_config.dynamic_axes is None:
             onnx_config.dynamic_axes = dynamic_axes
         else:
             config_dict["custom_configs"].append(OnnxConfig(dynamic_axes=dynamic_axes))
-
-        if trt_config is not None and trt_config.trt_profiles is None:
-            trt_config.trt_profiles = [trt_profile]
-            if trt_config.run_max_batch_size_search is None:
-                trt_config.run_max_batch_size_search = True
-        else:
-            config_dict["custom_configs"].append(
-                TensorRTConfig(trt_profiles=[trt_profile], run_max_batch_size_search=True)
-            )
-
-        if torch_trt_config is not None and torch_trt_config.trt_profiles is None:
-            torch_trt_config.trt_profiles = [trt_profile]
-            if torch_trt_config.run_max_batch_size_search is None:
-                torch_trt_config.run_max_batch_size_search = True
-        else:
-            config_dict["custom_configs"].append(
-                TorchTensorRTConfig(trt_profiles=[trt_profile], run_max_batch_size_search=True)
-            )
 
         return config_dict
 
@@ -248,7 +216,7 @@ class OptimizedModule(BaseModule):
     """Module that runs the optimized module."""
 
     def __init__(
-        self, *args, strategy: Optional[RuntimeSearchStrategy] = None, activate_runners: bool = True, **kwargs
+        self, *args, strategies: Optional[List[RuntimeSearchStrategy]] = None, activate_runners: bool = True, **kwargs
     ) -> None:
         """Initialize OptimizedModule.
 
@@ -259,15 +227,16 @@ class OptimizedModule(BaseModule):
 
         self._packages = []
         self._runners = {}
-        strategy = strategy or inplace_config.strategy
+        strategies = strategies or inplace_config.strategies
 
         for package_workspace in self._workspace.iterdir():
             package = load_from_workspace(package_workspace)
             package.load_source_model(self._module)
 
             runner = package.get_runner(
-                return_type=TensorType.TORCH, strategy=strategy, device=self._device, inplace=True
+                return_type=TensorType.TORCH, strategies=strategies, device=self._device, inplace=True
             )
+
             pytree_metadata = package.status.input_metadata.pytree_metadata
 
             self._packages.append(package)

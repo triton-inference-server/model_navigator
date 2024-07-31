@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ def main():
             logger.info(f"Skipping {key} due to {runner_status} status")
             continue
         model_name, runner_name = key.split(".")
-        runner = package.get_runner(nav.SelectedRuntimeStrategy(model_name, runner_name))
+        runner = package.get_runner(strategies=[nav.SelectedRuntimeStrategy(model_name, runner_name)])
 
         assert nav.TensorType.TORCH in runner.get_available_input_types()
         assert nav.TensorType.TORCH in runner.get_available_return_types()

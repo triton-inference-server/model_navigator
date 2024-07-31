@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -41,15 +41,11 @@ def main():
     """
 
     """Use TensorType.TORCH to return torch.Tensor from runner inference function and enable zero-copy inference."""
-    onnx_pytriton_adapter = nav.pytriton.PyTritonAdapter(
-        package=onnx_package, strategy=nav.MaxThroughputStrategy(), runner_return_type=TensorType.TORCH
-    )
+    onnx_pytriton_adapter = nav.pytriton.PyTritonAdapter(package=onnx_package, runner_return_type=TensorType.TORCH)
     onnx_runner = onnx_pytriton_adapter.runner
     onnx_runner.activate()
 
-    tensorrt_pytriton_adapter = nav.pytriton.PyTritonAdapter(
-        package=tensort_package, strategy=nav.MaxThroughputStrategy()
-    )
+    tensorrt_pytriton_adapter = nav.pytriton.PyTritonAdapter(package=tensort_package)
     tensorrt_runner = tensorrt_pytriton_adapter.runner
     tensorrt_runner.activate()
 

@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -157,7 +157,11 @@ def test_tf2_convert_tf_trt():
         )
 
         input_data = next(iter(dataloader))
-        samples_to_npz([{"input__1": input_data.numpy()}], workspace / "model_input" / "conversion", None)
+        input_data_np = input_data.numpy()
+        samples_to_npz([{"input__1": input_data_np}], workspace / "model_input" / "conversion", None)
+
+        input_metadata = TensorMetadata()
+        input_metadata.add("input__1", input_data_np.shape, input_data_np.dtype)
 
         command_output = ConvertSavedModel2TFTRT().run(
             max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
@@ -167,6 +171,7 @@ def test_tf2_convert_tf_trt():
             minimum_segment_size=3,
             workspace=Workspace(workspace),
             verbose=True,
+            input_metadata=input_metadata,
             dataloader_trt_profile=TensorRTProfile(),
             custom_args={},
         )

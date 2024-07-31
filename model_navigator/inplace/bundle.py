@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 Enables easy storage and sharing of optimized models and modules.
 
 Selecting modules strategies - `nav.bundle.save` `modules` argument:
- * `nav.bundle.BestRunnersSelection(runner_selection_strategy=...)` - default, selects only best runners from registered modules for bundling.
+ * `nav.bundle.BestRunnersSelection(runner_selection_strategies=...)` - default, selects only best runners from registered modules for bundling.
  * `nav.bundle.RegisteredModulesSelection()` - selects only registered modules for bundling
  * `nav.bundle.ModulesByNameSelection(module_names=[...])` - selects only selected registered modules with given names for bundling
  * `nav.bundle.AllModulesSelection()` - selects all modules from cache for bundling
@@ -34,7 +34,7 @@ Example:
     # equivalent to ...
     nav.bundle.save("./bundle.nav", modules=nav.bundle.BestRunnersSelection())
     #  ... and ...
-    nav.bundle.save("./bundle.nav", modules=nav.bundle.BestRunnersSelection(runner_selection_strategy=nav.configuration.MaxThroughputAndMinLatencyStrategy())
+    nav.bundle.save("./bundle.nav", modules=nav.bundle.BestRunnersSelection(runner_selection_strategies=[nav.configuration.MaxThroughputAndMinLatencyStrategy()])
 
     # saving all registered modules (with all runners)
     nav.bundle.save("./bundle.nav", modules=nav.bundle.RegisteredModulesSelection())
@@ -73,7 +73,7 @@ from typing import List, Optional, Tuple, Union
 import yaml
 from packaging.version import Version
 
-from model_navigator.configuration import MaxThroughputAndMinLatencyStrategy, RuntimeSearchStrategy
+from model_navigator.configuration import MaxThroughputAndMinLatencyStrategy, MinLatencyStrategy, RuntimeSearchStrategy
 from model_navigator.core.logger import LOGGER
 from model_navigator.exceptions import ModelNavigatorConfigurationError, ModelNavigatorModuleNotOptimizedError
 from model_navigator.inplace.config import inplace_cache_dir
@@ -86,9 +86,9 @@ def load(bundle_path: Union[str, Path], tags: Optional[List[str]] = None, force:
     """Loads bundle from archive file. Extracts files to cache directory.
 
     Args:
-        bundle_path (Union[str, Path]): A path to archive.
-        tags (Optional[list[str]], optional):  user specified bundle info, if not None tags MUST match. Defaults to None.
-        force (bool, optional): If True, omits environment matching step. Defaults to False.
+        bundle_path: A path to archive.
+        tags:  user specified bundle info, if not None tags MUST match. Defaults to None.
+        force: If True, omits environment matching step. Defaults to False.
 
     Raises:
         ModelNavigatorConfigurationError: If bundle does not match current environment
@@ -121,8 +121,8 @@ def is_matching(bundle_path: Union[str, Path], tags: Optional[List[str]] = None)
         * TensorRT version must match
 
     Args:
-        bundle_path (Optional[str, Path]): Path to archive
-        tags (Optional[List[str]]): user specified bundle info, if not None tags MUST match
+        bundle_path: Path to archive
+        tags: user specified bundle info, if not None tags MUST match
 
     Returns:
         bool: if archive attributes match HW architecture and SW stack
@@ -206,14 +206,18 @@ class RegisteredModulesSelection(BundleModuleSelection):
 class BestRunnersSelection(BundleModuleSelection):
     """Selects only best runners from registered modules for bundling."""
 
-    def __init__(self, runner_selection_strategy: Optional[RuntimeSearchStrategy] = None) -> None:
+    def __init__(self, runner_selection_strategies: Optional[List[RuntimeSearchStrategy]] = None) -> None:
         """Init.
 
         Args:
-            runner_selection_strategy (Optional[RuntimeSearchStrategy], optional): Module loading strategy to use during modules selection for save. Defaults to MaxThroughputAndMinLatencyStrategy.
+            runner_selection_strategies (Optional[RuntimeSearchStrategy], optional): Module loading strategy to use during
+                modules selection for save. When none provided the strategies defaults to [`MaxThroughputAndMinLatencyStrategy`, `MinLatencyStrategy`].
         """
         super().__init__()
-        self.runner_selection_strategy = runner_selection_strategy or MaxThroughputAndMinLatencyStrategy()
+        self.runner_selection_strategies = runner_selection_strategies or [
+            MaxThroughputAndMinLatencyStrategy(),
+            MinLatencyStrategy(),
+        ]
 
 
 class ModulesByNameSelection(BundleModuleSelection):
@@ -236,14 +240,14 @@ def save(
     """Saves cache bundle to archive for easy storage.
 
     Args:
-        bundle_path (Union[str, Path]): Where to save bundle file
-        modules (BundleModuleSelection): Strategy for selecting modules. @see BundleModuleSelection and subclasses  Defaults to BestRunnersSelection with MaxThroughputAndMinLatencyStrategy runners.
-        tags (Optional[List[str]], optional): a set of tags, for better bundle identification and selection. Defaults to None.
+        bundle_path: Where to save bundle file
+        modules: Strategy for selecting modules. @see BundleModuleSelection and subclasses  Defaults to BestRunnersSelection with MaxThroughputAndMinLatencyStrategy runners.
+        tags: a set of tags, for better bundle identification and selection. Defaults to None.
 
     Raises:
         ModelNavigatorModuleNotOptimizedError: When selected modules are not optimized yet
     """
-    modules = modules or BestRunnersSelection(MaxThroughputAndMinLatencyStrategy())
+    modules = modules or BestRunnersSelection([MaxThroughputAndMinLatencyStrategy(), MinLatencyStrategy()])
     cache_dir = inplace_cache_dir()
 
     # saving to temporary file and then moving to final location to avoid corrupted files
@@ -267,7 +271,7 @@ def save(
         shutil.copy(tmp_zip, bundle_path)
 
 
-def _only_module_best_runner(strategy: RuntimeSearchStrategy) -> List[str]:
+def _only_module_best_runner(strategies: List[RuntimeSearchStrategy]) -> List[str]:
     cache_dir = inplace_cache_dir()
 
     best_modules = []
@@ -285,7 +289,7 @@ def _only_module_best_runner(strategy: RuntimeSearchStrategy) -> List[str]:
             model_input_path = workspace_path / "model_input"
             model_output_path = workspace_path / "model_output"
 
-            runtime_result = package._get_best_runtime(strategy=strategy)
+            runtime_result = package._get_best_runtime(strategies=strategies)
             module_runner_path = workspace_path / runtime_result.model_status.model_config.path.parent
 
             best_modules += [
@@ -320,7 +324,7 @@ def _selected_cache_entries(select_modules: BundleModuleSelection) -> List[str]:
     if isinstance(select_modules, RegisteredModulesSelection):
         return _registered_modules_names()
     if isinstance(select_modules, BestRunnersSelection):
-        return _only_module_best_runner(select_modules.runner_selection_strategy)
+        return _only_module_best_runner(select_modules.runner_selection_strategies)
     if isinstance(select_modules, ModulesByNameSelection):
         return _modules_by_name(select_modules.module_names)
 

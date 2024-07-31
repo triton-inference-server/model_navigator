@@ -1,4 +1,4 @@
-# Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,7 +23,12 @@ from model_navigator.commands.base import CommandStatus
 from model_navigator.commands.infer_metadata import InferInputMetadata, InferOutputMetadata
 from model_navigator.commands.load import LoadMetadata
 from model_navigator.commands.verification.verify import VerifyModel
-from model_navigator.configuration import Format, MaxThroughputStrategy, MinLatencyStrategy, TensorRTProfile
+from model_navigator.configuration import (
+    Format,
+    MaxThroughputAndMinLatencyStrategy,
+    MinLatencyStrategy,
+    TensorRTProfile,
+)
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.core.constants import NAVIGATOR_PACKAGE_VERSION
 from model_navigator.core.logger import LOGGER
@@ -147,14 +152,14 @@ class PackageBuilder:
 
                 models_paths_to_save.add(model_path)
 
-        for strategy in [MaxThroughputStrategy(), MinLatencyStrategy()]:
-            try:
-                best_model_status = package.get_best_model_status(include_source=False, strategy=strategy)
-                best_format_path = package.workspace.path / best_model_status.model_config.path
-                if best_format_path.exists():
-                    models_paths_to_save.add(best_format_path)
-            except ModelNavigatorRuntimeAnalyzerError:
-                LOGGER.info(f"No model found with strategy: {strategy}")
+        strategies = [MaxThroughputAndMinLatencyStrategy(), MinLatencyStrategy()]
+        try:
+            best_model_status = package.get_best_model_status(include_source=False, strategies=strategies)
+            best_format_path = package.workspace.path / best_model_status.model_config.path
+            if best_format_path.exists():
+                models_paths_to_save.add(best_format_path)
+        except ModelNavigatorRuntimeAnalyzerError:
+            LOGGER.info(f"No model found with strategy: {strategies}")
 
         external_weights_paths = set()
         model_subpaths = set()

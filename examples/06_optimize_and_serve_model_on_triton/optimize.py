@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -70,10 +70,7 @@ def main():
 
     try:
         nav.triton.model_repository.add_model_from_package(
-            model_repository_path=pathlib.Path("model_repository"),
-            model_name="linear",
-            package=package,
-            strategy=nav.MinLatencyStrategy(),
+            model_repository_path=pathlib.Path("model_repository"), model_name="linear", package=package
         )
     except (ModelNavigatorWrongParameterError, ModelNavigatorEmptyPackageError, ModelNavigatorError) as e:
         LOGGER.warning(f"Model repository cannot be created.\n{str(e)}")

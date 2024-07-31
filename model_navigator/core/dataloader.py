@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -143,13 +143,13 @@ def samples_to_npz(
     """Save samples to .npz files. Each sample is saved to `path/{sample index}.npz` file.
 
     Args:
-        samples (List[Sample]): Samples to save.
-        path (Path): Output directory.
-        batch_dim (Optional[int]): Batch dimension
-        num_samples (Optional[int], optional): Number of samples to save. Defaults to None.
-        metadata (Optional[TensorMetadata], optional): Metadata of the samples. Defaults to None.
-        framework (Framework): Model framework. Defaults to None.
-        raise_on_error (bool, optional): If True raise an error when sample is invalid. Defaults to True.
+        samples: Samples to save.
+        path: Output directory.
+        batch_dim: Batch dimension
+        num_samples: Number of samples to save. Defaults to None.
+        metadata: Metadata of the samples. Defaults to None.
+        framework: Model framework. Defaults to None.
+        raise_on_error: If True raise an error when sample is invalid. Defaults to True.
     """
     path.mkdir(parents=True, exist_ok=True)
     if num_samples is None:
@@ -222,13 +222,16 @@ def extract_bs1(sample: Sample, batch_dim: Optional[int]) -> Sample:
     return sample
 
 
-def expand_sample(sample: Sample, batch_dim: Optional[int], batch_size: Optional[int]) -> Sample:
+def expand_sample(
+    sample: Sample, input_metadata: TensorMetadata, batch_dim: Optional[int], batch_size: Optional[int]
+) -> Sample:
     """Expand sample to a given batch size.
 
     Args:
-        sample (Sample): Sample to be expanded.
-        batch_dim (Optional[int]): Batch dimension.
-        batch_size (int): Batch size.
+        sample: Sample to be expanded.
+        input_metadata: Model input metadata
+        batch_dim: Batch dimension.
+        batch_size: Batch size.
 
     Returns:
         Sample: Expanded Sample.
@@ -238,7 +241,15 @@ def expand_sample(sample: Sample, batch_dim: Optional[int], batch_size: Optional
         return sample
     expanded_sample = {}
     for name, tensor in sample.items():
-        expanded_sample[name] = tensor.repeat(batch_size, axis=batch_dim)
+        tensor_metadata = input_metadata.get(name)
+        if not tensor_metadata:
+            continue
+
+        if len(tensor_metadata.shape) > 0:
+            expanded_sample[name] = tensor.repeat(batch_size, axis=batch_dim)
+        else:
+            expanded_sample[name] = tensor
+
     return expanded_sample
 
 

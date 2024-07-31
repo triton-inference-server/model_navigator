@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ def main():
     - PyTriton configuration
     - Runner selected with given strategy (defaults to MaxThroughputAndMinLatencyStrategy)
     """
-    pytriton_adapter = nav.pytriton.PyTritonAdapter(package=package, strategy=nav.MaxThroughputStrategy())
+    pytriton_adapter = nav.pytriton.PyTritonAdapter(package=package)
     runner = pytriton_adapter.runner
 
     """Runner must be activated before inference."""
