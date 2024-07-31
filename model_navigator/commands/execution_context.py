@@ -15,7 +15,6 @@
 
 import contextlib
 import copy
-import logging
 import multiprocessing as mp
 import os
 import pathlib
@@ -32,39 +31,6 @@ from model_navigator.core.logger import LOGGER
 from model_navigator.core.workspace import Workspace
 from model_navigator.exceptions import ModelNavigatorUserInputError
 from model_navigator.utils.environment import use_multiprocessing
-
-
-class FileHandlersLogging:
-    """Disable everything that is not a FileHandler.
-
-    Example usage:
-        with FileHandlersLogging():
-            LOGGER.info("Log this to file")
-    """
-
-    def __init__(self):
-        """Initialize object."""
-        self._disabled_handlers = []
-
-    def __enter__(self):
-        """Enter the context."""
-        for handler in LOGGER.handlers:
-            if not isinstance(handler, logging.FileHandler):
-                self._disabled_handlers.append(handler)
-                LOGGER.removeHandler(handler)
-
-    def __exit__(self, exc_type, exc_val, exc_tb):  # noqa: F841
-        """Exit the context.
-
-        Args:
-            exc_type: class of exception
-            exc_val: type of exception
-            exc_tb: traceback of exception
-        """
-        for handler in self._disabled_handlers:
-            LOGGER.addHandler(handler)
-
-        self._disabled_handlers.clear()
 
 
 class ExecutionContext(contextlib.AbstractContextManager):
@@ -110,7 +76,6 @@ class ExecutionContext(contextlib.AbstractContextManager):
         self._script_path = pathlib.Path(script_path) if script_path else script_path
         self._cmd_path = pathlib.Path(cmd_path) if cmd_path else cmd_path
         self._cache = {}
-        self._output = None
         self._verbose = verbose
         self._on_exit = on_exit
 
@@ -125,12 +90,6 @@ class ExecutionContext(contextlib.AbstractContextManager):
         Raises:
             ModelNavigatorUserInputError when issue was cased by provided by user data
         """
-        if self._output is not None:
-            with FileHandlersLogging():
-                if not self._verbose:
-                    LOGGER.info("Command output:")
-                LOGGER.info(textwrap.indent(self._output, "    "))
-
         if self._on_exit is not None:
             self._on_exit()
 
@@ -227,20 +186,18 @@ class ExecutionContext(contextlib.AbstractContextManager):
             cwd=self._workspace.path,
         )
 
-        if self._verbose:
-            LOGGER.info("Command output:")
-
-        self._output = ""
+        process_output = ""
         while True:
-            output = process.stdout.readline()
-            if output == "" and process.poll() is not None:
+            output_chunk = process.stdout.readline()
+            if output_chunk == "" and process.poll() is not None:
                 break
-            if output:
-                self._output += output
-                if self._verbose:
-                    print(textwrap.indent(output.rstrip(), "    "))  # noqa: T201
+            if output_chunk:
+                process_output += output_chunk
 
         result = process.poll()
+
+        if result != 0 or self._verbose:
+            LOGGER.info("Command output:\n", textwrap.indent(process_output, "    "))
 
         if result != 0:
             if not allow_failure:
