@@ -26,7 +26,7 @@ limitations under the License.
 - change: moved JAX to support to experimental module and limited support
 - change: use autocast=True for Torch based runners
 - change: use torch.inference_mode or torch.no_grad context in `nav.profile` measurements
-
+- fix: properly revert log level after torch onnx dynamo export
 
 
 ## 0.10.1

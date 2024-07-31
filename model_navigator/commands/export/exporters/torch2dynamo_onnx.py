@@ -89,23 +89,23 @@ def export(
     export_options = torch.onnx.ExportOptions(**export_options_kwargs)
 
     root_logger = logging.getLogger()
-    root_loglevel = root_logger.getEffectiveLevel()
+    original_loglevel = root_logger.getEffectiveLevel()
     root_logger.setLevel(loglevel)
+    try:
+        exported_model = torch.onnx.dynamo_export(
+            model,
+            *args,
+            **custom_args,
+            **kwargs,
+            export_options=export_options,
+        )
 
-    exported_model = torch.onnx.dynamo_export(
-        model,
-        *args,
-        **custom_args,
-        **kwargs,
-        export_options=export_options,
-    )
-
-    exported_model_path = pathlib.Path(exported_model_path)
-    if not exported_model_path.is_absolute():
-        exported_model_path = navigator_workspace / exported_model_path
-    exported_model.save(exported_model_path.as_posix())
-
-    root_logger.setLevel(root_loglevel)
+        exported_model_path = pathlib.Path(exported_model_path)
+        if not exported_model_path.is_absolute():
+            exported_model_path = navigator_workspace / exported_model_path
+        exported_model.save(exported_model_path.as_posix())
+    finally:
+        root_logger.setLevel(original_loglevel)
 
     _modify_onnx_io_names(exported_model_path, input_names, output_names, exported_model_path)
 
