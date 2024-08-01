@@ -16,6 +16,9 @@ limitations under the License.
 
 # Changelog
 
+## 0.12.0 (unreleased)
+
+
 ## 0.11.0
 
 - new: Python 3.12 support
