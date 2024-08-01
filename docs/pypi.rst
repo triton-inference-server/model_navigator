@@ -113,11 +113,10 @@ For the Stable Diffusion model, initialize the pipeline and wrap the model compo
         pipe = StableDiffusionPipeline.from_pretrained("stabilityai/stable-diffusion-2-1")
         pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
         pipe = pipe.to("cuda")
-
         pipe.text_encoder = nav.Module(
             pipe.text_encoder,
             name="clip",
-            output_mapping=lambda output: BaseModelOutputWithPooling(**output),
+            output_mapping=lambda output: BaseModelOutputWithPooling(**output), # Mapping to convert output data to HuggingFace class
         )
         pipe.unet = nav.Module(
             pipe.unet,
@@ -134,8 +133,8 @@ Prepare a simple dataloader:
 
 .. code-block:: python
 
+    # Please mind, the first element in tuple need to be a batch size
     def get_dataloader():
-        # Please mind, the first element in tuple need to be a batch size
         return [(1, "a photo of an astronaut riding a horse on mars")]
 
 Execute model optimization:
@@ -157,6 +156,8 @@ After executing this method, when the optimized version of module exists, it wil
 directly in Python. The example how to serve Stable Diffusion pipeline through PyTriton can be
 found `here`_.
 
+Please read `Error isolation when running Python script`_ when you plan to place code in Python script.
+
 Optimize ResNET and deploy on Triton
 --------------------------------------
 
@@ -172,11 +173,16 @@ To optimize ResNet50 model from TorchHub run the following code:
     import model_navigator as nav
 
     # Optimize Torch model loaded from TorchHub
-    package = nav.torch.optimize(
-        model=torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_resnet50', pretrained=True).eval(),
-        dataloader=[torch.randn(1, 3, 256, 256) for _ in range(10)],
-    )
+    resnet50 = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_resnet50', pretrained=True).eval()
 
+    # Wrap model in nav.Module
+    resnet50 = nav.Module(resnet50, name="resnet50")
+
+    # Optimize Torch model loaded from TorchHub
+    nav.optimize(resnet50, dataloader=[(1, [torch.randn(1, 3, 256, 256)])])
+
+
+Please read `Error isolation when running Python script`_ when you plan to place code in Python script.
 
 Once optimization is done, creating a model store for deployment on Triton is simple as following code:
 
@@ -185,11 +191,8 @@ Once optimization is done, creating a model store for deployment on Triton is si
     import pathlib
 
     # Generate the model store from optimized model
-    nav.triton.model_repository.add_model_from_package(
+    resnet50.triton_model_store(
         model_repository_path=pathlib.Path("model_repository"),
-        model_name="resnet50",
-        package=package,
-        strategy=nav.MaxThroughputStrategy(),
     )
 
 Profile any model or callable in Python
@@ -222,6 +225,43 @@ Finally, run the profiling of the function with prepared dataloader:
 .. code-block:: python
 
     nav.profile(custom_fn, dataloader)
+
+
+Error isolation when running Python script
+------------------------------------------
+
+**Important**: Please review below section to prevent unexpected issues when running `optimize`.
+
+For better error isolation, some conversions and exports are run in separate child processes using multiprocessing in
+the `spawn` mode. This means that everything in a global scope will be run in a child process. You can encounter
+unexpected issue when the optimization code is place in Python script and executed as:
+
+.. code-block:: shell
+
+    python optimize.py
+
+To prevent nested optimization, you have to either put the optimize code in:
+
+.. code-block:: python
+
+    if __name__ == "__main__":
+        # optimization goes here
+
+or
+
+.. code-block:: python
+
+    import multiprocessing as mp
+    if mp.current_process().name == "MainProcess":
+        # optimization goes here
+
+
+If none of the above works for you, you can run all optimization in a single process at the cost of error isolation by
+setting the following environment variable:
+
+.. code-block:: shell
+
+    NAVIGATOR_USE_MULTIPROCESSING=False
 
 
 Examples

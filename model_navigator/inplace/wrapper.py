@@ -240,7 +240,15 @@ class Module(wrapt.ObjectProxy):
         device: Union[str, "torch.device"] = "cuda",
         activate_runners: bool = True,
     ) -> None:
-        """Load optimized module."""
+        """Load optimized module.
+
+        Args:
+            strategies: List of strategies for finding the best model. Strategies are selected in provided order. When
+                        first fails, next strategy from the list is used. When none provided the strategies
+                        defaults to [`MaxThroughputAndMinLatencyStrategy`, `MinLatencyStrategy`]
+            device: Device on which optimized modules would be loaded. Defaults to "cuda".
+            activate_runners: Activate models - load on device. Defaults to True.
+        """
         if isinstance(self._wrapper, OptimizedModule):
             self._wrapper.deactivate_runners()
 

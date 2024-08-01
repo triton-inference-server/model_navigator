@@ -65,7 +65,7 @@ def get_pipeline():
     pipe.text_encoder = nav.Module(
         pipe.text_encoder,
         name="clip",
-        output_mapping=lambda output: BaseModelOutputWithPooling(**output),
+        output_mapping=lambda output: BaseModelOutputWithPooling(**output), # Mapping to convert output data to HuggingFace class
     )
     pipe.unet = nav.Module(
         pipe.unet,
@@ -90,12 +90,10 @@ def get_dataloader():
 Execute model optimization:
 
 ```python
-if __name__ == "__main__":
-    # run optimization in the parent process only
-    pipe = get_pipeline()
-    dataloader = get_dataloader()
+pipe = get_pipeline()
+dataloader = get_dataloader()
 
-    nav.optimize(pipe, dataloader)
+nav.optimize(pipe, dataloader)
 ```
 
 Once the pipeline has been optimized, you can load explicit the most performant version of the modules executing:
@@ -136,12 +134,11 @@ Here is an example of running `optimize` on the Torch Hub ResNet50 model:
 import torch
 import model_navigator as nav
 
-if __name__ == "__main__":
-    # run optimization in the parent process only
-    package = nav.torch.optimize(
-        model=torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_resnet50', pretrained=True).eval(),
-        dataloader=[torch.randn(1, 3, 256, 256) for _ in range(10)],
-    )
+# run optimization in the parent process only
+package = nav.torch.optimize(
+    model=torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_resnet50', pretrained=True).eval(),
+    dataloader=[torch.randn(1, 3, 256, 256) for _ in range(10)],
+)
 ```
 
 Once the model has been optimized, the created artifacts are stored in `navigator_workspace` and a Package object is

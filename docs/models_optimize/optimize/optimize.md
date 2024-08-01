@@ -63,12 +63,10 @@ Here is an example of running `optimize` on the TorchHub ResNet50 model:
 import torch
 import model_navigator as nav
 
-if __name__ == "__main__":
-    # run optimization in the parent process only
-    package = nav.torch.optimize(
-        model=torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_resnet50', pretrained=True).eval(),
-        dataloader=[torch.randn(1, 3, 256, 256) for _ in range(10)],
-    )
+package = nav.torch.optimize(
+    model=torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_resnet50', pretrained=True).eval(),
+    dataloader=[torch.randn(1, 3, 256, 256) for _ in range(10)],
+)
 ```
 
 Once the model has been optimized, the created artifacts are stored in a dedicated workspace and a Package object is
@@ -99,15 +97,13 @@ optimize function. It can reduce accuracy, so you must validate the quantized mo
 The Triton Model Navigator can build your quantized model, when the flag ```INT8``` is used:
 
 ```python
-if __name__ == "__main__":
-    # run optimization in the parent process only
-    package = nav.torch.optimize(
-        model=model,
-        dataloader=dataloader,
-        custom_configs=[
-                nav.TensorRTConfig(precision=nav.TensorRTPrecision.INT8),
-        ],
-    )
+package = nav.torch.optimize(
+    model=model,
+    dataloader=dataloader,
+    custom_configs=[
+            nav.TensorRTConfig(precision=nav.TensorRTPrecision.INT8),
+    ],
+)
 ```
 
 At the end, the summary of the execution is presented, and artifacts are stored in the Navigator workspace, which by default

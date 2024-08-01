@@ -16,7 +16,7 @@ limitations under the License.
 
 # Changelog
 
-## 0.11.0 (unreleased)
+## 0.11.0
 
 - new: Python 3.12 support
 - new: Improved logging
@@ -32,10 +32,39 @@ limitations under the License.
 - change: `trt_profiles` are not set automatically for module when using `nav.optimize`
 - fix: properly revert log level after torch onnx dynamo export
 
+[//]: <> (put here on external component update with short summary what change or link to changelog)
+
+- Version of external components used during testing:
+    - [PyTorch 2.4.0a0+07cecf4](https://github.com/pytorch/pytorch/commit/40ec155e58ee1a1921377ff921b55e61502e4fb3)
+    - [TensorFlow 2.15.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.15.0)
+    - [TensorRT 10.0.1.6](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+    - [Torch-TensorRT 2.4.0.a0](https://github.com/NVIDIA/Torch-TensorRT)
+    - [ONNX Runtime 1.18.1](https://github.com/microsoft/onnxruntime/tree/v1.18.0)
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.49.10
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.5.2
+    - [tf2onnx v1.16.1](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.16.1)
+    - Other component versions depend on the used framework containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
 
 ## 0.10.1
 
 - fix: Check if torch 2 is available before doing dynamo cleanup
+
+[//]: <> (put here on external component update with short summary what change or link to changelog)
+
+- Version of external components used during testing:
+    - [PyTorch 2.4.0a0+07cecf4](https://github.com/pytorch/pytorch/commit/40ec155e58ee1a1921377ff921b55e61502e4fb3)
+    - [TensorFlow 2.15.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.15.0)
+    - [TensorRT 10.0.1.6](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+    - [Torch-TensorRT 2.4.0.a0](https://github.com/NVIDIA/Torch-TensorRT)
+    - [ONNX Runtime 1.18.1](https://github.com/microsoft/onnxruntime/tree/v1.18.0)
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.49.10
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.5.2
+    - [tf2onnx v1.16.1](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.16.1)
+    - Other component versions depend on the used framework containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
 
 ## 0.10.0
 
