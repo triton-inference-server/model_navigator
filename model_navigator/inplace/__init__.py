@@ -248,7 +248,7 @@ def _load_modules(model_key: str, runner_name: str, device: str, verbose: bool =
                 m.load_eager()
             else:
                 m.load_optimized(
-                    strategy=SelectedRuntimeStrategy(model_key=model_key, runner_name=runner_name), device=device
+                    strategies=[SelectedRuntimeStrategy(model_key=model_key, runner_name=runner_name)], device=device
                 )
 
         except (ModelNavigatorModuleNotOptimizedError, ModelNavigatorRuntimeAnalyzerError) as e:
