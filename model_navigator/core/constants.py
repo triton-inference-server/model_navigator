@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -53,9 +53,25 @@ NAVIGATOR_LOG_FORMAT_ENV = "NAVIGATOR_LOG_FORMAT"
 NAVIGATOR_CONSOLE_OUTPUT_ENV = "NAVIGATOR_CONSOLE_OUTPUT"
 NAVIGATOR_THIRD_PARTY_LOG_LEVEL_ENV = "NAVIGATOR_THIRD_PARTY_LOG_LEVEL"
 OUTPUT_LOGS_FLAG = "LOGS"
+OUTPUT_SIMPLE_REPORT = "SimpleReport"
 
 # Timer
 DEFAULT_COMPARISON_REPORT_FILE = "report.yaml"
 
 # Subcommands isolation
 NAVIGATOR_USE_MULTIPROCESSING = "NAVIGATOR_USE_MULTIPROCESSING"
+
+# Pipeline names
+PIPELINE_CORRECTNESS = "Correctness"
+PIPELINE_FIND_MAX_BATCH_SIZE = "Finding Max Batch Size for TensorRT"
+PIPELINE_PERFORMANCE = "Performance"
+PIPELINE_PREPROCESSING = "Preprocessing"
+PIPELINE_PROFILING = "Profiling"
+PIPELINE_TF_TENSORRT = "TensorFlow-TensorRT Conversion"
+PIPELINE_TF2_CONVERSION = "TensorFlow 2 Conversion"
+PIPELINE_TF2_EXPORT = "TensorFlow2 Export"
+PIPELINE_TENSORRT_CONVERSION = "TensorRT Conversion"
+PIPELINE_TORCH_TENSORRT_CONVERSION = "Torch-TensorRT Conversion"
+PIPELINE_TORCH_CONVERSION = "PyTorch Conversion"
+PIPELINE_TORCH_EXPORT = "PyTorch Export"
+PIPELINE_VERIFY_MODELS = "Verify Models"

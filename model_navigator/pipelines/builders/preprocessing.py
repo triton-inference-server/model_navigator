@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ from model_navigator.commands.load import LoadMetadata
 from model_navigator.configuration import Format
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig
+from model_navigator.core.constants import PIPELINE_PREPROCESSING
 from model_navigator.frameworks import Framework
 from model_navigator.pipelines.pipeline import Pipeline
 
@@ -57,4 +58,4 @@ def preprocessing_builder(config: CommonConfig, models_config: Dict[Format, List
     elif config.framework == Framework.TENSORRT:
         execution_units.append(ExecutionUnit(command=CopyModel, model_config=models_config[Format.TENSORRT][0]))
 
-    return Pipeline(name="Preprocessing", execution_units=execution_units)
+    return Pipeline(name=PIPELINE_PREPROCESSING, execution_units=execution_units)

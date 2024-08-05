@@ -28,7 +28,6 @@ from typing import Dict, Optional, TextIO, Tuple, Union
 from loguru import logger
 
 from model_navigator.core.constants import (
-    NAVIGATOR_CONSOLE_OUTPUT_ENV,
     NAVIGATOR_LOG_FORMAT_ENV,
     NAVIGATOR_LOG_LEVEL_ENV,
     NAVIGATOR_LOGGER_NAME,
@@ -36,7 +35,7 @@ from model_navigator.core.constants import (
     NAVIGATOR_USE_MULTIPROCESSING,
     OUTPUT_LOGS_FLAG,
 )
-from model_navigator.utils.environment import use_multiprocessing
+from model_navigator.utils.environment import get_console_output, use_multiprocessing
 
 LOGGER = logger.bind(**{NAVIGATOR_LOGGER_NAME: True})
 
@@ -71,12 +70,6 @@ def get_navigator_log_level() -> str:
 def get_third_party_log_level() -> str:
     """Returns logging level."""
     return os.environ.get(NAVIGATOR_THIRD_PARTY_LOG_LEVEL_ENV, "WARNING")
-
-
-@lru_cache
-def get_console_output() -> str:
-    """Returns what should be put on the console."""
-    return os.environ.get(NAVIGATOR_CONSOLE_OUTPUT_ENV, OUTPUT_LOGS_FLAG)
 
 
 @lru_cache

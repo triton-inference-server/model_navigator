@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ from model_navigator.commands.find_max_batch_size import FindMaxBatchSize, FindM
 from model_navigator.configuration import Format
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig
+from model_navigator.core.constants import PIPELINE_FIND_MAX_BATCH_SIZE
 from model_navigator.core.logger import LOGGER
 from model_navigator.frameworks import Framework
 from model_navigator.pipelines.pipeline import Pipeline
@@ -32,7 +33,7 @@ from model_navigator.utils.config_helpers import do_find_device_max_batch_size
 def find_device_max_batch_size_builder(
     config: CommonConfig, models_config: Dict[Format, List[ModelConfig]]
 ) -> Pipeline:
-    """Build find device max batch size pipeline.
+    """Build finding max batch size for TensorRT pipeline.
 
     Args:
         config: A configuration for pipelines
@@ -41,11 +42,10 @@ def find_device_max_batch_size_builder(
     Returns:
         Pipeline with steps for find max batch size.
     """
-    pipeline_name = "Find Device Max Batch Size"
     execution_units: List[ExecutionUnit] = []
 
     if not do_find_device_max_batch_size(config=config, models_config=models_config):
-        return Pipeline(name=pipeline_name, execution_units=execution_units)
+        return Pipeline(name=PIPELINE_FIND_MAX_BATCH_SIZE, execution_units=execution_units)
 
     configurations = []
     if config.framework == Framework.TORCH:
@@ -105,4 +105,4 @@ def find_device_max_batch_size_builder(
         )
     )
 
-    return Pipeline(name=pipeline_name, execution_units=execution_units)
+    return Pipeline(name=PIPELINE_FIND_MAX_BATCH_SIZE, execution_units=execution_units)

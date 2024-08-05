@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -71,6 +71,10 @@ class CommandMeta(abc.ABCMeta):  # noqa: B024
             Name of command as a string
         """
         return cls.__name__
+
+    def __repr__(cls) -> str:
+        """Return a string representation of the command."""
+        return cls.name
 
 
 class Command(metaclass=CommandMeta):
@@ -194,3 +198,9 @@ class ExecutionUnit:
 
         if self.runner_cls and not self.model_config:
             raise ModelNavigatorWrongParameterError("Unable to execute unit with runner without a model.")
+
+    def __repr__(self) -> str:
+        """Return a string representation of the execution unit."""
+        runner_name = "None" if self.runner_cls is None else self.runner_cls.name()
+        config = "None" if self.model_config is None else self.model_config.key
+        return f"Cmd:{self.command}, Config:{config}, Runner:{runner_name}"

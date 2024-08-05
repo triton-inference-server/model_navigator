@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ from model_navigator.commands.performance import Performance
 from model_navigator.configuration import Format
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig
+from model_navigator.core.constants import PIPELINE_PERFORMANCE
 from model_navigator.pipelines.pipeline import Pipeline
 from model_navigator.runners.registry import runner_registry
 from model_navigator.utils.format_helpers import is_source_format
@@ -55,4 +56,4 @@ def performance_builder(config: CommonConfig, models_config: Dict[Format, List[M
                             runner_cls=runner,
                         )
                     )
-    return Pipeline(name="Performance", execution_units=execution_units)
+    return Pipeline(name=PIPELINE_PERFORMANCE, execution_units=execution_units)

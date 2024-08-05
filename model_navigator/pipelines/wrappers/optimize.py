@@ -1,4 +1,4 @@
-# Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2023-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,15 +16,18 @@
 import pathlib
 from typing import Any, Dict, List, Optional, Sequence
 
+from pyee import EventEmitter
+
 from model_navigator.configuration import Format
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model import model_config
 from model_navigator.core.workspace import Workspace
-from model_navigator.exceptions import ModelNavigatorRuntimeError
+from model_navigator.exceptions import ModelNavigatorRuntimeAnalyzerError, ModelNavigatorRuntimeError
 from model_navigator.package.builder import PackageBuilder
 from model_navigator.package.package import Package
 from model_navigator.pipelines.builders import PipelineBuilder
 from model_navigator.pipelines.pipeline_manager import PipelineManager
+from model_navigator.reporting.events import NavigatorEvent, default_event_emitter
 
 
 def optimize_pipeline(
@@ -54,14 +57,18 @@ def optimize_pipeline(
     if model and package:
         raise ModelNavigatorRuntimeError("Only one of `model` and `package` arguments is required.")
 
+    event_emitter = default_event_emitter()
+
     workspace = Workspace(workspace)
     if not package or workspace.path != package.workspace.path:
         workspace.initialize()
+        event_emitter.emit(NavigatorEvent.WORKSPACE_INITIALIZED, path=workspace.path)
 
     if package:
         model = package.model
 
     pipeline_manager = PipelineManager(workspace=workspace)
+    event_emitter.emit(NavigatorEvent.OPTIMIZATION_STARTED)
     context = pipeline_manager.run(
         workspace=workspace,
         builders=builders,
@@ -77,4 +84,23 @@ def optimize_pipeline(
         config=config,
     )
 
+    emit_optimization_result_event(package, event_emitter)
+
+    event_emitter.emit(NavigatorEvent.OPTIMIZATION_FINISHED)
     return package
+
+
+def emit_optimization_result_event(package: Package, event_emitter: EventEmitter):
+    """Emits event with a best result or error."""
+    try:
+        best_model_status = package.get_best_model_status(include_source=True)
+        best_format_path = package.workspace.path / best_model_status.model_config.path
+        model_path = best_format_path if best_format_path.exists() else None
+        event_emitter.emit(
+            NavigatorEvent.BEST_MODEL_PICKED,
+            config_key=best_model_status.model_config.key,
+            runner_name=list(best_model_status.runners_status.keys())[0],
+            model_path=model_path,
+        )
+    except ModelNavigatorRuntimeAnalyzerError:
+        event_emitter.emit(NavigatorEvent.MODEL_NOT_OPTIMIZED_ERROR)

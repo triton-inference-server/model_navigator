@@ -14,10 +14,10 @@
 """TensorRT utils."""
 
 import contextlib
-import logging
 import os
 import pathlib
 import signal
+from functools import lru_cache
 from typing import Callable, List, Optional, Tuple, TypeVar, Union
 
 import numpy as np
@@ -221,23 +221,37 @@ def get_trt_logger() -> "trt.Logger":
     logger_type = trt.Logger
     if Version(trt.__version__) >= Version("8.0"):
 
+        @lru_cache
+        def get_log_level(severity):
+            """Translates trt log level into loguru log level.
+
+            Returns level only if it is WARNING or above to reduce TRT spam.
+
+            Note:
+            - loguru uses str levels.
+            - when logging the log function cannot throw, so `critical` should not be mapped here!
+            """
+            log_level = {
+                trt.Logger.INTERNAL_ERROR: "ERROR",
+                trt.Logger.ERROR: "ERROR",
+                trt.Logger.WARNING: "WARNING",
+                trt.Logger.INFO: "INFO",
+                trt.Logger.VERBOSE: "DEBUG",
+            }.get(severity, "INFO")
+
+            # emit log level only if the severity is WARNING or above, use int levels to compare
+            if logger.level(log_level).no >= logger.level("WARNING").no:
+                return log_level
+            else:
+                return None
+
         class CustomTrtLogger(trt.ILogger):
             def __init__(self):
                 trt.ILogger.__init__(self)
 
             def log(self, severity, msg):
                 try:
-                    log_level = {
-                        # This function cannot throw, so `critical` should not be used here!
-                        trt.Logger.INTERNAL_ERROR: logging.ERROR,
-                        trt.Logger.ERROR: logging.ERROR,
-                        # Reduce warning spam from TRT.
-                        trt.Logger.WARNING: logging.WARNING,
-                        trt.Logger.INFO: logging.INFO,
-                        trt.Logger.VERBOSE: logging.DEBUG,
-                    }.get(severity, logging.INFO)
-
-                    if log_level >= logging.WARNING:
+                    if log_level := get_log_level(severity):
                         logger.log(log_level, msg)
                 except KeyboardInterrupt:
                     # `log()` is `noexcept` so we need to convert exceptions to signals so that

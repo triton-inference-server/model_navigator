@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,6 @@
 """Functionality to perform search of max possible batch size that model can be loaded with on device."""
 
 import dataclasses
-import logging
 import pathlib
 import tempfile
 from typing import Dict, List, Optional, Type, Union
@@ -39,7 +38,7 @@ class MaxBatchSizeFinder(Profiler):
 
     @property
     def _profiling_results_logging_level(self):
-        return logging.DEBUG
+        return "DEBUG"
 
 
 @dataclasses.dataclass

@@ -285,3 +285,22 @@ setting the following environment variable:
 ```bash
 NAVIGATOR_USE_MULTIPROCESSING=False
 ```
+
+## Detailed optimization report
+
+Model navigator tries to hide the conversion and export complexity under the hood so that you can quickly start optimizing a model.
+For advanced use cases where you would like to have better insights into the process, you can set the environment variable:
+```bash
+NAVIGATOR_CONSOLE_OUTPUT=detailed
+```
+
+After each optimization of a model or module (in inplace mode) Model Navigator will print an optimization status table with each detailed step.
+
+Another option is to take a look at the log files in the `workspace/module/navigator.log` where you can find detailed logs and summary table of the
+whole process.
+
+If you would like to see the logs on the console during the optimization, set the following property:
+
+```bash
+NAVIGATOR_CONSOLE_OUTPUT=logs
+```

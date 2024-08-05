@@ -62,6 +62,8 @@ dependencies = [
     "tensorrt;platform_machine == 'x86_64'",
     "tritonclient[grpc]~=2.47",
     "wrapt>=1.11.0,<1.15",
+    "pyee>=11.1.0",
+    "rich>=13.7.1",
 ]
 
 [project.urls]

@@ -17,7 +17,7 @@ limitations under the License.
 # Changelog
 
 ## 0.12.0 (unreleased)
-
+- new: simple and detailed reporting of the optimization process
 
 ## 0.11.0
 

@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,7 +25,11 @@ import cpuinfo
 import psutil
 from loguru import logger
 
-from model_navigator.core.constants import NAVIGATOR_USE_MULTIPROCESSING
+from model_navigator.core.constants import (
+    NAVIGATOR_CONSOLE_OUTPUT_ENV,
+    NAVIGATOR_USE_MULTIPROCESSING,
+    OUTPUT_SIMPLE_REPORT,
+)
 
 PACKAGES = [
     "tensorflow",
@@ -228,3 +232,9 @@ def _remove(input: str, regex: str) -> str:
 def use_multiprocessing() -> bool:
     """Return flag whether to run subcommands in parent process."""
     return os.environ.get(NAVIGATOR_USE_MULTIPROCESSING, "True") in {"True", "true"}
+
+
+@lru_cache
+def get_console_output() -> str:
+    """Returns what should be put on the console."""
+    return os.environ.get(NAVIGATOR_CONSOLE_OUTPUT_ENV, OUTPUT_SIMPLE_REPORT)

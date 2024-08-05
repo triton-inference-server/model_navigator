@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -74,3 +74,6 @@ from model_navigator import (  # noqa: F401
     utilities,
 )
 from model_navigator.commands.base import CommandStatus  # noqa: F401
+from model_navigator.reporting import initialize_reporting
+
+initialize_reporting()

@@ -1,0 +1,169 @@
+NavigatorEvent.OPTIMIZATION_STARTED {}
+NavigatorEvent.PIPELINE_STARTED {'name': 'Preprocessing'}
+NavigatorEvent.COMMAND_STARTED {'command': 'LoadMetadata', 'config_key': None, 'runner_name': None}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+NavigatorEvent.PIPELINE_FINISHED {}
+NavigatorEvent.PIPELINE_STARTED {'name': 'TensorFlow 2 Conversion'}
+NavigatorEvent.COMMAND_STARTED {'command': 'ConvertSavedModel2ONNX', 'config_key': 'onnx-jit-xla', 'runner_name': None}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.FAIL}
+NavigatorEvent.COMMAND_STARTED {'command': 'GraphSurgeonOptimize', 'config_key': 'onnx-jit-xla', 'runner_name': None}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'ConvertSavedModel2ONNX', 'config_key': 'onnx-jit', 'runner_name': None}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.FAIL}
+NavigatorEvent.COMMAND_STARTED {'command': 'GraphSurgeonOptimize', 'config_key': 'onnx-jit', 'runner_name': None}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'ConvertSavedModel2ONNX', 'config_key': 'onnx-xla', 'runner_name': None}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.FAIL}
+NavigatorEvent.COMMAND_STARTED {'command': 'GraphSurgeonOptimize', 'config_key': 'onnx-xla', 'runner_name': None}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'ConvertSavedModel2ONNX', 'config_key': 'onnx', 'runner_name': None}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.FAIL}
+NavigatorEvent.COMMAND_STARTED {'command': 'GraphSurgeonOptimize', 'config_key': 'onnx', 'runner_name': None}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.PIPELINE_FINISHED {}
+NavigatorEvent.PIPELINE_STARTED {'name': 'TensorRT Conversion'}
+NavigatorEvent.COMMAND_STARTED {'command': 'ConvertONNX2TRT', 'config_key': 'trt-jit-xla-fp32', 'runner_name': None}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'ConvertONNX2TRT', 'config_key': 'trt-jit-xla-fp16', 'runner_name': None}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'ConvertONNX2TRT', 'config_key': 'trt-jit-fp32', 'runner_name': None}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'ConvertONNX2TRT', 'config_key': 'trt-jit-fp16', 'runner_name': None}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'ConvertONNX2TRT', 'config_key': 'trt-xla-fp32', 'runner_name': None}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'ConvertONNX2TRT', 'config_key': 'trt-xla-fp16', 'runner_name': None}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'ConvertONNX2TRT', 'config_key': 'trt-fp32', 'runner_name': None}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'ConvertONNX2TRT', 'config_key': 'trt-fp16', 'runner_name': None}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.PIPELINE_FINISHED {}
+NavigatorEvent.PIPELINE_STARTED {'name': 'Correctness'}
+NavigatorEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'tf-savedmodel-jit-xla', 'runner_name': 'TensorFlowSavedModelCUDA'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+NavigatorEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'tf-savedmodel-jit', 'runner_name': 'TensorFlowSavedModelCUDA'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+NavigatorEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'tf-savedmodel-xla', 'runner_name': 'TensorFlowSavedModelCUDA'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+NavigatorEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'tf-savedmodel', 'runner_name': 'TensorFlowSavedModelCUDA'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+NavigatorEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'onnx-jit-xla', 'runner_name': 'OnnxCUDA'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'onnx-jit-xla', 'runner_name': 'OnnxTensorRT'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'onnx-jit', 'runner_name': 'OnnxCUDA'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'onnx-jit', 'runner_name': 'OnnxTensorRT'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'onnx-xla', 'runner_name': 'OnnxCUDA'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'onnx-xla', 'runner_name': 'OnnxTensorRT'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'onnx', 'runner_name': 'OnnxCUDA'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'onnx', 'runner_name': 'OnnxTensorRT'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'trt-jit-xla-fp32', 'runner_name': 'TensorRT'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'trt-jit-xla-fp16', 'runner_name': 'TensorRT'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'trt-jit-fp32', 'runner_name': 'TensorRT'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'trt-jit-fp16', 'runner_name': 'TensorRT'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'trt-xla-fp32', 'runner_name': 'TensorRT'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'trt-xla-fp16', 'runner_name': 'TensorRT'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'trt-fp32', 'runner_name': 'TensorRT'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.FAIL}
+NavigatorEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'trt-fp16', 'runner_name': 'TensorRT'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.PIPELINE_FINISHED {}
+NavigatorEvent.PIPELINE_STARTED {'name': 'Performance'}
+NavigatorEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'tf-savedmodel-jit-xla', 'runner_name': 'TensorFlowSavedModelCUDA'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+NavigatorEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'tf-savedmodel-jit', 'runner_name': 'TensorFlowSavedModelCUDA'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+NavigatorEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'tf-savedmodel-xla', 'runner_name': 'TensorFlowSavedModelCUDA'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+NavigatorEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'tf-savedmodel', 'runner_name': 'TensorFlowSavedModelCUDA'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+NavigatorEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'onnx-jit-xla', 'runner_name': 'OnnxCUDA'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'onnx-jit-xla', 'runner_name': 'OnnxTensorRT'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'onnx-jit', 'runner_name': 'OnnxCUDA'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'onnx-jit', 'runner_name': 'OnnxTensorRT'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'onnx-xla', 'runner_name': 'OnnxCUDA'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'onnx-xla', 'runner_name': 'OnnxTensorRT'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'onnx', 'runner_name': 'OnnxCUDA'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'onnx', 'runner_name': 'OnnxTensorRT'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'trt-jit-xla-fp32', 'runner_name': 'TensorRT'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'trt-jit-xla-fp16', 'runner_name': 'TensorRT'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'trt-jit-fp32', 'runner_name': 'TensorRT'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'trt-jit-fp16', 'runner_name': 'TensorRT'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'trt-xla-fp32', 'runner_name': 'TensorRT'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'trt-xla-fp16', 'runner_name': 'TensorRT'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'trt-fp32', 'runner_name': 'TensorRT'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.FAIL}
+NavigatorEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'trt-fp16', 'runner_name': 'TensorRT'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.PIPELINE_FINISHED {}
+NavigatorEvent.PIPELINE_STARTED {'name': 'Verify Models'}
+NavigatorEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'tf-savedmodel-jit-xla', 'runner_name': 'TensorFlowSavedModelCUDA'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'tf-savedmodel-jit', 'runner_name': 'TensorFlowSavedModelCUDA'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'tf-savedmodel-xla', 'runner_name': 'TensorFlowSavedModelCUDA'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'tf-savedmodel', 'runner_name': 'TensorFlowSavedModelCUDA'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'onnx-jit-xla', 'runner_name': 'OnnxCUDA'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'onnx-jit-xla', 'runner_name': 'OnnxTensorRT'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'onnx-jit', 'runner_name': 'OnnxCUDA'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'onnx-jit', 'runner_name': 'OnnxTensorRT'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'onnx-xla', 'runner_name': 'OnnxCUDA'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'onnx-xla', 'runner_name': 'OnnxTensorRT'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'onnx', 'runner_name': 'OnnxCUDA'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'onnx', 'runner_name': 'OnnxTensorRT'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'trt-jit-xla-fp32', 'runner_name': 'TensorRT'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'trt-jit-xla-fp16', 'runner_name': 'TensorRT'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'trt-jit-fp32', 'runner_name': 'TensorRT'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'trt-jit-fp16', 'runner_name': 'TensorRT'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'trt-xla-fp32', 'runner_name': 'TensorRT'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'trt-xla-fp16', 'runner_name': 'TensorRT'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'trt-fp32', 'runner_name': 'TensorRT'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'trt-fp16', 'runner_name': 'TensorRT'}
+NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+NavigatorEvent.PIPELINE_FINISHED {}
+NavigatorEvent.BEST_MODEL_PICKED {'config_key': 'tf-savedmodel', 'runner_name': 'TensorFlowSavedModelCUDA', 'model_path': PosixPath('/workspace/navigator_workspace/tf-savedmodel/model.savedmodel')}
+NavigatorEvent.OPTIMIZATION_FINISHED {}

@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ from model_navigator.commands.optimize.graph_surgeon import GraphSurgeonOptimize
 from model_navigator.configuration import Format
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig, ONNXConfig
+from model_navigator.core.constants import PIPELINE_TF2_CONVERSION, PIPELINE_TF2_EXPORT
 from model_navigator.pipelines.pipeline import Pipeline
 
 
@@ -38,7 +39,8 @@ def tensorflow_export_builder(config: CommonConfig, models_config: Dict[Format, 
     execution_units: List[ExecutionUnit] = []
     for model_cfg in models_config.get(Format.TF_SAVEDMODEL, []):
         execution_units.append(ExecutionUnit(command=ExportTF2SavedModel, model_config=model_cfg))
-    return Pipeline(name="TensorFlow2 Export", execution_units=execution_units)
+
+    return Pipeline(name=PIPELINE_TF2_EXPORT, execution_units=execution_units)
 
 
 def tensorflow_conversion_builder(config: CommonConfig, models_config: Dict[Format, List[ModelConfig]]) -> Pipeline:
@@ -58,4 +60,4 @@ def tensorflow_conversion_builder(config: CommonConfig, models_config: Dict[Form
         if model_cfg.graph_surgeon_optimization:
             execution_units.append(ExecutionUnit(command=GraphSurgeonOptimize, model_config=model_cfg))
 
-    return Pipeline(name="TensorFlow 2 Conversion", execution_units=execution_units)
+    return Pipeline(name=PIPELINE_TF2_CONVERSION, execution_units=execution_units)

@@ -28,6 +28,10 @@ from model_navigator.exceptions import (
     ModelNavigatorUserInputError,
 )
 from model_navigator.pipelines.pipeline_context import PipelineContext
+from model_navigator.reporting.events import (
+    NavigatorEvent,
+    default_event_emitter,
+)
 
 
 class Pipeline:
@@ -43,10 +47,12 @@ class Pipeline:
         Args:
             name: Name of the pipeline
             execution_units: List of execution units objects
+            event_emitter: Emitter where pipeline event should be pushed
         """
         self.name = name
         self.id = name.lower().replace(" ", "_").replace("-", "_")
         self.execution_units = execution_units
+        self.event_emitter = default_event_emitter()
 
     def run(self, workspace: Workspace, config: CommonConfig, context: PipelineContext) -> None:
         """Execute pipeline.
@@ -57,6 +63,7 @@ class Pipeline:
             context: Context of pipeline execution
         """
         LOGGER.info(pad_string(f"Pipeline {self.name!r} started"))
+        self.event_emitter.emit(NavigatorEvent.PIPELINE_STARTED, name=self.name)
 
         for execution_unit in self.execution_units:
             command_output = self._execute_unit(
@@ -70,6 +77,8 @@ class Pipeline:
                 command_output=command_output,
             )
             context.save()
+
+        self.event_emitter.emit(NavigatorEvent.PIPELINE_FINISHED)
 
     def _execute_unit(
         self,
@@ -100,6 +109,7 @@ class Pipeline:
 
         with LoggingContext(log_dir=log_dir), redirect_stdout_context:
             start_time = time.perf_counter()
+            self.emit_command_started_event(execution_unit)
             try:
                 context.validate_execution(execution_unit=execution_unit)
                 try:
@@ -137,6 +147,7 @@ class Pipeline:
             end_time = time.perf_counter()
             command_output.execution_time = end_time - start_time
 
+            self.emit_command_finished_event(command_output)
             if command_output.status != CommandStatus.OK and execution_unit.command.is_required():
                 raise ModelNavigatorRuntimeError(
                     "The required command has failed. Please, review the log and verify the reported problems: \n"
@@ -144,3 +155,20 @@ class Pipeline:
                 )
 
             return command_output
+
+    def emit_command_started_event(self, execution_unit: ExecutionUnit):
+        """Emit command started event with execution unit properties."""
+        kwargs = {
+            "command": execution_unit.command.name,
+            "config_key": None if execution_unit.model_config is None else execution_unit.model_config.key,
+            "runner_name": None if execution_unit.runner_cls is None else execution_unit.runner_cls.name(),
+        }
+        self.event_emitter.emit(NavigatorEvent.COMMAND_STARTED, **kwargs)
+
+    def emit_command_finished_event(self, command_output: CommandOutput):
+        """Emit command finished with status."""
+        self.event_emitter.emit(NavigatorEvent.COMMAND_FINISHED, status=command_output.status)
+
+    def __repr__(self) -> str:
+        """Return pipeline name."""
+        return self.name
