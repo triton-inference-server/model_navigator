@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ from model_navigator.commands.optimize.graph_surgeon import GraphSurgeonOptimize
 from model_navigator.configuration import Format
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig, ONNXConfig
+from model_navigator.core.constants import PIPELINE_TORCH_CONVERSION, PIPELINE_TORCH_EXPORT
 from model_navigator.pipelines.pipeline import Pipeline
 
 
@@ -65,7 +66,7 @@ def torch_export_builder(config: CommonConfig, models_config: Dict[Format, List[
             if model_cfg.graph_surgeon_optimization:
                 execution_units.append(ExecutionUnit(command=GraphSurgeonOptimize, model_config=model_cfg))
 
-    return Pipeline(name="PyTorch Export", execution_units=execution_units)
+    return Pipeline(name=PIPELINE_TORCH_EXPORT, execution_units=execution_units)
 
 
 def torch_conversion_builder(config: CommonConfig, models_config: Dict[Format, List[ModelConfig]]) -> Pipeline:
@@ -88,4 +89,4 @@ def torch_conversion_builder(config: CommonConfig, models_config: Dict[Format, L
             if model_cfg.graph_surgeon_optimization:
                 execution_units.append(ExecutionUnit(command=GraphSurgeonOptimize, model_config=model_cfg))
 
-    return Pipeline(name="PyTorch Conversion", execution_units=execution_units)
+    return Pipeline(name=PIPELINE_TORCH_CONVERSION, execution_units=execution_units)

@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ from model_navigator.core.logger import LOGGER, log_dict
 from model_navigator.core.workspace import Workspace
 from model_navigator.package.package import Package
 from model_navigator.pipelines.builders import PipelineBuilder
+from model_navigator.pipelines.pipeline import Pipeline
 from model_navigator.pipelines.pipeline_context import PipelineContext
 from model_navigator.pipelines.validation import PipelineManagerConfigurationValidator
 
@@ -100,10 +101,12 @@ class PipelineManager:
         builders: Sequence[PipelineBuilder],
         config: CommonConfig,
         models_config: Optional[Dict[Format, List[ModelConfig]]] = None,
-    ) -> List:
+    ) -> List[Pipeline]:
         pipelines = []
         for pipeline_builder in builders:
             pipeline = pipeline_builder(config, models_config)
-            pipelines.append(pipeline)
+            # skip empty pipeline without execution units
+            if pipeline.execution_units:
+                pipelines.append(pipeline)
 
         return pipelines

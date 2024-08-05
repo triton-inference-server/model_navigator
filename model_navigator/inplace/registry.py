@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,10 @@
 """Inplace model registry."""
 
 import gc
+from collections import OrderedDict
 from typing import TYPE_CHECKING, Dict
+
+from model_navigator.reporting.events import NavigatorEvent, default_event_emitter
 
 if TYPE_CHECKING:
     from .wrapper import Module
@@ -25,13 +28,15 @@ class ModuleRegistry:
 
     def __init__(self) -> None:
         """Initialize ModuleRegistry."""
-        self._registry: Dict[str, Module] = {}
+        self._registry: OrderedDict[str, Module] = OrderedDict()
+        self.event_emitter = default_event_emitter()
 
     def register(self, name: str, module: "Module") -> None:
         """Register a module."""
         if name in self._registry:
             raise ValueError(f"Module {name} already registered.")
         self._registry[name] = module
+        self.emit_module_registered(name, module)
 
     def clear(self) -> None:
         """Removes already registered modules.
@@ -39,8 +44,9 @@ class ModuleRegistry:
         Warning: this should only be called when you want to optimize already registered modules once again
         from scratch.
         """
-        self._registry = {}
+        self._registry = OrderedDict()
         gc.collect()
+        self.event_emitter.emit(NavigatorEvent.MODULE_REGISTRY_CLEARED)
 
     @property
     def modules(self) -> Dict[str, "Module"]:
@@ -60,9 +66,12 @@ class ModuleRegistry:
 
     def optimize(self) -> None:
         """Optimize all registered modules."""
-        for module in self.values():
+        self.event_emitter.emit(NavigatorEvent.INPLACE_STARTED)
+        for name, module in self.items():
             if not module.is_optimized:
+                self.event_emitter.emit(NavigatorEvent.MODULE_PICKED_FOR_OPTIMIZATION, name=name)
                 module.optimize()
+        self.event_emitter.emit(NavigatorEvent.INPLACE_FINISHED)
 
     def items(self):
         """Return registered items."""
@@ -79,6 +88,18 @@ class ModuleRegistry:
     def is_empty(self):
         """Return True if registry is empty."""
         return not bool(self._registry)
+
+    def emit_module_registered(self, name, module: "Module"):
+        """Emits event about module being registered."""
+        num_modules = len(list(module.modules()))
+        num_params = sum(p.numel() for p in module.parameters())
+
+        self.event_emitter.emit(
+            NavigatorEvent.MODULE_REGISTERED,
+            name=name,
+            num_modules=num_modules,
+            num_params=num_params,
+        )
 
 
 module_registry = ModuleRegistry()

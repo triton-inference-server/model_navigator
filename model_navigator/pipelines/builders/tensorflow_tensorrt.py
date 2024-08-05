@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ from model_navigator.commands.convert.tf import ConvertSavedModel2TFTRT
 from model_navigator.configuration import DeviceKind, Format
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig
+from model_navigator.core.constants import PIPELINE_TF_TENSORRT
 from model_navigator.pipelines.pipeline import Pipeline
 from model_navigator.runners.registry import get_runner
 from model_navigator.runners.tensorflow import TensorFlowTensorRTRunner
@@ -38,7 +39,7 @@ def tensorflow_tensorrt_conversion_builder(
         Pipeline with steps for conversion
     """
     if config.target_device != DeviceKind.CUDA:
-        return Pipeline(name="TensorFlow-TensorRT Conversion", execution_units=[])
+        return Pipeline(name=PIPELINE_TF_TENSORRT, execution_units=[])
 
     tensorflow_trt_models_config = models_config.get(Format.TF_TRT, [])
     # run_profiles_search = search_for_optimized_profiles(config, tensorflow_trt_models_config)
@@ -78,4 +79,4 @@ def tensorflow_tensorrt_conversion_builder(
                 results_lookup_runner_cls=get_runner(TensorFlowTensorRTRunner),
             )
         )
-    return Pipeline(name="TensorFlow-TensorRT Conversion", execution_units=execution_units)
+    return Pipeline(name=PIPELINE_TF_TENSORRT, execution_units=execution_units)

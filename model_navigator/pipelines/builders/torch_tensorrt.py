@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ from model_navigator.commands.convert.torch import ConvertTorchScript2TorchTenso
 from model_navigator.configuration import DeviceKind, Format
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig
+from model_navigator.core.constants import PIPELINE_TORCH_TENSORRT_CONVERSION
 from model_navigator.pipelines.pipeline import Pipeline
 from model_navigator.runners.registry import get_runner
 from model_navigator.runners.torch import TorchTensorRTRunner
@@ -36,7 +37,7 @@ def torch_tensorrt_conversion_builder(config: CommonConfig, models_config: Dict[
         Pipeline with steps for conversion
     """
     if config.target_device != DeviceKind.CUDA:
-        return Pipeline(name="Torch-TensorRT Conversion", execution_units=[])
+        return Pipeline(name=PIPELINE_TORCH_TENSORRT_CONVERSION, execution_units=[])
 
     torch_trt_models_config = models_config.get(Format.TORCH_TRT, [])
     # run_profiles_search = search_for_optimized_profiles(config, torch_trt_models_config)
@@ -76,4 +77,4 @@ def torch_tensorrt_conversion_builder(config: CommonConfig, models_config: Dict[
                 results_lookup_runner_cls=get_runner(TorchTensorRTRunner),
             )
         )
-    return Pipeline(name="Torch-TensorRT Conversion", execution_units=execution_units)
+    return Pipeline(name=PIPELINE_TORCH_TENSORRT_CONVERSION, execution_units=execution_units)

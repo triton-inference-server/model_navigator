@@ -13,7 +13,6 @@
 # limitations under the License.
 """Runners profiling."""
 
-import logging
 import math
 import pathlib
 from typing import List, Optional
@@ -134,7 +133,7 @@ class Profiler:
 
     @property
     def _profiling_results_logging_level(self):
-        return logging.INFO
+        return "INFO"
 
     def _run_window_measurement(
         self,

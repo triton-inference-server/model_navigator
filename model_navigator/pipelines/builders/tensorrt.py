@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ from model_navigator.commands.base import ExecutionUnit
 from model_navigator.configuration import DeviceKind, Format
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig
+from model_navigator.core.constants import PIPELINE_TENSORRT_CONVERSION
 from model_navigator.frameworks import is_trt_available
 from model_navigator.pipelines.pipeline import Pipeline
 from model_navigator.runners.registry import get_runner
@@ -36,7 +37,7 @@ def tensorrt_conversion_builder(config: CommonConfig, models_config: Dict[Format
         Pipeline with steps for conversion
     """
     if not is_trt_available() or config.target_device != DeviceKind.CUDA:
-        return Pipeline(name="TensorRT Conversion", execution_units=[])
+        return Pipeline(name=PIPELINE_TENSORRT_CONVERSION, execution_units=[])
 
     trt_models_config = models_config.get(Format.TENSORRT, [])
     # run_profiles_search = search_for_optimized_profiles(config, trt_models_config)
@@ -58,4 +59,4 @@ def tensorrt_conversion_builder(config: CommonConfig, models_config: Dict[Format
                     results_lookup_runner_cls=get_runner(TensorRTRunner),
                 )
             )
-    return Pipeline(name="TensorRT Conversion", execution_units=execution_units)
+    return Pipeline(name=PIPELINE_TENSORRT_CONVERSION, execution_units=execution_units)

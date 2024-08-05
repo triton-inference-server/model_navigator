@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,9 +35,11 @@ from model_navigator.configuration import (
 from model_navigator.exceptions import ModelNavigatorUserInputError
 from model_navigator.inplace.config import DEFAULT_CACHE_DIR, OptimizeConfig, inplace_cache_dir
 from model_navigator.inplace.model import EagerModule, OptimizedModule, RecordingModule
-from model_navigator.inplace.registry import module_registry
+from model_navigator.inplace.registry import ModuleRegistry, module_registry
 from model_navigator.inplace.utils import get_object_name
 from model_navigator.inplace.wrapper import Module, module
+from model_navigator.reporting.events import NavigatorEvent
+from tests.unit.base.mocks.fixtures import mock_event_emitter  # noqa: F401
 
 
 @pytest.fixture
@@ -82,6 +84,40 @@ def test_model_registry_check_all_ready_returns_false_when_not_all_models_ready(
     module_registry.register("model1", MagicMock(is_optimized=False, is_ready_for_optimization=False))
     module_registry.register("model2", MagicMock(is_optimized=True, is_ready_for_optimization=True))
     assert not module_registry.check_all_ready()
+
+
+def test_registry_should_emit_events(mock_event_emitter):  # noqa: F811
+    # given
+    module = MagicMock()
+    module.is_optimized = False
+    registry = ModuleRegistry()
+    registry.event_emitter = mock_event_emitter
+    # when
+    registry.register("test_module", module)
+    registry.optimize()
+    registry.clear()
+    # then
+    events = mock_event_emitter.history
+    assert len(events) == 5
+    assert events[0] == (
+        NavigatorEvent.MODULE_REGISTERED,
+        (),
+        {
+            "name": "test_module",
+            "num_modules": 0,
+            "num_params": 0,
+        },
+    )
+    assert events[1] == (NavigatorEvent.INPLACE_STARTED, (), {})
+    assert events[2] == (
+        NavigatorEvent.MODULE_PICKED_FOR_OPTIMIZATION,
+        (),
+        {
+            "name": "test_module",
+        },
+    )
+    assert events[3] == (NavigatorEvent.INPLACE_FINISHED, (), {})
+    assert events[4] == (NavigatorEvent.MODULE_REGISTRY_CLEARED, (), {})
 
 
 def test_pass_model_is_optimized_returns_false():

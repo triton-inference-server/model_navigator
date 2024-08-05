@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -155,12 +155,17 @@ class ExecutionContext(contextlib.AbstractContextManager):
         try:
             fire.Fire(func, unwrapped_args)
         except Exception as e:
-            if not allow_failure:
-                raise ModelNavigatorUserInputError(f"Command to reproduce error: {' '.join(cmd)}") from e
+            cmd_to_reproduce_error = f"Command to reproduce error: {' '.join(cmd)}"
+            if allow_failure:
+                LOGGER.warning(f"Command exited with error: {traceback.format_exc()}. {cmd_to_reproduce_error}")
             else:
-                LOGGER.warning(
-                    f"Command exited with error: {traceback.format_exc()}. Command to reproduce error: {' '.join(cmd)}"
-                )
+                if process_name != "MainProcess":
+                    # we are in a child process, log error
+                    LOGGER.error(f"Command exited with error: {traceback.format_exc()}. {cmd_to_reproduce_error}")
+                    # prevent child process from printing exception to the stderr
+                    sys.stderr = open(os.devnull, "w")
+
+                raise ModelNavigatorUserInputError(cmd_to_reproduce_error) from e
 
     def execute_cmd(self, cmd: List, dry_run=False, allow_failure: bool = False):
         """Execute command as subprocess.
