@@ -108,7 +108,7 @@ class BaseReport(ABC):
             self.print_modules_table_summary()
             self.has_optimization_started = True
 
-    def on_optimization_finished(self):  # noqa: B027
+    def on_optimization_finished(self):
         """Action on optimization finished event."""
         # This event can be called many times in inplace. In plain mode this will be called once.
         if not self.inplace_started:

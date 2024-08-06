@@ -84,13 +84,13 @@ def optimize_pipeline(
         config=config,
     )
 
-    emit_optimization_result_event(package, event_emitter)
+    _emit_optimization_result_event(package, event_emitter)
 
     event_emitter.emit(NavigatorEvent.OPTIMIZATION_FINISHED)
     return package
 
 
-def emit_optimization_result_event(package: Package, event_emitter: EventEmitter):
+def _emit_optimization_result_event(package: Package, event_emitter: EventEmitter):
     """Emits event with a best result or error."""
     try:
         best_model_status = package.get_best_model_status(include_source=True)
