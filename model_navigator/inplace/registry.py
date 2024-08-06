@@ -36,7 +36,7 @@ class ModuleRegistry:
         if name in self._registry:
             raise ValueError(f"Module {name} already registered.")
         self._registry[name] = module
-        self.emit_module_registered(name, module)
+        self._emit_module_registered(name, module)
 
     def clear(self) -> None:
         """Removes already registered modules.
@@ -89,7 +89,7 @@ class ModuleRegistry:
         """Return True if registry is empty."""
         return not bool(self._registry)
 
-    def emit_module_registered(self, name, module: "Module"):
+    def _emit_module_registered(self, name, module: "Module"):
         """Emits event about module being registered."""
         num_modules = len(list(module.modules()))
         num_params = sum(p.numel() for p in module.parameters())

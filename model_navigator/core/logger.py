@@ -117,7 +117,7 @@ def forward_python_logging_to_loguru() -> None:
 
 def forward_polygraphy_logging_to_python_logging() -> None:
     """Reconfigures polygraphy logger to use python logging instead of stdout/stderr."""
-    # TODO: configure polygraphy logger
+    # TODO: configure polygraphy logger - waiting for polygraphy next release
     # from polygraphy.logger import G_LOGGER
     # G_LOGGER.use_python_logging_system = True
     ...
@@ -147,6 +147,7 @@ def configure_initial_logging() -> None:
 
     This should be called on once in the main process only.
     """
+    logging.captureWarnings(True)
     forward_polygraphy_logging_to_python_logging()
     forward_python_logging_to_loguru()
     logger.remove()  # remove pre-configured logger

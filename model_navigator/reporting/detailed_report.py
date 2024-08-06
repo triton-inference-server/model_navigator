@@ -50,7 +50,6 @@ class DetailedReport(SimpleReport):
         super().__init__(event_emitter)
         self.command_start_time = 0
         self.table_data: List[Row] = []
-        self.live = None
 
     def on_optimization_finished(self):
         """Action on optimization finished event."""

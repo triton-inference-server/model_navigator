@@ -109,7 +109,7 @@ class Pipeline:
 
         with LoggingContext(log_dir=log_dir), redirect_stdout_context:
             start_time = time.perf_counter()
-            self.emit_command_started_event(execution_unit)
+            self._emit_command_started_event(execution_unit)
             try:
                 context.validate_execution(execution_unit=execution_unit)
                 try:
@@ -156,7 +156,7 @@ class Pipeline:
 
             return command_output
 
-    def emit_command_started_event(self, execution_unit: ExecutionUnit):
+    def _emit_command_started_event(self, execution_unit: ExecutionUnit):
         """Emit command started event with execution unit properties."""
         kwargs = {
             "command": execution_unit.command.name,
