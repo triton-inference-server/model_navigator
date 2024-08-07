@@ -18,6 +18,7 @@ from collections import OrderedDict
 from typing import Dict, List, Mapping
 
 import numpy as np
+from packaging.version import Version
 
 from model_navigator.configuration import Format
 from model_navigator.core.dataloader import get_default_output_names
@@ -26,6 +27,7 @@ from model_navigator.runners.registry import register_runner
 from model_navigator.utils import module
 
 tf = module.lazy_import("tensorflow")
+keras = module.lazy_import("keras")
 
 
 class _BaseTFRunner(NavigatorRunner):
@@ -72,7 +74,10 @@ class TensorFlowSavedModelCUDARunner(_BaseTFRunner):
 
     def activate_impl(self):
         """Runner activation implementation."""
-        self._loaded_model = tf.keras.models.load_model(str(self._model))
+        if Version(keras.__version__) < Version("3.0"):
+            self._loaded_model = tf.keras.models.load_model(str(self._model))
+        else:
+            self._loaded_model = tf.saved_model.load(str(self._model))
 
     def _infer_impl(self, feed_dict: Dict):
         """Runner inference handler implementation."""
@@ -103,7 +108,11 @@ class TensorFlowSavedModelCPURunner(_BaseTFRunner):
         """Runner activation implementation."""
         if any(device.device_type == "GPU" for device in tf.config.get_visible_devices()):
             tf.config.set_visible_devices([], "GPU")
-        self._loaded_model = tf.keras.models.load_model(str(self._model))
+
+        if Version(keras.__version__) < Version("3.0"):
+            self._loaded_model = tf.keras.models.load_model(str(self._model))
+        else:
+            self._loaded_model = tf.saved_model.load(str(self._model))
 
     def deactivate_impl(self):
         """Runner deactivation implementation."""

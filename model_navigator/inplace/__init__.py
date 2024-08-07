@@ -135,12 +135,15 @@ def profile(
         runners = list(runner_registry.values())
 
     validate_device_string(device)
-
     modelkeys_runners = _get_modelkeys_runners(target_formats, runners)
 
-    LOGGER.info(f"Profiling runners: {modelkeys_runners}")
+    default_modelkeys_runners = [("python", "eager")]
+    optimized_modules_count = len([m.is_optimized for m in module_registry.values()])
+    if optimized_modules_count > 1:
+        default_modelkeys_runners += [("navigator", "optimized")]
 
-    modelkeys_runners = [("python", "eager")] + list(modelkeys_runners)
+    modelkeys_runners = default_modelkeys_runners + list(modelkeys_runners)
+    LOGGER.info(f"Profiling runners: {modelkeys_runners}")
 
     if is_torch2_available():
         inference_context = torch.inference_mode
@@ -246,6 +249,8 @@ def _load_modules(model_key: str, runner_name: str, device: str, verbose: bool =
         try:
             if model_key == "python" and runner_name == "eager":
                 m.load_eager()
+            elif model_key == "navigator" and runner_name == "optimized":
+                m.load_optimized(device=device)
             else:
                 m.load_optimized(
                     strategies=[SelectedRuntimeStrategy(model_key=model_key, runner_name=runner_name)], device=device
