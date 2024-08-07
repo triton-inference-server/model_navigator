@@ -18,6 +18,8 @@ limitations under the License.
 
 ## 0.12.0 (unreleased)
 - new: simple and detailed reporting of the optimization process
+- new: adjusted exporting TensorFlow SavedModel for Keras 3.x
+- change: include optimized pipeline to list of examined variants during `nav.profile`
 
 ## 0.11.0
 

@@ -15,7 +15,9 @@
 
 import pathlib
 
+import keras  # pytype: disable=import-error
 import tensorflow as tf  # pytype: disable=import-error
+from packaging.version import Version
 
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.execution_context import ExecutionContext
@@ -111,9 +113,16 @@ class UpdateSavedModelSignature(Command):
         assert exported_model_path.exists()
         exported_model_path.parent.mkdir(parents=True, exist_ok=True)
 
-        exporters.savedmodel2savedmodel.get_model = lambda: tf.keras.models.load_model(  # pytype: disable=module-attr
-            exported_model_path
-        )
+        if Version(keras.__version__) < Version("3.0"):
+            exporters.savedmodel2savedmodel.get_model = (
+                lambda: tf.keras.models.load_model(  # pytype: disable=module-attr
+                    exported_model_path
+                )
+            )
+        else:
+            exporters.savedmodel2savedmodel.get_model = lambda: tf.saved_model.load(  # pytype: disable=module-attr
+                exported_model_path
+            )
 
         with ExecutionContext(
             workspace=workspace,

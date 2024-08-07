@@ -16,9 +16,11 @@
 import pathlib
 import tempfile
 
+import keras  # pytype: disable=import-error
 import numpy
 import pytest
 import tensorflow  # pytype: disable=import-error
+from packaging.version import Version
 
 from model_navigator.commands.base import CommandStatus
 from model_navigator.commands.convert.tf import ConvertSavedModel2TFTRT
@@ -43,7 +45,6 @@ CUDA_AVAILABLE = bool(get_gpus(["all"]))
 VALUE_IN_TENSOR = 9.0
 
 dataloader = [tensorflow.fill(dims=[1, 224, 224, 3], value=VALUE_IN_TENSOR) for _ in range(5)]
-
 
 inp = tensorflow.keras.layers.Input((224, 224, 3), name="input__1")
 layer_output = tensorflow.keras.layers.Lambda(lambda x: x)(inp)
@@ -75,9 +76,12 @@ def test_tf2_correctness():
         model_dir.mkdir(parents=True, exist_ok=True)
         model_path = model_dir / "model.savedmodel"
         model_relative_path = pathlib.Path("tf-savedmodel") / "model.savedmodel"
-        tensorflow.keras.models.save_model(  # pytype: disable=module-attr
-            model=model, filepath=model_path, overwrite=True
-        )
+        if Version(keras.__version__) < Version("3.0"):
+            tensorflow.keras.models.save_model(  # pytype: disable=module-attr
+                model=model, filepath=model_path.as_posix(), overwrite=True
+            )
+        else:
+            model.export(filepath=model_path.as_posix())
 
         input_data = next(iter(dataloader))
         numpy_output = model.predict(input_data)
@@ -134,7 +138,11 @@ def test_tf2_export_savedmodel():
             verbose=True,
         )
         assert command_output.status == CommandStatus.OK
-        tensorflow.keras.models.load_model(exported_model_path)  # pytype: disable=module-attr
+
+        if Version(keras.__version__) < Version("3.0"):
+            tensorflow.keras.models.load_model(exported_model_path)  # pytype: disable=module-attr
+        else:
+            tensorflow.saved_model.load(exported_model_path)  # pytype: disable=module-attr
 
 
 @pytest.mark.skipif(
@@ -152,9 +160,12 @@ def test_tf2_convert_tf_trt():
         converted_model_path = workspace / model_relative_path
         model_dir.mkdir(parents=True, exist_ok=True)
         input_model_path = model_dir / "model.savedmodel"
-        tensorflow.keras.models.save_model(  # pytype: disable=module-attr
-            model=model, filepath=input_model_path, overwrite=True
-        )
+        if Version(keras.__version__) < Version("3.0"):
+            tensorflow.keras.models.save_model(  # pytype: disable=module-attr
+                model=model, filepath=input_model_path.as_posix(), overwrite=True
+            )
+        else:
+            model.export(filepath=input_model_path.as_posix())
 
         input_data = next(iter(dataloader))
         input_data_np = input_data.numpy()
@@ -177,4 +188,7 @@ def test_tf2_convert_tf_trt():
         )
 
         assert command_output.status == CommandStatus.OK
-        tensorflow.keras.models.load_model(converted_model_path)  # pytype: disable=module-attr
+        if Version(keras.__version__) < Version("3.0"):
+            tensorflow.keras.models.load_model(converted_model_path)  # pytype: disable=module-attr
+        else:
+            tensorflow.saved_model.load(converted_model_path)  # pytype: disable=module-attr

@@ -17,7 +17,9 @@ import pathlib
 from typing import Any, Dict, List, Optional
 
 import fire
+import keras  # pytype: disable=import-error
 import tensorflow as tf  # pytype: disable=import-error
+from packaging.version import Version
 
 from model_navigator.core.tensor import TensorMetadata
 
@@ -78,9 +80,12 @@ def update_signature(
     if not exported_model_path.is_absolute():
         exported_model_path = navigator_workspace / exported_model_path
 
-    tf.keras.models.save_model(  # pytype: disable=module-attr
-        model=model, filepath=exported_model_path.as_posix(), overwrite=True, signatures=signatures
-    )
+    if Version(keras.__version__) < Version("3.0"):
+        tf.keras.models.save_model(  # pytype: disable=module-attr
+            model=model, filepath=exported_model_path.as_posix(), overwrite=True, signatures=signatures
+        )
+    else:
+        model.export(filepath=exported_model_path.as_posix())
 
 
 if __name__ == "__main__":
