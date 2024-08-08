@@ -217,6 +217,7 @@ coverage.xml
 .ruff_cache/
 pytestdebug.log
 cover/
+*.test-report.xml
 
 # Translations
 *.mo

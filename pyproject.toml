@@ -129,6 +129,7 @@ build-backend = "setuptools.build_meta"
 addopts = [
     "--import-mode=importlib",
 ]
+pythonpath = ["."]
 
 [tool.setuptools]
 include-package-data = true
