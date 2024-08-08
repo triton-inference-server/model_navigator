@@ -46,14 +46,14 @@ clean-build: ## remove build artifacts
 	rm -fr build/
 	rm -fr dist/
 	rm -fr .eggs/
-	find . -name '*.egg-info' -exec rm -fr {} +
-	find . -name '*.egg' -exec rm -f {} +
+	find . -name '*.egg-info' -not -path "./.cache/*" -exec rm -fr {} +
+	find . -name '*.egg' -not -path "./.cache/*" -exec rm -f {} +
 
 clean-pyc: ## remove Python file artifacts
-	find . -name '*.pyc' -exec rm -f {} +
-	find . -name '*.pyo' -exec rm -f {} +
-	find . -name '*~' -exec rm -f {} +
-	find . -name '__pycache__' -exec rm -fr {} +
+	find . -name '*.pyc' -not -path "./.cache/*" -exec rm -f {} +
+	find . -name '*.pyo' -not -path "./.cache/*" -exec rm -f {} +
+	find . -name '*~' -not -path "./.cache/*" -exec rm -f {} +
+	find . -name '__pycache__' -not -path "./.cache/*" -exec rm -fr {} +
 
 clean-docs: ## remove test and coverage artifacts
 	rm -rf site
