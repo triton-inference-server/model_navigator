@@ -20,13 +20,13 @@ from model_navigator.configuration import (
     TensorRTPrecisionMode,
 )
 from model_navigator.configuration.common_config import CommonConfig
+from model_navigator.configuration.constants import DEFAULT_MAX_WORKSPACE_SIZE
 from model_navigator.configuration.model.model_config import (
     ONNXConfig,
     TensorFlowSavedModelConfig,
     TensorRTConfig,
     TorchScriptConfig,
 )
-from model_navigator.core.constants import DEFAULT_MAX_WORKSPACE_SIZE
 from model_navigator.frameworks import Framework
 from model_navigator.pipelines.builders.find_device_max_batch_size import find_device_max_batch_size_builder
 from model_navigator.runners.onnx import OnnxrtCUDARunner

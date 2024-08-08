@@ -19,7 +19,7 @@ from typing import List, Optional
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.performance.performance import ProfilingResults
 from model_navigator.configuration import TensorRTProfile
-from model_navigator.core.constants import (
+from model_navigator.configuration.constants import (
     DEFAULT_PROFILING_LATENCY_CUTOFF_THRESHOLD,
     DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD,
 )
@@ -40,7 +40,7 @@ class ProfileType(Enum):
             Latency cutoff threshold is used to find profile producing model with optimal latency. Shapes larger that this one cause latency to rapidly increase (more than 10%).
         LATENCY_BUDGET: Profile with latency constrained by latency budget.
             This profiles gives maximal throughput with latency below the latency budget.
-        MAX_THROUGHPUT: Profile optimized for high throughput. Shapes are calculated based on the throughput cutoff threshold equal to 0.05 (5%).
+        MAX_THROUGHPUT: Profile optimized for high throughput. Shapes are calculated based on the throughput cutoff threshold equal to 0.1 (10%).
             This profile is selected based on comparison of current batch size throughput and next batch size throughput and the difference must be smaller than 5% to select current batch size.
         MAX_THROUGHPUT_STATIC: Profile optimized for high throughput. Similar to MAX_THROUGHPUT except all shapes (min, opt, max) are equal.
         FALLBACK: Profile with fallback shape. Safe shape that tried to utilize all memory available on the device.

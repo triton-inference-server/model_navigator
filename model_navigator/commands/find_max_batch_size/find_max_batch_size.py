@@ -24,8 +24,8 @@ from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.execution_context import ExecutionContext
 from model_navigator.commands.performance import Profiler, ProfilingResults
 from model_navigator.configuration import OptimizationProfile
+from model_navigator.configuration.constants import DEFAULT_MAX_BATCH_SIZE_THRESHOLD
 from model_navigator.configuration.runner.runner_config import RunnerConfig
-from model_navigator.core.constants import DEFAULT_MAX_BATCH_SIZE_THRESHOLD
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata
 from model_navigator.core.workspace import Workspace

@@ -146,6 +146,7 @@ class Pipeline:
 
             end_time = time.perf_counter()
             command_output.execution_time = end_time - start_time
+            LOGGER.info(f"Execution time: {command_output.execution_time:.2f}[s]")
 
             self.emit_command_finished_event(command_output)
             if command_output.status != CommandStatus.OK and execution_unit.command.is_required():

@@ -25,7 +25,7 @@ import cpuinfo
 import psutil
 from loguru import logger
 
-from model_navigator.core.constants import (
+from model_navigator.configuration.constants import (
     NAVIGATOR_CONSOLE_OUTPUT_ENV,
     NAVIGATOR_USE_MULTIPROCESSING,
     OUTPUT_SIMPLE_REPORT,
@@ -231,10 +231,10 @@ def _remove(input: str, regex: str) -> str:
 @lru_cache
 def use_multiprocessing() -> bool:
     """Return flag whether to run subcommands in parent process."""
-    return os.environ.get(NAVIGATOR_USE_MULTIPROCESSING, "True") in {"True", "true"}
+    return os.environ.get(NAVIGATOR_USE_MULTIPROCESSING, "True").upper() == "TRUE"
 
 
 @lru_cache
 def get_console_output() -> str:
     """Returns what should be put on the console."""
-    return os.environ.get(NAVIGATOR_CONSOLE_OUTPUT_ENV, OUTPUT_SIMPLE_REPORT)
+    return os.environ.get(NAVIGATOR_CONSOLE_OUTPUT_ENV, OUTPUT_SIMPLE_REPORT).upper()

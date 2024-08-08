@@ -91,7 +91,7 @@ def optimize_pipeline(
 
 
 def _emit_optimization_result_event(package: Package, event_emitter: EventEmitter):
-    """Emits event with a best result or error."""
+    """Emits event with the best result or error."""
     try:
         best_model_status = package.get_best_model_status(include_source=True)
         best_format_path = package.workspace.path / best_model_status.model_config.path

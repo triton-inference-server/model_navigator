@@ -29,8 +29,8 @@ from model_navigator.configuration import (
     map_custom_configs,
 )
 from model_navigator.configuration.common_config import CommonConfig
+from model_navigator.configuration.constants import DEFAULT_SAMPLE_COUNT
 from model_navigator.configuration.model.model_config_builder import ModelConfigBuilder
-from model_navigator.core.constants import DEFAULT_SAMPLE_COUNT
 from model_navigator.core.logger import LOGGER
 from model_navigator.frameworks import Framework
 from model_navigator.frameworks.torch.utils import update_allowed_batching_parameters

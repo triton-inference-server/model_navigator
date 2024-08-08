@@ -29,7 +29,7 @@ from model_navigator.configuration import (
     RuntimeSearchStrategy,
     VerifyFunction,
 )
-from model_navigator.core.constants import DEFAULT_SAMPLE_COUNT
+from model_navigator.configuration.constants import DEFAULT_SAMPLE_COUNT
 from model_navigator.runners.base import NavigatorRunner
 
 DEFAULT_CACHE_DIR = pathlib.Path.home() / ".cache" / "model_navigator"

@@ -19,8 +19,8 @@ from model_navigator.commands.base import ExecutionUnit
 from model_navigator.configuration import DeviceKind, Format
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig
-from model_navigator.core.constants import PIPELINE_TENSORRT_CONVERSION
 from model_navigator.frameworks import is_trt_available
+from model_navigator.pipelines.constants import PIPELINE_TENSORRT_CONVERSION
 from model_navigator.pipelines.pipeline import Pipeline
 from model_navigator.runners.registry import get_runner
 from model_navigator.runners.tensorrt import TensorRTRunner

@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ from model_navigator.configuration import (
     TensorRTProfile,
 )
 from model_navigator.configuration.common_config import CommonConfig
+from model_navigator.configuration.constants import DEFAULT_MAX_WORKSPACE_SIZE
 from model_navigator.configuration.model.model_config import (
     ONNXConfig,
     TensorFlowTensorRTConfig,
@@ -27,7 +28,6 @@ from model_navigator.configuration.model.model_config import (
     TorchModelConfig,
     TorchTensorRTConfig,
 )
-from model_navigator.core.constants import DEFAULT_MAX_WORKSPACE_SIZE
 from model_navigator.frameworks import Framework
 from model_navigator.utils.config_helpers import _do_run_max_batch_size_search, do_find_device_max_batch_size
 

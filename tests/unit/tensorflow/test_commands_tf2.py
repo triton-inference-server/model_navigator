@@ -28,7 +28,7 @@ from model_navigator.commands.correctness import Correctness
 from model_navigator.commands.data_dump.samples import samples_to_npz
 from model_navigator.commands.export.tf import ExportTF2SavedModel
 from model_navigator.configuration import Format, TensorRTPrecision, TensorRTProfile, TensorType
-from model_navigator.core.constants import DEFAULT_MAX_WORKSPACE_SIZE
+from model_navigator.configuration.constants import DEFAULT_MAX_WORKSPACE_SIZE
 from model_navigator.core.tensor import PyTreeMetadata, TensorMetadata, TensorSpec
 from model_navigator.core.workspace import Workspace
 from model_navigator.runners.tensorflow import TensorFlowSavedModelCUDARunner

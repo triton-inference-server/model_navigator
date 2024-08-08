@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -102,7 +102,7 @@ class Correctness(Command):
         Args:
             workspace: Model Navigator workspace path.
             format: Model format.
-            runner_cls: Type of a runner to use with a model.
+            runner_cls: Type of runner to use with a model.
             input_metadata: Input metadata.
             output_metadata: Output metadata.
             batch_dim: Batch dimension.

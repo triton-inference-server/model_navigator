@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,7 +26,11 @@ from model_navigator.configuration import (
     TorchScriptConfig,
     TorchTensorRTConfig,
 )
-from model_navigator.core.constants import DEFAULT_MAX_WORKSPACE_SIZE, DEFAULT_MIN_SEGMENT_SIZE, DEFAULT_ONNX_OPSET
+from model_navigator.configuration.constants import (
+    DEFAULT_MAX_WORKSPACE_SIZE,
+    DEFAULT_MIN_SEGMENT_SIZE,
+    DEFAULT_ONNX_OPSET,
+)
 
 
 def test_default_values_for_tensorflow_custom_config():

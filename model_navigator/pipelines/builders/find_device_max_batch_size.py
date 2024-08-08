@@ -20,9 +20,9 @@ from model_navigator.commands.find_max_batch_size import FindMaxBatchSize, FindM
 from model_navigator.configuration import Format
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig
-from model_navigator.core.constants import PIPELINE_FIND_MAX_BATCH_SIZE
 from model_navigator.core.logger import LOGGER
 from model_navigator.frameworks import Framework
+from model_navigator.pipelines.constants import PIPELINE_FIND_MAX_BATCH_SIZE
 from model_navigator.pipelines.pipeline import Pipeline
 from model_navigator.runners.onnx import OnnxrtCUDARunner
 from model_navigator.runners.tensorflow import TensorFlowSavedModelCUDARunner

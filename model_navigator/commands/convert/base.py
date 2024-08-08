@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 from typing import Callable, Generator, Optional
 
 from model_navigator.commands.base import Command
-from model_navigator.core.constants import DEFAULT_MAX_BATCH_SIZE_HALVING
+from model_navigator.configuration.constants import DEFAULT_MAX_BATCH_SIZE_HALVING
 from model_navigator.core.logger import LOGGER
 
 

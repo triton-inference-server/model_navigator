@@ -28,7 +28,7 @@ from model_navigator.commands.optimize.graph_surgeon import GraphSurgeonOptimize
 from model_navigator.configuration import Format
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig, ONNXConfig
-from model_navigator.core.constants import PIPELINE_TORCH_CONVERSION, PIPELINE_TORCH_EXPORT
+from model_navigator.pipelines.constants import PIPELINE_TORCH_CONVERSION, PIPELINE_TORCH_EXPORT
 from model_navigator.pipelines.pipeline import Pipeline
 
 

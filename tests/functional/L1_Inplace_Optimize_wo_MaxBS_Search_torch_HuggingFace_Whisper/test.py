@@ -167,7 +167,7 @@ def main():
 
     names, packages = [], []
     for name, module in module_registry.items():
-        for i, package in enumerate(getattr(module._wrapper, "_packages", [])):
+        for i, package in enumerate(module.wrapper.packages):
             names.append(f"{name}.{i}")
             packages.append(package)
     assert (

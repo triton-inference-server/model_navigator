@@ -20,7 +20,7 @@ from model_navigator.commands.convert.torch import ConvertTorchScript2TorchTenso
 from model_navigator.configuration import DeviceKind, Format
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig
-from model_navigator.core.constants import PIPELINE_TORCH_TENSORRT_CONVERSION
+from model_navigator.pipelines.constants import PIPELINE_TORCH_TENSORRT_CONVERSION
 from model_navigator.pipelines.pipeline import Pipeline
 from model_navigator.runners.registry import get_runner
 from model_navigator.runners.torch import TorchTensorRTRunner

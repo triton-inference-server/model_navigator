@@ -28,9 +28,16 @@ from model_navigator.configuration import (
     SelectedRuntimeStrategy,
     TensorRTPrecision,
 )
+from model_navigator.configuration.constants import (
+    DEFAULT_MAX_TRIALS,
+    DEFAULT_MIN_TRIALS,
+    DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD,
+    DEFAULT_STABILITY_PERCENTAGE,
+    DEFAULT_STABILIZATION_WINDOWS,
+    DEFAULT_WINDOW_SIZE,
+)
 from model_navigator.configuration.validation.device import validate_device_string
 from model_navigator.core.constants import (
-    DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD,
     NAVIGATOR_INPLACE_OPTIMIZE_VERSION,
     NAVIGATOR_INPLACE_PROFILE_VERSION,
     NAVIGATOR_VERSION,
@@ -69,10 +76,10 @@ def optimize(
     dataloader: Sequence[Tuple[int, Any]],
     config: Optional[OptimizeConfig] = None,
 ) -> InplaceOptimizeStatus:
-    """Optimize all registered modules.
+    """Optimize registered modules executed in scope of callable.
 
     Args:
-        func: Function to optimize.
+        func:  Callable in scope of which optimize is executed.
         dataloader: List of tuples with batch size and input.
         config: Optimize config.
     """
@@ -103,19 +110,20 @@ def profile(
     dataloader: Sequence[Tuple[int, Any]],
     target_formats: Optional[Tuple[Union[str, Format], ...]] = None,
     runners: Optional[Tuple[Union[str, Type[NavigatorRunner]], ...]] = None,
-    min_trials: int = 3,
-    max_trials: int = 10,
-    stabilization_windows: int = 3,
-    window_size: int = 50,
-    stability_percentage: float = 10.0,
+    window_size: int = DEFAULT_WINDOW_SIZE,
+    stability_percentage: float = DEFAULT_STABILITY_PERCENTAGE,
+    stabilization_windows: int = DEFAULT_STABILIZATION_WINDOWS,
+    min_trials: int = DEFAULT_MIN_TRIALS,
+    max_trials: int = DEFAULT_MAX_TRIALS,
     throughput_cutoff_threshold: Optional[float] = DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD,
     device: str = "cuda",
+    initialize: bool = True,
     verbose: bool = False,
 ) -> InplaceProfileStatus:
-    """Profile `func` and all registered modules.
+    """Profile `callable` in scope of which registered modules are executed.
 
     Args:
-        func: Function to profile.
+        func:  Callable to profile.
         dataloader: List of tuples with batch size and input.
         target_formats: Target model formats for optimize process
         runners: Use only runners provided as parameter
@@ -127,6 +135,7 @@ def profile(
         throughput_cutoff_threshold: Minimum throughput increase to continue profiling. If None is provided,
                                      profiling run through whole dataloader
         device: Default device used for loading unoptimized model.
+        initialize: Whether to initialize pipeline on device before profiling.
         verbose: Provide verbose logging
     """
     if target_formats is None:
@@ -154,7 +163,11 @@ def profile(
     for model_key, runner_name in modelkeys_runners:
         LOGGER.info(pad_string(f"Profiling of {model_key} and {runner_name}"))
 
+        if initialize:
+            _initialize_pipeline(callable, model_key, runner_name, device)
+
         _load_modules(model_key, runner_name, device=device, verbose=verbose)
+
         runner_profiling_results = RunnerProfilingResults()
         try:
             prev_result = None
@@ -211,13 +224,13 @@ def _build_optimize_status() -> InplaceOptimizeStatus:
         raise ValueError("No module was found")
 
     m = modules[0]
-    packages = m._wrapper._packages
+    packages = m.wrapper.packages
     if len(packages) == 0:
         raise ValueError(f"Module {m.name()} has no packages")
 
     modules_status = {}
     for name, m in module_registry.items():
-        for i, package in enumerate(getattr(m._wrapper, "_packages", [])):
+        for i, package in enumerate(m.wrapper.packages):
             module_name = f"{name}.{i}"
             module_status = ModuleStatus.from_package_status(package.status)
             modules_status[module_name] = module_status
@@ -268,6 +281,16 @@ def _load_modules(model_key: str, runner_name: str, device: str, verbose: bool =
             m.load_eager(device=device)
 
 
+def _initialize_pipeline(func: Callable, model_key: str, runner_name: str, device: str):
+    if model_key == "python" and runner_name == "eager":
+        return
+
+    optimized_modules_count = len([m.is_optimized for m in module_registry.values()])
+    if optimized_modules_count > 1 and hasattr(callable, "to"):
+        LOGGER.info(f"Initialize pipeline on device: {device}")
+        callable.to(device)
+
+
 def _format_to_modelkey(format: Union[str, Format]):
     if isinstance(format, Format):
         format = format.value
@@ -294,6 +317,7 @@ def _get_modelkeys_runners(formats, runners):
             raise ModelNavigatorModuleNotOptimizedError(
                 f"Module {name} not optimized. Please optimize the nav.optimize command first."
             ) from e
+
         for package in m._wrapper._packages:
             for modelkey, model_status in package.status.models_status.items():
                 for runner_name, runner_status in model_status.runners_status.items():

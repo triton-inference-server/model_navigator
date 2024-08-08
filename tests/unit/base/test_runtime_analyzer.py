@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ from model_navigator.configuration import (
     TensorRTPrecision,
     TensorRTPrecisionMode,
 )
+from model_navigator.configuration.constants import DEFAULT_MAX_WORKSPACE_SIZE
 from model_navigator.configuration.model.model_config import ONNXConfig, TensorRTConfig, TorchScriptConfig
-from model_navigator.core.constants import DEFAULT_MAX_WORKSPACE_SIZE
 from model_navigator.exceptions import ModelNavigatorRuntimeAnalyzerError, ModelNavigatorUserInputError
 from model_navigator.package.status import CommandStatus, ModelStatus, RunnerStatus
 from model_navigator.runtime_analyzer import RuntimeAnalyzer
