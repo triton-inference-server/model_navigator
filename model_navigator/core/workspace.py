@@ -17,7 +17,7 @@ import pathlib
 import shutil
 from typing import Optional, Union
 
-from model_navigator.core.constants import DEFAULT_WORKSPACE, NAVIGATOR_LOG_FILENAME
+from model_navigator.configuration.constants import DEFAULT_WORKSPACE, NAVIGATOR_LOG_FILENAME
 from model_navigator.core.logger import LOGGER, reconfigure_logging_to_file
 
 

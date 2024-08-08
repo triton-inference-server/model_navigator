@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 import numpy
 from polygraphy.backend.trt.profile import Profile, ShapeTuple
 
-from model_navigator.core.constants import OPT_MAX_SHAPE_RATIO
+from model_navigator.configuration.constants import OPT_MAX_SHAPE_RATIO
 from model_navigator.core.logger import LOGGER
 from model_navigator.utils import module
 

@@ -30,9 +30,16 @@ from model_navigator.configuration import (
     map_custom_configs,
 )
 from model_navigator.configuration.common_config import CommonConfig
+from model_navigator.configuration.constants import (
+    DEFAULT_MAX_TRIALS,
+    DEFAULT_MIN_TRIALS,
+    DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD,
+    DEFAULT_STABILITY_PERCENTAGE,
+    DEFAULT_STABILIZATION_WINDOWS,
+    DEFAULT_WINDOW_SIZE,
+)
 from model_navigator.configuration.model.model_config import ModelConfig
 from model_navigator.configuration.model.model_config_builder import ModelConfigBuilder
-from model_navigator.core.constants import DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.workspace import Workspace
 from model_navigator.exceptions import (
@@ -248,11 +255,11 @@ def profile(
     runners: Optional[Tuple[Union[str, Type[NavigatorRunner]], ...]] = None,
     max_batch_size: Optional[int] = None,
     batch_sizes: Optional[List[int]] = None,
-    window_size: int = 50,
-    stability_percentage: float = 10.0,
-    stabilization_windows: int = 3,
-    min_trials: int = 3,
-    max_trials: int = 10,
+    window_size: int = DEFAULT_WINDOW_SIZE,
+    stability_percentage: float = DEFAULT_STABILITY_PERCENTAGE,
+    stabilization_windows: int = DEFAULT_STABILIZATION_WINDOWS,
+    min_trials: int = DEFAULT_MIN_TRIALS,
+    max_trials: int = DEFAULT_MAX_TRIALS,
     throughput_cutoff_threshold: float = DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD,
     verbose: bool = False,
 ) -> ProfilingResults:

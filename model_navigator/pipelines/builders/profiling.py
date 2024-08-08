@@ -20,7 +20,7 @@ from model_navigator.commands.performance import Profile
 from model_navigator.configuration import Format
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig
-from model_navigator.core.constants import PIPELINE_PROFILING
+from model_navigator.pipelines.constants import PIPELINE_PROFILING
 from model_navigator.pipelines.pipeline import Pipeline
 from model_navigator.runners.registry import runner_registry
 from model_navigator.utils.format_helpers import is_source_format

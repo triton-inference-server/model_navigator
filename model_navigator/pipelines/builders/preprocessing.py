@@ -23,8 +23,8 @@ from model_navigator.commands.load import LoadMetadata
 from model_navigator.configuration import Format
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig
-from model_navigator.core.constants import PIPELINE_PREPROCESSING
 from model_navigator.frameworks import Framework
+from model_navigator.pipelines.constants import PIPELINE_PREPROCESSING
 from model_navigator.pipelines.pipeline import Pipeline
 
 

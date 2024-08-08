@@ -18,7 +18,7 @@ from typing import Optional
 from pyee import EventEmitter
 
 from model_navigator.commands.base import CommandStatus
-from model_navigator.core.constants import (
+from model_navigator.pipelines.constants import (
     PIPELINE_CORRECTNESS,
     PIPELINE_FIND_MAX_BATCH_SIZE,
     PIPELINE_PERFORMANCE,

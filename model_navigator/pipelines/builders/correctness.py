@@ -20,7 +20,7 @@ from model_navigator.commands.correctness import Correctness
 from model_navigator.configuration import Format
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig
-from model_navigator.core.constants import PIPELINE_CORRECTNESS
+from model_navigator.pipelines.constants import PIPELINE_CORRECTNESS
 from model_navigator.pipelines.pipeline import Pipeline
 from model_navigator.runners.registry import runner_registry
 

@@ -240,8 +240,8 @@ def run_measurement(
     """Run profiling measurement.
 
     Args:
-        func: Function to profile.
-        sample: Sample for the function.
+        func:  Callable on which measurement is executed.
+        sample: Sample passed as the callable input.
         nvml_handler: NVML handler.
         min_trials: Minimum number of trials.
         max_trials: Maximum number of trials.

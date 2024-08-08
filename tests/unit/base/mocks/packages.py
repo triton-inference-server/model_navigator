@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@ import numpy as np
 from model_navigator.commands.correctness.correctness import Tolerance, TolerancePerOutputName
 from model_navigator.commands.performance.performance import ProfilingResults
 from model_navigator.configuration import Format, JitType, TensorRTPrecision, TensorRTPrecisionMode, TensorRTProfile
+from model_navigator.configuration.constants import (
+    DEFAULT_MAX_WORKSPACE_SIZE,
+)
 from model_navigator.configuration.model.model_config import (
     ONNXConfig,
     TensorFlowSavedModelConfig,
@@ -26,7 +29,10 @@ from model_navigator.configuration.model.model_config import (
     TorchScriptConfig,
     TorchTensorRTConfig,
 )
-from model_navigator.core.constants import DEFAULT_MAX_WORKSPACE_SIZE, NAVIGATOR_PACKAGE_VERSION, NAVIGATOR_VERSION
+from model_navigator.core.constants import (
+    NAVIGATOR_PACKAGE_VERSION,
+    NAVIGATOR_VERSION,
+)
 from model_navigator.core.tensor import TensorMetadata, TensorSpec
 from model_navigator.core.workspace import Workspace
 from model_navigator.frameworks import Framework

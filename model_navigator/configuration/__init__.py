@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -39,11 +39,16 @@ from typing import (
 
 import numpy as np
 
-from model_navigator.core.constants import (
+from model_navigator.configuration.constants import (
+    DEFAULT_MAX_TRIALS,
     DEFAULT_MAX_WORKSPACE_SIZE,
     DEFAULT_MIN_SEGMENT_SIZE,
+    DEFAULT_MIN_TRIALS,
     DEFAULT_ONNX_OPSET,
     DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD,
+    DEFAULT_STABILITY_PERCENTAGE,
+    DEFAULT_STABILIZATION_WINDOWS,
+    DEFAULT_WINDOW_SIZE,
 )
 from model_navigator.core.logger import LOGGER
 from model_navigator.exceptions import ModelNavigatorConfigurationError
@@ -241,11 +246,11 @@ class OptimizationProfile(DataObject):
 
     max_batch_size: Optional[int] = None
     batch_sizes: Optional[List[Union[int, None]]] = None
-    window_size: int = 50
-    stability_percentage: float = 10.0
-    stabilization_windows: int = 3
-    min_trials: int = 3
-    max_trials: int = 10
+    window_size: int = DEFAULT_WINDOW_SIZE
+    stability_percentage: float = DEFAULT_STABILITY_PERCENTAGE
+    stabilization_windows: int = DEFAULT_STABILIZATION_WINDOWS
+    min_trials: int = DEFAULT_MIN_TRIALS
+    max_trials: int = DEFAULT_MAX_TRIALS
     throughput_cutoff_threshold: Optional[float] = DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD
     dataloader: Optional[SizedDataLoader] = None
 
@@ -307,11 +312,11 @@ class OptimizationProfile(DataObject):
         return cls(
             max_batch_size=optimization_profile_dict.get("max_batch_size"),
             batch_sizes=optimization_profile_dict.get("batch_sizes"),
-            window_size=optimization_profile_dict.get("window_size", 50),
-            stability_percentage=optimization_profile_dict.get("stability_percentage", 10.0),
-            stabilization_windows=optimization_profile_dict.get("stabilization_windows", 3),
-            min_trials=optimization_profile_dict.get("min_trials", 3),
-            max_trials=optimization_profile_dict.get("max_trials", 10),
+            window_size=optimization_profile_dict.get("window_size", DEFAULT_WINDOW_SIZE),
+            stability_percentage=optimization_profile_dict.get("stability_percentage", DEFAULT_STABILITY_PERCENTAGE),
+            stabilization_windows=optimization_profile_dict.get("stabilization_windows", DEFAULT_STABILIZATION_WINDOWS),
+            min_trials=optimization_profile_dict.get("min_trials", DEFAULT_MIN_TRIALS),
+            max_trials=optimization_profile_dict.get("max_trials", DEFAULT_MAX_TRIALS),
             throughput_cutoff_threshold=optimization_profile_dict.get(
                 "throughput_cutoff_threshold", DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD
             ),

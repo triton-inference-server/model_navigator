@@ -32,7 +32,7 @@ from model_navigator.core.dataloader import to_numpy
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import PyTreeMetadata
 from model_navigator.frameworks import is_torch2_available
-from model_navigator.package import load_from_workspace
+from model_navigator.package import Package, load_from_workspace
 from model_navigator.utils.module import lazy_import
 
 from ..utils.format_helpers import is_source_format
@@ -80,6 +80,11 @@ class BaseModule(abc.ABC):
         else:
             self.optimize_config = optimize_config
 
+    @abc.abstractclassmethod
+    def __call__(cls, *args, **kwargs) -> Any:
+        """Module forward method."""
+        pass
+
     @property
     def name(self) -> str:
         """Module name."""
@@ -90,10 +95,10 @@ class BaseModule(abc.ABC):
         """Module object."""
         return self._module
 
-    @abc.abstractclassmethod
-    def __call__(cls, *args, **kwargs) -> Any:
-        """Module forward method."""
-        pass
+    @property
+    def forward_call(self) -> Callable:
+        """Module object."""
+        return self._forward_call
 
     @property
     def is_ready_for_optimization(self) -> bool:
@@ -104,6 +109,11 @@ class BaseModule(abc.ABC):
     def is_optimized(self) -> bool:
         """Check if the module is optimized."""
         return False
+
+    @property
+    def packages(self) -> List[Package]:
+        """Get list of packages for optimized modules."""
+        return []
 
     @property
     def _workspace(self):
@@ -133,6 +143,34 @@ class RecordingModule(BaseModule):
         self._optimized = False
         self._temp_dir = tempfile.TemporaryDirectory(prefix=f"{self._name}_")
         self._samples_dir = pathlib.Path(self._temp_dir.name)
+        self._min_batch_size = None
+
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+        """Record a sample and run the module."""
+        self.record_sample(*args, **kwargs)
+        output = self._forward_call(*args, **kwargs)
+        return output
+
+    def optimize(self):
+        """Optimize the module using the recorded samples."""
+        from model_navigator.torch import optimize
+
+        batch_dim = 0 if self.optimize_config.batching else None
+        if self.optimize_config.batching:
+            self._update_max_batch_size()
+
+        config_dict = {k: v for k, v in self.optimize_config.to_dict().items() if k != "workspace"}
+
+        for i, pytree_metadata in enumerate(self._samples):
+            config_dict["workspace"] = self.optimize_config.workspace / str(i)
+            samples = self._samples[pytree_metadata]
+            samples_shapes = self._samples_shapes[pytree_metadata]
+            dynamic_axes = get_dynamic_axes_from_shapes(samples_shapes, pytree_metadata, batch_dim)
+            updated_config_dict = self._update_custom_configs(config_dict, dynamic_axes)
+
+            optimize(model=self._module, dataloader=TorchDataloader(samples), **updated_config_dict)
+
+        self._optimized = True
 
     def record_sample(self, *args: Any, **kwargs: Any) -> None:
         """Record a sample from the module."""
@@ -147,31 +185,13 @@ class RecordingModule(BaseModule):
             self._samples[pytree_metadata].append(sample_path)
 
         shapes = {n: to_numpy(t, Framework.TORCH).shape for n, t in pytree_metadata.flatten_sample(sample).items()}
+
+        min_shapes = [shape[0] for shape in shapes.values() if len(shape) > 1]
+        if len(min_shapes) > 0:
+            min_batch_size = min(min_shapes)
+            self._min_batch_size = min(min_batch_size, self._min_batch_size) if self._min_batch_size else min_batch_size
+
         self._samples_shapes[pytree_metadata].append(shapes)
-
-    def __call__(self, *args: Any, **kwargs: Any) -> Any:
-        """Record a sample and run the module."""
-        self.record_sample(*args, **kwargs)
-        output = self._forward_call(*args, **kwargs)
-        return output
-
-    def optimize(self):
-        """Optimize the module using the recorded samples."""
-        from model_navigator.torch import optimize
-
-        batch_dim = 0 if self.optimize_config.batching else None
-        config_dict = {k: v for k, v in self.optimize_config.to_dict().items() if k != "workspace"}
-
-        for i, pytree_metadata in enumerate(self._samples):
-            config_dict["workspace"] = self.optimize_config.workspace / str(i)
-            samples = self._samples[pytree_metadata]
-            samples_shapes = self._samples_shapes[pytree_metadata]
-            dynamic_axes = get_dynamic_axes_from_shapes(samples_shapes, pytree_metadata, batch_dim)
-            updated_config_dict = self._update_custom_configs(config_dict, dynamic_axes)
-
-            optimize(model=self._module, dataloader=TorchDataloader(samples), **updated_config_dict)
-
-        self._optimized = True
 
     def get_total_num_samples(self) -> int:
         """Get the total number of samples."""
@@ -210,6 +230,31 @@ class RecordingModule(BaseModule):
             config_dict["custom_configs"].append(OnnxConfig(dynamic_axes=dynamic_axes))
 
         return config_dict
+
+    def _update_max_batch_size(self):
+        if self.optimize_config.optimization_profile is None:
+            return
+
+        if self.optimize_config.optimization_profile.max_batch_size is not None:
+            max_batch_size = self.optimize_config.optimization_profile.max_batch_size
+            new_max_batch_size = max(self._min_batch_size, max_batch_size)
+            if new_max_batch_size > max_batch_size:
+                self.optimize_config.optimization_profile.max_batch_size = new_max_batch_size
+                LOGGER.info(
+                    f"""Setting maximal batch for size to `{new_max_batch_size}` for {self.name} module as provided"""
+                    f"""value `{max_batch_size}`is lower than minimal batch size required for module conversion."""
+                )
+
+        if self.optimize_config.optimization_profile.batch_sizes is not None:
+            max_batch_size = max(self.optimize_config.optimization_profile.batch_sizes)
+            new_max_batch_size = max(self._min_batch_size, max_batch_size)
+            if new_max_batch_size > max_batch_size:
+                self.optimize_config.optimization_profile.batch_sizes.append(new_max_batch_size)
+                LOGGER.info(
+                    f"""Extending batch sizes list with `{new_max_batch_size}`for {self.name} module as """
+                    f"""max batch size `{max_batch_size}` provided in `batch_sizes` list is lower than minimal  """
+                    """required for module conversion."""
+                )
 
 
 class OptimizedModule(BaseModule):
@@ -260,21 +305,6 @@ class OptimizedModule(BaseModule):
         else:
             self.runner_active = False
 
-    def __del__(self):
-        """Deactivate runners and delete packages."""
-        if hasattr(self, "runner_active") and self.runner_active:
-            self.deactivate_runners()
-
-    def activate_runners(self):
-        """Activate all runners."""
-        for runner in self._runners.values():
-            runner.activate()
-
-    def deactivate_runners(self):
-        """Deactivate all runners."""
-        for runner in self._runners.values():
-            runner.deactivate()
-
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         """Run the call through the optimized module."""
         sample = (*args, kwargs)
@@ -295,10 +325,31 @@ class OptimizedModule(BaseModule):
         output = self._output_mapping(output)  # TODO better solution?
         return output
 
+    def __del__(self):
+        """Deactivate runners and delete packages."""
+        if hasattr(self, "runner_active") and self.runner_active:
+            self.deactivate_runners()
+
     @property
     def is_optimized(self) -> bool:
         """Check if the module is optimized."""
         return True
+
+    @property
+    def packages(self) -> List[Package]:
+        """Get the list of packages."""
+        return self._packages
+
+    def activate_runners(self):
+        """Activate all runners."""
+        LOGGER.info("Activating runners for optimized module.")
+        for runner in self._runners.values():
+            runner.activate()
+
+    def deactivate_runners(self):
+        """Deactivate all runners."""
+        for runner in self._runners.values():
+            runner.deactivate()
 
     def _offload_module(self):
         self._module.to("cpu")

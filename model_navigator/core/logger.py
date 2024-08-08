@@ -27,7 +27,7 @@ from typing import Dict, Optional, TextIO, Tuple, Union
 
 from loguru import logger
 
-from model_navigator.core.constants import (
+from model_navigator.configuration.constants import (
     NAVIGATOR_LOG_FORMAT_ENV,
     NAVIGATOR_LOG_LEVEL_ENV,
     NAVIGATOR_LOGGER_NAME,
@@ -63,13 +63,13 @@ class InterceptHandler(logging.Handler):
 @lru_cache
 def get_navigator_log_level() -> str:
     """Returns logging level."""
-    return os.environ.get(NAVIGATOR_LOG_LEVEL_ENV, "INFO")
+    return os.environ.get(NAVIGATOR_LOG_LEVEL_ENV, "INFO").upper()
 
 
 @lru_cache
 def get_third_party_log_level() -> str:
     """Returns logging level."""
-    return os.environ.get(NAVIGATOR_THIRD_PARTY_LOG_LEVEL_ENV, "WARNING")
+    return os.environ.get(NAVIGATOR_THIRD_PARTY_LOG_LEVEL_ENV, "WARNING").upper()
 
 
 @lru_cache

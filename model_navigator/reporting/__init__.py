@@ -22,7 +22,7 @@ _reporter = None
 
 def initialize_reporting():
     """Initialize reporting."""
-    if "detailed" in get_console_output():
+    if get_console_output() in ["DETAILED", "LOGS"]:
         _reporter = DetailedReport()
     else:
         _reporter = SimpleReport()
