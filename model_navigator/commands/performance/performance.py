@@ -21,6 +21,7 @@ from typing import Any, Optional, Type
 from jsonlines import jsonlines
 
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
+from model_navigator.commands.correctness import Correctness
 from model_navigator.commands.execution_context import ExecutionContext
 from model_navigator.commands.performance.results import ProfilingResults
 from model_navigator.configuration import Format, OptimizationProfile
@@ -34,7 +35,7 @@ from model_navigator.utils.common import parse_kwargs_to_cmd
 from model_navigator.utils.format_helpers import is_source_format
 
 
-class Performance(Command):
+class Performance(Command, requires=[Correctness.name]):
     """Performance command."""
 
     def _run(
