@@ -17,11 +17,14 @@ limitations under the License.
 # Changelog
 
 ## 0.12.0 (unreleased)
+
 - new: simple and detailed reporting of the optimization process
 - new: adjusted exporting TensorFlow SavedModel for Keras 3.x
 - new: improve handling conversion batch size based on recorded samples
 - change: adjusted profiling configuration for throughput cutoff search
 - change: include optimized pipeline to list of examined variants during `nav.profile`
+- change: performance is not executed when correctness failed for format and runtime
+- change: verify command is not executed when verify function is not provided
 - fix: pipelines sometimes obtain model and tensors on different devices during `nav.profile`
 
 ## 0.11.0
