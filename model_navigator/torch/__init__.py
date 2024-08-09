@@ -149,8 +149,9 @@ def optimize(
         tensorrt_conversion_builder,
         correctness_builder,
         performance_builder,
-        verify_builder,
     ]
+    if verify_func:
+        builders.append(verify_builder)
 
     package = optimize_pipeline(
         model=model,

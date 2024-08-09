@@ -34,7 +34,6 @@ from model_navigator.pipelines.builders import (
     preprocessing_builder,
     verify_builder,
 )
-from model_navigator.pipelines.builders.find_device_max_batch_size import find_device_max_batch_size_builder
 from model_navigator.pipelines.wrappers.optimize import optimize_pipeline
 from model_navigator.runners.base import NavigatorRunner
 from model_navigator.runners.utils import default_runners, filter_runners
@@ -108,11 +107,11 @@ def optimize(
 
     builders = [
         preprocessing_builder,
-        find_device_max_batch_size_builder,
         correctness_builder,
         performance_builder,
-        verify_builder,
     ]
+    if verify_func:
+        builders.append(verify_builder)
 
     package = optimize_pipeline(
         model=model,
