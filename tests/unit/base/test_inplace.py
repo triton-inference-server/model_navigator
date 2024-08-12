@@ -33,6 +33,7 @@ from model_navigator.configuration import (
     TorchConfig,
 )
 from model_navigator.exceptions import ModelNavigatorUserInputError
+from model_navigator.inplace import _initialize_pipeline
 from model_navigator.inplace.config import DEFAULT_CACHE_DIR, OptimizeConfig, inplace_cache_dir
 from model_navigator.inplace.model import EagerModule, OptimizedModule, RecordingModule
 from model_navigator.inplace.registry import ModuleRegistry, module_registry
@@ -42,13 +43,11 @@ from model_navigator.reporting.events import NavigatorEvent
 from tests.unit.base.mocks.fixtures import mock_event_emitter  # noqa: F401
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def clean_up_registry():
     """Clears registry after test case."""
-    try:
-        yield
-    finally:
-        module_registry.clear()
+    yield
+    module_registry.clear()
 
 
 def test_get_object_name():
@@ -351,3 +350,131 @@ def test_module_tags_should_partially_override_config(clean_up_registry):
 
     assert model_b.optimize_config.batching
     assert model_b.optimize_config.custom_configs == config.custom_configs
+
+
+@pytest.mark.skipif(not find_spec("torch"), reason="PyTorch is not installed.")
+def test_initialize_pipeline_not_call_to_method_when_only_one_module_wrapped(mocker):
+    # given
+    import torch  # pytype: disable=import-error
+
+    class TestModule(torch.nn.Module):
+        def forward(self, x):
+            return x + 1
+
+    module = TestModule()
+
+    spy_to_method = mocker.spy(module, "to")
+
+    module = Module(module, name="test")
+
+    result = _initialize_pipeline(func=module, model_key="torch", runner_name="TorchCUDA", device="cpu")
+
+    assert result is False
+    assert spy_to_method.call_count == 0
+
+
+@pytest.mark.skipif(not find_spec("torch"), reason="PyTorch is not installed.")
+def test_initialize_pipeline_not_call_to_method_when_more_then_one_module_wrapped_but_not_to_method_in_pipe():
+    # given
+    import torch  # pytype: disable=import-error
+
+    class TestModule1(torch.nn.Module):
+        def forward(self, x):
+            return x + 1
+
+    class TestModule2(torch.nn.Module):
+        def forward(self, x):
+            return x + 1
+
+    class Pipe:
+        def __init__(self):
+            super().__init__()
+            self.module1 = TestModule1()
+            self.module2 = TestModule2()
+
+        def __call__(self, *args, **kwargs):
+            pass
+
+    pipe = Pipe()
+
+    pipe.module1 = Module(pipe.module1, name="test1")
+    pipe.module2 = Module(pipe.module2, name="test2")
+
+    result = _initialize_pipeline(func=pipe, model_key="torch", runner_name="TorchCUDA", device="cpu")
+    assert result is False
+
+
+@pytest.mark.skipif(not find_spec("torch"), reason="PyTorch is not installed.")
+def test_initialize_pipeline_not_call_to_method_when_python_eager_passed(mocker):
+    # given
+    import torch  # pytype: disable=import-error
+
+    class TestModule1(torch.nn.Module):
+        def forward(self, x):
+            return x + 1
+
+    class TestModule2(torch.nn.Module):
+        def forward(self, x):
+            return x + 1
+
+    class Pipe:
+        def __init__(self):
+            self.module1 = TestModule1()
+            self.module2 = TestModule2()
+
+        def __call__(self, *args, **kwargs):
+            pass
+
+        def to(self, device):
+            self.module1.to(device)
+            self.module2.to(device)
+
+    pipe = Pipe()
+
+    spy_to_method = mocker.spy(pipe, "to")
+
+    pipe.module1 = Module(pipe.module1, name="module1")
+    pipe.module2 = Module(pipe.module2, name="module2")
+
+    result = _initialize_pipeline(func=pipe, model_key="python", runner_name="eager", device="cpu")
+
+    assert result is False
+    assert spy_to_method.call_count == 0
+
+
+@pytest.mark.skipif(not find_spec("torch"), reason="PyTorch is not installed.")
+def test_initialize_pipeline_called_when_more_then_one_module_wrapped_and_pipe_has_to_method(mocker):
+    # given
+    import torch  # pytype: disable=import-error
+
+    class TestModule1(torch.nn.Module):
+        def forward(self, x):
+            return x + 1
+
+    class TestModule2(torch.nn.Module):
+        def forward(self, x):
+            return x + 1
+
+    class Pipe:
+        def __init__(self):
+            self.module1 = TestModule1()
+            self.module2 = TestModule2()
+
+        def __call__(self, *args, **kwargs):
+            pass
+
+        def to(self, device):
+            self.module1.to(device)
+            self.module2.to(device)
+
+    pipe = Pipe()
+
+    spy_to_method = mocker.spy(pipe, "to")
+
+    pipe.module1 = Module(pipe.module1, name="module1")
+    pipe.module2 = Module(pipe.module2, name="module2")
+
+    result = _initialize_pipeline(func=pipe, model_key="torch", runner_name="TorchCUDA", device="cpu")
+
+    assert result is True
+    assert spy_to_method.call_count == 1
