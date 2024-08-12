@@ -35,6 +35,7 @@ from model_navigator.frameworks import is_torch2_available
 from model_navigator.package import Package, load_from_workspace
 from model_navigator.utils.module import lazy_import
 
+from ..exceptions import ModelNavigatorUserInputError
 from ..utils.format_helpers import is_source_format
 from .config import OptimizeConfig, inplace_config
 from .utils import TorchDataloader, get_dynamic_axes_from_shapes
@@ -75,6 +76,7 @@ class BaseModule(abc.ABC):
         self._output_mapping = output_mapping
         self._device = device
         self._forward_call = forward if forward is not None else self._module
+        self._recorder = False
         if optimize_config:
             self.optimize_config = self._update_optimize_config(optimize_config)
         else:
@@ -149,11 +151,19 @@ class RecordingModule(BaseModule):
         """Record a sample and run the module."""
         self.record_sample(*args, **kwargs)
         output = self._forward_call(*args, **kwargs)
+        self._recorder = True
         return output
 
     def optimize(self):
         """Optimize the module using the recorded samples."""
         from model_navigator.torch import optimize
+
+        if not self._recorder:
+            raise ModelNavigatorUserInputError(
+                f"""The module `{self.name}` has not been evaluated as part of provided callable. """
+                """Please, review the wrapped modules. We use `__call__` method to run queries on module. """
+                """If you model use other method, use `forward_func` in module configuration to override the default."""
+            )
 
         batch_dim = 0 if self.optimize_config.batching else None
         if self.optimize_config.batching:
@@ -236,6 +246,12 @@ class RecordingModule(BaseModule):
             return
 
         if self.optimize_config.optimization_profile.max_batch_size is not None:
+            if not self._min_batch_size:
+                raise ModelNavigatorUserInputError(
+                    """Unable to collect required batch size from input samples."""
+                    f"""Has the wrapped module `{self.name}` been executed in scope of the provided function?"""
+                )
+
             max_batch_size = self.optimize_config.optimization_profile.max_batch_size
             new_max_batch_size = max(self._min_batch_size, max_batch_size)
             if new_max_batch_size > max_batch_size:
@@ -246,6 +262,12 @@ class RecordingModule(BaseModule):
                 )
 
         if self.optimize_config.optimization_profile.batch_sizes is not None:
+            if not self._min_batch_size:
+                raise ModelNavigatorUserInputError(
+                    """Unable to collect required batch size from input samples."""
+                    f"""Has the wrapped module `{self.name}` been executed in scope of the provided function?"""
+                )
+
             max_batch_size = max(self.optimize_config.optimization_profile.batch_sizes)
             new_max_batch_size = max(self._min_batch_size, max_batch_size)
             if new_max_batch_size > max_batch_size:
