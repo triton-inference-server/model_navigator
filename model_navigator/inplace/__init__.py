@@ -164,7 +164,7 @@ def profile(
         LOGGER.info(pad_string(f"Profiling of {model_key} and {runner_name}"))
 
         if initialize:
-            _initialize_pipeline(callable, model_key, runner_name, device)
+            _initialize_pipeline(func, model_key, runner_name, device)
 
         _load_modules(model_key, runner_name, device=device, verbose=verbose)
 
@@ -281,14 +281,17 @@ def _load_modules(model_key: str, runner_name: str, device: str, verbose: bool =
             m.load_eager(device=device)
 
 
-def _initialize_pipeline(func: Callable, model_key: str, runner_name: str, device: str):
+def _initialize_pipeline(func: Callable, model_key: str, runner_name: str, device: str) -> bool:
     if model_key == "python" and runner_name == "eager":
-        return
+        return False
 
     optimized_modules_count = len([m.is_optimized for m in module_registry.values()])
-    if optimized_modules_count > 1 and hasattr(callable, "to"):
+    if optimized_modules_count > 1 and hasattr(func, "to"):
         LOGGER.info(f"Initialize pipeline on device: {device}")
-        callable.to(device)
+        func.to(device)
+        return True
+
+    return False
 
 
 def _format_to_modelkey(format: Union[str, Format]):
