@@ -33,7 +33,7 @@ from model_navigator.utils.config_helpers import do_find_device_max_batch_size
 def find_device_max_batch_size_builder(
     config: CommonConfig, models_config: Dict[Format, List[ModelConfig]]
 ) -> Pipeline:
-    """Build finding max batch size for TensorRT pipeline.
+    """Build finding max batch size for fixed shapes based pipeline.
 
     Args:
         config: A configuration for pipelines

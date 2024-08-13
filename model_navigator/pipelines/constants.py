@@ -15,7 +15,7 @@
 
 # Pipeline names
 PIPELINE_CORRECTNESS = "Correctness"
-PIPELINE_FIND_MAX_BATCH_SIZE = "Finding Max Batch Size for TensorRT"
+PIPELINE_FIND_MAX_BATCH_SIZE = "Finding max batch size for fixed shapes based pipelines"
 PIPELINE_PERFORMANCE = "Performance"
 PIPELINE_PREPROCESSING = "Preprocessing"
 PIPELINE_PROFILING = "Profiling"
@@ -26,4 +26,5 @@ PIPELINE_TENSORRT_CONVERSION = "TensorRT Conversion"
 PIPELINE_TORCH_TENSORRT_CONVERSION = "Torch-TensorRT Conversion"
 PIPELINE_TORCH_CONVERSION = "PyTorch Conversion"
 PIPELINE_TORCH_EXPORT = "PyTorch Export"
+PIPELINE_TORCH_EXPORTEDPROGRAM = "PyTorch ExportedProgram Export"
 PIPELINE_VERIFY_MODELS = "Verify Models"

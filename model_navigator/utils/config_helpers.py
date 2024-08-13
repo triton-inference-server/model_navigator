@@ -37,7 +37,7 @@ def do_find_device_max_batch_size(config: CommonConfig, models_config: Dict[Form
         True if search is required, false, otherwise
     """
     model_formats = models_config.keys()
-    adaptive_formats = {Format.TORCH_TRT, Format.TENSORRT, Format.TF_TRT}
+    adaptive_formats = {Format.TORCH_TRT, Format.TENSORRT, Format.TF_TRT, Format.TORCH_EXPORTEDPROGRAM}
 
     matching_formats = adaptive_formats.intersection(set(model_formats))
     if len(matching_formats) == 0 or config.target_device != DeviceKind.CUDA:

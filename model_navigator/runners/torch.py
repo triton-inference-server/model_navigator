@@ -435,7 +435,9 @@ class _BaseTorchExportedProgramRunner(_BaseTorchRunner):
 
     def activate_impl(self):
         """Activation implementation."""
-        self._loaded_model = torch.load(str(self._model), map_location=self.device)
+        exported_program = torch.export.load(str(self._model))
+        self._loaded_model = exported_program.module()
+        self._loaded_model.to(self.device)
 
 
 class TorchExportedProgramCPURunner(_BaseTorchExportedProgramRunner):

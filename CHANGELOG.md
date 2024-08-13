@@ -14,19 +14,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-# Changelog## 0.12.0 (unreleased)
+# Changelog
+
+## 0.12.0 (unreleased)
 
 - new: simple and detailed reporting of the optimization process
 - new: adjusted exporting TensorFlow SavedModel for Keras 3.x
 - new: improve handling conversion batch size based on recorded samples
 - new: inform user when wrapped a module which is not called during optimize or module use a custom forward function
+- new: support for dynamic shapes in Torch ExportedProgram
 - change: adjusted profiling configuration for throughput cutoff search
 - change: include optimized pipeline to list of examined variants during `nav.profile`
 - change: performance is not executed when correctness failed for format and runtime
 - change: verify command is not executed when verify function is not provided
 - fix: pipelines sometimes obtain model and tensors on different devices during `nav.profile`
-
-
+- fix: extract graph from ExportedProgram for running inference
 
 ## 0.11.0
 

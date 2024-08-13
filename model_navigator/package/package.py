@@ -268,7 +268,7 @@ class Package:
             model = self.workspace.path / model_config.path
 
         device_kind = get_device_kind_from_device_string(device)
-        LOGGER.info(f"Loading model `{model_key}` on runner `{runner_name}` and device `{device}`")
+        LOGGER.info(f"Creating model `{model_key}` on runner `{runner_name}` and device `{device}`")
         return get_runner(runner_name, device_kind)(
             model=model,
             input_metadata=self.status.input_metadata,

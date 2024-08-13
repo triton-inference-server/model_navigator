@@ -61,7 +61,7 @@ class SimpleReport(BaseReport):
         if self.current_pipeline == PIPELINE_CORRECTNESS:
             self.status_line = f"Validating model {config_key} on {runner_name} backend"
         elif self.current_pipeline == PIPELINE_FIND_MAX_BATCH_SIZE:
-            self.status_line = "Finding max batch size for TensorRT"
+            self.status_line = "Finding max batch size for fixed shapes based pipelines"
         elif self.current_pipeline == PIPELINE_PERFORMANCE:
             self.status_line = f"Benchmarking model {config_key} on {runner_name} backend"
         elif self.current_pipeline == PIPELINE_PREPROCESSING:

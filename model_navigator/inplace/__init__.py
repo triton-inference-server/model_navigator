@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -120,7 +120,7 @@ def profile(
     initialize: bool = True,
     verbose: bool = False,
 ) -> InplaceProfileStatus:
-    """Profile `callable` in scope of which registered modules are executed.
+    """Profile `func` in scope of which registered modules are executed.
 
     Args:
         func:  Callable to profile.
@@ -321,7 +321,7 @@ def _get_modelkeys_runners(formats, runners):
                 f"Module {name} not optimized. Please optimize the nav.optimize command first."
             ) from e
 
-        for package in m._wrapper._packages:
+        for package in m.wrapper.packages:
             for modelkey, model_status in package.status.models_status.items():
                 for runner_name, runner_status in model_status.runners_status.items():
                     if (

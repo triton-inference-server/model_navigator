@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -65,8 +65,6 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
             workspace: Model Navigator working directory.
             path: ONNX checkpoint path, relative to workspace.
             parent_path: Path of ONNX parent model, relative to workspace.
-            input_metadata: Model input metadata.
-            output_metadata: Model output metadata.
             precision: TensorRT precision.
             precision_mode: TensorRT precision mode.
             dataloader_trt_profile: Dataloader TensorRT profile.
