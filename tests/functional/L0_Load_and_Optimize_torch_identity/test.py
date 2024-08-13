@@ -24,7 +24,7 @@ METADATA = {
     "image_name": "nvcr.io/nvidia/pytorch:{version}-py3",
 }
 
-EXPECTED_STATUES = [
+EXPECTED_STATUSES = [
     "onnx.OnnxCUDA",
     "onnx.OnnxTensorRT",
     "torchscript-script.TorchScriptCUDA",
@@ -69,7 +69,7 @@ def main():
     status_file = args.status
     status = collect_optimize_status(new_package.status)
 
-    validate_status(status, expected_statuses=EXPECTED_STATUES)
+    validate_status(status, expected_statuses=EXPECTED_STATUSES)
 
     with status_file.open("w") as fp:
         yaml.safe_dump(status, fp)

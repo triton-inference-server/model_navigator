@@ -210,7 +210,7 @@ class PipelineContext:
 
                 runners_command = models_command.runners_commands[execution_unit.runner_cls.name()]
                 runners_command.commands[execution_unit.command.name] = command_output
-        elif execution_unit.model_config is None:
+        else:
             self._commands.commands[execution_unit.command.name] = command_output
 
     def initialize(self):
@@ -263,12 +263,14 @@ class PipelineContext:
 
         _update_args(data={**execution_unit.kwargs})
 
+        if execution_unit.runner_cls:
+            _update_args(data={"runner_cls": execution_unit.runner_cls})
+            if execution_unit.runner_config:
+                _update_args(data={"runner_config": execution_unit.runner_config})
+
         if execution_unit.model_config:
             model_config_data = execution_unit.model_config.get_config_dict_for_command()
             _update_args(data=model_config_data)
-
-            if execution_unit.runner_cls:
-                _update_args(data={"runner_cls": execution_unit.runner_cls})
 
             model_commands = self._commands.models_commands.get(execution_unit.model_config.key)
             if model_commands:
