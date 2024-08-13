@@ -14,13 +14,14 @@
 """Inputs and outputs metadata commands."""
 
 import pathlib
-from typing import Dict, Iterator, List, Optional, Sequence, Tuple, Union
+from typing import Dict, Iterator, List, Optional, Sequence, Tuple, Type, Union
 
 import numpy as np
 
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.execution_context import ExecutionContext
 from model_navigator.configuration import OptimizationProfile, SizedDataLoader, SizedIterable, TensorRTProfile
+from model_navigator.configuration.runner.runner_config import RunnerConfig
 from model_navigator.core.dataloader import extract_sample, load_samples, to_numpy, validate_sample_input
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import (
@@ -34,10 +35,9 @@ from model_navigator.exceptions import ModelNavigatorUserInputError
 from model_navigator.frameworks import Framework, is_torch_available
 from model_navigator.frameworks.onnx.utils import get_onnx_io_names
 from model_navigator.frameworks.tensorrt.utils import get_tensorrt_io_names
-from model_navigator.runners.utils import get_format_default_runners
+from model_navigator.runners.base import NavigatorRunner
 from model_navigator.utils import module
 from model_navigator.utils.common import optimal_batch_size
-from model_navigator.utils.format_helpers import FRAMEWORK2BASE_FORMAT
 
 torch = module.lazy_import("torch")
 
@@ -255,10 +255,12 @@ class InferOutputMetadata(Command, is_required=True):
         self,
         framework: Framework,
         model: Union[object, pathlib.Path],
+        runner_cls: Type[NavigatorRunner],
         dataloader: SizedDataLoader,
         input_metadata: TensorMetadata,
         workspace: Workspace,
         verbose: bool,
+        runner_config: Optional[RunnerConfig] = None,
         _output_names: Optional[Tuple[str, ...]] = None,
         batch_dim: Optional[int] = None,
     ) -> CommandOutput:
@@ -267,10 +269,12 @@ class InferOutputMetadata(Command, is_required=True):
         Args:
             framework: Framework of model to run inference
             model: A model object or path to file
+            runner_cls: Type of a runner to use with a model.
             dataloader: Dataloader for providing samples
             input_metadata: Model inputs metadata
             workspace: Working directory where command should be executed
             verbose: Enable verbose logging
+            runner_config: Additional runner arguments.
             _output_names: Name of model outputs
             batch_dim: Location of batch dimension in data samples
 
@@ -287,12 +291,15 @@ class InferOutputMetadata(Command, is_required=True):
             temp_output_metadata = TensorMetadata({out_name: TensorSpec(out_name, ()) for out_name in _output_names})
         else:
             temp_output_metadata = None
-        runner = get_format_default_runners(FRAMEWORK2BASE_FORMAT[framework])[0](
+
+        runner_kwargs = runner_config.to_dict() if runner_config is not None else {}
+        runner = runner_cls(
             model=model,
             input_metadata=input_metadata,
             output_metadata=temp_output_metadata,
             disable_fallback=False,
-        )  # pytype: disable=not-instantiable
+            **runner_kwargs,
+        )
 
         profiling_sample = load_samples("profiling_sample", workspace.path, batch_dim)[0]
         conversion_samples = load_samples("conversion_sample", workspace.path, batch_dim)

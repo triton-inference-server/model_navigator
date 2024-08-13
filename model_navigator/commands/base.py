@@ -20,6 +20,7 @@ from inspect import getfullargspec
 from typing import Any, Callable, Dict, List, Optional, Type
 
 from model_navigator.configuration.model.model_config import ModelConfig
+from model_navigator.configuration.runner.runner_config import RunnerConfig
 from model_navigator.exceptions import ModelNavigatorWrongParameterError
 from model_navigator.runners.base import NavigatorRunner
 from model_navigator.utils.common import DataObject
@@ -174,6 +175,7 @@ class ExecutionUnit:
         command: Type[Command],
         model_config: Optional[ModelConfig] = None,
         runner_cls: Optional[Type[NavigatorRunner]] = None,
+        runner_config: Optional[RunnerConfig] = None,
         results_lookup_runner_cls: Optional[Type[NavigatorRunner]] = None,
         **kwargs,
     ) -> None:
@@ -184,20 +186,19 @@ class ExecutionUnit:
             config: Global configuration provide by user
             model_config: Optional configuration of model that has to be produced by command
             runner_cls: Optional runner for correctness or performance evaluation
+            runner_config: Additional runner arguments
             results_lookup_runner_cls: Optional runner for results lookup
             kwargs: Additional arguments for command
         """
         self.command = command
         self.model_config = model_config
         self.runner_cls = runner_cls
+        self.runner_config = runner_config
         self.results_lookup_runner_cls = results_lookup_runner_cls
         self.kwargs = kwargs
 
         if self.runner_cls and self.results_lookup_runner_cls:
             raise ModelNavigatorWrongParameterError("runner_cls and results_lookup_runner_cls cannot be set at once.")
-
-        if self.runner_cls and not self.model_config:
-            raise ModelNavigatorWrongParameterError("Unable to execute unit with runner without a model.")
 
     def __repr__(self) -> str:
         """Return a string representation of the execution unit."""

@@ -13,19 +13,19 @@
 # limitations under the License.
 """Commands for fetching and dumping model IO."""
 
-from typing import Any, Optional
+from typing import Any, Optional, Type
 
 import numpy as np
 
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.configuration import OptimizationProfile, SizedDataLoader, TensorRTProfile
+from model_navigator.configuration.runner.runner_config import RunnerConfig
 from model_navigator.core.dataloader import IndiciesFilteredDataloader, extract_sample, load_samples, samples_to_npz
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata
 from model_navigator.core.workspace import Workspace
 from model_navigator.frameworks import Framework
-from model_navigator.runners.utils import get_format_default_runners
-from model_navigator.utils.format_helpers import FRAMEWORK2BASE_FORMAT
+from model_navigator.runners.base import NavigatorRunner
 
 
 class FetchInputModelData(Command, is_required=True):
@@ -165,12 +165,13 @@ class FetchOutputModelData(Command, is_required=True):
 
     def _run(
         self,
-        framework: Framework,
         workspace: Workspace,
         model: Any,
+        runner_cls: Type[NavigatorRunner],
         input_metadata: TensorMetadata,
         output_metadata: TensorMetadata,
         batch_dim: Optional[int],
+        runner_config: Optional[RunnerConfig] = None,
         raise_on_error: Optional[bool] = True,
     ) -> CommandOutput:
         """Run the command and save model outputs.
@@ -179,9 +180,11 @@ class FetchOutputModelData(Command, is_required=True):
             framework: Model framework.
             workspace: Model Navigator workspace path.
             model: Model instance.
+            runner_cls: Type of a runner to use with a model.
             input_metadata: Input metadata.
             output_metadata: Output metadata.
             batch_dim: Batch dimension.
+            runner_config: Additional runner arguments.
             raise_on_error: If True raise an error when one of the samples is invalid.
                 Defaults to True.
 
@@ -191,11 +194,10 @@ class FetchOutputModelData(Command, is_required=True):
         output_data_path = workspace.path / "model_output"
         output_data_path.mkdir(parents=True, exist_ok=True)
 
-        runner = get_format_default_runners(FRAMEWORK2BASE_FORMAT[framework])[0](
-            model=model,
-            input_metadata=input_metadata,
-            output_metadata=output_metadata,
-        )  # pytype: disable=not-instantiable
+        runner_kwargs = runner_config.to_dict() if runner_config is not None else {}
+        runner = runner_cls(
+            model=model, input_metadata=input_metadata, output_metadata=output_metadata, **runner_kwargs
+        )
 
         for input_sample, sample_name in [
             ("profiling_sample", "profiling"),

@@ -26,6 +26,7 @@ from model_navigator.core.tensor import PyTreeMetadata, TensorMetadata
 from model_navigator.core.workspace import Workspace
 from model_navigator.exceptions import ModelNavigatorUserInputError
 from model_navigator.frameworks import Framework
+from model_navigator.runners.torch import TorchCPURunner, TorchCUDARunner
 
 
 def test_infer_output_metadata_return_fails_status_when_invalid_model_used():
@@ -35,6 +36,8 @@ def test_infer_output_metadata_return_fails_status_when_invalid_model_used():
 
     input_metadata = TensorMetadata(pytree_metadata=PyTreeMetadata("input_0", tensor_type=TensorType.NUMPY))
     input_metadata.add(name="input_0", shape=(1,), dtype=np.int32)
+
+    runner_cls = TorchCUDARunner if torch.cuda.is_available() else TorchCPURunner
 
     dataloader = [torch.randn(1) for _ in range(5)]
 
@@ -55,6 +58,7 @@ def test_infer_output_metadata_return_fails_status_when_invalid_model_used():
             InferOutputMetadata().run(
                 framework=Framework.TORCH,
                 model=Model(),
+                runner_cls=runner_cls,
                 dataloader=dataloader,
                 profiling_sample=profiling_sample,
                 conversion_samples=conversion_samples,
@@ -71,6 +75,8 @@ def test_infer_output_metadata_return_success_status_when_valid_model_used():
 
     input_metadata = TensorMetadata(pytree_metadata=PyTreeMetadata("input_0", tensor_type=TensorType.NUMPY))
     input_metadata.add(name="input_0", shape=(1,), dtype=np.int32)
+
+    runner_cls = TorchCUDARunner if torch.cuda.is_available() else TorchCPURunner
 
     dataloader = [torch.randn(1) for _ in range(5)]
 
@@ -90,6 +96,7 @@ def test_infer_output_metadata_return_success_status_when_valid_model_used():
         status = InferOutputMetadata().run(
             framework=Framework.TORCH,
             model=Model(),
+            runner_cls=runner_cls,
             dataloader=dataloader,
             profiling_sample=profiling_sample,
             conversion_samples=conversion_samples,
@@ -110,6 +117,8 @@ def test_infer_output_metadata_return_success_status_when_valid_model_used_bf16(
     input_metadata = TensorMetadata(pytree_metadata=PyTreeMetadata("input_0", tensor_type=TensorType.TORCH))
     input_metadata.add(name="input_0", shape=(1,), dtype=torch.bfloat16)
 
+    runner_cls = TorchCUDARunner if torch.cuda.is_available() else TorchCPURunner
+
     bf16_dataloader = [torch.randn(1, dtype=torch.bfloat16) for _ in range(5)]
 
     profiling_sample = [{"input_0": np.random.randint(1, 10, 1, dtype=np.int32)}]
@@ -128,6 +137,7 @@ def test_infer_output_metadata_return_success_status_when_valid_model_used_bf16(
         status = InferOutputMetadata().run(
             framework=Framework.TORCH,
             model=Model().to(torch.bfloat16),
+            runner_cls=runner_cls,
             dataloader=bf16_dataloader,
             profiling_sample=profiling_sample,
             conversion_samples=conversion_samples,

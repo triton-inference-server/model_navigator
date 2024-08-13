@@ -23,9 +23,10 @@ from model_navigator.commands.load import LoadMetadata
 from model_navigator.configuration import Format
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig
-from model_navigator.frameworks import Framework
 from model_navigator.pipelines.constants import PIPELINE_PREPROCESSING
 from model_navigator.pipelines.pipeline import Pipeline
+from model_navigator.runners.utils import get_format_default_runners
+from model_navigator.utils.format_helpers import FRAMEWORK2BASE_FORMAT
 
 
 def preprocessing_builder(config: CommonConfig, models_config: Dict[Format, List[ModelConfig]]) -> Pipeline:
@@ -42,20 +43,27 @@ def preprocessing_builder(config: CommonConfig, models_config: Dict[Format, List
     Returns:
         Pipeline with steps for profiling.
     """
-    execution_units: List[ExecutionUnit] = []
-    if config.from_source:
-        execution_units.extend([
-            ExecutionUnit(command=InferInputMetadata),
-            ExecutionUnit(command=FetchInputModelData),
-            ExecutionUnit(command=InferOutputMetadata),
-            ExecutionUnit(command=FetchOutputModelData),
-        ])
-    else:
-        execution_units.extend([ExecutionUnit(command=LoadMetadata)])
+    format = FRAMEWORK2BASE_FORMAT[config.framework]
+    model_config = models_config[format][0] if models_config[format] else None
+    runners = get_format_default_runners(format)
 
-    if config.framework == Framework.ONNX:
-        execution_units.append(ExecutionUnit(command=CopyModel, model_config=models_config[Format.ONNX][0]))
-    elif config.framework == Framework.TENSORRT:
-        execution_units.append(ExecutionUnit(command=CopyModel, model_config=models_config[Format.TENSORRT][0]))
+    execution_units: List[ExecutionUnit] = []
+    for runner in runners:
+        if config.target_device in runner.devices_kind():
+            if config.from_source:
+                runner_config = getattr(model_config, "runner_config", None)
+                execution_units.extend([
+                    ExecutionUnit(command=InferInputMetadata),
+                    ExecutionUnit(command=FetchInputModelData),
+                    ExecutionUnit(command=InferOutputMetadata, runner_config=runner_config, runner_cls=runner),
+                    ExecutionUnit(command=FetchOutputModelData, runner_config=runner_config, runner_cls=runner),
+                ])
+            else:
+                execution_units.extend([ExecutionUnit(command=LoadMetadata)])
+
+            if format in (Format.ONNX, Format.TENSORRT):
+                execution_units.append(ExecutionUnit(command=CopyModel, model_config=model_config))
+
+            break
 
     return Pipeline(name=PIPELINE_PREPROCESSING, execution_units=execution_units)
