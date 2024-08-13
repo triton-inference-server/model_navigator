@@ -131,6 +131,22 @@ class Module(wrapt.ObjectProxy):
         )
         module_registry.register(self._name, self)
 
+    def __call__(self, *args, **kwargs) -> Any:
+        """Call the wrapped module.
+
+        This method overrides the __call__ method of the wrapped module.
+        If the module is already optimized it is replaced with the optimized one.
+        """
+        if self._module_timer and self._module_timer.enabled:
+            with self._module_timer:
+                output = self._wrapper(*args, **kwargs)
+                if isinstance(self, torch.nn.Module):
+                    torch.cuda.synchronize()
+        else:
+            output = self._wrapper(*args, **kwargs)
+
+        return output
+
     def add_timer(self, timer: Timer) -> None:
         """Add timer to module."""
         self._module_timer = timer.register_module(self._name)
@@ -153,63 +169,6 @@ class Module(wrapt.ObjectProxy):
 
         self._optimize_config = value
         self._wrapper.optimize_config = value
-
-    def _override_config_with_module_tags(self, config: OptimizeConfig):
-        """Overrides given configuration.
-
-          Overridden parameters:
-            batching
-            precision
-            model_path
-
-        Note:
-        - batching is overridden if specified during model initialization
-        - precision is applied only if TensortRT custom configuration have not been already specified.
-        """
-        if self.batching is not None:
-            config.batching = self.batching
-
-        config.custom_configs = config.custom_configs or []
-        trt_config_provided = False
-        for cc in config.custom_configs:
-            if isinstance(cc, CustomConfigForTensorRT):
-                trt_config_provided = True
-                break
-        if not trt_config_provided:
-            precision = ("fp32", "fp16") if self.precision == "fp32" else self.precision
-            new_trt_config = TensorRTConfig(precision=precision, precision_mode=TensorRTPrecisionMode.HIERARCHY)
-            config.custom_configs = list(config.custom_configs) + [new_trt_config]
-
-        if self.model_path:
-            if self.model_path.suffix == ".onnx":
-                config_class = OnnxConfig
-            elif self.model_path.suffix == ".plan":
-                config_class = TensorRTConfig
-
-            config_provided = False
-            for cc in config.custom_configs:
-                if isinstance(cc, config_class):
-                    cc.model_path = self.model_path
-                    config_provided = True
-                    break
-            if not config_provided:
-                config.custom_configs = list(config.custom_configs) + [config_class(model_path=self.model_path)]
-
-    def __call__(self, *args, **kwargs) -> Any:
-        """Call the wrapped module.
-
-        This method overrides the __call__ method of the wrapped module.
-        If the module is already optimized it is replaced with the optimized one.
-        """
-        if self._module_timer and self._module_timer.enabled:
-            with self._module_timer:
-                output = self._wrapper(*args, **kwargs)
-                if isinstance(self, torch.nn.Module):
-                    torch.cuda.synchronize()
-        else:
-            output = self._wrapper(*args, **kwargs)
-
-        return output
 
     @property
     def wrapper(self) -> BaseModule:
@@ -261,7 +220,7 @@ class Module(wrapt.ObjectProxy):
             strategies=strategies,
             activate_runners=activate_runners,
             device=str(device),
-            forward=self._wrapper._forward_call,
+            forward=self._wrapper.forward_call,
         )
 
     def load_recorded(self) -> None:
@@ -272,7 +231,7 @@ class Module(wrapt.ObjectProxy):
             input_mapping=self._input_mapping,
             output_mapping=self._output_mapping,
             optimize_config=self._optimize_config,
-            forward=self._wrapper._forward_call,
+            forward=self._wrapper.forward_call,
         )
 
     def load_eager(self, device: Optional[str] = None) -> None:
@@ -283,7 +242,7 @@ class Module(wrapt.ObjectProxy):
             input_mapping=self._input_mapping,
             output_mapping=self._output_mapping,
             optimize_config=self._optimize_config,
-            forward=self._wrapper._forward_call,
+            forward=self._wrapper.forward_call,
         )
         device = device or self._device
         self._wrapper.module.to(device)
@@ -316,16 +275,16 @@ class Module(wrapt.ObjectProxy):
                 f"Module {self.name} must be optimized to store in Triton model store. Did you load_optimized()?"
             )
 
-        if len(self._wrapper._packages) == 0:
+        if len(self._wrapper.packages) == 0:
             raise ModelNavigatorUserInputError(
                 f"Module {self.name} must have packages to store in Triton model store. Did you optimize the module?"
             )
 
         try:
-            package = self._wrapper._packages[package_idx]
+            package = self._wrapper.packages[package_idx]
         except IndexError as e:
             raise ModelNavigatorUserInputError(
-                f"Incorrect package index {package_idx=} for module {self.name}. There are only {len(self._wrapper._packages)} packages."
+                f"Incorrect package index {package_idx=} for module {self.name}. There are only {len(self._wrapper.packages)} packages."
             ) from e
 
         model_name = model_name or self.name
@@ -339,6 +298,47 @@ class Module(wrapt.ObjectProxy):
             response_cache=response_cache,
             warmup=warmup,
         )
+
+    def _override_config_with_module_tags(self, config: OptimizeConfig):
+        """Overrides given configuration.
+
+          Overridden parameters:
+            batching
+            precision
+            model_path
+
+        Note:
+        - batching is overridden if specified during model initialization
+        - precision is applied only if TensortRT custom configuration have not been already specified.
+        """
+        if self.batching is not None:
+            config.batching = self.batching
+
+        config.custom_configs = config.custom_configs or []
+        trt_config_provided = False
+        for cc in config.custom_configs:
+            if isinstance(cc, CustomConfigForTensorRT):
+                trt_config_provided = True
+                break
+        if not trt_config_provided:
+            precision = ("fp32", "fp16") if self.precision == "fp32" else self.precision
+            new_trt_config = TensorRTConfig(precision=precision, precision_mode=TensorRTPrecisionMode.HIERARCHY)
+            config.custom_configs = list(config.custom_configs) + [new_trt_config]
+
+        if self.model_path:
+            if self.model_path.suffix == ".onnx":
+                config_class = OnnxConfig
+            elif self.model_path.suffix == ".plan":
+                config_class = TensorRTConfig
+
+            config_provided = False
+            for cc in config.custom_configs:
+                if isinstance(cc, config_class):
+                    cc.model_path = self.model_path
+                    config_provided = True
+                    break
+            if not config_provided:
+                config.custom_configs = list(config.custom_configs) + [config_class(model_path=self.model_path)]
 
 
 def module(

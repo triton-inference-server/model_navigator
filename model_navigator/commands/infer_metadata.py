@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,7 +23,12 @@ from model_navigator.commands.execution_context import ExecutionContext
 from model_navigator.configuration import OptimizationProfile, SizedDataLoader, SizedIterable, TensorRTProfile
 from model_navigator.core.dataloader import extract_sample, load_samples, to_numpy, validate_sample_input
 from model_navigator.core.logger import LOGGER
-from model_navigator.core.tensor import FRAMEWORK_TO_TENSOR_TYPE, PyTreeMetadata, TensorMetadata, TensorSpec
+from model_navigator.core.tensor import (
+    FRAMEWORK_TO_TENSOR_TYPE,
+    PyTreeMetadata,
+    TensorMetadata,
+    TensorSpec,
+)
 from model_navigator.core.workspace import Workspace
 from model_navigator.exceptions import ModelNavigatorUserInputError
 from model_navigator.frameworks import Framework, is_torch_available

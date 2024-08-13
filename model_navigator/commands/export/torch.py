@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ from typing import Any, Dict, List, Optional, Union
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.execution_context import ExecutionContext
 from model_navigator.commands.export import exporters
-from model_navigator.configuration import DeviceKind, JitType
+from model_navigator.configuration import DeviceKind, JitType, TensorRTProfile
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata
 from model_navigator.core.workspace import Workspace
@@ -236,28 +236,31 @@ class ExportExportedProgram(Command):
         path: pathlib.Path,
         input_metadata: TensorMetadata,
         output_metadata: TensorMetadata,
+        dataloader_trt_profile: TensorRTProfile,
         target_device: DeviceKind,
         verbose: bool,
         custom_args: Dict[str, Any],
         model: Optional[Any] = None,
         batch_dim: Optional[int] = None,
-        dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None,
+        dataloader_max_batch_size: Optional[int] = None,
+        device_max_batch_size: Optional[int] = None,
     ) -> CommandOutput:
         """Execute command.
 
         Args:
             workspace: Workspace where the files are stored.
             path: Path inside the workspace where exported model is stored
-            opset: ONNX opset
             input_metadata: Model inputs metadata
             output_metadata: Model outputs metadata
+            dataloader_trt_profile: Profile from dataloader
             target_device: Target device for export - determine the exported model
             verbose: Enable verbose logging
             model: The model that has to be exported
             batch_dim: Location of batch position in shapes
-            dynamic_axes: Definition of model inputs dynamic axes
-            custom_args (Optional[Dict[str, Any]], optional): Passthrough parameters for torch.onnx.export
+            custom_args: Passthrough parameters for torch.onnx.export
                 For available arguments check PyTorch documentation: https://pytorch.org/docs/stable/onnx.html#torch.onnx.export
+            dataloader_max_batch_size: The maximal batch size obtained from datalaoder
+            device_max_batch_size: The maximal batch size obtained for device
 
         Returns:
             CommandOutput object with status
@@ -292,9 +295,12 @@ class ExportExportedProgram(Command):
             kwargs = {
                 "exported_model_path": exported_model_path.relative_to(workspace.path).as_posix(),
                 "input_metadata": input_metadata.to_json(),
+                "dataloader_trt_profile": dataloader_trt_profile.to_dict(),
                 "batch_dim": batch_dim,
                 "target_device": target_device.value,
                 "navigator_workspace": workspace.path.as_posix(),
+                "dataloader_max_batch_size": dataloader_max_batch_size,
+                "device_max_batch_size": device_max_batch_size,
                 "custom_args": custom_args,
             }
 

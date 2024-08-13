@@ -26,7 +26,7 @@ NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
 NavigatorEvent.COMMAND_STARTED {'command': 'GraphSurgeonOptimize', 'config_key': 'onnx', 'runner_name': None}
 NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
 NavigatorEvent.PIPELINE_FINISHED {}
-NavigatorEvent.PIPELINE_STARTED {'name': 'Finding Max Batch Size for TensorRT'}
+NavigatorEvent.PIPELINE_STARTED {'name': 'Finding max batch size for fixed shapes based pipelines'}
 NavigatorEvent.COMMAND_STARTED {'command': 'FindMaxBatchSize', 'config_key': None, 'runner_name': None}
 NavigatorEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
 NavigatorEvent.PIPELINE_FINISHED {}
