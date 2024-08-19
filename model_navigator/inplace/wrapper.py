@@ -42,6 +42,15 @@ torch = lazy_import("torch")
 PrecisionType = Literal["int8", "fp8", "fp16", "bf16", "fp32"]
 
 
+@wrapt.decorator
+def deactivate_wrapper(wrapped, instance, args, kwargs):
+    """Deactivate module wrapper."""
+    if instance._wrapper:
+        instance._wrapper.deactivate()
+
+    return wrapped(*args, **kwargs)
+
+
 class Module(wrapt.ObjectProxy):
     """Inplace Optimize module wrapper.
 
@@ -140,7 +149,7 @@ class Module(wrapt.ObjectProxy):
         if self._module_timer and self._module_timer.enabled:
             with self._module_timer:
                 output = self._wrapper(*args, **kwargs)
-                if isinstance(self, torch.nn.Module):
+                if isinstance(self, torch.nn.Module) and torch.cuda.is_available():
                     torch.cuda.synchronize()
         else:
             output = self._wrapper(*args, **kwargs)
@@ -193,6 +202,7 @@ class Module(wrapt.ObjectProxy):
         self._wrapper.optimize()
         self.load_optimized(activate_runners=False)
 
+    @deactivate_wrapper
     def load_optimized(
         self,
         strategies: Optional[List[RuntimeSearchStrategy]] = None,
@@ -208,9 +218,6 @@ class Module(wrapt.ObjectProxy):
             device: Device on which optimized modules would be loaded. Defaults to "cuda".
             activate_runners: Activate models - load on device. Defaults to True.
         """
-        if isinstance(self._wrapper, OptimizedModule):
-            self._wrapper.deactivate_runners()
-
         self._wrapper = OptimizedModule(
             module=self._wrapper.module,
             # self._optimize_config,
@@ -223,6 +230,7 @@ class Module(wrapt.ObjectProxy):
             forward=self._wrapper.forward_call,
         )
 
+    @deactivate_wrapper
     def load_recorded(self) -> None:
         """Load recorded module."""
         self._wrapper = RecordingModule(
@@ -234,6 +242,7 @@ class Module(wrapt.ObjectProxy):
             forward=self._wrapper.forward_call,
         )
 
+    @deactivate_wrapper
     def load_eager(self, device: Optional[str] = None) -> None:
         """Load eager module."""
         self._wrapper = EagerModule(

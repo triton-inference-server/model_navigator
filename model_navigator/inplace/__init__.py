@@ -285,8 +285,11 @@ def _initialize_pipeline(func: Callable, model_key: str, runner_name: str, devic
     if model_key == "python" and runner_name == "eager":
         return False
 
-    optimized_modules_count = len([m.is_optimized for m in module_registry.values()])
-    if optimized_modules_count > 1 and hasattr(func, "to"):
+    if len(module_registry.values()) > 1 and hasattr(func, "to"):
+        LOGGER.info("Loading eager modules.")
+        for m in module_registry.values():
+            m.load_eager(device=device)
+
         LOGGER.info(f"Initialize pipeline on device: {device}")
         func.to(device)
         return True
