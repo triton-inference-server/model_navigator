@@ -82,9 +82,14 @@ class BaseModule(abc.ABC):
         else:
             self.optimize_config = optimize_config
 
-    @abc.abstractclassmethod
-    def __call__(cls, *args, **kwargs) -> Any:
+    @abc.abstractmethod
+    def __call__(self, *args, **kwargs) -> Any:
         """Module forward method."""
+        pass
+
+    @abc.abstractmethod
+    def deactivate(self):
+        """Deactivate module."""
         pass
 
     @property
@@ -153,6 +158,10 @@ class RecordingModule(BaseModule):
         output = self._forward_call(*args, **kwargs)
         self._recorder = True
         return output
+
+    def deactivate(self):
+        """Deactivate module."""
+        return
 
     def optimize(self):
         """Optimize the module using the recorded samples."""
@@ -322,10 +331,7 @@ class OptimizedModule(BaseModule):
             self._offload_module()
 
         if activate_runners:
-            self.activate_runners()
-            self.runner_active = True
-        else:
-            self.runner_active = False
+            self._activate_runners()
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         """Run the call through the optimized module."""
@@ -347,10 +353,9 @@ class OptimizedModule(BaseModule):
         output = self._output_mapping(output)  # TODO better solution?
         return output
 
-    def __del__(self):
-        """Deactivate runners and delete packages."""
-        if hasattr(self, "runner_active") and self.runner_active:
-            self.deactivate_runners()
+    def deactivate(self):
+        """Deactivate the optimized module."""
+        self._deactivate_runners()
 
     @property
     def is_optimized(self) -> bool:
@@ -362,13 +367,13 @@ class OptimizedModule(BaseModule):
         """Get the list of packages."""
         return self._packages
 
-    def activate_runners(self):
+    def _activate_runners(self):
         """Activate all runners."""
         LOGGER.info("Activating runners for optimized module.")
         for runner in self._runners.values():
             runner.activate()
 
-    def deactivate_runners(self):
+    def _deactivate_runners(self):
         """Deactivate all runners."""
         for runner in self._runners.values():
             runner.deactivate()
@@ -389,3 +394,7 @@ class EagerModule(BaseModule):
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         """Pass through the original module."""
         return self._forward_call(*args, **kwargs)
+
+    def deactivate(self):
+        """Deactivate module."""
+        return
