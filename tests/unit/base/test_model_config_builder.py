@@ -163,24 +163,24 @@ def test_get_torch_export_config_returns_model_configs_matching_custom_config_wh
 def test_get_torch_trt_config_returns_model_configs_matching_custom_config():
     torch_config = TorchConfig()
     torch_trt_config = TorchTensorRTConfig(
-        precision=(TensorRTPrecision.FP16,),
+        precision=(TensorRTPrecision.FP16, TensorRTPrecision.FP32),
         precision_mode=TensorRTPrecisionMode.MIXED,
         max_workspace_size=10,
         trt_profiles=[TensorRTProfile().add("x", (1,), (2,), (3,))],
     )
 
     custom_configs = [torch_config, torch_trt_config]
-    model_configs = {Format.TORCHSCRIPT: [], Format.TORCH_TRT: []}
-    ModelConfigBuilder().get_torchscript_config(custom_configs, model_configs)
+    model_configs = {Format.TORCH_EXPORTEDPROGRAM: [], Format.TORCH_TRT: []}
+    ModelConfigBuilder().get_torch_exportedprogram_config(custom_configs, model_configs)
     ModelConfigBuilder().get_torch_trt_config(custom_configs, model_configs)
 
     assert len(model_configs[Format.TORCH_TRT]) == 2
     for (torch_model_configuration, precision), torch_trt_model_configuration in zip(
-        itertools.product(model_configs[Format.TORCHSCRIPT], torch_trt_config.precision),
+        itertools.product(model_configs[Format.TORCH_EXPORTEDPROGRAM], torch_trt_config.precision),
         model_configs[Format.TORCH_TRT],
     ):
         assert isinstance(torch_trt_model_configuration, model_config.TorchTensorRTConfig)
-        assert isinstance(torch_model_configuration, model_config.TorchScriptConfig)
+        assert isinstance(torch_model_configuration, model_config.TorchExportedProgram)
         assert torch_trt_model_configuration.precision == precision
         assert torch_trt_model_configuration.max_workspace_size == torch_trt_config.max_workspace_size
         assert torch_trt_model_configuration.precision_mode == torch_trt_config.precision_mode

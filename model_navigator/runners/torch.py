@@ -299,43 +299,12 @@ class TorchScriptCPURunner(_BaseTorchScriptRunner):
         return "TorchScriptCPU"
 
 
-class TorchTensorRTRunner(_BaseTorchScriptRunner):
-    """TorchScript-TensorRT model runner."""
-
-    _target_device = DeviceKind.CUDA
-
-    @classmethod
-    def format(cls) -> Format:
-        """Runner supported format."""
-        return Format.TORCH_TRT
-
-    @classmethod
-    def devices_kind(cls) -> List[DeviceKind]:
-        """Return supported devices for runner."""
-        return [cls._target_device]
-
-    @classmethod
-    def name(cls) -> str:
-        """Runner name."""
-        return "TorchTensorRT"
-
-    def init_impl(self):
-        """Initialization implementation."""
-        import torch_tensorrt  # pytype: disable=import-error # noqa: F401
-
-    def _to_torch_tensor(self, value, dtype):
-        value = super()._to_torch_tensor(value, dtype)
-        value = tensorrt_utils.cast_tensor(value)
-        return value
-
-
 def register_torch_runners():
     """Register runners in global registry."""
     register_runner(TorchCUDARunner)
     register_runner(TorchCPURunner)
     register_runner(TorchScriptCUDARunner)
     register_runner(TorchScriptCPURunner)
-    register_runner(TorchTensorRTRunner)
 
 
 class TorchCompileCUDARunner(_BaseTorchRunner):
@@ -472,9 +441,40 @@ class TorchExportedProgramCUDARunner(_BaseTorchExportedProgramRunner):
         return "TorchExportedProgramCUDA"
 
 
+class TorchTensorRTRunner(_BaseTorchExportedProgramRunner):
+    """TorchScript-TensorRT model runner."""
+
+    _target_device = DeviceKind.CUDA
+
+    @classmethod
+    def format(cls) -> Format:
+        """Runner supported format."""
+        return Format.TORCH_TRT
+
+    @classmethod
+    def devices_kind(cls) -> List[DeviceKind]:
+        """Return supported devices for runner."""
+        return [cls._target_device]
+
+    @classmethod
+    def name(cls) -> str:
+        """Runner name."""
+        return "TorchTensorRT"
+
+    def init_impl(self):
+        """Initialization implementation."""
+        import torch_tensorrt  # pytype: disable=import-error # noqa: F401
+
+    def _to_torch_tensor(self, value, dtype):
+        value = super()._to_torch_tensor(value, dtype)
+        value = tensorrt_utils.cast_tensor(value)
+        return value
+
+
 def register_torch2_runners():
     """Register runners in global registry."""
     register_runner(TorchCompileCPURunner)
     register_runner(TorchCompileCUDARunner)
     register_runner(TorchExportedProgramCPURunner)
     register_runner(TorchExportedProgramCUDARunner)
+    register_runner(TorchTensorRTRunner)

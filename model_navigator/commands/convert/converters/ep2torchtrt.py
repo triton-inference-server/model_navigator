@@ -22,6 +22,7 @@ import torch  # pytype: disable=import-error
 from loguru import logger
 
 from model_navigator.configuration import TensorRTPrecision, TensorRTPrecisionMode
+from model_navigator.core.dataloader import load_samples
 from model_navigator.utils.common import numpy_to_torch_dtype
 
 
@@ -54,6 +55,7 @@ def convert(
     exported_model_path: str,
     converted_model_path: str,
     shapes: Dict[str, Dict[str, int]],
+    batch_dim: Optional[int],
     input_dtypes: List[str],
     max_workspace_size: int,
     precision: str,
@@ -71,6 +73,7 @@ def convert(
         shapes (Dict[str, Dict[str, int]]): Dictionary with min, opt, max shapes of the inputs.
             The key is an input name and the value is a dictionary with keys ("min", "opt", "max")
             and respective values.
+        batch_dim: Batch dimension.
         input_dtypes (List[str]): List of inputs data types.
         max_workspace_size (int): Maximum workspace size in bytes.
         precision (str): TensorRT precision. Could be "fp16" or "fp32".
@@ -107,15 +110,15 @@ def convert(
     if not exported_model_path.is_absolute():
         exported_model_path = navigator_workspace / exported_model_path
 
-    model = torch.jit.load(exported_model_path.as_posix(), map_location=target_device)
+    model = torch.export.load(exported_model_path.as_posix())
 
     if debug:
         log_level = torch_tensorrt.logging.Level.Debug
         logger.info(f"Logging set to `debug` ({log_level})")
         torch_tensorrt.logging.set_reportable_log_level(log_level)
 
-    tr_model_compiled = torch_tensorrt.compile(
-        module=model,
+    tr_model_compiled = torch_tensorrt.dynamo.compile(
+        exported_program=model,
         inputs=model_input_shapes,
         workspace_size=max_workspace_size,
         truncate_long_and_double=True,
@@ -127,7 +130,11 @@ def convert(
     if not converted_model_path.is_absolute():
         converted_model_path = navigator_workspace / converted_model_path
 
-    tr_model_compiled.save(converted_model_path.as_posix())
+    conversion_sample = load_samples("conversion_samples", navigator_workspace, batch_dim)[0]
+    inputs = []
+    for t in conversion_sample.values():
+        inputs += torch.from_numpy(t)
+    torch_tensorrt.save(tr_model_compiled, converted_model_path.as_posix(), inputs=inputs)
 
 
 if __name__ == "__main__":

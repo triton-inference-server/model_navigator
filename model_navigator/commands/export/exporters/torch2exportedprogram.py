@@ -109,13 +109,23 @@ def export(
 
         dynamic_shapes.append(dynamic_shapes_)
 
-    exported_model = torch.export.export(
-        model,
-        args=tuple(args),
-        kwargs=kwargs,
-        dynamic_shapes=dynamic_shapes,
-        **custom_args,
-    )
+    try:
+        exported_model = torch.export.export(
+            model,
+            args=tuple(args),
+            kwargs=kwargs,
+            dynamic_shapes=dynamic_shapes,
+            **custom_args,
+        )
+    except Exception:
+        exported_model = torch.export._trace._export(
+            model,
+            args=tuple(args),
+            _allow_complex_guards_as_runtime_asserts=True,
+            dynamic_shapes=dynamic_shapes,
+            kwargs=kwargs,
+            **custom_args,
+        )
 
     exported_model_path = pathlib.Path(exported_model_path)
     if not exported_model_path.is_absolute():

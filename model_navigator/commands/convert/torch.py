@@ -18,7 +18,7 @@ from typing import Any, Dict, List, Optional
 
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.convert.base import Convert2TensorRTWithMaxBatchSizeSearch
-from model_navigator.commands.convert.converters import ts2onnx, ts2torchtrt
+from model_navigator.commands.convert.converters import ep2torchtrt, ts2onnx
 from model_navigator.commands.execution_context import ExecutionContext
 from model_navigator.configuration import DeviceKind, TensorRTPrecision, TensorRTPrecisionMode, TensorRTProfile
 from model_navigator.core.logger import LOGGER
@@ -99,7 +99,7 @@ class ConvertTorchScript2ONNX(Command):
         return CommandOutput(status=CommandStatus.OK)
 
 
-class ConvertTorchScript2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearch):
+class ConvertExportedProgram2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearch):
     """Convert TorchScript to Torch-TensorRT."""
 
     def _run(
@@ -177,6 +177,7 @@ class ConvertTorchScript2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearch):
                 "exported_model_path": exported_model_path.relative_to(workspace.path).as_posix(),
                 "converted_model_path": converted_model_path.relative_to(workspace.path).as_posix(),
                 "shapes": shapes,
+                "batch_dim": batch_dim,
                 "input_dtypes": input_dtypes_str,
                 "max_workspace_size": max_workspace_size,
                 "precision": precision.value,
@@ -197,8 +198,8 @@ class ConvertTorchScript2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearch):
         ) as context:
             conversion_max_batch_size = self._execute_conversion(
                 convert_func=lambda args: context.execute_python_script(
-                    ts2torchtrt.__file__,
-                    ts2torchtrt.convert,
+                    ep2torchtrt.__file__,
+                    ep2torchtrt.convert,
                     args,
                     run_in_isolation=True,
                 ),
