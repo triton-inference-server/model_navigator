@@ -293,7 +293,9 @@ class ModelConfigBuilder:
         torch_trt_config = _get_custom_config(
             custom_configs=custom_configs, custom_config_cls=config_api.TorchTensorRTConfig
         )
-        for model_configuration, precision in product(model_configs[Format.TORCHSCRIPT], torch_trt_config.precision):
+        for model_configuration, precision in product(
+            model_configs[Format.TORCH_EXPORTEDPROGRAM], torch_trt_config.precision
+        ):
             model_configs[Format.TORCH_TRT].append(
                 model_config.TorchTensorRTConfig(
                     parent=model_configuration,

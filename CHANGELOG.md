@@ -23,6 +23,7 @@ limitations under the License.
 - new: improve handling conversion batch size based on recorded samples
 - new: inform user when wrapped a module which is not called during optimize or module use a custom forward function
 - new: support for dynamic shapes in Torch ExportedProgram
+- new: use ExportedProgram for Torch-TensorRT conversion
 - change: adjusted profiling configuration for throughput cutoff search
 - change: include optimized pipeline to list of examined variants during `nav.profile`
 - change: performance is not executed when correctness failed for format and runtime

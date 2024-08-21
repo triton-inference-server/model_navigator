@@ -16,7 +16,7 @@
 from typing import Dict, List
 
 from model_navigator.commands.base import ExecutionUnit
-from model_navigator.commands.convert.torch import ConvertTorchScript2TorchTensorRT
+from model_navigator.commands.convert.torch import ConvertExportedProgram2TorchTensorRT
 from model_navigator.configuration import DeviceKind, Format
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig
@@ -40,39 +40,13 @@ def torch_tensorrt_conversion_builder(config: CommonConfig, models_config: Dict[
         return Pipeline(name=PIPELINE_TORCH_TENSORRT_CONVERSION, execution_units=[])
 
     torch_trt_models_config = models_config.get(Format.TORCH_TRT, [])
-    # run_profiles_search = search_for_optimized_profiles(config, torch_trt_models_config)
 
     execution_units: List[ExecutionUnit] = []
     for model_cfg in torch_trt_models_config:
-        # if run_profiles_search:
-        #     # Run initial conversion to Torch TensorRT
-        #     execution_units.append(ExecutionUnit(command=ConvertTorchScript2TorchTensorRT, model_config=model_cfg))
-        #
-        #     # Generate preliminary profiling results
-        #     execution_units.append(
-        #         ExecutionUnit(
-        #             command=Performance,
-        #             model_config=model_cfg,
-        #             runner_cls=get_runner(TorchTensorRTRunner),
-        #         )
-        #     )
-        #
-        #     # Delete temporary Torch TensorRT models
-        #     execution_units.append(ExecutionUnit(command=DeleteModel, model_config=model_cfg))
-
-        # Generate TensorRT profiles or use user provided ones
-        # execution_units.append(
-        #     ExecutionUnit(
-        #         command=TensorRTProfileBuilder,
-        #         model_config=model_cfg,
-        #         results_lookup_runner_cls=get_runner(TorchTensorRTRunner),
-        #     )
-        # )
-
         # Convert TorchScript to Torch TensorRT again, this time with optimized profiles
         execution_units.append(
             ExecutionUnit(
-                command=ConvertTorchScript2TorchTensorRT,
+                command=ConvertExportedProgram2TorchTensorRT,
                 model_config=model_cfg,
                 results_lookup_runner_cls=get_runner(TorchTensorRTRunner),
             )

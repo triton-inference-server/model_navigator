@@ -94,7 +94,7 @@ def get_base_format(format: Format, framework: Framework) -> Optional[Format]:
         },
         Framework.TORCH: {
             Format.TENSORRT: Format.ONNX,
-            Format.TORCH_TRT: Format.TORCHSCRIPT,
+            Format.TORCH_TRT: Format.TORCH_EXPORTEDPROGRAM,
         },
         Framework.TENSORFLOW: {
             Format.ONNX: Format.TF_SAVEDMODEL,

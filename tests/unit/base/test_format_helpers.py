@@ -50,7 +50,7 @@ def test_get_base_format_returns_correct_formats():
     assert get_base_format(framework=Framework.NONE, format=Format.PYTHON) == Format.PYTHON
 
     assert get_base_format(framework=Framework.TORCH, format=Format.TENSORRT) == Format.ONNX
-    assert get_base_format(framework=Framework.TORCH, format=Format.TORCH_TRT) == Format.TORCHSCRIPT
+    assert get_base_format(framework=Framework.TORCH, format=Format.TORCH_TRT) == Format.TORCH_EXPORTEDPROGRAM
 
     assert get_base_format(framework=Framework.TENSORFLOW, format=Format.ONNX) == Format.TF_SAVEDMODEL
     assert get_base_format(framework=Framework.TENSORFLOW, format=Format.TENSORRT) == Format.ONNX

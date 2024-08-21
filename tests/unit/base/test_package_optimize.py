@@ -37,8 +37,7 @@ def test_get_model_configs_returns_original_configs_when_no_custom_configs_passe
         package = torchscript_package_with_torch_tensorrt(workspace)
         model_configs = _get_model_configs(config=package.config, custom_configs=[])
         flatten_model_configs = list(itertools.chain(*list(model_configs.values())))
-
-        assert len(flatten_model_configs) == 6
+        assert len(flatten_model_configs) == 5
 
 
 def test_get_model_configs_returns_updated_torchscript_config_when_torch_script_custom_config_passed():
