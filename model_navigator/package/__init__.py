@@ -48,7 +48,6 @@ from model_navigator.exceptions import (
     ModelNavigatorNotFoundError,
 )
 from model_navigator.frameworks import Framework
-from model_navigator.frameworks.torch.utils import update_allowed_batching_parameters
 from model_navigator.package.builder import PackageBuilder
 from model_navigator.package.loader import PackageLoader
 from model_navigator.package.package import Package
@@ -201,11 +200,6 @@ def optimize(
     is_source_available = package.model is not None
     if target_formats is None:
         target_formats = get_target_formats(framework=package.framework, is_source_available=is_source_available)
-        if package.framework == Framework.TORCH and config.batch_dim is not None:
-            target_formats, custom_configs = update_allowed_batching_parameters(
-                target_formats=target_formats,
-                custom_configs=custom_configs,
-            )
 
     if runners is None:
         runners = default_runners(device_kind=target_device)
@@ -299,11 +293,6 @@ def profile(
 
     if target_formats is None:
         target_formats = get_target_formats(framework=package.framework, is_source_available=is_source_available)
-        if package.framework == Framework.TORCH and config.batch_dim is not None:
-            target_formats, _custom_configs = update_allowed_batching_parameters(
-                target_formats=target_formats,
-                custom_configs=(),
-            )
 
     if runners is None:
         runners = default_runners(device_kind=target_device)
