@@ -13,29 +13,11 @@
 # limitations under the License.
 """Torch utils."""
 
-from typing import Optional, Sequence, Tuple
+from typing import Optional
 
-from model_navigator.configuration import CustomConfig, Format, TorchTensorRTConfig
-from model_navigator.core.logger import LOGGER
 from model_navigator.utils.module import lazy_import
 
 torch = lazy_import("torch")
-
-
-def update_allowed_batching_parameters(
-    target_formats: Tuple[Format, ...], custom_configs: Optional[Sequence[CustomConfig]]
-):
-    """Update target formats and custom configs to disable Torch-TensorRT when batching is True."""
-    target_formats = tuple(tf for tf in target_formats if tf != Format.TORCH_TRT)
-    if custom_configs:
-        custom_configs = [config for config in custom_configs if not isinstance(config, TorchTensorRTConfig)]
-
-    LOGGER.warning(
-        "When `batching` is True, Torch-TensorRT target format is disabled in the default configuration.\n"
-        "Explicitly set `nav.Format.TORCH_TRT` in `target_formats` to use it."
-    )
-
-    return target_formats, custom_configs
 
 
 def get_module_device(module: "torch.nn.Module") -> Optional["torch.device"]:

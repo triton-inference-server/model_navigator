@@ -33,8 +33,7 @@ from model_navigator.configuration.constants import DEFAULT_SAMPLE_COUNT
 from model_navigator.configuration.model.model_config_builder import ModelConfigBuilder
 from model_navigator.core.logger import LOGGER
 from model_navigator.frameworks import Framework
-from model_navigator.frameworks.torch.utils import update_allowed_batching_parameters
-from model_navigator.package.package import Package
+from model_navigator.package import Package
 from model_navigator.pipelines.builders import (
     correctness_builder,
     performance_builder,
@@ -96,11 +95,6 @@ def optimize(
     """
     if target_formats is None:
         target_formats = DEFAULT_TORCH_TARGET_FORMATS
-        if batching:
-            target_formats, custom_configs = update_allowed_batching_parameters(
-                target_formats=target_formats,
-                custom_configs=custom_configs,
-            )
         LOGGER.info(f"Using default target formats: {[tf.name for tf in target_formats]}")
 
     if runners is None:
