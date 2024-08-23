@@ -261,16 +261,21 @@ def _load_modules(model_key: str, runner_name: str, device: str, verbose: bool =
     for module_name, m in module_registry.items():
         try:
             if model_key == "python" and runner_name == "eager":
-                m.load_eager()
+                LOGGER.info(f"Loading eager module `{module_name}` on device: `{device}`.")
+                m.load_eager(device=device)
             elif model_key == "navigator" and runner_name == "optimized":
+                LOGGER.info(f"Loading optimized module `{module_name}` on device: `{device}`.")
                 m.load_optimized(device=device)
             else:
+                LOGGER.info(
+                    f"Loading optimized module `{module_name}` ({model_key}, {runner_name}) on device: `{device}`."
+                )
                 m.load_optimized(
                     strategies=[SelectedRuntimeStrategy(model_key=model_key, runner_name=runner_name)], device=device
                 )
 
         except (ModelNavigatorModuleNotOptimizedError, ModelNavigatorRuntimeAnalyzerError) as e:
-            LOGGER.info(f"{str(e)}" f"Loading eager module.")
+            LOGGER.info(f"{str(e)}" f"Loading eager module for `{module_name}` on device: `{device}`.")
             m.load_eager(device=device)
         except Exception as e:
             LOGGER.warning(f"Failed to load module {module_name} for model key {model_key} and runner {runner_name}.")
@@ -278,6 +283,7 @@ def _load_modules(model_key: str, runner_name: str, device: str, verbose: bool =
             if verbose:
                 LOGGER.warning(f"Traceback: {traceback.format_exc()}")
 
+            LOGGER.info(f"Loading eager module `{module_name}` on device: `{device}`.")
             m.load_eager(device=device)
 
 

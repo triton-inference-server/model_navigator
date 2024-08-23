@@ -37,6 +37,7 @@ class _BaseTorchRunner(NavigatorRunner):
     """Base runner for inference using PyTorch."""
 
     _target_device = None
+    is_native = True
 
     @classmethod
     def format(cls) -> Format:
@@ -55,10 +56,10 @@ class _BaseTorchRunner(NavigatorRunner):
 
         if is_torch2_available():
             self._infer = self._infer_v2
-            self._inplace_infer = self._inplace_infer_v2
+            self._infer_native = self._infer_native_v2
         else:
             self._infer = self._infer_v1
-            self._inplace_infer = self._inplace_infer_v1
+            self._infer_native = self._infer_native_v1
 
         # validate device with runner target device
         if self.device:
@@ -104,10 +105,10 @@ class _BaseTorchRunner(NavigatorRunner):
 
         return out_dict
 
-    def inplace_infer(self, *args, **kwargs):
+    def infer_native(self, *args, **kwargs):
         """Inplace inference handler implementation."""
-        args, kwargs = self._prepare_inplace_inputs(*args, **kwargs)
-        return self._inplace_infer(*args, **kwargs)
+        args, kwargs = self._prepare_native_inputs(*args, **kwargs)
+        return self._infer_native(*args, **kwargs)
 
     def get_available_input_types(self) -> List[TensorType]:
         return [TensorType.NUMPY, TensorType.TORCH]
@@ -136,36 +137,18 @@ class _BaseTorchRunner(NavigatorRunner):
 
         return outputs
 
-    def _inplace_infer_v2(self, *args, **kwargs):
+    def _infer_native_v2(self, *args, **kwargs):
         with torch.inference_mode(mode=self._inference_mode):
             with torch.autocast(device_type=self.device, enabled=self._autocast):
                 outputs = self._loaded_model(*args, **kwargs)
         return outputs
 
-    def _inplace_infer_v1(self, *args, **kwargs):
+    def _infer_native_v1(self, *args, **kwargs):
         with torch.no_grad():
             with torch.autocast(device_type=self.device, enabled=self._autocast):
                 outputs = self._loaded_model(*args, **kwargs)
 
         return outputs
-
-    def _prepare_inplace_inputs(self, *args, **kwargs):
-        """Prepare inputs for inplace inference."""
-        device_args = []
-        device_kwargs = {}
-        for value in args:
-            if isinstance(value, torch.Tensor):
-                value = value.to(self.device)
-
-            device_args.append(value)
-
-        for key, value in kwargs.items():
-            if isinstance(value, torch.Tensor):
-                value = value.to(self.device)
-
-            device_kwargs[key] = value
-
-        return device_args, device_kwargs
 
     def _prepare_inputs(self, feed_dict):
         """Prepare inputs for inference."""
@@ -202,6 +185,25 @@ class _BaseTorchRunner(NavigatorRunner):
                     else outputs.to(torch.float32).cpu().detach().numpy()
                 )
         return out_dict
+
+    def _prepare_native_inputs(self, *args, **kwargs):
+        """Prepare inputs for inplace inference for torch based runners."""
+        sample = (*args, kwargs)
+
+        input_sample = {}
+        for n, t in self.input_metadata.flatten_sample(sample).items():
+            if isinstance(t, torch.Tensor) and t.device != self.device:
+                t = t.to(self.device)
+
+            input_sample[n] = t
+
+        unflatten_inputs = self.input_metadata.unflatten_sample(input_sample, wrap_input=True)
+        if isinstance(unflatten_inputs[-1], dict):
+            device_args, device_kwargs = unflatten_inputs[:-1], unflatten_inputs[-1]
+        else:
+            device_args, device_kwargs = unflatten_inputs, {}
+
+        return device_args, device_kwargs
 
     def _to_torch_tensor(self, value, dtype):
         tensor_type = get_tensor_type(value)

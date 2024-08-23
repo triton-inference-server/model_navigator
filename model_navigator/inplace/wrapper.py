@@ -251,10 +251,9 @@ class Module(wrapt.ObjectProxy):
             input_mapping=self._input_mapping,
             output_mapping=self._output_mapping,
             optimize_config=self._optimize_config,
+            device=device or self._device,
             forward=self._wrapper.forward_call,
         )
-        device = device or self._device
-        self._wrapper.module.to(device)
 
     def triton_model_store(
         self,
