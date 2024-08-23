@@ -154,6 +154,7 @@ class RecordingModule(BaseModule):
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         """Record a sample and run the module."""
+        LOGGER.debug(f"Calling recording `{self.name}` module.")
         self.record_sample(*args, **kwargs)
         output = self._forward_call(*args, **kwargs)
         self._recorder = True
@@ -335,6 +336,7 @@ class OptimizedModule(BaseModule):
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         """Run the call through the optimized module."""
+        LOGGER.debug(f"Calling optimized `{self.name}` module on device `{self._device}`.")
         sample = (*args, kwargs)
         sample = self._input_mapping(sample)
         # TODO when only one runner is present, we can avoid the PyTreeMetadata
@@ -342,10 +344,9 @@ class OptimizedModule(BaseModule):
         if pytree_metadata not in self._runners:
             raise ValueError(f"No runner found for {pytree_metadata}")
         runner = self._runners[pytree_metadata]
-        if hasattr(
-            runner, "inplace_infer"
-        ):  # TODO this is a hack to avoid redundant flatten/unflatten for Torch runner
-            output = runner.inplace_infer(*args, **kwargs)
+
+        if runner.is_native:
+            output = runner.infer_native(*args, **kwargs)
         else:
             input_dict = runner.input_metadata.flatten_sample(sample)
             runner_output = runner.infer(input_dict)
@@ -391,10 +392,75 @@ class OptimizedModule(BaseModule):
 class EagerModule(BaseModule):
     """Module that passes through the original module."""
 
+    def __init__(
+        self,
+        module,
+        name: str,
+        input_mapping: Callable,
+        output_mapping: Callable,
+        optimize_config: Optional[OptimizeConfig] = None,
+        forward: Optional[Callable] = None,
+        device: Optional[str] = None,
+    ) -> None:
+        """Initialize BaseModule.
+
+        Args:
+            module: module to be optimized.
+            name: name of the module.
+            input_mapping: function mapping module input to runner input.
+            output_mapping: function mapping runner output to module output.
+            optimize_config: configuration for module optimization.
+            forward: method to replace navigator default __call__
+            device: Device on which optimized module has to be executed.
+        """
+        super().__init__(
+            module=module,
+            name=name,
+            input_mapping=input_mapping,
+            output_mapping=output_mapping,
+            optimize_config=optimize_config,
+            forward=forward,
+            device=device,
+        )
+        self._pytree_metadata = None
+        self._module.to(device)
+
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
-        """Pass through the original module."""
+        """Native inference on wrapped module."""
+        LOGGER.debug(f"Calling eager `{self.name}` module on device `{self._device}`.")
+        args, kwargs = self._prepare_inputs(*args, **kwargs)
         return self._forward_call(*args, **kwargs)
 
     def deactivate(self):
         """Deactivate module."""
         return
+
+    def _collect_pytree_metadata(self, *args, **kwargs):
+        sample = (*args, kwargs)
+        sample = self._input_mapping(sample)
+        pytree_metadata = PyTreeMetadata.from_sample(sample, TensorType.TORCH, prefix=PYTREE_METADATA_PREFIX)
+
+        return pytree_metadata
+
+    def _prepare_inputs(self, *args, **kwargs):
+        """Prepare inputs for inplace inference and place them on the same device if are not."""
+        if not self._pytree_metadata:
+            self._pytree_metadata = self._collect_pytree_metadata(*args, **kwargs)
+
+        sample = (*args, kwargs)
+        sample = self._input_mapping(sample)
+
+        input_sample = {}
+        for n, t in self._pytree_metadata.flatten_sample(sample).items():
+            if isinstance(t, torch.Tensor) and t.device != self._device:
+                t = t.to(self._device)
+
+            input_sample[n] = t
+
+        unflatten_inputs = self._pytree_metadata.unflatten_sample(input_sample, wrap_input=True)
+        if isinstance(unflatten_inputs[-1], dict):
+            device_args, device_kwargs = unflatten_inputs[:-1], unflatten_inputs[-1]
+        else:
+            device_args, device_kwargs = unflatten_inputs, {}
+
+        return device_args, device_kwargs

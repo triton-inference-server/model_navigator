@@ -92,6 +92,7 @@ class NavigatorRunner(abc.ABC):
 
     is_default = True
     is_inplace = True
+    is_native = False
 
     def __init__(
         self,
