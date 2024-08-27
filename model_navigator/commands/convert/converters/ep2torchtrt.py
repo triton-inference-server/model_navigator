@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,10 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Convert TorchScript model to Torch-TensorRT model."""
+"""Convert ExportedProgram model to Torch-TensorRT model."""
 
 import pathlib
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import fire
 import numpy as np
@@ -22,7 +22,10 @@ import torch  # pytype: disable=import-error
 from loguru import logger
 
 from model_navigator.configuration import TensorRTPrecision, TensorRTPrecisionMode
+from model_navigator.configuration.device import map_device_string
 from model_navigator.core.dataloader import load_samples
+from model_navigator.core.tensor import TensorMetadata
+from model_navigator.frameworks.tensorrt import utils as tensorrt_utils
 from model_navigator.utils.common import numpy_to_torch_dtype
 
 
@@ -54,9 +57,9 @@ def _get_precision(precision, precision_mode):
 def convert(
     exported_model_path: str,
     converted_model_path: str,
+    input_metadata: Dict[str, Any],
     shapes: Dict[str, Dict[str, int]],
     batch_dim: Optional[int],
-    input_dtypes: List[str],
     max_workspace_size: int,
     precision: str,
     precision_mode: str,
@@ -65,25 +68,24 @@ def convert(
     custom_args: Dict[str, Any],
     navigator_workspace: Optional[str] = None,
 ) -> None:
-    """Run conversion from TorchScript to Torch-TensorRT.
+    """Run conversion from ExportedProgram to Torch-TensorRT.
 
     Args:
-        exported_model_path (str): TorchScript model path.
-        converted_model_path (str): Output Torch-TensorRT model path.
-        shapes (Dict[str, Dict[str, int]]): Dictionary with min, opt, max shapes of the inputs.
+        exported_model_path: ExportedProgram model path.
+        converted_model_path: Output Torch-TensorRT model path.
+        input_metadata: List of input metadata.
+        shapes: Dictionary with min, opt, max shapes of the inputs.
             The key is an input name and the value is a dictionary with keys ("min", "opt", "max")
             and respective values.
         batch_dim: Batch dimension.
-        input_dtypes (List[str]): List of inputs data types.
-        max_workspace_size (int): Maximum workspace size in bytes.
-        precision (str): TensorRT precision. Could be "fp16" or "fp32".
-        precision_mode (str): TensorRT precision mode.
-        target_device (str): _description_
-        debug (bool): If True print debug logs.
-        navigator_workspace (Optional[str], optional): Model Navigator workspace path.
-            When None use current workdir. Defaults to None.
-        custom_args (Optional[Dict[str, str]], optional): Dictionary with passthrough parameters.
-            For available arguments check PyTorch documentation: https://pytorch.org/TensorRT/py_api/torch_tensorrt.html
+        max_workspace_size: Maximum workspace size in bytes.
+        precision: TensorRT precision. Could be "fp16" or "fp32".
+        precision_mode: TensorRT precision mode.
+        target_device: Device on which perform the conversion
+        debug: If True print debug logs.
+        navigator_workspace: Model Navigator workspace path. When None use current workdir. Defaults to None.
+        custom_args: Dictionary with passthrough parameters. For available arguments check PyTorch
+                     documentation: https://pytorch.org/TensorRT/py_api/torch_tensorrt.html
     """
     import torch_tensorrt  # pytype: disable=import-error
 
@@ -91,8 +93,13 @@ def convert(
         navigator_workspace = pathlib.Path.cwd()
     navigator_workspace = pathlib.Path(navigator_workspace)
 
+    input_metadata = TensorMetadata.from_json(input_metadata)
+    input_dtypes = [tensorrt_utils.cast_type(input_spec.dtype).name for input_spec in input_metadata.values()]
+
     logger.info(f"Shapes types: {type(shapes)}, Shapes: {shapes}")
     logger.info(f"Input dtypes types: {type(input_dtypes)}, Input dtypes: {input_dtypes}")
+
+    conversion_sample = load_samples("conversion_samples", navigator_workspace, batch_dim)[0]
 
     input_dtypes = [numpy_to_torch_dtype(np.dtype(input_dtype)) for input_dtype in input_dtypes]
     model_input_shapes = []
@@ -117,11 +124,13 @@ def convert(
         logger.info(f"Logging set to `debug` ({log_level})")
         torch_tensorrt.logging.set_reportable_log_level(log_level)
 
+    target_device = map_device_string(target_device)
+
     tr_model_compiled = torch_tensorrt.dynamo.compile(
         exported_program=model,
         inputs=model_input_shapes,
         workspace_size=max_workspace_size,
-        truncate_long_and_double=True,
+        device=target_device,
         **_get_precision(precision, precision_mode),
         **custom_args,
     )
@@ -130,10 +139,10 @@ def convert(
     if not converted_model_path.is_absolute():
         converted_model_path = navigator_workspace / converted_model_path
 
-    conversion_sample = load_samples("conversion_samples", navigator_workspace, batch_dim)[0]
     inputs = []
-    for t in conversion_sample.values():
-        inputs += torch.from_numpy(t)
+    for _, val in conversion_sample.items():
+        inputs.append(torch.from_numpy(val).to(target_device))
+
     torch_tensorrt.save(tr_model_compiled, converted_model_path.as_posix(), inputs=inputs)
 
 

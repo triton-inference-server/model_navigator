@@ -77,3 +77,25 @@ def get_id_from_device_string(device: str) -> Optional[int]:
         return 0
 
     return None
+
+
+def map_device_string(device: str) -> Optional[str]:
+    """Map device string to CUDA indexed device.
+
+    Args:
+        device: Device string e.g. cuda, cuda:0, cuda:1, cpu
+
+    Returns:
+        Device id or None if not found.
+    """
+    pattern = r"^cuda:(\d+)$"
+    match = re.match(pattern, device)
+    if match:
+        return device
+
+    pattern = r"^cuda$"
+    match = re.match(pattern, device)
+    if match:
+        return f"{device}:0"
+
+    return None

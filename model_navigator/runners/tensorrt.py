@@ -22,7 +22,7 @@ import numpy as np
 from packaging.version import Version
 
 from model_navigator.configuration import Format, TensorType
-from model_navigator.configuration.validation.device import get_id_from_device_string, validate_device_string_for_cuda
+from model_navigator.configuration.device import get_id_from_device_string, validate_device_string_for_cuda
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import get_tensor_type
 from model_navigator.exceptions import ModelNavigatorError, ModelNavigatorUserInputError
