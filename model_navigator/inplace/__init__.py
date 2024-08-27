@@ -38,7 +38,7 @@ from model_navigator.configuration.constants import (
     DEFAULT_THROUGHPUT_CUTOFF_THRESHOLD,
     DEFAULT_WINDOW_SIZE,
 )
-from model_navigator.configuration.validation.device import validate_device_string
+from model_navigator.configuration.device import validate_device_string
 from model_navigator.core.constants import (
     NAVIGATOR_INPLACE_OPTIMIZE_VERSION,
     NAVIGATOR_INPLACE_PROFILE_VERSION,

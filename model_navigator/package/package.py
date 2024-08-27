@@ -35,6 +35,7 @@ from model_navigator.configuration import (
     TensorType,
 )
 from model_navigator.configuration.common_config import CommonConfig
+from model_navigator.configuration.device import get_device_kind_from_device_string
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.workspace import Workspace
 from model_navigator.exceptions import (
@@ -49,7 +50,6 @@ from model_navigator.runtime_analyzer.analyzer import RuntimeAnalyzer
 from model_navigator.utils.common import DataObject, get_default_status_filename
 from model_navigator.utils.format_helpers import is_source_format
 
-from ..configuration.validation.device import get_device_kind_from_device_string
 from .status import ModelStatus, Status
 
 

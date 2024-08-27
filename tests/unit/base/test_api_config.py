@@ -36,7 +36,7 @@ from model_navigator.configuration import (
     _custom_configs,
     map_custom_configs,
 )
-from model_navigator.configuration.validation.device import (
+from model_navigator.configuration.device import (
     get_id_from_device_string,
     validate_device_string,
     validate_device_string_for_cuda,

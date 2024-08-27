@@ -84,7 +84,7 @@ class SimpleReport(BaseReport):
         elif self.current_pipeline == PIPELINE_TENSORRT_CONVERSION:
             self.status_line = f"Building TensorRT engine {config_key} from ONNX model"
         elif self.current_pipeline == PIPELINE_TORCH_TENSORRT_CONVERSION:
-            self.status_line = "Building Torch-TensorRT model from Torch model"
+            self.status_line = "Building Torch-TensorRT model from ExportedProgram model"
         elif self.current_pipeline == PIPELINE_TORCH_EXPORT:
             if command == "GraphSurgeonOptimize":
                 self.status_line = f"Optimizing graph for {config_key}"

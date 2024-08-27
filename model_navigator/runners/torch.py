@@ -18,7 +18,7 @@ from copy import deepcopy
 from typing import List, Optional
 
 from model_navigator.configuration import Format, TensorType
-from model_navigator.configuration.validation.device import get_id_from_device_string, validate_device_string
+from model_navigator.configuration.device import get_id_from_device_string, validate_device_string
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import get_tensor_type
 from model_navigator.exceptions import ModelNavigatorConfigurationError
