@@ -16,6 +16,7 @@
 
 import argparse
 import pathlib
+import time
 
 import yaml
 from loguru import logger
@@ -41,6 +42,7 @@ def main():
     logger.debug(f"CLI args: {args}")
 
     def call(input_):
+        time.sleep(0.01)
         return input_
 
     dataloader = [(1, "This is example input"), (1, "This is example input")]
@@ -67,7 +69,7 @@ def main():
         python_eager_status = "FAIL"
 
     assert detailed_results is not None
-    assert len(detailed_results) == 2
+    assert len(detailed_results) == 1
 
     status = {"python.eager": python_eager_status}
 

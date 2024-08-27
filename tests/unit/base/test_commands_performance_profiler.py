@@ -190,10 +190,16 @@ def test_profiler_run_return_batch_sizes_upto_4_when_batch_size_4_saturates_thro
                 [InferenceTime(total=15), InferenceTime(total=15), InferenceTime(total=15)], [1500, None], 2, 0
             ),
             ProfilingResults.from_measurements(
-                [InferenceTime(total=30), InferenceTime(total=30), InferenceTime(total=30)], [1500, None], 4, 0
+                [InferenceTime(total=20), InferenceTime(total=20), InferenceTime(total=20)], [1500, None], 4, 0
             ),
             ProfilingResults.from_measurements(
-                [InferenceTime(total=30), InferenceTime(total=30), InferenceTime(total=30)], [1500, None], 8, 0
+                [InferenceTime(total=40), InferenceTime(total=40), InferenceTime(total=40)], [1500, None], 8, 0
+            ),
+            ProfilingResults.from_measurements(
+                [InferenceTime(total=80), InferenceTime(total=80), InferenceTime(total=80)], [1500, None], 16, 0
+            ),
+            ProfilingResults.from_measurements(
+                [InferenceTime(total=160), InferenceTime(total=160), InferenceTime(total=160)], [1500, None], 32, 0
             ),
         ],
     )
@@ -208,4 +214,119 @@ def test_profiler_run_return_batch_sizes_upto_4_when_batch_size_4_saturates_thro
 
     results = profiler.run(runner=MagicMock(), profiling_sample=MagicMock(), sample_id=0)
 
+    assert len(results) == 3
     assert results[-1].batch_size == 4
+
+
+def test_profiler_run_return_batch_sizes_upto_4_when_batch_size_4_saturates_throughput_and_backoff_set_to_1(mocker):
+    mocker.patch("model_navigator.core.dataloader.expand_sample", return_value=MagicMock())
+    mocker.patch(
+        "model_navigator.commands.performance.Profiler._run_measurement",
+        side_effect=[
+            ProfilingResults.from_measurements(
+                [InferenceTime(total=10), InferenceTime(total=10), InferenceTime(total=10)], [1500, None], 1, 0
+            ),
+            ProfilingResults.from_measurements(
+                [InferenceTime(total=15), InferenceTime(total=15), InferenceTime(total=15)], [1500, None], 2, 0
+            ),
+            ProfilingResults.from_measurements(
+                [InferenceTime(total=20), InferenceTime(total=20), InferenceTime(total=20)], [1500, None], 4, 0
+            ),
+            ProfilingResults.from_measurements(
+                [InferenceTime(total=40), InferenceTime(total=40), InferenceTime(total=40)], [1500, None], 8, 0
+            ),
+            ProfilingResults.from_measurements(
+                [InferenceTime(total=80), InferenceTime(total=80), InferenceTime(total=80)], [1500, None], 16, 0
+            ),
+        ],
+    )
+
+    optimization_profile = OptimizationProfile(throughput_backoff_limit=1)
+    with tempfile.NamedTemporaryFile() as temp:
+        profiler = Profiler(
+            profile=optimization_profile,
+            input_metadata=MagicMock(),
+            results_path=pathlib.Path(temp.name),
+        )
+
+    results = profiler.run(runner=MagicMock(), profiling_sample=MagicMock(), sample_id=0)
+
+    assert len(results) == 3
+    assert results[-1].batch_size == 4
+
+
+def test_profiler_run_return_batch_sizes_upto_4_when_batch_size_4_saturates_throughput_and_backoff_set_to_0(mocker):
+    mocker.patch("model_navigator.core.dataloader.expand_sample", return_value=MagicMock())
+    mocker.patch(
+        "model_navigator.commands.performance.Profiler._run_measurement",
+        side_effect=[
+            ProfilingResults.from_measurements(
+                [InferenceTime(total=10), InferenceTime(total=10), InferenceTime(total=10)], [1500, None], 1, 0
+            ),
+            ProfilingResults.from_measurements(
+                [InferenceTime(total=15), InferenceTime(total=15), InferenceTime(total=15)], [1500, None], 2, 0
+            ),
+            ProfilingResults.from_measurements(
+                [InferenceTime(total=20), InferenceTime(total=20), InferenceTime(total=20)], [1500, None], 4, 0
+            ),
+            ProfilingResults.from_measurements(
+                [InferenceTime(total=40), InferenceTime(total=40), InferenceTime(total=40)], [1500, None], 8, 0
+            ),
+        ],
+    )
+
+    optimization_profile = OptimizationProfile(throughput_backoff_limit=0)
+    with tempfile.NamedTemporaryFile() as temp:
+        profiler = Profiler(
+            profile=optimization_profile,
+            input_metadata=MagicMock(),
+            results_path=pathlib.Path(temp.name),
+        )
+
+    results = profiler.run(runner=MagicMock(), profiling_sample=MagicMock(), sample_id=0)
+
+    assert len(results) == 3
+    assert results[-1].batch_size == 4
+
+
+def test_profiler_run_return_batch_sizes_upto_16_when_batch_size_16_saturates_throughput_and_backoff_found(mocker):
+    mocker.patch("model_navigator.core.dataloader.expand_sample", return_value=MagicMock())
+    mocker.patch(
+        "model_navigator.commands.performance.Profiler._run_measurement",
+        side_effect=[
+            ProfilingResults.from_measurements(
+                [InferenceTime(total=10), InferenceTime(total=10), InferenceTime(total=10)], [1500, None], 1, 0
+            ),
+            ProfilingResults.from_measurements(
+                [InferenceTime(total=15), InferenceTime(total=15), InferenceTime(total=15)], [1500, None], 2, 0
+            ),
+            ProfilingResults.from_measurements(
+                [InferenceTime(total=20), InferenceTime(total=20), InferenceTime(total=20)], [1500, None], 4, 0
+            ),
+            ProfilingResults.from_measurements(
+                [InferenceTime(total=40), InferenceTime(total=40), InferenceTime(total=40)], [1500, None], 8, 0
+            ),
+            ProfilingResults.from_measurements(
+                [InferenceTime(total=60), InferenceTime(total=60), InferenceTime(total=60)], [1500, None], 16, 0
+            ),
+            ProfilingResults.from_measurements(
+                [InferenceTime(total=120), InferenceTime(total=120), InferenceTime(total=120)], [1500, None], 32, 0
+            ),
+            ProfilingResults.from_measurements(
+                [InferenceTime(total=240), InferenceTime(total=240), InferenceTime(total=240)], [1500, None], 64, 0
+            ),
+        ],
+    )
+
+    optimization_profile = OptimizationProfile()
+    with tempfile.NamedTemporaryFile() as temp:
+        profiler = Profiler(
+            profile=optimization_profile,
+            input_metadata=MagicMock(),
+            results_path=pathlib.Path(temp.name),
+        )
+
+    results = profiler.run(runner=MagicMock(), profiling_sample=MagicMock(), sample_id=0)
+
+    assert len(results) == 5
+    assert results[-1].batch_size == 16

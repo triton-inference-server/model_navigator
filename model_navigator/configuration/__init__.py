@@ -45,9 +45,10 @@ from model_navigator.configuration.constants import (
     DEFAULT_MIN_SEGMENT_SIZE,
     DEFAULT_MIN_TRIALS,
     DEFAULT_ONNX_OPSET,
-    DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD,
     DEFAULT_STABILITY_PERCENTAGE,
     DEFAULT_STABILIZATION_WINDOWS,
+    DEFAULT_THROUGHPUT_BACKOFF_LIMIT,
+    DEFAULT_THROUGHPUT_CUTOFF_THRESHOLD,
     DEFAULT_WINDOW_SIZE,
 )
 from model_navigator.core.logger import LOGGER
@@ -241,6 +242,8 @@ class OptimizationProfile(DataObject):
         min_trials: Minimal number of window trials.
         max_trials: Maximum number of window trials.
         throughput_cutoff_threshold: Minimum throughput increase to continue profiling.
+        throughput_backoff_limit: Back-off limit to run multiple more profiling steps to avoid stop at local minimum
+                                  when throughput saturate based on `throughput_cutoff_threshold`.
         dataloader: Optional dataloader for profiling. Use only 1 sample.
     """
 
@@ -251,13 +254,17 @@ class OptimizationProfile(DataObject):
     stabilization_windows: int = DEFAULT_STABILIZATION_WINDOWS
     min_trials: int = DEFAULT_MIN_TRIALS
     max_trials: int = DEFAULT_MAX_TRIALS
-    throughput_cutoff_threshold: Optional[float] = DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD
+    throughput_cutoff_threshold: Optional[float] = DEFAULT_THROUGHPUT_CUTOFF_THRESHOLD
+    throughput_backoff_limit: int = DEFAULT_THROUGHPUT_BACKOFF_LIMIT
     dataloader: Optional[SizedDataLoader] = None
 
     def __post_init__(self):
         """Validate OptimizationProfile definition to avoid unsupported configurations."""
         if self.stability_percentage <= 0:
             raise ModelNavigatorConfigurationError("`stability_percentage` must be greater than 0.0.")
+
+        if self.throughput_backoff_limit < 0:
+            raise ModelNavigatorConfigurationError("`throughput_backoff_limit` must be greater then or equal to 0.")
 
         greater_or_equal_1 = [
             "window_size",
@@ -318,7 +325,10 @@ class OptimizationProfile(DataObject):
             min_trials=optimization_profile_dict.get("min_trials", DEFAULT_MIN_TRIALS),
             max_trials=optimization_profile_dict.get("max_trials", DEFAULT_MAX_TRIALS),
             throughput_cutoff_threshold=optimization_profile_dict.get(
-                "throughput_cutoff_threshold", DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD
+                "throughput_cutoff_threshold", DEFAULT_THROUGHPUT_CUTOFF_THRESHOLD
+            ),
+            throughput_backoff_limit=optimization_profile_dict.get(
+                "throughput_backoff_limit", DEFAULT_THROUGHPUT_BACKOFF_LIMIT
             ),
         )
 

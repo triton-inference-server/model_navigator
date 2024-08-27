@@ -42,7 +42,7 @@ def is_measurement_stable(profiling_results: List, last_n: int, stability_percen
 
 def is_throughput_saturated(
     profiling_result: Any,
-    prev_profiling_result: Optional[Any],
+    prev_profiling_result: Any,
     throughput_cutoff_threshold: Optional[float],
 ) -> bool:
     """Validate if throughput saturated between consecutive samples.

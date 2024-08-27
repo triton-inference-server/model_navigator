@@ -20,8 +20,8 @@ from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.performance.performance import ProfilingResults
 from model_navigator.configuration import TensorRTProfile
 from model_navigator.configuration.constants import (
-    DEFAULT_PROFILING_LATENCY_CUTOFF_THRESHOLD,
-    DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD,
+    DEFAULT_LATENCY_CUTOFF_THRESHOLD,
+    DEFAULT_THROUGHPUT_CUTOFF_THRESHOLD,
 )
 from model_navigator.core.logger import LOGGER
 from model_navigator.frameworks.tensorrt import utils as tensorrt_utils
@@ -36,7 +36,7 @@ class ProfileType(Enum):
         MIN_LATENCY: Profile with minimum latency, min = 1, opt = 1, max = 1
         OPT_LATENCY: Profile with optimal latency. Shapes are calculated based on the latency cutoff threshold.
             This profile gives maximal throughput with latency below the cutoff threshold.
-            Default latency cutoff threshold is equal to 0.1 (10%) and it's mean that if latency increase by at least 10% then threshold is exceeded.
+            It's mean that if latency increase by at least x% then threshold is exceeded.
             Latency cutoff threshold is used to find profile producing model with optimal latency. Shapes larger that this one cause latency to rapidly increase (more than 10%).
         LATENCY_BUDGET: Profile with latency constrained by latency budget.
             This profiles gives maximal throughput with latency below the latency budget.
@@ -90,8 +90,8 @@ class TensorRTProfileBuilder(Command):
         dataloader_trt_profile: TensorRTProfile,
         batch_dim: int,
         profiling_results: List[ProfilingResults],
-        throughput_cutoff_threshold: float = DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD,
-        latency_cutoff_threshold: float = DEFAULT_PROFILING_LATENCY_CUTOFF_THRESHOLD,
+        throughput_cutoff_threshold: float = DEFAULT_THROUGHPUT_CUTOFF_THRESHOLD,
+        latency_cutoff_threshold: float = DEFAULT_LATENCY_CUTOFF_THRESHOLD,
         latency_budget: Optional[float] = None,
     ):
         """Get TensorRT profiles based on profiling results.
