@@ -13,6 +13,7 @@
 # limitations under the License.
 """Inplace Optimize API."""
 
+import queue
 import traceback
 import uuid
 from typing import Any, Callable, Optional, Sequence, Tuple, Type, Union
@@ -31,9 +32,10 @@ from model_navigator.configuration import (
 from model_navigator.configuration.constants import (
     DEFAULT_MAX_TRIALS,
     DEFAULT_MIN_TRIALS,
-    DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD,
     DEFAULT_STABILITY_PERCENTAGE,
     DEFAULT_STABILIZATION_WINDOWS,
+    DEFAULT_THROUGHPUT_BACKOFF_LIMIT,
+    DEFAULT_THROUGHPUT_CUTOFF_THRESHOLD,
     DEFAULT_WINDOW_SIZE,
 )
 from model_navigator.configuration.validation.device import validate_device_string
@@ -115,7 +117,8 @@ def profile(
     stabilization_windows: int = DEFAULT_STABILIZATION_WINDOWS,
     min_trials: int = DEFAULT_MIN_TRIALS,
     max_trials: int = DEFAULT_MAX_TRIALS,
-    throughput_cutoff_threshold: Optional[float] = DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD,
+    throughput_cutoff_threshold: Optional[float] = DEFAULT_THROUGHPUT_CUTOFF_THRESHOLD,
+    throughput_backoff_limit: int = DEFAULT_THROUGHPUT_BACKOFF_LIMIT,
     device: str = "cuda",
     initialize: bool = True,
     verbose: bool = False,
@@ -134,6 +137,8 @@ def profile(
         stability_percentage: Allowed percentage of variation from the mean in three consecutive windows.
         throughput_cutoff_threshold: Minimum throughput increase to continue profiling. If None is provided,
                                      profiling run through whole dataloader
+        throughput_backoff_limit: Back-off limit to run multiple more profiling steps to avoid stop at local minimum
+                                  when throughput saturate based on `throughput_cutoff_threshold`.
         device: Default device used for loading unoptimized model.
         initialize: Whether to initialize pipeline on device before profiling.
         verbose: Provide verbose logging
@@ -169,8 +174,8 @@ def profile(
         _load_modules(model_key, runner_name, device=device, verbose=verbose)
 
         runner_profiling_results = RunnerProfilingResults()
+        prev_results = queue.Queue(maxsize=throughput_backoff_limit + 1)
         try:
-            prev_result = None
             for sample_id, input_ in enumerate(dataloader):
                 with NvmlHandler() as nvml_handler:
                     with inference_context():
@@ -190,11 +195,30 @@ def profile(
                         f"Performance profiling result for {runner_name} "
                         f"and sample id: {sample_id}:\n{profiling_result}"
                     )
-                    runner_profiling_results.detailed[sample_id] = profiling_result
 
+                    prev_result = sorted(
+                        (item for _, item in prev_results.queue), key=lambda x: x.throughput, reverse=True
+                    )
+                    prev_result = prev_result[0] if len(prev_result) > 0 else None
                     if is_throughput_saturated(profiling_result, prev_result, throughput_cutoff_threshold):
-                        break
-                    prev_result = profiling_result
+                        if throughput_backoff_limit == 0:
+                            break
+
+                        prev_results.put((sample_id, profiling_result))
+
+                        if prev_results.full():
+                            break
+                    else:
+                        # Pop first element as is a valid result already recorded
+                        if not prev_results.empty():
+                            prev_results.get()
+
+                        while not prev_results.empty():
+                            sample_id, prev_profiling_result = prev_results.get()
+                            runner_profiling_results.detailed[sample_id] = prev_profiling_result
+
+                        runner_profiling_results.detailed[sample_id] = profiling_result
+                        prev_results.put((sample_id, profiling_result))
 
             runner_profiling_results.status = CommandStatus.OK
         except Exception as e:

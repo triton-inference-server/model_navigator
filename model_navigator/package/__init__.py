@@ -33,9 +33,10 @@ from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.constants import (
     DEFAULT_MAX_TRIALS,
     DEFAULT_MIN_TRIALS,
-    DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD,
     DEFAULT_STABILITY_PERCENTAGE,
     DEFAULT_STABILIZATION_WINDOWS,
+    DEFAULT_THROUGHPUT_BACKOFF_LIMIT,
+    DEFAULT_THROUGHPUT_CUTOFF_THRESHOLD,
     DEFAULT_WINDOW_SIZE,
 )
 from model_navigator.configuration.model.model_config import ModelConfig
@@ -254,7 +255,8 @@ def profile(
     stabilization_windows: int = DEFAULT_STABILIZATION_WINDOWS,
     min_trials: int = DEFAULT_MIN_TRIALS,
     max_trials: int = DEFAULT_MAX_TRIALS,
-    throughput_cutoff_threshold: float = DEFAULT_PROFILING_THROUGHPUT_CUTOFF_THRESHOLD,
+    throughput_cutoff_threshold: float = DEFAULT_THROUGHPUT_CUTOFF_THRESHOLD,
+    throughput_backoff_limit: int = DEFAULT_THROUGHPUT_BACKOFF_LIMIT,
     verbose: bool = False,
 ) -> ProfilingResults:
     """Profile provided package.
@@ -278,6 +280,8 @@ def profile(
         min_trials: Minimal number of window trials.
         max_trials: Maximum number of window trials.
         throughput_cutoff_threshold: Minimum throughput increase to continue profiling.
+        throughput_backoff_limit: Back-off limit to run multiple more profiling steps to avoid stop at local minimum
+                                  when throughput saturate based on `throughput_cutoff_threshold`.
         verbose: If True enable verbose logging. Defaults to False.
 
     Returns:
@@ -309,6 +313,7 @@ def profile(
         min_trials=min_trials,
         max_trials=max_trials,
         throughput_cutoff_threshold=throughput_cutoff_threshold,
+        throughput_backoff_limit=throughput_backoff_limit,
     )
 
     _update_config(

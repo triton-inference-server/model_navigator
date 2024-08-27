@@ -15,6 +15,7 @@
 
 import math
 import pathlib
+import queue
 from typing import List, Optional
 
 import numpy as np
@@ -97,37 +98,65 @@ class Profiler:
         Returns:
             List[ProfilingResults]: Results for each of the batch sizes from profiler configuration.
         """
-        results, prev_result = [], None
+        results = []
+        prev_results = queue.Queue(maxsize=self._profile.throughput_backoff_limit + 1)
         with runner, NvmlHandler() as nvml_handler:
-            for batch_size in self._batch_sizes:
-                LOGGER.log(self._profiling_results_logging_level, f"Performance profiling for {runner.name()} started.")
-                if batch_size:
-                    LOGGER.log(self._profiling_results_logging_level, f"Batch size: {batch_size}.")
-                sample = expand_sample(profiling_sample, self._input_metadata, self._batch_dim, batch_size)
-                profiling_result = self._run_measurement(runner, nvml_handler, sample, batch_size, sample_id)
-                LOGGER.log(
-                    self._profiling_results_logging_level,
-                    (
-                        f"Performance profiling result for {runner.name()} "
-                        f"and batch size: {batch_size}:\n{profiling_result}"
-                    ),
-                )
-                total_latency = profiling_result.avg_latency
-                total_steps_latency = sum(
-                    result.avg_time
-                    for step_name, result in profiling_result.detailed_results.items()
-                    if step_name != InferenceStep.TOTAL.value
-                )
-                steps_coverage = total_steps_latency / total_latency
-                LOGGER.log(self._profiling_results_logging_level, f"Inference steps coverage: {steps_coverage:.3f}")
+            try:
+                for batch_size in self._batch_sizes:
+                    LOGGER.log(
+                        self._profiling_results_logging_level, f"Performance profiling for {runner.name()} started."
+                    )
+                    if batch_size:
+                        LOGGER.log(self._profiling_results_logging_level, f"Batch size: {batch_size}.")
+                    sample = expand_sample(profiling_sample, self._input_metadata, self._batch_dim, batch_size)
+                    profiling_result = self._run_measurement(runner, nvml_handler, sample, batch_size, sample_id)
+                    LOGGER.log(
+                        self._profiling_results_logging_level,
+                        (
+                            f"Performance profiling result for {runner.name()} "
+                            f"and batch size: {batch_size}:\n{profiling_result}"
+                        ),
+                    )
+                    total_latency = profiling_result.avg_latency
+                    total_steps_latency = sum(
+                        result.avg_time
+                        for step_name, result in profiling_result.detailed_results.items()
+                        if step_name != InferenceStep.TOTAL.value
+                    )
+                    steps_coverage = total_steps_latency / total_latency
+                    LOGGER.log(self._profiling_results_logging_level, f"Inference steps coverage: {steps_coverage:.3f}")
 
-                with jsonlines.open(self._results_path.as_posix(), "a") as f:
-                    f.write(profiling_result.to_dict(parse=True))
+                    prev_result = sorted(
+                        (item for item in prev_results.queue), key=lambda x: x.throughput, reverse=True
+                    )
+                    prev_result = prev_result[0] if len(prev_result) > 0 else None
 
-                results.append(profiling_result)
-                if is_throughput_saturated(profiling_result, prev_result, self._profile.throughput_cutoff_threshold):
-                    break
-                prev_result = profiling_result
+                    if is_throughput_saturated(
+                        profiling_result, prev_result, self._profile.throughput_cutoff_threshold
+                    ):
+                        if self._profile.throughput_backoff_limit == 0:
+                            break
+
+                        prev_results.put(profiling_result)
+
+                        if prev_results.full():
+                            break
+
+                    else:
+                        # Pop first element as is a valid result already recorded
+                        if not prev_results.empty():
+                            prev_results.get()
+
+                        while not prev_results.empty():
+                            prev_result = prev_results.get()
+                            results.append(prev_result)
+
+                        prev_results.put(profiling_result)
+                        results.append(profiling_result)
+            finally:
+                for result in results:
+                    with jsonlines.open(self._results_path.as_posix(), "a") as f:
+                        f.write(result.to_dict(parse=True))
 
         return results
 
