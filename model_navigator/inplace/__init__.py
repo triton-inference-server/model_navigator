@@ -54,6 +54,7 @@ from model_navigator.runners.base import NavigatorRunner
 from model_navigator.runners.registry import runner_registry
 from model_navigator.utils.module import lazy_import
 
+from ..core.context import INPLACE_STRATEGIES_CONTEXT_KEY, global_context
 from ..frameworks import is_torch2_available
 from ..utils.environment import get_env
 from .profiling import ProfilingResults, RunnerProfilingResults, RunnerResults, run_measurement
@@ -85,26 +86,32 @@ def optimize(
         dataloader: List of tuples with batch size and input.
         config: Optimize config.
     """
-    if config is None:
-        config = OptimizeConfig()
+    try:
+        global_context.set(INPLACE_STRATEGIES_CONTEXT_KEY, inplace_config.strategies)
+        if config is None:
+            config = OptimizeConfig()
 
-    for m in module_registry.values():
-        # set main config if user did not provide one for a module
-        if m.optimize_config is None:
-            m.optimize_config = config
-        m.load_recorded()
+        for m in module_registry.values():
+            # set main config if user did not provide one for a module
+            if m.optimize_config is None:
+                m.optimize_config = config
+            m.load_recorded()
 
-    for input_ in dataloader:
-        _, sample = input_  # unpack batch_size and sample
-        if not isinstance(sample, (list, tuple)):
-            sample = (sample,)
-        if not isinstance(sample[-1], dict):
-            sample = (*sample, {})
-        *args, kwargs = sample
-        func(*args, **kwargs)
+        for input_ in dataloader:
+            _, sample = input_  # unpack batch_size and sample
+            if not isinstance(sample, (list, tuple)):
+                sample = (sample,)
+            if not isinstance(sample[-1], dict):
+                sample = (*sample, {})
+            *args, kwargs = sample
+            func(*args, **kwargs)
 
-    module_registry.optimize()
-    return _build_optimize_status()
+        module_registry.optimize()
+        return _build_optimize_status()
+    except Exception as e:
+        raise e
+    finally:
+        global_context.pop(INPLACE_STRATEGIES_CONTEXT_KEY)
 
 
 def profile(
