@@ -29,6 +29,7 @@ limitations under the License.
 - change: include optimized pipeline to list of examined variants during `nav.profile`
 - change: performance is not executed when correctness failed for format and runtime
 - change: verify command is not executed when verify function is not provided
+- change: do not create a model copy before executing `torch.compile`
 - fix: pipelines sometimes obtain model and tensors on different devices during `nav.profile`
 - fix: extract graph from ExportedProgram for running inference
 
