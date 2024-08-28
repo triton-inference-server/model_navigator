@@ -1022,3 +1022,6 @@ class SelectedRuntimeStrategy(RuntimeSearchStrategy):
     def __str__(self):
         """Return name of strategy."""
         return f"{self.__class__.__name__}({self.model_key}:{self.runner_name})"
+
+
+DEFAULT_RUNTIME_STRATEGIES = [MaxThroughputAndMinLatencyStrategy(), MinLatencyStrategy()]

@@ -73,7 +73,7 @@ from typing import List, Optional, Tuple, Union
 import yaml
 from packaging.version import Version
 
-from model_navigator.configuration import MaxThroughputAndMinLatencyStrategy, MinLatencyStrategy, RuntimeSearchStrategy
+from model_navigator.configuration import DEFAULT_RUNTIME_STRATEGIES, RuntimeSearchStrategy
 from model_navigator.core.logger import LOGGER
 from model_navigator.exceptions import ModelNavigatorConfigurationError, ModelNavigatorModuleNotOptimizedError
 from model_navigator.inplace.config import inplace_cache_dir
@@ -210,14 +210,12 @@ class BestRunnersSelection(BundleModuleSelection):
         """Init.
 
         Args:
-            runner_selection_strategies (Optional[RuntimeSearchStrategy], optional): Module loading strategy to use during
-                modules selection for save. When none provided the strategies defaults to [`MaxThroughputAndMinLatencyStrategy`, `MinLatencyStrategy`].
+            runner_selection_strategies (Optional[RuntimeSearchStrategy], optional): Module loading strategy to
+                use during modules selection for save. When no strategies have been provided it
+                defaults to [`MaxThroughputAndMinLatencyStrategy`, `MinLatencyStrategy`].
         """
         super().__init__()
-        self.runner_selection_strategies = runner_selection_strategies or [
-            MaxThroughputAndMinLatencyStrategy(),
-            MinLatencyStrategy(),
-        ]
+        self.runner_selection_strategies = runner_selection_strategies or DEFAULT_RUNTIME_STRATEGIES
 
 
 class ModulesByNameSelection(BundleModuleSelection):
@@ -247,7 +245,7 @@ def save(
     Raises:
         ModelNavigatorModuleNotOptimizedError: When selected modules are not optimized yet
     """
-    modules = modules or BestRunnersSelection([MaxThroughputAndMinLatencyStrategy(), MinLatencyStrategy()])
+    modules = modules or BestRunnersSelection(DEFAULT_RUNTIME_STRATEGIES)
     cache_dir = inplace_cache_dir()
 
     # saving to temporary file and then moving to final location to avoid corrupted files
@@ -289,7 +287,7 @@ def _only_module_best_runner(strategies: List[RuntimeSearchStrategy]) -> List[st
             model_input_path = workspace_path / "model_input"
             model_output_path = workspace_path / "model_output"
 
-            runtime_result = package._get_best_runtime(strategies=strategies)
+            runtime_result = package.get_best_runtime(strategies=strategies)
             module_runner_path = workspace_path / runtime_result.model_status.model_config.path.parent
 
             best_modules += [

@@ -16,19 +16,21 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from model_navigator import CommandStatus
 from model_navigator.exceptions import ModelNavigatorRuntimeAnalyzerError
 from model_navigator.package.builder import PackageBuilder
-from model_navigator.package.status import ModelStatus
+from model_navigator.package.status import ModelStatus, RunnerStatus
 from model_navigator.pipelines.pipeline_manager import PipelineManager
 from model_navigator.pipelines.wrappers.optimize import optimize_pipeline
 from model_navigator.reporting.events import NavigatorEvent
+from model_navigator.runtime_analyzer.analyzer import RuntimeAnalyzerResult
 from tests.unit.base.mocks.fixtures import mock_event_emitter  # noqa: F401
 
 
 def test_optimize_pipeline_emits_events_no_results(mocker, mock_event_emitter):  # noqa: F811
     # given
     empty_mock_package = MagicMock()
-    empty_mock_package.get_best_model_status.side_effect = ModelNavigatorRuntimeAnalyzerError("test_exception")
+    empty_mock_package.get_best_runtime.side_effect = ModelNavigatorRuntimeAnalyzerError("test_exception")
 
     with mocker.patch.object(PipelineManager, "run"):
         with mocker.patch.object(PackageBuilder, "create", return_value=empty_mock_package):
@@ -62,7 +64,12 @@ def test_optimize_pipeline_emits_events_correct_opt_results(is_source_model, moc
     model_config.key = "test_key"
     model_config.path = "opt_path"
     model_status = ModelStatus(model_config=model_config, runners_status={"test_runner": MagicMock()})
-    mock_package.get_best_model_status.return_value = model_status
+    runner_status = RunnerStatus(runner_name="test_runner", status={"Performance": CommandStatus.OK})
+    runtime_analyzer_result = RuntimeAnalyzerResult(
+        model_status=model_status, runner_status=runner_status, latency=1, throughput=1
+    )
+
+    mock_package.get_best_runtime.return_value = runtime_analyzer_result
     mock_package.workspace.path = tmp_path
     if is_source_model:
         expected_path = None

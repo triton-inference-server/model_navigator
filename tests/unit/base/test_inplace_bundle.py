@@ -422,7 +422,7 @@ def test_save_best_packages(tmp_path, nav_cache: Path, status_yaml):
     assert "trt-fp16" in m1_package.status.models_status, "trt-fp16 should be present in the onnx_package() mock!"
 
     # (sanity check) best runner is ONNX
-    runtime_result = m1_package._get_best_runtime(strategies=selection.runner_selection_strategies, inplace=True)
+    runtime_result = m1_package.get_best_runtime(strategies=selection.runner_selection_strategies, inplace=True)
     assert runtime_result.model_status.model_config.format == Format.ONNX
 
     # mock module wrapper

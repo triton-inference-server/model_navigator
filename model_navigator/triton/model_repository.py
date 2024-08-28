@@ -34,9 +34,8 @@ from loguru import logger
 
 from model_navigator.commands.performance import Performance
 from model_navigator.configuration import (
+    DEFAULT_RUNTIME_STRATEGIES,
     Format,
-    MaxThroughputAndMinLatencyStrategy,
-    MinLatencyStrategy,
     RuntimeSearchStrategy,
     Sample,
     TensorRTProfile,
@@ -250,7 +249,7 @@ def add_model_from_package(
         package: Package for which model store is created
         model_version: Version of model that is deployed
         strategies: List of strategies for finding the best model. Strategies are selected in provided order. When
-                    first fails, next strategy from the list is used. When none provided the strategies
+                    first fails, next strategy from the list is used. When no strategies have been provided it
                     defaults to [`MaxThroughputAndMinLatencyStrategy`, `MinLatencyStrategy`]
         response_cache: Enable response cache for model
         warmup: Enable warmup for min and max batch size
@@ -267,7 +266,7 @@ def add_model_from_package(
         )
 
     if strategies is None:
-        strategies = [MaxThroughputAndMinLatencyStrategy(), MinLatencyStrategy()]
+        strategies = DEFAULT_RUNTIME_STRATEGIES
 
     batching = package.config.batch_dim == 0
 

@@ -24,9 +24,8 @@ from model_navigator.commands.infer_metadata import InferInputMetadata, InferOut
 from model_navigator.commands.load import LoadMetadata
 from model_navigator.commands.verification.verify import VerifyModel
 from model_navigator.configuration import (
+    DEFAULT_RUNTIME_STRATEGIES,
     Format,
-    MaxThroughputAndMinLatencyStrategy,
-    MinLatencyStrategy,
     TensorRTProfile,
 )
 from model_navigator.configuration.common_config import CommonConfig
@@ -152,7 +151,7 @@ class PackageBuilder:
 
                 models_paths_to_save.add(model_path)
 
-        strategies = [MaxThroughputAndMinLatencyStrategy(), MinLatencyStrategy()]
+        strategies = DEFAULT_RUNTIME_STRATEGIES
         try:
             best_model_status = package.get_best_model_status(include_source=False, strategies=strategies)
             best_format_path = package.workspace.path / best_model_status.model_config.path

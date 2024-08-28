@@ -20,8 +20,7 @@ from typing import Dict, List, Optional, Type, Union
 import numpy as np
 
 from model_navigator.configuration import (
-    MaxThroughputAndMinLatencyStrategy,
-    MinLatencyStrategy,
+    DEFAULT_RUNTIME_STRATEGIES,
     RuntimeSearchStrategy,
     TensorType,
 )
@@ -141,14 +140,14 @@ class PyTritonAdapter:
         Args:
             package: A package object to be searched for best possible model.
             strategies: List of strategies for finding the best model. Strategies are selected in provided order. When
-                        first fails, next strategy from the list is used. When none provided the strategies
+                        first fails, next strategy from the list is used. When no strategies have been provided it
                         defaults to [`MaxThroughputAndMinLatencyStrategy`, `MinLatencyStrategy`]
             runner_return_type: The type of the output tensor. Defaults to `TensorType.NUMPY`.
                 If the return_type supports CUDA tensors (e.g. TensorType.TORCH) and the input tensors are on CUDA,
                 there will be no additional data transfer between CPU and GPU.
         """
         self._package = package
-        self._strategies = strategies or [MaxThroughputAndMinLatencyStrategy(), MinLatencyStrategy()]
+        self._strategies = strategies or DEFAULT_RUNTIME_STRATEGIES
         self._runner = self._package.get_runner(strategies=strategies, return_type=runner_return_type)
         self._batching = self._package.status.config.get("batch_dim", None) == 0
 

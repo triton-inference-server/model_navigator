@@ -18,9 +18,10 @@ from typing import Any, Dict, List, Optional, Sequence
 
 from pyee import EventEmitter
 
-from model_navigator.configuration import Format
+from model_navigator.configuration import DEFAULT_RUNTIME_STRATEGIES, Format
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model import model_config
+from model_navigator.core.context import INPLACE_STRATEGIES_CONTEXT_KEY, global_context
 from model_navigator.core.workspace import Workspace
 from model_navigator.exceptions import ModelNavigatorRuntimeAnalyzerError, ModelNavigatorRuntimeError
 from model_navigator.package.builder import PackageBuilder
@@ -34,7 +35,7 @@ def optimize_pipeline(
     workspace: pathlib.Path,
     builders: Sequence[PipelineBuilder],
     config: CommonConfig,
-    model: Optional[Any] = None,
+    model: Any = None,
     package: Optional[Package] = None,
     models_config: Optional[Dict[Format, List[model_config.ModelConfig]]] = None,
 ) -> Package:
@@ -93,13 +94,14 @@ def optimize_pipeline(
 def _emit_optimization_result_event(package: Package, event_emitter: EventEmitter):
     """Emits event with the best result or error."""
     try:
-        best_model_status = package.get_best_model_status(include_source=True)
-        best_format_path = package.workspace.path / best_model_status.model_config.path
+        strategies = global_context.get(INPLACE_STRATEGIES_CONTEXT_KEY) or DEFAULT_RUNTIME_STRATEGIES
+        best_runtime_result = package.get_best_runtime(strategies=strategies, include_source=True)
+        best_format_path = package.workspace.path / best_runtime_result.model_status.model_config.path
         model_path = best_format_path if best_format_path.exists() else None
         event_emitter.emit(
             NavigatorEvent.BEST_MODEL_PICKED,
-            config_key=best_model_status.model_config.key,
-            runner_name=list(best_model_status.runners_status.keys())[0],
+            config_key=best_runtime_result.model_status.model_config.key,
+            runner_name=best_runtime_result.runner_status.runner_name,
             model_path=model_path,
         )
     except ModelNavigatorRuntimeAnalyzerError:

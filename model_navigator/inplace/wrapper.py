@@ -213,7 +213,7 @@ class Module(wrapt.ObjectProxy):
 
         Args:
             strategies: List of strategies for finding the best model. Strategies are selected in provided order. When
-                        first fails, next strategy from the list is used. When none provided the strategies
+                        first fails, next strategy from the list is used. When no strategies have been provided it
                         defaults to [`MaxThroughputAndMinLatencyStrategy`, `MinLatencyStrategy`]
             device: Device on which optimized modules would be loaded. Defaults to "cuda".
             activate_runners: Activate models - load on device. Defaults to True.
@@ -271,7 +271,7 @@ class Module(wrapt.ObjectProxy):
             model_repository_path (pathlib.Path): Path to store the optimized module.
             strategies (Optional[List[RuntimeSearchStrategy]]): List of strategies for finding the best model.
                     Strategies are selected in provided order. When first fails, next strategy from the list is used.
-                    When none provided the strategies defaults to [`MaxThroughputAndMinLatencyStrategy`, `MinLatencyStrategy`]
+                    When no strategies have been provided it defaults to [`MaxThroughputAndMinLatencyStrategy`, `MinLatencyStrategy`]
             model_name (Optional[str]): Name of the module to use in the Triton model store, by default the module name is used.
             model_version (int): Version of model that is deployed
             response_cache(bool): Enable response cache for model

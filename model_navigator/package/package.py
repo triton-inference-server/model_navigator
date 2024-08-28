@@ -24,12 +24,11 @@ from model_navigator.commands.correctness.correctness import Correctness
 from model_navigator.commands.performance.performance import Performance
 from model_navigator.configuration import (
     CUSTOM_CONFIGS_MAPPING,
+    DEFAULT_RUNTIME_STRATEGIES,
     SERIALIZED_FORMATS,
     CustomConfigForFormat,
     DeviceKind,
     Format,
-    MaxThroughputAndMinLatencyStrategy,
-    MinLatencyStrategy,
     OptimizationProfile,
     RuntimeSearchStrategy,
     TensorType,
@@ -168,7 +167,7 @@ class Package:
 
         Args:
             strategies: List of strategies for finding the best model. Strategies are selected in provided order. When
-                        first fails, next strategy from the list is used. When none provided the strategies
+                        first fails, next strategy from the list is used. When no strategies have been provided it
                         defaults to [`MaxThroughputAndMinLatencyStrategy`, `MinLatencyStrategy`]
             include_source: Flag if Python based model has to be included in analysis
             return_type: The type of the output tensor. Defaults to `TensorType.NUMPY`.
@@ -180,7 +179,7 @@ class Package:
         Returns:
             The optimal runner for the optimized model.
         """
-        runtime_result = self._get_best_runtime(strategies=strategies, include_source=include_source, inplace=inplace)
+        runtime_result = self.get_best_runtime(strategies=strategies, include_source=include_source, inplace=inplace)
 
         model_config = runtime_result.model_status.model_config
         runner_status = runtime_result.runner_status
@@ -212,14 +211,14 @@ class Package:
 
         Args:
             strategies: List of strategies for finding the best model. Strategies are selected in provided order. When
-                        first fails, next strategy from the list is used. When none provided the strategies
+                        first fails, next strategy from the list is used. When no strategies have been provided it
                         defaults to [`MaxThroughputAndMinLatencyStrategy`, `MinLatencyStrategy`]
             include_source: Flag if Python based model has to be included in analysis
 
         Returns:
             ModelStatus of best model for given strategy or None.
         """
-        runtime_result = self._get_best_runtime(strategies=strategies, include_source=include_source)
+        runtime_result = self.get_best_runtime(strategies=strategies, include_source=include_source)
         return runtime_result.model_status
 
     def is_empty(self) -> bool:
@@ -278,14 +277,29 @@ class Package:
             inplace=inplace,
         )  # pytype: disable=not-instantiable
 
-    def _get_best_runtime(
+    def get_best_runtime(
         self,
         strategies: Optional[List[RuntimeSearchStrategy]] = None,
         include_source: bool = True,
         inplace: bool = False,
     ):
+        """Returns best runtime for given strategy.
+
+        Args:
+            strategies: List of strategies for finding the best model. Strategies are selected in provided order. When
+                        first fails, next strategy from the list is used. When no strategies have been provided it
+                        defaults to [`MaxThroughputAndMinLatencyStrategy`, `MinLatencyStrategy`]
+            include_source: Flag if Python based model has to be included in analysis
+            inplace: should only inplace supported runners be included in analysis
+
+        Returns:
+            Best runtime for given strategy.
+
+        Raises:
+            ModelNavigatorRuntimeAnalyzerError when no matching results found.
+        """
         if strategies is None:
-            strategies = [MaxThroughputAndMinLatencyStrategy(), MinLatencyStrategy()]
+            strategies = DEFAULT_RUNTIME_STRATEGIES
 
         formats = None
         if not include_source:

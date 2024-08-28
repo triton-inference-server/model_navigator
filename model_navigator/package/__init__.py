@@ -151,7 +151,7 @@ def get_best_model_status(
     Args:
         package: A package object to be searched for best model.
         strategies: List of strategies for finding the best model. Strategies are selected in provided order. When
-                        first fails, next strategy from the list is used. When none provided the strategies
+                        first fails, next strategy from the list is used. When no strategies have been provided it
                         defaults to [`MaxThroughputAndMinLatencyStrategy`, `MinLatencyStrategy`]
         include_source: Flag if Python based model has to be included in analysis
 
