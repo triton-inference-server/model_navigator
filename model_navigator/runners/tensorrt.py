@@ -634,16 +634,15 @@ class TensorRTRunner(NavigatorRunner):
                     raw_array.view(shape=(nbytes,))
                     .copy_to_device(array, stream=self.stream)
                     .view(shape=shape, dtype=trt_datatype)
+                    .to(torch.float32)
+                    .numpy(force=True)
                 )
-                array = array.to(torch.float32)
-                array = array.numpy(force=True)
             else:
                 dtype = np.dtype(trt.nptype(trt_datatype))
                 self.host_output_buffers[name] = utils.resize_buffer(self.host_output_buffers[name], (nbytes,))
                 raw_array.view(shape=(nbytes,)).copy_to(self.host_output_buffers[name], stream=self.stream)
                 raw_array = self.host_output_buffers[name]
 
-                array = FormattedArray(raw_array, shape=shape, dtype=dtype)
                 array = raw_array.view(dtype).reshape(shape)
         else:
             assert return_type == TensorType.TORCH
@@ -654,6 +653,7 @@ class TensorRTRunner(NavigatorRunner):
                 raw_array.view(shape=(nbytes,))
                 .copy_to_device(array, stream=self.stream)
                 .view(shape=shape, dtype=torch_dtype)
+                .torch()
             )
 
         return array

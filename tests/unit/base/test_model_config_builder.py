@@ -94,7 +94,7 @@ def test_get_torchscript_config_returns_model_configs_matching_custom_config():
 
     assert len(model_configs[Format.TORCHSCRIPT]) == 2
     for jit_type, model_configuration in zip(torch_script_config.jit_type, model_configs[Format.TORCHSCRIPT]):
-        assert isinstance(model_configuration, model_config.TorchScriptConfig)
+        assert isinstance(model_configuration, model_config.TorchScriptModelConfig)
         assert model_configuration.jit_type == jit_type
         assert model_configuration.format == torch_script_config.format
         assert model_configuration.parent_key is None
@@ -118,7 +118,7 @@ def test_get_torchscript_config_returns_model_configs_matching_custom_config_whe
     assert len(model_configs[Format.TORCHSCRIPT]) == 1
     model_configuration = model_configs[Format.TORCHSCRIPT][0]
 
-    assert isinstance(model_configuration, model_config.TorchScriptConfig)
+    assert isinstance(model_configuration, model_config.TorchScriptModelConfig)
     assert model_configuration.jit_type == JitType.TRACE
     assert model_configuration.format == torch_script_config.format
     assert model_configuration.parent_key is None
@@ -136,7 +136,7 @@ def test_get_torch_export_config_returns_model_configs_matching_custom_config():
 
     assert len(model_configs[Format.TORCH_EXPORTEDPROGRAM]) == 1
     model_configuration = model_configs[Format.TORCH_EXPORTEDPROGRAM][0]
-    assert isinstance(model_configuration, model_config.TorchExportedProgram)
+    assert isinstance(model_configuration, model_config.TorchExportedProgramModelConfig)
     assert model_configuration.parent_key is None
 
     assert model_configuration.runner_config.autocast is True
@@ -152,7 +152,7 @@ def test_get_torch_export_config_returns_model_configs_matching_custom_config_wh
 
     assert len(model_configs[Format.TORCH_EXPORTEDPROGRAM]) == 1
     model_configuration = model_configs[Format.TORCH_EXPORTEDPROGRAM][0]
-    assert isinstance(model_configuration, model_config.TorchExportedProgram)
+    assert isinstance(model_configuration, model_config.TorchExportedProgramModelConfig)
     assert model_configuration.parent_key is None
 
     assert model_configuration.runner_config.autocast is False
@@ -179,8 +179,8 @@ def test_get_torch_trt_config_returns_model_configs_matching_custom_config():
         itertools.product(model_configs[Format.TORCH_EXPORTEDPROGRAM], torch_trt_config.precision),
         model_configs[Format.TORCH_TRT],
     ):
-        assert isinstance(torch_trt_model_configuration, model_config.TorchTensorRTConfig)
-        assert isinstance(torch_model_configuration, model_config.TorchExportedProgram)
+        assert isinstance(torch_trt_model_configuration, model_config.TorchTensorRTModelConfig)
+        assert isinstance(torch_model_configuration, model_config.TorchExportedProgramModelConfig)
         assert torch_trt_model_configuration.precision == precision
         assert torch_trt_model_configuration.max_workspace_size == torch_trt_config.max_workspace_size
         assert torch_trt_model_configuration.precision_mode == torch_trt_config.precision_mode
@@ -227,7 +227,7 @@ def test_get_tf_trt_config_returns_model_configs_matching_custom_config():
         itertools.product(model_configs[Format.TF_SAVEDMODEL], tensorflow_tensorrt_config.precision),
         model_configs[Format.TF_TRT],
     ):
-        assert isinstance(tf_trt_model_configuration, model_config.TensorFlowTensorRTConfig)
+        assert isinstance(tf_trt_model_configuration, model_config.TensorFlowTensorRTModelConfig)
         assert isinstance(sm_model_configuration, model_config.TensorFlowSavedModelConfig)
         assert tf_trt_model_configuration.precision == precision
         assert tf_trt_model_configuration.max_workspace_size == tensorflow_tensorrt_config.max_workspace_size
@@ -247,7 +247,7 @@ def test_get_onnx_config_returns_model_configs_matching_custom_config_when_torch
 
     assert len(model_configs[Format.ONNX]) == 1
     model_configuration = model_configs[Format.ONNX][0]
-    assert isinstance(model_configuration, model_config.ONNXConfig)
+    assert isinstance(model_configuration, model_config.ONNXModelConfig)
     assert model_configuration.dynamic_axes == onnx_config.dynamic_axes
     assert model_configuration.opset == onnx_config.opset
     assert model_configuration.format == onnx_config.format
@@ -271,7 +271,7 @@ def test_get_onnx_config_returns_model_configs_matching_custom_config_when_torch
     for model_configuration, torchscript_model_configuration in zip(
         model_configs[Format.ONNX], [None] + model_configs[Format.TORCHSCRIPT]
     ):
-        assert isinstance(model_configuration, model_config.ONNXConfig)
+        assert isinstance(model_configuration, model_config.ONNXModelConfig)
         assert model_configuration.dynamic_axes == onnx_config.dynamic_axes
         assert model_configuration.opset == onnx_config.opset
         assert model_configuration.format == onnx_config.format
@@ -279,7 +279,7 @@ def test_get_onnx_config_returns_model_configs_matching_custom_config_when_torch
         if torchscript_model_configuration is None:
             assert model_configuration.parent_key is None
         else:
-            assert isinstance(torchscript_model_configuration, model_config.TorchScriptConfig)
+            assert isinstance(torchscript_model_configuration, model_config.TorchScriptModelConfig)
             assert model_configuration.parent_key == torchscript_model_configuration.key
 
 
@@ -291,7 +291,7 @@ def test_get_onnx_config_for_onnx_framework_returns_model_configs_matching_custo
 
     assert len(model_configs[Format.ONNX]) == 1
     model_configuration = model_configs[Format.ONNX][0]
-    assert isinstance(model_configuration, model_config.ONNXConfig)
+    assert isinstance(model_configuration, model_config.ONNXModelConfig)
     assert model_configuration.dynamic_axes == onnx_config.dynamic_axes
     assert model_configuration.opset == onnx_config.opset
     assert model_configuration.format == onnx_config.format
@@ -312,7 +312,7 @@ def test_get_onnx_config_for_jax_framework_returns_model_configs_matching_custom
     for model_configuration, savedmodel_model_configuration in zip(
         model_configs[Format.ONNX], model_configs[Format.TF_SAVEDMODEL]
     ):
-        assert isinstance(model_configuration, model_config.ONNXConfig)
+        assert isinstance(model_configuration, model_config.ONNXModelConfig)
         assert model_configuration.dynamic_axes == onnx_config.dynamic_axes
         assert model_configuration.opset == onnx_config.opset
         assert model_configuration.format == onnx_config.format
@@ -333,7 +333,7 @@ def test_get_onnx_config_for_tensorflow_framework_returns_model_configs_matching
     for model_configuration, savedmodel_model_configuration in zip(
         model_configs[Format.ONNX], model_configs[Format.TF_SAVEDMODEL]
     ):
-        assert isinstance(model_configuration, model_config.ONNXConfig)
+        assert isinstance(model_configuration, model_config.ONNXModelConfig)
         assert model_configuration.dynamic_axes == onnx_config.dynamic_axes
         assert model_configuration.opset == onnx_config.opset
         assert model_configuration.format == onnx_config.format
@@ -362,8 +362,8 @@ def test_get_trt_config_returns_model_configs_matching_custom_config():
     for (onnx_model_configuration, precision), trt_model_configuration in zip(
         itertools.product(model_configs[Format.ONNX], trt_config.precision), model_configs[Format.TENSORRT]
     ):
-        assert isinstance(trt_model_configuration, model_config.TensorRTConfig)
-        assert isinstance(onnx_model_configuration, model_config.ONNXConfig)
+        assert isinstance(trt_model_configuration, model_config.TensorRTModelConfig)
+        assert isinstance(onnx_model_configuration, model_config.ONNXModelConfig)
         assert trt_model_configuration.precision == precision
         assert trt_model_configuration.max_workspace_size == trt_config.max_workspace_size
         assert trt_model_configuration.precision_mode == trt_config.precision_mode

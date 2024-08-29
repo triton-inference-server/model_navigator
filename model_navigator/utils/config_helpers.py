@@ -13,15 +13,12 @@
 # limitations under the License.
 """Find Max Batch size pipelines builders."""
 
-from typing import Dict, List, Union
+from typing import Dict, List
 
 from model_navigator.configuration import DeviceKind, Format
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import (
     ModelConfig,
-    TensorFlowTensorRTConfig,
-    TensorRTConfig,
-    TorchTensorRTConfig,
 )
 from model_navigator.core.logger import LOGGER
 
@@ -44,30 +41,10 @@ def do_find_device_max_batch_size(config: CommonConfig, models_config: Dict[Form
         LOGGER.debug("No matching formats found")
         return False
 
-    run_search = False
-    for fmt in adaptive_formats:
-        for model_cfg in models_config.get(fmt, []):
-            if _do_run_max_batch_size_search(config, model_cfg):
-                run_search = True
+    run_search = config.batch_dim is not None
 
     if not run_search:
         LOGGER.debug("Run search disabled.")
         return False
 
     return True
-
-
-def _do_run_max_batch_size_search(
-    config: CommonConfig,
-    model_cfg: Union[TensorRTConfig, TensorFlowTensorRTConfig, TorchTensorRTConfig],
-) -> bool:
-    """Should max batch size search be run for the model.
-
-    Args:
-        config: Common optimize configuration.
-        model_cfg: Model configuration.
-
-    Returns:
-        bool: True if run max batch size.
-    """
-    return config.batch_dim is not None

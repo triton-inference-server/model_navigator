@@ -14,7 +14,7 @@
 from model_navigator.commands.optimize.graph_surgeon import GraphSurgeonOptimize
 from model_navigator.configuration import DeviceKind, Format, JitType, OptimizationProfile
 from model_navigator.configuration.common_config import CommonConfig
-from model_navigator.configuration.model.model_config import ONNXConfig, TorchScriptConfig
+from model_navigator.configuration.model.model_config import ONNXModelConfig, TorchScriptModelConfig
 from model_navigator.frameworks import Framework
 from model_navigator.pipelines.builders.torch import torch_conversion_builder, torch_export_builder
 
@@ -32,7 +32,7 @@ def test_torch_export_builder_return_graph_surgeon_optimization_when_enabled():
     )
 
     models_config = {
-        Format.ONNX: [ONNXConfig(opset=17, dynamic_axes={}, dynamo_export=False, graph_surgeon_optimization=True)],
+        Format.ONNX: [ONNXModelConfig(opset=17, dynamic_axes={}, dynamo_export=False, graph_surgeon_optimization=True)],
     }
     pipeline = torch_export_builder(config=config, models_config=models_config)
     assert len(pipeline.execution_units) == 2
@@ -52,7 +52,9 @@ def test_torch_export_builder_does_not_return_graph_surgeon_optimization_when_di
     )
 
     models_config = {
-        Format.ONNX: [ONNXConfig(opset=17, dynamic_axes={}, dynamo_export=False, graph_surgeon_optimization=False)],
+        Format.ONNX: [
+            ONNXModelConfig(opset=17, dynamic_axes={}, dynamo_export=False, graph_surgeon_optimization=False)
+        ],
     }
     pipeline = torch_export_builder(config=config, models_config=models_config)
     assert len(pipeline.execution_units) == 1
@@ -72,12 +74,14 @@ def test_torch_conversion_builder_return_graph_surgeon_optimization_when_enabled
 
     models_config = {
         Format.ONNX: [
-            ONNXConfig(
+            ONNXModelConfig(
                 opset=17,
                 dynamic_axes={},
                 dynamo_export=False,
                 graph_surgeon_optimization=True,
-                parent=TorchScriptConfig(jit_type=JitType.TRACE, strict=False, autocast=False, inference_mode=True),
+                parent=TorchScriptModelConfig(
+                    jit_type=JitType.TRACE, strict=False, autocast=False, inference_mode=True
+                ),
             )
         ],
     }
@@ -100,12 +104,14 @@ def test_torch_conversion_builder_does_not_return_graph_surgeon_optimization_whe
 
     models_config = {
         Format.ONNX: [
-            ONNXConfig(
+            ONNXModelConfig(
                 opset=17,
                 dynamic_axes={},
                 dynamo_export=False,
                 graph_surgeon_optimization=False,
-                parent=TorchScriptConfig(jit_type=JitType.TRACE, strict=False, autocast=False, inference_mode=True),
+                parent=TorchScriptModelConfig(
+                    jit_type=JitType.TRACE, strict=False, autocast=False, inference_mode=True
+                ),
             )
         ],
     }

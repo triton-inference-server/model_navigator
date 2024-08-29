@@ -26,14 +26,25 @@ from model_navigator.core.tensor import TensorMetadata
 from model_navigator.runners.registry import get_runner
 
 
+def get_model() -> object:
+    """Get model instance.
+
+    Returns:
+        Model to be tested for correctness.
+    """
+    raise NotImplementedError(
+        "Please implement the get_model() function if model cannot be read by the runner from the path."
+    )
+
+
 def find_max_batch_size(
     batch_dim: int,
     results_path: str,
     optimization_profile: Dict,
-    model_path: str,
     runner_name: str,
     input_metadata: Dict,
     output_metadata: Dict,
+    model_path: Optional[str] = None,
     navigator_workspace: Optional[str] = None,
     runner_config: Optional[Dict] = None,
 ) -> None:
@@ -52,6 +63,7 @@ def find_max_batch_size(
     """
     if not navigator_workspace:
         navigator_workspace = pathlib.Path.cwd()
+
     navigator_workspace = pathlib.Path(navigator_workspace)
 
     profiling_sample = load_samples("profiling_sample", navigator_workspace, batch_dim)[0]
@@ -60,8 +72,13 @@ def find_max_batch_size(
     if runner_config is None:
         runner_config = {}
 
+    if model_path:
+        model = navigator_workspace / model_path
+    else:
+        model = get_model()
+
     runner = get_runner(runner_name)(
-        model=navigator_workspace / model_path,
+        model=model,
         input_metadata=TensorMetadata.from_json(input_metadata),
         output_metadata=TensorMetadata.from_json(output_metadata),
         disable_fallback=False,

@@ -307,7 +307,7 @@ class TensorFlowSavedModelConfig(_SerializedModelConfig, format=Format.TF_SAVEDM
         )
 
 
-class TorchScriptConfig(_SerializedModelConfig, format=Format.TORCHSCRIPT):
+class TorchScriptModelConfig(_SerializedModelConfig, format=Format.TORCHSCRIPT):
     """TorchScript model configuration class."""
 
     def __init__(
@@ -355,7 +355,7 @@ class TorchScriptConfig(_SerializedModelConfig, format=Format.TORCHSCRIPT):
         )
 
 
-class TorchExportedProgram(_SerializedModelConfig, format=Format.TORCH_EXPORTEDPROGRAM):
+class TorchExportedProgramModelConfig(_SerializedModelConfig, format=Format.TORCH_EXPORTEDPROGRAM):
     """ExportedProgram model configuration class."""
 
     def __init__(
@@ -388,7 +388,7 @@ class TorchExportedProgram(_SerializedModelConfig, format=Format.TORCH_EXPORTEDP
         )
 
 
-class ONNXConfig(_SerializedModelConfig, format=Format.ONNX):
+class ONNXModelConfig(_SerializedModelConfig, format=Format.ONNX):
     """ONNX model configuration class."""
 
     def __init__(
@@ -447,7 +447,7 @@ class ONNXConfig(_SerializedModelConfig, format=Format.ONNX):
         )
 
 
-class TensorRTConfig(_SerializedModelConfig, format=Format.TENSORRT):
+class TensorRTModelConfig(_SerializedModelConfig, format=Format.TENSORRT):
     """TensorRT model configuration class."""
 
     def __init__(
@@ -518,7 +518,7 @@ class TensorRTConfig(_SerializedModelConfig, format=Format.TENSORRT):
         )
 
 
-class TensorFlowTensorRTConfig(_SerializedModelConfig, format=Format.TF_TRT):
+class TensorFlowTensorRTModelConfig(_SerializedModelConfig, format=Format.TF_TRT):
     """TensorFlow TensorRT model configuration class."""
 
     def __init__(
@@ -563,7 +563,7 @@ class TensorFlowTensorRTConfig(_SerializedModelConfig, format=Format.TF_TRT):
         )
 
 
-class TorchTensorRTConfig(_SerializedModelConfig, format=Format.TORCH_TRT):
+class TorchTensorRTModelConfig(_SerializedModelConfig, format=Format.TORCH_TRT):
     """Torch TensorRT model configuration class."""
 
     def __init__(

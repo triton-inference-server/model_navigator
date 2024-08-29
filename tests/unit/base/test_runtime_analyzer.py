@@ -25,13 +25,17 @@ from model_navigator.configuration import (
     TensorRTPrecisionMode,
 )
 from model_navigator.configuration.constants import DEFAULT_MAX_WORKSPACE_SIZE
-from model_navigator.configuration.model.model_config import ONNXConfig, TensorRTConfig, TorchScriptConfig
+from model_navigator.configuration.model.model_config import (
+    ONNXModelConfig,
+    TensorRTModelConfig,
+    TorchScriptModelConfig,
+)
 from model_navigator.exceptions import ModelNavigatorRuntimeAnalyzerError, ModelNavigatorUserInputError
 from model_navigator.package.status import CommandStatus, ModelStatus, RunnerStatus
 from model_navigator.runtime_analyzer import RuntimeAnalyzer
 
-onnx_config = ONNXConfig(opset=13, dynamic_axes=None, dynamo_export=False, graph_surgeon_optimization=True)
-tensorrt_config = TensorRTConfig(
+onnx_config = ONNXModelConfig(opset=13, dynamic_axes=None, dynamo_export=False, graph_surgeon_optimization=True)
+tensorrt_config = TensorRTModelConfig(
     precision=TensorRTPrecision.FP16,
     precision_mode=TensorRTPrecisionMode.HIERARCHY,
     max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
@@ -173,7 +177,7 @@ model_statuses2 = {
     ),
 }
 
-torchscript_config = TorchScriptConfig(jit_type=JitType.TRACE, strict=True, inference_mode=True, autocast=False)
+torchscript_config = TorchScriptModelConfig(jit_type=JitType.TRACE, strict=True, inference_mode=True, autocast=False)
 model_statuses3 = {
     torchscript_config.key: ModelStatus(
         model_config=torchscript_config,
@@ -253,7 +257,7 @@ def test_get_runtime_returns_min_latency_runner_when_strategy_is_min_latency_and
         strategy=MinLatencyStrategy(),
     )
 
-    assert isinstance(runtime_result.model_status.model_config, TensorRTConfig)
+    assert isinstance(runtime_result.model_status.model_config, TensorRTModelConfig)
     assert runtime_result.runner_status.runner_name == "TensorRT"
 
 
@@ -263,7 +267,7 @@ def test_get_runtime_returns_min_latency_runner_when_strategy_is_min_latency_and
         strategy=MinLatencyStrategy(),
     )
 
-    assert isinstance(runtime_result.model_status.model_config, ONNXConfig)
+    assert isinstance(runtime_result.model_status.model_config, ONNXModelConfig)
     assert runtime_result.runner_status.runner_name == "OnnxCUDA"
 
 
@@ -273,7 +277,7 @@ def test_get_runtime_returns_max_throughput_runner_when_strategy_is_max_throughp
         strategy=MaxThroughputStrategy(),
     )
 
-    assert isinstance(runtime_result.model_status.model_config, TensorRTConfig)
+    assert isinstance(runtime_result.model_status.model_config, TensorRTModelConfig)
     assert runtime_result.runner_status.runner_name == "TensorRT"
 
 
@@ -283,7 +287,7 @@ def test_get_runtime_returns_max_throughput_runner_when_strategy_is_max_throughp
         strategy=MaxThroughputStrategy(),
     )
 
-    assert isinstance(runtime_result.model_status.model_config, ONNXConfig)
+    assert isinstance(runtime_result.model_status.model_config, ONNXModelConfig)
     assert runtime_result.runner_status.runner_name == "OnnxTensorRT"
 
 
@@ -300,7 +304,7 @@ def test_get_runtime_returns_min_latency_max_throughput_runner_when_min_latency_
         model_statuses1,
         strategy=MaxThroughputAndMinLatencyStrategy(),
     )
-    assert isinstance(runtime_result.model_status.model_config, TensorRTConfig)
+    assert isinstance(runtime_result.model_status.model_config, TensorRTModelConfig)
     assert runtime_result.runner_status.runner_name == "TensorRT"
 
 
@@ -309,7 +313,7 @@ def test_get_runtime_returns_max_thr_within_lat_budget_runner_when_strategy_is_m
         model_statuses2,
         strategy=MaxThroughputWithLatencyBudgetStrategy(latency_budget=1.25),
     )
-    assert isinstance(runtime_result.model_status.model_config, ONNXConfig)
+    assert isinstance(runtime_result.model_status.model_config, ONNXModelConfig)
     assert runtime_result.runner_status.runner_name == "OnnxCUDA"
 
 
@@ -327,5 +331,5 @@ def test_get_runtime_returns_min_latency_runner_when_strategy_is_min_latency_and
         strategy=MinLatencyStrategy(),
     )
 
-    assert isinstance(runtime_result.model_status.model_config, TorchScriptConfig)
+    assert isinstance(runtime_result.model_status.model_config, TorchScriptModelConfig)
     assert runtime_result.runner_status.runner_name == "TorchScriptCUDA"
