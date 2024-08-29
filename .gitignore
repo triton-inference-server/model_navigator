@@ -218,6 +218,7 @@ coverage.xml
 pytestdebug.log
 cover/
 *.test-report.xml
+.gitlab-ci-local/
 
 # Translations
 *.mo
