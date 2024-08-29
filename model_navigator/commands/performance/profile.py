@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ class Profile(Command):
         batch_dim: Optional[int],
         verbose: bool,
         runner_cls: Type[NavigatorRunner],
-        model: Optional[Any] = None,
+        model: Any = None,
         runner_config: Optional[RunnerConfig] = None,
     ) -> CommandOutput:
         """Run performance command.

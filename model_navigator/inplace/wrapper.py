@@ -100,6 +100,7 @@ class Module(wrapt.ObjectProxy):
         self._input_mapping = input_mapping or (lambda x: x)
         self._output_mapping = output_mapping or (lambda x: x)
         self._optimize_config = None
+
         if timer:
             self.add_timer(timer=timer)
         else:
@@ -199,6 +200,7 @@ class Module(wrapt.ObjectProxy):
         assert isinstance(self.wrapper, RecordingModule), f"Module {self.name} must be in recording mode to optimize."
         assert not self.is_optimized, f"Module {self.name} is already optimized."
         assert hasattr(self.wrapper, "optimize"), f"Module {self.name} does not have an optimize method."
+
         self._wrapper.optimize()
         self.load_optimized(activate_runners=False)
 

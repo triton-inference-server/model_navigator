@@ -166,75 +166,48 @@ def profile(
     modelkeys_runners = default_modelkeys_runners + list(modelkeys_runners)
     LOGGER.info(f"Profiling runners: {modelkeys_runners}")
 
-    if is_torch2_available():
-        inference_context = torch.inference_mode
-    else:
-        inference_context = torch.no_grad
-
     profiling_results = ProfilingResults()
     for model_key, runner_name in modelkeys_runners:
         LOGGER.info(pad_string(f"Profiling of {model_key} and {runner_name}"))
-
-        if initialize:
-            _initialize_pipeline(func, model_key, runner_name, device)
-
-        _load_modules(model_key, runner_name, device=device, verbose=verbose)
-
-        runner_profiling_results = RunnerProfilingResults()
-        prev_results = queue.Queue(maxsize=throughput_backoff_limit + 1)
         try:
-            for sample_id, input_ in enumerate(dataloader):
-                with NvmlHandler() as nvml_handler:
-                    with inference_context():
-                        LOGGER.info(f"Profiling {runner_name} on sample id: {sample_id}")
-                        profiling_result = run_measurement(
-                            func=func,
-                            sample=input_,
-                            nvml_handler=nvml_handler,
-                            min_trials=min_trials,
-                            max_trials=max_trials,
-                            stabilization_windows=stabilization_windows,
-                            window_size=window_size,
-                            stability_percentage=stability_percentage,
-                        )
+            _initialize_modules(
+                func=func,
+                model_key=model_key,
+                runner_name=runner_name,
+                device=device,
+                initialize=initialize,
+                verbose=verbose,
+            )
 
-                    LOGGER.info(
-                        f"Performance profiling result for {runner_name} "
-                        f"and sample id: {sample_id}:\n{profiling_result}"
-                    )
+            try:
+                runner_profiling_results = RunnerProfilingResults(status=CommandStatus.OK)
+                for sample_id, result in _profile_runner(
+                    runner_name=runner_name,
+                    func=func,
+                    dataloader=dataloader,
+                    min_trials=min_trials,
+                    max_trials=max_trials,
+                    stabilization_windows=stabilization_windows,
+                    window_size=window_size,
+                    stability_percentage=stability_percentage,
+                    throughput_cutoff_threshold=throughput_cutoff_threshold,
+                    throughput_backoff_limit=throughput_backoff_limit,
+                ):
+                    runner_profiling_results.detailed[sample_id] = result
+            except Exception as e:
+                LOGGER.error(f"Profiling failed for model_key {model_key} and runner {runner_name}.")
+                LOGGER.error(str(e))
+                if verbose:
+                    LOGGER.error(f"Traceback: {traceback.format_exc()}")
 
-                    prev_result = sorted(
-                        (item for _, item in prev_results.queue), key=lambda x: x.throughput, reverse=True
-                    )
-                    prev_result = prev_result[0] if len(prev_result) > 0 else None
-                    if is_throughput_saturated(profiling_result, prev_result, throughput_cutoff_threshold):
-                        if throughput_backoff_limit == 0:
-                            break
-
-                        prev_results.put((sample_id, profiling_result))
-
-                        if prev_results.full():
-                            break
-                    else:
-                        # Pop first element as is a valid result already recorded
-                        if not prev_results.empty():
-                            prev_results.get()
-
-                        while not prev_results.empty():
-                            sample_id, prev_profiling_result = prev_results.get()
-                            runner_profiling_results.detailed[sample_id] = prev_profiling_result
-
-                        runner_profiling_results.detailed[sample_id] = profiling_result
-                        prev_results.put((sample_id, profiling_result))
-
-            runner_profiling_results.status = CommandStatus.OK
+                runner_profiling_results = RunnerProfilingResults(status=CommandStatus.FAIL)
         except Exception as e:
-            LOGGER.error(f"Profiling failed for model_key {model_key} and runner {runner_name}.")
+            LOGGER.error(f"Loading model failed for model_key {model_key} and runner {runner_name}.")
             LOGGER.error(str(e))
             if verbose:
                 LOGGER.error(f"Traceback: {traceback.format_exc()}")
 
-            runner_profiling_results.status = CommandStatus.FAIL
+            runner_profiling_results = RunnerProfilingResults(status=CommandStatus.FAIL)
 
         if model_key not in profiling_results.models:
             profiling_results.models[model_key] = RunnerResults()
@@ -246,6 +219,73 @@ def profile(
     status = _build_profile_status(profiling_results)
 
     return status
+
+
+def _initialize_modules(func: Callable, model_key: str, runner_name: str, device: str, initialize: bool, verbose: bool):
+    if initialize:
+        _initialize_pipeline(func, model_key, runner_name, device)
+
+    _load_modules(model_key, runner_name, device=device, verbose=verbose)
+
+
+def _profile_runner(
+    func: Callable,
+    dataloader: Sequence[Tuple[int, Any]],
+    runner_name: str,
+    window_size: int,
+    stability_percentage: float,
+    stabilization_windows: int,
+    min_trials: int,
+    max_trials: int,
+    throughput_cutoff_threshold: Optional[float],
+    throughput_backoff_limit: int,
+):
+    if is_torch2_available():
+        inference_context = torch.inference_mode
+    else:
+        inference_context = torch.no_grad
+
+    prev_results = queue.Queue(maxsize=throughput_backoff_limit + 1)
+    for sample_id, input_ in enumerate(dataloader):
+        with NvmlHandler() as nvml_handler:
+            with inference_context():
+                LOGGER.info(f"Profiling {runner_name} on sample id: {sample_id}")
+                profiling_result = run_measurement(
+                    func=func,
+                    sample=input_,
+                    nvml_handler=nvml_handler,
+                    min_trials=min_trials,
+                    max_trials=max_trials,
+                    stabilization_windows=stabilization_windows,
+                    window_size=window_size,
+                    stability_percentage=stability_percentage,
+                )
+
+            LOGGER.info(
+                f"Performance profiling result for {runner_name} and sample id: {sample_id}:\n{profiling_result}"
+            )
+
+            prev_result = sorted((item for _, item in prev_results.queue), key=lambda x: x.throughput, reverse=True)
+            prev_result = prev_result[0] if len(prev_result) > 0 else None
+            if is_throughput_saturated(profiling_result, prev_result, throughput_cutoff_threshold):
+                if throughput_backoff_limit == 0:
+                    break
+
+                prev_results.put((sample_id, profiling_result))
+
+                if prev_results.full():
+                    break
+            else:
+                # Pop first element as is a valid result already recorded
+                if not prev_results.empty():
+                    prev_results.get()
+
+                while not prev_results.empty():
+                    prev_sample_id, prev_profiling_result = prev_results.get()
+                    yield prev_sample_id, prev_profiling_result
+
+                prev_results.put((sample_id, profiling_result))
+                yield sample_id, profiling_result
 
 
 def _build_optimize_status() -> InplaceOptimizeStatus:
@@ -310,7 +350,7 @@ def _load_modules(model_key: str, runner_name: str, device: str, verbose: bool =
             m.load_eager(device=device)
         except Exception as e:
             LOGGER.warning(f"Failed to load module {module_name} for model key {model_key} and runner {runner_name}.")
-            LOGGER.warning(f"Eager module will be used. Error message: {str(e)}")
+            LOGGER.warning(f"Eager module will be used on device {device}. Error message: {str(e)}")
             if verbose:
                 LOGGER.warning(f"Traceback: {traceback.format_exc()}")
 

@@ -55,7 +55,7 @@ class ExportTorch2TorchScript(Command):
         verbose: bool,
         strict: bool,
         custom_args: Dict[str, Any],
-        model: Optional[Any] = None,
+        model: Any = None,
         batch_dim: Optional[int] = None,
     ) -> CommandOutput:
         """Execute command.
@@ -151,7 +151,7 @@ class ExportTorch2ONNX(Command):
         target_device: DeviceKind,
         verbose: bool,
         custom_args: Dict[str, Any],
-        model: Optional[Any] = None,
+        model: Any = None,
         batch_dim: Optional[int] = None,
         dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None,
         export_device: Optional[str] = None,
@@ -240,7 +240,7 @@ class ExportExportedProgram(Command):
         target_device: DeviceKind,
         verbose: bool,
         custom_args: Dict[str, Any],
-        model: Optional[Any] = None,
+        model: Any = None,
         batch_dim: Optional[int] = None,
         dataloader_max_batch_size: Optional[int] = None,
         device_max_batch_size: Optional[int] = None,
@@ -327,7 +327,7 @@ class ExportTorch2DynamoONNX(Command):
         dynamo_dynamic_shapes: Optional[bool],
         verbose: bool,
         custom_args: Dict[str, Any],
-        model: Optional[Any] = None,
+        model: Any = None,
         batch_dim: Optional[int] = None,
     ) -> CommandOutput:
         """Execute command.

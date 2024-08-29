@@ -21,13 +21,13 @@ from model_navigator.configuration.constants import (
     DEFAULT_MAX_WORKSPACE_SIZE,
 )
 from model_navigator.configuration.model.model_config import (
-    ONNXConfig,
+    ONNXModelConfig,
     TensorFlowSavedModelConfig,
-    TensorFlowTensorRTConfig,
-    TensorRTConfig,
+    TensorFlowTensorRTModelConfig,
+    TensorRTModelConfig,
     TorchModelConfig,
-    TorchScriptConfig,
-    TorchTensorRTConfig,
+    TorchScriptModelConfig,
+    TorchTensorRTModelConfig,
 )
 from model_navigator.core.constants import (
     NAVIGATOR_PACKAGE_VERSION,
@@ -76,10 +76,10 @@ def empty_package(workspace) -> Package:
                 },
             },
             models_status={
-                ONNXConfig(
+                ONNXModelConfig(
                     opset=13, dynamic_axes=None, dynamo_export=False, graph_surgeon_optimization=True
                 ).key: ModelStatus(
-                    model_config=ONNXConfig(
+                    model_config=ONNXModelConfig(
                         opset=13, dynamic_axes=None, dynamo_export=False, graph_surgeon_optimization=True
                     ),
                     runners_status={
@@ -129,7 +129,7 @@ def empty_package(workspace) -> Package:
 
 
 def custom_runner_package(workspace) -> Package:
-    onnx_config = ONNXConfig(opset=13, dynamic_axes=None, dynamo_export=False, graph_surgeon_optimization=True)
+    onnx_config = ONNXModelConfig(opset=13, dynamic_axes=None, dynamo_export=False, graph_surgeon_optimization=True)
     package = Package(
         status=Status(
             format_version=NAVIGATOR_PACKAGE_VERSION,
@@ -205,7 +205,9 @@ def custom_runner_package(workspace) -> Package:
 
 
 def trochscript_package_without_source(workspace) -> Package:
-    torchscript_config = TorchScriptConfig(jit_type=JitType.SCRIPT, strict=True, autocast=False, inference_mode=True)
+    torchscript_config = TorchScriptModelConfig(
+        jit_type=JitType.SCRIPT, strict=True, autocast=False, inference_mode=True
+    )
     package = Package(
         status=Status(
             format_version=NAVIGATOR_PACKAGE_VERSION,
@@ -280,7 +282,9 @@ def trochscript_package_without_source(workspace) -> Package:
 
 def trochscript_package_with_source(workspace) -> Package:
     source_config = TorchModelConfig(autocast=False, inference_mode=True)
-    torchscript_config = TorchScriptConfig(jit_type=JitType.SCRIPT, strict=True, autocast=False, inference_mode=True)
+    torchscript_config = TorchScriptModelConfig(
+        jit_type=JitType.SCRIPT, strict=True, autocast=False, inference_mode=True
+    )
     package = Package(
         status=Status(
             format_version=NAVIGATOR_PACKAGE_VERSION,
@@ -403,7 +407,7 @@ def trochscript_package_with_source(workspace) -> Package:
 
 
 def onnx_package_with_tensorrt_runner(workspace) -> Package:
-    onnx_config = ONNXConfig(opset=13, dynamic_axes=None, dynamo_export=False, graph_surgeon_optimization=True)
+    onnx_config = ONNXModelConfig(opset=13, dynamic_axes=None, dynamo_export=False, graph_surgeon_optimization=True)
     package = Package(
         status=Status(
             format_version=NAVIGATOR_PACKAGE_VERSION,
@@ -515,7 +519,7 @@ def onnx_package_with_tensorrt_runner(workspace) -> Package:
 
 
 def onnx_package_with_cuda_runner(workspace) -> Package:
-    onnx_config = ONNXConfig(opset=13, dynamic_axes=None, dynamo_export=False, graph_surgeon_optimization=True)
+    onnx_config = ONNXModelConfig(opset=13, dynamic_axes=None, dynamo_export=False, graph_surgeon_optimization=True)
     package = Package(
         status=Status(
             format_version=NAVIGATOR_PACKAGE_VERSION,
@@ -627,7 +631,7 @@ def onnx_package_with_cuda_runner(workspace) -> Package:
 
 
 def onnx_package_with_cpu_runner_only(workspace) -> Package:
-    onnx_config = ONNXConfig(opset=13, dynamic_axes=None, dynamo_export=False, graph_surgeon_optimization=True)
+    onnx_config = ONNXModelConfig(opset=13, dynamic_axes=None, dynamo_export=False, graph_surgeon_optimization=True)
     package = Package(
         status=Status(
             format_version=NAVIGATOR_PACKAGE_VERSION,
@@ -786,7 +790,7 @@ def tensorflow_package_with_tensorflow_tensorrt(workspace) -> Package:
         enable_xla=None,
         jit_compile=None,
     )
-    tensorflow_tensorrt_config = TensorFlowTensorRTConfig(
+    tensorflow_tensorrt_config = TensorFlowTensorRTModelConfig(
         precision=TensorRTPrecision.FP16,
         max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
         minimum_segment_size=3,
@@ -903,7 +907,7 @@ def tensorflow_package_with_optimal_model_tensorflow_tensorrt_and_dummy_navigato
         enable_xla=None,
         jit_compile=None,
     )
-    tensorflow_tensorrt_config = TensorFlowTensorRTConfig(
+    tensorflow_tensorrt_config = TensorFlowTensorRTModelConfig(
         precision=TensorRTPrecision.FP16,
         max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
         minimum_segment_size=3,
@@ -1019,7 +1023,9 @@ def tensorflow_package_with_optimal_model_tensorflow_tensorrt_and_dummy_navigato
 
 
 def torchscript_package_with_cpu_only(workspace) -> Package:
-    torchscript_config = TorchScriptConfig(jit_type=JitType.TRACE, strict=True, autocast=False, inference_mode=True)
+    torchscript_config = TorchScriptModelConfig(
+        jit_type=JitType.TRACE, strict=True, autocast=False, inference_mode=True
+    )
 
     package = Package(
         status=Status(
@@ -1099,7 +1105,9 @@ def torchscript_package_with_cpu_only(workspace) -> Package:
 
 
 def torchscript_package_with_cuda(workspace) -> Package:
-    torchscript_config = TorchScriptConfig(jit_type=JitType.TRACE, strict=True, autocast=False, inference_mode=True)
+    torchscript_config = TorchScriptModelConfig(
+        jit_type=JitType.TRACE, strict=True, autocast=False, inference_mode=True
+    )
     package = Package(
         status=Status(
             format_version=NAVIGATOR_PACKAGE_VERSION,
@@ -1210,8 +1218,10 @@ def torchscript_package_with_cuda(workspace) -> Package:
 
 
 def torchscript_package_with_torch_tensorrt(workspace) -> Package:
-    torchscript_config = TorchScriptConfig(jit_type=JitType.TRACE, strict=True, autocast=False, inference_mode=True)
-    torchtensorrt_config = TorchTensorRTConfig(
+    torchscript_config = TorchScriptModelConfig(
+        jit_type=JitType.TRACE, strict=True, autocast=False, inference_mode=True
+    )
+    torchtensorrt_config = TorchTensorRTModelConfig(
         precision=TensorRTPrecision.FP16,
         precision_mode=TensorRTPrecisionMode.HIERARCHY,
         max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
@@ -1332,10 +1342,10 @@ def torchscript_package_with_torch_tensorrt(workspace) -> Package:
 
 
 def onnx_package(workspace) -> Package:
-    onnx_config = ONNXConfig(
+    onnx_config = ONNXModelConfig(
         opset=13, dynamic_axes={"input__0": [0]}, dynamo_export=False, graph_surgeon_optimization=True
     )
-    tensorrt_config = TensorRTConfig(
+    tensorrt_config = TensorRTModelConfig(
         precision=TensorRTPrecision.FP16,
         precision_mode=TensorRTPrecisionMode.HIERARCHY,
         max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
@@ -1461,7 +1471,7 @@ def onnx_package(workspace) -> Package:
 
 
 def tensorrt_package(workspace) -> Package:
-    tensorrt_config = TensorRTConfig(
+    tensorrt_config = TensorRTModelConfig(
         precision=TensorRTPrecision.FP16,
         precision_mode=TensorRTPrecisionMode.HIERARCHY,
         max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,

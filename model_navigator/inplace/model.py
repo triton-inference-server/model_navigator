@@ -164,7 +164,7 @@ class RecordingModule(BaseModule):
         """Deactivate module."""
         return
 
-    def optimize(self):
+    def optimize(self) -> None:
         """Optimize the module using the recorded samples."""
         from model_navigator.torch import optimize
 
@@ -380,6 +380,7 @@ class OptimizedModule(BaseModule):
             runner.deactivate()
 
     def _offload_module(self):
+        LOGGER.info("Offloading module to CPU.")
         self._module.to("cpu")
         if torch.cuda.is_available():
             # empty torch cuda buffers after moving module to cpu i.e. more free vram

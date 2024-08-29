@@ -94,7 +94,7 @@ class Correctness(Command):
         batch_dim: Optional[int],
         path: pathlib.Path,
         verbose: bool,
-        model: Optional[Any] = None,
+        model: Any = None,
         runner_config: Optional[RunnerConfig] = None,
     ) -> CommandOutput:
         """Run correctness command.

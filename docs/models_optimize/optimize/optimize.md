@@ -101,7 +101,7 @@ package = nav.torch.optimize(
     model=model,
     dataloader=dataloader,
     custom_configs=[
-            nav.TensorRTConfig(precision=nav.TensorRTPrecision.INT8),
+        nav.TensorRTConfig(precision=nav.TensorRTPrecision.INT8),
     ],
 )
 ```

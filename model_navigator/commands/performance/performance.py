@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -49,8 +49,7 @@ class Performance(Command, requires=[Correctness.name]):
         batch_dim: Optional[int],
         verbose: bool,
         runner_cls: Type[NavigatorRunner],
-        reproduce_script_dir: Optional[pathlib.Path] = None,
-        model: Optional[Any] = None,
+        model: Any = None,
         runner_config: Optional[RunnerConfig] = None,
     ) -> CommandOutput:
         """Run performance command.
@@ -65,8 +64,6 @@ class Performance(Command, requires=[Correctness.name]):
             batch_dim: Batch dimension.
             verbose: If True verbose logging.
             runner_cls: Runner type to profile the model with.
-            reproduce_script_dir: Path to store the reproducing scripts for the command.
-                When None use model directory. Defaults to None.
             model: Model when profiling on a source format. Defaults to None.
             runner_config: Additional runner arguments.
 
@@ -75,7 +72,6 @@ class Performance(Command, requires=[Correctness.name]):
         """
         model_path = workspace.path / path
         model_dir = model_path.parent
-        reproduce_script_dir = reproduce_script_dir or model_dir
 
         if not is_source_format(format) and not model_path.exists():
             LOGGER.warning(f"Model: {model_path.as_posix()!r} not found, command skipped.")
@@ -90,8 +86,8 @@ class Performance(Command, requires=[Correctness.name]):
 
         with ExecutionContext(
             workspace=workspace,
-            script_path=reproduce_script_dir / f"reproduce_profiling-{runner_cls.slug()}.py",
-            cmd_path=reproduce_script_dir / f"reproduce_profiling-{runner_cls.slug()}.sh",
+            script_path=model_dir / f"reproduce_profiling-{runner_cls.slug()}.py",
+            cmd_path=model_dir / f"reproduce_profiling-{runner_cls.slug()}.sh",
             verbose=verbose,
         ) as context, tempfile.NamedTemporaryFile() as temp_file:
             kwargs = {

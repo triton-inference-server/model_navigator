@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2022-2024, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -392,7 +392,7 @@ class NavigatorRunner(abc.ABC):
 
     def __del__(self):
         """Cleanup of object removal. Log warning when `deactivate` was not called before runner was removed."""
-        if self.is_active:
+        if hasattr(self, "is_active") and self.is_active:
             # __del__ is not guaranteed to be called, but when it is, this could be a useful warning.
             LOGGER.debug(f"{self.name()} | Was activated but never deactivated. This could cause a memory leak!")
 

@@ -14,7 +14,7 @@
 from model_navigator.commands.optimize.graph_surgeon import GraphSurgeonOptimize
 from model_navigator.configuration import DeviceKind, Format, OptimizationProfile
 from model_navigator.configuration.common_config import CommonConfig
-from model_navigator.configuration.model.model_config import ONNXConfig
+from model_navigator.configuration.model.model_config import ONNXModelConfig
 from model_navigator.frameworks import Framework
 from model_navigator.pipelines.builders.tensorflow import tensorflow_conversion_builder
 
@@ -33,7 +33,7 @@ def test_tensorflow_conversion_builder_return_graph_surgeon_optimization_when_en
 
     models_config = {
         Format.ONNX: [
-            ONNXConfig(
+            ONNXModelConfig(
                 opset=17,
                 dynamic_axes={},
                 dynamo_export=False,
@@ -60,7 +60,7 @@ def test_tensorflow_conversion_builder_does_not_return_graph_surgeon_optimizatio
 
     models_config = {
         Format.ONNX: [
-            ONNXConfig(
+            ONNXModelConfig(
                 opset=17,
                 dynamic_axes={},
                 dynamo_export=False,

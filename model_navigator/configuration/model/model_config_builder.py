@@ -248,7 +248,7 @@ class ModelConfigBuilder:
         torch_config = _get_custom_config(custom_configs=custom_configs, custom_config_cls=config_api.TorchScriptConfig)
         for jit_type in torch_config.jit_type:
             model_configs[Format.TORCHSCRIPT].append(
-                model_config.TorchScriptConfig(
+                model_config.TorchScriptModelConfig(
                     jit_type=jit_type,
                     strict=torch_config.strict,
                     autocast=torch_config.autocast,
@@ -271,7 +271,7 @@ class ModelConfigBuilder:
         """
         torch_config = _get_custom_config(custom_configs=custom_configs, custom_config_cls=config_api.TorchExportConfig)
         model_configs[Format.TORCH_EXPORTEDPROGRAM].append(
-            model_config.TorchExportedProgram(
+            model_config.TorchExportedProgramModelConfig(
                 autocast=torch_config.autocast,
                 inference_mode=torch_config.inference_mode,
                 custom_args=torch_config.custom_args,
@@ -297,7 +297,7 @@ class ModelConfigBuilder:
             model_configs[Format.TORCH_EXPORTEDPROGRAM], torch_trt_config.precision
         ):
             model_configs[Format.TORCH_TRT].append(
-                model_config.TorchTensorRTConfig(
+                model_config.TorchTensorRTModelConfig(
                     parent=model_configuration,
                     precision=precision,
                     precision_mode=torch_trt_config.precision_mode,
@@ -347,7 +347,7 @@ class ModelConfigBuilder:
         )
         for model_configuration, precision in product(model_configs[Format.TF_SAVEDMODEL], tf_trt_config.precision):
             model_configs[Format.TF_TRT].append(
-                model_config.TensorFlowTensorRTConfig(
+                model_config.TensorFlowTensorRTModelConfig(
                     parent=model_configuration,
                     precision=precision,
                     max_workspace_size=tf_trt_config.max_workspace_size,
@@ -374,7 +374,7 @@ class ModelConfigBuilder:
         if framework in (Framework.TENSORFLOW, Framework.JAX):
             for model_configuration in model_configs[Format.TF_SAVEDMODEL]:
                 model_configs[Format.ONNX].append(
-                    model_config.ONNXConfig(
+                    model_config.ONNXModelConfig(
                         parent=model_configuration,
                         opset=onnx_config.opset,
                         dynamo_export=False,
@@ -387,7 +387,7 @@ class ModelConfigBuilder:
                 )
         if framework == Framework.ONNX:
             model_configs[Format.ONNX].append(
-                model_config.ONNXConfig(
+                model_config.ONNXModelConfig(
                     parent=None,
                     opset=onnx_config.opset,
                     dynamo_export=False,
@@ -401,7 +401,7 @@ class ModelConfigBuilder:
         if framework == Framework.TORCH:
             for dynamo_export in (True, False) if onnx_config.dynamo_export else (False,):
                 model_configs[Format.ONNX].append(
-                    model_config.ONNXConfig(
+                    model_config.ONNXModelConfig(
                         parent=None,
                         opset=onnx_config.opset,
                         dynamo_export=dynamo_export,
@@ -417,7 +417,7 @@ class ModelConfigBuilder:
         if framework == Framework.TORCH and onnx_config.onnx_extended_conversion:
             for model_configuration in model_configs[Format.TORCHSCRIPT]:
                 model_configs[Format.ONNX].append(
-                    model_config.ONNXConfig(
+                    model_config.ONNXModelConfig(
                         parent=model_configuration,
                         opset=onnx_config.opset,
                         dynamo_export=False,
@@ -445,7 +445,7 @@ class ModelConfigBuilder:
         trt_config = _get_custom_config(custom_configs=custom_configs, custom_config_cls=config_api.TensorRTConfig)
         if framework == Framework.TENSORRT or trt_config.model_path is not None:
             model_configs[Format.TENSORRT].append(
-                model_config.TensorRTConfig(
+                model_config.TensorRTModelConfig(
                     parent=None,
                     precision=None,
                     precision_mode=trt_config.precision_mode,
@@ -463,7 +463,7 @@ class ModelConfigBuilder:
         else:
             for model_configuration, precision in product(model_configs[Format.ONNX], trt_config.precision):
                 model_configs[Format.TENSORRT].append(
-                    model_config.TensorRTConfig(
+                    model_config.TensorRTModelConfig(
                         parent=model_configuration,
                         precision=precision,
                         precision_mode=trt_config.precision_mode,

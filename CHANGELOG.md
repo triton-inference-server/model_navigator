@@ -25,6 +25,7 @@ limitations under the License.
 - new: support for dynamic shapes in Torch ExportedProgram
 - new: use ExportedProgram for Torch-TensorRT conversion
 - new: support back-off policy during profiling to avoid reporting local minimum
+- change: TensorRT conversion max batch size search rely on saturating throughput for base formats
 - change: adjusted profiling configuration for throughput cutoff search
 - change: include optimized pipeline to list of examined variants during `nav.profile`
 - change: performance is not executed when correctness failed for format and runtime
@@ -32,6 +33,7 @@ limitations under the License.
 - change: do not create a model copy before executing `torch.compile`
 - fix: pipelines sometimes obtain model and tensors on different devices during `nav.profile`
 - fix: extract graph from ExportedProgram for running inference
+- fix: runner configuration not propagated to pre-processing steps
 
 ## 0.11.0
 
@@ -45,7 +47,8 @@ limitations under the License.
 - change: moved JAX to support to experimental module and limited support
 - change: use autocast=True for Torch based runners
 - change: use torch.inference_mode or torch.no_grad context in `nav.profile` measurements
-- change: use multiple strategies to select optimized runtime, defaults to [`MaxThroughputAndMinLatencyStrategy`, `MinLatencyStrategy`]
+- change: use multiple strategies to select optimized runtime, defaults
+  to [`MaxThroughputAndMinLatencyStrategy`, `MinLatencyStrategy`]
 - change: `trt_profiles` are not set automatically for module when using `nav.optimize`
 - fix: properly revert log level after torch onnx dynamo export
 
@@ -85,7 +88,8 @@ limitations under the License.
 
 ## 0.10.0
 
-- new: inplace `nav.Module` accepts `batching` flag which overrides a config setting and `precision` which allows setting appropriate configuration for TensorRT
+- new: inplace `nav.Module` accepts `batching` flag which overrides a config setting and `precision` which allows
+  setting appropriate configuration for TensorRT
 - new: Allow to set device when loading optimized modules using `nav.load_optimized()`
 - new: Add support for custom i/o names and dynamic shapes in Torch ONNX Dynamo path
 - new: Added `nav.bundle.save` and `nav.bundle.load` to save and load optimized models from cache
@@ -110,14 +114,14 @@ limitations under the License.
       See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
       for a detailed summary.
 
-
-
 ## 0.9.0
 
-- new: TensorRT Timing Tactics Cache Management - using timing tactics cache files for optimization performance improvements
+- new: TensorRT Timing Tactics Cache Management - using timing tactics cache files for optimization performance
+  improvements
 - new: Added throughput saturation verification in `nav.profile()` (enabled by default)
 - new: Allow to override Inplace cache dir through `MODEL_NAVIGATOR_DEFAULT_CACHE_DIR` env variable
-- new: inplace `nav.Module` can now receive a function name to be used instead of __call__ in modules/submodules, allows customizing modules with non-standard calls
+- new: inplace `nav.Module` can now receive a function name to be used instead of __call__ in modules/submodules, allows
+  customizing modules with non-standard calls
 - fix: torch dynamo export and torch dynamo onnx export
 - fix: measurement stabilization in `nav.profile()`
 - fix: inplace inference through Torch

@@ -22,102 +22,12 @@ from model_navigator.configuration import (
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.constants import DEFAULT_MAX_WORKSPACE_SIZE
 from model_navigator.configuration.model.model_config import (
-    ONNXConfig,
-    TensorFlowTensorRTConfig,
-    TensorRTConfig,
+    ONNXModelConfig,
+    TensorRTModelConfig,
     TorchModelConfig,
-    TorchTensorRTConfig,
 )
 from model_navigator.frameworks import Framework
-from model_navigator.utils.config_helpers import _do_run_max_batch_size_search, do_find_device_max_batch_size
-
-
-def test__do_run_max_batch_size_search_return_false_when_batch_dim_is_none():
-    config = CommonConfig(
-        framework=Framework.TORCH,
-        dataloader=[{"input_name": [idx]} for idx in range(10)],
-        model=None,
-        optimization_profile=OptimizationProfile(),
-        runner_names=(),
-        sample_count=10,
-        target_formats=(),
-        target_device=DeviceKind.CUDA,
-        batch_dim=None,
-    )
-
-    model_cfg = TensorRTConfig(
-        precision=TensorRTPrecision.FP16,
-        precision_mode=TensorRTPrecisionMode.HIERARCHY,
-        max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
-        optimization_level=None,
-        compatibility_level=None,
-    )
-    assert _do_run_max_batch_size_search(config=config, model_cfg=model_cfg) is False
-
-
-def test_do_run_max_batch_size_search_return_true_when_tensorrt_model_config_and_trt_profile_set():
-    config = CommonConfig(
-        framework=Framework.TORCH,
-        dataloader=[{"input_name": [idx]} for idx in range(10)],
-        model=None,
-        optimization_profile=OptimizationProfile(),
-        runner_names=(),
-        sample_count=10,
-        target_formats=(),
-        target_device=DeviceKind.CUDA,
-    )
-
-    model_cfg = TensorRTConfig(
-        precision=TensorRTPrecision.FP16,
-        precision_mode=TensorRTPrecisionMode.HIERARCHY,
-        max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
-        trt_profiles=[TensorRTProfile().add("x", (1,), (2,), (3,))],
-        optimization_level=None,
-        compatibility_level=None,
-    )
-    assert _do_run_max_batch_size_search(config=config, model_cfg=model_cfg) is True
-
-
-def test_do_run_max_batch_size_search_return_true_when_tftrt_model_config_and_trt_profile_set():
-    config = CommonConfig(
-        framework=Framework.TORCH,
-        dataloader=[{"input_name": [idx]} for idx in range(10)],
-        model=None,
-        optimization_profile=OptimizationProfile(),
-        runner_names=(),
-        sample_count=10,
-        target_formats=(),
-        target_device=DeviceKind.CUDA,
-    )
-
-    model_cfg = TensorFlowTensorRTConfig(
-        precision=TensorRTPrecision.FP16,
-        minimum_segment_size=3,
-        max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
-        trt_profiles=[TensorRTProfile().add("x", (1,), (2,), (3,))],
-    )
-    assert _do_run_max_batch_size_search(config=config, model_cfg=model_cfg) is True
-
-
-def test_do_run_max_batch_size_search_return_true_when_torchtrt_model_config_and_trt_profile_set():
-    config = CommonConfig(
-        framework=Framework.TORCH,
-        dataloader=[{"input_name": [idx]} for idx in range(10)],
-        model=None,
-        optimization_profile=OptimizationProfile(),
-        runner_names=(),
-        sample_count=10,
-        target_formats=(),
-        target_device=DeviceKind.CUDA,
-    )
-
-    model_cfg = TorchTensorRTConfig(
-        precision=TensorRTPrecision.FP16,
-        precision_mode=TensorRTPrecisionMode.HIERARCHY,
-        max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
-        trt_profiles=[TensorRTProfile().add("x", (1,), (2,), (3,))],
-    )
-    assert _do_run_max_batch_size_search(config=config, model_cfg=model_cfg) is True
+from model_navigator.utils.config_helpers import do_find_device_max_batch_size
 
 
 def test_do_find_device_max_batch_size_return_false_when_no_cuda_device():
@@ -134,7 +44,7 @@ def test_do_find_device_max_batch_size_return_false_when_no_cuda_device():
 
     models_config = {
         Format.TENSORRT: [
-            TensorRTConfig(
+            TensorRTModelConfig(
                 precision=TensorRTPrecision.FP16,
                 precision_mode=TensorRTPrecisionMode.HIERARCHY,
                 max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
@@ -160,14 +70,43 @@ def test_do_find_device_max_batch_size_return_false_when_no_adaptive_formats():
     )
 
     models_config = {
-        Format.ONNX: [ONNXConfig(opset=17, dynamic_axes={}, dynamo_export=False, graph_surgeon_optimization=True)],
+        Format.ONNX: [ONNXModelConfig(opset=17, dynamic_axes={}, dynamo_export=False, graph_surgeon_optimization=True)],
         Format.TORCH: [TorchModelConfig(autocast=False, inference_mode=True)],
     }
 
     assert do_find_device_max_batch_size(config, models_config) is False
 
 
-def test_do_find_device_max_batch_size_return_true_when_no_adaptive_conversion_needed():
+def test_do_find_device_max_batch_size_return_false_when_no_batch_dimension():
+    config = CommonConfig(
+        framework=Framework.TORCH,
+        dataloader=[{"input_name": [idx]} for idx in range(10)],
+        model=None,
+        optimization_profile=OptimizationProfile(),
+        runner_names=(),
+        sample_count=10,
+        target_formats=(Format.TENSORRT,),
+        target_device=DeviceKind.CUDA,
+        batch_dim=None,
+    )
+
+    models_config = {
+        Format.TENSORRT: [
+            TensorRTModelConfig(
+                precision=TensorRTPrecision.FP16,
+                precision_mode=TensorRTPrecisionMode.HIERARCHY,
+                max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
+                trt_profiles=[TensorRTProfile().add("x", (1,), (2,), (3,))],
+                optimization_level=None,
+                compatibility_level=None,
+            )
+        ],
+    }
+
+    assert do_find_device_max_batch_size(config, models_config) is False
+
+
+def test_do_find_device_max_batch_size_return_true_when_adaptive_conversion_needed():
     config = CommonConfig(
         framework=Framework.TORCH,
         dataloader=[{"input_name": [idx]} for idx in range(10)],
@@ -181,7 +120,7 @@ def test_do_find_device_max_batch_size_return_true_when_no_adaptive_conversion_n
 
     models_config = {
         Format.TENSORRT: [
-            TensorRTConfig(
+            TensorRTModelConfig(
                 precision=TensorRTPrecision.FP16,
                 precision_mode=TensorRTPrecisionMode.HIERARCHY,
                 max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
