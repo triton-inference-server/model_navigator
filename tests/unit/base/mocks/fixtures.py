@@ -14,7 +14,7 @@
 import pytest
 from pyee import EventEmitter
 
-from model_navigator.reporting.events import NavigatorEvent
+from model_navigator.reporting.optimize.events import OptimizeEvent
 
 
 @pytest.fixture
@@ -32,7 +32,7 @@ def mock_event_emitter():
 
         return func
 
-    for event in iter(NavigatorEvent):
+    for event in iter(OptimizeEvent):
         emitter.on(event, create_handler(event))
 
     yield emitter

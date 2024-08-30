@@ -22,7 +22,7 @@ from model_navigator.package.builder import PackageBuilder
 from model_navigator.package.status import ModelStatus, RunnerStatus
 from model_navigator.pipelines.pipeline_manager import PipelineManager
 from model_navigator.pipelines.wrappers.optimize import optimize_pipeline
-from model_navigator.reporting.events import NavigatorEvent
+from model_navigator.reporting.optimize.events import OptimizeEvent
 from model_navigator.runtime_analyzer.analyzer import RuntimeAnalyzerResult
 from tests.unit.base.mocks.fixtures import mock_event_emitter  # noqa: F401
 
@@ -50,10 +50,10 @@ def test_optimize_pipeline_emits_events_no_results(mocker, mock_event_emitter): 
     # then
     events = mock_event_emitter.history
     assert len(events) == 4
-    assert events[0] == (NavigatorEvent.WORKSPACE_INITIALIZED, (), {"path": Path("test_path")})
-    assert events[1] == (NavigatorEvent.OPTIMIZATION_STARTED, (), {})
-    assert events[2] == (NavigatorEvent.MODEL_NOT_OPTIMIZED_ERROR, (), {})
-    assert events[3] == (NavigatorEvent.OPTIMIZATION_FINISHED, (), {})
+    assert events[0] == (OptimizeEvent.WORKSPACE_INITIALIZED, (), {"path": Path("test_path")})
+    assert events[1] == (OptimizeEvent.OPTIMIZATION_STARTED, (), {})
+    assert events[2] == (OptimizeEvent.MODEL_NOT_OPTIMIZED_ERROR, (), {})
+    assert events[3] == (OptimizeEvent.OPTIMIZATION_FINISHED, (), {})
 
 
 @pytest.mark.parametrize("is_source_model", [False, True])
@@ -95,10 +95,10 @@ def test_optimize_pipeline_emits_events_correct_opt_results(is_source_model, moc
     # then
     events = mock_event_emitter.history
     assert len(events) == 4
-    assert events[0] == (NavigatorEvent.WORKSPACE_INITIALIZED, (), {"path": Path("test_path")})
-    assert events[1] == (NavigatorEvent.OPTIMIZATION_STARTED, (), {})
+    assert events[0] == (OptimizeEvent.WORKSPACE_INITIALIZED, (), {"path": Path("test_path")})
+    assert events[1] == (OptimizeEvent.OPTIMIZATION_STARTED, (), {})
     assert events[2] == (
-        NavigatorEvent.BEST_MODEL_PICKED,
+        OptimizeEvent.BEST_MODEL_PICKED,
         (),
         {
             "config_key": "test_key",
@@ -106,4 +106,4 @@ def test_optimize_pipeline_emits_events_correct_opt_results(is_source_model, moc
             "model_path": expected_path,
         },
     )
-    assert events[3] == (NavigatorEvent.OPTIMIZATION_FINISHED, (), {})
+    assert events[3] == (OptimizeEvent.OPTIMIZATION_FINISHED, (), {})

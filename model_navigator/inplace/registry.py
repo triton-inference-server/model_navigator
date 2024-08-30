@@ -17,7 +17,7 @@ import gc
 from collections import OrderedDict
 from typing import TYPE_CHECKING, Dict
 
-from model_navigator.reporting.events import NavigatorEvent, default_event_emitter
+from model_navigator.reporting.optimize.events import OptimizeEvent, default_event_emitter
 
 if TYPE_CHECKING:
     from .wrapper import Module
@@ -46,7 +46,7 @@ class ModuleRegistry:
         """
         self._registry = OrderedDict()
         gc.collect()
-        self.event_emitter.emit(NavigatorEvent.MODULE_REGISTRY_CLEARED)
+        self.event_emitter.emit(OptimizeEvent.MODULE_REGISTRY_CLEARED)
 
     @property
     def modules(self) -> Dict[str, "Module"]:
@@ -66,12 +66,12 @@ class ModuleRegistry:
 
     def optimize(self) -> None:
         """Optimize all registered modules."""
-        self.event_emitter.emit(NavigatorEvent.INPLACE_STARTED)
+        self.event_emitter.emit(OptimizeEvent.INPLACE_STARTED)
         for name, module in self.items():
             if not module.is_optimized:
-                self.event_emitter.emit(NavigatorEvent.MODULE_PICKED_FOR_OPTIMIZATION, name=name)
+                self.event_emitter.emit(OptimizeEvent.MODULE_PICKED_FOR_OPTIMIZATION, name=name)
                 module.optimize()
-        self.event_emitter.emit(NavigatorEvent.INPLACE_FINISHED)
+        self.event_emitter.emit(OptimizeEvent.INPLACE_FINISHED)
 
     def items(self):
         """Return registered items."""
@@ -95,7 +95,7 @@ class ModuleRegistry:
         num_params = sum(p.numel() for p in module.parameters())
 
         self.event_emitter.emit(
-            NavigatorEvent.MODULE_REGISTERED,
+            OptimizeEvent.MODULE_REGISTERED,
             name=name,
             num_modules=num_modules,
             num_params=num_params,

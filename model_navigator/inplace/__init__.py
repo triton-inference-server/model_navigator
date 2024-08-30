@@ -14,6 +14,7 @@
 """Inplace Optimize API."""
 
 import queue
+import time
 import traceback
 import uuid
 from typing import Any, Callable, Optional, Sequence, Tuple, Type, Union
@@ -44,9 +45,15 @@ from model_navigator.core.constants import (
     NAVIGATOR_INPLACE_PROFILE_VERSION,
     NAVIGATOR_VERSION,
 )
-from model_navigator.core.logger import LOGGER, pad_string
+from model_navigator.core.logger import LOGGER, reconfigure_logging_to_file
 from model_navigator.exceptions import ModelNavigatorModuleNotOptimizedError, ModelNavigatorRuntimeAnalyzerError
-from model_navigator.inplace.config import InplaceConfig, OptimizeConfig, inplace_config  # noqa: F401
+from model_navigator.inplace.config import (
+    InplaceConfig as InplaceConfig,
+)
+from model_navigator.inplace.config import (
+    OptimizeConfig,
+    inplace_config,
+)
 from model_navigator.inplace.timer import Timer, TimerComparator  # noqa: F401
 from model_navigator.inplace.wrapper import Module, module  # noqa: F401
 from model_navigator.package.status import CommandStatus
@@ -56,6 +63,8 @@ from model_navigator.utils.module import lazy_import
 
 from ..core.context import INPLACE_STRATEGIES_CONTEXT_KEY, global_context
 from ..frameworks import is_torch2_available
+from ..reporting.profile.events import ProfileEvent
+from ..reporting.profile.events import default_event_emitter as profile_event_emitter
 from ..utils.environment import get_env
 from .profiling import ProfilingResults, RunnerProfilingResults, RunnerResults, run_measurement
 from .registry import module_registry
@@ -150,10 +159,16 @@ def profile(
         initialize: Whether to initialize pipeline on device before profiling.
         verbose: Provide verbose logging
     """
+    log_file = inplace_config.cache_dir / "profiling.log"
+    reconfigure_logging_to_file(log_file)
+
     if target_formats is None:
         target_formats = DEFAULT_TORCH_TARGET_FORMATS_FOR_PROFILING
     if runners is None:
         runners = list(runner_registry.values())
+
+    event_emitter = profile_event_emitter()
+    event_emitter.emit(ProfileEvent.PROFILING_STARTED)
 
     validate_device_string(device)
     modelkeys_runners = _get_modelkeys_runners(target_formats, runners)
@@ -168,7 +183,8 @@ def profile(
 
     profiling_results = ProfilingResults()
     for model_key, runner_name in modelkeys_runners:
-        LOGGER.info(pad_string(f"Profiling of {model_key} and {runner_name}"))
+        runtime_name = f"{model_key} on {runner_name}"
+        event_emitter.emit(ProfileEvent.RUNTIME_PROFILING_STARTED, name=runtime_name)
         try:
             _initialize_modules(
                 func=func,
@@ -178,7 +194,6 @@ def profile(
                 initialize=initialize,
                 verbose=verbose,
             )
-
             try:
                 runner_profiling_results = RunnerProfilingResults(status=CommandStatus.OK)
                 for sample_id, result in _profile_runner(
@@ -194,6 +209,23 @@ def profile(
                     throughput_backoff_limit=throughput_backoff_limit,
                 ):
                     runner_profiling_results.detailed[sample_id] = result
+
+                results_str = []
+                for result in runner_profiling_results.detailed.values():
+                    results_str.append(
+                        f"""Batch: {result.batch_size:6}, """
+                        f"""Throughput: {result.throughput:10.2f} [infer/sec], """
+                        f"""Avg Latency: {result.avg_latency:10.2f} [ms]"""
+                    )
+
+                results_str = "\n".join(results_str)
+                LOGGER.info(f"Collected results: \n{results_str}")
+                time.sleep(0.1)  # FIXME: WAR to avoid overlapping messages
+
+                for result in runner_profiling_results.detailed.values():
+                    event_emitter.emit(ProfileEvent.RUNTIME_PROFILING_RESULT, result=result)
+
+                event_emitter.emit(ProfileEvent.RUNTIME_PROFILING_FINISHED)
             except Exception as e:
                 LOGGER.error(f"Profiling failed for model_key {model_key} and runner {runner_name}.")
                 LOGGER.error(str(e))
@@ -201,6 +233,7 @@ def profile(
                     LOGGER.error(f"Traceback: {traceback.format_exc()}")
 
                 runner_profiling_results = RunnerProfilingResults(status=CommandStatus.FAIL)
+                event_emitter.emit(ProfileEvent.RUNTIME_PROFILING_ERROR)
         except Exception as e:
             LOGGER.error(f"Loading model failed for model_key {model_key} and runner {runner_name}.")
             LOGGER.error(str(e))
@@ -208,6 +241,7 @@ def profile(
                 LOGGER.error(f"Traceback: {traceback.format_exc()}")
 
             runner_profiling_results = RunnerProfilingResults(status=CommandStatus.FAIL)
+            event_emitter.emit(ProfileEvent.RUNTIME_PROFILING_ERROR)
 
         if model_key not in profiling_results.models:
             profiling_results.models[model_key] = RunnerResults()
@@ -215,6 +249,8 @@ def profile(
         elif runner_name not in profiling_results.models[model_key].runners:
             profiling_results.models[model_key].runners[runner_name] = RunnerProfilingResults()
         profiling_results.models[model_key].runners[runner_name] = runner_profiling_results
+
+    event_emitter.emit(ProfileEvent.PROFILING_FINISHED)
 
     status = _build_profile_status(profiling_results)
 
@@ -249,7 +285,7 @@ def _profile_runner(
     for sample_id, input_ in enumerate(dataloader):
         with NvmlHandler() as nvml_handler:
             with inference_context():
-                LOGGER.info(f"Profiling {runner_name} on sample id: {sample_id}")
+                LOGGER.debug(f"Profiling {runner_name} on sample id: {sample_id}")
                 profiling_result = run_measurement(
                     func=func,
                     sample=input_,
@@ -261,7 +297,7 @@ def _profile_runner(
                     stability_percentage=stability_percentage,
                 )
 
-            LOGGER.info(
+            LOGGER.debug(
                 f"Performance profiling result for {runner_name} and sample id: {sample_id}:\n{profiling_result}"
             )
 

@@ -28,7 +28,7 @@ from model_navigator.package.builder import PackageBuilder
 from model_navigator.package.package import Package
 from model_navigator.pipelines.builders import PipelineBuilder
 from model_navigator.pipelines.pipeline_manager import PipelineManager
-from model_navigator.reporting.events import NavigatorEvent, default_event_emitter
+from model_navigator.reporting.optimize.events import OptimizeEvent, default_event_emitter
 
 
 def optimize_pipeline(
@@ -63,13 +63,13 @@ def optimize_pipeline(
     workspace = Workspace(workspace)
     if not package or workspace.path != package.workspace.path:
         workspace.initialize()
-        event_emitter.emit(NavigatorEvent.WORKSPACE_INITIALIZED, path=workspace.path)
+        event_emitter.emit(OptimizeEvent.WORKSPACE_INITIALIZED, path=workspace.path)
 
     if package:
         model = package.model
 
     pipeline_manager = PipelineManager(workspace=workspace)
-    event_emitter.emit(NavigatorEvent.OPTIMIZATION_STARTED)
+    event_emitter.emit(OptimizeEvent.OPTIMIZATION_STARTED)
     context = pipeline_manager.run(
         workspace=workspace,
         builders=builders,
@@ -87,7 +87,7 @@ def optimize_pipeline(
 
     _emit_optimization_result_event(package, event_emitter)
 
-    event_emitter.emit(NavigatorEvent.OPTIMIZATION_FINISHED)
+    event_emitter.emit(OptimizeEvent.OPTIMIZATION_FINISHED)
     return package
 
 
@@ -99,10 +99,10 @@ def _emit_optimization_result_event(package: Package, event_emitter: EventEmitte
         best_format_path = package.workspace.path / best_runtime_result.model_status.model_config.path
         model_path = best_format_path if best_format_path.exists() else None
         event_emitter.emit(
-            NavigatorEvent.BEST_MODEL_PICKED,
+            OptimizeEvent.BEST_MODEL_PICKED,
             config_key=best_runtime_result.model_status.model_config.key,
             runner_name=best_runtime_result.runner_status.runner_name,
             model_path=model_path,
         )
     except ModelNavigatorRuntimeAnalyzerError:
-        event_emitter.emit(NavigatorEvent.MODEL_NOT_OPTIMIZED_ERROR)
+        event_emitter.emit(OptimizeEvent.MODEL_NOT_OPTIMIZED_ERROR)

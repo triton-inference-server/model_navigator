@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Simple report for the optimization."""
+"""Detailed report for the optimization."""
 
 from dataclasses import dataclass
 from time import perf_counter
@@ -22,7 +22,7 @@ from rich.table import Table
 from rich.text import Text
 
 from model_navigator.commands.base import CommandStatus
-from model_navigator.reporting.simple_report import SimpleReport
+from model_navigator.reporting.optimize.simple_report import SimpleReport
 
 
 @dataclass

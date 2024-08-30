@@ -22,7 +22,7 @@ import jsonlines
 
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.execution_context import ExecutionContext
-from model_navigator.commands.performance import Profiler, ProfilingResults
+from model_navigator.commands.performance import ProfilingResults
 from model_navigator.configuration import Format, OptimizationProfile
 from model_navigator.configuration.runner.runner_config import RunnerConfig
 from model_navigator.core.logger import LOGGER
@@ -32,14 +32,6 @@ from model_navigator.exceptions import ModelNavigatorRuntimeError
 from model_navigator.runners.base import NavigatorRunner
 from model_navigator.utils.common import parse_kwargs_to_cmd
 from model_navigator.utils.format_helpers import is_source_format
-
-
-class MaxBatchSizeFinder(Profiler):
-    """Overridden profiled for max batch size search."""
-
-    @property
-    def _profiling_results_logging_level(self):
-        return "DEBUG"
 
 
 @dataclasses.dataclass

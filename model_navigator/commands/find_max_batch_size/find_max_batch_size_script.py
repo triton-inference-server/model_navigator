@@ -18,7 +18,7 @@ from typing import Dict, Optional
 
 import fire
 
-from model_navigator.commands.find_max_batch_size.find_max_batch_size import MaxBatchSizeFinder
+from model_navigator.commands.performance import Profiler
 from model_navigator.configuration import OptimizationProfile
 from model_navigator.core.dataloader import load_samples
 from model_navigator.core.logger import LOGGER
@@ -86,7 +86,7 @@ def find_max_batch_size(
         **runner_config,
     )  # pytype: disable=not-instantiable
     try:
-        MaxBatchSizeFinder(
+        Profiler(
             profile=OptimizationProfile.from_dict(optimization_profile),
             input_metadata=TensorMetadata.from_json(input_metadata),
             batch_dim=batch_dim,

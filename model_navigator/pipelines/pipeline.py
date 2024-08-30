@@ -28,8 +28,8 @@ from model_navigator.exceptions import (
     ModelNavigatorUserInputError,
 )
 from model_navigator.pipelines.pipeline_context import PipelineContext
-from model_navigator.reporting.events import (
-    NavigatorEvent,
+from model_navigator.reporting.optimize.events import (
+    OptimizeEvent,
     default_event_emitter,
 )
 
@@ -47,7 +47,6 @@ class Pipeline:
         Args:
             name: Name of the pipeline
             execution_units: List of execution units objects
-            event_emitter: Emitter where pipeline event should be pushed
         """
         self.name = name
         self.id = name.lower().replace(" ", "_").replace("-", "_")
@@ -63,7 +62,7 @@ class Pipeline:
             context: Context of pipeline execution
         """
         LOGGER.info(pad_string(f"Pipeline {self.name!r} started"))
-        self.event_emitter.emit(NavigatorEvent.PIPELINE_STARTED, name=self.name)
+        self.event_emitter.emit(OptimizeEvent.PIPELINE_STARTED, name=self.name)
 
         for execution_unit in self.execution_units:
             command_output = self._execute_unit(
@@ -78,7 +77,7 @@ class Pipeline:
             )
             context.save()
 
-        self.event_emitter.emit(NavigatorEvent.PIPELINE_FINISHED)
+        self.event_emitter.emit(OptimizeEvent.PIPELINE_FINISHED)
 
     def _execute_unit(
         self,
@@ -164,11 +163,11 @@ class Pipeline:
             "config_key": None if execution_unit.model_config is None else execution_unit.model_config.key,
             "runner_name": None if execution_unit.runner_cls is None else execution_unit.runner_cls.name(),
         }
-        self.event_emitter.emit(NavigatorEvent.COMMAND_STARTED, **kwargs)
+        self.event_emitter.emit(OptimizeEvent.COMMAND_STARTED, **kwargs)
 
     def emit_command_finished_event(self, command_output: CommandOutput):
         """Emit command finished with status."""
-        self.event_emitter.emit(NavigatorEvent.COMMAND_FINISHED, status=command_output.status)
+        self.event_emitter.emit(OptimizeEvent.COMMAND_FINISHED, status=command_output.status)
 
     def __repr__(self) -> str:
         """Return pipeline name."""

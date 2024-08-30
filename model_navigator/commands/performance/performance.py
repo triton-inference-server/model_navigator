@@ -120,6 +120,17 @@ class Performance(Command, requires=[Correctness.name]):
 
             with jsonlines.open(temp_file.name, "r") as f:
                 profiling_results = [ProfilingResults.from_dict(res) for res in f]
+
+            results_str = []
+            for result in profiling_results:
+                results_str.append(
+                    f"""Batch: {result.batch_size:6}, """
+                    f"""Throughput: {result.throughput:10.2f} [infer/sec], """
+                    f"""Avg Latency: {result.avg_latency:10.2f} [ms]"""
+                )
+            results_str = "\n".join(results_str)
+            LOGGER.info(f"Collected results: \n{results_str}")
+
         if not profiling_results:
             raise ModelNavigatorProfilingError("No profiling results found.")
         return CommandOutput(status=CommandStatus.OK, output={"profiling_results": profiling_results})

@@ -1,0 +1,56 @@
+OptimizeEvent.WORKSPACE_INITIALIZED {'path': PosixPath('onnx_workspace')}
+OptimizeEvent.OPTIMIZATION_STARTED {}
+OptimizeEvent.PIPELINE_STARTED {'name': 'Preprocessing'}
+OptimizeEvent.COMMAND_STARTED {'command': 'InferInputMetadata', 'config_key': None, 'runner_name': None}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'FetchInputModelData', 'config_key': None, 'runner_name': None}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'InferOutputMetadata', 'config_key': None, 'runner_name': None}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'FetchOutputModelData', 'config_key': None, 'runner_name': None}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'CopyModel', 'config_key': 'onnx', 'runner_name': None}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.PIPELINE_FINISHED {}
+OptimizeEvent.PIPELINE_STARTED {'name': 'Finding max batch size for fixed shapes based pipelines'}
+OptimizeEvent.COMMAND_STARTED {'command': 'FindMaxBatchSize', 'config_key': None, 'runner_name': None}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.PIPELINE_FINISHED {}
+OptimizeEvent.PIPELINE_STARTED {'name': 'TensorRT Conversion'}
+OptimizeEvent.COMMAND_STARTED {'command': 'ConvertONNX2TRT', 'config_key': 'trt-fp32', 'runner_name': None}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'ConvertONNX2TRT', 'config_key': 'trt-fp16', 'runner_name': None}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.PIPELINE_FINISHED {}
+OptimizeEvent.PIPELINE_STARTED {'name': 'Correctness'}
+OptimizeEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'onnx', 'runner_name': 'OnnxCUDA'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'onnx', 'runner_name': 'OnnxTensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'trt-fp32', 'runner_name': 'TensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'trt-fp16', 'runner_name': 'TensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.PIPELINE_FINISHED {}
+OptimizeEvent.PIPELINE_STARTED {'name': 'Performance'}
+OptimizeEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'onnx', 'runner_name': 'OnnxCUDA'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'onnx', 'runner_name': 'OnnxTensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'trt-fp32', 'runner_name': 'TensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'trt-fp16', 'runner_name': 'TensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.PIPELINE_FINISHED {}
+OptimizeEvent.PIPELINE_STARTED {'name': 'Verify Models'}
+OptimizeEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'onnx', 'runner_name': 'OnnxCUDA'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'onnx', 'runner_name': 'OnnxTensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'trt-fp32', 'runner_name': 'TensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'trt-fp16', 'runner_name': 'TensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.PIPELINE_FINISHED {}
+OptimizeEvent.BEST_MODEL_PICKED {'config_key': 'trt-fp16', 'runner_name': 'TensorRT', 'model_path': PosixPath('onnx_workspace/trt-fp16/model.plan')}
+OptimizeEvent.OPTIMIZATION_FINISHED {}

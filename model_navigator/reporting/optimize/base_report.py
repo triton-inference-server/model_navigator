@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Base class for report classes."""
+"""Base class for optimize report classes."""
 
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -21,7 +21,7 @@ from pyee import EventEmitter
 from rich.console import Console
 from rich.table import Table
 
-from model_navigator.reporting.events import NavigatorEvent, default_event_emitter
+from model_navigator.reporting.optimize.events import OptimizeEvent, default_event_emitter
 
 
 class BaseReport(ABC):
@@ -48,20 +48,20 @@ class BaseReport(ABC):
 
     def listen_for_events(self):
         """Register listener on events."""
-        self.emitter.on(NavigatorEvent.MODULE_REGISTERED, self.on_module_registered)
-        self.emitter.on(NavigatorEvent.MODULE_REGISTRY_CLEARED, self.on_registry_cleared)
-        self.emitter.on(NavigatorEvent.WORKSPACE_INITIALIZED, self.on_workspace_initialized)
-        self.emitter.on(NavigatorEvent.MODULE_PICKED_FOR_OPTIMIZATION, self.on_module_picked_for_optimization)
-        self.emitter.on(NavigatorEvent.OPTIMIZATION_STARTED, self.on_optimization_started)
-        self.emitter.on(NavigatorEvent.OPTIMIZATION_FINISHED, self.on_optimization_finished)
-        self.emitter.on(NavigatorEvent.PIPELINE_STARTED, self.on_pipeline_started)
-        self.emitter.on(NavigatorEvent.PIPELINE_FINISHED, self.on_pipeline_finished)
-        self.emitter.on(NavigatorEvent.COMMAND_STARTED, self.on_command_started)
-        self.emitter.on(NavigatorEvent.COMMAND_FINISHED, self.on_command_finished)
-        self.emitter.on(NavigatorEvent.INPLACE_STARTED, self.on_inplace_started)
-        self.emitter.on(NavigatorEvent.INPLACE_FINISHED, self.on_inplace_finished)
-        self.emitter.on(NavigatorEvent.BEST_MODEL_PICKED, self.on_best_model_picked)
-        self.emitter.on(NavigatorEvent.MODEL_NOT_OPTIMIZED_ERROR, self.on_model_not_optimized_error)
+        self.emitter.on(OptimizeEvent.MODULE_REGISTERED, self.on_module_registered)
+        self.emitter.on(OptimizeEvent.MODULE_REGISTRY_CLEARED, self.on_registry_cleared)
+        self.emitter.on(OptimizeEvent.WORKSPACE_INITIALIZED, self.on_workspace_initialized)
+        self.emitter.on(OptimizeEvent.MODULE_PICKED_FOR_OPTIMIZATION, self.on_module_picked_for_optimization)
+        self.emitter.on(OptimizeEvent.OPTIMIZATION_STARTED, self.on_optimization_started)
+        self.emitter.on(OptimizeEvent.OPTIMIZATION_FINISHED, self.on_optimization_finished)
+        self.emitter.on(OptimizeEvent.PIPELINE_STARTED, self.on_pipeline_started)
+        self.emitter.on(OptimizeEvent.PIPELINE_FINISHED, self.on_pipeline_finished)
+        self.emitter.on(OptimizeEvent.COMMAND_STARTED, self.on_command_started)
+        self.emitter.on(OptimizeEvent.COMMAND_FINISHED, self.on_command_finished)
+        self.emitter.on(OptimizeEvent.INPLACE_STARTED, self.on_inplace_started)
+        self.emitter.on(OptimizeEvent.INPLACE_FINISHED, self.on_inplace_finished)
+        self.emitter.on(OptimizeEvent.BEST_MODEL_PICKED, self.on_best_model_picked)
+        self.emitter.on(OptimizeEvent.MODEL_NOT_OPTIMIZED_ERROR, self.on_model_not_optimized_error)
 
     def on_module_registered(self, name: str, num_modules: int, num_params: int):
         """Action on module_registered event."""
@@ -191,5 +191,5 @@ class BaseReport(ABC):
     def save_report_to_workspace(self):
         """Saves report to the workspaces."""
         for workspace in self.workspaces:
-            report_path = Path(workspace) / "report.txt"
+            report_path = Path(workspace) / "optimize_report.txt"
             self.console.save_text(str(report_path), clear=False)

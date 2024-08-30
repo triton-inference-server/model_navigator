@@ -19,13 +19,13 @@ from unittest.mock import MagicMock  # noqa: F401 - required by eval
 import pytest
 
 from model_navigator.commands.base import CommandStatus  # noqa: F401 - required by eval
-from model_navigator.reporting.detailed_report import DetailedReport
-from model_navigator.reporting.events import NavigatorEvent  # noqa: I001
-from model_navigator.reporting.simple_report import SimpleReport
+from model_navigator.reporting.optimize.detailed_report import DetailedReport
+from model_navigator.reporting.optimize.events import OptimizeEvent  # noqa: I001
+from model_navigator.reporting.optimize.simple_report import SimpleReport
 from tests.unit.base.mocks.fixtures import mock_event_emitter  # noqa: F401
 from tests.utils import get_assets_path
 
-SCENARIO_PATH = get_assets_path() / "reports"
+SCENARIO_PATH = get_assets_path() / "reports" / "optimize"
 
 
 def emit_events(event_emitter, filename):
@@ -33,7 +33,7 @@ def emit_events(event_emitter, filename):
     with open(SCENARIO_PATH / filename) as fp:
         while line := fp.readline():
             event_str, kwargs_str = line.strip().split(maxsplit=1)
-            event: NavigatorEvent = eval(event_str)
+            event: OptimizeEvent = eval(event_str)
             kwargs = eval(kwargs_str)
             event_emitter.emit(event, **kwargs)
 

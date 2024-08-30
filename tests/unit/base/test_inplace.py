@@ -39,7 +39,7 @@ from model_navigator.inplace.model import EagerModule, OptimizedModule, Recordin
 from model_navigator.inplace.registry import ModuleRegistry, module_registry
 from model_navigator.inplace.utils import get_object_name
 from model_navigator.inplace.wrapper import Module, module
-from model_navigator.reporting.events import NavigatorEvent
+from model_navigator.reporting.optimize.events import OptimizeEvent
 from tests.unit.base.mocks.fixtures import mock_event_emitter  # noqa: F401
 
 
@@ -99,7 +99,7 @@ def test_registry_should_emit_events(mock_event_emitter):  # noqa: F811
     events = mock_event_emitter.history
     assert len(events) == 5
     assert events[0] == (
-        NavigatorEvent.MODULE_REGISTERED,
+        OptimizeEvent.MODULE_REGISTERED,
         (),
         {
             "name": "test_module",
@@ -107,16 +107,16 @@ def test_registry_should_emit_events(mock_event_emitter):  # noqa: F811
             "num_params": 0,
         },
     )
-    assert events[1] == (NavigatorEvent.INPLACE_STARTED, (), {})
+    assert events[1] == (OptimizeEvent.INPLACE_STARTED, (), {})
     assert events[2] == (
-        NavigatorEvent.MODULE_PICKED_FOR_OPTIMIZATION,
+        OptimizeEvent.MODULE_PICKED_FOR_OPTIMIZATION,
         (),
         {
             "name": "test_module",
         },
     )
-    assert events[3] == (NavigatorEvent.INPLACE_FINISHED, (), {})
-    assert events[4] == (NavigatorEvent.MODULE_REGISTRY_CLEARED, (), {})
+    assert events[3] == (OptimizeEvent.INPLACE_FINISHED, (), {})
+    assert events[4] == (OptimizeEvent.MODULE_REGISTRY_CLEARED, (), {})
 
 
 def test_pass_model_is_optimized_returns_false():

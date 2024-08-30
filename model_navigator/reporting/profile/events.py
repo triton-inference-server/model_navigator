@@ -18,29 +18,17 @@ from enum import Enum
 from pyee import EventEmitter
 
 
-class NavigatorEvent(str, Enum):
+class ProfileEvent(str, Enum):
     """All navigator events."""
 
-    MODULE_REGISTERED = "module registered"
-    MODULE_REGISTRY_CLEARED = "module registered cleared"
+    PROFILING_STARTED = "profiling started"
+    PROFILING_FINISHED = "profiling finished"
 
-    WORKSPACE_INITIALIZED = "WORKSPACE_INITIALIZED"
+    RUNTIME_PROFILING_STARTED = "runtime profiling selected"
+    RUNTIME_PROFILING_FINISHED = "runtime profiling finished"
+    RUNTIME_PROFILING_ERROR = "runtime profiling error"
 
-    MODULE_PICKED_FOR_OPTIMIZATION = "module picked for optimization"
-
-    OPTIMIZATION_STARTED = "optimization started"
-    OPTIMIZATION_FINISHED = "optimization finished"
-
-    PIPELINE_STARTED = "pipeline started"
-    PIPELINE_FINISHED = "pipeline finished"
-    COMMAND_STARTED = "command started"
-    COMMAND_FINISHED = "command finished"
-
-    BEST_MODEL_PICKED = "best model picked"
-    MODEL_NOT_OPTIMIZED_ERROR = "model not optimized error"
-
-    INPLACE_STARTED = "inplace started"
-    INPLACE_FINISHED = "inplace finished"
+    RUNTIME_PROFILING_RESULT = "runtime profiling result"
 
 
 _DEFAULT_EVENT_EMITTER = EventEmitter()
