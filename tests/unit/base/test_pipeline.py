@@ -15,7 +15,7 @@ from unittest.mock import MagicMock
 
 from model_navigator.commands.base import CommandOutput, CommandStatus
 from model_navigator.pipelines.pipeline import Pipeline
-from model_navigator.reporting.events import NavigatorEvent
+from model_navigator.reporting.optimize.events import OptimizeEvent
 from tests.unit.base.mocks.fixtures import mock_event_emitter  # noqa: F401
 
 
@@ -37,9 +37,9 @@ def test_pipeline_run_emits_events(mock_event_emitter):  # noqa: F811
     # then
     events = mock_event_emitter.history
     assert len(events) == 4
-    assert events[0] == (NavigatorEvent.PIPELINE_STARTED, (), {"name": "test_pipeline"})
+    assert events[0] == (OptimizeEvent.PIPELINE_STARTED, (), {"name": "test_pipeline"})
     assert events[1] == (
-        NavigatorEvent.COMMAND_STARTED,
+        OptimizeEvent.COMMAND_STARTED,
         (),
         {
             "command": "test_command",
@@ -47,5 +47,5 @@ def test_pipeline_run_emits_events(mock_event_emitter):  # noqa: F811
             "runner_name": None,
         },
     )
-    assert events[2] == (NavigatorEvent.COMMAND_FINISHED, (), {"status": CommandStatus.OK})
-    assert events[3] == (NavigatorEvent.PIPELINE_FINISHED, (), {})
+    assert events[2] == (OptimizeEvent.COMMAND_FINISHED, (), {"status": CommandStatus.OK})
+    assert events[3] == (OptimizeEvent.PIPELINE_FINISHED, (), {})

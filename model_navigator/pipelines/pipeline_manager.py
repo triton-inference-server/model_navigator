@@ -87,8 +87,6 @@ class PipelineManager:
         for pipeline in pipelines:
             pipeline.run(workspace=workspace, config=config, context=context)
 
-        context.log_status()
-
         LOGGER.warning(
             "Initially models are not verified. Validate exported models and use "
             "PackageDescriptor.set_verified(format, runtime, jit_type, precision) method to set models as verified."

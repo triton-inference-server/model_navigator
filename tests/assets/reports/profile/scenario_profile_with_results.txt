@@ -1,0 +1,13 @@
+ProfileEvent.PROFILING_STARTED {}
+ProfileEvent.RUNTIME_PROFILING_STARTED {'name': 'python on eager'}
+ProfileEvent.RUNTIME_PROFILING_RESULT {'result': ProfilingResult(batch_size=1, avg_latency=1, std_latency=1,p50_latency=1,p90_latency=1, p95_latency=1,p99_latency=1,throughput=1000,request_count=1)}
+ProfileEvent.RUNTIME_PROFILING_RESULT {'result': ProfilingResult(batch_size=2, avg_latency=2, std_latency=2,p50_latency=2,p90_latency=2, p95_latency=2,p99_latency=2,throughput=1000,request_count=1)}
+ProfileEvent.RUNTIME_PROFILING_FINISHED {}
+ProfileEvent.RUNTIME_PROFILING_STARTED {'name': 'navigator on optimized'}
+ProfileEvent.RUNTIME_PROFILING_RESULT {'result': ProfilingResult(batch_size=1, avg_latency=1, std_latency=1,p50_latency=1,p90_latency=1, p95_latency=1,p99_latency=1,throughput=1000,request_count=1)}
+ProfileEvent.RUNTIME_PROFILING_RESULT {'result': ProfilingResult(batch_size=2, avg_latency=1, std_latency=1,p50_latency=1,p90_latency=1, p95_latency=1,p99_latency=1,throughput=2000,request_count=1)}
+ProfileEvent.RUNTIME_PROFILING_RESULT {'result': ProfilingResult(batch_size=4, avg_latency=1, std_latency=1,p50_latency=1,p90_latency=1, p95_latency=1,p99_latency=1,throughput=4000,request_count=1)}
+ProfileEvent.RUNTIME_PROFILING_FINISHED {}
+ProfileEvent.RUNTIME_PROFILING_STARTED {'name': 'onnx on OnnxCUDA'}
+ProfileEvent.RUNTIME_PROFILING_ERROR {}
+ProfileEvent.PROFILING_FINISHED {}

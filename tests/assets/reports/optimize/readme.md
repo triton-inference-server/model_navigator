@@ -17,6 +17,7 @@ limitations under the License.
 This folder contains recorded events for various pipeline use cases and expected report results.
 
 The events were recorded with the following script:
+
 ```python
 # pytype: skip-file
 
@@ -24,7 +25,7 @@ import atexit
 from datetime import datetime
 from multiprocessing import current_process
 
-from model_navigator.reporting.events import NavigatorEvent, default_event_emitter
+from model_navigator.reporting.optimize.events import OptimizeEvent, default_event_emitter
 
 
 def create_handler(event):  # noqa: D103
@@ -56,10 +57,10 @@ def store_events():  # noqa: D103
 
 
 def main(emitter):
-    for event in iter(NavigatorEvent):
+    for event in iter(OptimizeEvent):
         emitter.on(event, create_handler(event))
 
-    emitter.on(NavigatorEvent.WORKSPACE_INITIALIZED, save_workspace)
+    emitter.on(OptimizeEvent.WORKSPACE_INITIALIZED, save_workspace)
     atexit.register(store_events)
 
 

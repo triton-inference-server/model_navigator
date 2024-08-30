@@ -19,7 +19,7 @@ import pathlib
 import tempfile
 from typing import Any, Callable, Dict, Optional
 
-from model_navigator.commands.find_max_batch_size.find_max_batch_size import MaxBatchSizeFinder
+from model_navigator.commands.performance import Profiler
 from model_navigator.configuration import Framework, OptimizationProfile, SizedDataLoader
 from model_navigator.core.dataloader import to_numpy
 from model_navigator.core.logger import LOGGER
@@ -131,7 +131,7 @@ def find_max_batch_size_till_oom(
         )  # pytype: disable=not-instantiable
         try:
             LOGGER.info("Starting max batch size search.")
-            MaxBatchSizeFinder(
+            Profiler(
                 profile=optimization_profile,
                 input_metadata=input_metadata,
                 batch_dim=batch_dim,

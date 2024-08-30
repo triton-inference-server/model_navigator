@@ -1,0 +1,194 @@
+OptimizeEvent.WORKSPACE_INITIALIZED {'path': PosixPath('torch_workspace')}
+OptimizeEvent.OPTIMIZATION_STARTED {}
+OptimizeEvent.PIPELINE_STARTED {'name': 'Preprocessing'}
+OptimizeEvent.COMMAND_STARTED {'command': 'InferInputMetadata', 'config_key': None, 'runner_name': None}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'FetchInputModelData', 'config_key': None, 'runner_name': None}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'InferOutputMetadata', 'config_key': None, 'runner_name': None}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'FetchOutputModelData', 'config_key': None, 'runner_name': None}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.PIPELINE_FINISHED {}
+OptimizeEvent.PIPELINE_STARTED {'name': 'PyTorch Export'}
+OptimizeEvent.COMMAND_STARTED {'command': 'ExportTorch2TorchScript', 'config_key': 'torchscript-script', 'runner_name': None}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'ExportTorch2TorchScript', 'config_key': 'torchscript-trace', 'runner_name': None}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'ExportExportedProgram', 'config_key': 'torch-exportedprogram', 'runner_name': None}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'ExportTorch2DynamoONNX', 'config_key': 'onnx-dynamo', 'runner_name': None}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.FAIL}
+OptimizeEvent.COMMAND_STARTED {'command': 'GraphSurgeonOptimize', 'config_key': 'onnx-dynamo', 'runner_name': None}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+OptimizeEvent.COMMAND_STARTED {'command': 'ExportTorch2ONNX', 'config_key': 'onnx', 'runner_name': None}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'GraphSurgeonOptimize', 'config_key': 'onnx', 'runner_name': None}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.PIPELINE_FINISHED {}
+OptimizeEvent.PIPELINE_STARTED {'name': 'Finding max batch size for fixed shapes based pipelines'}
+OptimizeEvent.COMMAND_STARTED {'command': 'FindMaxBatchSize', 'config_key': None, 'runner_name': None}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.PIPELINE_FINISHED {}
+OptimizeEvent.PIPELINE_STARTED {'name': 'PyTorch Conversion'}
+OptimizeEvent.COMMAND_STARTED {'command': 'ConvertTorchScript2ONNX', 'config_key': 'onnx-script', 'runner_name': None}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'GraphSurgeonOptimize', 'config_key': 'onnx-script', 'runner_name': None}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'ConvertTorchScript2ONNX', 'config_key': 'onnx-trace', 'runner_name': None}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'GraphSurgeonOptimize', 'config_key': 'onnx-trace', 'runner_name': None}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.PIPELINE_FINISHED {}
+OptimizeEvent.PIPELINE_STARTED {'name': 'TensorRT Conversion'}
+OptimizeEvent.COMMAND_STARTED {'command': 'ConvertONNX2TRT', 'config_key': 'trt-dynamo-fp32', 'runner_name': None}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+OptimizeEvent.COMMAND_STARTED {'command': 'ConvertONNX2TRT', 'config_key': 'trt-dynamo-fp16', 'runner_name': None}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+OptimizeEvent.COMMAND_STARTED {'command': 'ConvertONNX2TRT', 'config_key': 'trt-fp32', 'runner_name': None}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'ConvertONNX2TRT', 'config_key': 'trt-fp16', 'runner_name': None}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'ConvertONNX2TRT', 'config_key': 'trt-script-fp32', 'runner_name': None}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'ConvertONNX2TRT', 'config_key': 'trt-script-fp16', 'runner_name': None}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'ConvertONNX2TRT', 'config_key': 'trt-trace-fp32', 'runner_name': None}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'ConvertONNX2TRT', 'config_key': 'trt-trace-fp16', 'runner_name': None}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.PIPELINE_FINISHED {}
+OptimizeEvent.PIPELINE_STARTED {'name': 'Correctness'}
+OptimizeEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'torch', 'runner_name': 'TorchCUDA'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'torch', 'runner_name': 'TorchCompileCUDA'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'torchscript-script', 'runner_name': 'TorchScriptCUDA'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'torchscript-trace', 'runner_name': 'TorchScriptCUDA'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'torch-exportedprogram', 'runner_name': 'TorchExportedProgramCUDA'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.FAIL}
+OptimizeEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'onnx-dynamo', 'runner_name': 'OnnxCUDA'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+OptimizeEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'onnx-dynamo', 'runner_name': 'OnnxTensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+OptimizeEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'onnx', 'runner_name': 'OnnxCUDA'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'onnx', 'runner_name': 'OnnxTensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'onnx-script', 'runner_name': 'OnnxCUDA'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'onnx-script', 'runner_name': 'OnnxTensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'onnx-trace', 'runner_name': 'OnnxCUDA'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'onnx-trace', 'runner_name': 'OnnxTensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'trt-dynamo-fp32', 'runner_name': 'TensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+OptimizeEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'trt-dynamo-fp16', 'runner_name': 'TensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+OptimizeEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'trt-fp32', 'runner_name': 'TensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'trt-fp16', 'runner_name': 'TensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'trt-script-fp32', 'runner_name': 'TensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'trt-script-fp16', 'runner_name': 'TensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'trt-trace-fp32', 'runner_name': 'TensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'Correctness', 'config_key': 'trt-trace-fp16', 'runner_name': 'TensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.PIPELINE_FINISHED {}
+OptimizeEvent.PIPELINE_STARTED {'name': 'Performance'}
+OptimizeEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'torchscript-script', 'runner_name': 'TorchScriptCUDA'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'torchscript-trace', 'runner_name': 'TorchScriptCUDA'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'torch-exportedprogram', 'runner_name': 'TorchExportedProgramCUDA'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.FAIL}
+OptimizeEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'onnx-dynamo', 'runner_name': 'OnnxCUDA'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+OptimizeEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'onnx-dynamo', 'runner_name': 'OnnxTensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+OptimizeEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'onnx', 'runner_name': 'OnnxCUDA'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'onnx', 'runner_name': 'OnnxTensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'onnx-script', 'runner_name': 'OnnxCUDA'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'onnx-script', 'runner_name': 'OnnxTensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'onnx-trace', 'runner_name': 'OnnxCUDA'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'onnx-trace', 'runner_name': 'OnnxTensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'trt-dynamo-fp32', 'runner_name': 'TensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+OptimizeEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'trt-dynamo-fp16', 'runner_name': 'TensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+OptimizeEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'trt-fp32', 'runner_name': 'TensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'trt-fp16', 'runner_name': 'TensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'trt-script-fp32', 'runner_name': 'TensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'trt-script-fp16', 'runner_name': 'TensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'trt-trace-fp32', 'runner_name': 'TensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'trt-trace-fp16', 'runner_name': 'TensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'torch', 'runner_name': 'TorchCUDA'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'Performance', 'config_key': 'torch', 'runner_name': 'TorchCompileCUDA'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.PIPELINE_FINISHED {}
+OptimizeEvent.PIPELINE_STARTED {'name': 'Verify Models'}
+OptimizeEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'torch', 'runner_name': 'TorchCUDA'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'torch', 'runner_name': 'TorchCompileCUDA'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'torchscript-script', 'runner_name': 'TorchScriptCUDA'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'torchscript-trace', 'runner_name': 'TorchScriptCUDA'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'torch-exportedprogram', 'runner_name': 'TorchExportedProgramCUDA'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+OptimizeEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'onnx-dynamo', 'runner_name': 'OnnxCUDA'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+OptimizeEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'onnx-dynamo', 'runner_name': 'OnnxTensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+OptimizeEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'onnx', 'runner_name': 'OnnxCUDA'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'onnx', 'runner_name': 'OnnxTensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'onnx-script', 'runner_name': 'OnnxCUDA'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'onnx-script', 'runner_name': 'OnnxTensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'onnx-trace', 'runner_name': 'OnnxCUDA'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'onnx-trace', 'runner_name': 'OnnxTensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'trt-dynamo-fp32', 'runner_name': 'TensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+OptimizeEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'trt-dynamo-fp16', 'runner_name': 'TensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}
+OptimizeEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'trt-fp32', 'runner_name': 'TensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'trt-fp16', 'runner_name': 'TensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'trt-script-fp32', 'runner_name': 'TensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'trt-script-fp16', 'runner_name': 'TensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'trt-trace-fp32', 'runner_name': 'TensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.COMMAND_STARTED {'command': 'VerifyModel', 'config_key': 'trt-trace-fp16', 'runner_name': 'TensorRT'}
+OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
+OptimizeEvent.PIPELINE_FINISHED {}
+OptimizeEvent.BEST_MODEL_PICKED {'config_key': 'torch', 'runner_name': 'TorchCUDA', 'model_path': None}
+OptimizeEvent.OPTIMIZATION_FINISHED {}

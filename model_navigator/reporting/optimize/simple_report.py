@@ -33,7 +33,7 @@ from model_navigator.pipelines.constants import (
     PIPELINE_TORCH_TENSORRT_CONVERSION,
     PIPELINE_VERIFY_MODELS,
 )
-from model_navigator.reporting.base_report import BaseReport
+from model_navigator.reporting.optimize.base_report import BaseReport
 
 
 class SimpleReport(BaseReport):

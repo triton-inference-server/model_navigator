@@ -1,0 +1,26 @@
+Profiling started
+python on eager: profiling ...
+python on eager: Batch      1, Throughput:    1000.00 [infer/sec], Avg Latency:       1.00 [ms]
+python on eager: Batch      2, Throughput:    1000.00 [infer/sec], Avg Latency:       2.00 [ms]
+python on eager: profiling OK
+navigator on optimized: profiling ...
+navigator on optimized: Batch      1, Throughput:    1000.00 [infer/sec], Avg Latency:       1.00 [ms]
+navigator on optimized: Batch      2, Throughput:    2000.00 [infer/sec], Avg Latency:       1.00 [ms]
+navigator on optimized: Batch      4, Throughput:    4000.00 [infer/sec], Avg Latency:       1.00 [ms]
+navigator on optimized: profiling OK
+onnx on OnnxCUDA: profiling ...
+onnx on OnnxCUDA: profiling FAILED
+Profiling finished
+                            Profiling status                             
+┏━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┓
+┃ Model on Runtime       ┃ Status ┃ Batch  ┃ Throughput  ┃ Avg Latency  ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━━┩
+│ python on eager        │   OK   │      1 │    1000.00  │       1.00   │
+│                        │        │      2 │    1000.00  │       2.00   │
+├────────────────────────┼────────┼────────┼─────────────┼──────────────┤
+│ navigator on optimized │   OK   │      1 │    1000.00  │       1.00   │
+│                        │        │      2 │    2000.00  │       1.00   │
+│                        │        │      4 │    4000.00  │       1.00   │
+├────────────────────────┼────────┼────────┼─────────────┼──────────────┤
+│ onnx on OnnxCUDA       │ FAILED │        │             │              │
+└────────────────────────┴────────┴────────┴─────────────┴──────────────┘

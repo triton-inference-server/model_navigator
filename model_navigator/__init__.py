@@ -74,6 +74,8 @@ from model_navigator import (  # noqa: F401
     utilities,
 )
 from model_navigator.commands.base import CommandStatus  # noqa: F401
-from model_navigator.reporting import initialize_reporting
+from model_navigator.reporting.optimize import initialize_optimize_reporting
+from model_navigator.reporting.profile import initialize_profile_reporting
 
-initialize_reporting()
+initialize_optimize_reporting()
+initialize_profile_reporting()
