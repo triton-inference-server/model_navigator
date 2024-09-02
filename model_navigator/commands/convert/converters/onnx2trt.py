@@ -21,8 +21,7 @@ from polygraphy import mod
 from polygraphy.backend.trt import CreateConfig, Profile, engine_from_network, network_from_onnx_path, save_engine
 
 from model_navigator.configuration import TensorRTPrecision, TensorRTPrecisionMode
-from model_navigator.frameworks.tensorrt.timing_tactics import TimingCacheManager
-from model_navigator.inplace.config import DEFAULT_CACHE_DIR
+from model_navigator.frameworks.tensorrt.timing_tactics import TimingCacheManager, trt_cache_inplace_cache_dir
 
 trt = mod.lazy_import("tensorrt")
 
@@ -76,22 +75,22 @@ def convert(
     """Run conversion from TorchScript to Torch-TensorRT.
 
     Args:
-        exported_model_path (str): TorchScript model path.
-        converted_model_path (str): Output Torch-TensorRT model path.
-        profiles (Dict[str, Dict[str, int]]): Dictionary with min, opt, max shapes of the inputs.
+        exported_model_path: TorchScript model path.
+        converted_model_path: Output Torch-TensorRT model path.
+        profiles: Dictionary with min, opt, max shapes of the inputs.
             The key is an input name and the value is a dictionary with keys ("min", "opt", "max")
             and respective values.
-        max_workspace_size (int): Maximum workspace size in bytes.
-        precision (str): TensorRT precision. Could be "fp16" or "fp32".
-        precision_mode (str): TensorRT precision mode.
-        navigator_workspace (Optional[str], optional): Model Navigator workspace path.
+        max_workspace_size: Maximum workspace size in bytes.
+        precision: TensorRT precision. Could be "fp16" or "fp32".
+        precision_mode: TensorRT precision mode.
+        navigator_workspace: Model Navigator workspace path.
             When None use current workdir. Defaults to None.
         optimization_level: Optimization level for TensorRT engine
         compatibility_level: Hardware compatibility level for generated engine
-        onnx_parser_flags (Optional[List[trt.OnnxParserFlag]], optional): List of flags to set ONNX parser behavior.
-        timing_cache_dir: (Optional[str]): Directory to save timing cache. Defaults to None which means it will be saved in workspace root.
-        model_name: (Optional[str]): Model name for the timing cache. Defaults to None which means it will be named after the model file.
-        custom_args (Optional[Dict[str, str]], optional): Dictionary with passthrough parameters.
+        onnx_parser_flags: List of flags to set ONNX parser behavior.
+        timing_cache_dir: Directory to save timing cache. Defaults to None which means it will be saved in workspace root.
+        model_name: Model name for the timing cache. Defaults to None which means it will be named after the model file.
+        custom_args: Dictionary with passthrough parameters.
             For available arguments check PyTorch documentation: https://pytorch.org/TensorRT/py_api/torch_tensorrt.html
     """
     if not navigator_workspace:
@@ -103,7 +102,7 @@ def convert(
         exported_model_path = navigator_workspace / exported_model_path
 
     if model_name is None:
-        model_name = exported_model_path.stem
+        model_name = navigator_workspace.stem
 
     converted_model_path = pathlib.Path(converted_model_path)
     if not converted_model_path.is_absolute():
@@ -134,10 +133,8 @@ def convert(
             trt.MemoryPoolType.WORKSPACE: max_workspace_size,
         }
 
-    # saving timing cache in model_navigator workspace root
-    timing_cache = DEFAULT_CACHE_DIR / "timing_cache"
-
-    # .. or in user provided directory
+    # saving timing cache in model_navigator workspace or ...
+    timing_cache = trt_cache_inplace_cache_dir()
     if timing_cache_dir is not None:
         timing_cache = pathlib.Path(timing_cache_dir)
 

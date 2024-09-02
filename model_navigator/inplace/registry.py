@@ -17,6 +17,7 @@ import gc
 from collections import OrderedDict
 from typing import TYPE_CHECKING, Dict
 
+import model_navigator.core.context as ctx
 from model_navigator.reporting.optimize.events import OptimizeEvent, default_event_emitter
 
 if TYPE_CHECKING:
@@ -69,6 +70,7 @@ class ModuleRegistry:
         self.event_emitter.emit(OptimizeEvent.INPLACE_STARTED)
         for name, module in self.items():
             if not module.is_optimized:
+                ctx.global_context.set(ctx.INPLACE_OPTIMIZE_MODULE_NAME_KEY, name)
                 self.event_emitter.emit(OptimizeEvent.MODULE_PICKED_FOR_OPTIMIZATION, name=name)
                 module.optimize()
         self.event_emitter.emit(OptimizeEvent.INPLACE_FINISHED)

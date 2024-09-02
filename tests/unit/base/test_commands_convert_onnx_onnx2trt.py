@@ -67,6 +67,14 @@ def test_run_execute_conversion_when_model_not_support_batching(mocker):
             assert result.status == CommandStatus.OK
             assert ConvertONNX2TRT._execute_conversion.called is True  # pytype: disable=attribute-error
 
+            args = ConvertONNX2TRT._execute_conversion.call_args_list[0][1][
+                "get_args"
+            ]  # pytype: disable=attribute-error
+            assert callable(args)
+            args = args()
+            assert "--timing_cache_dir" in args
+            assert "--model_name" in args
+
 
 # TODO: add similar test for when trt_profiles provided
 def test_run_execute_conversion_with_max_bs_search_when_trt_profile_not_provided(mocker):

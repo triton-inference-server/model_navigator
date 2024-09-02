@@ -26,6 +26,7 @@ from model_navigator.configuration.device import map_device_string
 from model_navigator.core.dataloader import load_samples
 from model_navigator.core.tensor import TensorMetadata
 from model_navigator.frameworks.tensorrt import utils as tensorrt_utils
+from model_navigator.frameworks.tensorrt.timing_tactics import TimingCacheManager, trt_cache_inplace_cache_dir
 from model_navigator.utils.common import numpy_to_torch_dtype
 
 
@@ -66,6 +67,8 @@ def convert(
     target_device: str,
     debug: bool,
     custom_args: Dict[str, Any],
+    timing_cache_dir: Optional[str] = None,
+    model_name: Optional[str] = None,
     navigator_workspace: Optional[str] = None,
 ) -> None:
     """Run conversion from ExportedProgram to Torch-TensorRT.
@@ -83,9 +86,11 @@ def convert(
         precision_mode: TensorRT precision mode.
         target_device: Device on which perform the conversion
         debug: If True print debug logs.
-        navigator_workspace: Model Navigator workspace path. When None use current workdir. Defaults to None.
         custom_args: Dictionary with passthrough parameters. For available arguments check PyTorch
                      documentation: https://pytorch.org/TensorRT/py_api/torch_tensorrt.html
+        timing_cache_dir: Directory to save timing cache. Defaults to None which means it will be saved in workspace root.
+        model_name: Model name for the timing cache. Defaults to None which means it will be named after the model file.
+        navigator_workspace: Model Navigator workspace path. When None use current workdir. Defaults to None.
     """
     import torch_tensorrt  # pytype: disable=import-error
 
@@ -117,6 +122,9 @@ def convert(
     if not exported_model_path.is_absolute():
         exported_model_path = navigator_workspace / exported_model_path
 
+    if model_name is None:
+        model_name = navigator_workspace.stem
+
     model = torch.export.load(exported_model_path.as_posix())
 
     if debug:
@@ -126,14 +134,26 @@ def convert(
 
     target_device = map_device_string(target_device)
 
-    tr_model_compiled = torch_tensorrt.dynamo.compile(
-        exported_program=model,
-        inputs=model_input_shapes,
-        workspace_size=max_workspace_size,
-        device=target_device,
-        **_get_precision(precision, precision_mode),
-        **custom_args,
-    )
+    # saving timing cache in model_navigator workspace or ...
+    timing_cache = trt_cache_inplace_cache_dir()
+    if timing_cache_dir is not None:
+        timing_cache = pathlib.Path(timing_cache_dir)
+
+    with TimingCacheManager(model_name=model_name, cache_path=timing_cache_dir) as timing_cache:
+        timing_cache_path = timing_cache.as_posix() if timing_cache else None
+
+        # reusing custom_args as dynamo.compile has a default cache path argument
+        if timing_cache_path is not None:
+            custom_args["timing_cache_path"] = timing_cache_path
+
+        tr_model_compiled = torch_tensorrt.dynamo.compile(
+            exported_program=model,
+            inputs=model_input_shapes,
+            workspace_size=max_workspace_size,
+            device=target_device,
+            **_get_precision(precision, precision_mode),
+            **custom_args,
+        )
 
     converted_model_path = pathlib.Path(converted_model_path)
     if not converted_model_path.is_absolute():

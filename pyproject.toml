@@ -74,7 +74,7 @@ dependencies = [
 [project.optional-dependencies]
 torch = [
     "torch",
-    "torch_tensorrt"
+    "torch_tensorrt>1"
 ]
 tensorflow = [
     "tensorflow",
