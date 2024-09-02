@@ -16,6 +16,7 @@
 import pathlib
 from typing import Any, Dict, List, Optional
 
+import model_navigator.core.context as ctx
 from model_navigator.commands.base import CommandOutput, CommandStatus
 from model_navigator.commands.convert.base import Convert2TensorRTWithMaxBatchSizeSearch
 from model_navigator.commands.execution_context import ExecutionContext
@@ -29,6 +30,7 @@ from model_navigator.core.logger import LOGGER
 from model_navigator.core.workspace import Workspace
 from model_navigator.frameworks.onnx.utils import get_onnx_io_names
 from model_navigator.frameworks.tensorrt import utils as tensorrt_utils
+from model_navigator.frameworks.tensorrt.timing_tactics import trt_cache_inplace_cache_dir
 from model_navigator.utils import devices
 from model_navigator.utils.common import parse_kwargs_to_cmd
 
@@ -118,6 +120,8 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
                 profile_dict = {name: shapes for name, shapes in profile.to_dict().items() if name in onnx_input_names}
                 profiles_dicts.append(profile_dict)
 
+            module_name = ctx.global_context.get(ctx.INPLACE_OPTIMIZE_MODULE_NAME_KEY) or workspace.path.stem
+
             kwargs = {
                 "exported_model_path": input_model_path.relative_to(workspace.path).as_posix(),
                 "converted_model_path": converted_model_path.relative_to(workspace.path).as_posix(),
@@ -126,7 +130,8 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
                 "precision": precision.value,
                 "precision_mode": precision_mode.value,
                 "navigator_workspace": workspace.path.as_posix(),
-                "model_name": workspace.path.parent.name,
+                "model_name": module_name,
+                "timing_cache_dir": trt_cache_inplace_cache_dir(),
                 "custom_args": custom_args,
             }
             if optimization_level is not None:

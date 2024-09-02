@@ -16,6 +16,7 @@
 import pathlib
 from typing import Any, Dict, List, Optional
 
+import model_navigator.core.context as ctx
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.convert.base import Convert2TensorRTWithMaxBatchSizeSearch
 from model_navigator.commands.convert.converters import ep2torchtrt, ts2onnx
@@ -25,6 +26,7 @@ from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata
 from model_navigator.core.workspace import Workspace
 from model_navigator.frameworks.tensorrt import utils as tensorrt_utils
+from model_navigator.frameworks.tensorrt.timing_tactics import trt_cache_inplace_cache_dir
 from model_navigator.utils import devices
 from model_navigator.utils.common import parse_kwargs_to_cmd
 
@@ -168,6 +170,7 @@ class ConvertExportedProgram2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearc
             # TODO: Add support for multiple profiles when Torch-TensorRT supports it.
             profile = trt_profiles[0] if trt_profiles else dataloader_trt_profile
             shapes = self._get_shape_args(trt_profile=profile, batch_dim=batch_dim, max_batch_size=max_batch_size)
+            module_name = ctx.global_context.get(ctx.INPLACE_OPTIMIZE_MODULE_NAME_KEY) or workspace.path.stem
 
             kwargs = {
                 "exported_model_path": exported_model_path.relative_to(workspace.path).as_posix(),
@@ -181,6 +184,8 @@ class ConvertExportedProgram2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearc
                 "navigator_workspace": workspace.path.as_posix(),
                 "target_device": target_device.value,
                 "custom_args": custom_args,
+                "model_name": module_name,
+                "timing_cache_dir": trt_cache_inplace_cache_dir(),
                 "debug": debug,
             }
             args = parse_kwargs_to_cmd(kwargs)
