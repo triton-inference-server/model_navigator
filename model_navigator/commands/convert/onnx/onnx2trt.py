@@ -120,7 +120,7 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
                 profile_dict = {name: shapes for name, shapes in profile.to_dict().items() if name in onnx_input_names}
                 profiles_dicts.append(profile_dict)
 
-            module_name = ctx.global_context.get(ctx.INPLACE_OPTIMIZE_MODULE_NAME_KEY) or workspace.path.stem
+            module_name = ctx.global_context.get(ctx.INPLACE_OPTIMIZE_MODULE_NAME_CONTEXT_KEY) or workspace.path.stem
 
             kwargs = {
                 "exported_model_path": input_model_path.relative_to(workspace.path).as_posix(),

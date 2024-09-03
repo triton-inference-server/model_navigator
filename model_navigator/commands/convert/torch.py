@@ -170,7 +170,7 @@ class ConvertExportedProgram2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearc
             # TODO: Add support for multiple profiles when Torch-TensorRT supports it.
             profile = trt_profiles[0] if trt_profiles else dataloader_trt_profile
             shapes = self._get_shape_args(trt_profile=profile, batch_dim=batch_dim, max_batch_size=max_batch_size)
-            module_name = ctx.global_context.get(ctx.INPLACE_OPTIMIZE_MODULE_NAME_KEY) or workspace.path.stem
+            module_name = ctx.global_context.get(ctx.INPLACE_OPTIMIZE_MODULE_NAME_CONTEXT_KEY) or workspace.path.stem
 
             kwargs = {
                 "exported_model_path": exported_model_path.relative_to(workspace.path).as_posix(),

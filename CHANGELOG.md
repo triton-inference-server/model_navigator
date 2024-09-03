@@ -20,11 +20,12 @@ limitations under the License.
 
 - new: simple and detailed reporting of the optimization process
 - new: adjusted exporting TensorFlow SavedModel for Keras 3.x
-- new: improve handling conversion batch size based on recorded samples
-- new: inform user when wrapped a module which is not called during optimize or module use a custom forward function
+- new: inform user when wrapped a module which is not called during optimize
+- new: inform user when module use a custom forward function
 - new: support for dynamic shapes in Torch ExportedProgram
 - new: use ExportedProgram for Torch-TensorRT conversion
 - new: support back-off policy during profiling to avoid reporting local minimum
+- new: automatically scale conversion batch size when modules have different batch sizes in scope of a single pipeline
 - change: TensorRT conversion max batch size search rely on saturating throughput for base formats
 - change: adjusted profiling configuration for throughput cutoff search
 - change: include optimized pipeline to list of examined variants during `nav.profile`
