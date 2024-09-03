@@ -35,7 +35,8 @@ from model_navigator.frameworks import is_torch2_available
 from model_navigator.package import Package, load_from_workspace
 from model_navigator.utils.module import lazy_import
 
-from ..exceptions import ModelNavigatorUserInputError
+from ..core import context as ctx
+from ..exceptions import ModelNavigatorRuntimeError, ModelNavigatorUserInputError
 from ..utils.format_helpers import is_source_format
 from .config import OptimizeConfig, inplace_config
 from .utils import TorchDataloader, get_dynamic_axes_from_shapes
@@ -150,14 +151,19 @@ class RecordingModule(BaseModule):
         self._optimized = False
         self._temp_dir = tempfile.TemporaryDirectory(prefix=f"{self._name}_")
         self._samples_dir = pathlib.Path(self._temp_dir.name)
-        self._min_batch_size = None
+        self._min_batch_sizes = {}
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         """Record a sample and run the module."""
         LOGGER.debug(f"Calling recording `{self.name}` module.")
-        self.record_sample(*args, **kwargs)
+        if self.optimize_config:
+            self.record_sample(*args, **kwargs)
+
         output = self._forward_call(*args, **kwargs)
-        self._recorder = True
+
+        if self.optimize_config:
+            self._recorder = True
+
         return output
 
     def deactivate(self):
@@ -174,6 +180,9 @@ class RecordingModule(BaseModule):
                 """Please, review the wrapped modules. We use `__call__` method to run queries on module. """
                 """If you model use other method, use `forward_func` in module configuration to override the default."""
             )
+
+        if not self.optimize_config:
+            raise ModelNavigatorRuntimeError(f"The module `{self.name}` has no optimize configuration")
 
         batch_dim = 0 if self.optimize_config.batching else None
         if self.optimize_config.batching:
@@ -206,10 +215,15 @@ class RecordingModule(BaseModule):
 
         shapes = {n: to_numpy(t, Framework.TORCH).shape for n, t in pytree_metadata.flatten_sample(sample).items()}
 
-        min_shapes = [shape[0] for shape in shapes.values() if len(shape) > 1]
-        if len(min_shapes) > 0:
-            min_batch_size = min(min_shapes)
-            self._min_batch_size = min(min_batch_size, self._min_batch_size) if self._min_batch_size else min_batch_size
+        if self.optimize_config.batching:
+            recording_batch = ctx.global_context.get(ctx.INPLACE_OPTIMIZE_BATCH_CONTEXT_KEY)
+            min_shapes = [shape[0] for shape in shapes.values() if len(shape) > 1]
+            if len(min_shapes) > 0:
+                batch_size = min(min_shapes)
+                if recording_batch in self._min_batch_sizes:
+                    self._min_batch_sizes[recording_batch] = min(batch_size, self._min_batch_sizes[recording_batch])
+                else:
+                    self._min_batch_sizes[recording_batch] = batch_size
 
         self._samples_shapes[pytree_metadata].append(shapes)
 
@@ -255,38 +269,48 @@ class RecordingModule(BaseModule):
         if self.optimize_config.optimization_profile is None:
             return
 
-        if self.optimize_config.optimization_profile.max_batch_size is not None:
-            if not self._min_batch_size:
+        max_batch_size = self.optimize_config.optimization_profile.max_batch_size
+        batch_sizes = self.optimize_config.optimization_profile.batch_sizes
+        if max_batch_size is not None or batch_sizes is not None:
+            if not self._min_batch_sizes:
                 raise ModelNavigatorUserInputError(
                     """Unable to collect required batch size from input samples."""
                     f"""Has the wrapped module `{self.name}` been executed in scope of the provided function?"""
                 )
 
-            max_batch_size = self.optimize_config.optimization_profile.max_batch_size
-            new_max_batch_size = max(self._min_batch_size, max_batch_size)
-            if new_max_batch_size > max_batch_size:
-                self.optimize_config.optimization_profile.max_batch_size = new_max_batch_size
+            scale_ratios = [b // rb for rb, b in self._min_batch_sizes.items()]
+            scale_ratio = max(scale_ratios)
+            if scale_ratio != 1:
+                batch_sizes_info = []
+                for rb, b in self._min_batch_sizes.items():
+                    batch_sizes_info.append(f"""Pipeline batch size: {rb:6}, module batch size: {b:6}""")
+
+                batch_sizes_info_str = "\n".join(batch_sizes_info)
+
                 LOGGER.info(
-                    f"""Setting maximal batch for size to `{new_max_batch_size}` for {self.name} module as provided"""
-                    f"""value `{max_batch_size}`is lower than minimal batch size required for module conversion."""
+                    f"""Found `{self.name}` module is executed with different batch size than other modules.\n"""
+                    """Collected batch sizes for module during recording:\n"""
+                    f"""{batch_sizes_info_str}"""
                 )
 
-        if self.optimize_config.optimization_profile.batch_sizes is not None:
-            if not self._min_batch_size:
-                raise ModelNavigatorUserInputError(
-                    """Unable to collect required batch size from input samples."""
-                    f"""Has the wrapped module `{self.name}` been executed in scope of the provided function?"""
-                )
-
-            max_batch_size = max(self.optimize_config.optimization_profile.batch_sizes)
-            new_max_batch_size = max(self._min_batch_size, max_batch_size)
-            if new_max_batch_size > max_batch_size:
-                self.optimize_config.optimization_profile.batch_sizes.append(new_max_batch_size)
-                LOGGER.info(
-                    f"""Extending batch sizes list with `{new_max_batch_size}`for {self.name} module as """
-                    f"""max batch size `{max_batch_size}` provided in `batch_sizes` list is lower than minimal  """
-                    """required for module conversion."""
-                )
+            if max_batch_size is not None:
+                new_max_batch_size = max_batch_size * scale_ratio
+                if new_max_batch_size > max_batch_size:
+                    self.optimize_config.optimization_profile.max_batch_size = new_max_batch_size
+                    LOGGER.info(
+                        f"""Setting maximal batch for size to `{new_max_batch_size}` for {self.name} module as provided"""
+                        f"""value `{max_batch_size}`is lower than minimal batch size required for module conversion."""
+                    )
+            else:
+                max_batch_size = max(batch_sizes)
+                new_max_batch_size = max_batch_size * scale_ratio
+                if new_max_batch_size > max_batch_size:
+                    self.optimize_config.optimization_profile.batch_sizes.append(new_max_batch_size)
+                    LOGGER.info(
+                        f"""Extending batch sizes list with `{new_max_batch_size}`for {self.name} module as """
+                        f"""max batch size `{max_batch_size}` provided in `batch_sizes` list is lower than minimal  """
+                        """required for module conversion."""
+                    )
 
 
 class OptimizedModule(BaseModule):

@@ -72,12 +72,15 @@ def export(
             "The provided `device_max_batch_size` and `dataloader_max_batch_size` are None."
         )
 
-    # WAR for to big batch size value
-    max_batch_size = max_batch_size if max_batch_size < 2048 else max_batch_size - 1
-
-    # WAR to make data dynamic
-    batch_size = min(2, max_batch_size)  # select the minimum value to expand samples
-    expanded_sample = expand_sample(conversion_sample, input_metadata, batch_dim=batch_dim, batch_size=batch_size)
+    if batch_dim is None:
+        max_batch_size = None
+        expanded_sample = expand_sample(conversion_sample, input_metadata, batch_dim=batch_dim, batch_size=None)
+    else:
+        # WAR for to big batch size value
+        max_batch_size = max_batch_size if max_batch_size < 2048 else max_batch_size - 1
+        # WAR to make data dynamic
+        batch_size = min(2, max_batch_size)  # select the minimum value to expand samples
+        expanded_sample = expand_sample(conversion_sample, input_metadata, batch_dim=batch_dim, batch_size=batch_size)
 
     dummy_input = {n: torch.from_numpy(val).to(target_device) for n, val in expanded_sample.items()}
     dummy_input = input_metadata.unflatten_sample(dummy_input, wrap_input=False)
@@ -100,7 +103,7 @@ def export(
             continue
 
         dynamic_shapes_ = {}
-        if max_batch_size > 1 and len(tensor_metadata.shape) > 0:
+        if max_batch_size is not None and max_batch_size > 1 and len(tensor_metadata.shape) > 0:
             dynamic_shapes_[0] = torch.export.Dim(f"{name}_batch", min=1, max=max_batch_size)
 
         for idx in range(1, len(spec_.min)):

@@ -16,8 +16,9 @@
 from collections import OrderedDict
 from typing import Any
 
-INPLACE_STRATEGIES_CONTEXT_KEY = "inplace_strategies"
-INPLACE_OPTIMIZE_MODULE_NAME_KEY = "optimization_current_module_name"
+INPLACE_OPTIMIZE_STRATEGIES_CONTEXT_KEY = "inplace_optimize_strategies"
+INPLACE_OPTIMIZE_BATCH_CONTEXT_KEY = "inplace_optimize_batch"
+INPLACE_OPTIMIZE_MODULE_NAME_CONTEXT_KEY = "inplace_optimize_current_module_name"
 
 
 class GlobalContext:

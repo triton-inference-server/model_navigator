@@ -21,7 +21,7 @@ from pyee import EventEmitter
 from model_navigator.configuration import DEFAULT_RUNTIME_STRATEGIES, Format
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model import model_config
-from model_navigator.core.context import INPLACE_STRATEGIES_CONTEXT_KEY, global_context
+from model_navigator.core.context import INPLACE_OPTIMIZE_STRATEGIES_CONTEXT_KEY, global_context
 from model_navigator.core.workspace import Workspace
 from model_navigator.exceptions import ModelNavigatorRuntimeAnalyzerError, ModelNavigatorRuntimeError
 from model_navigator.package.builder import PackageBuilder
@@ -94,7 +94,7 @@ def optimize_pipeline(
 def _emit_optimization_result_event(package: Package, event_emitter: EventEmitter):
     """Emits event with the best result or error."""
     try:
-        strategies = global_context.get(INPLACE_STRATEGIES_CONTEXT_KEY) or DEFAULT_RUNTIME_STRATEGIES
+        strategies = global_context.get(INPLACE_OPTIMIZE_STRATEGIES_CONTEXT_KEY) or DEFAULT_RUNTIME_STRATEGIES
         best_runtime_result = package.get_best_runtime(strategies=strategies, include_source=True)
         best_format_path = package.workspace.path / best_runtime_result.model_status.model_config.path
         model_path = best_format_path if best_format_path.exists() else None

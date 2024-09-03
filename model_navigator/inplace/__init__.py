@@ -61,7 +61,7 @@ from model_navigator.runners.base import NavigatorRunner
 from model_navigator.runners.registry import runner_registry
 from model_navigator.utils.module import lazy_import
 
-from ..core.context import INPLACE_STRATEGIES_CONTEXT_KEY, global_context
+from ..core import context as ctx
 from ..frameworks import is_torch2_available
 from ..reporting.profile.events import ProfileEvent
 from ..reporting.profile.events import default_event_emitter as profile_event_emitter
@@ -96,7 +96,7 @@ def optimize(
         config: Optimize config.
     """
     try:
-        global_context.set(INPLACE_STRATEGIES_CONTEXT_KEY, inplace_config.strategies)
+        ctx.global_context.set(ctx.INPLACE_OPTIMIZE_STRATEGIES_CONTEXT_KEY, inplace_config.strategies)
         if config is None:
             config = OptimizeConfig()
 
@@ -107,7 +107,8 @@ def optimize(
             m.load_recorded()
 
         for input_ in dataloader:
-            _, sample = input_  # unpack batch_size and sample
+            batch_size, sample = input_  # unpack batch_size and sample
+            ctx.global_context.set(ctx.INPLACE_OPTIMIZE_BATCH_CONTEXT_KEY, batch_size)
             if not isinstance(sample, (list, tuple)):
                 sample = (sample,)
             if not isinstance(sample[-1], dict):
@@ -120,7 +121,8 @@ def optimize(
     except Exception as e:
         raise e
     finally:
-        global_context.pop(INPLACE_STRATEGIES_CONTEXT_KEY)
+        ctx.global_context.pop(ctx.INPLACE_OPTIMIZE_STRATEGIES_CONTEXT_KEY)
+        ctx.global_context.pop(ctx.INPLACE_OPTIMIZE_BATCH_CONTEXT_KEY)
 
 
 def profile(

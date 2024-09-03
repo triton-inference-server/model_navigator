@@ -197,11 +197,22 @@ def test_record_module_alt_forward():
     module.side_effect = lambda _: torch.Tensor([1])
     module.forward.side_effect = lambda _: torch.Tensor([2])
 
-    module1 = RecordingModule(module=module, name="model1", input_mapping=lambda x: x, output_mapping=lambda x: x)
+    module1 = RecordingModule(
+        module=module,
+        name="model1",
+        input_mapping=lambda x: x,
+        output_mapping=lambda x: x,
+        optimize_config=OptimizeConfig(),
+    )
     assert module1(torch.Tensor([0])) == torch.ones(1)
 
     module1 = RecordingModule(
-        module=module, name="model2", input_mapping=lambda x: x, output_mapping=lambda x: x, forward=module.forward
+        module=module,
+        name="model2",
+        input_mapping=lambda x: x,
+        output_mapping=lambda x: x,
+        forward=module.forward,
+        optimize_config=OptimizeConfig(),
     )
     assert module1(torch.Tensor([0])) == torch.Tensor([2])
 

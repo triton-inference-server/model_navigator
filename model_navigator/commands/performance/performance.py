@@ -123,8 +123,9 @@ class Performance(Command, requires=[Correctness.name]):
 
             results_str = []
             for result in profiling_results:
+                batch_size = f"{result.batch_size:6}" if result.batch_size is not None else "-"
                 results_str.append(
-                    f"""Batch: {result.batch_size:6}, """
+                    f"""Batch: {batch_size}, """
                     f"""Throughput: {result.throughput:10.2f} [infer/sec], """
                     f"""Avg Latency: {result.avg_latency:10.2f} [ms]"""
                 )
