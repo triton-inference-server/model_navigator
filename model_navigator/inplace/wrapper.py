@@ -96,6 +96,9 @@ class Module(wrapt.ObjectProxy):
     ) -> None:
         """Initialize Module."""
         super().__init__(module)
+        if not isinstance(module, torch.nn.Module):
+            raise ModelNavigatorUserInputError("Only torch modules are supported.")
+
         self._name = name or get_object_name(module)
         self._input_mapping = input_mapping or (lambda x: x)
         self._output_mapping = output_mapping or (lambda x: x)
