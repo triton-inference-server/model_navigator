@@ -50,6 +50,16 @@ def clean_up_registry():
     module_registry.clear()
 
 
+def get_test_module():
+    import torch  # pytype: disable=import-error
+
+    class TestModule(torch.nn.Module):
+        def forward(self, x):
+            return x
+
+    return TestModule()
+
+
 def test_get_object_name():
     assert get_object_name(MagicMock()) == "unittest.mock.MagicMock"
 
@@ -119,9 +129,10 @@ def test_registry_should_emit_events(mock_event_emitter):  # noqa: F811
     assert events[4] == (OptimizeEvent.MODULE_REGISTRY_CLEARED, (), {})
 
 
+@pytest.mark.skipif(not find_spec("torch"), reason="PyTorch is not installed.")
 def test_pass_model_is_optimized_returns_false():
     module = EagerModule(
-        module=MagicMock(),
+        module=get_test_module(),
         name="model_name",
         input_mapping=lambda x: x,
         output_mapping=lambda x: x,
@@ -130,10 +141,11 @@ def test_pass_model_is_optimized_returns_false():
     assert not module.is_optimized
 
 
+@pytest.mark.skipif(not find_spec("torch"), reason="PyTorch is not installed.")
 def test_optimized_model_is_optimized_returns_true(mocker):
     with mocker.patch.object(OptimizedModule, "__init__", return_value=None):
         module = OptimizedModule(
-            module=MagicMock(),
+            module=get_test_module(),
             name="model_name",
             input_mapping=lambda x: x,
             output_mapping=lambda x: x,
@@ -142,9 +154,10 @@ def test_optimized_model_is_optimized_returns_true(mocker):
         assert module.is_optimized
 
 
+@pytest.mark.skipif(not find_spec("torch"), reason="PyTorch is not installed.")
 def test_recording_model_is_optimized_returns_false():
     module = RecordingModule(
-        module=MagicMock(),
+        module=get_test_module(),
         name="model_name",
         input_mapping=lambda x: x,
         output_mapping=lambda x: x,
@@ -153,9 +166,10 @@ def test_recording_model_is_optimized_returns_false():
     assert not module.is_optimized
 
 
+@pytest.mark.skipif(not find_spec("torch"), reason="PyTorch is not installed.")
 def test_pass_model_is_ready_for_optimization_returns_false():
     module = EagerModule(
-        module=MagicMock(),
+        module=get_test_module(),
         name="model_name",
         input_mapping=lambda x: x,
         output_mapping=lambda x: x,
@@ -164,9 +178,10 @@ def test_pass_model_is_ready_for_optimization_returns_false():
     assert not module.is_ready_for_optimization
 
 
+@pytest.mark.skipif(not find_spec("torch"), reason="PyTorch is not installed.")
 def test_recording_model_is_ready_for_optimization_returns_false_when_not_enough_samples():
     module = RecordingModule(
-        module=MagicMock(),
+        module=get_test_module(),
         name="model_name",
         input_mapping=lambda x: x,
         output_mapping=lambda x: x,
@@ -175,11 +190,12 @@ def test_recording_model_is_ready_for_optimization_returns_false_when_not_enough
     assert not module.is_ready_for_optimization
 
 
+@pytest.mark.skipif(not find_spec("torch"), reason="PyTorch is not installed.")
 def test_recording_model_is_ready_for_optimization_returns_true_when_enough_samples():
     from model_navigator.inplace.config import inplace_config
 
     module = RecordingModule(
-        module=MagicMock(),
+        module=get_test_module(),
         name="model_name",
         input_mapping=lambda x: x,
         output_mapping=lambda x: x,
@@ -190,12 +206,30 @@ def test_recording_model_is_ready_for_optimization_returns_true_when_enough_samp
 
 
 @pytest.mark.skipif(not find_spec("torch"), reason="PyTorch is not installed.")
+def test_record_module_raise_exception_when_invalid_module_wrapped():
+    module = MagicMock()
+    with pytest.raises(ModelNavigatorUserInputError, match="Only torch modules are supported."):
+        RecordingModule(
+            module=module,
+            name="model1",
+            input_mapping=lambda x: x,
+            output_mapping=lambda x: x,
+            optimize_config=OptimizeConfig(),
+        )
+
+
+@pytest.mark.skipif(not find_spec("torch"), reason="PyTorch is not installed.")
 def test_record_module_alt_forward():
     import torch  # pytype: disable=import-error
 
-    module = MagicMock()
-    module.side_effect = lambda _: torch.Tensor([1])
-    module.forward.side_effect = lambda _: torch.Tensor([2])
+    class TestModule(torch.nn.Module):
+        def forward(self, x):
+            return torch.Tensor([1])
+
+        def encode(self, x):
+            return torch.Tensor([2])
+
+    module = TestModule()
 
     module1 = RecordingModule(
         module=module,
@@ -211,24 +245,41 @@ def test_record_module_alt_forward():
         name="model2",
         input_mapping=lambda x: x,
         output_mapping=lambda x: x,
-        forward=module.forward,
+        forward=module.encode,
         optimize_config=OptimizeConfig(),
     )
     assert module1(torch.Tensor([0])) == torch.Tensor([2])
 
 
 @pytest.mark.skipif(not find_spec("torch"), reason="PyTorch is not installed.")
-def test_module_wrapper_alt_forward():
+def test_module_raise_exception_when_invalid_module_wrapped():
+    module = MagicMock()
+    with pytest.raises(ModelNavigatorUserInputError, match="Only torch modules are supported."):
+        Module(
+            module=module,
+            name="model1",
+        )
+
+
+@pytest.mark.skipif(not find_spec("torch"), reason="PyTorch is not installed.")
+def test_module_wrapper_alt_forward(mocker):
     import torch  # pytype: disable=import-error
 
-    module = MagicMock()
-    # torch __call__ triggers forward, so we need to mock both, and be careful
-    module.side_effect = lambda _: module.forward(0) + 1000
-    module.forward.side_effect = lambda _: torch.Tensor([2])
+    class TestModule(torch.nn.Module):
+        def forward(self, x):
+            return x + torch.Tensor([2])
+
+        def encode(self, x):
+            return self.forward(x)
+
+    module = TestModule()
+
+    spy_forward = mocker.spy(module, "forward")
 
     module = Module(module, "model3", forward_func="forward")
 
-    assert module(torch.zeros(1)) == torch.Tensor([2])
+    assert module.encode(torch.zeros(1)) == torch.Tensor([2])
+    assert spy_forward.call_count == 1
 
 
 @pytest.mark.skipif(not find_spec("torch"), reason="PyTorch is not installed.")

@@ -70,6 +70,9 @@ class BaseModule(abc.ABC):
             forward: method to replace navigator default __call__
             device: Device on which optimized module has to be executed.
         """
+        if not isinstance(module, torch.nn.Module):
+            raise ModelNavigatorUserInputError("Only torch modules are supported.")
+
         self._module = module
         self._name = name
         self._signature = self._get_signature()
