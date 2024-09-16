@@ -16,7 +16,7 @@ limitations under the License.
 
 # Changelog
 
-## 0.12.0 (unreleased)
+## 0.12.0
 
 - new: simple and detailed reporting of the optimization process
 - new: adjusted exporting TensorFlow SavedModel for Keras 3.x
@@ -35,6 +35,21 @@ limitations under the License.
 - fix: pipelines sometimes obtain model and tensors on different devices during `nav.profile`
 - fix: extract graph from ExportedProgram for running inference
 - fix: runner configuration not propagated to pre-processing steps
+
+[//]: <> (put here on external component update with short summary what change or link to changelog)
+
+- Version of external components used during testing:
+    - [PyTorch 2.4.0a0+3bcc3cddb5](https://github.com/pytorch/pytorch/commit/3bcc3cddb580bf0f0f1958cfe27001f236eac2c1)
+    - [TensorFlow 2.16.1](https://github.com/tensorflow/tensorflow/releases/tag/v2.16.1)
+    - [TensorRT 10.3.0.26](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+    - [Torch-TensorRT 2.4.0.a0](https://github.com/NVIDIA/Torch-TensorRT)
+    - [ONNX Runtime 1.18.1](https://github.com/microsoft/onnxruntime/tree/v1.18.0)
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.49.12
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.5.2
+    - [tf2onnx v1.16.1](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.16.1)
+    - Other component versions depend on the used framework containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
 
 ## 0.11.0
 
