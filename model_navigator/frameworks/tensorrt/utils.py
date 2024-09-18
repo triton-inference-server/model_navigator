@@ -414,7 +414,7 @@ def get_input_metadata_impl(engine, context=None):
         return _get_input_metadata_from_engine(engine, start_binding, end_binding)
 
 
-def get_output_metadate_impl(engine, context=None):
+def get_output_metadata_impl(engine, context=None):
     """Implementation of get_output_metadata method.
 
     Returns:
@@ -458,7 +458,7 @@ def get_tensorrt_io_names(model: pathlib.Path) -> Tuple[List, List]:
         )
 
     input_metadata = get_input_metadata_impl(engine, context)
-    output_metadata = get_output_metadate_impl(engine, context)
+    output_metadata = get_output_metadata_impl(engine, context)
 
     with contextlib.ExitStack() as stack:
         if owns_engine:
