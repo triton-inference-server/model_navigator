@@ -42,6 +42,7 @@ from model_navigator.frameworks import (  # noqa: F401
     is_torch_available,
     is_trt_available,
 )
+from model_navigator.inplace import profile  # noqa: F401
 from model_navigator.runners import register_runner  # noqa: F401
 
 if is_torch_available():
@@ -55,7 +56,6 @@ if is_torch_available():
         load_optimized,
         module,
         optimize,
-        profile,
     )
 if is_tf_available():
     from model_navigator import tensorflow  # noqa: F401

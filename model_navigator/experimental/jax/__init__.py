@@ -16,8 +16,6 @@
 import pathlib
 from typing import Any, Callable, Optional, Sequence, Tuple, Type, Union
 
-import tensorflow  # pytype: disable=import-error
-
 from model_navigator.configuration import (
     DEFAULT_JAX_TARGET_FORMATS,
     CustomConfig,
@@ -32,15 +30,15 @@ from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.constants import DEFAULT_SAMPLE_COUNT
 from model_navigator.configuration.model.model_config_builder import ModelConfigBuilder
 from model_navigator.exceptions import ModelNavigatorConfigurationError
-from model_navigator.frameworks import Framework
+from model_navigator.frameworks import (
+    Framework,
+    is_tf_available,  # noqa: F401
+)
 from model_navigator.package.package import Package
 from model_navigator.pipelines.builders import (
     correctness_builder,
     performance_builder,
     preprocessing_builder,
-    tensorflow_conversion_builder,
-    tensorflow_tensorrt_conversion_builder,
-    tensorrt_conversion_builder,
     verify_builder,
 )
 from model_navigator.pipelines.builders.find_device_max_batch_size import find_device_max_batch_size_builder
@@ -92,16 +90,19 @@ def optimize(
     Returns:
         Package descriptor representing created package.
     """
-    if target_device == DeviceKind.CPU and any(
-        device.device_type == "GPU" for device in tensorflow.config.get_visible_devices()
-    ):
-        raise ModelNavigatorConfigurationError(
-            "\n"
-            "    'target_device == nav.DeviceKind.CPU' is not supported for TensorFlow2 "
-            "(exported from JAX) when GPU is available.\n"
-            "    To optimize model for CPU, disable GPU with: "
-            "'tf.config.set_visible_devices([], 'GPU')' directly after importing TensorFlow.\n"
-        )
+    if is_tf_available():
+        import tensorflow  # pytype: disable=import-error
+
+        if target_device == DeviceKind.CPU and any(
+            device.device_type == "GPU" for device in tensorflow.config.get_visible_devices()
+        ):
+            raise ModelNavigatorConfigurationError(
+                "\n"
+                "    'target_device == nav.DeviceKind.CPU' is not supported for TensorFlow2 "
+                "(exported from JAX) when GPU is available.\n"
+                "    To optimize model for CPU, disable GPU with: "
+                "'tf.config.set_visible_devices([], 'GPU')' directly after importing TensorFlow.\n"
+            )
     if isinstance(model, str):
         model = pathlib.Path(model)
 
@@ -146,11 +147,24 @@ def optimize(
 
     builders = [
         preprocessing_builder,
-        jax_export_builder,
-        find_device_max_batch_size_builder,
-        tensorflow_conversion_builder,
-        tensorflow_tensorrt_conversion_builder,
-        tensorrt_conversion_builder,
+    ]
+
+    if is_tf_available():
+        from model_navigator.pipelines.builders import (
+            tensorflow_conversion_builder,
+            tensorflow_tensorrt_conversion_builder,
+            tensorrt_conversion_builder,
+        )
+
+        builders += [
+            jax_export_builder,
+            find_device_max_batch_size_builder,
+            tensorflow_conversion_builder,
+            tensorflow_tensorrt_conversion_builder,
+            tensorrt_conversion_builder,
+        ]
+
+    builders += [
         correctness_builder,
         performance_builder,
         verify_builder,

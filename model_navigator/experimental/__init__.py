@@ -13,8 +13,7 @@
 # limitations under the License.
 from model_navigator.frameworks import (  # noqa: F401
     is_jax_available,
-    is_tf_available,
 )
 
-if is_tf_available() and is_jax_available():
+if is_jax_available():
     from model_navigator.experimental import jax  # noqa: F401

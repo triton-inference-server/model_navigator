@@ -47,7 +47,7 @@ if is_tf_available():
 
     register_tensorflow_runners()
 
-if is_tf_available() and is_jax_available():
+if is_jax_available():
     from .jax import register_jax_runners
 
     register_jax_runners()
