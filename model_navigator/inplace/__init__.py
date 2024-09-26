@@ -17,6 +17,7 @@ import queue
 import time
 import traceback
 import uuid
+from contextlib import nullcontext
 from typing import Any, Callable, Optional, Sequence, Tuple, Type, Union
 
 import model_navigator.inplace.bundle as bundle  # noqa: F401
@@ -62,7 +63,7 @@ from model_navigator.runners.registry import runner_registry
 from model_navigator.utils.module import lazy_import
 
 from ..core import context as ctx
-from ..frameworks import is_torch2_available
+from ..frameworks import is_torch2_available, is_torch_available
 from ..reporting.profile.events import ProfileEvent
 from ..reporting.profile.events import default_event_emitter as profile_event_emitter
 from ..utils.environment import get_env
@@ -70,10 +71,10 @@ from .profiling import ProfilingResults, RunnerProfilingResults, RunnerResults, 
 from .registry import module_registry
 from .status import InplaceOptimizeStatus, InplaceProfileStatus, ModuleStatus
 
-torch = lazy_import("torch")
 
-
-def load_optimized(device: Union[str, "torch.device"] = "cuda"):
+# pytype: disable=name-error
+def load_optimized(device: Union[str, "torch.device"] = "cuda"):  # noqa: F821
+    # pytype: enable=name-error
     """Load optimized modules.
 
     Args:
@@ -278,10 +279,14 @@ def _profile_runner(
     throughput_cutoff_threshold: Optional[float],
     throughput_backoff_limit: int,
 ):
-    if is_torch2_available():
-        inference_context = torch.inference_mode
+    if is_torch_available():
+        torch = lazy_import("torch")
+        if is_torch2_available():
+            inference_context = torch.inference_mode
+        else:
+            inference_context = torch.no_grad
     else:
-        inference_context = torch.no_grad
+        inference_context = nullcontext
 
     prev_results = queue.Queue(maxsize=throughput_backoff_limit + 1)
     for sample_id, input_ in enumerate(dataloader):

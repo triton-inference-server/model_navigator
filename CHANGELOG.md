@@ -16,6 +16,11 @@ limitations under the License.
 
 # Changelog
 
+## 0.13.0 (unreleased)
+- change: Remove TensorFlow dependencies for `nav.jax.optimize`
+- change: Remove PyTorch dependecies from `nav.profile`
+
+
 ## 0.12.0
 
 - new: simple and detailed reporting of the optimization process
