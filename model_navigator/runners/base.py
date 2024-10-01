@@ -34,6 +34,7 @@ class InferenceStep(Enum):
 
     PREPROCESSING = "preprocessing"
     H2D_MEMCPY = "h2d_memcpy"
+    COMPILATION = "compilation"
     COMPUTE = "compute"
     D2H_MEMCPY = "d2h_memcpy"
     D2D_MEMCPY = "d2d_memcpy"

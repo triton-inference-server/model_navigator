@@ -48,10 +48,33 @@ def test_get_source_torch_config_returns_model_configs_matching_custom_config():
     assert model_configuration.runner_config.autocast is True
     assert model_configuration.runner_config.inference_mode is True
     assert model_configuration.runner_config.device is None
+    assert model_configuration.runner_config.custom_args is None
+
+
+def test_get_source_torch_config_runners_config_to_dict_correctness():
+    torch_config = TorchConfig(custom_args={"truncate_long_and_double": False})
+    model_configs = {Format.TORCH: []}
+    custom_configs = [torch_config]
+    ModelConfigBuilder().get_source_torch_config(custom_configs=custom_configs, model_configs=model_configs)
+
+    assert len(model_configs[Format.TORCH]) == 1
+    model_configuration = model_configs[Format.TORCH][0]
+
+    assert model_configuration.runner_config is not None
+    runner_cfg_dict = model_configuration.runner_config.to_dict()
+
+    assert "custom_args" in runner_cfg_dict
+    assert "truncate_long_and_double" in runner_cfg_dict["custom_args"]
+    assert runner_cfg_dict["custom_args"]["truncate_long_and_double"] is False
 
 
 def test_get_source_torch_config_returns_model_configs_matching_custom_config_when_overridden_arguments():
-    torch_config = TorchConfig(autocast=False, inference_mode=False, device="cpu")
+    torch_config = TorchConfig(
+        autocast=False,
+        inference_mode=False,
+        device="cpu",
+        custom_args={"dynamic_shapes": {"input__0": [(0, 1, 16)]}},
+    )
     model_configs = {Format.TORCH: []}
     custom_configs = [torch_config]
     ModelConfigBuilder().get_source_torch_config(custom_configs=custom_configs, model_configs=model_configs)
@@ -64,6 +87,11 @@ def test_get_source_torch_config_returns_model_configs_matching_custom_config_wh
     assert model_configuration.runner_config.autocast is False
     assert model_configuration.runner_config.inference_mode is False
     assert model_configuration.runner_config.device == "cpu"
+
+    assert "dynamic_shapes" in model_configuration.runner_config.custom_args
+    assert "input__0" in model_configuration.runner_config.custom_args["dynamic_shapes"]
+    assert len(model_configuration.runner_config.custom_args["dynamic_shapes"]["input__0"]) == 1
+    assert model_configuration.runner_config.custom_args["dynamic_shapes"]["input__0"][0] == (0, 1, 16)
 
 
 def test_get_source_tensorflow_config_returns_model_configs_matching_custom_config():

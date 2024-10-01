@@ -51,6 +51,10 @@ def test_find_device_max_batch_size_builder_return_execution_unit_when_torch_fra
             TorchModelConfig(
                 autocast=True,
                 inference_mode=True,
+                custom_args={
+                    "truncate_long_and_double": False,
+                    "backend": "torch_tensorrt",
+                },
             )
         ],
         Format.TORCHSCRIPT: [

@@ -108,13 +108,15 @@ def test_torch_config_has_valid_name_and_format():
     config = TorchConfig()
     assert config.name() == "Torch"
     assert config.format == Format.TORCH
+    assert config.custom_args is None
 
 
 def test_torch_config_defaults_reset_values_to_initial():
-    config = TorchConfig(inference_mode=False, autocast=False)
+    config = TorchConfig(inference_mode=False, autocast=False, custom_args={"key": "value"})
     config.defaults()
     assert config.autocast is True
     assert config.inference_mode is True
+    assert config.custom_args is None
 
 
 def test_torch_script_config_has_valid_name_and_format():
@@ -392,7 +394,7 @@ def test_optimization_config_is_cloning_correctly():
         ),
         optimization_profile=OptimizationProfile(max_batch_size=64),
         custom_configs=[
-            TorchConfig(autocast=False),
+            TorchConfig(autocast=False, custom_args={"truncate_long_and_double": True}),
             TorchScriptConfig(autocast=False),
             TensorRTConfig(
                 precision=(TensorRTPrecision.BF16, TensorRTPrecision.FP16),
@@ -404,9 +406,15 @@ def test_optimization_config_is_cloning_correctly():
     cloned_opt_config = opt_config.clone()
     cloned_opt_config.runners = ("TensorRT",)
     cloned_opt_config.optimization_profile.max_batch_size = 32
-    cloned_opt_config.custom_configs[0].autocast = True
+    cloned_opt_config.custom_configs[0].autocast = True  # pytype: disable=attribute-error
+    cloned_opt_config.custom_configs[0].custom_args["truncate_long_and_double"] = (
+        False  # pytype: disable=attribute-error
+    )
 
     # nothing changed in original object
     assert len(opt_config.runners) == 5
     assert opt_config.optimization_profile.max_batch_size == 64
-    assert opt_config.custom_configs[0].autocast is False
+    assert opt_config.custom_configs[0].autocast is False  # pytype: disable=attribute-error
+    assert (
+        opt_config.custom_configs[0].custom_args["truncate_long_and_double"] is True  # pytype: disable=attribute-error
+    )

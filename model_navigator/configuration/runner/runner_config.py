@@ -15,7 +15,7 @@
 """This module contains classes representing runner configurations."""
 
 from abc import ABC, abstractmethod
-from typing import Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from model_navigator.utils.common import DataObject
 
@@ -71,18 +71,26 @@ class RunnerConfig(ABC, DataObject):
 class TorchRunnerConfig(RunnerConfig):
     """Torch runner configuration class."""
 
-    def __init__(self, autocast: bool, inference_mode: bool, device: Optional[str]) -> None:
+    def __init__(
+        self,
+        autocast: bool,
+        inference_mode: bool,
+        device: Optional[str],
+        custom_args: Optional[Dict[str, Any]] = None,
+    ) -> None:
         """Initializes Torch runner configuration class.
 
         Args:
             autocast: Enable Automatic Mixed Precision in runner
             inference_mode: Enable inference mode in runner
             device: The target device on which mode has to be loaded
+            custom_args: Additional keyword arguments used for model export and conversions
         """
         super().__init__()
         self.autocast = autocast
         self.inference_mode = inference_mode
         self.device = device
+        self.custom_args = custom_args
 
     @classmethod
     def from_dict(cls, data_dict: Dict) -> "TorchRunnerConfig":
@@ -98,6 +106,7 @@ class TorchRunnerConfig(RunnerConfig):
             autocast=cls._parse_string(bool, data_dict.get("autocast")),
             inference_mode=cls._parse_string(bool, data_dict.get("inference_mode")),
             device=data_dict.get("device"),
+            custom_args=data_dict.get("custom_args"),  # TODO(kn): parse_string int ?
         )
 
 

@@ -212,7 +212,10 @@ class ModelConfigBuilder:
         torch_config = _get_custom_config(custom_configs=custom_configs, custom_config_cls=config_api.TorchConfig)
         model_configs[Format.TORCH].append(
             model_config.TorchModelConfig(
-                autocast=torch_config.autocast, inference_mode=torch_config.inference_mode, device=torch_config.device
+                autocast=torch_config.autocast,
+                inference_mode=torch_config.inference_mode,
+                device=torch_config.device,
+                custom_args=torch_config.custom_args,
             )
         )
 

@@ -685,6 +685,7 @@ class TorchConfig(CustomConfigForFormat):
 
     autocast: bool = True
     inference_mode: bool = True
+    custom_args: Optional[Dict[str, Any]] = None
 
     @property
     def format(self) -> Format:
@@ -704,6 +705,7 @@ class TorchConfig(CustomConfigForFormat):
         """Update parameters to defaults."""
         self.autocast = True
         self.inference_mode = True
+        self.custom_args = None
 
 
 @dataclasses.dataclass

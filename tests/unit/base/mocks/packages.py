@@ -281,7 +281,11 @@ def trochscript_package_without_source(workspace) -> Package:
 
 
 def trochscript_package_with_source(workspace) -> Package:
-    source_config = TorchModelConfig(autocast=False, inference_mode=True)
+    source_config = TorchModelConfig(
+        autocast=False,
+        inference_mode=True,
+        custom_args={"dynamic_shapes": {"input__0": [(0, 1, 16)]}},
+    )
     torchscript_config = TorchScriptModelConfig(
         jit_type=JitType.SCRIPT, strict=True, autocast=False, inference_mode=True
     )

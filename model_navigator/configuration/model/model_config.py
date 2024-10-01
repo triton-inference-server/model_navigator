@@ -223,19 +223,27 @@ class PythonModelConfig(_SourceModelConfig, format=Format.PYTHON):
 class TorchModelConfig(_SourceModelConfig, format=Format.TORCH):
     """Source code Torch model configuration class."""
 
-    def __init__(self, autocast: bool, inference_mode: bool, device: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        autocast: bool,
+        inference_mode: bool,
+        device: Optional[str] = None,
+        custom_args: Optional[Dict[str, Any]] = None,
+    ) -> None:
         """Initializes Torch model configuration class.
 
         Args:
             autocast: Enable Automatic Mixed Precision in runner
             inference_mode: Enable inference mode in runner
             device: The target device on which mode has to be loaded
+            custom_args: Additional keyword arguments used for model export and conversions
         """
         super().__init__()
         self.runner_config = TorchRunnerConfig(
             autocast=autocast,
             inference_mode=inference_mode,
             device=device,
+            custom_args=custom_args,
         )
 
     @classmethod

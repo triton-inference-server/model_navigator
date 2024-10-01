@@ -18,15 +18,16 @@ limitations under the License.
 
 ## 0.13.0 (unreleased)
 - change: Remove TensorFlow dependencies for `nav.jax.optimize`
-- change: Remove PyTorch dependecies from `nav.profile`
-
+- change: Remove PyTorch dependencies from `nav.profile`
+- new: Introducing custom_args in TensorConfig for custom runners to handle -
+  enables dynamic shapes user setup for TorchTensorRT compilation
 
 ## 0.12.0
 
 - new: simple and detailed reporting of the optimization process
 - new: adjusted exporting TensorFlow SavedModel for Keras 3.x
 - new: inform user when wrapped a module which is not called during optimize
-- new: inform user when module use a custom forward function
+- new: inform user when module uses a custom forward function
 - new: support for dynamic shapes in Torch ExportedProgram
 - new: use ExportedProgram for Torch-TensorRT conversion
 - new: support back-off policy during profiling to avoid reporting local minimum

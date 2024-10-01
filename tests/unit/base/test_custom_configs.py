@@ -56,6 +56,7 @@ def test_default_values_for_torch_custom_config():
     assert config.autocast is True
     assert config.inference_mode is True
     assert config.format == Format.TORCH
+    assert config.custom_args is None
 
 
 def test_default_values_for_torch_export_custom_config():
