@@ -66,7 +66,7 @@ import os
 from abc import ABC, abstractmethod
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Optional, Type, TypeVar
+from typing import Any, Dict, Optional, Type, TypeVar, Union
 
 from model_navigator.frameworks.tensorrt.utils import get_version as get_trt_version
 from model_navigator.utils.environment import get_gpu_info
@@ -121,16 +121,16 @@ DEFAULT_CACHE_STRATEGY = TimingCacheStrategy(
 class TimingCache(ABC):
     """Abstract class for the timing cache manager."""
 
-    def __init__(self, model_name: str, cache_path: Optional[Path], strategy: TimingCacheStrategy):
+    def __init__(self, model_name: str, cache_path: Optional[Union[str, Path]], strategy: TimingCacheStrategy):
         """Initialize the TimingCache class.
 
         Args:
-            model_name (str): Model name, used for per model caching strategy.
-            cache_path (Optional[Path], optional): Where the cache is stored.
-            strategy (TimingCacheStrategy, optional): See `TimingCacheStrategy`.
+            model_name: Model name, used for per model caching strategy.
+            cache_path: Where the cache is stored.
+            strategy: See `TimingCacheStrategy`.
         """
         self.model_name = model_name or "global"
-        self.cache_path = cache_path or trt_cache_inplace_cache_dir()
+        self.cache_path = Path(cache_path) if cache_path else trt_cache_inplace_cache_dir()
         self.strategy = strategy
 
     @abstractmethod
@@ -173,15 +173,15 @@ ITimingCache = TypeVar("ITimingCache", bound=TimingCache)
 class DiskTimingCache(TimingCache):
     """Manages the timing cache files created by TRT."""
 
-    def __init__(self, model_name: str, cache_path: Optional[Path], strategy: TimingCacheStrategy):
+    def __init__(self, model_name: str, cache_path: Optional[Union[str, Path]], strategy: TimingCacheStrategy):
         """Initialize the DiskTimingCache class.
 
         If user provide existing file or file that ends with .cache, it will switch to USER strategy.
 
         Args:
-            model_name (str): model name, "tag" for caching file for per model strategy.
-            cache_path (Optional[Path]): User provided cache file path (file suffix must be .cache) or directory.
-            strategy (TimingCacheStrategy): See `TimingCacheStrategy`.
+            model_name: model name, "tag" for caching file for per model strategy.
+            cache_path: User provided cache file path (file suffix must be .cache) or directory.
+            strategy: See `TimingCacheStrategy`.
         """
         super().__init__(model_name, cache_path, strategy)
         self._prepare_cache()
