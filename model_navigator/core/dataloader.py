@@ -369,8 +369,9 @@ def _sample_filename(idx: int, num_samples: int) -> str:
 
 def _validate_tensor(tensor: np.ndarray, *, raise_on_error: bool = True):
     if any(np.isnan(tensor.flatten())):
-        message = "Tensor data contains `NaN` value. Please verify the dataloader and model."
+        message = "Tensor data contains `NaN` value. Please verify the dataloader and model. Consider disabling autocast or inference mode in TorchConfig custom configuration."
         if raise_on_error:
+            LOGGER.warning(message)
             raise ModelNavigatorUserInputError(message)
         else:
             LOGGER.warning(message)
