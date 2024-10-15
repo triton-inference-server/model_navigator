@@ -16,6 +16,7 @@
 from collections import OrderedDict
 from typing import Any
 
+INPLACE_OPTIMIZE_KEY = "inplace_optimize"
 INPLACE_OPTIMIZE_STRATEGIES_CONTEXT_KEY = "inplace_optimize_strategies"
 INPLACE_OPTIMIZE_BATCH_CONTEXT_KEY = "inplace_optimize_batch"
 INPLACE_OPTIMIZE_MODULE_NAME_CONTEXT_KEY = "inplace_optimize_current_module_name"

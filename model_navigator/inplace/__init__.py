@@ -98,6 +98,7 @@ def optimize(
     """
     try:
         ctx.global_context.set(ctx.INPLACE_OPTIMIZE_STRATEGIES_CONTEXT_KEY, inplace_config.strategies)
+        ctx.global_context.set(ctx.INPLACE_OPTIMIZE_KEY, True)
         if config is None:
             config = OptimizeConfig()
 
@@ -124,6 +125,7 @@ def optimize(
     finally:
         ctx.global_context.pop(ctx.INPLACE_OPTIMIZE_STRATEGIES_CONTEXT_KEY)
         ctx.global_context.pop(ctx.INPLACE_OPTIMIZE_BATCH_CONTEXT_KEY)
+        ctx.global_context.pop(ctx.INPLACE_OPTIMIZE_KEY)
 
 
 def profile(
