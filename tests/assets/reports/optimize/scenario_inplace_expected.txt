@@ -182,14 +182,11 @@ model_c: Verifying model trt-fp32 on TensorRT backend OK
 model_c: Verifying model trt-fp16 on TensorRT backend ...
 model_c: Verifying model trt-fp16 on TensorRT backend OK
 Optimization finished for all modules.
-        Optimization result for max throughput and min latency strategy         
-┏━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃ Module name ┃ Optimized backend              ┃ Path                          ┃
-┡━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
-│ model_a     │ torchscript-trace on           │ /home/dev/.cache/model_navig… │
-│             │ TorchScriptCUDA backend        │                               │
-│ model_b     │ torchscript-trace on           │ /home/dev/.cache/model_navig… │
-│             │ TorchScriptCUDA backend        │                               │
-│ model_c     │ torchscript-trace on           │ /home/dev/.cache/model_navig… │
-│             │ TorchScriptCUDA backend        │                               │
-└─────────────┴────────────────────────────────┴───────────────────────────────┘
+                                   Optimization result for max throughput and min latency strategy                                    
+┏━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Module name ┃ Optimized backend                            ┃ Path                                                                  ┃
+┡━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ model_a     │ torchscript-trace on TorchScriptCUDA backend │ /home/dev/.cache/model_navigator/model_a/0/torchscript-trace/model.pt │
+│ model_b     │ torchscript-trace on TorchScriptCUDA backend │ /home/dev/.cache/model_navigator/model_b/0/torchscript-trace/model.pt │
+│ model_c     │ torchscript-trace on TorchScriptCUDA backend │ /home/dev/.cache/model_navigator/model_c/0/torchscript-trace/model.pt │
+└─────────────┴──────────────────────────────────────────────┴───────────────────────────────────────────────────────────────────────┘

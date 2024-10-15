@@ -38,7 +38,7 @@ class Row:
     """Represents a row in the status table."""
 
     runtime: str = ""
-    status: Text = Text()
+    status: Text = field(default_factory=Text)
     results: List[ProfilingResult] = field(default_factory=list)
     is_separator: bool = False
 
@@ -46,9 +46,7 @@ class Row:
 class SimpleReport:
     """Profile reports."""
 
-    def __init__(
-        self, show_results: bool = True, event_emitter: Optional[EventEmitter] = None, width: Optional[int] = None
-    ) -> None:
+    def __init__(self, show_results: bool = True, event_emitter: Optional[EventEmitter] = None) -> None:
         """Initialized object.
 
         Args:
@@ -68,7 +66,7 @@ class SimpleReport:
 
         self.table_data: List[Row] = []
 
-        self.console = Console(record=True, width=width)
+        self.console = Console(record=True, width=256)  # specify width to prevent auto-width detection
         self.listen_for_events()
 
     def listen_for_events(self):

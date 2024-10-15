@@ -21,7 +21,10 @@ from pyee import EventEmitter
 from rich.console import Console
 from rich.table import Table
 
-from model_navigator.reporting.optimize.events import OptimizeEvent, default_event_emitter
+from model_navigator.reporting.optimize.events import (
+    OptimizeEvent,
+    default_event_emitter,
+)
 
 
 class BaseReport(ABC):
@@ -43,7 +46,7 @@ class BaseReport(ABC):
         self.inplace_started = False
         self.has_optimization_started = False
         self.is_first_pipeline_command = False
-        self.console = Console(record=True)
+        self.console = Console(record=True, width=256)  # specify width to prevent auto-width detection
         self.listen_for_events()
 
     def listen_for_events(self):
@@ -51,7 +54,10 @@ class BaseReport(ABC):
         self.emitter.on(OptimizeEvent.MODULE_REGISTERED, self.on_module_registered)
         self.emitter.on(OptimizeEvent.MODULE_REGISTRY_CLEARED, self.on_registry_cleared)
         self.emitter.on(OptimizeEvent.WORKSPACE_INITIALIZED, self.on_workspace_initialized)
-        self.emitter.on(OptimizeEvent.MODULE_PICKED_FOR_OPTIMIZATION, self.on_module_picked_for_optimization)
+        self.emitter.on(
+            OptimizeEvent.MODULE_PICKED_FOR_OPTIMIZATION,
+            self.on_module_picked_for_optimization,
+        )
         self.emitter.on(OptimizeEvent.OPTIMIZATION_STARTED, self.on_optimization_started)
         self.emitter.on(OptimizeEvent.OPTIMIZATION_FINISHED, self.on_optimization_finished)
         self.emitter.on(OptimizeEvent.PIPELINE_STARTED, self.on_pipeline_started)

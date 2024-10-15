@@ -40,7 +40,7 @@ def emit_events(event_emitter, filename):
 @pytest.mark.parametrize("scenario_name", ["profile_with_results"])
 def test_simple_report_with_results(scenario_name, mock_event_emitter):  # noqa: F811
     # given
-    report = SimpleReport(event_emitter=mock_event_emitter, width=200)
+    report = SimpleReport(event_emitter=mock_event_emitter)
     # when
     emit_events(mock_event_emitter, f"scenario_{scenario_name}.txt")
     # then
