@@ -82,7 +82,6 @@ def export(
 
     loglevel = logging.WARNING if verbose else logging.ERROR
     export_options_kwargs = {}
-    export_options_kwargs["op_level_debug"] = verbose
     export_options_kwargs["diagnostic_options"] = torch.onnx.DiagnosticOptions(verbosity_level=loglevel)
     if dynamic_shapes:
         export_options_kwargs["dynamic_shapes"] = True

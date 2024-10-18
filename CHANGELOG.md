@@ -22,6 +22,7 @@ limitations under the License.
 - new: Introducing custom_args in TensorConfig for custom runners to handle -
   enables dynamic shapes user setup for TorchTensorRT compilation
 - fix: Exception is raised with Python >=3.11 due to wrong dataclass initialization
+- fix: Removing option from ExportOption removed from Torch 2.5
 
 ## 0.12.0
 
