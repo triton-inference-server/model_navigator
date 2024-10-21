@@ -21,7 +21,7 @@ try:
     import jax.experimental  # pytype: disable=import-error # noqa: F401
 
     _JAX_AVAILABLE = True
-except ModuleNotFoundError:
+except (ModuleNotFoundError, ImportError):
     _JAX_AVAILABLE = False
 
 try:
@@ -29,7 +29,7 @@ try:
 
     _TORCH_AVAILABLE = True
     _TORCH_VERSION = Version(torch.__version__)
-except ModuleNotFoundError:
+except (ModuleNotFoundError, ImportError):
     _TORCH_AVAILABLE = False
 
 try:
@@ -41,7 +41,7 @@ try:
         _TF_AVAILABLE = False
     else:
         _TF_AVAILABLE = True
-except (ModuleNotFoundError, AttributeError):
+except (ModuleNotFoundError, AttributeError, ImportError):
     _TF_AVAILABLE = False
 
 
@@ -49,7 +49,7 @@ try:
     import tensorrt  # pytype: disable=import-error # noqa: F401
 
     _TRT_AVAILABLE = True
-except ModuleNotFoundError:
+except (ModuleNotFoundError, ImportError):
     _TRT_AVAILABLE = False
 
 
