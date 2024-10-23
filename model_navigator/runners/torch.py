@@ -209,8 +209,8 @@ class _BaseTorchRunner(NavigatorRunner):
         if tensor_type == TensorType.TORCH:
             value = value.to(numpy_to_torch_dtype(dtype))
         elif tensor_type == TensorType.NUMPY:
-            value = value.astype(dtype)
             value = torch.from_numpy(value)
+            value = value.to(numpy_to_torch_dtype(dtype))
         else:
             raise ValueError(f"Unsupported type {type(value)}")
         return value
@@ -388,7 +388,9 @@ class TorchCompileCPURunner(_BaseTorchRunner):
     def deactivate_impl(self):
         """Deactivation implementation."""
         super().deactivate_impl()
-        torch._dynamo.reset()
+        if is_torch2_available():
+            torch._dynamo.reset()
+        torch.cuda.empty_cache()
         gc.collect()
 
 

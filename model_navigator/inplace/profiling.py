@@ -27,7 +27,11 @@ from model_navigator.commands.performance.nvml_handler import NvmlHandler
 from model_navigator.commands.performance.utils import is_measurement_stable
 from model_navigator.core.logger import LOGGER
 from model_navigator.exceptions import ModelNavigatorError
+from model_navigator.frameworks import is_torch_available
 from model_navigator.utils.common import DataObject
+from model_navigator.utils.module import lazy_import
+
+torch = lazy_import("torch")
 
 
 @dataclasses.dataclass
@@ -194,39 +198,6 @@ class ProfilingResults(DataObject):
             yaml.safe_dump(data, f, sort_keys=False)
 
 
-def _run_window_measurement(
-    func: Callable,
-    sample: Any,
-    batch_size: int,
-    nvml_handler: NvmlHandler,
-    window_size: int,
-) -> ProfilingResult:
-    if not isinstance(sample, (list, tuple)):
-        sample = (sample,)
-    if not isinstance(sample[-1], dict):
-        sample = (*sample, {})
-    *args, kwargs = sample
-
-    measurements = []
-    gpu_clocks = []
-    for _ in range(window_size):
-        start = time.monotonic()
-        func(*args, **kwargs)
-        end = time.monotonic()
-        gpu_clocks.append(nvml_handler.gpu_clock)
-        measurements.append((end - start) * 1000.0)  # ms
-
-    return ProfilingResult.from_measurements(measurements=measurements, batch_size=batch_size, gpu_clocks=gpu_clocks)
-
-
-def _measurements_result(profiling_results: List[ProfilingResult], last_n: int = 3) -> ProfilingResult:
-    if len(profiling_results) < last_n:
-        raise ModelNavigatorError(f"Measurements results requires at least {last_n} consecutive stable measurements.")
-
-    profiling_results = profiling_results[-last_n:]
-    return ProfilingResult.from_profiling_results(profiling_results)
-
-
 def run_measurement(
     func: Callable,
     sample: Any,
@@ -273,3 +244,42 @@ def run_measurement(
         "Unable to get stable performance results. Consider increasing "
         "window_size | stability_percentage | max_trials"
     )
+
+
+def _run_window_measurement(
+    func: Callable,
+    sample: Any,
+    batch_size: int,
+    nvml_handler: NvmlHandler,
+    window_size: int,
+) -> ProfilingResult:
+    if not isinstance(sample, (list, tuple)):
+        sample = (sample,)
+    if not isinstance(sample[-1], dict):
+        sample = (*sample, {})
+    *args, kwargs = sample
+
+    measurements = []
+    gpu_clocks = []
+    for _ in range(window_size):
+        start = time.monotonic()
+        func(*args, **kwargs)
+        _synchronize()
+        end = time.monotonic()
+        gpu_clocks.append(nvml_handler.gpu_clock)
+        measurements.append((end - start) * 1000.0)  # ms
+
+    return ProfilingResult.from_measurements(measurements=measurements, batch_size=batch_size, gpu_clocks=gpu_clocks)
+
+
+def _synchronize():
+    if is_torch_available():
+        torch.cuda.synchronize()
+
+
+def _measurements_result(profiling_results: List[ProfilingResult], last_n: int = 3) -> ProfilingResult:
+    if len(profiling_results) < last_n:
+        raise ModelNavigatorError(f"Measurements results requires at least {last_n} consecutive stable measurements.")
+
+    profiling_results = profiling_results[-last_n:]
+    return ProfilingResult.from_profiling_results(profiling_results)

@@ -110,7 +110,7 @@ def _cast_numpy_tensor(tensor, dtype):
     target_dtype = dtype or type_casts.get(tensor.dtype)
     if target_dtype:
         logger.debug(f"Casting {dtype} tensor to {target_dtype}.")
-        return tensor.astype(target_dtype.type)
+        return tensor.astype(target_dtype.type, copy=False)
     return tensor
 
 
