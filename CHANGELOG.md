@@ -17,12 +17,14 @@ limitations under the License.
 # Changelog
 
 ## 0.13.0 (unreleased)
-- change: Remove TensorFlow dependencies for `nav.jax.optimize`
-- change: Remove PyTorch dependencies from `nav.profile`
 - new: Introducing custom_args in TensorConfig for custom runners to handle -
   enables dynamic shapes user setup for TorchTensorRT compilation
+- change: Removed TensorFlow dependencies for `nav.jax.optimize`
+- change: Removed PyTorch dependencies from `nav.profile`
+- change: Collect all Python packages in status instead of filtered list
 - fix: Exception is raised with Python >=3.11 due to wrong dataclass initialization
-- fix: Removing option from ExportOption removed from Torch 2.5
+- fix: Removed option from ExportOption removed from Torch 2.5
+- fix: Improved preprocessing stage in Torch based runners
 
 ## 0.12.0
 

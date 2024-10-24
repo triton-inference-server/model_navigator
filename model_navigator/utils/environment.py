@@ -31,27 +31,6 @@ from model_navigator.configuration.constants import (
     OUTPUT_SIMPLE_REPORT,
 )
 
-PACKAGES = [
-    "tensorflow",
-    "torch",
-    "torch-tensorrt",
-    "torchtext",
-    "torchvision",
-    "tensorrt",
-    "tritonclient",
-    "triton-model-analyzer",
-    "xgboost",
-    "tensorboard",
-    "tensorboard-data-server",
-    "tensorboard-plugin-wit",
-    "polygraphy",
-    "onnx",
-    "onnxruntime-gpu",
-    "onnx_graphsurgeon",
-    "numpy",
-    "tf2onnx",
-]
-
 LIBRARIES = {
     "NPP_VERSION",
     "DALI_BUILD",
@@ -169,7 +148,7 @@ def get_env() -> Dict:
         "gpu": gpu_details,
         "os": os_details,
         "python_version": platform.python_version(),
-        "python_packages": {k: v for k, v in packages.items() if k in PACKAGES},
+        "python_packages": packages,
         "libraries": {k: v for k, v in os.environ.items() if k in LIBRARIES},
     }
     return env
