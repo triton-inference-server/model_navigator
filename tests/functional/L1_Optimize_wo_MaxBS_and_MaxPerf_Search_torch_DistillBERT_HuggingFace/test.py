@@ -66,7 +66,6 @@ def main():
     dynamic_axes = {
         name: axes for name, axes in itertools.chain(onnx_config.inputs.items(), onnx_config.outputs.items())
     }
-    opset = onnx_config.default_onnx_opset
 
     dataset = load_dataset(dataset_name)["train"]
     dataloader_factory = huggingface_utils.HFDataLoaderFactory(
@@ -97,7 +96,6 @@ def main():
         verbose=True,
         custom_configs=(
             nav.OnnxConfig(
-                opset=opset,
                 dynamic_axes=dynamic_axes,
                 dynamo_export=True,
             ),

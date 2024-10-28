@@ -92,6 +92,7 @@ class NavigatorRunner(abc.ABC):
     """
 
     is_default = True
+    is_experimental = False
     is_inplace = True
     is_native = False
 

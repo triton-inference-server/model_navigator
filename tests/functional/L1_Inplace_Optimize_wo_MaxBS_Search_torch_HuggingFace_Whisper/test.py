@@ -120,10 +120,16 @@ def get_dataloader():
 def get_config():
     import model_navigator as nav
 
+    _default_runners = set()
+    for name, runner in nav.runners.registry.runner_registry.items():
+        if runner.is_default and not runner.is_experimental:
+            _default_runners.add(name)
+
     # pytype: enable=import-error
     optimize_config = nav.OptimizeConfig(
         verbose=True,
         optimization_profile=nav.OptimizationProfile(max_batch_size=BATCH_SIZE),
+        runners=tuple(_default_runners),
     )
 
     return optimize_config
