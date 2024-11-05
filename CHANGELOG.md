@@ -19,6 +19,7 @@ limitations under the License.
 ## 0.13.0 (unreleased)
 - new: Introducing custom_args in TensorConfig for custom runners to handle -
   enables dynamic shapes user setup for TorchTensorRT compilation
+- new: New version of Onnx Runtime 1.20 for python version >= 3.10
 - change: Removed TensorFlow dependencies for `nav.jax.optimize`
 - change: Removed PyTorch dependencies from `nav.profile`
 - change: Collect all Python packages in status instead of filtered list
