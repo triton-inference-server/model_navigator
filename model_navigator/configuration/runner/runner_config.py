@@ -17,7 +17,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Dict, List, Optional
 
-from model_navigator.utils.common import DataObject
+from model_navigator.utils.common import DataObject, str_to_torch_dtype
 
 
 class RunnerConfig(ABC, DataObject):
@@ -38,15 +38,17 @@ class RunnerConfig(ABC, DataObject):
         """
         pass
 
-    def to_dict(self, *_, **__) -> dict:
+    @abstractmethod
+    def to_dict(self, parse: bool = False, *_, **__) -> dict:
         """Returns dictionary representation of the object.
+
+        Args:
+            parse: if True, converts parsable fields to string representation
 
         Returns:
             Dictionary representation of RunnerConfig
         """
-        return DataObject._from_dict({
-            **{k: v for k, v in self.__dict__.items() if v is not None},
-        })
+        pass
 
     def get_config_dict_for_command(self) -> dict:
         """Returns dictionary with RunnerConfig data required for Command execution.
@@ -76,6 +78,7 @@ class TorchRunnerConfig(RunnerConfig):
         autocast: bool,
         inference_mode: bool,
         device: Optional[str],
+        autocast_dtype: Optional["torch.dtype"] = None,  # noqa: F821 # type: ignore # pytype: disable=name-error
         custom_args: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Initializes Torch runner configuration class.
@@ -84,12 +87,14 @@ class TorchRunnerConfig(RunnerConfig):
             autocast: Enable Automatic Mixed Precision in runner
             inference_mode: Enable inference mode in runner
             device: The target device on which mode has to be loaded
+            autocast_dtype: The dtype to use for autocast
             custom_args: Additional keyword arguments used for model export and conversions
         """
         super().__init__()
         self.autocast = autocast
         self.inference_mode = inference_mode
         self.device = device
+        self.autocast_dtype = autocast_dtype
         self.custom_args = custom_args
 
     @classmethod
@@ -105,9 +110,27 @@ class TorchRunnerConfig(RunnerConfig):
         return cls(
             autocast=cls._parse_string(bool, data_dict.get("autocast")),
             inference_mode=cls._parse_string(bool, data_dict.get("inference_mode")),
+            autocast_dtype=str_to_torch_dtype(data_dict.get("autocast_dtype")),
             device=data_dict.get("device"),
             custom_args=data_dict.get("custom_args"),  # TODO(kn): parse_string int ?
         )
+
+    def to_dict(self, parse: bool = False, *_, **__) -> Dict:
+        """Returns dictionary representation of the object.
+
+        Args:
+            parse: if True, converts parsable fields to string representation
+
+        Returns:
+            Dictionary representation of TorchRunnerConfig
+        """
+        return {
+            "autocast": self.autocast,
+            "inference_mode": self.inference_mode,
+            "device": self.device,
+            "autocast_dtype": str(self.autocast_dtype) if parse else self.autocast_dtype,
+            "custom_args": self.custom_args,
+        }
 
 
 class DeviceRunnerConfig(RunnerConfig):
@@ -128,3 +151,13 @@ class DeviceRunnerConfig(RunnerConfig):
         return cls(
             device=data_dict.get("device"),
         )
+
+    def to_dict(self, *_, **__) -> Dict:
+        """Returns dictionary representation of the object.
+
+        Returns:
+            Dictionary representation of DeviceRunnerConfig
+        """
+        return {
+            "device": self.device,
+        }

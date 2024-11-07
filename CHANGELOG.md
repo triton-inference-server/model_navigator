@@ -19,6 +19,7 @@ limitations under the License.
 ## 0.13.0 (unreleased)
 - new: Introducing custom_args in TensorConfig for custom runners to handle -
   enables dynamic shapes user setup for TorchTensorRT compilation
+- new: autocast_dtype added Torch runner configuration to set the dtype for autocast
 - new: New version of Onnx Runtime 1.20 for python version >= 3.10
 - change: Removed TensorFlow dependencies for `nav.jax.optimize`
 - change: Removed PyTorch dependencies from `nav.profile`
@@ -26,6 +27,7 @@ limitations under the License.
 - fix: Exception is raised with Python >=3.11 due to wrong dataclass initialization
 - fix: Removed option from ExportOption removed from Torch 2.5
 - fix: Improved preprocessing stage in Torch based runners
+- fix: Warn when using autocast with bfloat16 in Torch
 
 ## 0.12.0
 

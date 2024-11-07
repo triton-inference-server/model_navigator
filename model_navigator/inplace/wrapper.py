@@ -225,7 +225,7 @@ class Module(wrapt.ObjectProxy):
         """
         self._wrapper = OptimizedModule(
             module=self._wrapper.module,
-            # self._optimize_config,
+            optimize_config=self._optimize_config,
             name=self._name,
             input_mapping=self._input_mapping,
             output_mapping=self._output_mapping,

@@ -26,6 +26,8 @@ from polygraphy.backend.trt.profile import Profile, ShapeTuple
 
 from model_navigator.configuration.constants import OPT_MAX_SHAPE_RATIO
 from model_navigator.core.logger import LOGGER
+from model_navigator.exceptions import ModelNavigatorUserInputError
+from model_navigator.frameworks import is_torch_available
 from model_navigator.utils import module
 
 torch = module.lazy_import("torch")
@@ -156,6 +158,8 @@ class DataObject:
             value = str(value)
         elif isinstance(value, ShapeTuple):
             value = vars(value)
+        elif is_torch_available() and isinstance(value, torch.dtype):
+            value = str(value)
 
         return value
 
@@ -192,6 +196,18 @@ def parse_enum(value: Union[Union[str, T], Sequence[Union[str, T]]], enum_type: 
         value = tuple(enum_type(v) for v in value)
         return value
     return ()
+
+
+def str_to_torch_dtype(dtype_str):
+    """Converts string to torch.dtype.
+
+    Example: "torch.float32" -> torch.float32
+    """
+    if dtype_str in (None, "None"):
+        return None
+    if not dtype_str.startswith("torch.") or not hasattr(torch, dtype_str.split(".")[-1]):
+        raise ModelNavigatorUserInputError(f"Invalid torch dtype string: {dtype_str}")
+    return getattr(torch, dtype_str.split(".")[-1])
 
 
 def _get_numpy_to_torch_dtype_dict():
@@ -235,6 +251,7 @@ def torch_to_numpy_dtype(torch_dtype: "torch.dtype") -> Type[numpy.dtype]:
     """
     numpy_to_torch_dtype_dict = _get_numpy_to_torch_dtype_dict()
     torch_to_numpy_dtype_dict = {v: k for k, v in numpy_to_torch_dtype_dict.items()}
+    torch_to_numpy_dtype_dict[torch.bfloat16] = numpy.float32  # Workaround for torch.bfloat16
     return torch_to_numpy_dtype_dict[torch_dtype]
 
 

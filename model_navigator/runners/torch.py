@@ -14,7 +14,7 @@
 """Torch runners."""
 
 import gc
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from model_navigator.configuration import Format, TensorType
 from model_navigator.configuration.device import get_id_from_device_string, validate_device_string
@@ -27,7 +27,7 @@ from model_navigator.frameworks.torch.utils import get_module_device
 from model_navigator.runners.base import DeviceKind, InferenceStep, InferenceStepTimer, NavigatorRunner
 from model_navigator.runners.registry import register_runner
 from model_navigator.utils import module
-from model_navigator.utils.common import numpy_to_torch_dtype
+from model_navigator.utils.common import numpy_to_torch_dtype, str_to_torch_dtype
 
 torch = module.lazy_import("torch")
 
@@ -44,7 +44,13 @@ class _BaseTorchRunner(NavigatorRunner):
         return Format.TORCH
 
     def __init__(
-        self, inference_mode: bool = True, autocast: bool = True, device: Optional[str] = None, *args, **kwargs
+        self,
+        inference_mode: bool = True,
+        autocast: bool = True,
+        device: Optional[str] = None,
+        autocast_dtype: Optional[Union["torch.dtype", str]] = None,  # type: ignore
+        *args,
+        **kwargs,
     ) -> None:
         """Initialization implementation."""
         super().__init__(*args, **kwargs)
@@ -52,6 +58,9 @@ class _BaseTorchRunner(NavigatorRunner):
         self._autocast = autocast
         self._loaded_model = None
         self.device = device
+        if isinstance(autocast_dtype, str):
+            autocast_dtype = str_to_torch_dtype(autocast_dtype)
+        self._autocast_dtype = autocast_dtype
 
         if is_torch2_available():
             self._infer = self._infer_v2
@@ -84,6 +93,16 @@ class _BaseTorchRunner(NavigatorRunner):
         self._input_module_device = get_module_device(self.model) or torch.device("cpu")
         self._loaded_model = self.model
         self._loaded_model.to(self.device).eval()
+
+        # TODO: Consider better handling for controlling autocast behavior
+        try:
+            if hasattr(self._loaded_model, "parameters") and self._autocast_dtype is None:
+                param_dtype = next(self._loaded_model.parameters()).dtype
+                if param_dtype in [torch.bfloat16, torch.int8, torch.uint8]:
+                    self._autocast = False
+                    LOGGER.warning(f"Model has {param_dtype} parameters. Disabling autocast.")
+        except StopIteration:
+            LOGGER.warning("Model has no parameters.")
 
     def deactivate_impl(self):
         """Deactivation implementation."""
@@ -118,9 +137,8 @@ class _BaseTorchRunner(NavigatorRunner):
     def _infer_v2(self, feed_dict):
         with torch.inference_mode(mode=self._inference_mode):
             args, kwargs = self._prepare_inputs(feed_dict)
-
             with self._inference_step_timer.measure_step(InferenceStep.COMPUTE), torch.autocast(
-                device_type=self.device, enabled=self._autocast
+                device_type=self.device, enabled=self._autocast, dtype=self._autocast_dtype
             ):
                 outputs = self._loaded_model(*args, **kwargs)
         return outputs
@@ -130,7 +148,7 @@ class _BaseTorchRunner(NavigatorRunner):
             args, kwargs = self._prepare_inputs(feed_dict)
 
             with self._inference_step_timer.measure_step(InferenceStep.COMPUTE), torch.autocast(
-                device_type=self.device, enabled=self._autocast
+                device_type=self.device, enabled=self._autocast, dtype=self._autocast_dtype
             ):
                 outputs = self._loaded_model(*args, **kwargs)
 
@@ -138,13 +156,13 @@ class _BaseTorchRunner(NavigatorRunner):
 
     def _infer_native_v2(self, *args, **kwargs):
         with torch.inference_mode(mode=self._inference_mode):
-            with torch.autocast(device_type=self.device, enabled=self._autocast):
+            with torch.autocast(device_type=self.device, enabled=self._autocast, dtype=self._autocast_dtype):
                 outputs = self._loaded_model(*args, **kwargs)
         return outputs
 
     def _infer_native_v1(self, *args, **kwargs):
         with torch.no_grad():
-            with torch.autocast(device_type=self.device, enabled=self._autocast):
+            with torch.autocast(device_type=self.device, enabled=self._autocast, dtype=self._autocast_dtype):
                 outputs = self._loaded_model(*args, **kwargs)
 
         return outputs

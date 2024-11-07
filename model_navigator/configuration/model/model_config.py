@@ -227,6 +227,7 @@ class TorchModelConfig(_SourceModelConfig, format=Format.TORCH):
         self,
         autocast: bool,
         inference_mode: bool,
+        autocast_dtype: Optional["torch.dtype"] = None,  # noqa: F821 # pytype: disable=name-error # type: ignore
         device: Optional[str] = None,
         custom_args: Optional[Dict[str, Any]] = None,
     ) -> None:
@@ -235,6 +236,7 @@ class TorchModelConfig(_SourceModelConfig, format=Format.TORCH):
         Args:
             autocast: Enable Automatic Mixed Precision in runner
             inference_mode: Enable inference mode in runner
+            autocast_dtype: dtype used for autocast
             device: The target device on which mode has to be loaded
             custom_args: Additional keyword arguments used for model export and conversions
         """
@@ -242,6 +244,7 @@ class TorchModelConfig(_SourceModelConfig, format=Format.TORCH):
         self.runner_config = TorchRunnerConfig(
             autocast=autocast,
             inference_mode=inference_mode,
+            autocast_dtype=autocast_dtype,
             device=device,
             custom_args=custom_args,
         )
@@ -324,6 +327,7 @@ class TorchScriptModelConfig(_SerializedModelConfig, format=Format.TORCHSCRIPT):
         strict: bool,
         autocast: bool,
         inference_mode: bool,
+        autocast_dtype: Optional["torch.dtype"] = None,  # noqa: F821 # pytype: disable=name-error # type: ignore
         parent: Optional[ModelConfig] = None,
         custom_args: Optional[Dict[str, Any]] = None,
         device: Optional[str] = None,
@@ -335,6 +339,7 @@ class TorchScriptModelConfig(_SerializedModelConfig, format=Format.TORCHSCRIPT):
             strict: Enable or Disable strict flag for tracer used in TorchScript export
             autocast: Enable Automatic Mixed Precision in runner
             inference_mode: Enable inference mode in runner
+            autocast_dtype: dtype used for autocast
             parent: Parent model configuration
             custom_args: Custom arguments passed to TorchScript export
             device: runtime device e.g. "cuda:0"
@@ -346,6 +351,7 @@ class TorchScriptModelConfig(_SerializedModelConfig, format=Format.TORCHSCRIPT):
         self.runner_config = TorchRunnerConfig(
             autocast=autocast,
             inference_mode=inference_mode,
+            autocast_dtype=autocast_dtype,
             device=device,
         )
 
@@ -359,6 +365,7 @@ class TorchScriptModelConfig(_SerializedModelConfig, format=Format.TORCHSCRIPT):
             strict=cls._parse_string(bool, data_dict.get("strict")),
             autocast=cls._parse_string(bool, data_dict.get("autocast")),
             inference_mode=cls._parse_string(bool, data_dict.get("inference_mode")),
+            autocast_dtype=data_dict.get("autocast_dtype"),
             device=data_dict.get("device"),
         )
 
@@ -371,6 +378,7 @@ class TorchExportedProgramModelConfig(_SerializedModelConfig, format=Format.TORC
         autocast: bool,
         inference_mode: bool,
         parent: Optional[ModelConfig] = None,
+        autocast_dtype: Optional["torch.dtype"] = None,  # noqa: F821 # type: ignore # pytype: disable=name-error
         custom_args: Optional[Dict[str, Any]] = None,
         device: Optional[str] = None,
     ) -> None:
@@ -380,12 +388,14 @@ class TorchExportedProgramModelConfig(_SerializedModelConfig, format=Format.TORC
             autocast: Enable Automatic Mixed Precision in runner
             inference_mode: Enable inference mode in runner
             parent: Parent model configuration
+            autocast_dtype: dtype used for autocast
             custom_args: Custom arguments passed to TorchScript export
             device: runtime device e.g. "cuda:0"
         """
         super().__init__(parent=parent)
         self.custom_args = custom_args
         self.runner_config = TorchRunnerConfig(autocast=autocast, inference_mode=inference_mode, device=device)
+        self.autocast_dtype = autocast_dtype
 
     @classmethod
     def _from_dict(cls, data_dict: Dict):
@@ -393,6 +403,7 @@ class TorchExportedProgramModelConfig(_SerializedModelConfig, format=Format.TORC
             autocast=cls._parse_string(bool, data_dict.get("autocast")),
             inference_mode=cls._parse_string(bool, data_dict.get("inference_mode")),
             device=data_dict.get("device"),
+            autocast_dtype=data_dict.get("autocast_dtype"),
         )
 
 

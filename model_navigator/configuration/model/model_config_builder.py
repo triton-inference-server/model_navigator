@@ -213,6 +213,7 @@ class ModelConfigBuilder:
         model_configs[Format.TORCH].append(
             model_config.TorchModelConfig(
                 autocast=torch_config.autocast,
+                autocast_dtype=torch_config.autocast_dtype,
                 inference_mode=torch_config.inference_mode,
                 device=torch_config.device,
                 custom_args=torch_config.custom_args,
@@ -255,6 +256,7 @@ class ModelConfigBuilder:
                     jit_type=jit_type,
                     strict=torch_config.strict,
                     autocast=torch_config.autocast,
+                    autocast_dtype=torch_config.autocast_dtype,
                     inference_mode=torch_config.inference_mode,
                     custom_args=torch_config.custom_args,
                     device=torch_config.device,
@@ -276,6 +278,7 @@ class ModelConfigBuilder:
         model_configs[Format.TORCH_EXPORTEDPROGRAM].append(
             model_config.TorchExportedProgramModelConfig(
                 autocast=torch_config.autocast,
+                autocast_dtype=torch_config.autocast_dtype,
                 inference_mode=torch_config.inference_mode,
                 custom_args=torch_config.custom_args,
                 device=torch_config.device,

@@ -680,10 +680,12 @@ class TorchConfig(CustomConfigForFormat):
 
     Args:
         autocast: Enable Automatic Mixed Precision in runner (default: False).
+        autocast_dtype: dtype used for autocast
         inference_mode: Enable inference mode in runner (default: True).
     """
 
     autocast: bool = True
+    autocast_dtype: Optional["torch.dtype"] = None  # type: ignore # noqa: F821 # pytype: disable=name-error
     inference_mode: bool = True
     custom_args: Optional[Dict[str, Any]] = None
 
@@ -704,6 +706,7 @@ class TorchConfig(CustomConfigForFormat):
     def defaults(self) -> None:
         """Update parameters to defaults."""
         self.autocast = True
+        self.autocast_dtype = None
         self.inference_mode = True
         self.custom_args = None
 
@@ -716,12 +719,14 @@ class TorchScriptConfig(CustomConfigForFormat):
         jit_type: Type of TorchScript export.
         strict: Enable or Disable strict flag for tracer used in TorchScript export (default: True).
         autocast: Enable Automatic Mixed Precision in runner (default: False).
+        autocast_dtype: dtype used for autocast
         inference_mode: Enable inference mode in runner (default: True).
     """
 
     jit_type: Union[Union[str, JitType], Tuple[Union[str, JitType], ...]] = (JitType.SCRIPT, JitType.TRACE)
     strict: bool = True
     autocast: bool = True
+    autocast_dtype: Optional["torch.dtype"] = None  # type: ignore # noqa: F821 # pytype: disable=name-error
     inference_mode: bool = True
 
     def __post_init__(self) -> None:
@@ -748,6 +753,7 @@ class TorchScriptConfig(CustomConfigForFormat):
         self.jit_type = (JitType.SCRIPT, JitType.TRACE)
         self.strict = True
         self.autocast = True
+        self.autocast_dtype = None
         self.inference_mode = True
 
 
@@ -757,10 +763,13 @@ class TorchExportConfig(CustomConfigForFormat):
 
     Args:
         autocast: Enable Automatic Mixed Precision in runner (default: False).
+        autocast_dtype: dtype used for autocast
         inference_mode: Enable inference mode in runner (default: True).
     """
 
     autocast: bool = True
+    autocast_dtype: Optional["torch.dtype"] = None  # type: ignore # noqa: F821 # pytype: disable=name-error
+
     inference_mode: bool = True
 
     @property
@@ -780,6 +789,7 @@ class TorchExportConfig(CustomConfigForFormat):
     def defaults(self) -> None:
         """Update parameters to defaults."""
         self.autocast = True
+        self.autocast_dtype = None
         self.inference_mode = True
 
 
