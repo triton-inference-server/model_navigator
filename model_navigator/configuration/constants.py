@@ -13,6 +13,8 @@
 # limitations under the License.
 """Constants definition for configuration."""
 
+from packaging.version import Version
+
 # Workspace related
 DEFAULT_WORKSPACE = "navigator_workspace"
 
@@ -35,9 +37,6 @@ DEFAULT_MIN_SEGMENT_SIZE = 3
 DEFAULT_TENSORRT_MAX_DIMENSION_SIZE = 2**31 - 1
 OPT_MAX_SHAPE_RATIO = 4 / 5
 
-# ONNX export/conversion related
-DEFAULT_ONNX_OPSET = 17
-
 # Find Max Batch Size
 DEFAULT_MAX_BATCH_SIZE_THRESHOLD = 512
 DEFAULT_MAX_BATCH_SIZE_HALVING = 2
@@ -59,3 +58,25 @@ DEFAULT_COMPARISON_REPORT_FILE = "report.yaml"
 
 # Subcommands isolation
 NAVIGATOR_USE_MULTIPROCESSING = "NAVIGATOR_USE_MULTIPROCESSING"
+
+# ONNX Opset
+_DEFAULT_ONNX_OPSET_2_4 = 17
+_DEFAULT_ONNX_OPSET_2_5 = 22
+
+
+def default_onnx_opset():
+    """Dynamically set default ONNX opset based on Torch version."""
+    from model_navigator.frameworks import is_torch_available
+
+    if not is_torch_available():
+        return _DEFAULT_ONNX_OPSET_2_4
+
+    from model_navigator.frameworks import _TORCH_VERSION
+
+    if _TORCH_VERSION >= Version("2.5.0"):
+        return _DEFAULT_ONNX_OPSET_2_5
+
+    return _DEFAULT_ONNX_OPSET_2_4
+
+
+DEFAULT_ONNX_OPSET = default_onnx_opset()

@@ -17,7 +17,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Dict, List, Optional
 
-from model_navigator.utils.common import DataObject, str_to_torch_dtype
+from model_navigator.utils.common import DataObject
 
 
 class RunnerConfig(ABC, DataObject):
@@ -78,7 +78,7 @@ class TorchRunnerConfig(RunnerConfig):
         autocast: bool,
         inference_mode: bool,
         device: Optional[str],
-        autocast_dtype: Optional["torch.dtype"] = None,  # noqa: F821 # type: ignore # pytype: disable=name-error
+        autocast_dtype: Optional[str] = None,
         custom_args: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Initializes Torch runner configuration class.
@@ -110,7 +110,7 @@ class TorchRunnerConfig(RunnerConfig):
         return cls(
             autocast=cls._parse_string(bool, data_dict.get("autocast")),
             inference_mode=cls._parse_string(bool, data_dict.get("inference_mode")),
-            autocast_dtype=str_to_torch_dtype(data_dict.get("autocast_dtype")),
+            autocast_dtype=data_dict.get("autocast_dtype"),
             device=data_dict.get("device"),
             custom_args=data_dict.get("custom_args"),  # TODO(kn): parse_string int ?
         )
@@ -128,7 +128,7 @@ class TorchRunnerConfig(RunnerConfig):
             "autocast": self.autocast,
             "inference_mode": self.inference_mode,
             "device": self.device,
-            "autocast_dtype": str(self.autocast_dtype) if parse else self.autocast_dtype,
+            "autocast_dtype": self.autocast_dtype,
             "custom_args": self.custom_args,
         }
 

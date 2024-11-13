@@ -14,7 +14,7 @@
 """Torch runners."""
 
 import gc
-from typing import List, Optional, Union
+from typing import List, Optional
 
 from model_navigator.configuration import Format, TensorType
 from model_navigator.configuration.device import get_id_from_device_string, validate_device_string
@@ -48,7 +48,7 @@ class _BaseTorchRunner(NavigatorRunner):
         inference_mode: bool = True,
         autocast: bool = True,
         device: Optional[str] = None,
-        autocast_dtype: Optional[Union["torch.dtype", str]] = None,  # type: ignore
+        autocast_dtype: Optional[str] = None,
         *args,
         **kwargs,
     ) -> None:

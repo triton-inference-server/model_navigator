@@ -23,7 +23,7 @@ import jsonlines
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.execution_context import ExecutionContext
 from model_navigator.commands.performance import ProfilingResults
-from model_navigator.configuration import Format, OptimizationProfile
+from model_navigator.configuration import DEFAULT_THROUGHPUT_CUTOFF_THRESHOLD, Format, OptimizationProfile
 from model_navigator.configuration.runner.runner_config import RunnerConfig
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata
@@ -82,6 +82,8 @@ class FindMaxBatchSize(Command):
                 output={"device_max_batch_size": device_max_batch_size},
             )
 
+        optimization_profile = optimization_profile.clone()
+
         if optimization_profile.max_batch_size or optimization_profile.batch_sizes:
             if optimization_profile.max_batch_size:
                 device_max_batch_size = optimization_profile.max_batch_size
@@ -91,6 +93,13 @@ class FindMaxBatchSize(Command):
             return CommandOutput(
                 status=CommandStatus.OK,
                 output={"device_max_batch_size": device_max_batch_size},
+            )
+
+        if optimization_profile.throughput_cutoff_threshold is None:
+            optimization_profile.throughput_cutoff_threshold = DEFAULT_THROUGHPUT_CUTOFF_THRESHOLD
+            LOGGER.info(
+                f"""Using default throughput_cutoff_threshold={DEFAULT_THROUGHPUT_CUTOFF_THRESHOLD} """
+                """for heuristic search as `None` was provided."""
             )
 
         device_max_batch_sizes = []

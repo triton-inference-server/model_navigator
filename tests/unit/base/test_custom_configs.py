@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from model_navigator.configuration import (
+    DEFAULT_ONNX_OPSET,
     Format,
     JitType,
     OnnxConfig,
@@ -29,7 +30,6 @@ from model_navigator.configuration import (
 from model_navigator.configuration.constants import (
     DEFAULT_MAX_WORKSPACE_SIZE,
     DEFAULT_MIN_SEGMENT_SIZE,
-    DEFAULT_ONNX_OPSET,
 )
 
 

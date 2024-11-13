@@ -227,7 +227,7 @@ class TorchModelConfig(_SourceModelConfig, format=Format.TORCH):
         self,
         autocast: bool,
         inference_mode: bool,
-        autocast_dtype: Optional["torch.dtype"] = None,  # noqa: F821 # pytype: disable=name-error # type: ignore
+        autocast_dtype: Optional[str] = None,
         device: Optional[str] = None,
         custom_args: Optional[Dict[str, Any]] = None,
     ) -> None:
@@ -255,6 +255,7 @@ class TorchModelConfig(_SourceModelConfig, format=Format.TORCH):
             autocast=cls._parse_string(bool, data_dict.get("autocast")),
             inference_mode=cls._parse_string(bool, data_dict.get("inference_mode")),
             device=data_dict.get("device"),
+            autocast_dtype=data_dict.get("autocast_dtype"),
         )
 
 
@@ -327,7 +328,7 @@ class TorchScriptModelConfig(_SerializedModelConfig, format=Format.TORCHSCRIPT):
         strict: bool,
         autocast: bool,
         inference_mode: bool,
-        autocast_dtype: Optional["torch.dtype"] = None,  # noqa: F821 # pytype: disable=name-error # type: ignore
+        autocast_dtype: Optional[str] = None,
         parent: Optional[ModelConfig] = None,
         custom_args: Optional[Dict[str, Any]] = None,
         device: Optional[str] = None,
@@ -378,7 +379,7 @@ class TorchExportedProgramModelConfig(_SerializedModelConfig, format=Format.TORC
         autocast: bool,
         inference_mode: bool,
         parent: Optional[ModelConfig] = None,
-        autocast_dtype: Optional["torch.dtype"] = None,  # noqa: F821 # type: ignore # pytype: disable=name-error
+        autocast_dtype: Optional[str] = None,
         custom_args: Optional[Dict[str, Any]] = None,
         device: Optional[str] = None,
     ) -> None:
@@ -394,8 +395,9 @@ class TorchExportedProgramModelConfig(_SerializedModelConfig, format=Format.TORC
         """
         super().__init__(parent=parent)
         self.custom_args = custom_args
-        self.runner_config = TorchRunnerConfig(autocast=autocast, inference_mode=inference_mode, device=device)
-        self.autocast_dtype = autocast_dtype
+        self.runner_config = TorchRunnerConfig(
+            autocast=autocast, autocast_dtype=autocast_dtype, inference_mode=inference_mode, device=device
+        )
 
     @classmethod
     def _from_dict(cls, data_dict: Dict):

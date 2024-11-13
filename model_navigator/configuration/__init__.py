@@ -14,6 +14,7 @@
 """Definition of enums and classes representing configuration for Model Navigator."""
 
 import abc
+import copy
 import dataclasses
 import inspect
 import itertools
@@ -138,6 +139,20 @@ class JitType(Enum):
 
     SCRIPT = "script"
     TRACE = "trace"
+
+
+class AutocastType(Enum):
+    """Torch runner autocast options.
+
+    Args:
+        DEVICE: Use device default dtype.
+        FP16 (str): Use float16 autocast during runtime.
+        BF16 (str): Use bfloat16 autocast during runtime.
+    """
+
+    DEVICE = None
+    FP16 = "torch.float16"
+    BF16 = "torch.bfloat16"
 
 
 class TensorRTPrecision(Enum):
@@ -331,6 +346,10 @@ class OptimizationProfile(DataObject):
                 "throughput_backoff_limit", DEFAULT_THROUGHPUT_BACKOFF_LIMIT
             ),
         )
+
+    def clone(self) -> "OptimizationProfile":
+        """Clone the current OptimizationProfile using deepcopy."""
+        return copy.deepcopy(self)
 
 
 class TensorRTProfile(Dict[str, ShapeTuple]):
@@ -685,7 +704,7 @@ class TorchConfig(CustomConfigForFormat):
     """
 
     autocast: bool = True
-    autocast_dtype: Optional["torch.dtype"] = None  # type: ignore # noqa: F821 # pytype: disable=name-error
+    autocast_dtype: AutocastType = AutocastType.DEVICE
     inference_mode: bool = True
     custom_args: Optional[Dict[str, Any]] = None
 
@@ -706,7 +725,7 @@ class TorchConfig(CustomConfigForFormat):
     def defaults(self) -> None:
         """Update parameters to defaults."""
         self.autocast = True
-        self.autocast_dtype = None
+        self.autocast_dtype = AutocastType.DEVICE
         self.inference_mode = True
         self.custom_args = None
 
@@ -726,7 +745,7 @@ class TorchScriptConfig(CustomConfigForFormat):
     jit_type: Union[Union[str, JitType], Tuple[Union[str, JitType], ...]] = (JitType.SCRIPT, JitType.TRACE)
     strict: bool = True
     autocast: bool = True
-    autocast_dtype: Optional["torch.dtype"] = None  # type: ignore # noqa: F821 # pytype: disable=name-error
+    autocast_dtype: AutocastType = AutocastType.DEVICE
     inference_mode: bool = True
 
     def __post_init__(self) -> None:
@@ -753,7 +772,7 @@ class TorchScriptConfig(CustomConfigForFormat):
         self.jit_type = (JitType.SCRIPT, JitType.TRACE)
         self.strict = True
         self.autocast = True
-        self.autocast_dtype = None
+        self.autocast_dtype = AutocastType.DEVICE
         self.inference_mode = True
 
 
@@ -768,8 +787,7 @@ class TorchExportConfig(CustomConfigForFormat):
     """
 
     autocast: bool = True
-    autocast_dtype: Optional["torch.dtype"] = None  # type: ignore # noqa: F821 # pytype: disable=name-error
-
+    autocast_dtype: AutocastType = AutocastType.DEVICE
     inference_mode: bool = True
 
     @property
@@ -789,7 +807,7 @@ class TorchExportConfig(CustomConfigForFormat):
     def defaults(self) -> None:
         """Update parameters to defaults."""
         self.autocast = True
-        self.autocast_dtype = None
+        self.autocast_dtype = AutocastType.DEVICE
         self.inference_mode = True
 
 
