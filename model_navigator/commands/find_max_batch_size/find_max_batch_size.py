@@ -82,8 +82,6 @@ class FindMaxBatchSize(Command):
                 output={"device_max_batch_size": device_max_batch_size},
             )
 
-        optimization_profile = optimization_profile.clone()
-
         if optimization_profile.max_batch_size or optimization_profile.batch_sizes:
             if optimization_profile.max_batch_size:
                 device_max_batch_size = optimization_profile.max_batch_size
@@ -93,13 +91,6 @@ class FindMaxBatchSize(Command):
             return CommandOutput(
                 status=CommandStatus.OK,
                 output={"device_max_batch_size": device_max_batch_size},
-            )
-
-        if optimization_profile.throughput_cutoff_threshold is None:
-            optimization_profile.throughput_cutoff_threshold = DEFAULT_THROUGHPUT_CUTOFF_THRESHOLD
-            LOGGER.info(
-                f"""Using default throughput_cutoff_threshold={DEFAULT_THROUGHPUT_CUTOFF_THRESHOLD} """
-                """for heuristic search as `None` was provided."""
             )
 
         device_max_batch_sizes = []
@@ -184,6 +175,14 @@ class FindMaxBatchSize(Command):
         reproduction_scripts_dir = workspace.path / reproduction_scripts_dir
         reproduction_scripts_dir.mkdir(exist_ok=True)
 
+        optimization_profile_copy = optimization_profile.clone()
+        if optimization_profile_copy.throughput_cutoff_threshold is None:
+            optimization_profile_copy.throughput_cutoff_threshold = DEFAULT_THROUGHPUT_CUTOFF_THRESHOLD
+            LOGGER.info(
+                f"""Using default throughput_cutoff_threshold={DEFAULT_THROUGHPUT_CUTOFF_THRESHOLD} """
+                """for heuristic search as `None` was provided."""
+            )
+
         with ExecutionContext(
             workspace=workspace,
             script_path=reproduction_scripts_dir / f"reproduce_max_batch_size-{runner_cls.slug()}.py",
@@ -194,7 +193,7 @@ class FindMaxBatchSize(Command):
                 "navigator_workspace": workspace.path.as_posix(),
                 "batch_dim": batch_dim,
                 "results_path": temp_file.name,
-                "optimization_profile": optimization_profile.to_dict(parse=True),
+                "optimization_profile": optimization_profile_copy.to_dict(parse=True),
                 "runner_name": runner_cls.name(),
                 "input_metadata": input_metadata.to_json(),
                 "output_metadata": output_metadata.to_json(),
