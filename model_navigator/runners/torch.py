@@ -93,16 +93,7 @@ class _BaseTorchRunner(NavigatorRunner):
         self._input_module_device = get_module_device(self.model) or torch.device("cpu")
         self._loaded_model = self.model
         self._loaded_model.to(self.device).eval()
-
-        # TODO: Consider better handling for controlling autocast behavior
-        try:
-            if hasattr(self._loaded_model, "parameters") and self._autocast_dtype is None:
-                param_dtype = next(self._loaded_model.parameters()).dtype
-                if param_dtype in [torch.bfloat16, torch.int8, torch.uint8]:
-                    self._autocast = False
-                    LOGGER.warning(f"Model has {param_dtype} parameters. Disabling autocast.")
-        except StopIteration:
-            LOGGER.warning("Model has no parameters.")
+        self._adjust_autocast()
 
     def deactivate_impl(self):
         """Deactivation implementation."""
@@ -232,6 +223,17 @@ class _BaseTorchRunner(NavigatorRunner):
         else:
             raise ValueError(f"Unsupported type {type(value)}")
         return value
+
+    def _adjust_autocast(self):
+        # TODO: Consider better handling for controlling autocast behavior
+        try:
+            if hasattr(self._loaded_model, "parameters") and self._autocast_dtype is None:
+                param_dtype = next(self._loaded_model.parameters()).dtype
+                if param_dtype in [torch.bfloat16, torch.int8, torch.uint8]:
+                    self._autocast = False
+                    LOGGER.warning(f"Model has {param_dtype} parameters. Disabling autocast.")
+        except StopIteration:
+            LOGGER.warning("Model has no parameters.")
 
 
 class _BaseTorchScriptRunner(_BaseTorchRunner):
@@ -424,6 +426,7 @@ class _BaseTorchExportedProgramRunner(_BaseTorchRunner):
         exported_program = torch.export.load(str(self._model))
         self._loaded_model = exported_program.module()
         self._loaded_model.to(self.device)
+        self._adjust_autocast()
 
 
 class TorchExportedProgramCPURunner(_BaseTorchExportedProgramRunner):
