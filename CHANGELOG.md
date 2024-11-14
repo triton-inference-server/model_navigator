@@ -24,6 +24,7 @@ limitations under the License.
 - change: Removed TensorFlow dependencies for `nav.jax.optimize`
 - change: Removed PyTorch dependencies from `nav.profile`
 - change: Collect all Python packages in status instead of filtered list
+- change: Use default throughput cutoff threshold for max batch size heuristic when `None` provided in configuration
 - fix: Exception is raised with Python >=3.11 due to wrong dataclass initialization
 - fix: Removed option from ExportOption removed from Torch 2.5
 - fix: Improved preprocessing stage in Torch based runners
