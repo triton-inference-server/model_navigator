@@ -20,7 +20,7 @@ from model_navigator.configuration import (
     TensorRTProfile,
 )
 from model_navigator.configuration.common_config import CommonConfig
-from model_navigator.configuration.constants import DEFAULT_MAX_WORKSPACE_SIZE
+from model_navigator.configuration.constants import DEFAULT_MAX_WORKSPACE_SIZE, DEFAULT_ONNX_OPSET
 from model_navigator.configuration.model.model_config import (
     ONNXModelConfig,
     TensorRTModelConfig,
@@ -70,7 +70,11 @@ def test_do_find_device_max_batch_size_return_false_when_no_adaptive_formats():
     )
 
     models_config = {
-        Format.ONNX: [ONNXModelConfig(opset=17, dynamic_axes={}, dynamo_export=False, graph_surgeon_optimization=True)],
+        Format.ONNX: [
+            ONNXModelConfig(
+                opset=DEFAULT_ONNX_OPSET, dynamic_axes={}, dynamo_export=False, graph_surgeon_optimization=True
+            )
+        ],
         Format.TORCH: [TorchModelConfig(autocast=False, inference_mode=True)],
     }
 

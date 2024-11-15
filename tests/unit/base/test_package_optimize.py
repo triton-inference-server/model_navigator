@@ -18,7 +18,7 @@ import tempfile
 
 import pytest
 
-from model_navigator.configuration import Format, JitType, OptimizationProfile, TorchScriptConfig
+from model_navigator.configuration import DEFAULT_ONNX_OPSET, Format, JitType, OptimizationProfile, TorchScriptConfig
 from model_navigator.exceptions import ModelNavigatorEmptyPackageError, ModelNavigatorMissingSourceModelError
 from model_navigator.package import _get_model_configs, _update_config, optimize
 from model_navigator.runners.registry import runner_registry
@@ -75,7 +75,7 @@ def test_update_config_returns_updated_custom_config_when_defaults_is_true():
         torch_script_config = config.custom_configs["TorchScript"]
         tensorrt_config = config.custom_configs["TensorRT"]
 
-        assert onnx_config.opset == 17  # pytype: disable=attribute-error
+        assert onnx_config.opset == DEFAULT_ONNX_OPSET  # pytype: disable=attribute-error
         assert torch_script_config.jit_type == (JitType.SCRIPT, JitType.TRACE)  # pytype: disable=attribute-error
         assert tensorrt_config.trt_profiles is None  # pytype: disable=attribute-error
 

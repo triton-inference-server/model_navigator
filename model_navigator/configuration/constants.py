@@ -60,8 +60,9 @@ DEFAULT_COMPARISON_REPORT_FILE = "report.yaml"
 NAVIGATOR_USE_MULTIPROCESSING = "NAVIGATOR_USE_MULTIPROCESSING"
 
 # ONNX Opset
-_DEFAULT_ONNX_OPSET_2_4 = 17
-_DEFAULT_ONNX_OPSET_2_5 = 22
+_DEFAULT_ONNX_OPSET_TORCH_2_4 = 17
+_DEFAULT_ONNX_OPSET_TORCH_2_5 = 20
+_DEFAULT_ONNX_OPSET = 18
 
 
 def default_onnx_opset():
@@ -69,14 +70,14 @@ def default_onnx_opset():
     from model_navigator.frameworks import is_torch_available
 
     if not is_torch_available():
-        return _DEFAULT_ONNX_OPSET_2_4
+        return _DEFAULT_ONNX_OPSET
 
     from model_navigator.frameworks import _TORCH_VERSION
 
     if _TORCH_VERSION >= Version("2.5.0"):
-        return _DEFAULT_ONNX_OPSET_2_5
+        return _DEFAULT_ONNX_OPSET_TORCH_2_5
 
-    return _DEFAULT_ONNX_OPSET_2_4
+    return _DEFAULT_ONNX_OPSET_TORCH_2_4
 
 
 DEFAULT_ONNX_OPSET = default_onnx_opset()
