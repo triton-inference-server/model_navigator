@@ -18,6 +18,7 @@ import pytest
 from model_navigator.configuration import (
     DEFAULT_TENSORRT_PRECISION,
     DEFAULT_TENSORRT_PRECISION_MODE,
+    AutocastType,
     CustomConfigForFormat,
     Format,
     JitType,
@@ -112,10 +113,34 @@ def test_torch_config_has_valid_name_and_format():
 
 
 def test_torch_config_defaults_reset_values_to_initial():
-    config = TorchConfig(inference_mode=False, autocast=False, custom_args={"key": "value"})
+    config = TorchConfig(
+        inference_mode=False, autocast=False, autocast_dtype=AutocastType.FP16, custom_args={"key": "value"}
+    )
     config.defaults()
     assert config.autocast is True
     assert config.inference_mode is True
+    assert config.autocast_dtype is AutocastType.DEVICE
+    assert config.custom_args is None
+
+
+def test_torch_config_initialize_values_from_dict_correctly():
+    config = TorchConfig.from_dict({
+        "inference_mode": False,
+        "autocast": False,
+        "autocast_dtype": "torch.float16",
+        "custom_args": {"key": "value"},
+    })
+
+    assert config.autocast is False
+    assert config.inference_mode is False
+    assert config.autocast_dtype is AutocastType.FP16
+    assert config.custom_args == {"key": "value"}
+
+    config = TorchConfig.from_dict({})
+
+    assert config.autocast is True
+    assert config.inference_mode is True
+    assert config.autocast_dtype is AutocastType.DEVICE
     assert config.custom_args is None
 
 

@@ -729,6 +729,16 @@ class TorchConfig(CustomConfigForFormat):
         self.inference_mode = True
         self.custom_args = None
 
+    @classmethod
+    def from_dict(cls, config_dict: Dict[str, Any]) -> "TorchConfig":
+        """Instantiate TorchConfig from a dictionary."""
+        return cls(
+            autocast=config_dict.get("autocast", True),
+            autocast_dtype=AutocastType(config_dict.get("autocast_dtype", AutocastType.DEVICE)),
+            inference_mode=config_dict.get("inference_mode", True),
+            custom_args=config_dict.get("custom_args"),
+        )
+
 
 @dataclasses.dataclass
 class TorchScriptConfig(CustomConfigForFormat):
