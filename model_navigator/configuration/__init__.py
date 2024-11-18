@@ -708,6 +708,10 @@ class TorchConfig(CustomConfigForFormat):
     inference_mode: bool = True
     custom_args: Optional[Dict[str, Any]] = None
 
+    def __post_init__(self):
+        """Post initialization to handle correctly enums."""
+        self.autocast_dtype: AutocastType = AutocastType(self.autocast_dtype)
+
     @property
     def format(self) -> Format:
         """Returns Format.TORCH.
@@ -762,6 +766,7 @@ class TorchScriptConfig(CustomConfigForFormat):
         """Parse dataclass enums."""
         jit_type = (self.jit_type,) if not isinstance(self.jit_type, (list, tuple)) else self.jit_type
         self.jit_type = tuple(JitType(j) for j in jit_type)
+        self.autocast_dtype: AutocastType = AutocastType(self.autocast_dtype)
 
     @property
     def format(self) -> Format:
@@ -799,6 +804,10 @@ class TorchExportConfig(CustomConfigForFormat):
     autocast: bool = True
     autocast_dtype: AutocastType = AutocastType.DEVICE
     inference_mode: bool = True
+
+    def __post_init__(self):
+        """Post initialization to handle correctly enums."""
+        self.autocast_dtype: AutocastType = AutocastType(self.autocast_dtype)
 
     @property
     def format(self) -> Format:

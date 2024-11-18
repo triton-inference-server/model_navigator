@@ -75,7 +75,7 @@ def test_default_values_for_torch_script_custom_config():
     assert config.format == Format.TORCHSCRIPT
 
 
-def test_default_values_for_torch_tensorrt_custom_confg():
+def test_default_values_for_torch_tensorrt_custom_config():
     torch_tensorrt_config = TorchTensorRTConfig()
     assert torch_tensorrt_config.precision == (
         TensorRTPrecision.FP32,

@@ -112,6 +112,14 @@ def test_torch_config_has_valid_name_and_format():
     assert config.custom_args is None
 
 
+def test_torch_config_handle_autocast_dtype_mapping():
+    config = TorchConfig(autocast_dtype=None)  # pytype: disable=wrong-arg-types
+    assert config.autocast_dtype is AutocastType.DEVICE
+
+    config = TorchConfig(autocast_dtype="torch.float16")  # pytype: disable=wrong-arg-types
+    assert config.autocast_dtype is AutocastType.FP16
+
+
 def test_torch_config_defaults_reset_values_to_initial():
     config = TorchConfig(
         inference_mode=False, autocast=False, autocast_dtype=AutocastType.FP16, custom_args={"key": "value"}

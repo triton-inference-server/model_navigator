@@ -19,8 +19,9 @@ THIS_SCRIPT_PATH="$(realpath --relative-to="$(pwd)" "$0")"
 TEST_MODULE="$(dirname "${THIS_SCRIPT_PATH}"|sed 's/\//./g').test"
 
 
+pip install --upgrade setuptools
 pip install "transformers<=4.38.2" datasets librosa --upgrade
-pip install "numpy<=1.24.0"
+pip install "numpy<2"
 
 export NAVIGATOR_CONSOLE_OUTPUT=LOGS
 export NAVIGATOR_LOG_LEVEL=DEBUG
