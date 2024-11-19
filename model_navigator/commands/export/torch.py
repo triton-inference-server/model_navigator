@@ -322,6 +322,7 @@ class ExportTorch2DynamoONNX(Command):
         path: pathlib.Path,
         input_metadata: TensorMetadata,
         output_metadata: TensorMetadata,
+        dataloader_trt_profile: TensorRTProfile,
         target_device: DeviceKind,
         dynamic_axes: Dict[str, Union[Dict[int, str], List[int]]],
         dynamo_dynamic_shapes: Optional[bool],
@@ -329,6 +330,8 @@ class ExportTorch2DynamoONNX(Command):
         custom_args: Dict[str, Any],
         model: Any = None,
         batch_dim: Optional[int] = None,
+        dataloader_max_batch_size: Optional[int] = None,
+        device_max_batch_size: Optional[int] = None,
     ) -> CommandOutput:
         """Execute command.
 
@@ -338,6 +341,7 @@ class ExportTorch2DynamoONNX(Command):
             opset: ONNX opset
             input_metadata: Model inputs metadata
             output_metadata: Model outputs metadata
+            dataloader_trt_profile: Profile from dataloader
             target_device: Target device for export - determine the exported model
             dynamic_axes: Definition of model inputs dynamic axes
             dynamo_dynamic_shapes: Enable dynamo dynamic shapes
@@ -347,6 +351,8 @@ class ExportTorch2DynamoONNX(Command):
             custom_args (Optional[Dict[str, Any]], optional): Passthrough parameters for torch.onnx.dynamo_export
                 Can be used to pass ExportOptions object.
                 For available arguments check PyTorch documentation: https://pytorch.org/docs/stable/onnx.html#torch.onnx.export
+            dataloader_max_batch_size: The maximal batch size obtained from datalaoder
+            device_max_batch_size: The maximal batch size obtained for device
 
         Returns:
             CommandOutput object with status
@@ -394,8 +400,10 @@ class ExportTorch2DynamoONNX(Command):
                 "navigator_workspace": workspace.path.as_posix(),
                 "custom_args": custom_args,
                 "verbose": verbose,
+                "dataloader_max_batch_size": dataloader_max_batch_size,
+                "device_max_batch_size": device_max_batch_size,
+                "dataloader_trt_profile": dataloader_trt_profile.to_dict(),
             }
-
             args = parse_kwargs_to_cmd(kwargs)
 
             context.execute_python_script(

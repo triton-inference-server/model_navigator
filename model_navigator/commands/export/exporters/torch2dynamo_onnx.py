@@ -21,6 +21,7 @@ import onnx
 import onnx_graphsurgeon as gs
 import torch  # pytype: disable=import-error
 
+from model_navigator.configuration import TensorRTProfile
 from model_navigator.core.dataloader import load_samples
 from model_navigator.core.tensor import TensorMetadata
 
@@ -37,6 +38,7 @@ def get_model() -> torch.nn.Module:
 def export(
     exported_model_path: str,
     input_metadata: Dict[str, Any],
+    dataloader_trt_profile: Dict[str, Any],
     input_names: List[str],
     output_names: List[str],
     batch_dim: Optional[int],
@@ -45,12 +47,15 @@ def export(
     verbose: bool,
     custom_args: Dict[str, Any],
     navigator_workspace: Optional[str] = None,
+    dataloader_max_batch_size: Optional[int] = None,
+    device_max_batch_size: Optional[int] = None,
 ):
     """Export Torch model using dynamo.
 
     Args:
         exported_model_path (str): Output ONNX model path.
         input_metadata (Dict[str, Any]): List of input metadata.
+        dataloader_trt_profile: Profiles generated based on shapes.
         input_names (List[str]): List of model input names.
         output_names (List[str]): List of model output names.
         batch_dim (Optional[int]): Batch dimension.
@@ -61,6 +66,8 @@ def export(
             When None use current workdir. Defaults to None.
         custom_args (Optional[Dict[str, Any]], optional): Passthrough parameters for torch.jit.trace
             For available arguments check PyTorch documentation: https://pytorch.org/docs/stable/jit.html#torch.jit.trace
+        dataloader_max_batch_size: Maximum batch size in the dataloader. Defaults to None.
+        device_max_batch_size: Maximum batch size that fits on the device. Defaults to None.
     """
     model = get_model()
 
@@ -71,6 +78,14 @@ def export(
     profiling_sample = load_samples("profiling_sample", navigator_workspace, batch_dim)[0]
     input_metadata = TensorMetadata.from_json(input_metadata)
 
+    def expand_batch_dim(tensor, batch_dim, max_batch_size):
+        if batch_dim is not None and tensor.shape[batch_dim] < max_batch_size:
+            expand_shape = list(tensor.shape)
+            expand_shape[batch_dim] = max_batch_size
+            expanded_tensor = tensor.expand(*expand_shape)
+            return expanded_tensor
+        return tensor
+
     dummy_input = {n: torch.from_numpy(val).to(target_device) for n, val in profiling_sample.items()}
     dummy_input = input_metadata.unflatten_sample(dummy_input, wrap_input=False)
 
@@ -80,23 +95,53 @@ def export(
         dummy_input = (*dummy_input, {})
     *args, kwargs = dummy_input
 
+    # Expand batch_dim of tensors to max_batch_size
+    max_batch_size = device_max_batch_size or dataloader_max_batch_size
+    if max_batch_size is not None:
+        args = tuple(
+            expand_batch_dim(arg, batch_dim, max_batch_size) if isinstance(arg, torch.Tensor) else arg for arg in args
+        )
+        kwargs = {
+            k: expand_batch_dim(v, batch_dim, max_batch_size) if isinstance(v, torch.Tensor) else v
+            for k, v in kwargs.items()
+        }
+
     loglevel = logging.WARNING if verbose else logging.ERROR
-    export_options_kwargs = {}
-    export_options_kwargs["diagnostic_options"] = torch.onnx.DiagnosticOptions(verbosity_level=loglevel)
-    if dynamic_shapes:
-        export_options_kwargs["dynamic_shapes"] = True
-    export_options = torch.onnx.ExportOptions(**export_options_kwargs)
 
     root_logger = logging.getLogger()
     original_loglevel = root_logger.getEffectiveLevel()
     root_logger.setLevel(loglevel)
+
+    # Dynamic shapes support
+
+    # Collect trt profile for min and max shape data
+    # FIXME: Use a common structure for the min/max shapes
+    dataloader_trt_profile = TensorRTProfile.from_dict(dataloader_trt_profile)
+    dynamic_shapes = []
+    for name, spec_ in dataloader_trt_profile.items():
+        tensor_metadata = input_metadata.get(name)
+        if not tensor_metadata:
+            continue
+
+        dynamic_shapes_ = {}
+        if max_batch_size is not None and max_batch_size > 1 and len(tensor_metadata.shape) > 0:
+            dynamic_shapes_[0] = torch.export.Dim("batch", min=1, max=max_batch_size)
+
+        for idx in range(1, len(spec_.min)):
+            if spec_.min[idx] != spec_.max[idx]:
+                dynamic_shapes_[idx] = torch.export.Dim(f"{name}__{idx}", min=spec_.min[idx], max=spec_.max[idx])
+
+        dynamic_shapes.append(dynamic_shapes_)
+
     try:
-        exported_model = torch.onnx.dynamo_export(
+        exported_model = torch.onnx.export(
             model,
-            *args,
+            args=tuple(args),
+            kwargs=kwargs,
             **custom_args,
-            **kwargs,
-            export_options=export_options,
+            dynamo=True,
+            dynamic_shapes=dynamic_shapes,
+            fallback=False,
         )
 
         exported_model_path = pathlib.Path(exported_model_path)
