@@ -28,7 +28,7 @@ from model_navigator.pipelines.constants import PIPELINE_FIND_MAX_BATCH_SIZE
 from model_navigator.pipelines.pipeline import Pipeline
 from model_navigator.runners.onnx import OnnxrtCPURunner, OnnxrtCUDARunner
 from model_navigator.runners.tensorflow import TensorFlowSavedModelCPURunner, TensorFlowSavedModelCUDARunner
-from model_navigator.runners.torch import TorchCPURunner, TorchCUDARunner
+from model_navigator.runners.torch import TorchCompileCPURunner, TorchCompileCUDARunner, TorchCPURunner, TorchCUDARunner
 from model_navigator.utils.config_helpers import do_find_device_max_batch_size
 
 
@@ -77,22 +77,24 @@ def find_device_max_batch_size_builder(
 def _find_max_batch_size_config_for_torch(config: CommonConfig, models_config: Dict[Format, List[ModelConfig]]):
     configurations = []
     for model_cfg in models_config.get(Format.TORCH, []):
-        runner_cls = {
-            DeviceKind.CUDA: TorchCUDARunner,
-            DeviceKind.CPU: TorchCPURunner,
+        runners_cls = {
+            DeviceKind.CUDA: [TorchCUDARunner, TorchCompileCUDARunner],
+            DeviceKind.CPU: [TorchCPURunner, TorchCompileCPURunner],
         }[config.target_device]
 
-        if model_cfg.format != runner_cls.format():
-            raise ModelNavigatorRuntimeError(
-                f"Model config format `{model_cfg.format}` does not match `{runner_cls.format()}`."
+        for runner_cls in runners_cls:
+            if model_cfg.format != runner_cls.format():
+                raise ModelNavigatorRuntimeError(
+                    f"Model config format `{model_cfg.format}` does not match `{runner_cls.format()}`."
+                )
+            mbs_config = FindMaxBatchSizeConfig(
+                format=Format.TORCH,
+                model=config.model,
+                runner_cls=runner_cls,
+                reproduction_scripts_dir=pathlib.Path(model_cfg.key),
             )
-        mbs_config = FindMaxBatchSizeConfig(
-            format=Format.TORCH,
-            model=config.model,
-            runner_cls=runner_cls,
-            reproduction_scripts_dir=pathlib.Path(model_cfg.key),
-        )
-        configurations.append(mbs_config)
+            configurations.append(mbs_config)
+
     for model_cfg in models_config.get(Format.ONNX, []):
         runner_cls = {
             DeviceKind.CUDA: OnnxrtCUDARunner,

@@ -31,7 +31,7 @@ from model_navigator.frameworks import Framework
 from model_navigator.pipelines.builders.find_device_max_batch_size import find_device_max_batch_size_builder
 from model_navigator.runners.onnx import OnnxrtCUDARunner
 from model_navigator.runners.tensorflow import TensorFlowSavedModelCUDARunner
-from model_navigator.runners.torch import TorchCUDARunner
+from model_navigator.runners.torch import TorchCompileCUDARunner, TorchCUDARunner
 
 
 def test_find_device_max_batch_size_builder_return_execution_unit_when_torch_framework_is_used():
@@ -84,12 +84,15 @@ def test_find_device_max_batch_size_builder_return_execution_unit_when_torch_fra
     assert len(pipeline.execution_units) == 1
 
     execution_unit = pipeline.execution_units[0]
-    assert len(execution_unit.kwargs["configurations"]) == 2
+    assert len(execution_unit.kwargs["configurations"]) == 3
 
     configuration = execution_unit.kwargs["configurations"][0]
     assert configuration.runner_cls == TorchCUDARunner
 
     configuration = execution_unit.kwargs["configurations"][1]
+    assert configuration.runner_cls == TorchCompileCUDARunner
+
+    configuration = execution_unit.kwargs["configurations"][2]
     assert configuration.runner_cls == OnnxrtCUDARunner
 
 
