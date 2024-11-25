@@ -195,7 +195,7 @@ class ModelConfig(ABC, DataObject):
     @staticmethod
     def _parse_string(parse_func: Callable, val: Optional[str] = None):
         """Parses string with parse_func or returns None if val not provided."""
-        if val:
+        if val is not None:
             return parse_func(val)
         else:
             return None

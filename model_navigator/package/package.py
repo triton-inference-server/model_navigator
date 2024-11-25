@@ -35,6 +35,7 @@ from model_navigator.configuration import (
 )
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.device import get_device_kind_from_device_string
+from model_navigator.configuration.runner.runner_config import RunnerConfig
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.workspace import Workspace
 from model_navigator.exceptions import (
@@ -180,8 +181,12 @@ class Package:
             The optimal runner for the optimized model.
         """
         runtime_result = self.get_best_runtime(strategies=strategies, include_source=include_source, inplace=inplace)
-
         model_config = runtime_result.model_status.model_config
+
+        runner_config = None
+        if hasattr(runtime_result.model_status.model_config, "runner_config"):
+            runner_config = runtime_result.model_status.model_config.runner_config  # pytype: disable=attribute-error
+
         runner_status = runtime_result.runner_status
 
         if not is_source_format(model_config.format) and not (self.workspace.path / model_config.path).exists():
@@ -199,7 +204,12 @@ class Package:
             )
 
         return self._get_runner(
-            model_config.key, runner_status.runner_name, return_type=return_type, device=device, inplace=inplace
+            model_config.key,
+            runner_status.runner_name,
+            return_type=return_type,
+            device=device,
+            inplace=inplace,
+            runner_config=runner_config,
         )
 
     def get_best_model_status(
@@ -239,7 +249,13 @@ class Package:
         return True
 
     def _get_runner(
-        self, model_key: str, runner_name: str, device: str, return_type: TensorType, inplace: bool = False
+        self,
+        model_key: str,
+        runner_name: str,
+        device: str,
+        return_type: TensorType,
+        inplace: bool = False,
+        runner_config: Optional[RunnerConfig] = None,
     ) -> NavigatorRunner:
         """Load runner.
 
@@ -249,6 +265,7 @@ class Package:
             return_type: Type of the runner output.
             device: Device on which the model has been executed
             inplace: Indicate if runner is in inplace mode.
+            runner_config: Runner configuration.
 
         Raises:
             ModelNavigatorNotFoundError when no runner found for provided constraints.
@@ -266,15 +283,23 @@ class Package:
         else:
             model = self.workspace.path / model_config.path
 
+        if runner_config is None:
+            runner_config = {}
+
         device_kind = get_device_kind_from_device_string(device)
         LOGGER.info(f"Creating model `{model_key}` on runner `{runner_name}` and device `{device}`")
+        # TODO: implement better handling for redundant device argument in _get_runner and runner_config
+        runner_config_dict = runner_config.to_dict(parse=True) if runner_config else {}
+        runner_config_dict["device"] = device
+
         return get_runner(runner_name, device_kind)(
             model=model,
             input_metadata=self.status.input_metadata,
             output_metadata=self.status.output_metadata,
             return_type=return_type,
-            device=device,
+            # device=device, # TODO: remove redundant device argument and use runner_config
             inplace=inplace,
+            **runner_config_dict,
         )  # pytype: disable=not-instantiable
 
     def get_best_runtime(

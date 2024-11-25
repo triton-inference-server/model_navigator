@@ -31,6 +31,7 @@ limitations under the License.
 - fix: Removed option from ExportOption removed from Torch 2.5
 - fix: Improved preprocessing stage in Torch based runners
 - fix: Warn when using autocast with bfloat16 in Torch
+- fix: Pass runner configuration to runners in nav.profile
 
 ## 0.12.0
 
