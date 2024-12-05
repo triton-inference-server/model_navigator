@@ -17,8 +17,8 @@ limitations under the License.
 # Changelog
 
 ## 0.13.0 (unreleased)
-- new: Introducing custom_args in TensorConfig for custom runners to handle -
-  enables dynamic shapes user setup for TorchTensorRT compilation
+- new: Introducing custom_args in TensorConfig for custom runners to use which
+  allows dynamic shapes setup for TorchTensorRT compilation
 - new: autocast_dtype added Torch runner configuration to set the dtype for autocast
 - new: New version of Onnx Runtime 1.20 for python version >= 3.10
 - new: Use `torch.compile` path in heuristic search for max batch size
