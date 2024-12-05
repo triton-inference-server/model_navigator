@@ -16,7 +16,8 @@ limitations under the License.
 
 # Changelog
 
-## 0.13.0 (unreleased)
+## 0.13.0
+
 - new: Introducing custom_args in TensorConfig for custom runners to use which
   allows dynamic shapes setup for TorchTensorRT compilation
 - new: autocast_dtype added Torch runner configuration to set the dtype for autocast
@@ -32,6 +33,21 @@ limitations under the License.
 - fix: Improved preprocessing stage in Torch based runners
 - fix: Warn when using autocast with bfloat16 in Torch
 - fix: Pass runner configuration to runners in nav.profile
+
+[//]: <> (put here on external component update with short summary what change or link to changelog)
+
+- Version of external components used during testing:
+    - [PyTorch 2.6.0a0+df5bbc0](https://github.com/pytorch/pytorch/commit/df5bbc09d191fff3bdb592c184176e84669a7157)
+    - [TensorFlow 2.16.1](https://github.com/tensorflow/tensorflow/releases/tag/v2.16.1)
+    - [TensorRT 10.6.0.26](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+    - [Torch-TensorRT 2.6.0a0](https://github.com/NVIDIA/Torch-TensorRT)
+    - [ONNX Runtime 1.19.2](https://github.com/microsoft/onnxruntime/releases/tag/v1.19.2)
+    - [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/): 0.49.13
+    - [GraphSurgeon](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/): 0.5.2
+    - [tf2onnx v1.16.1](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.16.1)
+    - Other component versions depend on the used framework containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
 
 ## 0.12.0
 
