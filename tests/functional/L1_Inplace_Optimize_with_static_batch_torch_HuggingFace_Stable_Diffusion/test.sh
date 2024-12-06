@@ -19,7 +19,7 @@ THIS_SCRIPT_PATH="$(realpath --relative-to="$(pwd)" "$0")"
 TEST_MODULE="$(dirname "${THIS_SCRIPT_PATH}"|sed 's/\//./g').test"
 
 
-pip install transformers diffusers --upgrade
+pip install transformers huggingface-hub diffusers "nvidia-modelopt<0.21" --upgrade
 
 export NAVIGATOR_CONSOLE_OUTPUT=LOGS
 export NAVIGATOR_LOG_LEVEL=DEBUG
