@@ -18,7 +18,7 @@ limitations under the License.
 
 
 ## 0.14.0 (unreleased)
-
+- change: Install the TensorRT package for architectures other than x86_64
 
 ## 0.13.0
 

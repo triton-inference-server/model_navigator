@@ -60,7 +60,7 @@ dependencies = [
     "python-slugify~=8.0",
     "pyyaml~=6.0",
     "tabulate>=0.8",
-    "tensorrt;platform_machine == 'x86_64'",
+    "tensorrt",
     "tritonclient[grpc]~=2.47",
     "wrapt>=1.16",
     "pyee>=11.1.0",
