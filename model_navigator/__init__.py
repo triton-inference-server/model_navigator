@@ -14,6 +14,7 @@
 
 from model_navigator.__version__ import __version__  # noqa: F401
 from model_navigator.configuration import (  # noqa: F401  # noqa: F401
+    AutocastType,
     DeviceKind,
     Format,
     Framework,
