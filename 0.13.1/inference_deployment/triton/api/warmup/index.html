@@ -2022,7 +2022,7 @@ limitations under the License.
 <span class="normal"><a href="#__codelineno-0-627">627</a></span>
 <span class="normal"><a href="#__codelineno-0-628">628</a></span>
 <span class="normal"><a href="#__codelineno-0-629">629</a></span>
-<span class="normal"><a href="#__codelineno-0-630">630</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-624" name="__codelineno-0-624"></a><span class="k">def</span> <span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal"><a href="#__codelineno-0-630">630</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-624" name="__codelineno-0-624"></a><span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <a id="__codelineno-0-625" name="__codelineno-0-625"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate the configuration for early error handling.&quot;&quot;&quot;</span>
 <a id="__codelineno-0-626" name="__codelineno-0-626"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
 <a id="__codelineno-0-627" name="__codelineno-0-627"></a>        <span class="k">raise</span> <span class="n">ModelNavigatorWrongParameterError</span><span class="p">(</span><span class="s2">&quot;`batch_size` must be greater or equal 1.&quot;</span><span class="p">)</span>
@@ -2141,7 +2141,7 @@ limitations under the License.
 <span class="normal"><a href="#__codelineno-0-598">598</a></span>
 <span class="normal"><a href="#__codelineno-0-599">599</a></span>
 <span class="normal"><a href="#__codelineno-0-600">600</a></span>
-<span class="normal"><a href="#__codelineno-0-601">601</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-595" name="__codelineno-0-595"></a><span class="k">def</span> <span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal"><a href="#__codelineno-0-601">601</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-595" name="__codelineno-0-595"></a><span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <a id="__codelineno-0-596" name="__codelineno-0-596"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate the configuration for early error handling.&quot;&quot;&quot;</span>
 <a id="__codelineno-0-597" name="__codelineno-0-597"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_data_type</span> <span class="o">==</span> <span class="n">ModelWarmupInputDataType</span><span class="o">.</span><span class="n">FILE</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_data_file</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
 <a id="__codelineno-0-598" name="__codelineno-0-598"></a>        <span class="k">raise</span> <span class="n">ModelNavigatorWrongParameterError</span><span class="p">(</span><span class="s2">&quot;`input_data_file` is required. Set the file path.&quot;</span><span class="p">)</span>

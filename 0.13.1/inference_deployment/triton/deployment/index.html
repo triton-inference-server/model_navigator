@@ -1856,7 +1856,7 @@ repository path.</p>
 Then you can use one of the specialized APIs that guides you through what options are possible for deployment of the
 selected model type.</p>
 <p>Example of deploying a TensorRT model:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span> <span class="nn">model_navigator</span> <span class="k">as</span> <span class="nn">nav</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">model_navigator</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nav</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">nav</span><span class="o">.</span><span class="n">triton</span><span class="o">.</span><span class="n">model_repository</span><span class="o">.</span><span class="n">add_model</span><span class="p">(</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">model_repository_path</span><span class="o">=</span><span class="s2">&quot;/path/to/triton/model/repository&quot;</span><span class="p">,</span>
@@ -1873,7 +1873,7 @@ selected model type.</p>
 about the function you can find in the <a href="../api/adding_model/">adding model section</a>.</p>
 <h2 id="adding-model-from-package-to-the-triton-model-repository">Adding model from package to the Triton model repository</h2>
 <p>When you want to deploy a model from a package created during the <code>optimize</code> process, you can use:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">import</span> <span class="nn">model_navigator</span> <span class="k">as</span> <span class="nn">nav</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">model_navigator</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nav</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">nav</span><span class="o">.</span><span class="n">triton</span><span class="o">.</span><span class="n">model_repository</span><span class="o">.</span><span class="n">add_model_from_package</span><span class="p">(</span>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">model_repository_path</span><span class="o">=</span><span class="s2">&quot;/path/to/triton/model/repository&quot;</span><span class="p">,</span>
