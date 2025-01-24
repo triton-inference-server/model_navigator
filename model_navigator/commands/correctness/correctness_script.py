@@ -112,9 +112,9 @@ def correctness(
 
                 out0, out1 = original_output[name], comp_output[name]
                 absdiff = np.abs(out0 - out1)
-                absout1 = np.abs(out1)
+                absout0 = np.abs(out0)
 
-                reldiff = absdiff / absout1
+                reldiff = absdiff / absout0
                 max_reldiff = np.amax(reldiff)
                 max_absdiff = np.amax(absdiff)
 
