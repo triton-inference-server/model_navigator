@@ -36,7 +36,7 @@ def load_runners_from_entry_points():
         try:
             entry_point.load()
         except Exception as e:
-            LOGGER.warning(f"Encountered an error when loading entry point: {entry_point}.\n" f"Error message: {e}.")
+            LOGGER.warning(f"Encountered an error when loading entry point: {entry_point}.\nError message: {e}.")
 
 
 def register_runner(runner_cls: Type[NavigatorRunner]) -> None:

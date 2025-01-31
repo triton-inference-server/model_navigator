@@ -77,9 +77,7 @@ def get_log_format():
     """Returns log format."""
     formats = {
         "compact": (
-            "<green>{time:HH:mm:ss}</green>|"
-            "<level>{level:.1}</level>|"
-            "<cyan>{module}</cyan>|<level>{message}</level>"
+            "<green>{time:HH:mm:ss}</green>|<level>{level:.1}</level>|<cyan>{module}</cyan>|<level>{message}</level>"
         ),
         "normal": (
             "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "

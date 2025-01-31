@@ -124,10 +124,13 @@ def test_find_max_batch_size_return_max_batch_when_model_support_batching(mocker
         mock = MagicMock()
         mock.__enter__.return_value.name = results_file.as_posix()
 
-        with mocker.patch.object(
-            ExecutionContext,
-            "execute_python_script",
-        ), mocker.patch("tempfile.NamedTemporaryFile", return_value=mock):
+        with (
+            mocker.patch.object(
+                ExecutionContext,
+                "execute_python_script",
+            ),
+            mocker.patch("tempfile.NamedTemporaryFile", return_value=mock),
+        ):
             result = FindMaxBatchSize().run(
                 configurations=[
                     FindMaxBatchSizeConfig(

@@ -49,8 +49,9 @@ def test_from_dict_returns_status_when_input_is_0_1_0_status_dict(mocker):
         package = Package(status=status, workspace=Workspace(workspace))
         package.save_status_file()
 
-        with mocker.patch("model_navigator.package.optimize_pipeline"), mocker.patch(
-            "model_navigator.package._get_builders"
+        with (
+            mocker.patch("model_navigator.package.optimize_pipeline"),
+            mocker.patch("model_navigator.package._get_builders"),
         ):
             optimize(package=package)
 
@@ -70,8 +71,9 @@ def test_from_dict_returns_status_when_input_is_0_1_2_status_dict(mocker):
         package = Package(status=status, workspace=Workspace(workspace))
         package.save_status_file()
 
-        with mocker.patch("model_navigator.package.optimize_pipeline"), mocker.patch(
-            "model_navigator.package._get_builders"
+        with (
+            mocker.patch("model_navigator.package.optimize_pipeline"),
+            mocker.patch("model_navigator.package._get_builders"),
         ):
             optimize(package=package)
 
@@ -91,8 +93,9 @@ def test_from_dict_returns_status_when_input_is_0_1_3_status_dict(mocker):
         package = Package(status=status, workspace=Workspace(workspace))
         package.save_status_file()
 
-        with mocker.patch("model_navigator.package.optimize_pipeline"), mocker.patch(
-            "model_navigator.package._get_builders"
+        with (
+            mocker.patch("model_navigator.package.optimize_pipeline"),
+            mocker.patch("model_navigator.package._get_builders"),
         ):
             optimize(package=package)
 
@@ -112,8 +115,9 @@ def test_from_dict_returns_status_when_input_is_0_1_4_status_dict(mocker):
         package = Package(status=status, workspace=Workspace(workspace))
         package.save_status_file()
 
-        with mocker.patch("model_navigator.package.optimize_pipeline"), mocker.patch(
-            "model_navigator.package._get_builders"
+        with (
+            mocker.patch("model_navigator.package.optimize_pipeline"),
+            mocker.patch("model_navigator.package._get_builders"),
         ):
             optimize(package=package)
 
@@ -133,8 +137,9 @@ def test_from_dict_returns_status_when_input_is_0_2_0_status_dict(mocker):
         package = Package(status=status, workspace=Workspace(workspace))
         package.save_status_file()
 
-        with mocker.patch("model_navigator.package.optimize_pipeline"), mocker.patch(
-            "model_navigator.package._get_builders"
+        with (
+            mocker.patch("model_navigator.package.optimize_pipeline"),
+            mocker.patch("model_navigator.package._get_builders"),
         ):
             optimize(package=package)
 
@@ -154,8 +159,9 @@ def test_from_dict_returns_status_when_input_is_0_2_1_status_dict(mocker):
         package = Package(status=status, workspace=Workspace(workspace))
         package.save_status_file()
 
-        with mocker.patch("model_navigator.package.optimize_pipeline"), mocker.patch(
-            "model_navigator.package._get_builders"
+        with (
+            mocker.patch("model_navigator.package.optimize_pipeline"),
+            mocker.patch("model_navigator.package._get_builders"),
         ):
             optimize(package=package)
 
@@ -175,8 +181,9 @@ def test_from_dict_returns_status_when_input_is_0_2_2_status_dict(mocker):
         package = Package(status=status, workspace=Workspace(workspace))
         package.save_status_file()
 
-        with mocker.patch("model_navigator.package.optimize_pipeline"), mocker.patch(
-            "model_navigator.package._get_builders"
+        with (
+            mocker.patch("model_navigator.package.optimize_pipeline"),
+            mocker.patch("model_navigator.package._get_builders"),
         ):
             optimize(package=package)
 
@@ -196,8 +203,9 @@ def test_from_dict_returns_status_when_input_is_0_2_3_status_dict(mocker):
         package = Package(status=status, workspace=Workspace(workspace))
         package.save_status_file()
 
-        with mocker.patch("model_navigator.package.optimize_pipeline"), mocker.patch(
-            "model_navigator.package._get_builders"
+        with (
+            mocker.patch("model_navigator.package.optimize_pipeline"),
+            mocker.patch("model_navigator.package._get_builders"),
         ):
             optimize(package=package)
 
@@ -217,8 +225,9 @@ def test_from_dict_returns_status_when_input_is_0_3_0_status_dict(mocker):
         package = Package(status=status, workspace=Workspace(workspace))
         package.save_status_file()
 
-        with mocker.patch("model_navigator.package.optimize_pipeline"), mocker.patch(
-            "model_navigator.package._get_builders"
+        with (
+            mocker.patch("model_navigator.package.optimize_pipeline"),
+            mocker.patch("model_navigator.package._get_builders"),
         ):
             optimize(package=package)
 

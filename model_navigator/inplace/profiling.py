@@ -241,8 +241,7 @@ def run_measurement(
             return _measurements_result(profiling_results, last_n)
 
     raise RuntimeError(
-        "Unable to get stable performance results. Consider increasing "
-        "window_size | stability_percentage | max_trials"
+        "Unable to get stable performance results. Consider increasing window_size | stability_percentage | max_trials"
     )
 
 

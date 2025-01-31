@@ -41,7 +41,7 @@ def main():
 
     import model_navigator as nav
     from model_navigator.inplace.registry import module_registry
-    from tests import utils
+    from tests import utils  # pytype: disable=import-error
     from tests.functional.common.utils import collect_optimize_statuses, validate_status
 
     def get_model():

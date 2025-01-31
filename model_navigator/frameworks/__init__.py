@@ -53,6 +53,14 @@ except (ModuleNotFoundError, ImportError):
     _TRT_AVAILABLE = False
 
 
+try:
+    import modelopt  # pytype: disable=import-error # noqa: F401
+
+    _MODEL_OPT_AVAILABLE = True
+except (ModuleNotFoundError, ImportError):
+    _MODEL_OPT_AVAILABLE = False
+
+
 class Framework(Enum):
     """Frameworks for models that are supported as input for `optimize` method."""
 
@@ -116,3 +124,12 @@ def is_trt_available() -> bool:
         bool: True if TensorRT is available.
     """
     return _TRT_AVAILABLE
+
+
+def is_modelopt_available() -> bool:
+    """Check if ModelOptimizer is available.
+
+    Returns:
+        bool: True if ModelOptimizer is available.
+    """
+    return _MODEL_OPT_AVAILABLE

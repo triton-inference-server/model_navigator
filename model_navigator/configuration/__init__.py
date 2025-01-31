@@ -28,6 +28,7 @@ from typing import (
     Iterable,
     Iterator,
     List,
+    Literal,
     Mapping,
     Optional,
     Protocol,
@@ -153,6 +154,9 @@ class AutocastType(Enum):
     DEVICE = None
     FP16 = "torch.float16"
     BF16 = "torch.bfloat16"
+
+
+PrecisionType = Literal["int8", "fp8", "fp16", "bf16", "fp32"]
 
 
 class TensorRTPrecision(Enum):

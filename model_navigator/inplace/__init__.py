@@ -391,7 +391,7 @@ def _load_modules(model_key: str, runner_name: str, device: str, verbose: bool =
                 )
 
         except (ModelNavigatorModuleNotOptimizedError, ModelNavigatorRuntimeAnalyzerError) as e:
-            LOGGER.info(f"{str(e)}" f"Loading eager module for `{module_name}` on device: `{device}`.")
+            LOGGER.info(f"{str(e)}Loading eager module for `{module_name}` on device: `{device}`.")
             m.load_eager(device=device)
         except Exception as e:
             LOGGER.warning(f"Failed to load module {module_name} for model key {model_key} and runner {runner_name}.")
@@ -429,9 +429,9 @@ def _format_to_modelkey(format: Union[str, Format]):
 
 def _get_modelkeys_runners(formats, runners):
     if runners and isinstance(runners[0], Type):
-        runners = [runner.name() for runner in runners]
+        runners = [runner.name() for runner in runners]  # pytype: disable=attribute-error
     if formats and isinstance(formats[0], Format):
-        formats = [format.value for format in formats]
+        formats = [format.value for format in formats]  # pytype: disable=attribute-error
 
     modelkeys = set()
     for format in formats:

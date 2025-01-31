@@ -18,6 +18,7 @@ limitations under the License.
 
 
 ## 0.14.0 (unreleased)
+- new: TensorRT quantization through ModelOpt (ONNX path)
 - change: Install the TensorRT package for architectures other than x86_64
 - fix: Correctness command relative tolerance formula
 

@@ -92,12 +92,15 @@ class Profile(Command):
             batch_dim=batch_dim,
         ):
             LOGGER.info(f"Profiling sample with idx: {sample_id}")
-            with ExecutionContext(
-                workspace=workspace,
-                script_path=workspace.path / f"reproduce_profiler-{runner_cls.slug()}.py",
-                cmd_path=workspace.path / f"reproduce_profiler-{runner_cls.slug()}.sh",
-                verbose=verbose,
-            ) as context, tempfile.NamedTemporaryFile() as temp_file:
+            with (
+                ExecutionContext(
+                    workspace=workspace,
+                    script_path=workspace.path / f"reproduce_profiler-{runner_cls.slug()}.py",
+                    cmd_path=workspace.path / f"reproduce_profiler-{runner_cls.slug()}.sh",
+                    verbose=verbose,
+                ) as context,
+                tempfile.NamedTemporaryFile() as temp_file,
+            ):
                 kwargs = {
                     "navigator_workspace": workspace.path.as_posix(),
                     "batch_dim": batch_dim,

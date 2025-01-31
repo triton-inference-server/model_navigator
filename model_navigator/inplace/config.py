@@ -108,6 +108,7 @@ class OptimizeConfig:
         debug: Enable debug logging from commands
         verify_func: Function for additional model verification
         custom_configs: Sequence of CustomConfigs used to control produced artifacts
+        model_precision: Source model precision
     """
 
     sample_count: int = DEFAULT_SAMPLE_COUNT
@@ -123,6 +124,7 @@ class OptimizeConfig:
     debug: Optional[bool] = False
     verify_func: Optional[VerifyFunction] = None
     custom_configs: Optional[Sequence[CustomConfig]] = None
+    model_precision: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert OptimizeConfig to dictionary."""

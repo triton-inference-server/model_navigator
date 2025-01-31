@@ -183,12 +183,15 @@ class FindMaxBatchSize(Command):
                 """for heuristic search as `None` was provided."""
             )
 
-        with ExecutionContext(
-            workspace=workspace,
-            script_path=reproduction_scripts_dir / f"reproduce_max_batch_size-{runner_cls.slug()}.py",
-            cmd_path=reproduction_scripts_dir / f"reproduce_max_batch_size-{runner_cls.slug()}.sh",
-            verbose=verbose,
-        ) as context, tempfile.NamedTemporaryFile() as temp_file:
+        with (
+            ExecutionContext(
+                workspace=workspace,
+                script_path=reproduction_scripts_dir / f"reproduce_max_batch_size-{runner_cls.slug()}.py",
+                cmd_path=reproduction_scripts_dir / f"reproduce_max_batch_size-{runner_cls.slug()}.sh",
+                verbose=verbose,
+            ) as context,
+            tempfile.NamedTemporaryFile() as temp_file,
+        ):
             kwargs = {
                 "navigator_workspace": workspace.path.as_posix(),
                 "batch_dim": batch_dim,

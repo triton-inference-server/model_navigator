@@ -15,13 +15,14 @@
 
 import functools
 import pathlib
-from typing import Any, Callable, List, Literal, Optional, Union
+from typing import Any, Callable, List, Optional, Union
 
 import wrapt
 
 from model_navigator.configuration import (
     CustomConfigForTensorRT,
     OnnxConfig,
+    PrecisionType,
     RuntimeSearchStrategy,
     TensorRTConfig,
     TensorRTPrecisionMode,
@@ -38,8 +39,6 @@ from .registry import module_registry
 from .utils import get_object_name
 
 torch = lazy_import("torch")
-
-PrecisionType = Literal["int8", "fp8", "fp16", "bf16", "fp32"]
 
 
 @wrapt.decorator
@@ -319,6 +318,7 @@ class Module(wrapt.ObjectProxy):
             batching
             precision
             model_path
+            model_precision
 
         Note:
         - batching is overridden if specified during model initialization
@@ -326,6 +326,9 @@ class Module(wrapt.ObjectProxy):
         """
         if self.batching is not None:
             config.batching = self.batching
+
+        if self.precision:
+            config.model_precision = self.precision
 
         config.custom_configs = config.custom_configs or []
         trt_config_provided = False

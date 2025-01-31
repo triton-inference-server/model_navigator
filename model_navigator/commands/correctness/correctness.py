@@ -122,12 +122,15 @@ class Correctness(Command):
             LOGGER.warning(f"Model: {model_path.as_posix()!r} not found, command skipped.")
             return CommandOutput(status=CommandStatus.SKIPPED)
 
-        with ExecutionContext(
-            workspace=workspace,
-            script_path=model_dir / f"reproduce_correctness-{runner_cls.slug()}.py",
-            cmd_path=model_dir / f"reproduce_correctness-{runner_cls.slug()}.sh",
-            verbose=verbose,
-        ) as context, tempfile.NamedTemporaryFile() as temp_file:
+        with (
+            ExecutionContext(
+                workspace=workspace,
+                script_path=model_dir / f"reproduce_correctness-{runner_cls.slug()}.py",
+                cmd_path=model_dir / f"reproduce_correctness-{runner_cls.slug()}.sh",
+                verbose=verbose,
+            ) as context,
+            tempfile.NamedTemporaryFile() as temp_file,
+        ):
             kwargs = {
                 "navigator_workspace": workspace.path.as_posix(),
                 "batch_dim": batch_dim,

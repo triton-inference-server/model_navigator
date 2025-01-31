@@ -24,6 +24,7 @@ from model_navigator.configuration import (
     DeviceKind,
     Format,
     OptimizationProfile,
+    PrecisionType,
     SizedDataLoader,
     VerifyFunction,
     map_custom_configs,
@@ -68,6 +69,7 @@ def optimize(
     debug: Optional[bool] = False,
     verify_func: Optional[VerifyFunction] = None,
     custom_configs: Optional[Sequence[CustomConfig]] = None,
+    model_precision: Optional[PrecisionType] = None,
 ) -> Package:
     """Entrypoint for Torch optimize.
 
@@ -89,6 +91,8 @@ def optimize(
         debug: Enable debug logging from commands
         verify_func: Function for additional model verification
         custom_configs: Sequence of CustomConfigs used to control produced artifacts
+        model_precision: Source model precision.
+
 
     Returns:
         Package descriptor representing created package.
@@ -127,6 +131,7 @@ def optimize(
         debug=debug,
         verify_func=verify_func,
         custom_configs=map_custom_configs(custom_configs=custom_configs),
+        model_precision=model_precision,
     )
 
     models_config = ModelConfigBuilder.generate_model_config(

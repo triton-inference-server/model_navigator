@@ -326,8 +326,7 @@ def test_sequence_batcher_raise_error_when_unsupported_strategy_passed():
 def test_sequence_batcher_control_raise_error_when_corrid_and_no_data_type():
     with pytest.raises(
         ModelNavigatorWrongParameterError,
-        match="The SequenceBatcherControlKind.CONTROL_SEQUENCE_CORRID control type requires `dtype` "
-        "to be specified.",
+        match="The SequenceBatcherControlKind.CONTROL_SEQUENCE_CORRID control type requires `dtype` to be specified.",
     ):
         SequenceBatcherControl(
             kind=SequenceBatcherControlKind.CONTROL_SEQUENCE_CORRID,

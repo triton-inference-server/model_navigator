@@ -21,7 +21,7 @@ limitations under the License.
 Before proceeding with the installation of the Triton Model Navigator, ensure your system meets the following criteria:
 
 - **Operating System**: Linux (Ubuntu 20.04+ recommended)
-- **Python**: Version `3.8` or newer
+- **Python**: Version `3.9` or newer
 - NVIDIA GPU
 
 You can use NGC Containers for PyTorch and TensorFlow which contain all necessary dependencies:

@@ -21,6 +21,7 @@ from model_navigator.commands.base import CommandOutput, CommandStatus
 from model_navigator.commands.convert.base import Convert2TensorRTWithMaxBatchSizeSearch
 from model_navigator.commands.execution_context import ExecutionContext
 from model_navigator.configuration import (
+    PrecisionType,
     TensorRTCompatibilityLevel,
     TensorRTPrecision,
     TensorRTPrecisionMode,
@@ -57,6 +58,7 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
         onnx_parser_flags: Optional[List[int]] = None,
         timing_cache_dir: Optional[str] = None,
         verbose: bool = False,
+        model_precision: Optional[PrecisionType] = None,
     ) -> CommandOutput:
         """Run the ConvertONNX2TRT Command.
 
@@ -85,6 +87,7 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
             custom_args (Optional[Dict[str, Any]], optional): Passthrough parameters for Polygraphy convert command
                 For available arguments check Polygraphy documentation: https://docs.nvidia.com/deeplearning/tensorrt/developer-guide/index.html#polygraphy
                 or Polygraphy repository: https://github.com/NVIDIA/TensorRT/tree/main/tools/Polygraphy
+            model_precision: Source model precision.
 
         Returns:
             CommandOutput: Status and results of the command.
@@ -133,6 +136,8 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
                 "model_name": module_name,
                 "timing_cache_dir": trt_cache_inplace_cache_dir(),
                 "custom_args": custom_args,
+                "batch_dim": batch_dim,
+                "model_precision": model_precision,
             }
             if optimization_level is not None:
                 kwargs["optimization_level"] = optimization_level

@@ -119,9 +119,7 @@ def _assert_all_inputs_have_same_pytree_metadata(
     for sample in dataloader:
         if not pytree_metadata.is_compatible_with(sample):
             raise ModelNavigatorUserInputError(
-                f"All inputs must have the same structure.\n"
-                f"Input structure: {pytree_metadata}\n"
-                f"Sample: {sample}."
+                f"All inputs must have the same structure.\nInput structure: {pytree_metadata}\nSample: {sample}."
             )
 
 

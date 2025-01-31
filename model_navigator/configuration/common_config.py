@@ -47,6 +47,7 @@ class CommonConfig(DataObject):
     from_source: bool = True
     verify_func: Optional[VerifyFunction] = None
     custom_configs: Dict[str, CustomConfig] = dataclasses.field(default_factory=lambda: {})
+    model_precision: Optional[str] = None
 
     # Verbose logging - enable debug mode in export and conversion paths
     verbose: bool = False

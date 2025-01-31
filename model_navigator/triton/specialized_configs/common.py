@@ -287,14 +287,13 @@ class DynamicBatcher:
         """Validate the configuration for early error handling."""
         if self.default_priority_level > self.priority_levels:
             raise ModelNavigatorWrongParameterError(
-                "The `default_priority_level` must be between 1 and " f"{self.priority_levels}."
+                f"The `default_priority_level` must be between 1 and {self.priority_levels}."
             )
 
         if self.priority_queue_policy:
             if not self.priority_levels:
                 raise ModelNavigatorWrongParameterError(
-                    "Provide the `priority_levels` if you want to define `priority_queue_policy` "
-                    "for Dynamic Batching."
+                    "Provide the `priority_levels` if you want to define `priority_queue_policy` for Dynamic Batching."
                 )
 
             for priority in self.priority_queue_policy.keys():

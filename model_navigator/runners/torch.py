@@ -128,8 +128,9 @@ class _BaseTorchRunner(NavigatorRunner):
     def _infer_v2(self, feed_dict):
         with torch.inference_mode(mode=self._inference_mode):
             args, kwargs = self._prepare_inputs(feed_dict)
-            with self._inference_step_timer.measure_step(InferenceStep.COMPUTE), torch.autocast(
-                device_type=self.device, enabled=self._autocast, dtype=self._autocast_dtype
+            with (
+                self._inference_step_timer.measure_step(InferenceStep.COMPUTE),
+                torch.autocast(device_type=self.device, enabled=self._autocast, dtype=self._autocast_dtype),
             ):
                 outputs = self._loaded_model(*args, **kwargs)
         return outputs
@@ -138,8 +139,9 @@ class _BaseTorchRunner(NavigatorRunner):
         with torch.no_grad():
             args, kwargs = self._prepare_inputs(feed_dict)
 
-            with self._inference_step_timer.measure_step(InferenceStep.COMPUTE), torch.autocast(
-                device_type=self.device, enabled=self._autocast, dtype=self._autocast_dtype
+            with (
+                self._inference_step_timer.measure_step(InferenceStep.COMPUTE),
+                torch.autocast(device_type=self.device, enabled=self._autocast, dtype=self._autocast_dtype),
             ):
                 outputs = self._loaded_model(*args, **kwargs)
 

@@ -84,12 +84,15 @@ class Performance(Command, requires=[Correctness.name]):
         profiling_samples = workspace.path / "model_input" / "profiling"
         shutil.copytree(profiling_samples, profiler_samples)
 
-        with ExecutionContext(
-            workspace=workspace,
-            script_path=model_dir / f"reproduce_profiling-{runner_cls.slug()}.py",
-            cmd_path=model_dir / f"reproduce_profiling-{runner_cls.slug()}.sh",
-            verbose=verbose,
-        ) as context, tempfile.NamedTemporaryFile() as temp_file:
+        with (
+            ExecutionContext(
+                workspace=workspace,
+                script_path=model_dir / f"reproduce_profiling-{runner_cls.slug()}.py",
+                cmd_path=model_dir / f"reproduce_profiling-{runner_cls.slug()}.sh",
+                verbose=verbose,
+            ) as context,
+            tempfile.NamedTemporaryFile() as temp_file,
+        ):
             kwargs = {
                 "navigator_workspace": workspace.path.as_posix(),
                 "batch_dim": batch_dim,
