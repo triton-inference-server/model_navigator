@@ -75,7 +75,10 @@ class Convert2TensorRTWithMaxBatchSizeSearch(Command):
             )
         else:
             conversion_max_batch_size = cls._execute_single_conversion(
-                convert_func=convert_func, get_args=get_args, max_batch_size=dataloader_max_batch_size
+                convert_func=convert_func,
+                get_args=get_args,
+                device_max_batch_size=device_max_batch_size,
+                dataloader_max_batch_size=dataloader_max_batch_size,
             )
         LOGGER.info(f"Converted with maximal batch size: {conversion_max_batch_size}.")
 
@@ -83,16 +86,17 @@ class Convert2TensorRTWithMaxBatchSizeSearch(Command):
 
     @classmethod
     def _execute_single_conversion(
-        cls,
-        convert_func: Callable,
-        get_args: Callable,
-        max_batch_size: int,
+        cls, convert_func: Callable, get_args: Callable, device_max_batch_size: int, dataloader_max_batch_size: int
     ):
+        max_batch_size = cls._get_conversion_max_batch_sizes(device_max_batch_size, dataloader_max_batch_size)
+
         LOGGER.info(
-            """Search for maximal batch size disable. Execute single conversion. """
-            """In order to execute fallback strategy provide `conversion_fallback=True` in custom configuration."""
+            """Search for maximal batch size disable. Execute single conversion with max_batch_size %d. """
+            """In order to execute fallback strategy provide `conversion_fallback=True` in custom configuration.""",
+            max_batch_size,
         )
-        convert_func(get_args())
+
+        convert_func(get_args(max_batch_size=max_batch_size))
         return max_batch_size
 
     @classmethod
