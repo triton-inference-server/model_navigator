@@ -311,6 +311,7 @@ class ModelConfigBuilder:
                     trt_profiles=torch_trt_config.trt_profiles,
                     custom_args=torch_trt_config.custom_args,
                     device=torch_trt_config.device,
+                    conversion_fallback=torch_trt_config.conversion_fallback,
                 )
             )
 
@@ -359,6 +360,7 @@ class ModelConfigBuilder:
                     max_workspace_size=tf_trt_config.max_workspace_size,
                     minimum_segment_size=tf_trt_config.minimum_segment_size,
                     trt_profiles=tf_trt_config.trt_profiles,
+                    conversion_fallback=tf_trt_config.conversion_fallback,
                     custom_args=tf_trt_config.custom_args,
                 )
             )
@@ -464,6 +466,7 @@ class ModelConfigBuilder:
                     device=trt_config.device,
                     timing_cache_dir=trt_config.timing_cache_dir,
                     model_path=trt_config.model_path,
+                    conversion_fallback=trt_config.conversion_fallback,
                 )
             )
         else:
@@ -482,5 +485,6 @@ class ModelConfigBuilder:
                         device=trt_config.device,
                         timing_cache_dir=trt_config.timing_cache_dir,
                         model_path=trt_config.model_path,
+                        conversion_fallback=trt_config.conversion_fallback,
                     )
                 )

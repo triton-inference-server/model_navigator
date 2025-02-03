@@ -107,6 +107,7 @@ class ConvertSavedModel2TFTRT(Convert2TensorRTWithMaxBatchSizeSearch):
         input_metadata: TensorMetadata,
         dataloader_trt_profile: TensorRTProfile,
         custom_args: Dict[str, Any],
+        conversion_fallback: bool = False,
         batch_dim: Optional[int] = None,
         dataloader_max_batch_size: Optional[int] = None,
         device_max_batch_size: Optional[int] = None,
@@ -124,6 +125,7 @@ class ConvertSavedModel2TFTRT(Convert2TensorRTWithMaxBatchSizeSearch):
             verbose: If True verbose logging.
             input_metadata: Tensorflow-TensorRT input metadata.
             dataloader_trt_profile: Dataloader TensorRT profile.
+            conversion_fallback: Enable fallback for conversion to try conversion with smaller batch size
             batch_dim: Batching axis. Defaults to None.
             dataloader_max_batch_size: Maximum batch size from the dataloader.
                 Defaults to None.
@@ -195,6 +197,7 @@ class ConvertSavedModel2TFTRT(Convert2TensorRTWithMaxBatchSizeSearch):
                 device_max_batch_size=device_max_batch_size,
                 dataloader_max_batch_size=dataloader_max_batch_size,
                 custom_trt_profile_available=bool(trt_profiles),
+                conversion_fallback=conversion_fallback,
             )
 
         LOGGER.info("Converted SavedModel to Tensorflow-TensorRT.")

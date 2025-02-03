@@ -100,9 +100,13 @@ def test_tensorflow_tensorrt_config_has_valid_name_and_format():
 
 
 def test_tensorflow_tensorrt_config_defaults_reset_values_to_initial():
-    config = TensorFlowTensorRTConfig(precision=(TensorRTPrecision.FP32,))
+    config = TensorFlowTensorRTConfig(
+        precision=(TensorRTPrecision.FP32,),
+        precision_mode=TensorRTPrecisionMode.MIXED,
+    )
     config.defaults()
-    assert config.precision == DEFAULT_TENSORRT_PRECISION
+    assert config.precision == tuple(TensorRTPrecision(p) for p in DEFAULT_TENSORRT_PRECISION)
+    assert config.precision_mode == TensorRTPrecisionMode(DEFAULT_TENSORRT_PRECISION_MODE)
 
 
 def test_torch_config_has_valid_name_and_format():
@@ -178,7 +182,7 @@ def test_torch_export_config_has_valid_name_and_format():
     assert config.format == Format.TORCH_EXPORTEDPROGRAM
 
 
-def test_torch__export_config_defaults_reset_values_to_initial():
+def test_torch_export_config_defaults_reset_values_to_initial():
     config = TorchExportConfig(inference_mode=False, autocast=False)
     config.defaults()
     assert config.autocast is True
@@ -197,8 +201,8 @@ def test_torch_tensorrt_config_defaults_reset_values_to_initial():
         precision_mode=TensorRTPrecisionMode.MIXED,
     )
     config.defaults()
-    assert config.precision == DEFAULT_TENSORRT_PRECISION
-    assert config.precision_mode == DEFAULT_TENSORRT_PRECISION_MODE
+    assert config.precision == tuple(TensorRTPrecision(p) for p in DEFAULT_TENSORRT_PRECISION)
+    assert config.precision_mode == TensorRTPrecisionMode(DEFAULT_TENSORRT_PRECISION_MODE)
 
 
 def test_onnx_config_has_valid_name_and_format():
@@ -219,8 +223,8 @@ def test_tensorrt_config_defaults_reset_values_to_initial():
         precision_mode=TensorRTPrecisionMode.MIXED,
     )
     config.defaults()
-    assert config.precision == DEFAULT_TENSORRT_PRECISION
-    assert config.precision_mode == DEFAULT_TENSORRT_PRECISION_MODE
+    assert config.precision == tuple(TensorRTPrecision(p) for p in DEFAULT_TENSORRT_PRECISION)
+    assert config.precision_mode == TensorRTPrecisionMode(DEFAULT_TENSORRT_PRECISION_MODE)
 
 
 def test_map_custom_configs_return_empty_dict_when_empty_list_pass():

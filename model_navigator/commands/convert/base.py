@@ -32,6 +32,7 @@ class Convert2TensorRTWithMaxBatchSizeSearch(Command):
         batch_dim: Optional[int] = None,
         dataloader_max_batch_size: Optional[int] = None,
         device_max_batch_size: Optional[int] = None,
+        conversion_fallback: bool = False,
     ):
         """Execution conversion.
 
@@ -45,6 +46,7 @@ class Convert2TensorRTWithMaxBatchSizeSearch(Command):
             batch_dim: Provide the place where batch shape is stored in shapes
             device_max_batch_size: Maximal batch size found for device
             dataloader_max_batch_size: Batch size used by the dataloader
+            conversion_fallback: Enable fallback for conversion to try conversion with smaller batch size
 
         Returns:
             New max batch size for which conversion succeeded
@@ -59,7 +61,7 @@ class Convert2TensorRTWithMaxBatchSizeSearch(Command):
             device_max_batch_size=device_max_batch_size,
         )
 
-        if run_search:
+        if run_search and conversion_fallback:
             assert dataloader_max_batch_size is not None
             assert device_max_batch_size is not None
 
@@ -86,7 +88,10 @@ class Convert2TensorRTWithMaxBatchSizeSearch(Command):
         get_args: Callable,
         max_batch_size: int,
     ):
-        LOGGER.info("Search for maximal batch size disable. Execute single conversion.")
+        LOGGER.info(
+            """Search for maximal batch size disable. Execute single conversion. """
+            """In order to execute fallback strategy provide `conversion_fallback=True` in custom configuration."""
+        )
         convert_func(get_args())
         return max_batch_size
 

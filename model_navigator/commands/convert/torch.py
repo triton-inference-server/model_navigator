@@ -118,6 +118,7 @@ class ConvertExportedProgram2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearc
         debug: bool,
         dataloader_trt_profile: TensorRTProfile,
         custom_args: Dict[str, Any],
+        conversion_fallback: bool = False,
         batch_dim: Optional[int] = None,
         dataloader_max_batch_size: Optional[int] = None,
         device_max_batch_size: Optional[int] = None,
@@ -141,6 +142,7 @@ class ConvertExportedProgram2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearc
             debug: If True print debug logs.
             dataloader_trt_profile: Dataloader TensorRT profile.
             custom_args: Custom arguments for conversion.
+            conversion_fallback: Enable fallback for conversion to try conversion with smaller batch size
             batch_dim : Batch dimension. Defaults to None.
             dataloader_max_batch_size: Maximum batch size form the dataloader. Defaults to None.
             device_max_batch_size: Device maximum batch size. Defaults to None.
@@ -209,6 +211,7 @@ class ConvertExportedProgram2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearc
                 device_max_batch_size=device_max_batch_size,
                 dataloader_max_batch_size=dataloader_max_batch_size,
                 custom_trt_profile_available=bool(trt_profiles),
+                conversion_fallback=conversion_fallback,
             )
 
         conversion_profiles = self._get_shape_args(

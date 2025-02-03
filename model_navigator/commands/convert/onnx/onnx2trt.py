@@ -50,6 +50,7 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
         custom_args: Dict[str, Any],
         max_workspace_size: Optional[int] = None,
         batch_dim: Optional[int] = None,
+        conversion_fallback: bool = False,
         dataloader_max_batch_size: Optional[int] = None,
         device_max_batch_size: Optional[int] = None,
         optimization_level: Optional[int] = None,
@@ -75,6 +76,7 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
             max_workspace_size: Maximum TensorRT workspace size, in bytes. Defaults to None.
             batch_dim: Dimension of the batching, None if model does not support batching.
                 Defaults to None.
+            conversion_fallback: Enable fallback for conversion to try conversion with smaller batch size
             dataloader_max_batch_size (Optional[int], optional): Maximum batch size in the dataloader. Defaults to None.
             device_max_batch_size: Maximum batch size that fits on the device.
                 Defaults to None.
@@ -170,6 +172,7 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
                 device_max_batch_size=device_max_batch_size,
                 dataloader_max_batch_size=dataloader_max_batch_size,
                 custom_trt_profile_available=bool(trt_profiles),
+                conversion_fallback=conversion_fallback,
             )
 
         profiles = [

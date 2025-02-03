@@ -23,6 +23,7 @@ from polygraphy.backend.trt import CreateConfig, Profile, engine_from_network, n
 
 from model_navigator.configuration import PrecisionType, TensorRTPrecision, TensorRTPrecisionMode
 from model_navigator.core.dataloader import load_samples
+from model_navigator.core.logger import LOGGER
 from model_navigator.frameworks import is_modelopt_available
 from model_navigator.frameworks.tensorrt.timing_tactics import TimingCacheManager, trt_cache_inplace_cache_dir
 
@@ -125,6 +126,7 @@ def convert(
         trt_profiles.append(trt_profile)
     if not trt_profiles:
         trt_profiles = [Profile()]
+
     tf32, fp16, bf16, fp8, int8 = _get_precisions(precision, precision_mode)
 
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -134,6 +136,7 @@ def convert(
             and is_modelopt_available()
             and TensorRTPrecision(precision) in (TensorRTPrecision.FP8, TensorRTPrecision.INT8)
         ):
+            LOGGER.info("Quantize model through TensorRT ModelOpt with %s precision", precision)
             import modelopt.onnx.quantization as moq  # pytype: disable=import-error # noqa: F401
 
             correctness_samples = load_samples("correctness_samples", navigator_workspace, batch_dim)
@@ -146,7 +149,7 @@ def convert(
                 output_path=onnx_quant_path,
                 quantize_mode=precision,
             )
-
+            LOGGER.info("Quantized ONNX model saved in %s", onnx_quant_path)
             onnx_path = onnx_quant_path
         else:
             onnx_path = exported_model_path.as_posix()

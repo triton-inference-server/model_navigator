@@ -536,10 +536,10 @@ AVAILABLE_TARGET_FORMATS = {
 }
 
 DEFAULT_TENSORRT_PRECISION = (
-    TensorRTPrecision.FP32,
-    TensorRTPrecision.FP16,
+    TensorRTPrecision.FP32.value,
+    TensorRTPrecision.FP16.value,
 )
-DEFAULT_TENSORRT_PRECISION_MODE = TensorRTPrecisionMode.HIERARCHY
+DEFAULT_TENSORRT_PRECISION_MODE = TensorRTPrecisionMode.HIERARCHY.value
 
 TensorRTPrecisionType = Union[Union[str, TensorRTPrecision], Tuple[Union[str, TensorRTPrecision], ...]]
 TensorRTPrecisionModeType = Union[str, TensorRTPrecisionMode]
@@ -592,7 +592,7 @@ class CustomConfigForTensorRT(CustomConfigForFormat):
     precision: TensorRTPrecisionType = DEFAULT_TENSORRT_PRECISION
     precision_mode: TensorRTPrecisionModeType = DEFAULT_TENSORRT_PRECISION_MODE
     max_workspace_size: Optional[int] = DEFAULT_MAX_WORKSPACE_SIZE
-    run_max_batch_size_search: Optional[bool] = None  # TODO this parameter is currently not used
+    conversion_fallback: bool = False
 
     def __post_init__(self):
         """Initialize common TensorRT parameters and validate configuration."""
@@ -614,11 +614,11 @@ class CustomConfigForTensorRT(CustomConfigForFormat):
     def defaults(self) -> None:
         """Update parameters to defaults."""
         self.precision = tuple(TensorRTPrecision(p) for p in DEFAULT_TENSORRT_PRECISION)
-        self.precision_mode = DEFAULT_TENSORRT_PRECISION_MODE
+        self.precision_mode = TensorRTPrecisionMode(DEFAULT_TENSORRT_PRECISION_MODE)
         self.max_workspace_size = DEFAULT_MAX_WORKSPACE_SIZE
         self.trt_profiles = None
         self.trt_profile = None
-        self.run_max_batch_size_search = None
+        self.conversion_fallback = False
 
 
 @dataclasses.dataclass

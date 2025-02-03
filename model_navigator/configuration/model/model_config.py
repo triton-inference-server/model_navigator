@@ -485,6 +485,7 @@ class TensorRTModelConfig(_SerializedModelConfig, format=Format.TENSORRT):
         device: Optional[str] = None,
         timing_cache_dir: Optional[str] = None,
         model_path: Optional[Union[str, pathlib.Path]] = None,
+        conversion_fallback: bool = False,
     ) -> None:
         """Initializes TensorRT (plan) model configuration class.
 
@@ -501,6 +502,7 @@ class TensorRTModelConfig(_SerializedModelConfig, format=Format.TENSORRT):
             device: runtime device e.g. "cuda:0"
             timing_cache_dir: Directory to store timing cache
             model_path: optional path to trt model file, if provided the model will be loaded from the file instead of converting ONNX to TRT
+            conversion_fallback: Enable fallback for conversion to try conversion with smaller batch size
         """
         super().__init__(parent=parent)
         self.precision = precision
@@ -514,6 +516,7 @@ class TensorRTModelConfig(_SerializedModelConfig, format=Format.TENSORRT):
         self.runner_config = DeviceRunnerConfig(device=device)
         self.timing_cache_dir = timing_cache_dir
         self.model_path = model_path
+        self.conversion_fallback = conversion_fallback
 
     def _get_path_params_as_array_of_strings(self) -> List[str]:
         return [self.precision.value] if self.precision else []
@@ -536,6 +539,7 @@ class TensorRTModelConfig(_SerializedModelConfig, format=Format.TENSORRT):
             onnx_parser_flags=onnx_parser_flags,
             timing_cache_dir=data_dict.get("timing_cache_dir"),
             model_path=data_dict.get("model_path"),
+            conversion_fallback=data_dict.get("conversion_fallback", False),
         )
 
 
@@ -550,6 +554,7 @@ class TensorFlowTensorRTModelConfig(_SerializedModelConfig, format=Format.TF_TRT
         trt_profiles: Optional[List[TensorRTProfile]] = None,
         parent: Optional[ModelConfig] = None,
         custom_args: Optional[Dict[str, Any]] = None,
+        conversion_fallback: bool = False,
     ) -> None:
         """Initializes TensorFlow TensorRT model configuration class.
 
@@ -560,6 +565,7 @@ class TensorFlowTensorRTModelConfig(_SerializedModelConfig, format=Format.TF_TRT
             minimum_segment_size: TensorRT minimum segment size
             trt_profiles: TensorRT profiles
             custom_args: Custom arguments passed to TensorFlow TensorRT conversion
+            conversion_fallback: Enable fallback for conversion to try conversion with smaller batch size
         """
         super().__init__(parent=parent)
         self.precision = precision
@@ -567,6 +573,7 @@ class TensorFlowTensorRTModelConfig(_SerializedModelConfig, format=Format.TF_TRT
         self.minimum_segment_size = minimum_segment_size
         self.trt_profiles = trt_profiles
         self.custom_args = custom_args
+        self.conversion_fallback = conversion_fallback
 
     def _get_path_params_as_array_of_strings(self) -> List[str]:
         return [self.precision.value] if self.precision else []
@@ -581,6 +588,7 @@ class TensorFlowTensorRTModelConfig(_SerializedModelConfig, format=Format.TF_TRT
             max_workspace_size=cls._parse_string(int, data_dict.get("max_workspace_size")),
             minimum_segment_size=cls._parse_string(int, data_dict.get("minimum_segment_size")),
             trt_profiles=trt_profiles,
+            conversion_fallback=data_dict.get("conversion_fallback", False),
         )
 
 
@@ -596,6 +604,7 @@ class TorchTensorRTModelConfig(_SerializedModelConfig, format=Format.TORCH_TRT):
         parent: Optional[ModelConfig] = None,
         custom_args: Optional[Dict[str, Any]] = None,
         device: Optional[str] = None,
+        conversion_fallback: bool = False,
     ) -> None:
         """Initializes Torch TensorRT model configuration class.
 
@@ -607,6 +616,7 @@ class TorchTensorRTModelConfig(_SerializedModelConfig, format=Format.TORCH_TRT):
             trt_profiles: TensorRT profiles
             custom_args: Custom arguments passed to Torch TensorRT conversion
             device: runtime device e.g. "cuda:0"
+            conversion_fallback: Enable fallback for conversion to try conversion with smaller batch size
         """
         super().__init__(parent=parent)
         self.precision = precision
@@ -615,6 +625,7 @@ class TorchTensorRTModelConfig(_SerializedModelConfig, format=Format.TORCH_TRT):
         self.trt_profiles = trt_profiles
         self.custom_args = custom_args
         self.runner_config = DeviceRunnerConfig(device=device)
+        self.conversion_fallback = conversion_fallback
 
     def _get_path_params_as_array_of_strings(self) -> List[str]:
         return [self.precision.value] if self.precision else []
@@ -630,4 +641,5 @@ class TorchTensorRTModelConfig(_SerializedModelConfig, format=Format.TORCH_TRT):
             max_workspace_size=cls._parse_string(int, data_dict.get("max_workspace_size")),
             trt_profiles=trt_profiles,
             device=data_dict.get("device"),
+            conversion_fallback=data_dict.get("conversion_fallback", False),
         )
