@@ -14,7 +14,6 @@
 """Convert ONNX model to TensorRT engine."""
 
 import pathlib
-import tempfile
 from typing import Any, Dict, List, Optional, Tuple
 
 import fire
@@ -129,71 +128,71 @@ def convert(
 
     tf32, fp16, bf16, fp8, int8 = _get_precisions(precision, precision_mode)
 
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        # Do ModelOpt quantization if model is not quantized and precision is FP8 or INT8
-        if (
-            model_precision not in ("fp8", "int8")
-            and is_modelopt_available()
-            and TensorRTPrecision(precision) in (TensorRTPrecision.FP8, TensorRTPrecision.INT8)
-        ):
-            LOGGER.info("Quantize model through TensorRT ModelOpt with %s precision", precision)
-            import modelopt.onnx.quantization as moq  # pytype: disable=import-error # noqa: F401
+    # Do ModelOpt quantization if model is not quantized and precision is FP8 or INT8
+    if (
+        model_precision not in ("fp8", "int8")
+        and is_modelopt_available()
+        and TensorRTPrecision(precision) in (TensorRTPrecision.FP8, TensorRTPrecision.INT8)
+    ):
+        LOGGER.info("Quantize model through TensorRT ModelOpt with %s precision", precision)
+        import modelopt.onnx.quantization as moq  # pytype: disable=import-error # noqa: F401
 
-            correctness_samples = load_samples("correctness_samples", navigator_workspace, batch_dim)
-            calibration_data = {name: tensor for sample in correctness_samples for name, tensor in sample.items()}
-            onnx_quant_path = (pathlib.Path(tmp_dir) / "quantized_model.onnx").as_posix()
+        correctness_samples = load_samples("correctness_samples", navigator_workspace, batch_dim)
+        calibration_data = {name: tensor for sample in correctness_samples for name, tensor in sample.items()}
 
-            moq.quantize(
-                onnx_path=exported_model_path.as_posix(),
-                calibration_data=calibration_data,
-                output_path=onnx_quant_path,
-                quantize_mode=precision,
-            )
-            LOGGER.info("Quantized ONNX model saved in %s", onnx_quant_path)
-            onnx_path = onnx_quant_path
-        else:
-            onnx_path = exported_model_path.as_posix()
+        onnx_quant_path = (converted_model_path.parent / "quantized_model.onnx").as_posix()
 
-        network = network_from_onnx_path(onnx_path, flags=onnx_parser_flags)
+        moq.quantize(
+            onnx_path=exported_model_path.as_posix(),
+            calibration_data=calibration_data,
+            output_path=onnx_quant_path,
+            quantize_mode=precision,
+        )
+        LOGGER.info("Quantized ONNX model saved in %s", onnx_quant_path)
+        onnx_path = onnx_quant_path
+    else:
+        onnx_path = exported_model_path.as_posix()
 
-        config_kwargs = {}
-        if optimization_level:
-            config_kwargs["builder_optimization_level"] = optimization_level
-        if compatibility_level:
-            config_kwargs["hardware_compatibility_level"] = compatibility_level
+    network = network_from_onnx_path(onnx_path, flags=onnx_parser_flags)
 
-        if max_workspace_size:
-            config_kwargs["memory_pool_limits"] = {
-                trt.MemoryPoolType.WORKSPACE: max_workspace_size,
-            }
+    config_kwargs = {}
+    if optimization_level:
+        config_kwargs["builder_optimization_level"] = optimization_level
+    if compatibility_level:
+        config_kwargs["hardware_compatibility_level"] = compatibility_level
 
-        # saving timing cache in model_navigator workspace or ...
-        timing_cache = trt_cache_inplace_cache_dir()
-        if timing_cache_dir is not None:
-            timing_cache = pathlib.Path(timing_cache_dir)
+    if max_workspace_size:
+        config_kwargs["memory_pool_limits"] = {
+            trt.MemoryPoolType.WORKSPACE: max_workspace_size,
+        }
 
-        with TimingCacheManager(model_name=model_name, cache_path=timing_cache) as timing_cache:
-            timing_cache = timing_cache.as_posix() if timing_cache else None
+    # saving timing cache in model_navigator workspace or ...
+    timing_cache = trt_cache_inplace_cache_dir()
+    if timing_cache_dir is not None:
+        timing_cache = pathlib.Path(timing_cache_dir)
 
-            if "precision_constraints" not in custom_args and precision in ("fp8", "int8"):
-                custom_args["precision_constraints"] = "obey"
+    with TimingCacheManager(model_name=model_name, cache_path=timing_cache) as timing_cache:
+        timing_cache = timing_cache.as_posix() if timing_cache else None
 
-            engine = engine_from_network(
-                network,
-                config=CreateConfig(
-                    tf32=tf32,
-                    fp16=fp16,
-                    bf16=bf16,
-                    fp8=fp8,
-                    int8=int8,
-                    profiles=trt_profiles,
-                    load_timing_cache=timing_cache,
-                    **config_kwargs,
-                    **custom_args,
-                ),
-                save_timing_cache=timing_cache,
-            )
-            save_engine(engine, path=converted_model_path.as_posix())
+        if "precision_constraints" not in custom_args and precision in ("fp8", "int8"):
+            custom_args["precision_constraints"] = "obey"
+
+        engine = engine_from_network(
+            network,
+            config=CreateConfig(
+                tf32=tf32,
+                fp16=fp16,
+                bf16=bf16,
+                fp8=fp8,
+                int8=int8,
+                profiles=trt_profiles,
+                load_timing_cache=timing_cache,
+                **config_kwargs,
+                **custom_args,
+            ),
+            save_timing_cache=timing_cache,
+        )
+        save_engine(engine, path=converted_model_path.as_posix())
 
 
 if __name__ == "__main__":
