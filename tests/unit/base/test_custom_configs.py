@@ -29,6 +29,8 @@ from model_navigator.configuration import (
 )
 from model_navigator.configuration.constants import (
     DEFAULT_MAX_WORKSPACE_SIZE,
+    DEFAULT_MAX_WORKSPACE_SIZE_TFTRT,
+    DEFAULT_MAX_WORKSPACE_SIZE_TORCHTRT,
     DEFAULT_MIN_SEGMENT_SIZE,
 )
 
@@ -46,7 +48,7 @@ def test_default_values_for_tensorflow_tensorrt_custom_config():
         TensorRTPrecision.FP32,
         TensorRTPrecision.FP16,
     )
-    assert tensorflow_tensorrt_config.max_workspace_size == DEFAULT_MAX_WORKSPACE_SIZE
+    assert tensorflow_tensorrt_config.max_workspace_size == DEFAULT_MAX_WORKSPACE_SIZE_TFTRT
     assert tensorflow_tensorrt_config.minimum_segment_size == DEFAULT_MIN_SEGMENT_SIZE
     assert tensorflow_tensorrt_config.format == Format.TF_TRT
 
@@ -82,7 +84,7 @@ def test_default_values_for_torch_tensorrt_custom_config():
         TensorRTPrecision.FP16,
     )
     assert torch_tensorrt_config.precision_mode == TensorRTPrecisionMode.HIERARCHY
-    assert torch_tensorrt_config.max_workspace_size == DEFAULT_MAX_WORKSPACE_SIZE
+    assert torch_tensorrt_config.max_workspace_size == DEFAULT_MAX_WORKSPACE_SIZE_TORCHTRT
     assert torch_tensorrt_config.format == Format.TORCH_TRT
 
 

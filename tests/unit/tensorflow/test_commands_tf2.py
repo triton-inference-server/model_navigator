@@ -28,7 +28,7 @@ from model_navigator.commands.correctness import Correctness
 from model_navigator.commands.data_dump.samples import samples_to_npz
 from model_navigator.commands.export.tf import ExportTF2SavedModel
 from model_navigator.configuration import Format, TensorRTPrecision, TensorRTProfile, TensorType
-from model_navigator.configuration.constants import DEFAULT_MAX_WORKSPACE_SIZE
+from model_navigator.configuration.constants import DEFAULT_MAX_WORKSPACE_SIZE_TFTRT
 from model_navigator.core.tensor import PyTreeMetadata, TensorMetadata, TensorSpec
 from model_navigator.core.workspace import Workspace
 from model_navigator.runners.tensorflow import TensorFlowSavedModelCUDARunner
@@ -175,7 +175,7 @@ def test_tf2_convert_tf_trt():
         input_metadata.add("input__1", input_data_np.shape, input_data_np.dtype)
 
         command_output = ConvertSavedModel2TFTRT().run(
-            max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
+            max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE_TFTRT,
             parent_path=input_model_path,
             path=converted_model_path,
             precision=TensorRTPrecision.FP16,

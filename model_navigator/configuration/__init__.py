@@ -44,6 +44,8 @@ import numpy as np
 from model_navigator.configuration.constants import (
     DEFAULT_MAX_TRIALS,
     DEFAULT_MAX_WORKSPACE_SIZE,
+    DEFAULT_MAX_WORKSPACE_SIZE_TFTRT,
+    DEFAULT_MAX_WORKSPACE_SIZE_TORCHTRT,
     DEFAULT_MIN_SEGMENT_SIZE,
     DEFAULT_MIN_TRIALS,
     DEFAULT_ONNX_OPSET,
@@ -663,6 +665,7 @@ class TensorFlowTensorRTConfig(CustomConfigForTensorRT):
     """
 
     minimum_segment_size: int = DEFAULT_MIN_SEGMENT_SIZE
+    max_workspace_size: Optional[int] = DEFAULT_MAX_WORKSPACE_SIZE_TFTRT
 
     @property
     def format(self) -> Format:
@@ -837,6 +840,8 @@ class TorchExportConfig(CustomConfigForFormat):
 @dataclasses.dataclass
 class TorchTensorRTConfig(CustomConfigForTensorRT):
     """Torch custom config used for TensorRT TorchScript conversion."""
+
+    max_workspace_size: Optional[int] = DEFAULT_MAX_WORKSPACE_SIZE_TORCHTRT
 
     @property
     def format(self) -> Format:

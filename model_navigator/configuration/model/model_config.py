@@ -474,9 +474,9 @@ class TensorRTModelConfig(_SerializedModelConfig, format=Format.TENSORRT):
     def __init__(
         self,
         precision_mode: TensorRTPrecisionMode,
-        max_workspace_size: int,
         optimization_level: Optional[int],
         compatibility_level: Optional[TensorRTCompatibilityLevel],
+        max_workspace_size: Optional[int] = None,
         precision: Optional[TensorRTPrecision] = None,
         trt_profiles: Optional[List[TensorRTProfile]] = None,
         parent: Optional[ModelConfig] = None,
@@ -492,11 +492,11 @@ class TensorRTModelConfig(_SerializedModelConfig, format=Format.TENSORRT):
         Args:
             parent: Parent model configuration/
             precision_mode: Mode how the precision flags are combined
-            max_workspace_size: The maximum GPU memory the model can use temporarily during execution
             optimization_level: Level of TensorRT engine optimization
+            compatibility_level: Hardware compatibility level
+            max_workspace_size: The maximum GPU memory the model can use temporarily during execution
             precision: TensorRT model precision
             trt_profiles: TensorRT profiles
-            compatibility_level: Hardware compatibility level
             onnx_parser_flags: ONNX parser flags
             custom_args: Custom arguments passed to TensorRT conversion
             device: runtime device e.g. "cuda:0"
@@ -532,10 +532,10 @@ class TensorRTModelConfig(_SerializedModelConfig, format=Format.TENSORRT):
         return cls(
             precision=cls._parse_string(TensorRTPrecision, data_dict.get("precision")),
             precision_mode=cls._parse_string(TensorRTPrecisionMode, data_dict.get("precision_mode")),
-            max_workspace_size=cls._parse_string(int, data_dict.get("max_workspace_size")),
-            trt_profiles=trt_profiles,
             optimization_level=cls._parse_string(int, data_dict.get("optimization_level")),
             compatibility_level=cls._parse_string(TensorRTCompatibilityLevel, data_dict.get("compatibility_level")),
+            max_workspace_size=cls._parse_string(int, data_dict.get("max_workspace_size")),
+            trt_profiles=trt_profiles,
             onnx_parser_flags=onnx_parser_flags,
             timing_cache_dir=data_dict.get("timing_cache_dir"),
             model_path=data_dict.get("model_path"),
