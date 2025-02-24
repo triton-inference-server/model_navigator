@@ -134,7 +134,7 @@ def convert(
         and is_modelopt_available()
         and TensorRTPrecision(precision) in (TensorRTPrecision.FP8, TensorRTPrecision.INT8)
     ):
-        LOGGER.info("Quantize model through TensorRT ModelOpt with %s precision", precision)
+        LOGGER.info("Quantize model through TensorRT ModelOpt with {} precision", precision)
         import modelopt.onnx.quantization as moq  # pytype: disable=import-error # noqa: F401
 
         correctness_samples = load_samples("correctness_samples", navigator_workspace, batch_dim)
@@ -148,7 +148,7 @@ def convert(
             output_path=onnx_quant_path,
             quantize_mode=precision,
         )
-        LOGGER.info("Quantized ONNX model saved in %s", onnx_quant_path)
+        LOGGER.info("Quantized ONNX model saved in {}", onnx_quant_path)
         onnx_path = onnx_quant_path
     else:
         onnx_path = exported_model_path.as_posix()
