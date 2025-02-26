@@ -92,8 +92,8 @@ def main():
 
     nav.load_optimized()
 
-    image = pipe(dataloader[0]).images[0]
-    image.save(f"astronaut_rides_horse_{nav.inplace_config.mode.value}.png")  # pytype: disable=attribute-error
+    image = pipe(dataloader[0][1]).images[0]
+    image.save("astronaut_rides_horse.png")
 
 
 if __name__ == "__main__":
