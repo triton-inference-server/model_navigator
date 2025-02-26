@@ -304,3 +304,20 @@ If you would like to see the logs on the console during the optimization, set th
 ```bash
 NAVIGATOR_CONSOLE_OUTPUT=logs
 ```
+
+# PyTorch Optimization
+
+## Torch Compile Configuration
+
+### Cache Configuration
+Model Navigator supports caching for torch.compile to improve subsequent compilation times through environment variables:
+
+```bash
+# TORCHINDUCTOR_CACHE_DIR is set - overriden - to the navigator workspace directory by default
+
+# Enable additional caching features
+export TORCHINDUCTOR_FX_GRAPH_CACHE=1   # Cache FX graph transformations
+export TORCHINDUCTOR_AUTOGRAD_CACHE=1   # Cache autograd optimizations
+```
+
+These settings can significantly reduce compilation time for repeated runs with the same model configuration.

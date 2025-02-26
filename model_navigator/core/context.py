@@ -20,6 +20,8 @@ INPLACE_OPTIMIZE_KEY = "inplace_optimize"
 INPLACE_OPTIMIZE_STRATEGIES_CONTEXT_KEY = "inplace_optimize_strategies"
 INPLACE_OPTIMIZE_BATCH_CONTEXT_KEY = "inplace_optimize_batch"
 INPLACE_OPTIMIZE_MODULE_NAME_CONTEXT_KEY = "inplace_optimize_current_module_name"
+INPLACE_OPTIMIZE_WORKSPACE_CONTEXT_KEY = "inplace_optimize_workspace"
+INPLACE_OPTIMIZE_MODULE_GRAPH_ID_CONTEXT_KEY = "inplace_optimize_module_graph_id"
 
 
 class GlobalContext:
@@ -48,6 +50,37 @@ class GlobalContext:
         from scratch.
         """
         self._context = OrderedDict()
+
+    def temporary(self) -> "TemporaryGlobalContext":
+        """Create a temporary context."""
+        return TemporaryGlobalContext(self)
+
+
+class TemporaryGlobalContext:
+    """Keeps track of variable changes and restores values of global context after exit of the scope."""
+
+    def __init__(self, global_context: GlobalContext):
+        """Inits."""
+        self._gc = global_context
+        self._changes = {}
+
+    def __enter__(self) -> "TemporaryGlobalContext":
+        """Enter context scope."""
+        return self
+
+    def set(self, name: str, value: Any):
+        """Setting context values and remembering previous ones."""
+        if name not in self._changes:  # keep only first occurrence
+            self._changes[name] = self._gc.get(name)
+        self._gc.set(name, value)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Restores values or removes them if None."""
+        for name, value in self._changes.items():
+            if value is None:
+                self._gc.pop(name)
+            else:
+                self._gc.set(name, value)
 
 
 global_context = GlobalContext()

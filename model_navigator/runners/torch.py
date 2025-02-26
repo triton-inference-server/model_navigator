@@ -14,8 +14,11 @@
 """Torch runners."""
 
 import gc
+import os
+import pathlib
 from typing import List, Optional
 
+import model_navigator.core.context as ctx
 from model_navigator.configuration import Format, TensorType
 from model_navigator.configuration.device import get_id_from_device_string, validate_device_string
 from model_navigator.core.logger import LOGGER
@@ -361,6 +364,7 @@ class TorchCompileCUDARunner(_BaseTorchRunner):
 
     def activate_impl(self):
         """Runner activation implementation."""
+        self.set_cache_dir()
         super().activate_impl()
         LOGGER.info(
             f"Using torch.compile with config: fullgraph={self.fullgraph}, dynamic={self.dynamic}, backend={self.backend}, mode={self.mode}, options={self.options}"
@@ -385,6 +389,20 @@ class TorchCompileCUDARunner(_BaseTorchRunner):
             torch._dynamo.reset()
         torch.cuda.empty_cache()
         gc.collect()
+
+    def set_cache_dir(self):
+        """For each runner name there is separate cache dir."""
+        workspace = ctx.global_context.get(ctx.INPLACE_OPTIMIZE_WORKSPACE_CONTEXT_KEY)
+
+        if workspace:
+            workspace = pathlib.Path(workspace)
+        else:
+            workspace = pathlib.Path("/tmp/model_navigator/torch_compile_cache")
+
+        workspace = workspace / self.name()
+        workspace.mkdir(parents=True, exist_ok=True)
+
+        os.environ["TORCHINDUCTOR_CACHE_DIR"] = str(workspace)
 
 
 class TorchCompileCPURunner(_BaseTorchRunner):

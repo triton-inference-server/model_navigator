@@ -193,14 +193,18 @@ class RecordingModule(BaseModule):
 
         config_dict = {k: v for k, v in self.optimize_config.to_dict().items() if k != "workspace"}
 
-        for i, pytree_metadata in enumerate(self._samples):
-            config_dict["workspace"] = self.optimize_config.workspace / str(i)
+        for module_graph_id, pytree_metadata in enumerate(self._samples):
+            config_dict["workspace"] = self.optimize_config.workspace / str(module_graph_id)
             samples = self._samples[pytree_metadata]
             samples_shapes = self._samples_shapes[pytree_metadata]
             dynamic_axes = get_dynamic_axes_from_shapes(samples_shapes, pytree_metadata, batch_dim)
             updated_config_dict = self._update_custom_configs(config_dict, dynamic_axes)
 
-            optimize(model=self._module, dataloader=TorchDataloader(samples), **updated_config_dict)
+            with ctx.global_context.temporary() as tmp_ctx:
+                tmp_ctx.set(ctx.INPLACE_OPTIMIZE_WORKSPACE_CONTEXT_KEY, config_dict["workspace"])
+                tmp_ctx.set(ctx.INPLACE_OPTIMIZE_MODULE_GRAPH_ID_CONTEXT_KEY, str(module_graph_id))
+
+                optimize(model=self._module, dataloader=TorchDataloader(samples), **updated_config_dict)
 
         self._optimized = True
 

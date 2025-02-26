@@ -97,35 +97,32 @@ def optimize(
         config: Optimize config.
     """
     try:
-        ctx.global_context.set(ctx.INPLACE_OPTIMIZE_STRATEGIES_CONTEXT_KEY, inplace_config.strategies)
-        ctx.global_context.set(ctx.INPLACE_OPTIMIZE_KEY, True)
-        if config is None:
-            config = OptimizeConfig()
+        with ctx.global_context.temporary() as tmp_ctx:
+            tmp_ctx.set(ctx.INPLACE_OPTIMIZE_STRATEGIES_CONTEXT_KEY, inplace_config.strategies)
+            tmp_ctx.set(ctx.INPLACE_OPTIMIZE_KEY, True)
+            if config is None:
+                config = OptimizeConfig()
 
-        for m in module_registry.values():
-            # set main config if user did not provide one for a module
-            if m.optimize_config is None:
-                m.optimize_config = config
-            m.load_recorded()
+            for m in module_registry.values():
+                # set main config if user did not provide one for a module
+                if m.optimize_config is None:
+                    m.optimize_config = config
+                m.load_recorded()
 
-        for input_ in dataloader:
-            batch_size, sample = input_  # unpack batch_size and sample
-            ctx.global_context.set(ctx.INPLACE_OPTIMIZE_BATCH_CONTEXT_KEY, batch_size)
-            if not isinstance(sample, (list, tuple)):
-                sample = (sample,)
-            if not isinstance(sample[-1], dict):
-                sample = (*sample, {})
-            *args, kwargs = sample
-            func(*args, **kwargs)
+            for input_ in dataloader:
+                batch_size, sample = input_  # unpack batch_size and sample
+                tmp_ctx.set(ctx.INPLACE_OPTIMIZE_BATCH_CONTEXT_KEY, batch_size)
+                if not isinstance(sample, (list, tuple)):
+                    sample = (sample,)
+                if not isinstance(sample[-1], dict):
+                    sample = (*sample, {})
+                *args, kwargs = sample
+                func(*args, **kwargs)
 
-        module_registry.optimize()
-        return _build_optimize_status()
+            module_registry.optimize()
+            return _build_optimize_status()
     except Exception as e:
         raise e
-    finally:
-        ctx.global_context.pop(ctx.INPLACE_OPTIMIZE_STRATEGIES_CONTEXT_KEY)
-        ctx.global_context.pop(ctx.INPLACE_OPTIMIZE_BATCH_CONTEXT_KEY)
-        ctx.global_context.pop(ctx.INPLACE_OPTIMIZE_KEY)
 
 
 def profile(

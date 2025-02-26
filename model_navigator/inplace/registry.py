@@ -70,9 +70,11 @@ class ModuleRegistry:
         self.event_emitter.emit(OptimizeEvent.INPLACE_STARTED)
         for name, module in self.items():
             if not module.is_optimized:
-                ctx.global_context.set(ctx.INPLACE_OPTIMIZE_MODULE_NAME_CONTEXT_KEY, name)
-                self.event_emitter.emit(OptimizeEvent.MODULE_PICKED_FOR_OPTIMIZATION, name=name)
-                module.optimize()
+                with ctx.global_context.temporary() as tmp_ctx:
+                    tmp_ctx.set(ctx.INPLACE_OPTIMIZE_MODULE_NAME_CONTEXT_KEY, name)
+                    self.event_emitter.emit(OptimizeEvent.MODULE_PICKED_FOR_OPTIMIZATION, name=name)
+                    module.optimize()
+
         self.event_emitter.emit(OptimizeEvent.INPLACE_FINISHED)
 
     def items(self):

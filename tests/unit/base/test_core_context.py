@@ -48,3 +48,73 @@ def test_context_clear_remove_all_items_stored_in_context():
 
     global_context.clear()
     assert global_context.get("foo") is None
+
+
+def test_context_temporary_add_item():
+    from model_navigator.core.context import global_context
+
+    with global_context.temporary() as tmp_ctx:
+        tmp_ctx.set("foo", "bar")
+
+        assert global_context.get("foo") == "bar"
+
+
+def test_context_temporary_remove_the_item():
+    from model_navigator.core.context import global_context
+
+    with global_context.temporary() as tmp_ctx:
+        tmp_ctx.set("foo", "bar")
+
+        assert global_context.get("foo") == "bar"
+
+    # outside context manager
+    assert global_context.get("foo") is None
+
+
+def test_context_temporary_restores_item():
+    from model_navigator.core.context import global_context
+
+    global_context.set("foo", "bar")
+    with global_context.temporary() as tmp_ctx:
+        tmp_ctx.set("foo", "baz")
+
+        assert global_context.get("foo") == "baz"
+
+    # restored
+    assert global_context.get("foo") == "bar"
+
+
+def test_context_temporary_restores_item_between_contexts():
+    from model_navigator.core.context import global_context
+
+    global_context.set("foo", "bar")
+    with global_context.temporary() as tmp_ctx:
+        tmp_ctx.set("foo", "baz")
+
+        with global_context.temporary() as tmp_ctx2:
+            tmp_ctx2.set("foo", "qux")
+
+            assert global_context.get("foo") == "qux"
+
+        # restored
+        assert global_context.get("foo") == "baz"
+
+    # restored
+    assert global_context.get("foo") == "bar"
+
+
+def test_context_temporary_restores_double_set():
+    from model_navigator.core.context import global_context
+
+    global_context.set("foo", "bar")
+    with global_context.temporary() as tmp_ctx:
+        tmp_ctx.set("foo", "baz")
+
+        assert global_context.get("foo") == "baz"
+
+        tmp_ctx.set("foo", "qux")
+
+        assert global_context.get("foo") == "qux"
+
+    # restored
+    assert global_context.get("foo") == "bar"
