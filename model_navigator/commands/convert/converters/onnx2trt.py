@@ -174,9 +174,6 @@ def convert(
     with TimingCacheManager(model_name=model_name, cache_path=timing_cache) as timing_cache:
         timing_cache = timing_cache.as_posix() if timing_cache else None
 
-        if "precision_constraints" not in custom_args and precision in ("fp8", "int8"):
-            custom_args["precision_constraints"] = "obey"
-
         engine = engine_from_network(
             network,
             config=CreateConfig(
