@@ -22,7 +22,7 @@ from typing import Any, Dict, List, Optional, Union
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.execution_context import ExecutionContext
 from model_navigator.commands.export import exporters
-from model_navigator.configuration import DeviceKind, JitType, TensorRTProfile
+from model_navigator.configuration import DeviceKind, JitType, TensorRTPrecision, TensorRTProfile
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata
 from model_navigator.core.workspace import Workspace
@@ -411,6 +411,104 @@ class ExportTorch2DynamoONNX(Command):
             )
 
         return CommandOutput(status=CommandStatus.OK)
+
+
+class ExportOnnxFromQuantizedTorch(Command):
+    """Command for exporting a PyTorch model to a quantized ONNX using ModelOpt.
+
+    This command first runs quantization via ModelOpt and then exports the quantized model to ONNX.
+    API reference:
+      - mtq.model_quant: https://nvidia.github.io/TensorRT-Model-Optimizer/reference/generated/modelopt.torch.quantization.model_quant.html
+      - mtq.export_onnx: https://nvidia.github.io/TensorRT-Model-Optimizer/reference/generated/modelopt.torch.quantization.export_onnx.html
+    """
+
+    def _run(
+        self,
+        workspace: Workspace,
+        opset: int,
+        input_metadata: TensorMetadata,
+        output_metadata: TensorMetadata,
+        precision: TensorRTPrecision,
+        target_device: Any,  # expected to have a .value attribute
+        verbose: bool,
+        custom_args: Dict[str, Any],
+        model: Any = None,
+        batch_dim: Optional[int] = None,
+        dynamic_axes: Optional[Dict[str, Union[Dict[int, str], list]]] = None,
+        export_device: Optional[str] = None,
+    ) -> CommandOutput:
+        """Execute command.
+
+        Args:
+            workspace: Workspace where the files are stored.
+            opset: ONNX opset
+            input_metadata: Model inputs metadata
+            output_metadata: Model outputs metadata
+            precision: TensorRT precision to use for the model
+            target_device: Target device for export
+            verbose: Enable verbose logging
+            custom_args: Passthrough parameters for torch.onnx.export
+            model: The model that has to be exported
+            batch_dim: Location of batch position in shapes
+            dynamic_axes: Definition of model inputs dynamic axes
+            export_device: Device to export model to ONNX on. If None use target_device.
+
+        Returns:
+            CommandOutput object with status
+        """
+        LOGGER.info("ExportOnnxFromQuantizedTorch started")
+
+        exported_model_path = workspace.path / f"trt-{precision.value}" / "quantized_model.onnx"
+        if exported_model_path.exists():
+            LOGGER.info("Quantized ONNX model already exists. Skipping export.")
+            return CommandOutput(status=CommandStatus.SKIPPED)
+
+        exported_model_path.parent.mkdir(parents=True, exist_ok=True)
+
+        if model is None:
+            raise RuntimeError("Expected a torch.nn.Module model. Got None.")
+
+        # Set up the device to use
+        device = export_device or target_device.value
+
+        # Set up the get_model function for the exporter script
+        from model_navigator.commands.export.exporters import torch2quantized_onnx
+
+        torch2quantized_onnx.get_model = lambda: model
+
+        # Keep model on CPU after operation
+        def on_exit():
+            model.to("cpu")
+
+        with ExecutionContext(
+            workspace=workspace,
+            script_path=exported_model_path.parent / "reproduce_export.py",
+            cmd_path=exported_model_path.parent / "reproduce_export.sh",
+            verbose=verbose,
+            on_exit=on_exit,
+        ) as context:
+            kwargs = {
+                "exported_model_path": exported_model_path.relative_to(workspace.path).as_posix(),
+                "opset": opset,
+                "input_metadata": input_metadata.to_json(),
+                "output_names": list(output_metadata.keys()),
+                "dynamic_axes": dynamic_axes,
+                "batch_dim": batch_dim,
+                "target_device": device,
+                "precision": precision.value,
+                "custom_args": custom_args,
+                "navigator_workspace": workspace.path.as_posix(),
+                "verbose": verbose,
+            }
+
+            args = parse_kwargs_to_cmd(kwargs)
+
+            try:
+                context.execute_python_script(torch2quantized_onnx.__file__, torch2quantized_onnx.export, args)
+                return CommandOutput(status=CommandStatus.OK)
+            except Exception as e:
+                LOGGER.error(f"Error during quantized ONNX export: {str(e)}")
+                return CommandOutput(status=CommandStatus.FAIL)
 
 
 def _validate_if_dynamic_axes_aligns_with_dataloader_shapes(

@@ -18,7 +18,8 @@ limitations under the License.
 
 
 ## 0.14.0 (unreleased)
-- new: TensorRT quantization through ModelOpt (ONNX path)
+- new: TensorRT INT8 and FP8 quantization through ModelOpt (ONNX path)
+- new: TensorRT NVFP4 quantization through ModelOpt (Torch path)
 - new: Improved TorchCompile performance for repeated compilations using TORCHINDUCTOR_CACHE_DIR environment variable
 - new: Global context with scoped variables - temporary context variables
 - new: Added new context variables `INPLACE_OPTIMIZE_WORKSPACE_CONTEXT_KEY` and `INPLACE_OPTIMIZE_MODULE_GRAPH_ID_CONTEXT_KEY`

@@ -39,6 +39,33 @@ from model_navigator.utils.common import parse_kwargs_to_cmd
 class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
     """Command that converts ONNX checkpoint to TensorRT model plan."""
 
+    def _setup_onnx_path(
+        self,
+        precision: TensorRTPrecision,
+        converted_model_path: pathlib.Path,
+        workspace: Workspace,
+    ) -> Optional[str]:
+        """Set up the ONNX path for TensorRT conversion.
+
+        This method only determines the path where a quantized ONNX model should be saved.
+        It does not perform the actual quantization.
+
+        Args:
+            precision: TensorRT precision
+            converted_model_path: Path where the converted model will be saved
+            workspace: Model Navigator workspace
+        Returns:
+            Optional[str]: Path to the quantized ONNX model or None if quantization is not needed.
+        """
+        # For quantization precisions, define the path where quantized model should be saved
+        # All quantization precisions use the same path convention
+        if precision in (TensorRTPrecision.FP8, TensorRTPrecision.INT8, TensorRTPrecision.NVFP4):
+            relative_path = converted_model_path.relative_to(workspace.path)
+            quantized_path = relative_path.parent / "quantized_model.onnx"
+            return quantized_path.as_posix()
+        else:
+            return None
+
     def _run(
         self,
         workspace: Workspace,
@@ -127,8 +154,18 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
 
             module_name = ctx.global_context.get(ctx.INPLACE_OPTIMIZE_MODULE_NAME_CONTEXT_KEY) or workspace.path.stem
 
+            # Get the path where a quantized ONNX model should be saved
+            onnx_quant_path = self._setup_onnx_path(
+                precision=precision,
+                converted_model_path=converted_model_path,
+                workspace=workspace,
+            )
+
+            # We still pass the original input model path to the converter
+            onnx_input_path = input_model_path.relative_to(workspace.path).as_posix()
+
             kwargs = {
-                "exported_model_path": input_model_path.relative_to(workspace.path).as_posix(),
+                "exported_model_path": onnx_input_path,
                 "converted_model_path": converted_model_path.relative_to(workspace.path).as_posix(),
                 "profiles": profiles_dicts,
                 "max_workspace_size": max_workspace_size,
@@ -140,6 +177,7 @@ class ConvertONNX2TRT(Convert2TensorRTWithMaxBatchSizeSearch):
                 "custom_args": custom_args,
                 "batch_dim": batch_dim,
                 "model_precision": model_precision,
+                "quantized_onnx_path": onnx_quant_path,
             }
             if optimization_level is not None:
                 kwargs["optimization_level"] = optimization_level

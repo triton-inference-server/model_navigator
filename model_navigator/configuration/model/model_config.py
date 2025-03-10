@@ -424,6 +424,7 @@ class ONNXModelConfig(_SerializedModelConfig, format=Format.ONNX):
         device: Optional[str] = None,
         export_device: Optional[str] = None,
         model_path: Optional[Union[str, pathlib.Path]] = None,
+        quantized: bool = False,
     ) -> None:
         """Initializes ONNX model configuration class.
 
@@ -438,6 +439,7 @@ class ONNXModelConfig(_SerializedModelConfig, format=Format.ONNX):
             device: runtime device e.g. "cuda:0"
             export_device: Device used for export
             model_path: optional path to onnx model file, if provided the model will be loaded from the file instead of exporting to ONNX
+            quantized: True if the model is quantized, default: False
         """
         super().__init__(parent=parent)
         self.opset = opset
@@ -449,9 +451,15 @@ class ONNXModelConfig(_SerializedModelConfig, format=Format.ONNX):
         self.export_device = export_device
         self.runner_config = DeviceRunnerConfig(device=device)
         self.model_path = model_path
+        self.quantized = quantized
 
     def _get_path_params_as_array_of_strings(self) -> List[str]:
-        return ["dynamo"] if self.dynamo_export else []
+        params_array = []
+        if self.quantized:
+            params_array.append("quantized")
+        if self.dynamo_export:
+            params_array.append("dynamo")
+        return params_array
 
     @classmethod
     def _from_dict(cls, data_dict: Dict):
@@ -465,6 +473,7 @@ class ONNXModelConfig(_SerializedModelConfig, format=Format.ONNX):
             device=data_dict.get("device"),
             export_device=data_dict.get("export_device"),
             model_path=data_dict.get("model_path"),
+            quantized=data_dict.get("quantized", False),
         )
 
 

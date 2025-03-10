@@ -13,6 +13,7 @@
 # limitations under the License.
 """Builders for Torch based models."""
 
+from copy import deepcopy
 from typing import Dict, List
 
 from model_navigator.commands.base import ExecutionUnit
@@ -20,12 +21,13 @@ from model_navigator.commands.convert.torch import ConvertTorchScript2ONNX
 from model_navigator.commands.copy.copy_model import CopyModelFromPath
 from model_navigator.commands.export.torch import (
     ExportExportedProgram,
+    ExportOnnxFromQuantizedTorch,
     ExportTorch2DynamoONNX,
     ExportTorch2ONNX,
     ExportTorch2TorchScript,
 )
 from model_navigator.commands.optimize.graph_surgeon import GraphSurgeonOptimize
-from model_navigator.configuration import Format
+from model_navigator.configuration import Format, TensorRTPrecision
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig, ONNXModelConfig
 from model_navigator.pipelines.constants import (
@@ -60,7 +62,15 @@ def torch_export_builder(config: CommonConfig, models_config: Dict[Format, List[
                 )
             else:
                 execution_units.append(ExecutionUnit(command=ExportTorch2ONNX, model_config=model_cfg))
-
+            for model_cfg_trt in models_config.get(Format.TENSORRT, []):
+                if model_cfg_trt.precision == TensorRTPrecision.NVFP4:  # pytype: disable=attribute-error
+                    # Use trt config copy for special case of NVFP4 torch->model opt quantization->onnx->trt conversion.
+                    # Patch it with opset from onnx config.
+                    trt_cfg_copy = deepcopy(model_cfg_trt)
+                    trt_cfg_copy.opset = model_cfg.opset  # pytype: disable=attribute-error
+                    execution_units.append(
+                        ExecutionUnit(command=ExportOnnxFromQuantizedTorch, model_config=trt_cfg_copy)
+                    )
             assert isinstance(model_cfg, ONNXModelConfig)
             if model_cfg.graph_surgeon_optimization:
                 execution_units.append(ExecutionUnit(command=GraphSurgeonOptimize, model_config=model_cfg))

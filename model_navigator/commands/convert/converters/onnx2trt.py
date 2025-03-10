@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Convert ONNX model to TensorRT engine."""
+"""Script for ONNX to TensorRT conversion."""
 
 import pathlib
 from typing import Any, Dict, List, Optional, Tuple
@@ -33,31 +33,33 @@ def _get_precisions(precision, precision_mode):
     precision = TensorRTPrecision(precision)
     precision_mode = TensorRTPrecisionMode(precision_mode)
     if precision_mode == TensorRTPrecisionMode.HIERARCHY:
-        tf32, fp16, bf16, fp8, int8 = {
+        tf32, fp16, bf16, fp8, int8, nvfp4 = {
             # TODO: Enable hierarchical BF16 for FP16, FP8 and INT8 after it's supported
-            TensorRTPrecision.FP32: [True, False, False, False, False],
+            TensorRTPrecision.FP32: [True, False, False, False, False, False],
             # TensorRTPrecision.FP16: [True, True, True, False, False],
-            TensorRTPrecision.FP16: [True, True, False, False, False],
-            TensorRTPrecision.BF16: [True, True, True, False, False],
+            TensorRTPrecision.FP16: [True, True, False, False, False, False],
+            TensorRTPrecision.BF16: [True, True, True, False, False, False],
             # TensorRTPrecision.FP8: [True, True, True, True, False],
-            TensorRTPrecision.FP8: [True, True, False, True, False],
+            TensorRTPrecision.FP8: [True, True, False, True, False, False],
             # TensorRTPrecision.INT8: [True, True, True, False, True],
-            TensorRTPrecision.INT8: [True, True, False, False, True],
+            TensorRTPrecision.INT8: [True, True, False, False, True, False],
+            TensorRTPrecision.NVFP4: [True, True, False, False, False, True],
         }[precision]
     elif precision_mode == TensorRTPrecisionMode.SINGLE:
-        tf32, fp16, bf16, fp8, int8 = {
-            TensorRTPrecision.FP32: [True, False, False, False, False],
-            TensorRTPrecision.FP16: [False, True, False, False, False],
-            TensorRTPrecision.BF16: [False, False, True, False, False],
-            TensorRTPrecision.FP8: [False, False, False, True, False],
-            TensorRTPrecision.INT8: [False, False, False, False, True],
+        tf32, fp16, bf16, fp8, int8, nvfp4 = {
+            TensorRTPrecision.FP32: [True, False, False, False, False, False],
+            TensorRTPrecision.FP16: [False, True, False, False, False, False],
+            TensorRTPrecision.BF16: [False, False, True, False, False, False],
+            TensorRTPrecision.FP8: [False, False, False, True, False, False],
+            TensorRTPrecision.INT8: [False, False, False, False, True, False],
+            TensorRTPrecision.NVFP4: [False, False, False, False, False, True],
         }[precision]
     else:
         raise ValueError(
             f"Unsupported precision mode {precision_mode}. Only {TensorRTPrecisionMode.HIERARCHY} and "
             f"{TensorRTPrecisionMode.SINGLE} are allowed"
         )
-    return tf32, fp16, bf16, fp8, int8
+    return tf32, fp16, bf16, fp8, int8, nvfp4
 
 
 def convert(
@@ -76,17 +78,18 @@ def convert(
     custom_args: Optional[Dict[str, Any]] = None,
     batch_dim: Optional[int] = None,
     model_precision: Optional[PrecisionType] = None,
+    quantized_onnx_path: Optional[str] = None,
 ) -> None:
-    """Run conversion from TorchScript to Torch-TensorRT.
+    """Run conversion from ONNX to TensorRT.
 
     Args:
-        exported_model_path: TorchScript model path.
-        converted_model_path: Output Torch-TensorRT model path.
+        exported_model_path: ONNX model path.
+        converted_model_path: Output TensorRT engine path.
         profiles: Dictionary with min, opt, max shapes of the inputs.
             The key is an input name and the value is a dictionary with keys ("min", "opt", "max")
             and respective values.
         max_workspace_size: Maximum workspace size in bytes.
-        precision: TensorRT precision. Could be "fp16" or "fp32".
+        precision: TensorRT precision. Could be "fp16", "fp32", etc.
         precision_mode: TensorRT precision mode.
         navigator_workspace: Model Navigator workspace path.
             When None use current workdir. Defaults to None.
@@ -99,6 +102,7 @@ def convert(
             For available arguments check PyTorch documentation: https://pytorch.org/TensorRT/py_api/torch_tensorrt.html
         batch_dim: Batch dimension. Defaults to None.
         model_precision: Source model precision.
+        quantized_onnx_path: Path to the quantized ONNX model.
     """
     if not navigator_workspace:
         navigator_workspace = pathlib.Path.cwd()
@@ -107,6 +111,7 @@ def convert(
     exported_model_path = pathlib.Path(exported_model_path)
     if not exported_model_path.is_absolute():
         exported_model_path = navigator_workspace / exported_model_path
+    exported_model_path = exported_model_path.as_posix()
 
     if model_name is None:
         model_name = navigator_workspace.stem
@@ -114,6 +119,13 @@ def convert(
     converted_model_path = pathlib.Path(converted_model_path)
     if not converted_model_path.is_absolute():
         converted_model_path = navigator_workspace / converted_model_path
+    converted_model_path = converted_model_path.as_posix()
+
+    if quantized_onnx_path:
+        quantized_onnx_path = pathlib.Path(quantized_onnx_path)
+        if not quantized_onnx_path.is_absolute():
+            quantized_onnx_path = navigator_workspace / quantized_onnx_path
+        quantized_onnx_path = quantized_onnx_path.as_posix()
 
     custom_args = custom_args or {}
 
@@ -126,34 +138,47 @@ def convert(
     if not trt_profiles:
         trt_profiles = [Profile()]
 
-    tf32, fp16, bf16, fp8, int8 = _get_precisions(precision, precision_mode)
+    # nvfp4 is currently not used as flag for converter, skip it
+    tf32, fp16, bf16, fp8, int8, _ = _get_precisions(precision, precision_mode)
 
-    # Do ModelOpt quantization if model is not quantized and precision is FP8 or INT8
-    if (
+    # Determine the path to use for ONNX model
+    onnx_path = exported_model_path
+
+    # Check if we need to perform quantization
+    should_quantize = (
         model_precision not in ("fp8", "int8")
         and is_modelopt_available()
         and TensorRTPrecision(precision) in (TensorRTPrecision.FP8, TensorRTPrecision.INT8)
-    ):
+    )
+
+    # Use ModelOpt for quantization if needed
+    if quantized_onnx_path and should_quantize:
         LOGGER.info("Quantize model through TensorRT ModelOpt with {} precision", precision)
         import modelopt.onnx.quantization as moq  # pytype: disable=import-error # noqa: F401
 
         correctness_samples = load_samples("correctness_samples", navigator_workspace, batch_dim)
         calibration_data = {name: tensor for sample in correctness_samples for name, tensor in sample.items()}
 
-        onnx_quant_path = (converted_model_path.parent / "quantized_model.onnx").as_posix()
+        # Prepare quantization parameters
+        quantize_kwargs = {
+            "onnx_path": onnx_path,
+            "calibration_data": calibration_data,
+            "output_path": quantized_onnx_path,
+            "quantize_mode": precision,
+        }
 
-        moq.quantize(
-            onnx_path=exported_model_path.as_posix(),
-            calibration_data=calibration_data,
-            output_path=onnx_quant_path,
-            quantize_mode=precision,
-        )
-        LOGGER.info("Quantized ONNX model saved in {}", onnx_quant_path)
-        onnx_path = onnx_quant_path
+        moq.quantize(**quantize_kwargs)
+        LOGGER.info("Quantized ONNX model saved in {}", quantized_onnx_path)
+        onnx_path = quantized_onnx_path
+    # For NVFP4, always use the quantized path (even if not quantized yet)
+    elif quantized_onnx_path and TensorRTPrecision(precision) == TensorRTPrecision.NVFP4:
+        onnx_path = quantized_onnx_path
+
+    if TensorRTPrecision(precision) == TensorRTPrecision.NVFP4:
+        strongly_typed = True
     else:
-        onnx_path = exported_model_path.as_posix()
-
-    network = network_from_onnx_path(onnx_path, flags=onnx_parser_flags)
+        strongly_typed = False
+    network = network_from_onnx_path(onnx_path, flags=onnx_parser_flags, strongly_typed=strongly_typed)
 
     config_kwargs = {}
     if optimization_level:
@@ -189,7 +214,7 @@ def convert(
             ),
             save_timing_cache=timing_cache,
         )
-        save_engine(engine, path=converted_model_path.as_posix())
+        save_engine(engine, path=converted_model_path)
 
 
 if __name__ == "__main__":

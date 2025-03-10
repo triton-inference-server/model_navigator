@@ -170,6 +170,7 @@ class TensorRTPrecision(Enum):
         FP16 (str): 16-bit floating point precision.
         BF16 (str): 16-bit brain floating point precision.
         FP32 (str): 32-bit floating point precision.
+        NVFP4 (str): 4-bit floating point precision.
     """
 
     INT8 = "int8"
@@ -177,6 +178,7 @@ class TensorRTPrecision(Enum):
     FP16 = "fp16"
     BF16 = "bf16"
     FP32 = "fp32"
+    NVFP4 = "nvfp4"
 
 
 class TensorRTPrecisionMode(Enum):
