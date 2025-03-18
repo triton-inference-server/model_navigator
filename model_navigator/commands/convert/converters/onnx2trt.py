@@ -33,33 +33,23 @@ def _get_precisions(precision, precision_mode):
     precision = TensorRTPrecision(precision)
     precision_mode = TensorRTPrecisionMode(precision_mode)
     if precision_mode == TensorRTPrecisionMode.HIERARCHY:
-        tf32, fp16, bf16, fp8, int8, nvfp4 = {
-            # TODO: Enable hierarchical BF16 for FP16, FP8 and INT8 after it's supported
-            TensorRTPrecision.FP32: [True, False, False, False, False, False],
-            # TensorRTPrecision.FP16: [True, True, True, False, False],
-            TensorRTPrecision.FP16: [True, True, False, False, False, False],
-            TensorRTPrecision.BF16: [True, True, True, False, False, False],
-            # TensorRTPrecision.FP8: [True, True, True, True, False],
-            TensorRTPrecision.FP8: [True, True, False, True, False, False],
-            # TensorRTPrecision.INT8: [True, True, True, False, True],
-            TensorRTPrecision.INT8: [True, True, False, False, True, False],
-            TensorRTPrecision.NVFP4: [True, True, False, False, False, True],
+        tf32, fp16, bf16 = {
+            TensorRTPrecision.FP32: [True, False, False],
+            TensorRTPrecision.FP16: [True, True, False],
+            TensorRTPrecision.BF16: [True, True, True],
         }[precision]
     elif precision_mode == TensorRTPrecisionMode.SINGLE:
-        tf32, fp16, bf16, fp8, int8, nvfp4 = {
-            TensorRTPrecision.FP32: [True, False, False, False, False, False],
-            TensorRTPrecision.FP16: [False, True, False, False, False, False],
-            TensorRTPrecision.BF16: [False, False, True, False, False, False],
-            TensorRTPrecision.FP8: [False, False, False, True, False, False],
-            TensorRTPrecision.INT8: [False, False, False, False, True, False],
-            TensorRTPrecision.NVFP4: [False, False, False, False, False, True],
+        tf32, fp16, bf16 = {
+            TensorRTPrecision.FP32: [True, False, False],
+            TensorRTPrecision.FP16: [False, True, False],
+            TensorRTPrecision.BF16: [False, False, True],
         }[precision]
     else:
         raise ValueError(
             f"Unsupported precision mode {precision_mode}. Only {TensorRTPrecisionMode.HIERARCHY} and "
             f"{TensorRTPrecisionMode.SINGLE} are allowed"
         )
-    return tf32, fp16, bf16, fp8, int8, nvfp4
+    return tf32, fp16, bf16
 
 
 def _quantize_model(
@@ -84,6 +74,41 @@ def _quantize_model(
 
     moq.quantize(**quantize_kwargs)
     LOGGER.info("Quantized ONNX model saved in {}", quantized_onnx_path)
+
+
+def _build_create_config_kwargs(
+    max_workspace_size,
+    precision,
+    precision_mode,
+    optimization_level,
+    compatibility_level,
+    custom_args,
+    trt_profiles,
+    timing_cache,
+):
+    create_config_kwargs = {
+        "profiles": trt_profiles,
+        "load_timing_cache": timing_cache,
+        **custom_args,
+    }
+    tf32, fp16, bf16 = _get_precisions(precision, precision_mode)
+
+    if optimization_level:
+        create_config_kwargs["builder_optimization_level"] = optimization_level
+    if compatibility_level:
+        create_config_kwargs["hardware_compatibility_level"] = compatibility_level
+
+    if max_workspace_size:
+        create_config_kwargs["memory_pool_limits"] = {
+            trt.MemoryPoolType.WORKSPACE: max_workspace_size,
+        }
+
+    # Set precision-specific flags
+    if TensorRTPrecision(precision) not in (TensorRTPrecision.INT8, TensorRTPrecision.FP8, TensorRTPrecision.NVFP4):
+        create_config_kwargs["tf32"] = tf32
+        create_config_kwargs["fp16"] = fp16
+        create_config_kwargs["bf16"] = bf16
+    return create_config_kwargs
 
 
 def convert(
@@ -160,8 +185,6 @@ def convert(
     if not trt_profiles:
         trt_profiles = [Profile()]
 
-    # nvfp4 is currently not used as flag for converter, skip it
-    tf32, fp16, bf16, fp8, int8, _ = _get_precisions(precision, precision_mode)
     strongly_typed = False
 
     # Determine the path to use for ONNX model
@@ -186,21 +209,12 @@ def convert(
         onnx_path = pathlib.Path(quantized_onnx_path)
     # For NVFP4, always use the quantized path (even if not quantized yet)
     elif quantized_onnx_path and TensorRTPrecision(precision) == TensorRTPrecision.NVFP4:
-        strongly_typed = True
         onnx_path = pathlib.Path(quantized_onnx_path)
 
+    if TensorRTPrecision(precision) in (TensorRTPrecision.INT8, TensorRTPrecision.FP8, TensorRTPrecision.NVFP4):
+        strongly_typed = True
+
     network = network_from_onnx_path(onnx_path.as_posix(), flags=onnx_parser_flags, strongly_typed=strongly_typed)
-
-    config_kwargs = {}
-    if optimization_level:
-        config_kwargs["builder_optimization_level"] = optimization_level
-    if compatibility_level:
-        config_kwargs["hardware_compatibility_level"] = compatibility_level
-
-    if max_workspace_size:
-        config_kwargs["memory_pool_limits"] = {
-            trt.MemoryPoolType.WORKSPACE: max_workspace_size,
-        }
 
     # saving timing cache in model_navigator workspace or ...
     timing_cache = trt_cache_inplace_cache_dir()
@@ -210,19 +224,20 @@ def convert(
     with TimingCacheManager(model_name=model_name, cache_path=timing_cache) as timing_cache:
         timing_cache = timing_cache.as_posix() if timing_cache else None
 
+        create_config_kwargs = _build_create_config_kwargs(
+            max_workspace_size,
+            precision,
+            precision_mode,
+            optimization_level,
+            compatibility_level,
+            custom_args,
+            trt_profiles,
+            timing_cache,
+        )
+
         engine = engine_from_network(
             network,
-            config=CreateConfig(
-                tf32=tf32,
-                fp16=fp16,
-                bf16=bf16,
-                fp8=fp8,
-                int8=int8,
-                profiles=trt_profiles,
-                load_timing_cache=timing_cache,
-                **config_kwargs,
-                **custom_args,
-            ),
+            config=CreateConfig(**create_config_kwargs),
             save_timing_cache=timing_cache,
         )
         save_engine(engine, path=converted_model_path)
