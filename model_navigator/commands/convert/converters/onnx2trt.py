@@ -32,24 +32,32 @@ trt = mod.lazy_import("tensorrt")
 def _get_precisions(precision, precision_mode):
     precision = TensorRTPrecision(precision)
     precision_mode = TensorRTPrecisionMode(precision_mode)
-    if precision_mode == TensorRTPrecisionMode.HIERARCHY:
-        tf32, fp16, bf16 = {
-            TensorRTPrecision.FP32: [True, False, False],
-            TensorRTPrecision.FP16: [True, True, False],
-            TensorRTPrecision.BF16: [True, True, True],
-        }[precision]
-    elif precision_mode == TensorRTPrecisionMode.SINGLE:
-        tf32, fp16, bf16 = {
-            TensorRTPrecision.FP32: [True, False, False],
-            TensorRTPrecision.FP16: [False, True, False],
-            TensorRTPrecision.BF16: [False, False, True],
-        }[precision]
-    else:
+
+    # Default values for quantized precisions
+    if precision in (TensorRTPrecision.INT8, TensorRTPrecision.FP8, TensorRTPrecision.NVFP4):
+        return False, False, False
+
+    # Precision configurations based on mode
+    precision_configs = {
+        TensorRTPrecisionMode.HIERARCHY: {
+            TensorRTPrecision.FP32: (True, False, False),
+            TensorRTPrecision.FP16: (True, True, False),
+            TensorRTPrecision.BF16: (True, True, True),
+        },
+        TensorRTPrecisionMode.SINGLE: {
+            TensorRTPrecision.FP32: (True, False, False),
+            TensorRTPrecision.FP16: (False, True, False),
+            TensorRTPrecision.BF16: (False, False, True),
+        },
+    }
+
+    if precision_mode not in precision_configs:
         raise ValueError(
             f"Unsupported precision mode {precision_mode}. Only {TensorRTPrecisionMode.HIERARCHY} and "
             f"{TensorRTPrecisionMode.SINGLE} are allowed"
         )
-    return tf32, fp16, bf16
+
+    return precision_configs[precision_mode][precision]
 
 
 def _quantize_model(
@@ -91,7 +99,6 @@ def _build_create_config_kwargs(
         "load_timing_cache": timing_cache,
         **custom_args,
     }
-    tf32, fp16, bf16 = _get_precisions(precision, precision_mode)
 
     if optimization_level:
         create_config_kwargs["builder_optimization_level"] = optimization_level
@@ -105,9 +112,8 @@ def _build_create_config_kwargs(
 
     # Set precision-specific flags
     if TensorRTPrecision(precision) not in (TensorRTPrecision.INT8, TensorRTPrecision.FP8, TensorRTPrecision.NVFP4):
-        create_config_kwargs["tf32"] = tf32
-        create_config_kwargs["fp16"] = fp16
-        create_config_kwargs["bf16"] = bf16
+        tf32, fp16, bf16 = _get_precisions(precision, precision_mode)
+        create_config_kwargs.update({"tf32": tf32, "fp16": fp16, "bf16": bf16})
     return create_config_kwargs
 
 
