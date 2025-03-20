@@ -13,7 +13,7 @@
 # limitations under the License.
 import zipfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 import yaml
@@ -25,6 +25,27 @@ from model_navigator.inplace.registry import ModuleRegistry
 from tests.unit.base.mocks import packages as mock_packages
 
 
+@pytest.fixture
+def nav_cache(mocker, tmp_path: Path):
+    nav_cache = tmp_path / ".cache"
+    nav_cache.mkdir(exist_ok=True)
+
+    mocker.patch("model_navigator.inplace.bundle.inplace_cache_dir", lambda: nav_cache)
+
+    return nav_cache
+
+
+def create_mock_module(nav_cache: Path, name: str, is_optimized: bool, status_yaml: str):
+    m1 = MagicMock()
+    m1.is_optimized = is_optimized
+    m1_path = nav_cache / name
+
+    m1_path.mkdir(parents=True, exist_ok=True)
+    (m1_path / "status.yaml").write_text(status_yaml)
+
+    return m1
+
+
 @pytest.mark.parametrize(
     "select_modules",
     [
@@ -33,35 +54,22 @@ from tests.unit.base.mocks import packages as mock_packages
         bundle.ModulesByNameSelection(["m1"]),
     ],
 )
-def test_bundle_save(tmp_path: Path, select_modules):
+def test_bundle_save(mocker, nav_cache: Path, select_modules):
     # register mock modules
-    m1 = MagicMock()
-    m1.is_optimized = True
-    m1_path = tmp_path / ".cache/m1"
-
-    m2 = MagicMock()
-    m2.is_optimized = True
-    m2_path = tmp_path / ".cache/m2"
-
-    m3_path = tmp_path / ".cache/m3"
-
-    m1_path.mkdir(parents=True, exist_ok=True)
-    m2_path.mkdir(parents=True, exist_ok=True)
-    m3_path.mkdir(parents=True, exist_ok=True)
-
-    (m1_path / "status.yaml").write_text("optimized: true")
-    (m2_path / "status.yaml").write_text("optimized: false")
-    (m3_path / "status.yaml").write_text("optimized: true")
+    m1 = create_mock_module(nav_cache, "m1", is_optimized=True, status_yaml="optimized: true")
+    m2 = create_mock_module(nav_cache, "m2", is_optimized=True, status_yaml="optimized: false")
+    _m3 = create_mock_module(nav_cache, "m3", is_optimized=True, status_yaml="optimized: true")
 
     # create mock registry
     module_registry = ModuleRegistry()
     module_registry.register("m1", m1)
     module_registry.register("m2", m2)
 
-    bundle_file_result = tmp_path / "bundle.nav"
-    with patch("model_navigator.inplace.bundle.module_registry", module_registry):
-        with patch("model_navigator.inplace.bundle.inplace_cache_dir", lambda: tmp_path / ".cache"):
-            bundle.save(bundle_file_result, modules=select_modules)
+    bundle_file_result = nav_cache / "bundle.nav"
+
+    mocker.patch("model_navigator.inplace.bundle.module_registry", module_registry)
+
+    bundle.save(bundle_file_result, modules=select_modules)
 
     assert bundle_file_result.exists()
 
@@ -92,35 +100,20 @@ def test__major_minor_version():
 
 
 @pytest.fixture
-def bundle_path_m1(status_yaml, tmp_path):
+def bundle_path_m1(nav_cache: Path, status_yaml, tmp_path):
     m1 = MagicMock()
     m1.is_optimized = True
-    m1_path = tmp_path / ".cache/m1"
+    m1_path = nav_cache / "m1"
     m1_status = m1_path / "status.yaml"
 
     m1_path.mkdir(parents=True, exist_ok=True)
     m1_status.write_text(status_yaml)
 
-    bundle_path = tmp_path / "bundle.nav"
-    with patch("model_navigator.inplace.bundle.inplace_cache_dir", lambda: tmp_path / ".cache"):
-        bundle.save(bundle_path, modules=bundle.AllModulesSelection(), tags=["tag1", "tag2"])
+    bundle_path = nav_cache / "bundle.nav"
+
+    bundle.save(bundle_path, modules=bundle.AllModulesSelection(), tags=["tag1", "tag2"])
 
     return bundle_path
-
-
-def test_bundle_match_check(bundle_path_m1, nav_env):
-    with patch("model_navigator.inplace.bundle.get_env", lambda: nav_env):
-        assert bundle.is_matching(bundle_path_m1)
-
-
-def test_bundle_match_check_with_tags(bundle_path_m1, nav_env):
-    with patch("model_navigator.inplace.bundle.get_env", lambda: nav_env):
-        assert bundle.is_matching(bundle_path_m1, tags=["tag1", "tag2"])
-
-
-def test_bundle_match_check_tags_mismatch(bundle_path_m1, nav_env):
-    with patch("model_navigator.inplace.bundle.get_env", lambda: nav_env):
-        assert not bundle.is_matching(bundle_path_m1, tags=["tag1"])
 
 
 @pytest.fixture
@@ -324,8 +317,24 @@ module_status:
 
 
 @pytest.fixture
-def nav_env(status_yaml):
-    return yaml.safe_load(status_yaml)["environment"]
+def nav_env(mocker, status_yaml):
+    env_vars = yaml.safe_load(status_yaml)["environment"]
+
+    mocker.patch("model_navigator.inplace.bundle.get_env", lambda: env_vars)
+
+    return env_vars
+
+
+def test_bundle_match_check(bundle_path_m1, nav_env):
+    assert bundle.is_matching(bundle_path_m1)
+
+
+def test_bundle_match_check_with_tags(bundle_path_m1, nav_env):
+    assert bundle.is_matching(bundle_path_m1, tags=["tag1", "tag2"])
+
+
+def test_bundle_match_check_tags_mismatch(bundle_path_m1, nav_env):
+    assert not bundle.is_matching(bundle_path_m1, tags=["tag1"])
 
 
 @pytest.fixture
@@ -340,17 +349,8 @@ def simple_bundle_path(tmp_path: Path, status_yaml):
     return bundle_file
 
 
-@pytest.fixture
-def nav_cache(tmp_path: Path):
-    nav_cache = tmp_path / ".cache"
-    nav_cache.mkdir(exist_ok=True)
-    return nav_cache
-
-
 def test_load_cache_bundle(nav_cache: Path, simple_bundle_path, nav_env):
-    with patch("model_navigator.inplace.bundle.get_env", lambda: nav_env):
-        with patch("model_navigator.inplace.bundle.inplace_cache_dir", lambda: nav_cache):
-            bundle.load(simple_bundle_path)
+    bundle.load(simple_bundle_path)
 
     assert (nav_cache / "m1/0/status.yaml").exists()
     assert (nav_cache / "m2/0/status.yaml").exists()
@@ -359,9 +359,7 @@ def test_load_cache_bundle(nav_cache: Path, simple_bundle_path, nav_env):
 
 
 def test_load_cache_bundle_with_tags(nav_cache: Path, simple_bundle_path, nav_env):
-    with patch("model_navigator.inplace.bundle.get_env", lambda: nav_env):
-        with patch("model_navigator.inplace.bundle.inplace_cache_dir", lambda: nav_cache):
-            bundle.load(simple_bundle_path, tags=["tag1", "tag2"])
+    bundle.load(simple_bundle_path, tags=["tag1", "tag2"])
 
     assert (nav_cache / "m1/0/status.yaml").exists()
     assert (nav_cache / "m2/0/status.yaml").exists()
@@ -371,18 +369,14 @@ def test_load_cache_bundle_with_tags(nav_cache: Path, simple_bundle_path, nav_en
 
 def test_load_cache_bundle_tags_mismatch(nav_cache: Path, simple_bundle_path, nav_env):
     with pytest.raises(ModelNavigatorConfigurationError):
-        with patch("model_navigator.inplace.bundle.get_env", lambda: nav_env):
-            with patch("model_navigator.inplace.bundle.inplace_cache_dir", lambda: nav_cache):
-                bundle.load(simple_bundle_path, tags=["tag1", "tag4"])
+        bundle.load(simple_bundle_path, tags=["tag1", "tag4"])
 
 
 def test_load_cache_bundle_env_mismatch(nav_cache: Path, simple_bundle_path, nav_env):
     nav_env["gpu"]["name"] = "RTX 4090"
 
     with pytest.raises(ModelNavigatorConfigurationError):
-        with patch("model_navigator.inplace.bundle.get_env", lambda: nav_env):
-            with patch("model_navigator.inplace.bundle.inplace_cache_dir", lambda: nav_cache):
-                bundle.load(simple_bundle_path)
+        bundle.load(simple_bundle_path)
 
 
 def test_load_cache_bundle_remove_prev_module_dir(nav_cache: Path, simple_bundle_path, nav_env):
@@ -391,17 +385,14 @@ def test_load_cache_bundle_remove_prev_module_dir(nav_cache: Path, simple_bundle
     old_module.parent.mkdir(parents=True, exist_ok=True)
     old_module.write_text("old values")
 
-    with patch("model_navigator.inplace.bundle.get_env", lambda: nav_env):
-        with patch("model_navigator.inplace.bundle.inplace_cache_dir", lambda: nav_cache):
-            bundle.load(simple_bundle_path)
+    bundle.load(simple_bundle_path)
 
     assert (nav_cache / "m1/0/status.yaml").exists()
     assert not old_module.exists()
 
 
-def test_save_best_packages(tmp_path, nav_cache: Path, status_yaml):
-    selection = bundle.BestRunnersSelection()
-
+@pytest.fixture
+def module_with_onnx(mocker, nav_cache: Path, status_yaml):
     workspace_path = nav_cache / "m1/0"
     workspace_path.mkdir(parents=True, exist_ok=True)
 
@@ -421,10 +412,6 @@ def test_save_best_packages(tmp_path, nav_cache: Path, status_yaml):
     assert "onnx" in m1_package.status.models_status
     assert "trt-fp16" in m1_package.status.models_status, "trt-fp16 should be present in the onnx_package() mock!"
 
-    # (sanity check) best runner is ONNX
-    runtime_result = m1_package.get_best_runtime(strategies=selection.runner_selection_strategies, inplace=True)
-    assert runtime_result.model_status.model_config.format == Format.ONNX
-
     # mock module wrapper
     wrapper = MagicMock()
     wrapper._packages = [m1_package]
@@ -438,10 +425,27 @@ def test_save_best_packages(tmp_path, nav_cache: Path, status_yaml):
     module_registry = ModuleRegistry()
     module_registry.register("m1", m1)
 
+    mocker.patch("model_navigator.inplace.bundle.module_registry", module_registry)
+
+    return m1, m1_package
+
+
+def test_save_best_packages(module_with_onnx, tmp_path):
+    selection = bundle.BestRunnersSelection()
+
+    _, m1_package = module_with_onnx
+
     bundle_file_result = tmp_path / "bundle.nav"
-    with patch("model_navigator.inplace.bundle.module_registry", module_registry):
-        with patch("model_navigator.inplace.bundle.inplace_cache_dir", lambda: nav_cache):
-            bundle.save(bundle_file_result, modules=bundle.BestRunnersSelection())
+
+    # (sanity check) we need at least 2 runners
+    assert "onnx" in m1_package.status.models_status
+    assert "trt-fp16" in m1_package.status.models_status, "trt-fp16 should be present in the onnx_package() mock!"
+
+    # (sanity check) best runner is ONNX
+    runtime_result = m1_package.get_best_runtime(strategies=selection.runner_selection_strategies, inplace=True)
+    assert runtime_result.model_status.model_config.format == Format.ONNX
+
+    bundle.save(bundle_file_result, modules=bundle.BestRunnersSelection())
 
     assert bundle_file_result.exists()
 
@@ -453,3 +457,33 @@ def test_save_best_packages(tmp_path, nav_cache: Path, status_yaml):
         assert "m1/0/context.yaml" in files
 
         assert "m1/0/trt-fp16/model.plan" not in files
+
+
+def test_save_bundle_with_exclude_patterns(module_with_onnx, tmp_path: Path):
+    bundle_file_result = tmp_path / "bundle.nav"
+    bundle.save(bundle_file_result, modules=bundle.AllModulesSelection(), exclude_patterns=[".*model.plan"])
+
+    with zipfile.ZipFile(bundle_file_result, "r") as zip_file:
+        assert "m1/0/onnx/model.onnx" in zip_file.namelist()
+
+        assert "m1/0/trt-fp16/model.plan" not in zip_file.namelist()
+        assert "m1/0/status.yaml" in zip_file.namelist()
+        assert "m1/0/context.yaml" in zip_file.namelist()
+        assert "m1/0/navigator.log" in zip_file.namelist()
+        assert "m1/0/model_input/test.log" in zip_file.namelist()
+        assert "m1/0/model_output/test.log" in zip_file.namelist()
+
+
+def test_save_bundle_with_include_patterns(module_with_onnx, tmp_path: Path):
+    bundle_file_result = tmp_path / "bundle.nav"
+    bundle.save(bundle_file_result, modules=bundle.AllModulesSelection(), include_patterns=[".*model.plan"])
+
+    with zipfile.ZipFile(bundle_file_result, "r") as zip_file:
+        assert "m1/0/trt-fp16/model.plan" in zip_file.namelist()
+
+        assert "m1/0/onnx/model.onnx" not in zip_file.namelist()
+        assert "m1/0/status.yaml" not in zip_file.namelist()
+        assert "m1/0/context.yaml" not in zip_file.namelist()
+        assert "m1/0/navigator.log" not in zip_file.namelist()
+        assert "m1/0/model_input/test.log" not in zip_file.namelist()
+        assert "m1/0/model_output/test.log" not in zip_file.namelist()

@@ -194,13 +194,26 @@ class BundleModuleSelection(abc.ABC):  # noqa: B024
         """Name of the selection strategy."""
         return self.__class__.__name__
 
+    @abc.abstractmethod
+    def modules_selected(self) -> List[str]:
+        """Selects modules to bundle."""
+        raise NotImplementedError
+
 
 class AllModulesSelection(BundleModuleSelection):
     """Selects all modules from cache for bundling."""
 
+    def modules_selected(self) -> List[str]:
+        """Selects all modules from cache for bundling."""
+        return _all_modules_names()
+
 
 class RegisteredModulesSelection(BundleModuleSelection):
     """Selects only registered modules from cache for bundling."""
+
+    def modules_selected(self) -> List[str]:
+        """Selects only registered modules from cache for bundling."""
+        return _registered_modules_names()
 
 
 class BestRunnersSelection(BundleModuleSelection):
@@ -217,6 +230,10 @@ class BestRunnersSelection(BundleModuleSelection):
         super().__init__()
         self.runner_selection_strategies = runner_selection_strategies or DEFAULT_RUNTIME_STRATEGIES
 
+    def modules_selected(self) -> List[str]:
+        """Selects only best runners from registered modules for bundling."""
+        return _only_module_best_runner(self.runner_selection_strategies)
+
 
 class ModulesByNameSelection(BundleModuleSelection):
     """Sometimes user may want to save only specific modules."""
@@ -229,11 +246,17 @@ class ModulesByNameSelection(BundleModuleSelection):
         """
         self.module_names = module_names
 
+    def modules_selected(self) -> List[str]:
+        """Selects only selected registered modules for bundling."""
+        return _modules_by_name(self.module_names)
+
 
 def save(
     bundle_path: Union[str, Path],
     modules: Optional[BundleModuleSelection] = None,
     tags: Optional[List[str]] = None,
+    include_patterns: Optional[List[str]] = None,
+    exclude_patterns: Optional[List[str]] = None,
 ):
     """Saves cache bundle to archive for easy storage.
 
@@ -241,32 +264,68 @@ def save(
         bundle_path: Where to save bundle file
         modules: Strategy for selecting modules. @see BundleModuleSelection and subclasses  Defaults to BestRunnersSelection with MaxThroughputAndMinLatencyStrategy runners.
         tags: a set of tags, for better bundle identification and selection. Defaults to None.
+        include_patterns: List of regex patterns to include.
+            If provided, only files matching at least one pattern will be included.
+        exclude_patterns: List of regex patterns to exclude.
+            Files matching any of these patterns will be excluded.
 
     Raises:
         ModelNavigatorModuleNotOptimizedError: When selected modules are not optimized yet
+        ValueError: When include_patterns and exclude_patterns are provided at the same time
     """
     modules = modules or BestRunnersSelection(DEFAULT_RUNTIME_STRATEGIES)
     cache_dir = inplace_cache_dir()
+    file_filter = _create_file_filter(include_patterns, exclude_patterns)
 
     # saving to temporary file and then moving to final location to avoid corrupted files
     with TemporaryDirectory() as tmp_dir:
         tmp_zip = Path(tmp_dir) / "bundle.nav"
         with zipfile.ZipFile(tmp_zip, "w") as zip_file:
-            for entry in _selected_cache_entries(modules):
+            for entry in modules.modules_selected():
                 entry_path = cache_dir / entry
 
-                if entry_path.is_file():
+                if entry_path.is_file() and file_filter(entry_path):
                     zip_file.write(entry_path, entry)
-                else:
-                    for dirpath, _, filenames in os.walk(entry_path):  # Path.walk() since 3.12
-                        for filename in filenames:
-                            file_path = Path(dirpath) / filename
+                    continue
+
+                for dirpath, _, filenames in os.walk(entry_path):  # Path.walk() since 3.12
+                    for filename in filenames:
+                        file_path = Path(dirpath) / filename
+                        if file_path.is_file() and file_filter(file_path):
                             zip_file.write(file_path, file_path.relative_to(cache_dir))
 
             # lastly adding tags to the bundle
             zip_file.writestr("tags.yaml", yaml.dump({"tags": tags or []}))
 
         shutil.copy(tmp_zip, bundle_path)
+
+
+def _create_file_filter(include_patterns: Optional[List[str]] = None, exclude_patterns: Optional[List[str]] = None):
+    include_patterns = include_patterns or []
+    exclude_patterns = exclude_patterns or []
+
+    if not include_patterns and not exclude_patterns:
+        return lambda _: True
+
+    if include_patterns and exclude_patterns:
+        raise ValueError(
+            "include_patterns and exclude_patterns cannot be provided at the same time. Use only one filtering method."
+        )
+
+    import re
+
+    include_compiled = [re.compile(pattern) for pattern in include_patterns]
+    exclude_compiled = [re.compile(pattern) for pattern in exclude_patterns]
+
+    def should_include(path: Path) -> bool:
+        path = str(path)
+        if include_compiled:
+            return any(pattern.search(path) for pattern in include_compiled)
+        if exclude_compiled:
+            return not any(pattern.search(path) for pattern in exclude_compiled)
+        return True
+
+    return should_include
 
 
 def _only_module_best_runner(strategies: List[RuntimeSearchStrategy]) -> List[str]:
@@ -314,19 +373,6 @@ def _all_modules_names() -> List[str]:
 def _modules_by_name(module_names: List[str]) -> List[str]:
     # TODO(kn): Can we have also best runners for selected modules by name?
     return [name for name in _registered_modules_names() if name in module_names]
-
-
-def _selected_cache_entries(select_modules: BundleModuleSelection) -> List[str]:
-    if isinstance(select_modules, AllModulesSelection):
-        return _all_modules_names()
-    if isinstance(select_modules, RegisteredModulesSelection):
-        return _registered_modules_names()
-    if isinstance(select_modules, BestRunnersSelection):
-        return _only_module_best_runner(select_modules.runner_selection_strategies)
-    if isinstance(select_modules, ModulesByNameSelection):
-        return _modules_by_name(select_modules.module_names)
-
-    raise ValueError(f"Unknown module selection strategy: {select_modules}")
 
 
 def _raise_if_module_not_optimized(name, module):
