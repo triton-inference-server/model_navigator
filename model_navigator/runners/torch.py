@@ -392,14 +392,18 @@ class TorchCompileCUDARunner(_BaseTorchRunner):
 
     def set_cache_dir(self):
         """For each runner name there is separate cache dir."""
-        workspace = ctx.global_context.get(ctx.INPLACE_OPTIMIZE_WORKSPACE_CONTEXT_KEY)
+        torch_inductor_cache_dir = os.environ.get("TORCHINDUCTOR_CACHE_DIR")
+        if torch_inductor_cache_dir:
+            LOGGER.debug("TORCHINDUCTOR_CACHE_DIR: {} set by the user.", torch_inductor_cache_dir)
+            return
 
+        workspace = ctx.global_context.get(ctx.INPLACE_OPTIMIZE_WORKSPACE_CONTEXT_KEY)
         if workspace:
             workspace = pathlib.Path(workspace)
         else:
-            workspace = pathlib.Path("/tmp/model_navigator/torch_compile_cache")
+            workspace = pathlib.Path("/tmp/model_navigator/.torch_compile_cache")
 
-        workspace = workspace / self.name()
+        workspace = workspace / self.name() / ".torch_compile_cache"
         workspace.mkdir(parents=True, exist_ok=True)
 
         os.environ["TORCHINDUCTOR_CACHE_DIR"] = str(workspace)
