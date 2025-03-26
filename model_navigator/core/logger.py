@@ -105,7 +105,10 @@ def navigator_record_predicate(record: Dict) -> bool:
 
 def third_party_record_predicate(record: Dict) -> bool:
     """Returns True if log emitted by 3rd party library."""
-    return not navigator_record_predicate(record)
+    # Import here to avoid circular imports
+    from model_navigator.core.memory_logging import gpu_memory_record_predicate
+
+    return not navigator_record_predicate(record) and not gpu_memory_record_predicate(record)
 
 
 def forward_python_logging_to_loguru() -> None:
@@ -173,6 +176,12 @@ def reconfigure_logging_to_file(log_path: pathlib.Path) -> None:
     logger.remove()  # remove existing configuration
     configure_logging_sink(log_path)
 
+    # configure GPU memory logging to a separate file
+    from model_navigator.core.memory_logging import configure_gpu_memory_logging_sink
+
+    gpu_memory_log_path = log_path.parent / "gpu_memory.log"
+    configure_gpu_memory_logging_sink(gpu_memory_log_path)
+
     if OUTPUT_LOGS_FLAG in get_console_output():
         configure_logging_sink(sys.stderr)
 
@@ -236,7 +245,7 @@ class LoggingContext(contextlib.AbstractContextManager):
 
     Example of use:
         log_dir = pathlib.Path("/path/to/log/directory")
-        with LoggingContext(log_dir=log_dir):
+        with LoggingContext(log_dir=log_dir, command_name="ExampleCommand"):
             LOGGER.info("Log inside the context")
     """
 
@@ -244,28 +253,69 @@ class LoggingContext(contextlib.AbstractContextManager):
         self,
         *,
         log_dir: Optional[pathlib.Path] = None,
+        command_name: Optional[str] = None,
+        runner_cls=None,
+        model_config=None,
     ):
         """Initialize the context.
 
         Args:
             log_dir: Optional path to directory where log file is stored.
+            command_name: Optional name of the command being executed.
+            runner_cls: Optional runner class from execution unit.
+            model_config: Optional model configuration from execution unit.
         """
+        self.sink_ids = None
+        self.gpu_memory_sink_id = None
+        self.command_name = command_name
+        self.runner_cls = runner_cls
+        self.model_config = model_config
+        self.initial_memory_info = None
+        self.initial_host_info = None
+
         if log_dir:
+            # Import here to avoid circular imports
+            from model_navigator.core.memory_logging import configure_gpu_memory_logging_sink
+
             log_dir.mkdir(parents=True, exist_ok=True)
             self.sink_ids = configure_logging_sink(log_dir / "format.log")
-        else:
-            self.sink_ids = None
+            self.gpu_memory_sink_id = configure_gpu_memory_logging_sink(log_dir / "gpu_memory.log")
+
+    def __enter__(self):
+        """Enter the context and capture initial GPU and host memory usage without logging."""
+        # Import here to avoid circular imports
+        from model_navigator.core.memory_logging import get_memory_info
+
+        # Just capture memory info without logging
+        self.initial_memory_info, self.initial_host_info = get_memory_info()
+        return self
 
     def __exit__(self, exc_type, exc_value, traceback):  # noqa: F841
-        """Exit the context and clean handlers.
+        """Exit the context, log all memory usage in nested hierarchy, and clean handlers.
 
         Args:
             exc_type: class of exception
             exc_value: type of exception
             traceback: traceback of exception
         """
+        # Import here to avoid circular imports
+        from model_navigator.core.memory_logging import log_command_gpu_memory_usage
+
+        # Log GPU and host memory usage information
+        log_command_gpu_memory_usage(
+            initial_memory_info=self.initial_memory_info,
+            initial_host_info=self.initial_host_info,
+            command_name=self.command_name,
+            runner_cls=self.runner_cls,
+            model_config=self.model_config,
+        )
+
+        # Remove logging sink handlers
         if self.sink_ids is not None:
             [logger.remove(sink_id) for sink_id in self.sink_ids]
+
+        if self.gpu_memory_sink_id is not None and self.gpu_memory_sink_id != 0:
+            logger.remove(self.gpu_memory_sink_id)
 
 
 def log_dict(title: str, data: Dict):

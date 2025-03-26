@@ -217,3 +217,17 @@ def use_multiprocessing() -> bool:
 def get_console_output() -> str:
     """Returns what should be put on the console."""
     return os.environ.get(NAVIGATOR_CONSOLE_OUTPUT_ENV, OUTPUT_SIMPLE_REPORT).upper()
+
+
+def is_env_var_set(env_var: str, default: str = "0") -> bool:
+    """Check if environment variable is set to true/yes/1.
+
+    Args:
+        env_var: Name of the environment variable to check
+        default: Default value if environment variable is not set
+
+    Returns:
+        True if environment variable is set to "1", "true", or "yes" (case insensitive)
+        False otherwise
+    """
+    return os.environ.get(env_var, default).lower() in ("1", "true", "yes")

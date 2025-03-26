@@ -106,7 +106,15 @@ class Pipeline:
         else:
             redirect_stdout_context = contextlib.nullcontext()
 
-        with LoggingContext(log_dir=log_dir), redirect_stdout_context:
+        with (
+            LoggingContext(
+                log_dir=log_dir,
+                command_name=execution_unit.command.name,
+                runner_cls=execution_unit.runner_cls,
+                model_config=execution_unit.model_config,
+            ),
+            redirect_stdout_context,
+        ):
             start_time = time.perf_counter()
             self._emit_command_started_event(execution_unit)
             try:

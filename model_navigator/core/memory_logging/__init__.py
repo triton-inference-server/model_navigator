@@ -11,7 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Memory logging package."""
 
-from .performance import Performance  # noqa: F401
-from .profile import Profile  # noqa: F401
-from .profiler import Profiler, ProfilingResults  # noqa: F401
+from model_navigator.core.memory_logging.gpu_memory import (
+    configure_gpu_memory_logging_sink,
+    get_memory_info,
+    gpu_memory_record_predicate,
+    log_command_gpu_memory_usage,
+)
+
+__all__ = [
+    "configure_gpu_memory_logging_sink",
+    "get_memory_info",
+    "gpu_memory_record_predicate",
+    "log_command_gpu_memory_usage",
+]

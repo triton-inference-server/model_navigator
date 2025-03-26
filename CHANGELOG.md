@@ -24,6 +24,7 @@ limitations under the License.
 - new: Global context with scoped variables - temporary context variables
 - new: Added new context variables `INPLACE_OPTIMIZE_WORKSPACE_CONTEXT_KEY` and `INPLACE_OPTIMIZE_MODULE_GRAPH_ID_CONTEXT_KEY`
 - new: nav.bundle.save now has include and exclude patterns for fine grained files selection
+- new: GPU and Host memory usage logging
 - change: Install the TensorRT package for architectures other than x86_64
 - change: Disable conversion fallback for TensorRT paths and expose control option in custom config
 - fix: Correctness command relative tolerance formula

@@ -264,6 +264,11 @@ setting the following environment variable:
 NAVIGATOR_USE_MULTIPROCESSING=False
 ```
 
+## GPU and Host memory logging
+By default GPU and Host memory usage logs are saved in main `navigator.log` file.
+
+Environment variable `NAVIGATOR_USE_SEPARATE_GPU_MEMORY_LOG_FILE=true` allows to redirect memory use logs to separate `gpu_memory.log` file for better log separation.
+
 ## Examples
 
 We offer comprehensive, step-by-step [guides](examples) that showcase the utilization of the Triton Model Navigator’s

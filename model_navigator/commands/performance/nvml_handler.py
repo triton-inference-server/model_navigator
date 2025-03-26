@@ -13,7 +13,7 @@
 # limitations under the License.
 """NVML handler."""
 
-from typing import ContextManager, Optional
+from typing import ContextManager, Dict, Optional
 
 import numpy as np
 from pynvml import (
@@ -23,6 +23,8 @@ from pynvml import (
     nvmlDeviceGetComputeRunningProcesses,
     nvmlDeviceGetCount,
     nvmlDeviceGetHandleByIndex,
+    nvmlDeviceGetMemoryInfo,
+    nvmlDeviceGetName,
     nvmlInit,
     nvmlShutdown,
 )
@@ -43,7 +45,7 @@ class NvmlHandler(ContextManager):
             nvmlInit()
             self._nvml_exists = True
         except NVMLError as e:
-            LOGGER.debug(f"Unable to initialize NVML: {str(e)}")
+            LOGGER.debug("Unable to initialize NVML: {}", str(e))
             self._nvml_exists = False
 
         return self
@@ -54,7 +56,7 @@ class NvmlHandler(ContextManager):
             try:
                 nvmlShutdown()
             except NVMLError as e:
-                LOGGER.debug(f"Unable to shutdown NVML: {str(e)}")
+                LOGGER.debug("Unable to shutdown NVML: {}", str(e))
             finally:
                 self._nvml_exists = False
 
@@ -75,7 +77,7 @@ class NvmlHandler(ContextManager):
                     gpus_running += 1
                     gpu_clocks_sum += nvmlDeviceGetClockInfo(handle, NVML_CLOCK_GRAPHICS)
             except NVMLError as e:
-                LOGGER.debug(f"Unable to collect NVML data for GPU {i}: {str(e)}")
+                LOGGER.debug("Unable to collect NVML data for GPU {}: {}", i, str(e))
                 continue
 
         if gpus_running == 0:
@@ -93,5 +95,61 @@ class NvmlHandler(ContextManager):
         try:
             return nvmlDeviceGetCount()
         except NVMLError as e:
-            LOGGER.debug(f"Unable to collect NVML device count: {str(e)}")
+            LOGGER.debug("Unable to collect NVML device count: {}", str(e))
             return 0
+
+    def get_gpu_memory_info(self) -> Dict[int, Dict[str, float]]:
+        """Get memory information for all available GPUs.
+
+        Returns:
+            Dictionary with GPU indices as keys and memory information as values
+        """
+        memory_info = {}
+
+        if not self._nvml_exists:
+            return memory_info
+
+        for i in range(self.gpu_count):
+            try:
+                handle = nvmlDeviceGetHandleByIndex(i)
+                mem_info = nvmlDeviceGetMemoryInfo(handle)
+
+                try:
+                    gpu_name = nvmlDeviceGetName(handle)
+                    if isinstance(gpu_name, bytes):
+                        gpu_name = gpu_name.decode("utf-8")
+                except NVMLError:
+                    gpu_name = f"GPU {i}"
+
+                # Convert bytes to megabytes for consistency with other logging
+                memory_used_mb = mem_info.used / (1024 * 1024)
+                memory_total_mb = mem_info.total / (1024 * 1024)
+                memory_free_mb = mem_info.free / (1024 * 1024)
+
+                gpu_info = {
+                    "index": i,
+                    "name": gpu_name,
+                    "memory_used_mb": memory_used_mb,
+                    "memory_total_mb": memory_total_mb,
+                    "memory_free_mb": memory_free_mb,
+                }
+                memory_info[i] = gpu_info
+            except NVMLError as e:
+                LOGGER.debug("Unable to collect memory info for GPU {}: {}", i, str(e))
+                continue
+
+        return memory_info
+
+    @property
+    def gpu_memory(self) -> Dict[int, Dict[str, float]]:
+        """Returns complete memory information for all GPUs.
+
+        Returns:
+            Dictionary with GPU indices as keys and complete GPU memory information as values:
+            - index: GPU index
+            - name: GPU name
+            - memory_used_mb: Used memory in MB
+            - memory_total_mb: Total memory in MB
+            - memory_free_mb: Free memory in MB
+        """
+        return self.get_gpu_memory_info()
