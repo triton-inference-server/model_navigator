@@ -275,6 +275,7 @@ class TorchCUDARunner(_BaseTorchRunner):
         if not self._inplace:
             self.model.to(self._input_module_device)
         torch.cuda.empty_cache()
+        gc.collect()
 
 
 class TorchCPURunner(_BaseTorchRunner):

@@ -61,6 +61,7 @@ def export(
             For available arguments check PyTorch documentation: https://pytorch.org/docs/stable/jit.html#torch.jit.trace
     """
     model = get_model()
+
     target_jit_type = JitType(target_jit_type)
 
     if not navigator_workspace:

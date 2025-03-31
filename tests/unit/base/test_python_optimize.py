@@ -76,11 +76,11 @@ def test_python_package_return_valid_runner():
         }
 
         with runner:
-            input = {"input__0": dataloader[0]}
-            output = runner.infer(input)
+            inputs = {"input__0": dataloader[0]}
+            output = runner.infer(inputs)
             assert output is not None
             assert output["output__0"] is not None
-            assert np.array_equal(output["output__0"], input["input__0"])
+            assert np.array_equal(output["output__0"], inputs["input__0"])
 
 
 def test_export_formats_return_empty_list_for_framework_none():

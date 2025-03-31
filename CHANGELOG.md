@@ -28,6 +28,7 @@ limitations under the License.
 - change: Install the TensorRT package for architectures other than x86_64
 - change: Disable conversion fallback for TensorRT paths and expose control option in custom config
 - fix: Correctness command relative tolerance formula
+- fix: Memory management during export and conversion process for Torch
 
 ## 0.13.0
 

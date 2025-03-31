@@ -25,6 +25,7 @@ from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata
 from model_navigator.core.workspace import Workspace
 from model_navigator.frameworks import Framework
+from model_navigator.frameworks.memory import offload_model_to_cpu
 from model_navigator.runners.base import NavigatorRunner
 
 
@@ -165,6 +166,7 @@ class FetchOutputModelData(Command, is_required=True):
 
     def _run(
         self,
+        framework: Framework,
         workspace: Workspace,
         model: Any,
         runner_cls: Type[NavigatorRunner],
@@ -194,6 +196,8 @@ class FetchOutputModelData(Command, is_required=True):
         output_data_path = workspace.path / "model_output"
         output_data_path.mkdir(parents=True, exist_ok=True)
 
+        offload_model_to_cpu(model, framework)
+
         runner_kwargs = runner_config.to_dict() if runner_config is not None else {}
         runner = runner_cls(
             model=model, input_metadata=input_metadata, output_metadata=output_metadata, **runner_kwargs
@@ -210,6 +214,8 @@ class FetchOutputModelData(Command, is_required=True):
 
                 sample_path = output_data_path / sample_name
                 samples_to_npz(outputs, sample_path, batch_dim, raise_on_error=raise_on_error, num_samples=len(samples))
+
+        runner.deactivate()
 
         return CommandOutput(
             status=CommandStatus.OK,

@@ -22,6 +22,7 @@ from model_navigator import TensorRTProfile
 from model_navigator.core.dataloader import expand_sample, load_samples
 from model_navigator.core.tensor import TensorMetadata
 from model_navigator.exceptions import ModelNavigatorRuntimeError
+from model_navigator.frameworks.torch.utils import offload_torch_model_to_cpu
 
 
 def get_model() -> torch.nn.Module:
@@ -133,4 +134,7 @@ def export(
     exported_model_path = pathlib.Path(exported_model_path)
     if not exported_model_path.is_absolute():
         exported_model_path = navigator_workspace / exported_model_path
+
     torch.export.save(exported_model, exported_model_path.as_posix())
+
+    offload_torch_model_to_cpu(exported_model.module())

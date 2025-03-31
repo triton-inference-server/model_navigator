@@ -46,7 +46,7 @@ from model_navigator.pipelines.builders import (
     verify_builder,
 )
 from model_navigator.pipelines.builders.find_device_max_batch_size import find_device_max_batch_size_builder
-from model_navigator.pipelines.builders.torch import torch_dynamo_onnx_builder, torch_exportedprogram_builder
+from model_navigator.pipelines.builders.torch import torch_exportedprogram_builder
 from model_navigator.pipelines.wrappers.optimize import optimize_pipeline
 from model_navigator.runners.base import NavigatorRunner
 from model_navigator.runners.utils import default_runners, filter_runners
@@ -145,7 +145,6 @@ def optimize(
         torch_export_builder,
         find_device_max_batch_size_builder,
         torch_exportedprogram_builder,
-        torch_dynamo_onnx_builder,
         torch_conversion_builder,
         torch_tensorrt_conversion_builder,
         tensorrt_conversion_builder,

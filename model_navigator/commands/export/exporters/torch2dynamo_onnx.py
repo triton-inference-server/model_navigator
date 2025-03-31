@@ -70,6 +70,7 @@ def export(
         device_max_batch_size: Maximum batch size that fits on the device. Defaults to None.
     """
     model = get_model()
+    model.to(target_device)
 
     if not navigator_workspace:
         navigator_workspace = pathlib.Path.cwd()

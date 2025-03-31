@@ -33,6 +33,7 @@ from model_navigator.core.tensor import (
 from model_navigator.core.workspace import Workspace
 from model_navigator.exceptions import ModelNavigatorUserInputError
 from model_navigator.frameworks import Framework, is_torch_available
+from model_navigator.frameworks.memory import offload_model_to_cpu
 from model_navigator.frameworks.onnx.utils import get_onnx_io_names
 from model_navigator.frameworks.tensorrt.utils import get_tensorrt_io_names
 from model_navigator.runners.base import NavigatorRunner
@@ -290,6 +291,8 @@ class InferOutputMetadata(Command, is_required=True):
         else:
             temp_output_metadata = None
 
+        offload_model_to_cpu(model, framework)
+
         runner_kwargs = runner_config.to_dict() if runner_config is not None else {}
         runner = runner_cls(
             model=model,
@@ -319,6 +322,8 @@ class InferOutputMetadata(Command, is_required=True):
             )
 
         output_metadata = _get_metadata_from_axes_shapes(pytree_metadata, axes_shapes, batch_dim, output_dtypes)
+
+        runner.deactivate()
 
         return CommandOutput(
             status=CommandStatus.OK,

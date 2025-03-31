@@ -63,7 +63,7 @@ def export(
             For available arguments check PyTorch documentation: https://pytorch.org/docs/stable/onnx.html#torch.onnx.export
     """
     model = get_model()
-    model = model.to(export_device)
+    model.to(export_device)
 
     if not navigator_workspace:
         navigator_workspace = pathlib.Path.cwd()

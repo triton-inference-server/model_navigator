@@ -27,6 +27,7 @@ from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata
 from model_navigator.core.workspace import Workspace
 from model_navigator.exceptions import ModelNavigatorConfigurationError
+from model_navigator.frameworks.torch.utils import offload_torch_model_to_cpu
 from model_navigator.utils.common import parse_kwargs_to_cmd
 
 
@@ -93,7 +94,7 @@ class ExportTorch2TorchScript(Command):
 
         # Keep model on CPU after operation
         def on_exit():
-            model.to("cpu")
+            offload_torch_model_to_cpu(model)
 
         with ExecutionContext(
             workspace=workspace,
@@ -197,7 +198,7 @@ class ExportTorch2ONNX(Command):
 
         # Keep model on CPU after operation
         def on_exit():
-            model.to("cpu")
+            offload_torch_model_to_cpu(model)
 
         with ExecutionContext(
             workspace=workspace,
@@ -283,7 +284,7 @@ class ExportExportedProgram(Command):
 
         # Keep model on CPU after operation
         def on_exit():
-            model.to("cpu")
+            offload_torch_model_to_cpu(model)
 
         with ExecutionContext(
             workspace=workspace,
@@ -375,7 +376,7 @@ class ExportTorch2DynamoONNX(Command):
 
         # Keep model on CPU after operation
         def on_exit():
-            model.to("cpu")
+            offload_torch_model_to_cpu(model)
 
         if dynamo_dynamic_shapes is None:
             dynamic_shapes = batch_dim is not None or dynamic_axes
@@ -478,7 +479,7 @@ class ExportOnnxFromQuantizedTorch(Command):
 
         # Keep model on CPU after operation
         def on_exit():
-            model.to("cpu")
+            offload_torch_model_to_cpu(model)
 
         with ExecutionContext(
             workspace=workspace,

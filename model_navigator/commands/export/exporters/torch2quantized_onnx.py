@@ -26,6 +26,7 @@ from modelopt.core.torch.quantization.config import NVFP4_FP8_MHA_CONFIG
 from model_navigator.core.dataloader import load_samples
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata
+from model_navigator.frameworks.torch.utils import offload_torch_model_to_cpu
 from model_navigator.utils.common import numpy_to_torch_dtype
 
 
@@ -105,7 +106,7 @@ def export(
     model_copy = deepcopy(original_model)
 
     # Offload original model to CPU
-    original_model.to("cpu")
+    offload_torch_model_to_cpu(original_model)
 
     try:
         # Move model copy to target device
@@ -226,10 +227,8 @@ def export(
         LOGGER.info("Quantized ONNX export completed successfully")
 
         # Clean up
-        del model_copy
-        del quantized_model
-        torch.cuda.empty_cache()
-
+        offload_torch_model_to_cpu(model_copy)
+        offload_torch_model_to_cpu(quantized_model)
     except Exception as e:
         LOGGER.error(f"Error during quantized ONNX export: {str(e)}")
         raise
