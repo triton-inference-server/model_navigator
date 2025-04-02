@@ -308,6 +308,7 @@ class ModelConfigBuilder:
                     precision=precision,
                     precision_mode=torch_trt_config.precision_mode,
                     max_workspace_size=torch_trt_config.max_workspace_size,
+                    pickle_protocol=torch_trt_config.pickle_protocol,
                     trt_profiles=torch_trt_config.trt_profiles,
                     custom_args=torch_trt_config.custom_args,
                     device=torch_trt_config.device,

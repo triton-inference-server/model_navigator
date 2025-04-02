@@ -27,6 +27,7 @@ limitations under the License.
 - new: GPU and Host memory usage logging
 - change: Install the TensorRT package for architectures other than x86_64
 - change: Disable conversion fallback for TensorRT paths and expose control option in custom config
+- change: Use torch.export.save for Torch-TRT model serialization
 - fix: Correctness command relative tolerance formula
 - fix: Memory management during export and conversion process for Torch
 

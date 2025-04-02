@@ -24,6 +24,7 @@ from model_navigator.configuration import JitType
 from model_navigator.core.dataloader import load_samples
 from model_navigator.core.tensor import TensorMetadata
 from model_navigator.exceptions import ModelNavigatorUserInputError
+from model_navigator.frameworks.torch.utils import offload_torch_model_to_cpu
 from model_navigator.utils.common import numpy_to_torch_dtype
 
 
@@ -121,6 +122,8 @@ def export(
         exported_model_path = navigator_workspace / exported_model_path
 
     torch.jit.save(script_module, exported_model_path.as_posix())
+
+    offload_torch_model_to_cpu(script_module)
 
 
 if __name__ == "__main__":

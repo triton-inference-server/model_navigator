@@ -49,6 +49,7 @@ from model_navigator.configuration.constants import (
     DEFAULT_MIN_SEGMENT_SIZE,
     DEFAULT_MIN_TRIALS,
     DEFAULT_ONNX_OPSET,
+    DEFAULT_PICKLE_PROTOCOL_TORCHTRT,
     DEFAULT_STABILITY_PERCENTAGE,
     DEFAULT_STABILIZATION_WINDOWS,
     DEFAULT_THROUGHPUT_BACKOFF_LIMIT,
@@ -844,6 +845,7 @@ class TorchTensorRTConfig(CustomConfigForTensorRT):
     """Torch custom config used for TensorRT TorchScript conversion."""
 
     max_workspace_size: Optional[int] = DEFAULT_MAX_WORKSPACE_SIZE_TORCHTRT
+    pickle_protocol: int = DEFAULT_PICKLE_PROTOCOL_TORCHTRT
 
     @property
     def format(self) -> Format:

@@ -17,6 +17,6 @@ from model_navigator.__version__ import __version__  # noqa: F401
 
 # Versions
 NAVIGATOR_VERSION = __version__
-NAVIGATOR_PACKAGE_VERSION = "0.3.1"
+NAVIGATOR_PACKAGE_VERSION = "0.3.2"
 NAVIGATOR_INPLACE_OPTIMIZE_VERSION = "0.1.0"
 NAVIGATOR_INPLACE_PROFILE_VERSION = "0.1.0"

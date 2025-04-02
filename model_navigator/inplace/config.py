@@ -34,7 +34,7 @@ from model_navigator.runners.base import NavigatorRunner
 
 DEFAULT_CACHE_DIR = pathlib.Path.home() / ".cache" / "model_navigator"
 DEFAULT_MIN_NUM_SAMPLES = 100
-DEFAULT_MAX_NUM_SAMPLES_STORED = 1
+DEFAULT_MAX_NUM_SAMPLES_STORED = 10
 
 
 def inplace_cache_dir() -> pathlib.Path:

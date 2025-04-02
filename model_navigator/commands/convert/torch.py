@@ -114,6 +114,7 @@ class ConvertExportedProgram2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearc
         precision: TensorRTPrecision,
         precision_mode: TensorRTPrecisionMode,
         max_workspace_size: int,
+        pickle_protocol: int,
         verbose: bool,
         debug: bool,
         dataloader_trt_profile: TensorRTProfile,
@@ -138,6 +139,7 @@ class ConvertExportedProgram2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearc
             precision: TensorRTPrecision.
             precision_mode: TensorRT precision mode.
             max_workspace_size: TensorRT maximum workspace size.
+            pickle_protocol: Pickle protocol for model serialization.
             verbose: If True verbose logging.
             debug: If True print debug logs.
             dataloader_trt_profile: Dataloader TensorRT profile.
@@ -183,6 +185,7 @@ class ConvertExportedProgram2TorchTensorRT(Convert2TensorRTWithMaxBatchSizeSearc
                 "max_workspace_size": max_workspace_size,
                 "precision": precision.value,
                 "precision_mode": precision_mode.value,
+                "pickle_protocol": pickle_protocol,
                 "navigator_workspace": workspace.path.as_posix(),
                 "target_device": target_device.value,
                 "custom_args": custom_args,

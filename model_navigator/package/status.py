@@ -38,8 +38,12 @@ from model_navigator.configuration import (
     TensorRTProfile,
     TorchTensorRTConfig,
 )
+from model_navigator.configuration.constants import DEFAULT_PICKLE_PROTOCOL_TORCHTRT
 from model_navigator.configuration.model.model_config import ModelConfig
-from model_navigator.core.constants import NAVIGATOR_PACKAGE_VERSION, NAVIGATOR_VERSION
+from model_navigator.core.constants import (
+    NAVIGATOR_PACKAGE_VERSION,
+    NAVIGATOR_VERSION,
+)
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata
 from model_navigator.frameworks import Framework
@@ -221,6 +225,7 @@ class StatusDictUpdater:
             version.parse("0.2.2"): self._update_from_v0_2_2,
             version.parse("0.2.3"): self._update_from_v0_2_3,
             version.parse("0.3.0"): self._update_from_v0_3_0,
+            version.parse("0.3.1"): self._update_from_v0_3_1,
         }
 
     def update(self, data_dict: Dict, format_version: version.Version):
@@ -570,5 +575,15 @@ class StatusDictUpdater:
         if "Torch" in custom_configs:
             torch_config = custom_configs.pop("Torch")
             custom_configs["TorchScript"] = torch_config
+
+        config["custom_configs"] = custom_configs
+
+    def _update_from_v0_3_1(self, data_dict: Dict):
+        config = data_dict["config"]
+        custom_configs = config.pop("custom_configs", {})
+        torch_trt_config = custom_configs.get("TorchTensorRT")
+        if torch_trt_config:
+            torch_trt_config["pickle_protocol"] = DEFAULT_PICKLE_PROTOCOL_TORCHTRT
+            custom_configs["TorchTensorRT"] = torch_trt_config
 
         config["custom_configs"] = custom_configs

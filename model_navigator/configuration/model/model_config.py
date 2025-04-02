@@ -609,6 +609,7 @@ class TorchTensorRTModelConfig(_SerializedModelConfig, format=Format.TORCH_TRT):
         precision: TensorRTPrecision,
         precision_mode: TensorRTPrecisionMode,
         max_workspace_size: int,
+        pickle_protocol: int,
         trt_profiles: Optional[List[TensorRTProfile]] = None,
         parent: Optional[ModelConfig] = None,
         custom_args: Optional[Dict[str, Any]] = None,
@@ -622,6 +623,7 @@ class TorchTensorRTModelConfig(_SerializedModelConfig, format=Format.TORCH_TRT):
             precision: TensorRT model precision
             precision_mode: Mode how the precision flags are combined
             max_workspace_size: The maximum GPU memory the model can use temporarily during execution
+            pickle_protocol: Pickle protocol used during model serialization
             trt_profiles: TensorRT profiles
             custom_args: Custom arguments passed to Torch TensorRT conversion
             device: runtime device e.g. "cuda:0"
@@ -631,6 +633,7 @@ class TorchTensorRTModelConfig(_SerializedModelConfig, format=Format.TORCH_TRT):
         self.precision = precision
         self.precision_mode = precision_mode
         self.max_workspace_size = max_workspace_size
+        self.pickle_protocol = pickle_protocol
         self.trt_profiles = trt_profiles
         self.custom_args = custom_args
         self.runner_config = DeviceRunnerConfig(device=device)
@@ -648,6 +651,7 @@ class TorchTensorRTModelConfig(_SerializedModelConfig, format=Format.TORCH_TRT):
             precision=cls._parse_string(TensorRTPrecision, data_dict.get("precision")),
             precision_mode=cls._parse_string(TensorRTPrecisionMode, data_dict.get("precision_mode")),
             max_workspace_size=cls._parse_string(int, data_dict.get("max_workspace_size")),
+            pickle_protocol=cls._parse_string(int, data_dict.get("pickle_protocol")),
             trt_profiles=trt_profiles,
             device=data_dict.get("device"),
             conversion_fallback=data_dict.get("conversion_fallback", False),

@@ -124,15 +124,15 @@ def export(
         if not tensor_metadata:
             continue
 
-        dynamic_shapes_ = {}
+        dynamic_shape_map = {}
         if max_batch_size is not None and max_batch_size > 1 and len(tensor_metadata.shape) > 0:
-            dynamic_shapes_[0] = torch.export.Dim("batch", min=1, max=max_batch_size)
+            dynamic_shape_map[0] = torch.export.Dim("batch", min=1, max=max_batch_size)
 
         for idx in range(1, len(spec_.min)):
             if spec_.min[idx] != spec_.max[idx]:
-                dynamic_shapes_[idx] = torch.export.Dim(f"{name}__{idx}", min=spec_.min[idx], max=spec_.max[idx])
+                dynamic_shape_map[idx] = torch.export.Dim(f"{name}__{idx}", min=spec_.min[idx], max=spec_.max[idx])
 
-        dynamic_shapes.append(dynamic_shapes_)
+        dynamic_shapes.append(dynamic_shape_map)
 
     try:
         exported_model = torch.onnx.export(

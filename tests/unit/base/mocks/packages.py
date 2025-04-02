@@ -17,9 +17,7 @@ import numpy as np
 from model_navigator.commands.correctness.correctness import Tolerance, TolerancePerOutputName
 from model_navigator.commands.performance.performance import ProfilingResults
 from model_navigator.configuration import Format, JitType, TensorRTPrecision, TensorRTPrecisionMode, TensorRTProfile
-from model_navigator.configuration.constants import (
-    DEFAULT_MAX_WORKSPACE_SIZE,
-)
+from model_navigator.configuration.constants import DEFAULT_MAX_WORKSPACE_SIZE, DEFAULT_PICKLE_PROTOCOL_TORCHTRT
 from model_navigator.configuration.model.model_config import (
     ONNXModelConfig,
     TensorFlowSavedModelConfig,
@@ -1230,6 +1228,7 @@ def torchscript_package_with_torch_tensorrt(workspace) -> Package:
         precision_mode=TensorRTPrecisionMode.HIERARCHY,
         max_workspace_size=DEFAULT_MAX_WORKSPACE_SIZE,
         trt_profiles=None,
+        pickle_protocol=DEFAULT_PICKLE_PROTOCOL_TORCHTRT,
     )
     package = Package(
         status=Status(
