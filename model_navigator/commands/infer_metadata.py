@@ -324,6 +324,7 @@ class InferOutputMetadata(Command, is_required=True):
         output_metadata = _get_metadata_from_axes_shapes(pytree_metadata, axes_shapes, batch_dim, output_dtypes)
 
         runner.deactivate()
+        offload_model_to_cpu(model, framework)
 
         return CommandOutput(
             status=CommandStatus.OK,

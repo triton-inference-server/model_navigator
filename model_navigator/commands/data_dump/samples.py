@@ -216,6 +216,7 @@ class FetchOutputModelData(Command, is_required=True):
                 samples_to_npz(outputs, sample_path, batch_dim, raise_on_error=raise_on_error, num_samples=len(samples))
 
         runner.deactivate()
+        offload_model_to_cpu(model, framework)
 
         return CommandOutput(
             status=CommandStatus.OK,

@@ -13,6 +13,7 @@
 # limitations under the License.
 """Export Torch model using dynamo."""
 
+import gc
 import logging
 import pathlib
 from typing import Any, Dict, List, Optional
@@ -151,6 +152,18 @@ def export(
         exported_model.save(exported_model_path.as_posix())
     finally:
         root_logger.setLevel(original_loglevel)
+        # Offload tensors to CPU
+        for arg in args:
+            if isinstance(arg, torch.Tensor):
+                arg.cpu()
+        for value in kwargs.values():
+            if isinstance(value, torch.Tensor):
+                value.cpu()
+
+        del args
+        del kwargs
+        gc.collect()
+        torch.cuda.empty_cache()
 
     _modify_onnx_io_names(exported_model_path, input_names, output_names, exported_model_path)
 

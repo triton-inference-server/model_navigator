@@ -13,6 +13,7 @@
 # limitations under the License.
 """Export Torch model to ONNX model."""
 
+import gc
 import inspect
 import pathlib
 from typing import Any, Dict, List, Mapping, Optional
@@ -72,16 +73,17 @@ def export(
     profiling_sample = load_samples("profiling_sample", navigator_workspace, batch_dim)[0]
     input_metadata = TensorMetadata.from_json(input_metadata)
 
-    dummy_input = {n: torch.from_numpy(val).to(export_device) for n, val in profiling_sample.items()}
+    dummy_input_map = {n: torch.from_numpy(val).to(export_device) for n, val in profiling_sample.items()}
 
     # adjust input dtypes to match input_metadata
     # TODO: Remove when torch.bfloat16 will be supported
+    dummy_input = {}
     for n, spec in input_metadata.items():
         if not isinstance(spec.dtype, torch.dtype):
             torch_dtype = numpy_to_torch_dtype(spec.dtype)
         else:
             torch_dtype = spec.dtype
-        dummy_input[n] = dummy_input[n].to(torch_dtype)
+        dummy_input[n] = dummy_input_map[n].to(torch_dtype)
 
     dummy_input = input_metadata.unflatten_sample(dummy_input)
 
@@ -89,19 +91,23 @@ def export(
     if isinstance(dummy_input, Mapping):
         dummy_input = (dummy_input,)
 
-    forward_argspec = inspect.getfullargspec(model.forward)
-    forward_args = forward_argspec.args[1:]
-
     args_mapping, kwargs_mapping = input_metadata.pytree_metadata.get_names_mapping()
 
+    # Use inspect.signature instead of getfullargspec for more complete parameter information
+    forward_signature = inspect.signature(model.forward)
+    forward_params = list(forward_signature.parameters.keys())
+
+    args_count = len(args_mapping)
+    forward_kwargs = forward_params[args_count:]
+
     for argname in kwargs_mapping:
-        assert argname in forward_args, f"Argument {argname} is not in forward argspec."
+        assert argname in forward_kwargs, f"Argument {argname} is not in forward argspec."
 
     input_names = []
     for args_names in args_mapping:
         input_names.extend(args_names)
 
-    for argname in forward_args:
+    for argname in forward_kwargs:
         if argname in kwargs_mapping:
             input_names.extend(kwargs_mapping[argname])
 
@@ -109,17 +115,25 @@ def export(
     if not exported_model_path.is_absolute():
         exported_model_path = navigator_workspace / exported_model_path
 
-    torch.onnx.export(
-        model,
-        args=dummy_input,
-        f=exported_model_path.as_posix(),
-        verbose=False,
-        opset_version=opset,
-        input_names=input_names,
-        output_names=output_names,
-        dynamic_axes=dynamic_axes,
-        **custom_args,
-    )
+    try:
+        torch.onnx.export(
+            model,
+            args=dummy_input,
+            f=exported_model_path.as_posix(),
+            verbose=False,
+            opset_version=opset,
+            input_names=input_names,
+            output_names=output_names,
+            dynamic_axes=dynamic_axes,
+            **custom_args,
+        )
+    finally:
+        for tensor in dummy_input_map.values():
+            tensor.cpu()
+
+        del dummy_input_map
+        gc.collect()
+        torch.cuda.empty_cache()
 
 
 if __name__ == "__main__":

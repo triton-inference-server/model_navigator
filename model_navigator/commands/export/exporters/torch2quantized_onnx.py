@@ -13,6 +13,7 @@
 # limitations under the License.
 """Export PyTorch model to quantized ONNX using ModelOpt."""
 
+import gc
 import inspect
 import pathlib
 from copy import deepcopy
@@ -109,9 +110,6 @@ def export(
     offload_torch_model_to_cpu(original_model)
 
     try:
-        # Move model copy to target device
-        model_copy = model_copy.to(target_device)
-
         # Load calibration samples
         LOGGER.info("Loading calibration samples")
         correctness_samples = load_samples("correctness_samples", navigator_workspace, batch_dim)
@@ -119,47 +117,23 @@ def export(
             LOGGER.error("No correctness samples found for calibration")
             raise RuntimeError("No calibration samples found")
 
-        # Convert samples to PyTorch tensors
-        torch_samples = []
-        for sample in correctness_samples:
-            sample_dict = {}
-            for name, tensor in sample.items():
-                torch_sample = torch.from_numpy(tensor)
-                torch_sample = torch_sample.to(target_device)
-                sample_dict[name] = torch_sample
-            torch_samples.append(sample_dict)
-
-        calibration_data = [list(sample.values()) for sample in torch_samples]
-
-        # Define calibration function
-        def forward_loop(model):
-            for sample in calibration_data:
-                model(*sample)
-
-        LOGGER.info("Using NVFP4_FP8_MHA_CONFIG quantization config for precision NVFP4")
-
-        # Run quantization
-        LOGGER.info("Starting model quantization (this may take several minutes)...")
-        quantized_model = mtq.quantize(
-            model_copy,
-            NVFP4_FP8_MHA_CONFIG,
-            forward_loop,
-        )
+        quantized_model = _quantize_model(model_copy, target_device, correctness_samples)
 
         LOGGER.info("Model quantization completed")
 
         # Prepare input for ONNX export
         input_metadata = TensorMetadata.from_json(input_metadata)
         correct_sample = correctness_samples[0]
-        dummy_input = {n: torch.from_numpy(val).to(target_device) for n, val in correct_sample.items()}
+        dummy_input_map = {n: torch.from_numpy(val).to(target_device) for n, val in correct_sample.items()}
 
         # Adjust input dtypes to match input_metadata
+        dummy_input = {}
         for n, spec in input_metadata.items():
             if not isinstance(spec.dtype, torch.dtype):
                 torch_dtype = numpy_to_torch_dtype(spec.dtype)
             else:
                 torch_dtype = spec.dtype
-            dummy_input[n] = dummy_input[n].to(torch_dtype).to(target_device)
+            dummy_input[n] = dummy_input_map[n].to(torch_dtype).to(target_device)
 
         dummy_input = input_metadata.unflatten_sample(dummy_input)
 
@@ -168,17 +142,20 @@ def export(
             dummy_input = (dummy_input,)
 
         # Get expected function signature for forward method
-        forward_argspec = inspect.getfullargspec(model_copy.forward)
-        forward_args = forward_argspec.args[1:]  # Skip 'self'
+        forward_signature = inspect.signature(model_copy.forward)
+        forward_params = list(forward_signature.parameters.keys())
 
         # Create input_names for ONNX model
         args_mapping, kwargs_mapping = input_metadata.pytree_metadata.get_names_mapping()
+
+        args_count = len(args_mapping)
+        forward_kwargs = forward_params[args_count:]
 
         input_names = []
         for args_names in args_mapping:
             input_names.extend(args_names)
 
-        for argname in forward_args:
+        for argname in forward_kwargs:
             if argname in kwargs_mapping:
                 input_names.extend(kwargs_mapping[argname])
         # Configure quantizers for ONNX export
@@ -226,12 +203,58 @@ def export(
 
         LOGGER.info("Quantized ONNX export completed successfully")
 
-        # Clean up
-        offload_torch_model_to_cpu(model_copy)
-        offload_torch_model_to_cpu(quantized_model)
     except Exception as e:
         LOGGER.error(f"Error during quantized ONNX export: {str(e)}")
         raise
+    finally:
+        # Clean up
+        if model_copy is not None:
+            offload_torch_model_to_cpu(model_copy)
+            del model_copy
+        if quantized_model is not None:
+            offload_torch_model_to_cpu(quantized_model)
+            del quantized_model
+        if dummy_input_map is not None:
+            for tensor in dummy_input_map.values():
+                tensor.cpu()
+            del dummy_input_map
+
+        gc.collect()
+        torch.cuda.empty_cache()
+
+
+def _quantize_model(model, target_device, correctness_samples):
+    # Move model copy to target device
+    model = model.to(target_device)
+
+    # Convert samples to PyTorch tensors
+    torch_samples = []
+    for sample in correctness_samples:
+        sample_dict = {}
+        for name, tensor in sample.items():
+            torch_sample = torch.from_numpy(tensor)
+            torch_sample = torch_sample.to(target_device)
+            sample_dict[name] = torch_sample
+        torch_samples.append(sample_dict)
+
+    calibration_data = [list(sample.values()) for sample in torch_samples]
+
+    # Define calibration function
+    def forward_loop(model):
+        for sample in calibration_data:
+            model(*sample)
+
+    LOGGER.info("Using NVFP4_FP8_MHA_CONFIG quantization config for precision NVFP4")
+
+    # Run quantization
+    LOGGER.info("Starting model quantization (this may take several minutes)...")
+    quantized_model = mtq.quantize(
+        model,
+        NVFP4_FP8_MHA_CONFIG,
+        forward_loop,
+    )
+
+    return quantized_model
 
 
 if __name__ == "__main__":

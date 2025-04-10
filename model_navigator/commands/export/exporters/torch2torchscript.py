@@ -13,6 +13,7 @@
 # limitations under the License.
 """Export Torch model to TorchScript model."""
 
+import gc
 import inspect
 import pathlib
 from typing import Any, Dict, Optional
@@ -62,6 +63,7 @@ def export(
             For available arguments check PyTorch documentation: https://pytorch.org/docs/stable/jit.html#torch.jit.trace
     """
     model = get_model()
+    model.to(target_device)
 
     target_jit_type = JitType(target_jit_type)
 
@@ -69,61 +71,101 @@ def export(
         navigator_workspace = pathlib.Path.cwd()
     navigator_workspace = pathlib.Path(navigator_workspace)
 
+    if target_jit_type == JitType.SCRIPT:
+        _export_script(model, exported_model_path, navigator_workspace)
+    else:
+        _export_trace(
+            model,
+            exported_model_path,
+            input_metadata,
+            batch_dim,
+            target_device,
+            navigator_workspace,
+            strict,
+            custom_args,
+        )
+
+
+def _export_script(model, exported_model_path, navigator_workspace):
+    script_module = None
+    try:
+        script_module = torch.jit.script(model)
+        exported_model_path = pathlib.Path(exported_model_path)
+        if not exported_model_path.is_absolute():
+            exported_model_path = navigator_workspace / exported_model_path
+
+        torch.jit.save(script_module, exported_model_path.as_posix())
+    finally:
+        if script_module is not None:
+            offload_torch_model_to_cpu(script_module)
+
+
+def _export_trace(
+    model, exported_model_path, input_metadata, batch_dim, target_device, navigator_workspace, strict, custom_args
+):
     profiling_sample = load_samples("profiling_sample", navigator_workspace, batch_dim)[0]
     input_metadata = TensorMetadata.from_json(input_metadata)
 
-    if target_jit_type == JitType.SCRIPT:
-        script_module = torch.jit.script(model)
-    else:
-        dummy_input = {n: torch.from_numpy(val).to(target_device) for n, val in profiling_sample.items()}
+    dummy_input_map = {n: torch.from_numpy(val).to(target_device) for n, val in profiling_sample.items()}
 
-        # adjust input dtypes to match input_metadata
-        # TODO: Remove when torch.bfloat16 will be supported
-        for n, spec in input_metadata.items():
-            if not isinstance(spec.dtype, torch.dtype):
-                torch_dtype = numpy_to_torch_dtype(spec.dtype)
-            else:
-                torch_dtype = spec.dtype
-            dummy_input[n] = dummy_input[n].to(torch_dtype)
-
-        dummy_input = input_metadata.unflatten_sample(dummy_input, wrap_input=True)
-        if isinstance(dummy_input[-1], dict):
-            args, kwargs = dummy_input[:-1], dummy_input[-1]
+    # adjust input dtypes to match input_metadata
+    # TODO: Remove when torch.bfloat16 will be supported
+    dummy_input = {}
+    for n, spec in input_metadata.items():
+        if not isinstance(spec.dtype, torch.dtype):
+            torch_dtype = numpy_to_torch_dtype(spec.dtype)
         else:
-            args, kwargs = dummy_input, {}
+            torch_dtype = spec.dtype
+        dummy_input[n] = dummy_input_map[n].to(torch_dtype)
 
-        if args:
-            if kwargs:
-                try:
-                    forward_signature = inspect.signature(model.forward)
-                    forward_args = list(forward_signature.parameters.keys())[1:]  # skip self
-                    for i, arg in enumerate(args):
-                        kwargs[forward_args[i]] = arg
-                    input_kwargs = {
-                        "example_kwarg_inputs": kwargs,
-                    }
-                except BaseException as e:
-                    raise ModelNavigatorUserInputError(
-                        "TorchScript trace does not support both args and kwargs and Model Navigator was unable to convert the input to kwargs. Please provide the input as only kwargs or only args."
-                    ) from e
-            else:
+    dummy_input = input_metadata.unflatten_sample(dummy_input, wrap_input=True)
+    if isinstance(dummy_input[-1], dict):
+        args, kwargs = dummy_input[:-1], dummy_input[-1]
+    else:
+        args, kwargs = dummy_input, {}
+
+    if args:
+        if kwargs:
+            try:
+                forward_signature = inspect.signature(model.forward)
+                forward_args = list(forward_signature.parameters.keys())
+                for i, arg in enumerate(args):
+                    kwargs[forward_args[i]] = arg
                 input_kwargs = {
-                    "example_inputs": args,
+                    "example_kwarg_inputs": kwargs,
                 }
+            except BaseException as e:
+                raise ModelNavigatorUserInputError(
+                    "TorchScript trace does not support both args and kwargs and Model Navigator was unable to convert the input to kwargs. Please provide the input as only kwargs or only args."
+                ) from e
         else:
             input_kwargs = {
-                "example_kwarg_inputs": kwargs,
+                "example_inputs": args,
             }
+    else:
+        input_kwargs = {
+            "example_kwarg_inputs": kwargs,
+        }
 
+    script_module = None
+    try:
         script_module = torch.jit.trace(model, strict=strict, **input_kwargs, **custom_args)
+        exported_model_path = pathlib.Path(exported_model_path)
+        if not exported_model_path.is_absolute():
+            exported_model_path = navigator_workspace / exported_model_path
 
-    exported_model_path = pathlib.Path(exported_model_path)
-    if not exported_model_path.is_absolute():
-        exported_model_path = navigator_workspace / exported_model_path
+        torch.jit.save(script_module, exported_model_path.as_posix())
+    finally:
+        if script_module is not None:
+            offload_torch_model_to_cpu(script_module)
+            del script_module
 
-    torch.jit.save(script_module, exported_model_path.as_posix())
+        for tensor in dummy_input_map.values():
+            tensor.cpu()
 
-    offload_torch_model_to_cpu(script_module)
+        del dummy_input_map
+        gc.collect()
+        torch.cuda.empty_cache()
 
 
 if __name__ == "__main__":

@@ -16,6 +16,7 @@
 import gc
 from typing import Optional
 
+from model_navigator.core.logger import LOGGER
 from model_navigator.utils.module import lazy_import
 
 torch = lazy_import("torch")
@@ -42,10 +43,11 @@ def offload_torch_model_to_cpu(model: "torch.nn.Module"):
     Args:
         model: PyTorch model to offload.
     """
+    LOGGER.info("Offloading model to CPU")
     model.to("cpu")
+
+    gc.collect()
 
     if torch.cuda.is_available():
         torch.cuda.synchronize()
         torch.cuda.empty_cache()
-
-    gc.collect()

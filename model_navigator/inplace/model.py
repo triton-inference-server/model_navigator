@@ -140,7 +140,9 @@ class BaseModule(abc.ABC):
 
     def _get_signature(self) -> List[str]:
         """Get signature of the module forward method."""
-        return inspect.getfullargspec(self._module.forward).args[1:]
+        forward_signature = inspect.signature(self._module.forward)
+        forward_params = list(forward_signature.parameters.keys())
+        return forward_params
 
 
 class RecordingModule(BaseModule):

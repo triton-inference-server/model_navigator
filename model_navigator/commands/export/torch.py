@@ -88,8 +88,6 @@ class ExportTorch2TorchScript(Command):
         if model is None:
             raise RuntimeError("Expected model of type torch.nn.Module. Got None instead.")
 
-        model.to(target_device.value)
-
         exporters.torch2torchscript.get_model = lambda: model
 
         # Keep model on CPU after operation
@@ -278,8 +276,6 @@ class ExportExportedProgram(Command):
         if model is None:
             raise RuntimeError("Expected model of type torch.nn.Module. Got None instead.")
 
-        model.to(target_device.value)
-
         exporters.torch2exportedprogram.get_model = lambda: model
 
         # Keep model on CPU after operation
@@ -369,8 +365,6 @@ class ExportTorch2DynamoONNX(Command):
 
         if model is None:
             raise RuntimeError("Expected model of type torch.nn.Module. Got None instead.")
-
-        model.to(target_device.value)
 
         exporters.torch2dynamo_onnx.get_model = lambda: model
 

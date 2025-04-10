@@ -13,6 +13,7 @@
 # limitations under the License.
 """Export Torch model using dynamo."""
 
+import gc
 import pathlib
 from typing import Any, Dict, Optional
 
@@ -59,6 +60,7 @@ def export(
         device_max_batch_size: Maximum batch size that fits on the device. Defaults to None.
     """
     model = get_model()
+    model.to(target_device)
 
     if not navigator_workspace:
         navigator_workspace = pathlib.Path.cwd()
@@ -112,27 +114,43 @@ def export(
         dynamic_shapes.append(dynamic_shape_map)
 
     try:
-        exported_model = torch.export.export(
-            model,
-            args=tuple(args),
-            kwargs=kwargs,
-            dynamic_shapes=dynamic_shapes,
-            **custom_args,
-        )
-    except Exception:
-        exported_model = torch.export._trace._export(
-            model,
-            args=tuple(args),
-            _allow_complex_guards_as_runtime_asserts=True,
-            dynamic_shapes=dynamic_shapes,
-            kwargs=kwargs,
-            **custom_args,
-        )
+        try:
+            exported_model = torch.export.export(
+                model,
+                args=tuple(args),
+                kwargs=kwargs,
+                dynamic_shapes=dynamic_shapes,
+                **custom_args,
+            )
+        except Exception:
+            exported_model = torch.export._trace._export(
+                model,
+                args=tuple(args),
+                _allow_complex_guards_as_runtime_asserts=True,
+                dynamic_shapes=dynamic_shapes,
+                kwargs=kwargs,
+                **custom_args,
+            )
 
-    exported_model_path = pathlib.Path(exported_model_path)
-    if not exported_model_path.is_absolute():
-        exported_model_path = navigator_workspace / exported_model_path
+        exported_model_path = pathlib.Path(exported_model_path)
+        if not exported_model_path.is_absolute():
+            exported_model_path = navigator_workspace / exported_model_path
 
-    torch.export.save(exported_model, exported_model_path.as_posix())
+        torch.export.save(exported_model, exported_model_path.as_posix())
+    finally:
+        if exported_model is not None:
+            offload_torch_model_to_cpu(exported_model.module())
+            del exported_model
 
-    offload_torch_model_to_cpu(exported_model.module())
+        # Offload tensors to CPU
+        for arg in args:
+            if isinstance(arg, torch.Tensor):
+                arg.cpu()
+        for value in kwargs.values():
+            if isinstance(value, torch.Tensor):
+                value.cpu()
+
+        del args
+        del kwargs
+        gc.collect()
+        torch.cuda.empty_cache()
