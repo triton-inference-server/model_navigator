@@ -91,7 +91,7 @@ class Convert2TensorRTWithMaxBatchSizeSearch(Command):
         max_batch_size = cls._get_conversion_max_batch_sizes(device_max_batch_size, dataloader_max_batch_size)
 
         LOGGER.info(
-            """Search for maximal batch size disable. Execute single conversion with max_batch_size %d. """
+            """Search for maximal batch size disable. Execute single conversion with max_batch_size {}. """
             """In order to execute fallback strategy provide `conversion_fallback=True` in custom configuration.""",
             max_batch_size,
         )

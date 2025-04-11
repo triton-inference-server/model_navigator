@@ -17,6 +17,8 @@ from model_navigator.configuration import (
     Format,
     JitType,
     OnnxConfig,
+    OnnxDynamoExportConfig,
+    OnnxTraceExportConfig,
     TensorFlowConfig,
     TensorFlowTensorRTConfig,
     TensorRTCompatibilityLevel,
@@ -309,6 +311,27 @@ def test_get_onnx_config_returns_model_configs_matching_custom_config_when_torch
         else:
             assert isinstance(torchscript_model_configuration, model_config.TorchScriptModelConfig)
             assert model_configuration.parent_key == torchscript_model_configuration.key
+
+
+def test_get_onnx_config_returns_model_configs_matching_custom_config_when_torch_framework_with_torch_dynamo_export_engine():
+    torch_config = TorchConfig()
+    onnx_config = OnnxConfig(
+        opset=8,
+        dynamic_axes={"x": {0: "batch_size"}, "y": {0: "batch_size"}},
+        export_engine=[OnnxTraceExportConfig(), OnnxDynamoExportConfig()],
+    )
+    model_configs = {Format.TORCHSCRIPT: [], Format.ONNX: []}
+    custom_configs = [torch_config, onnx_config]
+    ModelConfigBuilder().get_torchscript_config(custom_configs, model_configs)
+    ModelConfigBuilder().get_onnx_config(Framework.TORCH, custom_configs, model_configs)
+
+    assert len(model_configs[Format.ONNX]) == 2
+
+    assert model_configs[Format.ONNX][0].export_engine is None  # this is OnnxTraceExportConfig
+
+    assert isinstance(model_configs[Format.ONNX][1].export_engine, model_config.OnnxDynamoExportConfig)
+    assert model_configs[Format.ONNX][1].graph_surgeon_optimization is False
+    assert model_configs[Format.ONNX][1].opset == 8
 
 
 def test_get_onnx_config_for_onnx_framework_returns_model_configs_matching_custom_config():

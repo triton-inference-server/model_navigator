@@ -18,9 +18,6 @@ Note:
      The tests are checking if correct paths are executed on input arguments.
 """
 
-import pathlib
-import tempfile
-
 import pytest
 
 from model_navigator.configuration import (
@@ -37,168 +34,144 @@ from model_navigator.pipelines.validation import PipelineManagerConfigurationVal
 from tests.unit.base.mocks.packages import onnx_package, onnx_package_with_cpu_runner_only
 
 
-def test_validator_raises_no_errors_when_configuration_is_valid():
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir = pathlib.Path(tmpdir)
-        workspace = tmpdir / "navigator_workspace"
-        package = onnx_package_with_cpu_runner_only(workspace)
-        config = package.config
+def test_validator_raises_no_errors_when_configuration_is_valid(tmp_path):
+    workspace = tmp_path / "navigator_workspace"
+    package = onnx_package_with_cpu_runner_only(workspace)
+    config = package.config
+    PipelineManagerConfigurationValidator.run(config, None)
+    PipelineManagerConfigurationValidator.run(config, package)
+
+
+def test_validator_raises_error_when_wrong_type_in_configuration(tmp_path):
+    workspace = tmp_path / "navigator_workspace"
+    package = onnx_package_with_cpu_runner_only(workspace)
+    config = package.config
+    config.framework = 0
+    with pytest.raises(ModelNavigatorConfigurationError):
         PipelineManagerConfigurationValidator.run(config, None)
+
+
+def test_validator_warns_when_custom_config_format_is_not_in_target_formats(tmp_path):
+    workspace = tmp_path / "navigator_workspace"
+    package = onnx_package_with_cpu_runner_only(workspace)
+    config = package.config
+    config.custom_configs = {"torch": TorchConfig()}
+    with pytest.warns(ModelNavigatorConfigurationWarning):
+        PipelineManagerConfigurationValidator.run(config, None)
+
+
+def test_validator_raises_error_when_target_formats_does_not_match_farmework(tmp_path):
+    workspace = tmp_path / "navigator_workspace"
+    package = onnx_package_with_cpu_runner_only(workspace)
+    config = package.config
+    config.target_formats = (Format.JAX,)
+    with pytest.warns(ModelNavigatorConfigurationWarning), pytest.raises(ModelNavigatorConfigurationError):
+        PipelineManagerConfigurationValidator.run(config, None)
+
+
+def test_validator_raises_error_when_batching_is_disabled_and_profiler_specify_batch_sizes(tmp_path):
+    workspace = tmp_path / "navigator_workspace"
+    package = onnx_package_with_cpu_runner_only(workspace)
+    config = package.config
+    config.batch_dim = None
+    config.optimization_profile.batch_sizes = [1]
+    with pytest.raises(ModelNavigatorConfigurationError):
+        PipelineManagerConfigurationValidator.run(config, None)
+
+
+def test_validator_raises_no_error_when_trt_profile_names_match_input_names(tmp_path):
+    workspace = tmp_path / "navigator_workspace"
+    package = onnx_package_with_cpu_runner_only(workspace)
+    config = package.config
+    config._input_names = ("my_input",)
+    config.target_formats = (Format.TENSORRT,)
+    config.custom_configs = {
+        "TensorRT": TensorRTConfig(trt_profiles=[TensorRTProfile().add("my_input", (1,), (2,), (4,))])
+    }
+    PipelineManagerConfigurationValidator.run(config, None)
+
+
+def test_validator_raises_error_when_trt_profile_names_mismatch_input_names(tmp_path):
+    workspace = tmp_path / "navigator_workspace"
+    package = onnx_package_with_cpu_runner_only(workspace)
+    config = package.config
+    config._input_names = ("my_input",)
+    config.target_formats = (Format.TORCH_TRT,)
+    config.custom_configs = {
+        "TorchTRT": TorchTensorRTConfig(trt_profiles=[TensorRTProfile().add("not_my_input", (1,), (2,), (4,))])
+    }
+    with pytest.raises(ModelNavigatorConfigurationError):
+        PipelineManagerConfigurationValidator.run(config, None)
+
+
+def test_validator_raises_no_error_when_trt_profile_batch_dimension_match(tmp_path):
+    workspace = tmp_path / "navigator_workspace"
+    package = onnx_package_with_cpu_runner_only(workspace)
+    config = package.config
+    config.target_formats = (Format.TENSORRT,)
+    config.custom_configs = {
+        "TensorRT": TensorRTConfig(
+            trt_profiles=[TensorRTProfile().add("my_input", (1,), (2,), (4,)).add("my_input_2", (1,), (2,), (4,))]
+        )
+    }
+    PipelineManagerConfigurationValidator.run(config, None)
+
+
+def test_validator_raises_error_when_trt_profile_batch_dimension_mismatch(tmp_path):
+    workspace = tmp_path / "navigator_workspace"
+    package = onnx_package_with_cpu_runner_only(workspace)
+    config = package.config
+    config.target_formats = (Format.TORCH_TRT,)
+    config.custom_configs = {
+        "TorchTRT": TorchTensorRTConfig(
+            trt_profiles=[TensorRTProfile().add("my_input", (1,), (2,), (4,)).add("my_input_2", (1,), (2,), (8,))]
+        )
+    }
+
+    with pytest.raises(ModelNavigatorConfigurationError):
+        PipelineManagerConfigurationValidator.run(config, None)
+
+
+@pytest.mark.skipif(not is_trt_available(), reason="TensorRT is not available")
+def test_validator_raises_no_error_when_target_format_source_is_saved_in_package(tmp_path):
+    workspace = tmp_path / "navigator_workspace"
+    package = onnx_package(workspace)
+    config = package.config
+    config.target_formats = (Format.ONNX,)
+    with pytest.warns(ModelNavigatorConfigurationWarning):
         PipelineManagerConfigurationValidator.run(config, package)
 
 
-def test_validator_raises_error_when_wrong_type_in_configuration():
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir = pathlib.Path(tmpdir)
-        workspace = tmpdir / "navigator_workspace"
-        package = onnx_package_with_cpu_runner_only(workspace)
-        config = package.config
-        config.framework = 0
-        with pytest.raises(ModelNavigatorConfigurationError):
-            PipelineManagerConfigurationValidator.run(config, None)
+@pytest.mark.skipif(not is_trt_available(), reason="TensorRT is not available")
+def test_validator_warns_when_target_format_source_is_not_saved_in_package(tmp_path):
+    workspace = tmp_path / "navigator_workspace"
+    package = onnx_package_with_cpu_runner_only(workspace)
+    config = package.config
+    config.target_formats = (Format.TENSORRT,)
+    with pytest.warns(ModelNavigatorConfigurationWarning):
+        PipelineManagerConfigurationValidator.run(config, package)
 
 
-def test_validator_warns_when_custom_config_format_is_not_in_target_formats():
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir = pathlib.Path(tmpdir)
-        workspace = tmpdir / "navigator_workspace"
-        package = onnx_package_with_cpu_runner_only(workspace)
-        config = package.config
-        config.custom_configs = {"torch": TorchConfig()}
-        with pytest.warns(ModelNavigatorConfigurationWarning):
-            PipelineManagerConfigurationValidator.run(config, None)
+@pytest.mark.skipif(not is_trt_available(), reason="TensorRT is not available")
+def test_validator_raises_no_error_when_trt_profile_aligns_with_dynamic_axes(tmp_path):
+    workspace = tmp_path / "navigator_workspace"
+    package = onnx_package(workspace)
+    config = package.config
+    config.custom_configs["Onnx"] = OnnxConfig(dynamic_axes={"my_input": [0, 1]})
+    config.custom_configs["TensorRT"] = TensorRTConfig(
+        trt_profiles=[TensorRTProfile().add("my_input", (1, 1), (2, 2), (4, 4))]
+    )
+    PipelineManagerConfigurationValidator.run(config, package)
 
 
-def test_validator_raises_error_when_target_formats_does_not_match_farmework():
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir = pathlib.Path(tmpdir)
-        workspace = tmpdir / "navigator_workspace"
-        package = onnx_package_with_cpu_runner_only(workspace)
-        config = package.config
-        config.target_formats = (Format.JAX,)
-        with pytest.raises(ModelNavigatorConfigurationError):
-            PipelineManagerConfigurationValidator.run(config, None)
-
-
-def test_validator_raises_error_when_batching_is_disabled_and_profiler_specify_batch_sizes():
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir = pathlib.Path(tmpdir)
-        workspace = tmpdir / "navigator_workspace"
-        package = onnx_package_with_cpu_runner_only(workspace)
-        config = package.config
-        config.batch_dim = None
-        config.optimization_profile.batch_sizes = [1]
-        with pytest.raises(ModelNavigatorConfigurationError):
-            PipelineManagerConfigurationValidator.run(config, None)
-
-
-def test_validator_raises_no_error_when_trt_profile_names_match_input_names():
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir = pathlib.Path(tmpdir)
-        workspace = tmpdir / "navigator_workspace"
-        package = onnx_package_with_cpu_runner_only(workspace)
-        config = package.config
-        config._input_names = ("my_input",)
-        config.target_formats = (Format.TENSORRT,)
-        config.custom_configs = {
-            "TensorRT": TensorRTConfig(trt_profiles=[TensorRTProfile().add("my_input", (1,), (2,), (4,))])
-        }
-        PipelineManagerConfigurationValidator.run(config, None)
-
-
-def test_validator_raises_error_when_trt_profile_names_mismatch_input_names():
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir = pathlib.Path(tmpdir)
-        workspace = tmpdir / "navigator_workspace"
-        package = onnx_package_with_cpu_runner_only(workspace)
-        config = package.config
-        config._input_names = ("my_input",)
-        config.target_formats = (Format.TORCH_TRT,)
-        config.custom_configs = {
-            "TorchTRT": TorchTensorRTConfig(trt_profiles=[TensorRTProfile().add("not_my_input", (1,), (2,), (4,))])
-        }
-        with pytest.raises(ModelNavigatorConfigurationError):
-            PipelineManagerConfigurationValidator.run(config, None)
-
-
-def test_validator_raises_no_error_when_trt_profile_batch_dimension_match():
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir = pathlib.Path(tmpdir)
-        workspace = tmpdir / "navigator_workspace"
-        package = onnx_package_with_cpu_runner_only(workspace)
-        config = package.config
-        config.target_formats = (Format.TENSORRT,)
-        config.custom_configs = {
-            "TensorRT": TensorRTConfig(
-                trt_profiles=[TensorRTProfile().add("my_input", (1,), (2,), (4,)).add("my_input_2", (1,), (2,), (4,))]
-            )
-        }
-        PipelineManagerConfigurationValidator.run(config, None)
-
-
-def test_validator_raises_error_when_trt_profile_batch_dimension_mismatch():
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir = pathlib.Path(tmpdir)
-        workspace = tmpdir / "navigator_workspace"
-        package = onnx_package_with_cpu_runner_only(workspace)
-        config = package.config
-        config.target_formats = (Format.TORCH_TRT,)
-        config.custom_configs = {
-            "TorchTRT": TorchTensorRTConfig(
-                trt_profiles=[TensorRTProfile().add("my_input", (1,), (2,), (4,)).add("my_input_2", (1,), (2,), (8,))]
-            )
-        }
-        with pytest.raises(ModelNavigatorConfigurationError):
-            PipelineManagerConfigurationValidator.run(config, None)
-
-
-def test_validator_raises_no_error_when_target_format_source_is_saved_in_pacakge():
-    if is_trt_available():
-        with tempfile.TemporaryDirectory() as tmpdir:
-            tmpdir = pathlib.Path(tmpdir)
-            workspace = tmpdir / "navigator_workspace"
-            package = onnx_package(workspace)
-            config = package.config
-            config.target_formats = (Format.ONNX,)
-            PipelineManagerConfigurationValidator.run(config, package)
-
-
-def test_validator_warns_when_target_format_source_is_not_saved_in_pacakge():
-    if is_trt_available():
-        with tempfile.TemporaryDirectory() as tmpdir:
-            tmpdir = pathlib.Path(tmpdir)
-            workspace = tmpdir / "navigator_workspace"
-            package = onnx_package_with_cpu_runner_only(workspace)
-            config = package.config
-            config.target_formats = (Format.TENSORRT,)
-            with pytest.warns(ModelNavigatorConfigurationWarning):
-                PipelineManagerConfigurationValidator.run(config, package)
-
-
-def test_validator_raises_no_error_when_trt_profile_aligns_with_dynamic_axes():
-    if is_trt_available():
-        with tempfile.TemporaryDirectory() as tmpdir:
-            tmpdir = pathlib.Path(tmpdir)
-            workspace = tmpdir / "navigator_workspace"
-            package = onnx_package(workspace)
-            config = package.config
-            config.custom_configs["Onnx"] = OnnxConfig(dynamic_axes={"my_input": [0, 1]})
-            config.custom_configs["TensorRT"] = TensorRTConfig(
-                trt_profiles=[TensorRTProfile().add("my_input", (1, 1), (2, 2), (4, 4))]
-            )
-            PipelineManagerConfigurationValidator.run(config, package)
-
-
-def test_validator_raises_error_when_trt_profile_does_not_align_with_dynamic_axes():
-    if is_trt_available():
-        with tempfile.TemporaryDirectory() as tmpdir:
-            tmpdir = pathlib.Path(tmpdir)
-            workspace = tmpdir / "navigator_workspace"
-            package = onnx_package(workspace)
-            config = package.config
-            config.custom_configs["Onnx"] = OnnxConfig(dynamic_axes={"my_input": [0]})
-            config.custom_configs["TensorRT"] = TensorRTConfig(
-                trt_profiles=[TensorRTProfile().add("my_input", (1, 1), (2, 2), (4, 4))]
-            )
-            with pytest.raises(ModelNavigatorConfigurationError):
-                PipelineManagerConfigurationValidator.run(config, package)
+@pytest.mark.skipif(not is_trt_available(), reason="TensorRT is not available")
+def test_validator_raises_error_when_trt_profile_does_not_align_with_dynamic_axes(tmp_path):
+    workspace = tmp_path / "navigator_workspace"
+    package = onnx_package(workspace)
+    config = package.config
+    config.custom_configs["Onnx"] = OnnxConfig(dynamic_axes={"my_input": [0]})
+    config.custom_configs["TensorRT"] = TensorRTConfig(
+        trt_profiles=[TensorRTProfile().add("my_input", (1, 1), (2, 2), (4, 4))]
+    )
+    with pytest.raises(ModelNavigatorConfigurationError):
+        PipelineManagerConfigurationValidator.run(config, package)

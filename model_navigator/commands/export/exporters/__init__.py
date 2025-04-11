@@ -22,7 +22,6 @@ if is_torch_available():
 
 if is_torch2_available():
     from . import (
-        torch2dynamo_onnx,  # noqa: F401
         torch2exportedprogram,  # noqa: F401
     )
 

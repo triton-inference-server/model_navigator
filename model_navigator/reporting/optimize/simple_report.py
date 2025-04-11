@@ -92,9 +92,9 @@ class SimpleReport(BaseReport):
                 self.status_line = f"Building {config_key} model from Torch model"
             elif command == "ExportExportedProgram":
                 self.status_line = "Building ExportedProgram from Torch model"
-            elif command == "ExportTorch2DynamoONNX":
+            elif command == "ExportTorch2ONNX" and config_key == "onnx-dynamo":
                 self.status_line = "Building ONNX Dynamo model from Torch model"
-            elif command == "ExportTorch2ONNX":
+            elif command == "ExportTorch2ONNX" and config_key == "onnx":
                 self.status_line = "Building ONNX Trace model from Torch model"
         elif self.current_pipeline == PIPELINE_TORCH_CONVERSION:
             if command == "GraphSurgeonOptimize":

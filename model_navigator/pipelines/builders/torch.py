@@ -22,7 +22,6 @@ from model_navigator.commands.copy.copy_model import CopyModelFromPath
 from model_navigator.commands.export.torch import (
     ExportExportedProgram,
     ExportOnnxFromQuantizedTorch,
-    ExportTorch2DynamoONNX,
     ExportTorch2ONNX,
     ExportTorch2TorchScript,
 )
@@ -32,7 +31,6 @@ from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ModelConfig, ONNXModelConfig
 from model_navigator.pipelines.constants import (
     PIPELINE_TORCH_CONVERSION,
-    PIPELINE_TORCH_DYNAMO_ONNX,
     PIPELINE_TORCH_EXPORT,
     PIPELINE_TORCH_EXPORTEDPROGRAM,
 )
@@ -62,6 +60,7 @@ def torch_export_builder(config: CommonConfig, models_config: Dict[Format, List[
                 )
             else:
                 execution_units.append(ExecutionUnit(command=ExportTorch2ONNX, model_config=model_cfg))
+
             for model_cfg_trt in models_config.get(Format.TENSORRT, []):
                 if model_cfg_trt.precision == TensorRTPrecision.NVFP4:  # pytype: disable=attribute-error
                     # Use trt config copy for special case of NVFP4 torch->model opt quantization->onnx->trt conversion.
@@ -76,24 +75,6 @@ def torch_export_builder(config: CommonConfig, models_config: Dict[Format, List[
                 execution_units.append(ExecutionUnit(command=GraphSurgeonOptimize, model_config=model_cfg))
 
     return Pipeline(name=PIPELINE_TORCH_EXPORT, execution_units=execution_units)
-
-
-def torch_dynamo_onnx_builder(config: CommonConfig, models_config: Dict[Format, List[ModelConfig]]) -> Pipeline:
-    """Prepare export steps for pipeline.
-
-    Args:
-        config: A configuration for pipelines
-        models_config: List of model configs per format
-
-    Returns:
-        Pipeline with steps for export
-    """
-    execution_units: List[ExecutionUnit] = []
-    for model_cfg in models_config.get(Format.ONNX, []):
-        if model_cfg.dynamo_export:  # pytype: disable=attribute-error
-            execution_units.append(ExecutionUnit(command=ExportTorch2DynamoONNX, model_config=model_cfg))
-
-    return Pipeline(name=PIPELINE_TORCH_DYNAMO_ONNX, execution_units=execution_units)
 
 
 def torch_exportedprogram_builder(config: CommonConfig, models_config: Dict[Format, List[ModelConfig]]) -> Pipeline:

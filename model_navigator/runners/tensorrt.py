@@ -295,7 +295,7 @@ class TensorRTRunner(NavigatorRunner):
                     break
 
             if is_fitting_profile:
-                LOGGER.debug("Fitting profile found with index: %s. It will be used for inference.", profile_index)
+                LOGGER.debug("Fitting profile found with index: {}. It will be used for inference.", profile_index)
                 return profile_index
 
         LOGGER.debug("No fitting profile found. Using default profile with index: 0")
@@ -346,7 +346,7 @@ class TensorRTRunner(NavigatorRunner):
                     if not self.engine.binding_is_input(binding):
                         host_output_buffers[binding] = np.empty(shape=(), dtype=dtype)
 
-                LOGGER.debug("Initialized device buffers: %s", device_buffers)
+                LOGGER.debug("Initialized device buffers: {}", device_buffers)
                 return device_buffers, host_output_buffers, {}, None
 
             def make_buffers():
@@ -374,7 +374,7 @@ class TensorRTRunner(NavigatorRunner):
                             "Please update this implementation!"
                         )
 
-                LOGGER.debug("Initialized device buffers %s", device_buffers)
+                LOGGER.debug("Initialized device buffers {}", device_buffers)
                 return device_buffers, host_output_buffers, device_output_buffers, output_allocator
 
             self.device_buffers, self.host_output_buffers, self.device_output_buffers, self.output_allocator = (
@@ -416,7 +416,7 @@ class TensorRTRunner(NavigatorRunner):
                     )
 
                 if tuple(self.context.get_shape(binding)) != tuple(inp):
-                    LOGGER.debug("Setting shape binding: %s (index: %s) to: %s", name, binding, inp)
+                    LOGGER.debug("Setting shape binding: {} (index: {}) to: {}", name, binding, inp)
                     if not self.context.set_shape_input(binding, inp):
                         raise ModelNavigatorError(
                             f"Failed to set shape binding: {name} (index: {binding}) to: {inp}. "
@@ -426,7 +426,7 @@ class TensorRTRunner(NavigatorRunner):
             elif trt_utils.is_shape_dynamic(self.engine.get_binding_shape(binding)):
                 shape = inp.shape
                 if tuple(self.context.get_binding_shape(binding)) != tuple(shape):
-                    LOGGER.debug("Setting shape binding: %s (index: %s) to shape: %s", name, binding, shape)
+                    LOGGER.debug("Setting shape binding: {} (index: {}) to shape: {}", name, binding, shape)
                     if not self.context.set_binding_shape(binding, shape):
                         raise ModelNavigatorError(
                             f"Failed to set binding: {name} (index: {binding}) to shape: {shape}. "
@@ -539,7 +539,7 @@ class TensorRTRunner(NavigatorRunner):
                 # We retrieve the semantic shape from the FormattedArray, *not* the underlying array.
                 tensor_shape = self.context.get_tensor_shape(name)
                 if tensor_shape != array.shape:
-                    LOGGER.debug("Setting %s input shape from %s to: %s", name, tensor_shape, array.shape)
+                    LOGGER.debug("Setting {} input shape from {} to: {}", name, tensor_shape, array.shape)
                     reshape = True
                     if array.shape and not self.context.set_input_shape(name, array.shape):
                         raise ModelNavigatorError(

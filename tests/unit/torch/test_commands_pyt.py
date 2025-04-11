@@ -24,7 +24,8 @@ from model_navigator.commands.base import CommandStatus
 from model_navigator.commands.correctness import Correctness
 from model_navigator.commands.data_dump.samples import samples_to_npz
 from model_navigator.commands.export.torch import ExportTorch2ONNX, ExportTorch2TorchScript
-from model_navigator.configuration import DeviceKind, Format, JitType, TensorType
+from model_navigator.configuration import DeviceKind, Format, JitType, TensorRTProfile, TensorType
+from model_navigator.configuration.model.model_config import OnnxDynamoExportConfig
 from model_navigator.core.tensor import PyTreeMetadata, TensorMetadata, TensorSpec
 from model_navigator.core.workspace import Workspace
 from model_navigator.runners.torch import TorchScriptCPURunner, TorchScriptCUDARunner
@@ -175,6 +176,44 @@ def test_pyt_export_onnx():
             target_device=device,
             verbose=False,
             custom_args={},
+        )
+        assert command_output.status == CommandStatus.OK
+        onnx.checker.check_model(exported_model_path.as_posix())
+
+
+def test_pyt_export_onnx_dynamo():
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        workspace = pathlib.Path(tmp_dir) / "navigator_workspace"
+        model_relative_path = pathlib.Path("onnx-dynamo") / "model.onnx"
+        exported_model_path = workspace / model_relative_path
+
+        device = DeviceKind.CUDA if torch.cuda.is_available() else DeviceKind.CPU
+
+        dataloader_ = (torch.full((3, 5), VALUE_IN_TENSOR, device=device.value) for _ in range(5))
+        model_ = torch.nn.Linear(5, 7).to(device.value).eval()
+
+        input_data = next(iter(dataloader_))
+        sample = {"input": input_data.detach().cpu().numpy()}
+        samples_to_npz([sample], workspace / "model_input" / "profiling", None)
+
+        command_output = ExportTorch2ONNX().run(
+            model=model_,
+            workspace=Workspace(workspace),
+            path=exported_model_path,
+            opset=OPSET,
+            input_metadata=TensorMetadata(
+                {"input": TensorSpec("input", (-1, 5), numpy.dtype("float32"))},
+                pytree_metadata=PyTreeMetadata("input", TensorType.NUMPY),
+            ),
+            output_metadata=TensorMetadata(
+                {"output": TensorSpec("output", (-1, 7), numpy.dtype("float32"))},
+                pytree_metadata=PyTreeMetadata("output", TensorType.NUMPY),
+            ),
+            target_device=device,
+            verbose=False,
+            custom_args={},
+            export_engine=OnnxDynamoExportConfig(),
+            dataloader_trt_profile=TensorRTProfile().add("input__0", (1, 5), (3, 5), (3, 5)),
         )
         assert command_output.status == CommandStatus.OK
         onnx.checker.check_model(exported_model_path.as_posix())

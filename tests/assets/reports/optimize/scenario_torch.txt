@@ -17,7 +17,7 @@ OptimizeEvent.COMMAND_STARTED {'command': 'ExportTorch2TorchScript', 'config_key
 OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
 OptimizeEvent.COMMAND_STARTED {'command': 'ExportExportedProgram', 'config_key': 'torch-exportedprogram', 'runner_name': None}
 OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.OK}
-OptimizeEvent.COMMAND_STARTED {'command': 'ExportTorch2DynamoONNX', 'config_key': 'onnx-dynamo', 'runner_name': None}
+OptimizeEvent.COMMAND_STARTED {'command': 'ExportTorch2ONNX', 'config_key': 'onnx-dynamo', 'runner_name': None}
 OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.FAIL}
 OptimizeEvent.COMMAND_STARTED {'command': 'GraphSurgeonOptimize', 'config_key': 'onnx-dynamo', 'runner_name': None}
 OptimizeEvent.COMMAND_FINISHED {'status': CommandStatus.SKIPPED}

@@ -97,7 +97,10 @@ def main():
         custom_configs=(
             nav.OnnxConfig(
                 dynamic_axes=dynamic_axes,
-                dynamo_export=True,
+                export_engine=[
+                    nav.OnnxTraceExportConfig(),
+                    # nav.OnnxDynamoExportConfig(), # TODO: Torch 2.6 works but 2.7 fails
+                ],
             ),
             nav.TensorRTConfig(trt_profiles=trt_profiles),
             nav.TorchTensorRTConfig(trt_profiles=trt_profiles),

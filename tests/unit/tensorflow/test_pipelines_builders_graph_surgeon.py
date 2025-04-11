@@ -32,14 +32,7 @@ def test_tensorflow_conversion_builder_return_graph_surgeon_optimization_when_en
     )
 
     models_config = {
-        Format.ONNX: [
-            ONNXModelConfig(
-                opset=DEFAULT_ONNX_OPSET,
-                dynamic_axes={},
-                dynamo_export=False,
-                graph_surgeon_optimization=True,
-            )
-        ],
+        Format.ONNX: [ONNXModelConfig(opset=DEFAULT_ONNX_OPSET, graph_surgeon_optimization=True)],
     }
     pipeline = tensorflow_conversion_builder(config=config, models_config=models_config)
     assert len(pipeline.execution_units) == 2
@@ -59,14 +52,7 @@ def test_tensorflow_conversion_builder_does_not_return_graph_surgeon_optimizatio
     )
 
     models_config = {
-        Format.ONNX: [
-            ONNXModelConfig(
-                opset=DEFAULT_ONNX_OPSET,
-                dynamic_axes={},
-                dynamo_export=False,
-                graph_surgeon_optimization=False,
-            )
-        ],
+        Format.ONNX: [ONNXModelConfig(opset=DEFAULT_ONNX_OPSET, graph_surgeon_optimization=False)],
     }
     pipeline = tensorflow_conversion_builder(config=config, models_config=models_config)
     assert len(pipeline.execution_units) == 1

@@ -32,20 +32,19 @@ def test_optimize_pipeline_emits_events_no_results(mocker, mock_event_emitter): 
     empty_mock_package = MagicMock()
     empty_mock_package.get_best_runtime.side_effect = ModelNavigatorRuntimeAnalyzerError("test_exception")
 
-    with mocker.patch.object(PipelineManager, "run"):
-        with mocker.patch.object(PackageBuilder, "create", return_value=empty_mock_package):
-            with mocker.patch(
-                "model_navigator.pipelines.wrappers.optimize.default_event_emitter", return_value=mock_event_emitter
-            ):
-                # when
-                optimize_pipeline(
-                    workspace=Path("test_path"),
-                    builders=MagicMock(),
-                    config=MagicMock(),
-                    model=MagicMock(),
-                    package=None,
-                    models_config=None,
-                )
+    mocker.patch.object(PipelineManager, "run")
+    mocker.patch.object(PackageBuilder, "create", return_value=empty_mock_package)
+    mocker.patch("model_navigator.pipelines.wrappers.optimize.default_event_emitter", return_value=mock_event_emitter)
+
+    # when
+    optimize_pipeline(
+        workspace=Path("test_path"),
+        builders=MagicMock(),
+        config=MagicMock(),
+        model=MagicMock(),
+        package=None,
+        models_config=None,
+    )
 
     # then
     events = mock_event_emitter.history
@@ -77,20 +76,19 @@ def test_optimize_pipeline_emits_events_correct_opt_results(is_source_model, moc
         expected_path = tmp_path / model_config.path
         expected_path.mkdir(exist_ok=True)
 
-    with mocker.patch.object(PipelineManager, "run"):
-        with mocker.patch.object(PackageBuilder, "create", return_value=mock_package):
-            with mocker.patch(
-                "model_navigator.pipelines.wrappers.optimize.default_event_emitter", return_value=mock_event_emitter
-            ):
-                # when
-                optimize_pipeline(
-                    workspace=Path("test_path"),
-                    builders=MagicMock(),
-                    config=MagicMock(),
-                    model=MagicMock(),
-                    package=None,
-                    models_config=None,
-                )
+    mocker.patch.object(PipelineManager, "run")
+    mocker.patch.object(PackageBuilder, "create", return_value=mock_package)
+    mocker.patch("model_navigator.pipelines.wrappers.optimize.default_event_emitter", return_value=mock_event_emitter)
+
+    # when
+    optimize_pipeline(
+        workspace=Path("test_path"),
+        builders=MagicMock(),
+        config=MagicMock(),
+        model=MagicMock(),
+        package=None,
+        models_config=None,
+    )
 
     # then
     events = mock_event_emitter.history

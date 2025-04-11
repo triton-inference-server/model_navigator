@@ -71,7 +71,7 @@ def configure_gpu_memory_logging_sink(sink: Union[TextIO, str, pathlib.Path]) ->
     )
 
 
-def get_gpu_memory_info() -> Optional[Dict[int, Dict[str, float]]]:
+def get_gpu_memory_info() -> Optional[Dict[int, Dict[str, Union[float, int, str]]]]:
     """Get GPU memory information.
 
     Returns:
@@ -240,7 +240,7 @@ def log_command_gpu_memory_usage(
     return final_memory_info, final_host_info
 
 
-def get_memory_info() -> Tuple[Optional[Dict[int, Dict[str, float]]], Dict[str, float]]:
+def get_memory_info() -> Tuple[Optional[Dict[int, Dict[str, Union[float, int, str]]]], Dict[str, float]]:
     """Get both GPU and host memory information.
 
     Returns:

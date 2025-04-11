@@ -294,11 +294,11 @@ class NavigatorRunner(abc.ABC):
 
         if check_inputs:
             input_metadata = self.input_metadata
-            LOGGER.debug("Runner input metadata is: %s", input_metadata)
+            LOGGER.debug("Runner input metadata is: {}", input_metadata)
 
             for name in input_metadata:
                 if name not in feed_dict:
-                    LOGGER.warning("Input tensor: %s | Missing input in `feed_dict`: %s.", name, name)
+                    LOGGER.warning("Input tensor: {} | Missing input in `feed_dict`: {}.", name, name)
 
             for name, inp in feed_dict.items():
                 if get_tensor_type(inp) not in self.get_available_input_types():

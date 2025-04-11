@@ -768,14 +768,15 @@ def test_add_model_from_package_raises_error_when_unsupported_format_obtained(mo
             runner_status=mocked_runner_status,
         )
 
-        with mocker.patch.object(RuntimeAnalyzer, "get_runtime", return_value=mocked_result):
-            with pytest.raises(ModelNavigatorError, match="Unsupported model format selected:"):
-                add_model_from_package(
-                    model_repository_path,
-                    model_name=model_name,
-                    model_version=model_version,
-                    package=package,
-                )
+        mocker.patch.object(RuntimeAnalyzer, "get_runtime", return_value=mocked_result)
+
+        with pytest.raises(ModelNavigatorError, match="Unsupported model format selected:"):
+            add_model_from_package(
+                model_repository_path,
+                model_name=model_name,
+                model_version=model_version,
+                package=package,
+            )
 
 
 def test_add_model_from_package_raises_error_when_batching_dimension_is_invalid():

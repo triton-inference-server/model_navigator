@@ -16,12 +16,14 @@
 """This module contains builder class that generates all possible model configs."""
 
 import collections
+from copy import deepcopy
 from itertools import product
 from typing import Dict, List, Optional, Sequence, Type, TypeVar
 
 import model_navigator.configuration as config_api
 from model_navigator import Format
 from model_navigator.configuration.model import model_config
+from model_navigator.core.logger import LOGGER
 from model_navigator.frameworks import Framework
 from model_navigator.utils.format_helpers import get_base_format, get_export_formats
 
@@ -380,62 +382,45 @@ class ModelConfigBuilder:
             model_configs: Dictionary mapping model formats to lists of model configs
         """
         onnx_config = _get_custom_config(custom_configs=custom_configs, custom_config_cls=config_api.OnnxConfig)
+
         if framework in (Framework.TENSORFLOW, Framework.JAX):
             for model_configuration in model_configs[Format.TF_SAVEDMODEL]:
                 model_configs[Format.ONNX].append(
-                    model_config.ONNXModelConfig(
-                        parent=model_configuration,
-                        opset=onnx_config.opset,
-                        dynamo_export=False,
-                        graph_surgeon_optimization=onnx_config.graph_surgeon_optimization,
-                        dynamic_axes=onnx_config.dynamic_axes,
-                        custom_args=onnx_config.custom_args,
-                        device=onnx_config.device,
-                        export_device=onnx_config.export_device,
-                    )
+                    model_config.ONNXModelConfig.from_onnx_config(onnx_config, model_configuration)
                 )
+
         if framework == Framework.ONNX:
-            model_configs[Format.ONNX].append(
-                model_config.ONNXModelConfig(
-                    parent=None,
-                    opset=onnx_config.opset,
-                    dynamo_export=False,
-                    graph_surgeon_optimization=onnx_config.graph_surgeon_optimization,
-                    dynamic_axes=onnx_config.dynamic_axes,
-                    custom_args=onnx_config.custom_args,
-                    device=onnx_config.device,
-                    export_device=onnx_config.export_device,
-                )
-            )
+            model_configs[Format.ONNX].append(model_config.ONNXModelConfig.from_onnx_config(onnx_config, None))
+
         if framework == Framework.TORCH:
-            for dynamo_export in (True, False) if onnx_config.dynamo_export else (False,):
+            # Torch Trace export engine
+            trace_export_engine = onnx_config.get_export_engine(config_api.OnnxTraceExportConfig)
+            if trace_export_engine is not None:
+                model_configs[Format.ONNX].append(model_config.ONNXModelConfig.from_onnx_config(onnx_config, None))
+
+            # Torch Dynamo export engine
+            dynamo_export_engine = onnx_config.get_export_engine(config_api.OnnxDynamoExportConfig)
+            if dynamo_export_engine is not None:
+                if onnx_config.graph_surgeon_optimization:
+                    LOGGER.warning("Graph Surgeon optimization is disabled for Torch Dynamo export engine.")
+
+                onnx_config = deepcopy(onnx_config)
+                onnx_config.graph_surgeon_optimization = False
+
                 model_configs[Format.ONNX].append(
-                    model_config.ONNXModelConfig(
-                        parent=None,
-                        opset=onnx_config.opset,
-                        dynamo_export=dynamo_export,
-                        graph_surgeon_optimization=onnx_config.graph_surgeon_optimization,
-                        dynamic_axes=onnx_config.dynamic_axes,
-                        custom_args=onnx_config.custom_args,
-                        device=onnx_config.device,
-                        export_device=onnx_config.export_device,
-                        model_path=onnx_config.model_path,
+                    model_config.ONNXModelConfig.from_onnx_config(
+                        onnx_config,
+                        None,
+                        export_engine=model_config.OnnxDynamoExportConfig(
+                            dynamo_dynamic_shapes=dynamo_export_engine.dynamo_dynamic_shapes,
+                        ),
                     )
                 )
 
         if framework == Framework.TORCH and onnx_config.onnx_extended_conversion:
             for model_configuration in model_configs[Format.TORCHSCRIPT]:
                 model_configs[Format.ONNX].append(
-                    model_config.ONNXModelConfig(
-                        parent=model_configuration,
-                        opset=onnx_config.opset,
-                        dynamo_export=False,
-                        graph_surgeon_optimization=onnx_config.graph_surgeon_optimization,
-                        dynamic_axes=onnx_config.dynamic_axes,
-                        custom_args=onnx_config.custom_args,
-                        device=onnx_config.device,
-                        export_device=onnx_config.export_device,
-                    )
+                    model_config.ONNXModelConfig.from_onnx_config(onnx_config, model_configuration)
                 )
 
     @staticmethod

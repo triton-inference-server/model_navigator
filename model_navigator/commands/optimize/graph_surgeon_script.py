@@ -21,7 +21,7 @@ import fire
 import onnx
 import onnx_graphsurgeon as gs
 from onnx import shape_inference
-from polygraphy.backend.onnx.loader import fold_constants
+from polygraphy.backend.onnx.loader import fold_constants as polygraphy_fold_constants
 
 from model_navigator.core.logger import LOGGER
 
@@ -43,7 +43,7 @@ class _Optimizer:
 
     def fold_constants(self, return_onnx=False):
         LOGGER.info("Folding constants")
-        onnx_graph = fold_constants(gs.export_onnx(self.graph), allow_onnxruntime_shape_inference=True)
+        onnx_graph = polygraphy_fold_constants(gs.export_onnx(self.graph), allow_onnxruntime_shape_inference=True)
         self.graph = gs.import_onnx(onnx_graph)
 
     def infer_shapes(self):

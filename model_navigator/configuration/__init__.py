@@ -35,6 +35,7 @@ from typing import (
     Sequence,
     Tuple,
     Type,
+    TypeVar,
     Union,
     runtime_checkable,
 )
@@ -876,29 +877,53 @@ class TorchTensorRTConfig(CustomConfigForTensorRT):
 
 
 @dataclasses.dataclass
+class OnnxTraceExportConfig(DataObject):
+    """ONNX export config used for ONNX Torch Trace export.
+
+    Torch Trace export is performed by default, but when OnnxDynamoExportConfig
+    is used in export_engins list OnnxTraceExportConfig must be explicitly
+    provided to be performed.
+    """
+
+
+@dataclasses.dataclass
+class OnnxDynamoExportConfig(DataObject):
+    """ONNX export config used for ONNX Torch Dynamo export.
+
+    Args:
+        dynamo_dynamic_shapes: Enable dynamic shapes for dynamo export.
+            By default dynamic shapes are enabled if dynamic_axes are set or batching is enabled.
+    """
+
+    dynamo_dynamic_shapes: Optional[bool] = None
+
+
+OnnxExportEngineType = Union[OnnxTraceExportConfig, OnnxDynamoExportConfig]
+_EngineTypeT = TypeVar("_EngineTypeT", bound=OnnxExportEngineType)
+
+
+@dataclasses.dataclass
 class OnnxConfig(CustomConfigForFormat):
     """ONNX custom config used for ONNX export and conversion.
 
     Args:
         opset: ONNX opset used for conversion.
-        dynamo_export: Enable additional dynamo export.
-        dynamic_axes: Dynamic axes for ONNX conversion.
-        dynamo_dynamic_shapes: Enable dynamic shapes for dynamo export.
-            By default dynamic shapes are enabled if dynamic_axes are set or batching is enabled.
         onnx_extended_conversion: Enables additional conversions from TorchScript to ONNX.
         graph_surgeon_optimization: Enables polygraphy graph surgeon optimization: fold_constants, infer_shapes, toposort, cleanup.
         export_device: Device used for ONNX export.
+        dynamic_axes: Dynamic axes for ONNX conversion.
         model_path: optional path to onnx model file, if provided the model will be loaded from the file instead of exporting to onnx
+        export_engine: List of export engines to use. Expects only one engine of a type. First of each type will be used.
+            Currently, only Torch Dynamo exports engine is supported in addtion to default Torch Trace export.
     """
 
     opset: Optional[int] = DEFAULT_ONNX_OPSET
-    dynamo_export: Optional[bool] = False
-    dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None
-    dynamo_dynamic_shapes: Optional[bool] = None
     onnx_extended_conversion: bool = False
     graph_surgeon_optimization: bool = True
     export_device: Optional[str] = None
+    dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None
     model_path: Optional[Union[str, pathlib.Path]] = None
+    export_engine: List[OnnxExportEngineType] = dataclasses.field(default_factory=lambda: [OnnxTraceExportConfig()])
 
     @property
     def format(self) -> Format:
@@ -924,7 +949,23 @@ class OnnxConfig(CustomConfigForFormat):
         self.opset = DEFAULT_ONNX_OPSET
         self.graph_surgeon_optimization = True
         self.export_device = None
+        self.dynamic_axes = None
         self.model_path = None
+        self.export_engine = [OnnxTraceExportConfig()]
+
+    def get_export_engine(self, engine_type: Type[_EngineTypeT]) -> Optional[_EngineTypeT]:
+        """Find given export engine in export_engine list.
+
+        Args:
+            engine_type: Type of export engine to find
+
+        Returns:
+            Export engine if found, otherwise None
+        """
+        for engine in self.export_engine:
+            if isinstance(engine, engine_type):
+                return engine
+        return None
 
 
 @dataclasses.dataclass

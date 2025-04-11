@@ -23,6 +23,8 @@ from model_navigator.configuration import (  # noqa: F401  # noqa: F401
     MaxThroughputWithLatencyBudgetStrategy,
     MinLatencyStrategy,
     OnnxConfig,
+    OnnxDynamoExportConfig,
+    OnnxTraceExportConfig,
     OptimizationProfile,
     SelectedRuntimeStrategy,
     TensorFlowConfig,

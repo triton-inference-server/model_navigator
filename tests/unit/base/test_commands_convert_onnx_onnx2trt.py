@@ -43,38 +43,35 @@ def test_run_execute_conversion_when_model_not_support_batching(mocker):
         output_model_path = workspace / "trt-fp16" / "model.plan"
         output_model_path.parent.mkdir(parents=True)
 
-        with (
-            mocker.patch.object(ConvertONNX2TRT, "_execute_conversion"),
-            mocker.patch("model_navigator.utils.devices.get_available_gpus", return_value=[0]),
-        ):
-            result = ConvertONNX2TRT().run(
-                workspace=Workspace(workspace),
-                parent_path=input_model_path,
-                path=output_model_path,
-                input_metadata=TensorMetadata({
-                    "input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))
-                }),
-                output_metadata=TensorMetadata({
-                    "output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))
-                }),
-                batch_dim=None,
-                dataloader_trt_profile=TensorRTProfile(),
-                precision=TensorRTPrecision.FP16,
-                precision_mode=TensorRTPrecisionMode.HIERARCHY,
-                custom_args={},
-            )
+        mocker.patch.object(ConvertONNX2TRT, "_execute_conversion")
+        mocker.patch("model_navigator.utils.devices.get_available_gpus", return_value=[0])
 
-            assert result is not None
-            assert result.status == CommandStatus.OK
-            assert ConvertONNX2TRT._execute_conversion.called is True  # pytype: disable=attribute-error
+        result = ConvertONNX2TRT().run(
+            workspace=Workspace(workspace),
+            parent_path=input_model_path,
+            path=output_model_path,
+            input_metadata=TensorMetadata({
+                "input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))
+            }),
+            output_metadata=TensorMetadata({
+                "output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))
+            }),
+            batch_dim=None,
+            dataloader_trt_profile=TensorRTProfile(),
+            precision=TensorRTPrecision.FP16,
+            precision_mode=TensorRTPrecisionMode.HIERARCHY,
+            custom_args={},
+        )
 
-            args = ConvertONNX2TRT._execute_conversion.call_args_list[0][1][
-                "get_args"
-            ]  # pytype: disable=attribute-error
-            assert callable(args)
-            args = args()
-            assert "--timing_cache_dir" in args
-            assert "--model_name" in args
+        assert result is not None
+        assert result.status == CommandStatus.OK
+        assert ConvertONNX2TRT._execute_conversion.called is True  # pytype: disable=attribute-error
+
+        args = ConvertONNX2TRT._execute_conversion.call_args_list[0][1]["get_args"]  # pytype: disable=attribute-error
+        assert callable(args)
+        args = args()
+        assert "--timing_cache_dir" in args
+        assert "--model_name" in args
 
 
 # TODO: add similar test for when trt_profiles provided
@@ -90,30 +87,29 @@ def test_run_execute_conversion_with_max_bs_search_when_trt_profile_not_provided
         output_model_path = workspace / "trt-fp16" / "model.plan"
         output_model_path.parent.mkdir(parents=True)
 
-        with (
-            mocker.patch.object(ConvertONNX2TRT, "_execute_conversion", return_value=1),
-            mocker.patch("model_navigator.utils.devices.get_available_gpus", return_value=[0]),
-        ):
-            result = ConvertONNX2TRT().run(
-                workspace=Workspace(workspace),
-                parent_path=input_model_path,
-                path=output_model_path,
-                input_metadata=TensorMetadata({
-                    "input__1": TensorSpec(name="input__1", shape=(-1, -1), dtype=np.dtype("float32"))
-                }),
-                output_metadata=TensorMetadata({
-                    "output__1": TensorSpec(name="output__1", shape=(-1, -1), dtype=np.dtype("float32"))
-                }),
-                dataloader_trt_profile=TensorRTProfile().add("input__0", (1, 224), (16, 224), (128, 224)),
-                batch_dim=0,
-                precision=TensorRTPrecision.FP16,
-                precision_mode=TensorRTPrecisionMode.HIERARCHY,
-                custom_args={},
-            )
+        mocker.patch.object(ConvertONNX2TRT, "_execute_conversion", return_value=1)
+        mocker.patch("model_navigator.utils.devices.get_available_gpus", return_value=[0])
 
-            assert result is not None
-            assert result.status == CommandStatus.OK
-            assert ConvertONNX2TRT._execute_conversion.called is True  # pytype: disable=attribute-error
+        result = ConvertONNX2TRT().run(
+            workspace=Workspace(workspace),
+            parent_path=input_model_path,
+            path=output_model_path,
+            input_metadata=TensorMetadata({
+                "input__1": TensorSpec(name="input__1", shape=(-1, -1), dtype=np.dtype("float32"))
+            }),
+            output_metadata=TensorMetadata({
+                "output__1": TensorSpec(name="output__1", shape=(-1, -1), dtype=np.dtype("float32"))
+            }),
+            dataloader_trt_profile=TensorRTProfile().add("input__0", (1, 224), (16, 224), (128, 224)),
+            batch_dim=0,
+            precision=TensorRTPrecision.FP16,
+            precision_mode=TensorRTPrecisionMode.HIERARCHY,
+            custom_args={},
+        )
+
+        assert result is not None
+        assert result.status == CommandStatus.OK
+        assert ConvertONNX2TRT._execute_conversion.called is True  # pytype: disable=attribute-error
 
 
 def test_run_execute_conversion_when_dataloader_and_device_max_batch_size_is_invalid(mocker):
@@ -128,32 +124,31 @@ def test_run_execute_conversion_when_dataloader_and_device_max_batch_size_is_inv
         output_model_path = workspace / "trt-fp16" / "model.plan"
         output_model_path.parent.mkdir(parents=True)
 
-        with (
-            mocker.patch.object(ConvertONNX2TRT, "_execute_conversion", return_value=1),
-            mocker.patch("model_navigator.utils.devices.get_available_gpus", return_value=[0]),
-        ):
-            result = ConvertONNX2TRT().run(
-                workspace=Workspace(workspace),
-                parent_path=input_model_path,
-                path=output_model_path,
-                input_metadata=TensorMetadata({
-                    "input__1": TensorSpec(name="input__1", shape=(-1, -1), dtype=np.dtype("float32"))
-                }),
-                output_metadata=TensorMetadata({
-                    "output__1": TensorSpec(name="output__1", shape=(-1, -1), dtype=np.dtype("float32"))
-                }),
-                dataloader_max_batch_size=-1,
-                device_max_batch_size=0,
-                batch_dim=0,
-                dataloader_trt_profile=TensorRTProfile(),
-                precision=TensorRTPrecision.FP16,
-                precision_mode=TensorRTPrecisionMode.HIERARCHY,
-                custom_args={},
-            )
+        mocker.patch.object(ConvertONNX2TRT, "_execute_conversion", return_value=1)
+        mocker.patch("model_navigator.utils.devices.get_available_gpus", return_value=[0])
 
-            assert result is not None
-            assert result.status == CommandStatus.OK
-            assert ConvertONNX2TRT._execute_conversion.called is True  # pytype: disable=attribute-error
+        result = ConvertONNX2TRT().run(
+            workspace=Workspace(workspace),
+            parent_path=input_model_path,
+            path=output_model_path,
+            input_metadata=TensorMetadata({
+                "input__1": TensorSpec(name="input__1", shape=(-1, -1), dtype=np.dtype("float32"))
+            }),
+            output_metadata=TensorMetadata({
+                "output__1": TensorSpec(name="output__1", shape=(-1, -1), dtype=np.dtype("float32"))
+            }),
+            dataloader_max_batch_size=-1,
+            device_max_batch_size=0,
+            batch_dim=0,
+            dataloader_trt_profile=TensorRTProfile(),
+            precision=TensorRTPrecision.FP16,
+            precision_mode=TensorRTPrecisionMode.HIERARCHY,
+            custom_args={},
+        )
+
+        assert result is not None
+        assert result.status == CommandStatus.OK
+        assert ConvertONNX2TRT._execute_conversion.called is True  # pytype: disable=attribute-error
 
 
 def test_run_execute_single_conversion_when_only_dataloader_max_batch_size_provided(mocker):
@@ -168,31 +163,30 @@ def test_run_execute_single_conversion_when_only_dataloader_max_batch_size_provi
         output_model_path = workspace / "trt-fp16" / "model.plan"
         output_model_path.parent.mkdir(parents=True)
 
-        with (
-            mocker.patch.object(ConvertONNX2TRT, "_execute_single_conversion", return_value=3),
-            mocker.patch("model_navigator.utils.devices.get_available_gpus", return_value=[0]),
-        ):
-            result = ConvertONNX2TRT().run(
-                workspace=Workspace(workspace),
-                parent_path=input_model_path,
-                path=output_model_path,
-                input_metadata=TensorMetadata({
-                    "input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))
-                }),
-                output_metadata=TensorMetadata({
-                    "output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))
-                }),
-                batch_dim=0,
-                dataloader_max_batch_size=16,
-                dataloader_trt_profile=TensorRTProfile(),
-                precision=TensorRTPrecision.FP16,
-                precision_mode=TensorRTPrecisionMode.HIERARCHY,
-                custom_args={},
-            )
+        mocker.patch.object(ConvertONNX2TRT, "_execute_single_conversion", return_value=3)
+        mocker.patch("model_navigator.utils.devices.get_available_gpus", return_value=[0])
 
-            assert result is not None
-            assert result.status == CommandStatus.OK
-            assert ConvertONNX2TRT._execute_single_conversion.called is True  # pytype: disable=attribute-error
+        result = ConvertONNX2TRT().run(
+            workspace=Workspace(workspace),
+            parent_path=input_model_path,
+            path=output_model_path,
+            input_metadata=TensorMetadata({
+                "input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))
+            }),
+            output_metadata=TensorMetadata({
+                "output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))
+            }),
+            batch_dim=0,
+            dataloader_max_batch_size=16,
+            dataloader_trt_profile=TensorRTProfile(),
+            precision=TensorRTPrecision.FP16,
+            precision_mode=TensorRTPrecisionMode.HIERARCHY,
+            custom_args={},
+        )
+
+        assert result is not None
+        assert result.status == CommandStatus.OK
+        assert ConvertONNX2TRT._execute_single_conversion.called is True  # pytype: disable=attribute-error
 
 
 def test_run_execute_single_conversion_when_only_device_max_batch_size_provided(mocker):
@@ -207,31 +201,30 @@ def test_run_execute_single_conversion_when_only_device_max_batch_size_provided(
         output_model_path = workspace / "trt-fp16" / "model.plan"
         output_model_path.parent.mkdir(parents=True)
 
-        with (
-            mocker.patch.object(ConvertONNX2TRT, "_execute_single_conversion", return_value=3),
-            mocker.patch("model_navigator.utils.devices.get_available_gpus", return_value=[0]),
-        ):
-            result = ConvertONNX2TRT().run(
-                workspace=Workspace(workspace),
-                parent_path=input_model_path,
-                path=output_model_path,
-                input_metadata=TensorMetadata({
-                    "input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))
-                }),
-                output_metadata=TensorMetadata({
-                    "output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))
-                }),
-                batch_dim=0,
-                device_max_batch_size=16,
-                dataloader_trt_profile=TensorRTProfile(),
-                precision=TensorRTPrecision.FP16,
-                precision_mode=TensorRTPrecisionMode.HIERARCHY,
-                custom_args={},
-            )
+        mocker.patch.object(ConvertONNX2TRT, "_execute_single_conversion", return_value=3)
+        mocker.patch("model_navigator.utils.devices.get_available_gpus", return_value=[0])
 
-            assert result is not None
-            assert result.status == CommandStatus.OK
-            assert ConvertONNX2TRT._execute_single_conversion.called is True  # pytype: disable=attribute-error
+        result = ConvertONNX2TRT().run(
+            workspace=Workspace(workspace),
+            parent_path=input_model_path,
+            path=output_model_path,
+            input_metadata=TensorMetadata({
+                "input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))
+            }),
+            output_metadata=TensorMetadata({
+                "output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))
+            }),
+            batch_dim=0,
+            device_max_batch_size=16,
+            dataloader_trt_profile=TensorRTProfile(),
+            precision=TensorRTPrecision.FP16,
+            precision_mode=TensorRTPrecisionMode.HIERARCHY,
+            custom_args={},
+        )
+
+        assert result is not None
+        assert result.status == CommandStatus.OK
+        assert ConvertONNX2TRT._execute_single_conversion.called is True  # pytype: disable=attribute-error
 
 
 def test_run_execute_conversion_with_max_batch_size_search_when_both_max_batch_size_provided(mocker):
@@ -246,79 +239,75 @@ def test_run_execute_conversion_with_max_batch_size_search_when_both_max_batch_s
         output_model_path = workspace / "trt-fp16" / "model.plan"
         output_model_path.parent.mkdir(parents=True)
 
-        with (
-            mocker.patch.object(ConvertONNX2TRT, "_execute_conversion_with_max_batch_size_search", return_value=3),
-            mocker.patch("model_navigator.utils.devices.get_available_gpus", return_value=[0]),
-        ):
-            result = ConvertONNX2TRT().run(
-                workspace=Workspace(workspace),
-                parent_path=input_model_path,
-                path=output_model_path,
-                input_metadata=TensorMetadata({
-                    "input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))
-                }),
-                output_metadata=TensorMetadata({
-                    "output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))
-                }),
-                batch_dim=0,
-                dataloader_max_batch_size=16,
-                device_max_batch_size=32,
-                dataloader_trt_profile=TensorRTProfile(),
-                precision=TensorRTPrecision.FP16,
-                precision_mode=TensorRTPrecisionMode.HIERARCHY,
-                conversion_fallback=True,
-                custom_args={},
-            )
+        mocker.patch.object(ConvertONNX2TRT, "_execute_conversion_with_max_batch_size_search", return_value=3)
+        mocker.patch("model_navigator.utils.devices.get_available_gpus", return_value=[0])
 
-            assert result is not None
-            assert result.status == CommandStatus.OK
-            assert (
-                ConvertONNX2TRT._execute_conversion_with_max_batch_size_search.called
-                is True  # pytype: disable=attribute-error
-            )
+        result = ConvertONNX2TRT().run(
+            workspace=Workspace(workspace),
+            parent_path=input_model_path,
+            path=output_model_path,
+            input_metadata=TensorMetadata({
+                "input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))
+            }),
+            output_metadata=TensorMetadata({
+                "output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))
+            }),
+            batch_dim=0,
+            dataloader_max_batch_size=16,
+            device_max_batch_size=32,
+            dataloader_trt_profile=TensorRTProfile(),
+            precision=TensorRTPrecision.FP16,
+            precision_mode=TensorRTPrecisionMode.HIERARCHY,
+            conversion_fallback=True,
+            custom_args={},
+        )
+
+        assert result is not None
+        assert result.status == CommandStatus.OK
+        assert (
+            ConvertONNX2TRT._execute_conversion_with_max_batch_size_search.called
+            is True  # pytype: disable=attribute-error
+        )
 
 
-def test_run_execute_conversion_with_conversion_fallback_disabled(mocker):
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir = pathlib.Path(tmpdir)
-        workspace = tmpdir / "navigator_workspace"
+def test_run_execute_conversion_with_conversion_fallback_disabled(mocker, tmp_path):
+    workspace = tmp_path / "navigator_workspace"
 
-        input_model_path = workspace / "onnx" / "model.onnx"
-        input_model_path.parent.mkdir(parents=True)
-        input_model_path.touch()
+    input_model_path = workspace / "onnx" / "model.onnx"
+    input_model_path.parent.mkdir(parents=True)
+    input_model_path.touch()
 
-        output_model_path = workspace / "trt-fp16" / "model.plan"
-        output_model_path.parent.mkdir(parents=True)
+    output_model_path = workspace / "trt-fp16" / "model.plan"
+    output_model_path.parent.mkdir(parents=True)
 
-        with (
-            mocker.patch.object(ConvertONNX2TRT, "_execute_single_conversion", return_value=3),
-            mocker.patch("model_navigator.utils.devices.get_available_gpus", return_value=[0]),
-        ):
-            result = ConvertONNX2TRT().run(
-                workspace=Workspace(workspace),
-                parent_path=input_model_path,
-                path=output_model_path,
-                input_metadata=TensorMetadata({
-                    "input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))
-                }),
-                output_metadata=TensorMetadata({
-                    "output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))
-                }),
-                batch_dim=0,
-                dataloader_max_batch_size=16,
-                device_max_batch_size=32,
-                dataloader_trt_profile=TensorRTProfile(),
-                precision=TensorRTPrecision.FP16,
-                precision_mode=TensorRTPrecisionMode.HIERARCHY,
-                conversion_fallback=False,
-                custom_args={},
-            )
+    mocker.patch.object(ConvertONNX2TRT, "_execute_single_conversion", return_value=3)
+    mocker.patch("model_navigator.utils.devices.get_available_gpus", return_value=[0])
 
-            assert result is not None
-            assert result.status == CommandStatus.OK
-            assert (
-                ConvertONNX2TRT._execute_single_conversion.called is True  # pytype: disable=attribute-error
-            )
+    result = ConvertONNX2TRT().run(
+        workspace=Workspace(workspace),
+        parent_path=input_model_path,
+        path=output_model_path,
+        input_metadata=TensorMetadata({
+            "input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))
+        }),
+        output_metadata=TensorMetadata({
+            "output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))
+        }),
+        batch_dim=0,
+        dataloader_max_batch_size=16,
+        device_max_batch_size=32,
+        dataloader_trt_profile=TensorRTProfile(),
+        precision=TensorRTPrecision.FP16,
+        precision_mode=TensorRTPrecisionMode.HIERARCHY,
+        conversion_fallback=False,
+        custom_args={},
+    )
+
+    assert result is not None
+    assert result.status == CommandStatus.OK
+    assert (
+        ConvertONNX2TRT._execute_single_conversion.called is True  # pytype: disable=attribute-error
+    )
 
 
 def test_get_conversion_profiles_return_correct_arguments_when_batch_dim_is_none():

@@ -34,7 +34,7 @@ from model_navigator.exceptions import ModelNavigatorRuntimeAnalyzerError, Model
 from model_navigator.package.status import CommandStatus, ModelStatus, RunnerStatus
 from model_navigator.runtime_analyzer import RuntimeAnalyzer
 
-onnx_config = ONNXModelConfig(opset=13, dynamic_axes=None, dynamo_export=False, graph_surgeon_optimization=True)
+onnx_config = ONNXModelConfig(opset=13, graph_surgeon_optimization=True)
 tensorrt_config = TensorRTModelConfig(
     precision=TensorRTPrecision.FP16,
     precision_mode=TensorRTPrecisionMode.HIERARCHY,

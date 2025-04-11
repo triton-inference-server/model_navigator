@@ -13,7 +13,7 @@
 # limitations under the License.
 """NVML handler."""
 
-from typing import ContextManager, Dict, Optional
+from typing import ContextManager, Dict, Optional, Union
 
 import numpy as np
 from pynvml import (
@@ -98,7 +98,7 @@ class NvmlHandler(ContextManager):
             LOGGER.debug("Unable to collect NVML device count: {}", str(e))
             return 0
 
-    def get_gpu_memory_info(self) -> Dict[int, Dict[str, float]]:
+    def get_gpu_memory_info(self) -> Dict[int, Dict[str, Union[float, int, str]]]:
         """Get memory information for all available GPUs.
 
         Returns:
@@ -141,7 +141,7 @@ class NvmlHandler(ContextManager):
         return memory_info
 
     @property
-    def gpu_memory(self) -> Dict[int, Dict[str, float]]:
+    def gpu_memory(self) -> Dict[int, Dict[str, Union[float, int, str]]]:
         """Returns complete memory information for all GPUs.
 
         Returns:

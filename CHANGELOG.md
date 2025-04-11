@@ -28,6 +28,7 @@ limitations under the License.
 - change: Install the TensorRT package for architectures other than x86_64
 - change: Disable conversion fallback for TensorRT paths and expose control option in custom config
 - change: Use torch.export.save for Torch-TRT model serialization
+- change: Added export_engine to OnnxConfig for improved export control
 - fix: Correctness command relative tolerance formula
 - fix: Memory management during export and conversion process for Torch
 

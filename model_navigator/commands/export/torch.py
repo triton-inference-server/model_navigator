@@ -17,12 +17,13 @@ The module provide functionality to export model to TorchScript and/or ONNX.
 """
 
 import pathlib
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, cast
 
 from model_navigator.commands.base import Command, CommandOutput, CommandStatus
 from model_navigator.commands.execution_context import ExecutionContext
 from model_navigator.commands.export import exporters
 from model_navigator.configuration import DeviceKind, JitType, TensorRTPrecision, TensorRTProfile
+from model_navigator.configuration.model.model_config import OnnxDynamoExportConfig, ONNXExportEngine
 from model_navigator.core.logger import LOGGER
 from model_navigator.core.tensor import TensorMetadata
 from model_navigator.core.workspace import Workspace
@@ -149,11 +150,16 @@ class ExportTorch2ONNX(Command):
         output_metadata: TensorMetadata,
         target_device: DeviceKind,
         verbose: bool,
-        custom_args: Dict[str, Any],
-        model: Any = None,
+        dynamic_axes: Optional[Dict[str, Union[Dict[int, str], list]]] = None,
+        custom_args: Optional[Dict[str, Any]] = None,
+        model: Optional[Any] = None,
         batch_dim: Optional[int] = None,
-        dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None,
         export_device: Optional[str] = None,
+        export_engine: Optional[ONNXExportEngine] = None,
+        # Torch Dynamo path (injected)
+        dataloader_trt_profile: Optional[TensorRTProfile] = None,
+        dataloader_max_batch_size: Optional[int] = None,
+        device_max_batch_size: Optional[int] = None,
     ) -> CommandOutput:
         """Execute command.
 
@@ -165,12 +171,17 @@ class ExportTorch2ONNX(Command):
             output_metadata: Model outputs metadata
             target_device: Target device for export - determine the exported model
             verbose: Enable verbose logging
+            dynamic_axes: Definition of model inputs dynamic axes
             model: The model that has to be exported
             batch_dim: Location of batch position in shapes
-            dynamic_axes: Definition of model inputs dynamic axes
+            export_device: Device to export model to ONNX on. If None use target_device.
+            export_engine: Export engine config to use
             custom_args (Optional[Dict[str, Any]], optional): Passthrough parameters for torch.onnx.export
                 For available arguments check PyTorch documentation: https://pytorch.org/docs/stable/onnx.html#torch.onnx.export
-            export_device: Device to export model to ONNX on. If None use target_device.
+
+            dataloader_trt_profile: TensorRT profile for dataloader (injected)
+            dataloader_max_batch_size: The maximal batch size obtained from dataloader
+            device_max_batch_size: The maximal batch size obtained for device
 
         Returns:
             CommandOutput object with status
@@ -186,13 +197,15 @@ class ExportTorch2ONNX(Command):
         if model is None:
             raise RuntimeError("Expected model of type torch.nn.Module. Got None instead.")
 
+        exporters.torch2onnx.get_model = lambda: model
+
+        device = export_device or target_device.value
+
         if dynamic_axes is None:
             dynamic_axes = dict(**input_metadata.dynamic_axes, **output_metadata.dynamic_axes)
             LOGGER.warning(f"No dynamic axes provided. Using values derived from the dataloader: {dynamic_axes}")
         else:
             _validate_if_dynamic_axes_aligns_with_dataloader_shapes(dynamic_axes, input_metadata, output_metadata)
-
-        exporters.torch2onnx.get_model = lambda: model
 
         # Keep model on CPU after operation
         def on_exit():
@@ -205,20 +218,36 @@ class ExportTorch2ONNX(Command):
             verbose=verbose,
             on_exit=on_exit,
         ) as context:
-            # import json # TODO fix that
-
             kwargs = {
+                "export_engine": "torch-trace",
                 "navigator_workspace": workspace.path.as_posix(),
                 "exported_model_path": exported_model_path.relative_to(workspace.path).as_posix(),
                 "opset": opset,
                 "input_metadata": input_metadata.to_json(),
                 "input_names": list(input_metadata.keys()),
                 "output_names": list(output_metadata.keys()),
-                "dynamic_axes": dynamic_axes,
                 "batch_dim": batch_dim,
-                "export_device": export_device or target_device.value,
+                "dynamic_axes": dynamic_axes,
+                "target_device": device,
                 "custom_args": custom_args,
+                "verbose": verbose,
             }
+
+            # override kwargs if dynamo export engine is used
+            if isinstance(export_engine, OnnxDynamoExportConfig):
+                assert dataloader_trt_profile is not None, "Dataloader TRT profile is required for Torch Dynamo export"
+
+                export_engine = cast(OnnxDynamoExportConfig, export_engine)
+
+                dynamic_shapes = batch_dim is not None or dynamic_axes
+                if export_engine.dynamo_dynamic_shapes is not None:
+                    dynamic_shapes = export_engine.dynamo_dynamic_shapes
+
+                kwargs["export_engine"] = "torch-dynamo"
+                kwargs["dynamic_shapes"] = dynamic_shapes
+                kwargs["dataloader_max_batch_size"] = dataloader_max_batch_size
+                kwargs["device_max_batch_size"] = device_max_batch_size
+                kwargs["dataloader_trt_profile"] = dataloader_trt_profile.to_dict()
 
             args = parse_kwargs_to_cmd(kwargs)
             context.execute_python_script(exporters.torch2onnx.__file__, exporters.torch2onnx.export, args)
@@ -305,104 +334,6 @@ class ExportExportedProgram(Command):
 
             context.execute_python_script(
                 exporters.torch2exportedprogram.__file__, exporters.torch2exportedprogram.export, args
-            )
-
-        return CommandOutput(status=CommandStatus.OK)
-
-
-class ExportTorch2DynamoONNX(Command):
-    """Command for exporting Torch models to ONNX with dynamo."""
-
-    def _run(
-        self,
-        workspace: Workspace,
-        path: pathlib.Path,
-        input_metadata: TensorMetadata,
-        output_metadata: TensorMetadata,
-        dataloader_trt_profile: TensorRTProfile,
-        target_device: DeviceKind,
-        dynamic_axes: Dict[str, Union[Dict[int, str], List[int]]],
-        dynamo_dynamic_shapes: Optional[bool],
-        verbose: bool,
-        custom_args: Dict[str, Any],
-        model: Any = None,
-        batch_dim: Optional[int] = None,
-        dataloader_max_batch_size: Optional[int] = None,
-        device_max_batch_size: Optional[int] = None,
-    ) -> CommandOutput:
-        """Execute command.
-
-        Args:
-            workspace: Workspace where the files are stored.
-            path: Path inside the workspace where exported model is stored
-            opset: ONNX opset
-            input_metadata: Model inputs metadata
-            output_metadata: Model outputs metadata
-            dataloader_trt_profile: Profile from dataloader
-            target_device: Target device for export - determine the exported model
-            dynamic_axes: Definition of model inputs dynamic axes
-            dynamo_dynamic_shapes: Enable dynamo dynamic shapes
-            verbose: Enable verbose logging
-            model: The model that has to be exported
-            batch_dim: Location of batch position in shapes
-            custom_args (Optional[Dict[str, Any]], optional): Passthrough parameters for torch.onnx.dynamo_export
-                Can be used to pass ExportOptions object.
-                For available arguments check PyTorch documentation: https://pytorch.org/docs/stable/onnx.html#torch.onnx.export
-            dataloader_max_batch_size: The maximal batch size obtained from datalaoder
-            device_max_batch_size: The maximal batch size obtained for device
-
-        Returns:
-            CommandOutput object with status
-        """
-        LOGGER.info("PyTorch ExportedProgram export started")
-
-        exported_model_path = workspace.path / path
-        if exported_model_path.is_file() or exported_model_path.is_dir():
-            LOGGER.info("Model already exists. Skipping export.")
-            return CommandOutput(status=CommandStatus.SKIPPED)
-
-        exported_model_path.parent.mkdir(parents=True, exist_ok=True)
-
-        if model is None:
-            raise RuntimeError("Expected model of type torch.nn.Module. Got None instead.")
-
-        exporters.torch2dynamo_onnx.get_model = lambda: model
-
-        # Keep model on CPU after operation
-        def on_exit():
-            offload_torch_model_to_cpu(model)
-
-        if dynamo_dynamic_shapes is None:
-            dynamic_shapes = batch_dim is not None or dynamic_axes
-        else:
-            dynamic_shapes = dynamo_dynamic_shapes
-
-        with ExecutionContext(
-            workspace=workspace,
-            script_path=exported_model_path.parent / "reproduce_export.py",
-            cmd_path=exported_model_path.parent / "reproduce_export.sh",
-            verbose=verbose,
-            on_exit=on_exit,
-        ) as context:
-            kwargs = {
-                "exported_model_path": exported_model_path.relative_to(workspace.path).as_posix(),
-                "input_metadata": input_metadata.to_json(),
-                "input_names": list(input_metadata.keys()),
-                "output_names": list(output_metadata.keys()),
-                "batch_dim": batch_dim,
-                "target_device": target_device.value,
-                "dynamic_shapes": dynamic_shapes,
-                "navigator_workspace": workspace.path.as_posix(),
-                "custom_args": custom_args,
-                "verbose": verbose,
-                "dataloader_max_batch_size": dataloader_max_batch_size,
-                "device_max_batch_size": device_max_batch_size,
-                "dataloader_trt_profile": dataloader_trt_profile.to_dict(),
-            }
-            args = parse_kwargs_to_cmd(kwargs)
-
-            context.execute_python_script(
-                exporters.torch2dynamo_onnx.__file__, exporters.torch2dynamo_onnx.export, args
             )
 
         return CommandOutput(status=CommandStatus.OK)

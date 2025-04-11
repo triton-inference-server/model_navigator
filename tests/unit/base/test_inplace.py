@@ -143,15 +143,16 @@ def test_pass_model_is_optimized_returns_false():
 
 @pytest.mark.skipif(not find_spec("torch"), reason="PyTorch is not installed.")
 def test_optimized_model_is_optimized_returns_true(mocker):
-    with mocker.patch.object(OptimizedModule, "__init__", return_value=None):
-        module = OptimizedModule(
-            module=get_test_module(),
-            name="model_name",
-            input_mapping=lambda x: x,
-            output_mapping=lambda x: x,
-            optimize_config=OptimizeConfig(),
-        )
-        assert module.is_optimized
+    mocker.patch.object(OptimizedModule, "__init__", return_value=None)
+
+    module = OptimizedModule(
+        module=get_test_module(),
+        name="model_name",
+        input_mapping=lambda x: x,
+        output_mapping=lambda x: x,
+        optimize_config=OptimizeConfig(),
+    )
+    assert module.is_optimized
 
 
 @pytest.mark.skipif(not find_spec("torch"), reason="PyTorch is not installed.")

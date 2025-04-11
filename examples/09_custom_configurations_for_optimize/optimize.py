@@ -64,12 +64,17 @@ def get_onnx_config():
     - PyTorch -> ONNX
     - TorchScript Script -> ONNX
     - TorchScript Trace -> ONNX
+    - Torch Dynamo -> ONNX
 
     From each ONNX different TensorRT plan will be produced.
     """
     return nav.OnnxConfig(
         opset=17,
         onnx_extended_conversion=True,
+        export_engine=[
+            nav.OnnxTraceExportConfig(),
+            nav.OnnxDynamoExportConfig(),
+        ],
     )
 
 

@@ -74,12 +74,8 @@ def empty_package(workspace) -> Package:
                 },
             },
             models_status={
-                ONNXModelConfig(
-                    opset=13, dynamic_axes=None, dynamo_export=False, graph_surgeon_optimization=True
-                ).key: ModelStatus(
-                    model_config=ONNXModelConfig(
-                        opset=13, dynamic_axes=None, dynamo_export=False, graph_surgeon_optimization=True
-                    ),
+                ONNXModelConfig(opset=13, graph_surgeon_optimization=True).key: ModelStatus(
+                    model_config=ONNXModelConfig(opset=13, graph_surgeon_optimization=True),
                     runners_status={
                         "OnnxCUDA": RunnerStatus(
                             runner_name="OnnxCUDA",
@@ -127,7 +123,7 @@ def empty_package(workspace) -> Package:
 
 
 def custom_runner_package(workspace) -> Package:
-    onnx_config = ONNXModelConfig(opset=13, dynamic_axes=None, dynamo_export=False, graph_surgeon_optimization=True)
+    onnx_config = ONNXModelConfig(opset=13, graph_surgeon_optimization=True)
     package = Package(
         status=Status(
             format_version=NAVIGATOR_PACKAGE_VERSION,
@@ -409,7 +405,7 @@ def trochscript_package_with_source(workspace) -> Package:
 
 
 def onnx_package_with_tensorrt_runner(workspace) -> Package:
-    onnx_config = ONNXModelConfig(opset=13, dynamic_axes=None, dynamo_export=False, graph_surgeon_optimization=True)
+    onnx_config = ONNXModelConfig(opset=13, graph_surgeon_optimization=True)
     package = Package(
         status=Status(
             format_version=NAVIGATOR_PACKAGE_VERSION,
@@ -521,7 +517,7 @@ def onnx_package_with_tensorrt_runner(workspace) -> Package:
 
 
 def onnx_package_with_cuda_runner(workspace) -> Package:
-    onnx_config = ONNXModelConfig(opset=13, dynamic_axes=None, dynamo_export=False, graph_surgeon_optimization=True)
+    onnx_config = ONNXModelConfig(opset=13, graph_surgeon_optimization=True)
     package = Package(
         status=Status(
             format_version=NAVIGATOR_PACKAGE_VERSION,
@@ -633,7 +629,7 @@ def onnx_package_with_cuda_runner(workspace) -> Package:
 
 
 def onnx_package_with_cpu_runner_only(workspace) -> Package:
-    onnx_config = ONNXModelConfig(opset=13, dynamic_axes=None, dynamo_export=False, graph_surgeon_optimization=True)
+    onnx_config = ONNXModelConfig(opset=13, graph_surgeon_optimization=True)
     package = Package(
         status=Status(
             format_version=NAVIGATOR_PACKAGE_VERSION,
@@ -1346,7 +1342,9 @@ def torchscript_package_with_torch_tensorrt(workspace) -> Package:
 
 def onnx_package(workspace) -> Package:
     onnx_config = ONNXModelConfig(
-        opset=13, dynamic_axes={"input__0": [0]}, dynamo_export=False, graph_surgeon_optimization=True
+        opset=13,
+        graph_surgeon_optimization=True,
+        dynamic_axes={"input__0": [0]},
     )
     tensorrt_config = TensorRTModelConfig(
         precision=TensorRTPrecision.FP16,

@@ -78,13 +78,14 @@ def test_tensorrt_based_format_constructs_correctly_with_trt_profiles():
 def test_tensorrt_based_configs_return_valid_profiles():
     trt_profile = TensorRTProfile().add(name="input_0", min=(224, 224, 3), opt=(224, 224, 3), max=(224, 224, 3))
 
-    assert TensorRTConfig(trt_profile=trt_profile).trt_profiles[0] == trt_profile
-    assert TensorFlowTensorRTConfig(trt_profile=trt_profile).trt_profiles[0] == trt_profile
-    assert TorchTensorRTConfig(trt_profile=trt_profile).trt_profiles[0] == trt_profile
+    with pytest.warns(DeprecationWarning):
+        assert TensorRTConfig(trt_profile=trt_profile).trt_profiles[0] == trt_profile
+        assert TensorFlowTensorRTConfig(trt_profile=trt_profile).trt_profiles[0] == trt_profile
+        assert TorchTensorRTConfig(trt_profile=trt_profile).trt_profiles[0] == trt_profile
 
-    assert TensorRTConfig(trt_profiles=[trt_profile]).trt_profiles[0] == trt_profile
-    assert TensorFlowTensorRTConfig(trt_profiles=[trt_profile]).trt_profiles[0] == trt_profile
-    assert TorchTensorRTConfig(trt_profiles=[trt_profile]).trt_profiles[0] == trt_profile
+        assert TensorRTConfig(trt_profiles=[trt_profile]).trt_profiles[0] == trt_profile
+        assert TensorFlowTensorRTConfig(trt_profiles=[trt_profile]).trt_profiles[0] == trt_profile
+        assert TorchTensorRTConfig(trt_profiles=[trt_profile]).trt_profiles[0] == trt_profile
 
 
 def test_tensorflow_config_has_valid_name_and_format():

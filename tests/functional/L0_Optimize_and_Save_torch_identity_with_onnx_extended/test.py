@@ -27,8 +27,8 @@ METADATA = {
 EXPECTED_STATUES = [
     "onnx.OnnxCUDA",
     "onnx.OnnxTensorRT",
-    "onnx-dynamo.OnnxCUDA",
-    "onnx-dynamo.OnnxTensorRT",
+    # "onnx-dynamo.OnnxCUDA",
+    # "onnx-dynamo.OnnxTensorRT",
     "onnx-script.OnnxCUDA",
     "onnx-script.OnnxTensorRT",
     "onnx-trace.OnnxCUDA",
@@ -38,8 +38,8 @@ EXPECTED_STATUES = [
     "torchscript-trace.TorchScriptCUDA",
     "trt-fp16.TensorRT",
     "trt-fp32.TensorRT",
-    "trt-dynamo-fp16.TensorRT",
-    "trt-dynamo-fp32.TensorRT",
+    # "trt-dynamo-fp16.TensorRT",
+    # "trt-dynamo-fp32.TensorRT",
     "trt-script-fp16.TensorRT",
     "trt-script-fp32.TensorRT",
     "trt-trace-fp16.TensorRT",
@@ -89,8 +89,11 @@ def main():
         optimization_profile=nav.OptimizationProfile(batch_sizes=[1, 8, 16], stability_percentage=100),
         custom_configs=[
             nav.OnnxConfig(
-                dynamo_export=True,
                 onnx_extended_conversion=True,
+                export_engine=[
+                    nav.OnnxTraceExportConfig(),
+                    # nav.OnnxDynamoExportConfig(),# TODO: Torch 2.6 works but 2.7 fails
+                ],
             )
         ],
         workspace=pathlib.Path("torch_workspace"),

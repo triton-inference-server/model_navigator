@@ -49,7 +49,7 @@ def test_simple_report(scenario_name, mock_event_emitter):  # noqa: F811
     result = report.console.export_text()
     expected = Path.read_text(SCENARIO_PATH / f"scenario_{scenario_name}_expected.txt")
 
-    assert result == expected
+    assert result == expected, f"Scenario {scenario_name} failed"
     report.save_report_to_workspace.assert_called()
 
 

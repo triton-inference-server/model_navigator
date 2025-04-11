@@ -42,32 +42,32 @@ def test_find_max_batch_size_return_none_when_model_not_support_batching(mocker)
         model_path = tmpdir / "model.onnx"
         model_path.touch()
 
-        with mocker.patch.object(ExecutionContext, "execute_python_script"):
-            result = FindMaxBatchSize().run(
-                configurations=[
-                    FindMaxBatchSizeConfig(
-                        format=Format.ONNX,
-                        model_path=model_path,
-                        runner_cls=OnnxrtCPURunner,
-                        reproduction_scripts_dir=pathlib.Path("onnx"),
-                    )
-                ],
-                workspace=Workspace(workspace),
-                input_metadata=TensorMetadata({
-                    "input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))
-                }),
-                output_metadata=TensorMetadata({
-                    "output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))
-                }),
-                optimization_profile=OptimizationProfile(),
-                batch_dim=None,
-                verbose=True,
-            )
+        mocker.patch.object(ExecutionContext, "execute_python_script")
+        result = FindMaxBatchSize().run(
+            configurations=[
+                FindMaxBatchSizeConfig(
+                    format=Format.ONNX,
+                    model_path=model_path,
+                    runner_cls=OnnxrtCPURunner,
+                    reproduction_scripts_dir=pathlib.Path("onnx"),
+                )
+            ],
+            workspace=Workspace(workspace),
+            input_metadata=TensorMetadata({
+                "input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))
+            }),
+            output_metadata=TensorMetadata({
+                "output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))
+            }),
+            optimization_profile=OptimizationProfile(),
+            batch_dim=None,
+            verbose=True,
+        )
 
-            assert result is not None
-            assert result.status == CommandStatus.OK
-            assert result.output == {"device_max_batch_size": None}
-            assert ExecutionContext.execute_python_script.called is False  # pytype: disable=attribute-error
+        assert result is not None
+        assert result.status == CommandStatus.OK
+        assert result.output == {"device_max_batch_size": None}
+        assert ExecutionContext.execute_python_script.called is False  # pytype: disable=attribute-error
 
 
 def test_find_max_batch_size_return_max_batch_when_model_support_batching(mocker):
@@ -124,38 +124,34 @@ def test_find_max_batch_size_return_max_batch_when_model_support_batching(mocker
         mock = MagicMock()
         mock.__enter__.return_value.name = results_file.as_posix()
 
-        with (
-            mocker.patch.object(
-                ExecutionContext,
-                "execute_python_script",
-            ),
-            mocker.patch("tempfile.NamedTemporaryFile", return_value=mock),
-        ):
-            result = FindMaxBatchSize().run(
-                configurations=[
-                    FindMaxBatchSizeConfig(
-                        format=Format.ONNX,
-                        model_path=model_path,
-                        runner_cls=OnnxrtCPURunner,
-                        reproduction_scripts_dir=model_path.parent,
-                    )
-                ],
-                workspace=Workspace(workspace),
-                input_metadata=TensorMetadata({
-                    "input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))
-                }),
-                output_metadata=TensorMetadata({
-                    "output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))
-                }),
-                optimization_profile=OptimizationProfile(),
-                batch_dim=0,
-                verbose=True,
-            )
+        mocker.patch.object(ExecutionContext, "execute_python_script")
+        mocker.patch("tempfile.NamedTemporaryFile", return_value=mock)
 
-            assert result is not None
-            assert result.status == CommandStatus.OK
-            assert result.output == {"device_max_batch_size": 128}
-            assert ExecutionContext.execute_python_script.called is True  # pytype: disable=attribute-error
+        result = FindMaxBatchSize().run(
+            configurations=[
+                FindMaxBatchSizeConfig(
+                    format=Format.ONNX,
+                    model_path=model_path,
+                    runner_cls=OnnxrtCPURunner,
+                    reproduction_scripts_dir=model_path.parent,
+                )
+            ],
+            workspace=Workspace(workspace),
+            input_metadata=TensorMetadata({
+                "input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))
+            }),
+            output_metadata=TensorMetadata({
+                "output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))
+            }),
+            optimization_profile=OptimizationProfile(),
+            batch_dim=0,
+            verbose=True,
+        )
+
+        assert result is not None
+        assert result.status == CommandStatus.OK
+        assert result.output == {"device_max_batch_size": 128}
+        assert ExecutionContext.execute_python_script.called is True  # pytype: disable=attribute-error
 
 
 def test_find_max_batch_size_return_none_when_batch_dim_none_and_max_batch_size_provided_in_optimization_profile(
@@ -168,32 +164,33 @@ def test_find_max_batch_size_return_none_when_batch_dim_none_and_max_batch_size_
         model_path = tmpdir / "model.onnx"
         model_path.touch()
 
-        with mocker.patch.object(ExecutionContext, "execute_python_script"):
-            result = FindMaxBatchSize().run(
-                configurations=[
-                    FindMaxBatchSizeConfig(
-                        format=Format.ONNX,
-                        model_path=model_path,
-                        runner_cls=OnnxrtCPURunner,
-                        reproduction_scripts_dir=pathlib.Path("onnx"),
-                    )
-                ],
-                workspace=Workspace(workspace),
-                input_metadata=TensorMetadata({
-                    "input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))
-                }),
-                output_metadata=TensorMetadata({
-                    "output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))
-                }),
-                optimization_profile=OptimizationProfile(max_batch_size=16),
-                batch_dim=None,
-                verbose=True,
-            )
+        mocker.patch.object(ExecutionContext, "execute_python_script")
 
-            assert result is not None
-            assert result.status == CommandStatus.OK
-            assert result.output == {"device_max_batch_size": None}
-            assert ExecutionContext.execute_python_script.called is False  # pytype: disable=attribute-error
+        result = FindMaxBatchSize().run(
+            configurations=[
+                FindMaxBatchSizeConfig(
+                    format=Format.ONNX,
+                    model_path=model_path,
+                    runner_cls=OnnxrtCPURunner,
+                    reproduction_scripts_dir=pathlib.Path("onnx"),
+                )
+            ],
+            workspace=Workspace(workspace),
+            input_metadata=TensorMetadata({
+                "input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))
+            }),
+            output_metadata=TensorMetadata({
+                "output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))
+            }),
+            optimization_profile=OptimizationProfile(max_batch_size=16),
+            batch_dim=None,
+            verbose=True,
+        )
+
+        assert result is not None
+        assert result.status == CommandStatus.OK
+        assert result.output == {"device_max_batch_size": None}
+        assert ExecutionContext.execute_python_script.called is False  # pytype: disable=attribute-error
 
 
 def test_find_max_batch_size_return_max_batch_when_max_batch_size_provided_in_optimization_profile(mocker):
@@ -204,32 +201,33 @@ def test_find_max_batch_size_return_max_batch_when_max_batch_size_provided_in_op
         model_path = tmpdir / "model.onnx"
         model_path.touch()
 
-        with mocker.patch.object(ExecutionContext, "execute_python_script"):
-            result = FindMaxBatchSize().run(
-                configurations=[
-                    FindMaxBatchSizeConfig(
-                        format=Format.ONNX,
-                        model_path=model_path,
-                        runner_cls=OnnxrtCPURunner,
-                        reproduction_scripts_dir=pathlib.Path("onnx"),
-                    )
-                ],
-                workspace=Workspace(workspace),
-                input_metadata=TensorMetadata({
-                    "input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))
-                }),
-                output_metadata=TensorMetadata({
-                    "output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))
-                }),
-                optimization_profile=OptimizationProfile(max_batch_size=16),
-                batch_dim=[0],
-                verbose=True,
-            )
+        mocker.patch.object(ExecutionContext, "execute_python_script")
 
-            assert result is not None
-            assert result.status == CommandStatus.OK
-            assert result.output == {"device_max_batch_size": 16}
-            assert ExecutionContext.execute_python_script.called is False  # pytype: disable=attribute-error
+        result = FindMaxBatchSize().run(
+            configurations=[
+                FindMaxBatchSizeConfig(
+                    format=Format.ONNX,
+                    model_path=model_path,
+                    runner_cls=OnnxrtCPURunner,
+                    reproduction_scripts_dir=pathlib.Path("onnx"),
+                )
+            ],
+            workspace=Workspace(workspace),
+            input_metadata=TensorMetadata({
+                "input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))
+            }),
+            output_metadata=TensorMetadata({
+                "output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))
+            }),
+            optimization_profile=OptimizationProfile(max_batch_size=16),
+            batch_dim=[0],
+            verbose=True,
+        )
+
+        assert result is not None
+        assert result.status == CommandStatus.OK
+        assert result.output == {"device_max_batch_size": 16}
+        assert ExecutionContext.execute_python_script.called is False  # pytype: disable=attribute-error
 
 
 def test_find_max_batch_size_return_max_batch_when_batch_sizes_provided_in_optimization_profile(mocker):
@@ -240,29 +238,30 @@ def test_find_max_batch_size_return_max_batch_when_batch_sizes_provided_in_optim
         model_path = tmpdir / "model.onnx"
         model_path.touch()
 
-        with mocker.patch.object(ExecutionContext, "execute_python_script"):
-            result = FindMaxBatchSize().run(
-                configurations=[
-                    FindMaxBatchSizeConfig(
-                        format=Format.ONNX,
-                        model_path=model_path,
-                        runner_cls=OnnxrtCPURunner,
-                        reproduction_scripts_dir=pathlib.Path("onnx"),
-                    )
-                ],
-                workspace=Workspace(workspace),
-                input_metadata=TensorMetadata({
-                    "input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))
-                }),
-                output_metadata=TensorMetadata({
-                    "output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))
-                }),
-                optimization_profile=OptimizationProfile(batch_sizes=[1, 2, 4]),
-                batch_dim=[0],
-                verbose=True,
-            )
+        mocker.patch.object(ExecutionContext, "execute_python_script")
 
-            assert result is not None
-            assert result.status == CommandStatus.OK
-            assert result.output == {"device_max_batch_size": 4}
-            assert ExecutionContext.execute_python_script.called is False  # pytype: disable=attribute-error
+        result = FindMaxBatchSize().run(
+            configurations=[
+                FindMaxBatchSizeConfig(
+                    format=Format.ONNX,
+                    model_path=model_path,
+                    runner_cls=OnnxrtCPURunner,
+                    reproduction_scripts_dir=pathlib.Path("onnx"),
+                )
+            ],
+            workspace=Workspace(workspace),
+            input_metadata=TensorMetadata({
+                "input__1": TensorSpec(name="input__1", shape=(-1,), dtype=np.dtype("float32"))
+            }),
+            output_metadata=TensorMetadata({
+                "output__1": TensorSpec(name="output__1", shape=(-1,), dtype=np.dtype("float32"))
+            }),
+            optimization_profile=OptimizationProfile(batch_sizes=[1, 2, 4]),
+            batch_dim=[0],
+            verbose=True,
+        )
+
+        assert result is not None
+        assert result.status == CommandStatus.OK
+        assert result.output == {"device_max_batch_size": 4}
+        assert ExecutionContext.execute_python_script.called is False  # pytype: disable=attribute-error

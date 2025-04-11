@@ -21,6 +21,7 @@ from typing import Any, Callable, Dict, List, Optional, Union
 from model_navigator.configuration import (
     Format,
     JitType,
+    OnnxConfig,
     TensorRTCompatibilityLevel,
     TensorRTPrecision,
     TensorRTPrecisionMode,
@@ -409,55 +410,130 @@ class TorchExportedProgramModelConfig(_SerializedModelConfig, format=Format.TORC
         )
 
 
+class ONNXExportEngine:
+    """ONNX export engine base configuration class."""
+
+    def __init__(self, engine_name: str) -> None:
+        """Initialize ONNX export engine.
+
+        Args:
+            engine_name: Name of the export engine, for de/serialization purposes
+        """
+        self.engine_name = engine_name
+
+    @staticmethod
+    def _from_dict(data_dict: Optional[Dict] = None) -> Optional["ONNXExportEngine"]:
+        """Create ONNX export engine from dictionary.
+
+        Args:
+            data_dict: Dictionary containing export engine configuration
+
+        Returns:
+            ONNX export engine
+        """
+        if data_dict is None:
+            return None
+
+        engine_name = data_dict.get("engine_name")
+        if engine_name == OnnxDynamoExportConfig.NAME:
+            return OnnxDynamoExportConfig(**data_dict)
+        else:
+            raise ValueError(f"Unknown export engine: {engine_name}")
+
+
+class OnnxDynamoExportConfig(ONNXExportEngine):
+    """Dynamo export engine."""
+
+    NAME = "torch-dynamo"
+
+    def __init__(self, dynamo_dynamic_shapes: Optional[bool] = None) -> None:
+        """Initialize OnnxDynamoExportConfig.
+
+        Args:
+            dynamo_dynamic_shapes: Enable or Disable dynamic shapes in dynamo export
+        """
+        super().__init__(engine_name=OnnxDynamoExportConfig.NAME)
+        self.dynamo_dynamic_shapes = dynamo_dynamic_shapes
+
+    def to_dict(self) -> Dict:
+        """Dict representation of ONNX export engine."""
+        return {
+            "engine_name": self.engine_name,
+            "dynamo_dynamic_shapes": self.dynamo_dynamic_shapes,
+        }
+
+
 class ONNXModelConfig(_SerializedModelConfig, format=Format.ONNX):
     """ONNX model configuration class."""
 
     def __init__(
         self,
         opset: int,
-        dynamo_export: bool,
         graph_surgeon_optimization: bool,
-        dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]],
-        dynamo_dynamic_shapes: Optional[bool] = None,
         parent: Optional[ModelConfig] = None,
         custom_args: Optional[Dict[str, Any]] = None,
         device: Optional[str] = None,
         export_device: Optional[str] = None,
+        dynamic_axes: Optional[Dict[str, Union[Dict[int, str], List[int]]]] = None,
         model_path: Optional[Union[str, pathlib.Path]] = None,
         quantized: bool = False,
+        export_engine: Optional[ONNXExportEngine] = None,
     ) -> None:
         """Initializes ONNX model configuration class.
 
         Args:
             opset: ONNX opset
-            dynamo_export: True if dynamo export should be enabled, default: True
             graph_surgeon_optimization: Enable or Disable Graph Surgeon optimization
-            dynamic_axes: Dynamic axes definition for ONNXConfig
-            dynamo_dynamic_shapes: Enable or Disable dynamic shapes in dynamo export
             parent: Parent model configuration
             custom_args: Custom arguments passed to ONNX export
             device: runtime device e.g. "cuda:0"
             export_device: Device used for export
+            dynamic_axes: Dynamic axes definition for ONNXConfig
             model_path: optional path to onnx model file, if provided the model will be loaded from the file instead of exporting to ONNX
             quantized: True if the model is quantized, default: False
+            export_engine: Export engine config to use
         """
         super().__init__(parent=parent)
         self.opset = opset
-        self.dynamo_export = dynamo_export
         self.graph_surgeon_optimization = graph_surgeon_optimization
-        self.dynamic_axes = dynamic_axes
-        self.dynamo_dynamic_shapes = dynamo_dynamic_shapes
         self.custom_args = custom_args
         self.export_device = export_device
+        # self.target_device = export_device
         self.runner_config = DeviceRunnerConfig(device=device)
+        self.dynamic_axes = dynamic_axes
         self.model_path = model_path
         self.quantized = quantized
+        self.export_engine = export_engine
+
+    @staticmethod
+    def from_onnx_config(
+        onnx_config: OnnxConfig,
+        parent: Optional[ModelConfig] = None,
+        export_engine: Optional[ONNXExportEngine] = None,
+    ) -> "ONNXModelConfig":
+        """Create ONNX model configuration from ONNX config.
+
+        Args:
+            onnx_config: ONNX config
+            parent: Parent model configuration
+            export_engine: Export engine config to use
+        """
+        return ONNXModelConfig(
+            parent=parent,
+            opset=onnx_config.opset,
+            graph_surgeon_optimization=onnx_config.graph_surgeon_optimization,
+            custom_args=onnx_config.custom_args,
+            device=onnx_config.device,
+            export_device=onnx_config.export_device,
+            dynamic_axes=onnx_config.dynamic_axes,
+            export_engine=export_engine,
+        )
 
     def _get_path_params_as_array_of_strings(self) -> List[str]:
         params_array = []
         if self.quantized:
             params_array.append("quantized")
-        if self.dynamo_export:
+        if self.export_engine is not None and self.export_engine.engine_name == OnnxDynamoExportConfig.NAME:
             params_array.append("dynamo")
         return params_array
 
@@ -465,15 +541,13 @@ class ONNXModelConfig(_SerializedModelConfig, format=Format.ONNX):
     def _from_dict(cls, data_dict: Dict):
         return cls(
             opset=data_dict.get("opset"),
-            dynamo_export=data_dict.get("dynamo_export", False),
             graph_surgeon_optimization=data_dict.get("graph_surgeon_optimization"),
-            dynamic_axes=data_dict.get("dynamic_axes"),
-            dynamo_dynamic_shapes=data_dict.get("dynamo_dynamic_shapes"),
             custom_args=data_dict.get("custom_args"),
             device=data_dict.get("device"),
             export_device=data_dict.get("export_device"),
             model_path=data_dict.get("model_path"),
             quantized=data_dict.get("quantized", False),
+            export_engine=ONNXExportEngine._from_dict(data_dict.get("export_engine")),
         )
 
 
