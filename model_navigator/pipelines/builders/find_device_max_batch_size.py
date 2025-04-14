@@ -95,24 +95,6 @@ def _find_max_batch_size_config_for_torch(config: CommonConfig, models_config: D
             )
             configurations.append(mbs_config)
 
-    for model_cfg in models_config.get(Format.ONNX, []):
-        runner_cls = {
-            DeviceKind.CUDA: OnnxrtCUDARunner,
-            DeviceKind.CPU: OnnxrtCPURunner,
-        }[config.target_device]
-
-        if model_cfg.format != runner_cls.format():
-            raise ModelNavigatorRuntimeError(
-                f"Model config format `{model_cfg.format}` does not match `{runner_cls.format()}`."
-            )
-        mbs_config = FindMaxBatchSizeConfig(
-            format=Format.ONNX,
-            model_path=model_cfg.path,
-            runner_cls=runner_cls,
-            reproduction_scripts_dir=pathlib.Path(model_cfg.key),
-        )
-        configurations.append(mbs_config)
-
     return configurations
 
 

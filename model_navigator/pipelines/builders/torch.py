@@ -51,6 +51,20 @@ def torch_export_builder(config: CommonConfig, models_config: Dict[Format, List[
     for model_cfg in models_config.get(Format.TORCHSCRIPT, []):
         execution_units.append(ExecutionUnit(command=ExportTorch2TorchScript, model_config=model_cfg))
 
+    return Pipeline(name=PIPELINE_TORCH_EXPORT, execution_units=execution_units)
+
+
+def torch_export_onnx_builder(config: CommonConfig, models_config: Dict[Format, List[ModelConfig]]) -> Pipeline:
+    """Prepare export steps for pipeline.
+
+    Args:
+        config: A configuration for pipelines
+        models_config: List of model configs per format
+
+    Returns:
+        Pipeline with steps for export
+    """
+    execution_units: List[ExecutionUnit] = []
     for model_cfg in models_config.get(Format.ONNX, []):
         if model_cfg.parent_path in (None, Format.TORCH):
             #  If model_path provided in onnx config, copy this onnx instead of exporting.

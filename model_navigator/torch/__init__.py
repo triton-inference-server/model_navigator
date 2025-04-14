@@ -42,6 +42,7 @@ from model_navigator.pipelines.builders import (
     tensorrt_conversion_builder,
     torch_conversion_builder,
     torch_export_builder,
+    torch_export_onnx_builder,
     torch_tensorrt_conversion_builder,
     verify_builder,
 )
@@ -144,6 +145,7 @@ def optimize(
         preprocessing_builder,
         torch_export_builder,
         find_device_max_batch_size_builder,
+        torch_export_onnx_builder,
         torch_exportedprogram_builder,
         torch_conversion_builder,
         torch_tensorrt_conversion_builder,

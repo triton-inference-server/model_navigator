@@ -16,10 +16,13 @@ from model_navigator.configuration import DEFAULT_ONNX_OPSET, DeviceKind, Format
 from model_navigator.configuration.common_config import CommonConfig
 from model_navigator.configuration.model.model_config import ONNXModelConfig, TorchScriptModelConfig
 from model_navigator.frameworks import Framework
-from model_navigator.pipelines.builders.torch import torch_conversion_builder, torch_export_builder
+from model_navigator.pipelines.builders.torch import (
+    torch_conversion_builder,
+    torch_export_onnx_builder,
+)
 
 
-def test_torch_export_builder_return_graph_surgeon_optimization_when_enabled():
+def test_torch_export_onnx_builder_return_graph_surgeon_optimization_when_enabled():
     config = CommonConfig(
         framework=Framework.TORCH,
         dataloader=[{"input_name": [idx]} for idx in range(10)],
@@ -34,12 +37,12 @@ def test_torch_export_builder_return_graph_surgeon_optimization_when_enabled():
     models_config = {
         Format.ONNX: [ONNXModelConfig(opset=DEFAULT_ONNX_OPSET, graph_surgeon_optimization=True)],
     }
-    pipeline = torch_export_builder(config=config, models_config=models_config)
+    pipeline = torch_export_onnx_builder(config=config, models_config=models_config)
     assert len(pipeline.execution_units) == 2
     assert pipeline.execution_units[-1].command == GraphSurgeonOptimize
 
 
-def test_torch_export_builder_does_not_return_graph_surgeon_optimization_when_disabled():
+def test_torch_export_onnx_builder_does_not_return_graph_surgeon_optimization_when_disabled():
     config = CommonConfig(
         framework=Framework.TORCH,
         dataloader=[{"input_name": [idx]} for idx in range(10)],
@@ -54,7 +57,7 @@ def test_torch_export_builder_does_not_return_graph_surgeon_optimization_when_di
     models_config = {
         Format.ONNX: [ONNXModelConfig(opset=DEFAULT_ONNX_OPSET, graph_surgeon_optimization=False)],
     }
-    pipeline = torch_export_builder(config=config, models_config=models_config)
+    pipeline = torch_export_onnx_builder(config=config, models_config=models_config)
     assert len(pipeline.execution_units) == 1
 
 

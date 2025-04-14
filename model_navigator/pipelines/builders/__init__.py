@@ -26,7 +26,7 @@ from model_navigator.pipelines.builders.verify import verify_builder  # noqa: F4
 from model_navigator.pipelines.pipeline import Pipeline  # noqa: F401
 
 if is_torch_available():
-    from .torch import torch_conversion_builder, torch_export_builder  # noqa: F401
+    from .torch import torch_conversion_builder, torch_export_builder, torch_export_onnx_builder  # noqa: F401
     from .torch_tensorrt import torch_tensorrt_conversion_builder  # noqa: F401
 
 if is_tf_available():

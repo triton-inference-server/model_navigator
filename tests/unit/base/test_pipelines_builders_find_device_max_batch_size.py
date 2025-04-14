@@ -80,16 +80,13 @@ def test_find_device_max_batch_size_builder_return_execution_unit_when_torch_fra
     assert len(pipeline.execution_units) == 1
 
     execution_unit = pipeline.execution_units[0]
-    assert len(execution_unit.kwargs["configurations"]) == 3
+    assert len(execution_unit.kwargs["configurations"]) == 2
 
     configuration = execution_unit.kwargs["configurations"][0]
     assert configuration.runner_cls == TorchCUDARunner
 
     configuration = execution_unit.kwargs["configurations"][1]
     assert configuration.runner_cls == TorchCompileCUDARunner
-
-    configuration = execution_unit.kwargs["configurations"][2]
-    assert configuration.runner_cls == OnnxrtCUDARunner
 
 
 def test_find_device_max_batch_size_builder_return_execution_unit_when_tensorflow_framework_is_used():
