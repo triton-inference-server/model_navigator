@@ -17,7 +17,7 @@ limitations under the License.
 # Changelog
 
 
-## 0.14.0 (unreleased)
+## 0.14.0
 - new: TensorRT INT8 and FP8 quantization through ModelOpt (ONNX path)
 - new: TensorRT NVFP4 quantization through ModelOpt (Torch path)
 - new: Improved TorchCompile performance for repeated compilations using TORCHINDUCTOR_CACHE_DIR environment variable
@@ -31,6 +31,22 @@ limitations under the License.
 - change: Added export_engine to OnnxConfig for improved export control
 - fix: Correctness command relative tolerance formula
 - fix: Memory management during export and conversion process for Torch
+
+[//]: <> (put here on external component update with short summary what change or link to changelog)
+
+- Version of external components used during testing:
+    - [PyTorch 2.7.0a0+7c8ec84dab](https://github.com/pytorch/pytorch/commit/7c8ec84dab7dc10d4ef90afc93a49b97bbd04503)
+    - [TensorFlow 2.17.0](https://github.com/tensorflow/tensorflow/releases/tag/v2.17.0)
+    - [TensorRT 10.9.0.34](https://docs.nvidia.com/deeplearning/tensorrt/release-notes/index.html)
+    - [TensorRT ModelOptimizer 0.27.0](https://github.com/NVIDIA/TensorRT-Model-Optimizer/releases/tag/0.27.0)
+    - [Torch-TensorRT 2.7.0a0](https://github.com/NVIDIA/Torch-TensorRT)
+    - [ONNX Runtime 1.20.2](https://github.com/microsoft/onnxruntime/releases/tag/v1.20.2)
+    - [Polygraphy 0.49.20](https://github.com/NVIDIA/TensorRT/tree/master/tools/Polygraphy/)
+    - [GraphSurgeon 0.5.8](https://github.com/NVIDIA/TensorRT/tree/master/tools/onnx-graphsurgeon/)
+    - [tf2onnx v1.16.1](https://github.com/onnx/tensorflow-onnx/releases/tag/v1.16.1)
+    - Other component versions depend on the used framework containers versions.
+      See its [support matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html)
+      for a detailed summary.
 
 ## 0.13.0
 

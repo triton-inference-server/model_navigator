@@ -64,7 +64,7 @@ dependencies = [
     "wrapt>=1.16",
     "pyee>=11.1.0",
     "rich>=13.7.1",
-    "nvidia-modelopt[onnx]>=0.23.0",
+    "nvidia-modelopt[onnx]>=0.27.0",
 ]
 
 [project.urls]
