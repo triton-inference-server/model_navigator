@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ the [PyTriton](https://github.com/triton-inference-server/pytriton) and [Triton 
 2. [Optimize model and verify model](../examples/02_optimize_and_verify_model/)
 3. [Optimize model and save package](../examples/03_optimize_model_and_save_package/)
 4. [Load and optimize package](../examples/04_load%E2%80%8E_and_optimize_package%E2%80%8E/)
-5. [Optimize and server model on PyTriton](../examples/05_optimize_and_serve_model_on_pytriton/)
+5. [Optimize and serve model on PyTriton](../examples/05_optimize_and_serve_model_on_pytriton/)
 6. [Optimize and serve model on Triton Inference Server](../examples/06_optimize_and_serve_model_on_triton/)
 7. [Optimize model and use for offline inference](../examples/07_optimize_model_and_use_for_offline_inference/)
 8. [Optimize PyTorch QAT model](../examples/08_optimize_pytorch_hifigan_qat_model/)

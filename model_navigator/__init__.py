@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2025, NVIDIA CORPORATION. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
 
 from model_navigator.__version__ import __version__  # noqa: F401
 from model_navigator.configuration import (  # noqa: F401  # noqa: F401
+    AutocastType,
     DeviceKind,
     Format,
     Framework,
