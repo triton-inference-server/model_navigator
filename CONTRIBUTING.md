@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
+Copyright (c) 2021-2026, NVIDIA CORPORATION. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -186,7 +186,7 @@ Add/update docstrings as defined in the [Google Style Guide](https://github.com/
 
 Triton requires that all contributors (or their corporate entity) send
 a signed copy of the [Contributor License
-Agreement](https://github.com/NVIDIA/triton-inference-server/blob/master/Triton-CCLA-v1.pdf)
+Agreement](https://github.com/NVIDIA/triton-inference-server/blob/main/Triton-CCLA-v1.pdf)
 to triton-cla@nvidia.com.
 *NOTE*: Contributors with no company affiliation can fill `N/A` in the
 `Corporation Name` and `Corporation Address` fields.
