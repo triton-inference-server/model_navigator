@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
+Copyright (c) 2021-2026, NVIDIA CORPORATION. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -202,7 +202,7 @@ start [Triton Inference Server](https://github.com/triton-inference-server/serve
 mounting the defined `model_repository_path`.
 
 Read more about deploying the model on the Triton Inference Server
-in the [documentation](https://triton-inference-server.github.io/model_navigator/latest/triton/triton_deployment/).
+in the [documentation](https://triton-inference-server.github.io/model_navigator/latest/inference_deployment/triton/deployment/).
 
 ## Using the Navigator Package
 

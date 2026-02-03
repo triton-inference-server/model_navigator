@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2021-2024, NVIDIA CORPORATION. All rights reserved.
+Copyright (c) 2021-2026, NVIDIA CORPORATION. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@ apps in production.
 You can use those default TensorRT compute plans for your deployment to get excellent performance for NVIDIA hardware.
 
 You can also apply quantization to some selected models to get better performance, like
-in the [HiFiGAN example](../examples/08_optimize_pytorch_hifigan_qat_model).
+in the [HiFiGAN example](../../../examples/08_optimize_pytorch_hifigan_qat_model).
 This model uses quantization-aware
 training, so accuracy is perfect, but many other models can use post-training quantization by just enabling the INT8 flag in the
 optimize function. It can reduce accuracy, so you must validate the quantized model in such cases.
